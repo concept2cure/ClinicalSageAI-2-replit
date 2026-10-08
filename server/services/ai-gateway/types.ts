@@ -536,6 +536,17 @@ export interface GatewayRequest {
   thinking?: ExtendedThinkingConfig;
 
   /**
+   * The notes the model writes between tool calls come back as its words,
+   * even when this call reasons (ANA-SUMMARY decision 3, A). Only a model that
+   * returns those notes as thinking blocks is affected (`progressUpdatesInThinking`):
+   * on this call its reasoning stays hidden — it still reasons — and its notes
+   * arrive as text (progress-updates.ts). Every other model already returns
+   * them as text and keeps its reasoning summary. Set on calls that offer
+   * tools; a closing call that offers none keeps the summary.
+   */
+  notesBetweenTools?: boolean;
+
+  /**
    * Tools for agentic workflows (Claude only). Accepts either custom
    * JSON-schema tools or Anthropic server tools (web_search, web_fetch,
    * code_execution) — the two shapes are distinguished by the presence of

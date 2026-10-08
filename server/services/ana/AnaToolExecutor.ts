@@ -9158,6 +9158,45 @@ function confinePackagerPaths(
   return { ok: true, sourcePaths, outputDir: anaScratchDir(organizationId, 'submissions') };
 }
 
+/**
+ * package_ectd_for_region's application number and applicant, from the record
+ * (package-identity.ts — the one reader export, compile and transmit use), or
+ * the refusal naming what is missing. Never from model input: 2026-10-08
+ * (P-27, Rule 2) the schema stopped offering application_id / sponsor_id /
+ * sponsor_name, and a call that still carries them is not read for them.
+ */
+async function recordedPackageIdentityOrRefusal(
+  programIdInput: unknown,
+  organizationId: number,
+): Promise<{ ok: true; applicationNumber: string; applicantName: string } | { ok: false; refusal: string }> {
+  const programId = typeof programIdInput === 'string' ? programIdInput.trim() : '';
+  if (!programId) {
+    return {
+      ok: false,
+      refusal: JSON.stringify({
+        error:
+          'package_ectd_for_region needs program_id, the project this package is filed for: the application number and ' +
+          'the applicant are read from its record, never from this call. Nothing was built.',
+        code: 'PACKAGE_IDENTITY_MISSING',
+        retry: false,
+      }),
+    };
+  }
+  const [{ readRecordedPackageIdentity, packageIdentityRefusal }, { getPool }] = await Promise.all([
+    import('../ectd/package-identity.js'),
+    import('../../db.js'),
+  ]);
+  const identity = await readRecordedPackageIdentity(getPool(), organizationId, programId);
+  const missing = packageIdentityRefusal(identity, 'Nothing was built.');
+  if (missing) {
+    return {
+      ok: false,
+      refusal: JSON.stringify({ error: missing.message, code: missing.code, missing: missing.missing, retry: false }),
+    };
+  }
+  return { ok: true, applicationNumber: identity.applicationNumber as string, applicantName: identity.applicantName as string };
+}
+
 registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
@@ -9187,10 +9226,13 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!paths.ok) return paths.refusal;
   const { sourcePaths, outputDir } = paths;
   try {
+    const identity = await recordedPackageIdentityOrRefusal(input.program_id, ctx.organizationId);
+    if (!identity.ok) return identity.refusal;
+    const { applicationNumber, applicantName } = identity;
     const { packageEctdSubmission } = await import('../submission-gateways/index.js');
     const bundle = await packageEctdSubmission({
       region: region as any,
-      applicationId: String(input.application_id),
+      applicationId: applicationNumber,
       sequence:      String(input.sequence),
       submissionType: String(input.submission_type),
       /* `submission_type` on this tool means 'original | amendment | ...', so it
@@ -9200,8 +9242,10 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
       ...(typeof input.application_type === 'string' && input.application_type.trim()
         ? { fda: { applicationType: input.application_type.trim() } }
         : {}),
-      sponsorId:     String(input.sponsor_id),
-      sponsorName:   String(input.sponsor_name),
+      // The applicant's <id> (D-U-N-S) has no recorded home yet; it says so,
+      // as the compile's does (package-identity.ts header, P-27 known gap).
+      sponsorId:     `UNASSIGNED-ORG-${ctx.organizationId}`,
+      sponsorName:   applicantName,
       productName:   String(input.product_name),
       // A delete's source_path is passed through as given, never dropped: the
       // packager refuses a delete that carries one, by name, instead of this
@@ -9226,7 +9270,13 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
       sizeBytes:     bundle.sizeBytes,
       format:        bundle.format,
       displayName:   bundle.displayName,
-      message: `Packaged ${leaves.length} leaves into a ${region.toUpperCase()} eCTD zip.`,
+      // What the backbone names, as recorded — so the narration reports the record, not its input.
+      applicationNumber,
+      applicantName,
+      identitySource: 'record',
+      message:
+        `Packaged ${leaves.length} leaves into a ${region.toUpperCase()} eCTD zip for application ${applicationNumber} ` +
+        `(applicant ${applicantName}, from the record). The applicant's D-U-N-S is not yet recorded, so the backbone says it is unassigned.`,
     });
   } catch (err) {
     return JSON.stringify({

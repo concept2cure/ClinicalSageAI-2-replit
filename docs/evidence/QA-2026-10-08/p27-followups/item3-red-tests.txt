@@ -1,0 +1,21 @@
+ × server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > judges the signer's membership role, not the role the request carries 11ms
+ × server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > asks signing authority before the password: a role that may not sign tests no password 13ms
+ × server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > refuses, unverified, when the signer role cannot be read — and asks for no password 7ms
+ × server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > defines no local signing-authority wrapper by a retired name 292ms
+ × server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > calls the policy predicate directly only where the answer is displayed or judges another person 24ms
+ × server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > writes no signing role list out by hand 34ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > judges the signer's membership role, not the role the request carries
+AssertionError: expected 201 to be 403 // Object.is equality
+ FAIL  server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > asks signing authority before the password: a role that may not sign tests no password
+AssertionError: expected 401 to be 403 // Object.is equality
+ FAIL  server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > refuses, unverified, when the signer role cannot be read — and asks for no password
+AssertionError: expected 500 to be 503 // Object.is equality
+ FAIL  server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > defines no local signing-authority wrapper by a retired name
+AssertionError: a local copy of the signing-authority policy: expected [ …(4) ] to deeply equal []
+ FAIL  server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > calls the policy predicate directly only where the answer is displayed or judges another person
+AssertionError: isSigningAuthorized outside checkSigningAuthority: route the check through the gate: expected { …(18) } to deeply equal { …(7) }
+ FAIL  server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > writes no signing role list out by hand
+AssertionError: a hand-written copy of the signing roles (ESIGNATURE_SIGNING_ROLES is the policy's): expected [ 'server/routes/c2c/artifacts.ts' ] to deeply equal []
+ Test Files  3 failed (3)
+      Tests  6 failed | 37 passed (43)

@@ -1,0 +1,261 @@
+# HEAD 1f2557255; sources at HEAD: shared/ana/turn-timeline.ts server/services/ana/turn-timeline-emitter.ts client/src/concept2cure/v2/turnSummaryRows.ts client/src/concept2cure/v2/TurnSummary.tsx
+# RLS_ENFORCE=off
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a task completed while both of its steps failed carries "none of its 2 steps succeeded" 6ms
+   → expected undefined to be 'Marked complete by AnA · none of its …' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with no steps carries "No steps recorded for this task", not the failure fact 1ms
+   → expected undefined to be 'No steps recorded for this task' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with one step that failed and one that succeeded carries neither 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > Added and Started rows carry no fact 0ms
+ × client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > the fact is visible on the row, without opening it 85ms
+   → expected 'Completed Find the reportsFind the re…' to contain 'Marked complete by AnA · none of its …'
+ × client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > lists the plan as it stood at that moment, and the steps attributed to the task 192ms
+   → expected  to have a length of 2 but got +0
+ × client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > each task row lists only the steps attributed to that task 1ms
+   → Cannot read properties of undefined (reading 'map')
+stdout | server/routes/ana-ri/__tests__/stream-task-attribution.test.ts
+{
+  "timestamp": "2026-10-08T14:25:50.441Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T14:25:50.442Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-task-attribution.test.ts
+{
+  "timestamp": "2026-10-08T14:25:50.443Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-task-attribution.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > the single in-progress task's id; null with two in progress; null for update_plan, always 83ms
+   → expected [ null, null ] to deeply equal [ 't1', 't1' ]
+ × server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > before any plan, a step serves no task 11ms
+   → expected undefined to be null
+ × server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 3. task ids across five update_plan calls > hold for each task while it is in the plan; a title removed and added again is a new task 20ms
+   → expected [ null, null ] to deeply equal [ 't3', 't3' ]
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 1. (client half) the same rows live and from the record > rows built from the live frames equal the rows built from the /summary payload 134ms
+   → expected [ …(6) ] to deeply equal [ …(6) ]
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Recorded", with the hash and Download, only for a verdict that passed on this read 61ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Record could not be verified" for a verdict that failed, never "Recorded" 35ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Not recorded" with no record 55ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Recording…" while the confirm waits run, so "Not recorded" never flashes 29ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > declined 14ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > no answer 9ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > authorised, then failed 14ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > a step a sealed timeline announced and never finished says so 17ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > the record's end: cancelled steps keep their sentence, and the turn closes on "Stopped." 8ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > a lost connection reads "Stopped: this page lost its connection." with Continue 268ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > a turn the round limit stopped closes on its stop line, with Continue 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > the record's own end, when it says the page left, reads the same 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > notes and the live view > a note reads "AnA's words" once the answer is checked, and is never counted 35ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > notes and the live view > while she works, a running step reads running and "Working…" closes the list 13ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > her plan > a plan update that went through is its task rows, not a step row 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > her plan > a plan update that failed stays a row, with its sentence 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > her plan > a live turn before its first event is working, not a turn that ran nothing 10ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > a turn's Summary button opens it, beside the folded line and beside the live phase 89ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > a host that shows no Summary has no button 24ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > on a phone it is a modal dialog titled "Summary" that Escape closes 64ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > the single in-progress task's id; null with two in progress; null for update_plan, always
+AssertionError: expected [ null, null ] to deeply equal [ 't1', 't1' ]
+
+- Expected
++ Received
+
+  [
+-   "t1",
+-   "t1",
++   null,
++   null,
+  ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts:126:45
+    124|     expect(find).toBe('t1');
+    125|
+    126|     expect(tasksOfStep(events, t, 'tu_s1')).toEqual(['t1', 't1']);
+       |                                             ^
+    127|     expect(tasksOfStep(events, t, 'tu_r1')).toEqual([null, null]);
+    128|     for (const p of ['tu_p1', 'tu_p2', 'tu_p3', 'tu_p4']) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > before any plan, a step serves no task
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts:142:44
+    140|     const events = await turn();
+    141|     expect(tasksOfStep(events, timelineOf(events), 'tu_s0')).toEqual([…
+    142|     expect(recordedTaskIds().get('tu_s0')).toBeNull();
+       |                                            ^
+    143|   });
+    144| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 3. task ids across five update_plan calls > hold for each task while it is in the plan; a title removed and added again is a new task
+AssertionError: expected [ null, null ] to deeply equal [ 't3', 't3' ]
+
+- Expected
++ Received
+
+  [
+-   "t3",
+-   "t3",
++   null,
++   null,
+  ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts:174:45
+    172|       expect(new Set(taskEvents(t).filter(e => e.title === title).map(…
+    173|     }
+    174|     expect(tasksOfStep(events, t, 'tu_r1')).toEqual(['t3', 't3']);
+       |                                             ^
+    175|     expect(tasksOfStep(events, t, 'tu_s1')).toEqual(['t4', 't4']);
+    176|     const recorded = recordedTaskIds();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 1. (client half) the same rows live and from the record > rows built from the live frames equal the rows built from the /summary payload
+AssertionError: expected [ …(6) ] to deeply equal [ …(6) ]
+
+- Expected
++ Received
+
+  [
+    "I will look in the Vault first. AnA's words · not checked",
+    "Searched the Vault 2.4s Vault · shelf life",
+    "Added task Find the reports",
+    "Started Find the reports",
+-   "Completed Find the reports No steps recorded for this task",
++   "Completed Find the reports",
+    "Answered.",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx:92:22
+     90|     await waitFor(() => expect(sealed.container.querySelector('.ana-su…
+     91|     expect(rowTexts(sealed.container)).toEqual(liveRows);
+     92|     expect(liveRows).toEqual([
+       |                      ^
+     93|       "I will look in the Vault first. AnA's words · not checked",
+     94|       'Searched the Vault 2.4s Vault · shelf life',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a task completed while both of its steps failed carries "none of its 2 steps succeeded"
+AssertionError: expected undefined to be 'Marked complete by AnA · none of its …' // Object.is equality
+
+- Expected:
+"Marked complete by AnA · none of its 2 steps succeeded"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx:74:57
+     72|
+     73|   it('a task completed while both of its steps failed carries "none of…
+     74|     expect(completedRow(rows, 'Find the reports').fact).toBe(NONE_SUCC…
+       |                                                         ^
+     75|   });
+     76|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with no steps carries "No steps recorded for this task", not the failure fact
+AssertionError: expected undefined to be 'No steps recorded for this task' // Object.is equality
+
+- Expected:
+"No steps recorded for this task"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx:79:22
+     77|   it('a completed task with no steps carries "No steps recorded for th…
+     78|     const row = completedRow(rows, 'Read them');
+     79|     expect(row.fact).toBe(NO_STEPS);
+       |                      ^
+     80|     expect(JSON.stringify(row)).not.toContain('steps succeeded');
+     81|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > the fact is visible on the row, without opening it
+AssertionError: expected 'Completed Find the reportsFind the re…' to contain 'Marked complete by AnA · none of its …'
+
+Expected: "Marked complete by AnA · none of its 2 steps succeeded"
+Received: "Completed Find the reportsFind the reports · completedRead themList the claims"
+
+ ❯ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx:99:30
+     97|     const find = items.find((li) => /Completed\s*Find the reports/.tes…
+     98|     const read = items.find((li) => /Completed\s*Read them/.test(li.te…
+     99|     expect(find.textContent).toContain(NONE_SUCCEEDED);
+       |                              ^
+    100|     expect(read.textContent).toContain(NO_STEPS);
+    101|     expect(read.textContent).not.toContain('steps succeeded');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > lists the plan as it stood at that moment, and the steps attributed to the task
+AssertionError: expected  to have a length of 2 but got +0
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx:119:19
+    117|     // Its steps, each with its own sentence; never another task's ste…
+    118|     const steps = detail.querySelectorAll('.ana-summary-task-steps > l…
+    119|     expect(steps).toHaveLength(2);
+       |                   ^
+    120|     expect(detail.textContent).toContain(FAILED);
+    121|     expect(detail.textContent).not.toContain('Searched the Vault');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > each task row lists only the steps attributed to that task
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx:126:50
+    124|   it('each task row lists only the steps attributed to that task', () …
+    125|     const rows = summaryRows(EVENTS, [], { live: false });
+    126|     expect(completedRow(rows, 'List the claims').steps.map((s) => s.la…
+       |                                                  ^
+    127|     expect(completedRow(rows, 'Read them').steps).toEqual([]);
+    128|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  9 failed | 22 passed (31)
+   Start at  14:25:40
+   Duration  19.65s (transform 10.32s, setup 353ms, import 15.91s, tests 1.30s, environment 1.43s)
+
+shared/ana/turn-timeline.ts: OK (restored)
+server/services/ana/turn-timeline-emitter.ts: OK (restored)
+client/src/concept2cure/v2/turnSummaryRows.ts: OK (restored)
+client/src/concept2cure/v2/TurnSummary.tsx: OK (restored)

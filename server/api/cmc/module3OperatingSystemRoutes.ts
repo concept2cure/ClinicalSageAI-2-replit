@@ -27,7 +27,7 @@ import { SIGNATURE_MEANINGS, signatureMeaningSchema, resolveActorUserId } from '
 import { serverError } from '../../lib/api-response';
 import { guardModule3Project, module3OrgId } from './module3-project-guard';
 import { createScopedLogger } from '../../utils/logger';
-import { refusedWithoutSigningAuthority } from './cmc-signer';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { describeDrift, findSectionDrift } from '../../services/cmc/section-drift';
 import { findEvidenceDrift } from '../../services/cmc/source-evidence';
 import { reconcileContradictions, resolveContradiction } from '../../services/cmc/contradiction-lifecycle';
@@ -533,11 +533,12 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
 
     /* §11.10(g): identity is not authority. Batch release, specification
        approval and register qualification each ask whether the signer may
-       sign (cmc-signer.ts); this, the signature over the text that is filed
+       sign (checkSigningAuthority); this, the signature over the text that is filed
        in Module 3, did not — any member of the organisation who knew their own
        password, a read-only viewer included, could approve a section. Asked
        before the password, so a signer who may not sign spends no guess. */
-    if (await refusedWithoutSigningAuthority(res, { userId: actorId, orgId })) return;
+    const authority = await checkSigningAuthority(actorId, orgId);
+    if (authority) return res.status(authority.status).json({ success: false, error: authority.code, message: authority.message });
 
     const reauthResult = await verifyReauth(actorId, (req.body ?? {}).reauth);
     if (!reauthResult.ok) {

@@ -1,0 +1,10 @@
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > builds the backbone with the recorded applicant and application number, and proceeds to signature 310ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > says it is a dry run, and package.sign refuses it, when the project records no application number 88ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > is a dry run when the run names an application number the record does not 103ms
+ ✓ tests/unit/orchestrator-dry-run-identity.test.ts > orchestrator validation assembly — recorded identity or a dry run (P-27) > is a dry run when the run names no submission on record 75ms
+ ✓ server/services/submission-service/__tests__/packageability-dry-run.test.ts > the governed packageability check is a dry run (P-27) > asks the assembler for a dry run and supplies no identity of its own 1196ms
+ ✓ server/services/submission-service/__tests__/packageability-dry-run.test.ts > the governed packageability check is a dry run (P-27) > discards the dry-run bundle whether or not the check passes 4ms
+ ✓ server/routes/__tests__/submissions-assemble-dry-run.test.ts > the sequence assemble route is a dry run (P-27) > asks for a dry run, names no identity, and says no package was produced 908ms
+ ✓ server/routes/__tests__/submissions-assemble-dry-run.test.ts > the sequence assemble route is a dry run (P-27) > refuses a body that names the application or the applicant, and assembles nothing 10ms
+ Test Files  3 passed (3)
+      Tests  8 passed (8)

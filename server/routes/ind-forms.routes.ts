@@ -60,6 +60,7 @@ import { module1HeadingForSectionKey } from '../services/ectd/section-to-ctd';
 import { storeRenderedLeafFile } from '../services/ectd/rendered-leaf-files';
 import { upsertLeaf, SubmissionError, isSequenceLocked } from '../services/submission-service/submission-service';
 import { runM1FormsQc } from '../services/ind-forms/ind-form-qc';
+import { checkAttachedForm } from '../services/ind-forms/attached-form-check';
 import {
   getSponsor,
   getRegulatoryAgent,
@@ -233,13 +234,13 @@ function notApplicableReason(formId: string, programType: string | null): string
  * A blank input is NOT a value: an empty string is dropped rather than written
  * over a program fact, and never reaches a builder — `missingRequired` is the
  * server's verdict on what a form still needs, and `''` would silently satisfy
- * it. `projectIdent`/`projectId` are addressing, not form content, so they are
- * stripped before the merge.
+ * it. `projectIdent`/`projectId`/`sequenceId` are addressing, not form content,
+ * so they are stripped before the merge.
  */
 function statedFields(body: object): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
-    if (key === 'projectIdent' || key === 'projectId') continue;
+    if (key === 'projectIdent' || key === 'projectId' || key === 'sequenceId') continue;
     if (value === null || value === undefined) continue;
     if (typeof value === 'string' && value.trim() === '') continue;
     out[key] = value;
@@ -324,6 +325,9 @@ async function listFormPlacements(
         fileName: renderedLeafFiles.fileName,
         sha256: renderedLeafFiles.sha256,
         byteSize: renderedLeafFiles.byteSize,
+        // The forms engine's check recorded with the attachment: [] complete,
+        // non-empty not complete, null never checked (QA 2026-10-08, j7).
+        requiredFieldsMissing: renderedLeafFiles.requiredFieldsMissing,
         placedAt: submissionLeaves.updatedAt,
         sequenceId: ectdSequences.id,
         sequenceNumber: ectdSequences.sequenceNumber,
@@ -1150,7 +1154,10 @@ router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
  * it must belong to the program's submission and be neither frozen nor
  * dispatched). A form the registry does not apply to the program's application
  * type is refused (FORM_NOT_APPLICABLE). Returns 201 { formId, sectionCode,
- * leafId, sequenceId, sequenceNumber, sha256, … }.
+ * leafId, sequenceId, sequenceNumber, sha256, requiredFieldsMissing, complete,
+ * … }: the form is filed either way, and `complete` is the forms engine's
+ * verdict on it (services/ind-forms/attached-form-check.ts) — an attachment
+ * with a required field missing is filed, and is not a completed form.
  */
 const officialFormUpload = multer({
   storage: multer.memoryStorage(),
@@ -1308,6 +1315,19 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
       }
       const chosen = { id: Number(target.id), sequenceNumber: String(target.sequenceNumber) };
 
+      /* An attached PDF is an attachment, not a completion (QA 2026-10-08,
+         second walk, j7: the product's own unedited 1571 and 1572 were counted
+         COMPLETE). The forms engine checks it — the build over the program's
+         record and what the person stated with it, the same metadata Build &
+         check uses, plus the boxes the platform's own render leaves blank when
+         these bytes ARE that render — and the check is recorded with the file.
+         The IND checklist counts the form only when nothing is missing. */
+      const formCheck = await checkAttachedForm(
+        formId,
+        { ...programToFormMetadata(program), ...(statedFields(body) as IndProjectMetadata) },
+        sha256,
+      );
+
       const documentType = documentTypeForForm(formId);
       const shortId = formId.replace(/^FDA_/, '').toLowerCase();
       try {
@@ -1334,6 +1354,7 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           fileName: `form-fda-${shortId}.pdf`,
           renderedFrom: 'ind_form_sponsor_upload',
           sectionCode,
+          ...(formCheck.requiredFieldsMissing ? { requiredFieldsMissing: formCheck.requiredFieldsMissing } : {}),
         });
 
         const leaf = await upsertLeaf(
@@ -1375,6 +1396,8 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
             byteSize: bytes.length,
             originalFileName: typeof file?.originalname === 'string' ? file.originalname : null,
             replaced: Boolean(existing),
+            requiredFieldsMissing: formCheck.requiredFieldsMissing,
+            uneditedPlatformRender: formCheck.unedited,
           },
         });
         if (!uploadAudit?.persisted) {
@@ -1398,6 +1421,11 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           md5: stored.md5,
           byteSize: bytes.length,
           replaced: Boolean(existing),
+          // The forms engine's check: complete only when nothing required is
+          // missing; null when no check could be made (never complete).
+          requiredFieldsMissing: formCheck.requiredFieldsMissing,
+          complete: formCheck.requiredFieldsMissing !== null && formCheck.requiredFieldsMissing.length === 0,
+          uneditedPlatformRender: formCheck.unedited,
         });
       } catch (err) {
         if (err instanceof SubmissionError) return submissionRefusal(res, err);

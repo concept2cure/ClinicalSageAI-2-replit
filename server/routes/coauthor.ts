@@ -3,7 +3,7 @@
  * eCTD collaborative authoring service
  */
 import { Router, Request, Response } from 'express';
-import { eq, desc, and, count } from 'drizzle-orm';
+import { eq, desc, and, count, ilike, or, type SQL } from 'drizzle-orm';
 import { db, transaction } from '../db';
 import { coauthorDocuments, coauthorSections } from '../../shared/schema';
 import { authMiddleware } from '../auth';
@@ -101,28 +101,41 @@ router.get('/documents', authMiddleware, async (req: any, res: Response) => {
     }
 
     const limit = Math.min(Number(req.query.limit) || 50, 200);
+    // QA 2026-10-08 (j6): the Builder's picker showed 50 of 53 documents and
+    // had no way to the other 3. `offset` pages, `q` searches the title and the
+    // module number (case-insensitive text; % and _ match themselves).
+    const rawOffset = Number(req.query.offset);
+    const offset = Number.isSafeInteger(rawOffset) && rawOffset > 0 ? rawOffset : 0;
+    const q: string = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
+    const pattern = `%${q.replace(/[\\%_]/g, (c: string) => `\\${c}`)}%`;
+    const search: SQL | undefined = q
+      ? or(ilike(coauthorDocuments.title, pattern), ilike(coauthorDocuments.moduleNumber, pattern))
+      : undefined;
 
     const documents = await db
       .select()
       .from(coauthorDocuments)
-      .where(eq(coauthorDocuments.organizationId, organizationId))
-      .orderBy(desc(coauthorDocuments.updatedAt))
-      .limit(limit);
+      .where(and(eq(coauthorDocuments.organizationId, organizationId), search))
+      // id breaks ties, so consecutive pages neither repeat nor skip a row.
+      .orderBy(desc(coauthorDocuments.updatedAt), desc(coauthorDocuments.id))
+      .limit(limit)
+      .offset(offset);
 
     // 2026-09-28 (HS-0928-1): `total` was documents.length — the capped page —
     // so EctdCoauthor.tsx's partialRead (serverTotal > total) could never fire
     // and a truncated backbone read as complete, "All documents approved"
     // included. `total` is now the organisation's count(*) under the page's
-    // own predicate; `returned` is the page length.
+    // own predicate (the search included); `returned` is the page length.
     const [{ total }] = await db
       .select({ total: count() })
       .from(coauthorDocuments)
-      .where(eq(coauthorDocuments.organizationId, organizationId));
+      .where(and(eq(coauthorDocuments.organizationId, organizationId), search));
 
     return res.json({
       documents: documents.map(withCoauthorReadOnly),
       total: Number(total),
       returned: documents.length,
+      offset,
       message:
         documents.length > 0
           ? `Found ${documents.length} document(s)`
@@ -249,9 +262,14 @@ router.post('/documents', authMiddleware, requireAuthorForFilingCopy, async (req
           migration: 'migrations/20260814d_document_alias_map.sql',
         });
       }
+      /* `written` (2026-10-08, QA walk 2, j4): whether this placement wrote the
+         copy at all. `replaced` only ever meant "not created", so an unchanged
+         re-take and a rewritten copy read alike to the placement dialog. A copy a
+         live leaf files is refused 409 FILING_COPY_PINNED instead of rewritten. */
       return res.status(outcome.created ? 201 : 200).json({
         success: true,
         document: outcome.document,
+        written: outcome.written,
         ...(outcome.created ? {} : { replaced: true }),
       });
     }

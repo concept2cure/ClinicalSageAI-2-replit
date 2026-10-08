@@ -1,0 +1,32 @@
+[
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5086/concept2cure/projects"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5086/concept2cure/conversation-thread/ana-ri_1791465394750_thc9irtdx?program=50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1791465394750_thc9irtdx/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/turn-records/c8dbd06e-b14a-43f1-a773-2e0b0fd17b29/summary",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/stream",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "pageerror",
+    "text": "AbortError: BodyStreamBuffer was aborted",
+    "url": "http://localhost:5086/concept2cure/conversation-thread/ana-ri_1791465394750_thc9irtdx?program=50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+  }
+]

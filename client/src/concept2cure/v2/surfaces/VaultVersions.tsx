@@ -27,6 +27,7 @@ import {
   LifecycleSummary,
   stageLabel,
   VersionLifecycleActions,
+  type VaultSigningPosture,
   type VaultVersionLifecycle,
 } from './VaultLifecycle';
 
@@ -99,6 +100,8 @@ export interface VaultPlacement {
 
 export interface VersionsShape {
   versions: VaultVersion[];
+  /** Who may sign here, as the server decides it (absent from an older server). */
+  signing?: VaultSigningPosture;
 }
 
 export const isVersionsShape: ShapeGuard<VersionsShape> = (v): v is VersionsShape =>
@@ -236,8 +239,9 @@ function supersededBy(versions: VaultVersion[]): string[] {
 }
 
 /** Every version, newest first, each downloadable through the page's audited download. */
-function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleChanged, onCompare, projectId }: {
+function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleChanged, onCompare, projectId, signing }: {
   versions: VaultVersion[];
+  signing?: VaultSigningPosture | null;
   title: string;
   onDownload: Props['onDownload'];
   downloadingId: string;
@@ -293,6 +297,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleCh
               supersedes={supersededBy(versions)}
               onChanged={onLifecycleChanged}
               projectId={projectId}
+              signing={signing}
               />
           ) : null}
         </div>
@@ -361,6 +366,7 @@ export function VaultVersions({
         onLifecycleChanged={onLifecycleChanged}
         onCompare={setComparing}
         projectId={projectId}
+        signing={st.data.signing ?? null}
       />
     );
   }

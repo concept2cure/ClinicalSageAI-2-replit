@@ -25,6 +25,8 @@ const holder = vi.hoisted(() => ({
   pglite: null as any,
   gate: { cleared: true, blockers: [] as string[] },
   gw: { configured: true, sent: [] as Array<Record<string, unknown>> },
+  /** The applicant each transmitted package's us-regional backbone names. */
+  applicants: [] as string[],
 }));
 
 vi.mock('../../../db', () => {
@@ -50,8 +52,16 @@ vi.mock('../../submission-gateways/index', async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
   getGateway: () => ({
     isConfigured: async () => holder.gw.configured,
-    transmit: async (req: { metadata?: Record<string, unknown> }) => {
+    transmit: async (req: { metadata?: Record<string, unknown>; bundle?: { path?: string } }) => {
       holder.gw.sent.push(req.metadata ?? {});
+      if (req.bundle?.path) {
+        const { readFile } = await import('node:fs/promises');
+        const JSZip = (await import('jszip')).default;
+        const zip = await JSZip.loadAsync(await readFile(req.bundle.path));
+        const regionalName = Object.keys(zip.files).find((f) => f.endsWith('us-regional.xml'));
+        const regional = regionalName ? await zip.file(regionalName)!.async('string') : '';
+        holder.applicants.push(/<company-name>([^<]*)</.exec(regional)?.[1] ?? '(none)');
+      }
       return { transmittalId: 900 + holder.gw.sent.length, transmissionId: `T-${holder.gw.sent.length}`, status: 'submitted' };
     },
   }),
@@ -66,6 +76,12 @@ const ctx = { organizationId: ORG, userId: USER };
 const { sign, statusOf } = freezeGateHelpers(() => h);
 const outcome = (p: Promise<unknown>) => p.then(() => null, (e: any) => e);
 const PROGRAM = '0c000000-0000-4000-8000-0000000000c1';
+// QA 2026-10-08 (j6): the application number a package names is the one its
+// project records — submission 21's is IND-000061 — and the applicant is the
+// organisation's recorded name.
+const PROGRAM_61 = '0c000000-0000-4000-8000-0000000000c0';
+const PROGRAM_UNNUMBERED = '0c000000-0000-4000-8000-0000000000c2';
+const SPONSOR = 'Concept2Cure Therapeutics';
 
 const BLOCKED = 'Shadow Review: 1 unacknowledged critical finding.';
 
@@ -90,27 +106,39 @@ beforeAll(async () => {
   holder.pglite = h.pglite;
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
   await h.pglite.exec(FREEZE_GATE_SEED_SQL);
+  await h.pglite.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [ORG, SPONSOR]);
   await h.pglite.query(
     `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_name, application_number)
-     VALUES ($1, $2, 'Program C', 'C-1', 'ind', 'Gamma', 'IND-123456')`,
-    [PROGRAM, ORG],
+     VALUES ($1, $2, 'Program C', 'C-1', 'ind', 'Gamma', 'IND-123456'),
+            ($3, $2, 'Program C0', 'C-0', 'ind', 'Gamma-0', 'IND-000061'),
+            ($4, $2, 'Program C2', 'C-2', 'ind', 'Gamma-2', NULL)`,
+    [PROGRAM, ORG, PROGRAM_61, PROGRAM_UNNUMBERED],
   );
   await h.pglite.exec(`
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id) VALUES
       (20, 'P-23 freeze', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, NULL),
-      (21, 'P-23 transmit', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, NULL),
+      (21, 'P-23 transmit', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${PROGRAM_61}'),
       (22, 'P-23 application number', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${PROGRAM}'),
-      (23, 'P-23 another signer', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, NULL);
+      (23, 'P-23 another signer', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, NULL),
+      (24, 'j6 no number recorded', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${PROGRAM_UNNUMBERED}'),
+      (25, 'j6 not anchored', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, NULL),
+      (26, 'j6 applicant', 'ind', 'biotech', 'fda', ${ORG}, ${USER}, '${PROGRAM}');
     INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status, dispatch_status) VALUES
       (60, 20, 'fda', '0000', ${ORG}, ${USER}, 'validated', NULL),
       (61, 21, 'fda', '0000', ${ORG}, ${USER}, 'dispatched', 'pending'),
       (62, 22, 'fda', '0000', ${ORG}, ${USER}, 'dispatched', 'pending'),
-      (63, 23, 'fda', '0000', ${ORG}, ${USER}, 'validated', NULL);
+      (63, 23, 'fda', '0000', ${ORG}, ${USER}, 'validated', NULL),
+      (64, 24, 'fda', '0000', ${ORG}, ${USER}, 'dispatched', 'pending'),
+      (65, 25, 'fda', '0000', ${ORG}, ${USER}, 'dispatched', 'pending'),
+      (66, 26, 'fda', '0000', ${ORG}, ${USER}, 'dispatched', 'pending');
     INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
       (60, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 200, ${ORG}, ${USER}),
       (61, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${ORG}, ${USER}),
       (62, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${ORG}, ${USER}),
-      (63, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 200, ${ORG}, ${USER});
+      (63, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 200, ${ORG}, ${USER}),
+      (64, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${ORG}, ${USER}),
+      (65, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${ORG}, ${USER}),
+      (66, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${ORG}, ${USER});
   `);
 }, 120_000);
 afterAll(async () => { await h.close(); });
@@ -214,5 +242,43 @@ describe('transmit checks the typed application number against the program recor
     const sent = await transmitSequence({ sequenceId: 62, ctx, signatureActionId: fresh, environment: 'staging', applicationId: ' IND-123456 ' });
     expect(sent).toMatchObject({ transmitted: true });
     expect(holder.gw.sent).toEqual([expect.objectContaining({ applicationId: 'IND-123456' })]);
+  }, 120_000);
+});
+
+/* QA 2026-10-08 (j6): the sequence transmit sent no sponsor name, so the
+   package it would send named "UNASSIGNED (organization N)" as the applicant;
+   and a project with no recorded number accepted any typed one. A package names
+   the organisation's recorded name and ONLY the project's recorded number, or
+   it is not sent — refused by name, before the gateway, its signature void. */
+describe('transmit names the applicant and the application from the record', () => {
+  it('the package sent names the organisation as the applicant, never a placeholder', async () => {
+    holder.gw = { configured: true, sent: [] };
+    holder.applicants = [];
+    const given = await sign(66, 'transmit');
+    const sent = await transmitSequence({ sequenceId: 66, ctx, signatureActionId: given, environment: 'staging', applicationId: 'IND-123456' });
+    expect(sent).toMatchObject({ transmitted: true });
+    expect(holder.applicants).toEqual([SPONSOR]);
+  }, 120_000);
+
+  it.each([
+    [64, /its project records no agency application number/],
+    [65, /not anchored to a project/],
+  ])('sequence %i, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void', async (seqId, says) => {
+    holder.gw = { configured: true, sent: [] };
+    const pre = await precheckGovernedStep(seqId, 'transmit', ctx, { environment: 'staging', applicationId: 'IND-000064' });
+    expect(pre.cleared).toBe(false);
+    expect(pre.refusal).toMatch(says);
+    const given = await sign(seqId, 'transmit');
+    const refused = await outcome(
+      transmitSequence({ sequenceId: seqId, ctx, signatureActionId: given, environment: 'staging', applicationId: 'IND-000064' }),
+    );
+    expect(refused, 'a package was sent under a number no record holds').toMatchObject({
+      code: 'PACKAGE_IDENTITY_MISSING',
+      message: expect.stringMatching(says),
+    });
+    expect(refused.message).toMatch(/Nothing was sent\./);
+    expect(holder.gw.sent).toEqual([]);
+    expect(await signatureRow(given)).toEqual({ is_valid: false, verification_status: 'voided' });
+    expect((await statusOf(seqId)).dispatch_status).toBe('pending');
   }, 120_000);
 });

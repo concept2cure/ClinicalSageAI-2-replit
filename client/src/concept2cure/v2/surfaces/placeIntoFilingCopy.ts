@@ -38,7 +38,8 @@ export function assembleSnapshot(sections: SavedSection[]): string {
 interface SnapshotRow { id?: number; status?: string | null; metadata?: { source?: string; docId?: string } | null }
 
 type CopyResult =
-  | { ok: true; snapshotId: number; copyStatus: string | null }
+  /** `written`: the server's word on whether this placement wrote the copy; undefined when it gave none. */
+  | { ok: true; snapshotId: number; written: boolean | undefined; copyStatus: string | null }
   | { ok: false; unconfirmed: boolean; verdict: NonNullable<Verdict> };
 
 /** Read saved content and request the existing governed snapshot. A context
@@ -59,20 +60,32 @@ export async function takeFilingCopy(docId: string, docTitle: string, sectionCod
     ok: false, unconfirmed: false,
     verdict: { tone: 'err', text: 'This document has no saved section content yet — there is nothing to file. Nothing was created.' },
   };
-  const snap = await mutateVerbatim<{ success?: boolean; document?: SnapshotRow }>('POST', '/api/coauthor/documents', {
+  const snap: SnapshotReply = await mutateVerbatim('POST', '/api/coauthor/documents', {
     title: docTitle, moduleNumber: sectionCode, content: assembleSnapshot(saved), sourceAuthoringDocId: docId, changeReason,
   });
   if (!current()) return null;
-  return copyReceipt(snap.data, docId) ?? snapshotFailure(snap);
+  return copyReceipt(snap, docId) ?? snapshotFailure(snap);
 }
 
+type SnapshotReply = MutateResult<{ success?: boolean; written?: unknown; document?: SnapshotRow }>;
+
+/** The snapshot step's refusal of a copy that a leaf already files: the server's sentence is complete. */
+const FILING_COPY_PINNED = 'FILING_COPY_PINNED';
+
 /** The filing copy the server confirmed for this document, with the status it
- *  was filed as; null when the answer is not that receipt. */
-function copyReceipt(data: { success?: boolean; document?: SnapshotRow } | null | undefined, docId: string): CopyResult | null {
-  const row = data?.document;
+ *  was filed as and whether this placement wrote it; or its refusal of a copy
+ *  a leaf files (filing-copy pins); null when the answer is neither. */
+function copyReceipt(snap: SnapshotReply, docId: string): CopyResult | null {
+  const row = snap.data?.document;
   const snapshotId = row?.id;
-  if (!validReceiptId(snapshotId) || !matchingSnapshotSource(row, docId) || data?.success === false) return null;
-  return { ok: true, snapshotId, copyStatus: typeof row?.status === 'string' ? row.status : null };
+  if (row && validReceiptId(snapshotId) && matchingSnapshotSource(row, docId) && snap.data?.success !== false) {
+    const written = typeof snap.data?.written === 'boolean' ? snap.data.written : undefined;
+    return { ok: true, snapshotId, written, copyStatus: typeof row.status === 'string' ? row.status : null };
+  }
+  if (snap.code === FILING_COPY_PINNED && snap.error) {
+    return { ok: false, unconfirmed: false, verdict: { tone: 'err', text: snap.error } };
+  }
+  return null;
 }
 
 function snapshotFailure(snap: MutateResult<unknown>): CopyResult {

@@ -534,6 +534,11 @@ export interface TurnRecordErasure {
   blobs: number;
 }
 
+/** What the purge erased of the tenant's live AnA run-event mirror (public.ana_run_events). */
+export interface RunEventErasure {
+  events: number;
+}
+
 /** What the purge erased of the tenant's artifact signatures and lock snapshots. */
 export interface ArtifactRecordErasure {
   signatures: number;
@@ -557,6 +562,10 @@ export interface ArtifactRecordErasure {
  *     (migrations/20260929_concept2cure_signatures_append_only.sql, amended
  *     2026-10-01). It runs before `projects`, whose cascade to the artifacts
  *     those triggers refuse.
+ *   - The live mirror of AnA turns: public.purge_tenant_run_events, as
+ *     ana_run_events_purger (migrations/20261008f_ana_run_events.sql, AnA
+ *     detach DT1). It runs before `ana_runs`, which its rows reference. Working
+ *     data, not a record; the sealed turn record is erased by the first door.
  *
  * A deployment without a door's tables has nothing to erase. One with the
  * tables but not the door is refused: their records would survive.
@@ -568,6 +577,13 @@ export const PURGE_DOORS = Object.freeze([
     columns: ['records', 'blobs'],
     erasure: 'turnRecordErasure',
     unavailable: 'TURN_RECORD_PURGE_UNAVAILABLE',
+  },
+  {
+    tables: ['ana_run_events'],
+    fn: 'purge_tenant_run_events',
+    columns: ['events'],
+    erasure: 'runEventErasure',
+    unavailable: 'RUN_EVENT_PURGE_UNAVAILABLE',
   },
   {
     tables: ['concept2cure_signatures', 'concept2cure_submission_snapshots'],
@@ -625,8 +641,9 @@ interface PurgeTally {
   tablesAbsent: string[];
   /** The deleted vault versions' stored bytes, erased after COMMIT. */
   storedObjects: StoredObject[];
-  /** What each door erased (PURGE_DOORS): AnA turn records; artifact signatures and lock snapshots. */
+  /** What each door erased (PURGE_DOORS): AnA turn records; the run-event mirror; artifact signatures and lock snapshots. */
   turnRecordErasure: TurnRecordErasure;
+  runEventErasure: RunEventErasure;
   artifactRecordErasure: ArtifactRecordErasure;
 }
 
@@ -641,6 +658,7 @@ async function deleteTenantRows(
     tablesAbsent: [],
     storedObjects: [],
     turnRecordErasure: { records: 0, blobs: 0 },
+    runEventErasure: { events: 0 },
     artifactRecordErasure: { signatures: 0, snapshots: 0 },
   };
   const opened = new Set<string>();
@@ -802,6 +820,7 @@ export async function purgeTenant(
     storageErasure: StorageErasure;
     deletedRows: Record<string, number>;
     turnRecordErasure: TurnRecordErasure;
+    runEventErasure: RunEventErasure;
     artifactRecordErasure: ArtifactRecordErasure;
   }
 > {
@@ -838,6 +857,7 @@ export async function purgeTenant(
     finalExportDigest: receipt.digest,
     deletedRows: tally.deletedRows,
     turnRecordErasure: tally.turnRecordErasure,
+    runEventErasure: tally.runEventErasure,
     artifactRecordErasure: tally.artifactRecordErasure,
   });
 
@@ -849,6 +869,7 @@ export async function purgeTenant(
     storageErasure,
     deletedRows: tally.deletedRows,
     turnRecordErasure: tally.turnRecordErasure,
+    runEventErasure: tally.runEventErasure,
     artifactRecordErasure: tally.artifactRecordErasure,
   };
 }
@@ -891,6 +912,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // A tenant's AnA run-control records: the pauses, steers and stops their
   // people issued mid-turn. Tenant-owned working data, not the audit trail —
   // the Part 11 rows for those actions live elsewhere and outlive the account.
+  //
+  // Its live timeline mirror first, through its PURGE_DOORS entry (AnA detach
+  // DT1): the rows reference ana_runs, and the table refuses a plain DELETE
+  // from every role, so purgeChildTable could not erase them.
+  'ana_run_events',
   'ana_runs',
   // CMC/project workflow payloads are customer plans and assignments. Delete
   // them before their project parents; workflow_tasks cascade where the

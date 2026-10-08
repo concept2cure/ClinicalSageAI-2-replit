@@ -45,6 +45,7 @@
  *   GET  /api/ana-ri/decisions         → ./ana-ri/utility.ts
  *   GET  /api/ana-ri/threads/:id/timeline → ./ana-ri/threads.ts
  *   GET  /api/ana-ri/turn-records + /:id + /:id/export → ./ana-ri/turn-records.ts
+ *   GET  /api/ana-ri/runs?thread_id= | ?mine=live + /runs/:runId/events → ./ana-ri/runs.ts
  *   GET  /api/ana-ri/documents/:artifactId/lineage-dossier      → ./ana-ri/lineage.ts
  *   GET  /api/ana-ri/documents/:artifactId/lineage-dossier.xml  → ./ana-ri/lineage.ts
  *
@@ -54,6 +55,7 @@
 import { Router } from 'express';
 
 import { mountStreamRoute } from './ana-ri/stream.js';
+import { mountRunReadRoutes } from './ana-ri/runs.js';
 import { mountPlanRoutes } from './ana-ri/plan.js';
 import { mountKernelRoutes } from './ana-ri/kernel.js';
 import { mountGenerateExecuteRoutes } from './ana-ri/generate-execute.js';
@@ -69,6 +71,8 @@ const router = Router();
 // in registration order but these paths don't overlap, so ordering is purely
 // organisational.
 mountStreamRoute(router);
+// Beside the stream: a live run read without its socket (AnA detach DT1).
+mountRunReadRoutes(router);
 mountPlanRoutes(router);
 mountKernelRoutes(router);
 mountGenerateExecuteRoutes(router);

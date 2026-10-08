@@ -46,6 +46,7 @@ const hoisted = vi.hoisted(() => {
     verifyMfaToken: vi.fn(),
     writeChainedAuditRow: vi.fn(),
     isSigningAuthorized: vi.fn(),
+    resolveSignerOrgRole: vi.fn(),
     buildVersionBindingDigest: vi.fn(),
     // The sign route checks out a dedicated client for the signature+audit
     // transaction; the pre-flight reads (password hash, signer identity,
@@ -90,6 +91,10 @@ vi.mock('../../services/part11/version-binding.js', () => ({
 }));
 vi.mock('../../services/part11/signing-authority', () => ({
   isSigningAuthorized: (...a: unknown[]) => hoisted.isSigningAuthorized(...a),
+}));
+// The signer's role comes from the membership row (P-27, checkSigningAuthority).
+vi.mock('../../services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: (...a: unknown[]) => hoisted.resolveSignerOrgRole(...a),
 }));
 
 import esignatureRouter from '../esignature';
@@ -154,6 +159,7 @@ beforeEach(async () => {
   if (!PW_HASH) PW_HASH = await bcrypt.hash(PASSWORD, 4);
   vi.clearAllMocks();
   hoisted.isSigningAuthorized.mockReturnValue(true);
+  hoisted.resolveSignerOrgRole.mockResolvedValue('approver');
   hoisted.isMfaEnabled.mockResolvedValue(false);
   hoisted.buildVersionBindingDigest.mockReturnValue('bound-digest');
   hoisted.writeChainedAuditRow.mockResolvedValue(undefined);
@@ -248,6 +254,20 @@ describe('POST /api/esignature/sign — input + authority guards', () => {
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('ESIGNATURE_NO_AUTHORITY');
     expect(hoisted.poolQuery).not.toHaveBeenCalled();
+  });
+
+  // P-27 (2026-10-08): the role was read from the request (resolveUserRole),
+  // which the membership resolver's own header calls unreliable on signing
+  // routes. A request claiming 'approver' for a member signed. One policy now:
+  // checkSigningAuthority, which reads the membership row.
+  it("judges the signer's membership role, not the role the request carries", async () => {
+    hoisted.isSigningAuthorized.mockImplementation((r: unknown) => ['admin', 'approver', 'reviewer'].includes(String(r)));
+    hoisted.resolveSignerOrgRole.mockResolvedValue('member'); // the request says 'approver'
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(hoisted.resolveSignerOrgRole).toHaveBeenCalledWith(7, 3);
+    expect(hoisted.clientQuery).not.toHaveBeenCalled();
   });
 
   it('401s when the password fails re-verification (§11.200)', async () => {

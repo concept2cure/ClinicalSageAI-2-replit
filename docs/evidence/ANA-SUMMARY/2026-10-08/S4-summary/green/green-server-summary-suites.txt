@@ -1,0 +1,28 @@
+# The S4 server suites and the three files the wide run failed on, after their fixes
+# Trimmed from the full run: passing test lines are counted per file below, not listed.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ Test Files  18 passed (18)
+      Tests  193 passed (193)
+   Start at  13:09:21
+   Duration  90.08s (transform 15.59s, setup 390ms, import 41.56s, tests 44.33s, environment 2ms)
+
+## Per file (passed / failed / skipped)
+   7 / 0 / 0  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts
+   4 / 0 / 0  server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+  11 / 0 / 0  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts
+   2 / 0 / 0  server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts
+   3 / 0 / 0  server/services/ana/__tests__/turn-record-sent.test.ts
+   7 / 0 / 0  server/routes/__tests__/chat-threads-read-honesty.test.ts
+   7 / 0 / 0  server/services/ana/__tests__/tool-refusal-ok-false.test.ts
+  12 / 0 / 0  tests/schema-contract/chat-thread-store.contract.test.ts
+  13 / 0 / 0  server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+  13 / 0 / 0  tests/schema-contract/chat-thread-access.contract.test.ts
+  15 / 0 / 0  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts
+  11 / 0 / 0  server/routes/__tests__/chat-upload-safety.test.ts
+  18 / 0 / 0  tests/routes/chat-upload-source-identity.test.ts
+  18 / 0 / 0  tests/services/agentic-loop.test.ts
+  12 / 0 / 0  server/services/__tests__/chat-thread-program-key.test.ts
+   1 / 0 / 0  tests/routes/chat-governed-upload.test.ts
+  28 / 0 / 0  server/services/ana/__tests__/submission-chat-ia.test.ts
+  11 / 0 / 0  tests/services/tool-outcome.test.ts

@@ -45,7 +45,7 @@
 
 import { Router, Request, Response } from 'express';
 
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
 import { looksLikeProgramUuid } from '../lib/project-id';
@@ -280,15 +280,21 @@ function openProgramParam(raw: unknown): string | null | false {
  * readiness computed anywhere fell to the lowest project id — project 1, a
  * legacy record no program anchors — so every report and digest ran over a
  * program the person had not chosen.
+ *
+ * The anchor is read on the request's RLS-scoped client (`requestDb(req)`), the
+ * handle resolveProgramProjectAnchor requires, and only when a program is
+ * named. It was read through the shared pool's `db` (4ac15bdd1), which the
+ * requestDb adoption gate refuses for a new route.
  */
 async function pickLead(
+  req: Request,
   organizationId: number,
   programId: string | null,
   summary: { attentionRanked: ProgramMemberInsight[] } | null,
 ): Promise<{ leadProgram: CanvasLeadProgram | null; openProgram: CanvasOpenProgram | null }> {
   const members = summary?.attentionRanked ?? [];
   if (!programId) return { leadProgram: null, openProgram: null };
-  const anchored = await resolveProgramProjectAnchor(db, {
+  const anchored = await resolveProgramProjectAnchor(requestDb(req), {
     programId,
     orgId: organizationId,
     context: 'insights-canvas-overview',
@@ -414,7 +420,7 @@ export default function createInsightsCanvasRoutes(): Router {
       // Lead program — a single program's OWN governed readiness, a base
       // capability shown on every tier (not the enterprise rollup): the open
       // program when one is named; none otherwise (pickLead).
-      const { leadProgram, openProgram } = await pickLead(organizationId, programId, summary);
+      const { leadProgram, openProgram } = await pickLead(req, organizationId, programId, summary);
 
       const catalogSegments = await leadSegments(organizationId, leadProgram, segments);
       const reportTypes = catalogFor(catalogSegments, persona, tier);

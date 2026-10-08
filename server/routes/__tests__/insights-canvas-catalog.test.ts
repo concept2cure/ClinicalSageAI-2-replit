@@ -41,6 +41,12 @@ vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProj
 import createInsightsCanvasRoutes from '../insights-canvas-routes';
 
 const app = express();
+// The request-scoped client the production mount's authenticateToken installs
+// (establishRequestTenantScope); the open program's anchor is read on it.
+app.use((req, _res, next) => {
+  (req as unknown as { dbClient: unknown }).dbClient = { query: vi.fn(async () => ({ rows: [] })) };
+  next();
+});
 app.use('/api/insights-canvas', createInsightsCanvasRoutes());
 const HLV = 'd979e567-4622-46f1-8cb7-8bf434227f25';
 const CV = '11111111-2222-3333-4444-000000000117';

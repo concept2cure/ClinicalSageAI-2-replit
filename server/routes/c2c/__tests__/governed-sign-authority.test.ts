@@ -108,7 +108,11 @@ describe('POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.
   it('refuses, and does not sign, when the role cannot be read', async () => {
     h.role.mockRejectedValue(new Error('connection refused'));
     const res = await request(app()).post('/api/c2c/actions/sign').send(BODY);
-    expect(res.status).toBe(500);
+    // P-27 (2026-10-08): the platform's one policy answers an unreadable role
+    // 503 SIGNING_AUTHORITY_UNVERIFIED; this route's own copy answered 500
+    // INTERNAL_ERROR. Still refused, still before the password, cause not shown.
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('SIGNING_AUTHORITY_UNVERIFIED');
     expect(h.queries.some((q) => /password_hash/.test(q))).toBe(false);
     expect(JSON.stringify(res.body)).not.toMatch(/connection refused/);
   });

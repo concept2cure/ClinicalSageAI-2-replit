@@ -1,0 +1,27 @@
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 1295ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 16ms
+   → walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+walk-back/sequence-to-pinned-leaves FAILS and is not baselined — the sequence’s leaves each name a document and pin its digest
+walk-back/leaves-to-project FAILS and is not baselined — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+walk-back/sequence-to-project FAILS and is not baselined — the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees
+walk-back/filing-copy-leaf-to-seal FAILS and is not baselined — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 44ms
+   → walk-forward/document-to-transmittal FAILS and is not baselined — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 145ms
+   → retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+Error: walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+walk-back/sequence-to-pinned-leaves FAILS and is not baselined — the sequence’s leaves each name a document and pin its digest
+walk-back/leaves-to-project FAILS and is not baselined — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+walk-back/sequence-to-project FAILS and is not baselined — the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees
+walk-back/filing-copy-leaf-to-seal FAILS and is not baselined — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+Error: walk-forward/document-to-transmittal FAILS and is not baselined — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+Error: retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ Test Files  1 failed | 11 passed (12)
+      Tests  5 failed | 32 passed (37)

@@ -10,8 +10,9 @@
  *
  * Required-section context: for an original sequence of an application kind
  * the regional Module 1 record models, the record's requirement — a missing
- * section is an error; otherwise the region profile's list, as non-blocking
- * warnings (readinessOptionsForSequence).
+ * section is an error; for a continuing US IND, NDA, BLA or ANDA sequence, its
+ * 1.1 application form, as an error; otherwise the region profile's list, as
+ * non-blocking warnings (readinessOptionsForSequence).
  *
  * Tenant-scoped + DB-bound. Running it needs a database.
  *
@@ -81,8 +82,20 @@ export function dispatchAsOfDate(now: Date = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
 
-/** The Module 1 heading every IND submission's Form FDA 1571 is filed under. */
-const IND_FORM_1571_SECTION = '1.1';
+/**
+ * The Module 1 heading (1.1 Forms) every US submission's application form is
+ * filed under, and the form a continuing sequence of each kind carries: a
+ * Form FDA 1571 for an IND (21 CFR 312), a Form FDA 356h for an NDA, BLA or
+ * ANDA (21 CFR 314 and 601). An original is held to its kind's whole list,
+ * which includes 1.1, so this is read for continuing sequences only.
+ */
+const US_APPLICATION_FORM_SECTION = '1.1';
+const US_CONTINUING_FORM: Readonly<Record<string, string>> = Object.freeze({
+  ind: 'Every IND submission carries a Form FDA 1571 (21 CFR 312)',
+  nda: 'Every submission to an NDA carries a Form FDA 356h (21 CFR 314)',
+  bla: 'Every submission to a BLA carries a Form FDA 356h (21 CFR 601)',
+  anda: 'Every submission to an ANDA carries a Form FDA 356h (21 CFR 314)',
+});
 
 /**
  * The validator options for one stored sequence. The region and as-of date go
@@ -101,11 +114,13 @@ const IND_FORM_1571_SECTION = '1.1';
  *     Investigator's Brochure or the general investigational plan, and the
  *     record makes no per-sequence claim, so nothing is reported as missing
  *     (it used to say "Required section 1.20 has no leaf" of every amendment);
- *   - except its Form FDA 1571: every IND submission carries one (21 CFR 312;
- *     P-20 follow-up, docs/LAUNCH_DEFINITION_OF_DONE.md), so a continuing US
- *     IND sequence is held to the 1.1 form, as an error, and to nothing else.
+ *   - except its application form: every IND submission carries a Form FDA
+ *     1571 (21 CFR 312; P-20 follow-up), and every submission to an NDA, BLA
+ *     or ANDA a Form FDA 356h ("Form 356h" follow-up decision; both in
+ *     docs/LAUNCH_DEFINITION_OF_DONE.md), so a continuing US sequence of those
+ *     kinds is held to the 1.1 form, as an error, and to nothing else.
  *     d155ef099 exempted continuing sequences from every requirement, which let
- *     an IND amendment with no 1571 clear the structural gate;
+ *     an amendment or supplement with no form clear the structural gate;
  *   - an unmodelled region or kind keeps the region profile's list as
  *     informative warnings, as before.
  */
@@ -128,12 +143,12 @@ export function readinessOptionsForSequence(
               `${regulated.kind.toUpperCase()} application, so this sequence cannot be validated, frozen or dispatched without it.`,
           },
         }
-      : regulated.jurisdiction === 'US' && regulated.kind === 'ind'
+      : regulated.jurisdiction === 'US' && US_CONTINUING_FORM[regulated.kind]
         ? {
             requiredByRegulation: {
-              codes: [IND_FORM_1571_SECTION],
+              codes: [US_APPLICATION_FORM_SECTION],
               basis:
-                'Every IND submission carries a Form FDA 1571 (21 CFR 312), filed under 1.1 (Forms), so this ' +
+                `${US_CONTINUING_FORM[regulated.kind]}, filed under 1.1 (Forms), so this ` +
                 'sequence cannot be validated, frozen or dispatched without it.',
             },
           }

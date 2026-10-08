@@ -37,7 +37,6 @@ import {
 } from '../services/submission-gateways/fda-esg';
 import {
   executeGovernedTransmit,
-  assertTransmitterHasSigningAuthority,
   GovernedTransmitRefusal,
   GovernedTransmitInternalError,
   BUNDLE_FORMAT_SET,
@@ -48,6 +47,7 @@ import {
   FiledSequenceRejectionRefusal,
 } from '../services/ectd/filed-sequence-rejection';
 import { recordGovernedAction, verifyReauth } from './c2c/actions';
+import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services/part11/signing-authority-gate';
 /* Re-authentication proves WHO is acting; it does not prove they MAY. Every
    mutating route below ran the §11.50 re-auth gate and then transmitted, with no
    check on the caller's organization role — so a read-only `viewer`, who knows
@@ -96,6 +96,23 @@ function verifiedFactors(reauth: z.infer<typeof reauthEnvelope>): { authenticati
   };
 }
 
+/**
+ * §11.10(g), before the password: a transmit and a technical rejection are
+ * electronic signatures, so the signer's role must carry signing authority under
+ * the platform's one policy (checkSigningAuthority — the check the governed
+ * ceremony and POST /api/c2c/actions/sign apply). requireEditorAccess decides
+ * who may WRITE here; it never decided who may SIGN. QA 2026-10-08 (j6): a
+ * manager (P-18: managers do not sign) signed a transmit as "Release", passed
+ * re-authentication, and was refused only because the package did not exist.
+ * A rollback is not a signature (transmittal_rollback, like the canonical route's
+ * lock, writes no signature row), so it keeps the editor gate and re-auth only.
+ */
+function signingAuthorityRefused(res: Response, refusal: SigningAuthorityRefusal): Response {
+  // clientError's statuses stop at 4xx and 502; the unverified lookup is a 503.
+  if (refusal.status === 503) return res.status(503).json({ error: refusal.message, details: { code: refusal.code } });
+  return clientError(res, refusal.status, refusal.message, { code: refusal.code });
+}
+
 /* ─── GET /api/mdx/gateways ──────────────────────────────────────── */
 
 router.get('/gateways', async (req: Request, res: Response) => {
@@ -105,11 +122,21 @@ router.get('/gateways', async (req: Request, res: Response) => {
   try {
     const config = await gatewayConfigurationStatus(orgId, environment);
     const all = listGateways();
-    return ok(res, all.map((g) => ({
-      ...g,
-      configured: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.configured ?? false,
-      environment,
-    })));
+    // Whether this person may sign a transmit, from the check the transmit
+    // applies, so the screen does not offer a signature the server refuses.
+    // Unknown (the lookup failed) is null: not "you cannot", and the server decides.
+    const userId = getUserId(req);
+    const authority = userId === null ? null : await checkSigningAuthority(userId, orgId);
+    const canSign = userId === null ? false : authority === null ? true : authority.status === 403 ? false : null;
+    return ok(
+      res,
+      all.map((g) => ({
+        ...g,
+        configured: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.configured ?? false,
+        environment,
+      })),
+      { signing: { canSign } },
+    );
   } catch (err) {
     return serverError(res, log, 'list-gateways', err);
   }
@@ -217,18 +244,6 @@ const transmitBody = z.object({
   reauth: reauthEnvelope,
 });
 
-/** Answers the refusal and returns true when this person may not sign a transmission. */
-async function refusedForSigningAuthority(res: Response, orgId: number, userId: number): Promise<boolean> {
-  try {
-    await assertTransmitterHasSigningAuthority(orgId, userId);
-    return false;
-  } catch (err: unknown) {
-    if (err instanceof GovernedTransmitRefusal) clientError(res, err.httpStatus, err.message, { code: err.code });
-    else serverError(res, log, 'transmit-signing-authority', err);
-    return true;
-  }
-}
-
 router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -248,11 +263,12 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
   const p = parsed.data;
 
   if (userId === null) return orgRequired(res);
-  // Signing authority before the credentials (SEC-1008-1): a role that may not
-  // sign spends no password attempt. executeGovernedTransmit asks again, for
-  // its other callers.
-  if (await refusedForSigningAuthority(res, orgId, userId)) return;
-  // Re-auth gate next (high-risk sign).
+  // Signing authority before the password (see signingAuthorityRefused;
+  // SEC-1008-1): a role that may not sign spends no password attempt.
+  // executeGovernedTransmit asks again, for its other callers.
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority) return signingAuthorityRefused(res, authority);
+  // Then the re-auth gate (high-risk sign).
   const reauthResult = await verifyReauth(userId, p.reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
@@ -495,7 +511,10 @@ router.post('/gateways/transmittals/:id/technical-rejection', requireEditorAcces
   }
   const p = parsed.data;
 
-  // Re-auth gate FIRST — the same high-risk gate as transmit and rollback.
+  // Signing authority before the password, as transmit asks it.
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority) return signingAuthorityRefused(res, authority);
+  // Then the same high-risk re-auth gate as transmit and rollback.
   const reauthResult = await verifyReauth(userId, p.reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');

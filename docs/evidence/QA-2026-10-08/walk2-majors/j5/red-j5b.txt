@@ -1,0 +1,7 @@
+ ✓ client/src/concept2cure/v2/__tests__/anaReplyText.test.tsx > tool status codes in AnA replies > says known codes in words and leaves other identifiers alone 2ms
+ × client/src/concept2cure/v2/__tests__/anaReplyText.test.tsx > tool status codes in AnA replies > an answer rendered by AnaMarkdown carries no status code 50ms
+ × client/src/concept2cure/v2/__tests__/anaReplyText.test.tsx > tool status codes in AnA replies > the reply strip on another screen carries no status code 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Open program: action_ready.\n' to be 'Open program: sent to the screen.' // Object.is equality
+AssertionError: expected 'AnA’s reply is in the conversationVau…' to contain 'Vault search result: sent to the scre…'
+      Tests  2 failed | 1 passed (3)

@@ -45,6 +45,13 @@
  * nothing, deliberately: writing one section's text into another's slot is the
  * one outcome worse than not writing it at all.
  *
+ * 2026-10-08 (QA walk 2, j4): and a section under an outline node the outline
+ * does not subdivide is part of that node's document — the 2.5 Clinical
+ * Overview's 2.5.1 … 2.5.7 file into the outline's single 2.5, as the placement
+ * dialog already files that document at 2.5. The node receives the document's
+ * sections under it, assembled; a section with no such node still reaches
+ * nothing, and says so (./filing-section-target.ts).
+ *
  * ── Content shape ─────────────────────────────────────────────────────────────
  * authoring_sections.content is TEXT; the governed column is jsonb. It is
  * written as `{"text": …}` — the same shape the mdx editor saves, which
@@ -53,6 +60,8 @@
  */
 
 import type { PoolClient } from 'pg';
+import { filingSectionKey } from '../../../shared/regulatory/filing-section-key.js';
+import { filingSectionText } from './filing-section-target.js';
 
 /**
  * What the version ledger records when the save gave no reason.
@@ -96,10 +105,12 @@ export interface CommitSectionInput {
 }
 
 export type CommitSectionResult =
-  /** Written through to the filing. `approvalWithdrawn` is present when the
-   *  section was 'approved' and this text is not the text that was signed, so
-   *  it no longer reads approved (spine F1). */
-  | { committed: true; documentId: string; sectionKey: string; approvalWithdrawn?: true }
+  /** Written through to the filing. `partOf`: the outline node holds several of
+   *  the document's sections, assembled, and this one is part of it.
+   *  `approvalWithdrawn` is present when the section was 'approved' and this
+   *  text is not the text that was signed, so it no longer reads approved
+   *  (spine F1). */
+  | { committed: true; documentId: string; sectionKey: string; partOf?: string; approvalWithdrawn?: true }
   /** Not written, and why — never a silent no-op. */
   | { committed: false; reason: string };
 
@@ -251,6 +262,19 @@ export async function commitSectionToFiling(
     stated ?? REASON_NOT_STATED,
   ]);
 
+  /* Which outline node the section files into (2026-10-08, QA walk 2, j4):
+     its own key, or the undivided node it sits under. Org-scoped like the
+     write below. */
+  const outline = await client.query<{ section_key: string }>(
+    `SELECT ds.section_key FROM c2c_document_sections ds
+      WHERE ds.document_id = $1
+        AND EXISTS (SELECT 1 FROM c2c_documents d WHERE d.id = ds.document_id AND d.org_id = $2)`,
+    [documentId, tenantId],
+  );
+  const key = filingSectionKey(outline.rows.map((r) => String(r.section_key)), code);
+  if (!key) return noSuchSection(code);
+  const filed = await filingSectionText(client, { sectionId, tenantId, key, code, content });
+
   // Org-scoped through the document: c2c_document_sections has no org column of
   // its own, so the EXISTS is what keeps this write inside the caller's tenant.
   const updated = await client.query<{
@@ -280,6 +304,11 @@ export async function commitSectionToFiling(
     // NULL still records that the origin was not captured, which stays true
     // for every caller that has not been taught to pass one.
     //
+    // 2026-10-08: a node assembled from several sections has no single origin
+    // — this save's is one section's — so it records NULL, never a claim about
+    // text this save did not produce. $2 is the node the section files into
+    // (filingSectionKey) and $3 that node's text (filingSectionText).
+    //
     // STATUS FOLLOWS THE WORK (spine F1, 2026-10-08). The scaffold writes every
     // section 'todo' and nothing on this path ever moved it, so Module
     // completion, Recent drafts and c2c_documents.readiness read zero for work
@@ -299,10 +328,12 @@ export async function commitSectionToFiling(
     // result can tell a locked section from a missing one and say when an
     // approval was withdrawn. Parameter order is unchanged.
     WRITE_SECTION_SQL,
-    [documentId, code, content, tenantId, draftSource ?? null],
+    [documentId, key, filed.text, tenantId, filed.partOf ? null : draftSource ?? null],
   );
 
-  return settleWrite(updated.rows, { client, code, documentId, sectionId, actorId, tenantId, stated });
+  return settleWrite(updated.rows, {
+    client, code, documentId, sectionId, actorId, tenantId, stated, partOf: filed.partOf,
+  });
 }
 
 /**
@@ -322,30 +353,26 @@ async function settleWrite(
     actorId: string;
     tenantId: number;
     stated: string | null;
+    /** The assembled node this section is part of, when it is one. */
+    partOf?: string;
   },
 ): Promise<CommitSectionResult> {
-  const { client, code, documentId, sectionId, actorId, tenantId, stated } = ctx;
+  const { client, code, documentId, sectionId, actorId, tenantId, stated, partOf } = ctx;
   // rows.length, never rowCount: PGlite does not populate rowCount, and this
   // path is exercised against it.
-  if (rows.length === 0) {
-    return {
-      committed: false,
-      reason: `The filing has no section "${code}", so there was nothing to update. ` +
-              'The governed outline comes from the rule pack; a section outside it is not created here.',
-    };
-  }
+  if (rows.length === 0) return noSuchSection(code);
   const row = rows[0];
   if (!row.section_key) {
     return {
       committed: false,
-      reason: `Section "${code}" of the filing is locked, so its text was not changed. ` +
+      reason: `Section "${partOf ?? code}" of the filing is locked, so its text was not changed. ` +
               'A locked section is not edited in place.',
     };
   }
+  const part = partOf ? { partOf } : {};
   if (row.previous_status !== 'approved' || row.status === 'approved') {
-    return { committed: true, documentId, sectionKey: row.section_key };
+    return { committed: true, documentId, sectionKey: row.section_key, ...part };
   }
-
   // The approval was a signed act, so withdrawing it is recorded too: one
   // governed-action row on this transaction, beside the version-ledger row the
   // snapshot trigger writes for the text. Imported here, not at module load,
@@ -373,5 +400,14 @@ async function settleWrite(
     domain: 'documents',
     surface: 'authoring-save',
   });
-  return { committed: true, documentId, sectionKey: row.section_key, approvalWithdrawn: true };
+  return { committed: true, documentId, sectionKey: row.section_key, ...part, approvalWithdrawn: true };
+}
+
+/** The refusal for a section with no place in the filing — unchanged in its words. */
+function noSuchSection(code: string): CommitSectionResult {
+  return {
+    committed: false,
+    reason: `The filing has no section "${code}", so there was nothing to update. ` +
+            'The governed outline comes from the rule pack; a section outside it is not created here.',
+  };
 }

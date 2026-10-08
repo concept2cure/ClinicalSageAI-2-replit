@@ -23,7 +23,11 @@ const { gatewayCalls, rows } = vi.hoisted(() => ({
   gatewayCalls: [] as unknown[][],
   rows: {
     sequence: { id: 1, submissionId: 1, region: 'eu', sequenceNumber: '0000', status: 'dispatched', dispatchStatus: 'pending', type: 'original', organizationId: 7 },
-    submission: { id: 1, clientType: 'pharma', applicationType: 'maa', organizationId: 7 },
+    submission: { id: 1, clientType: 'pharma', applicationType: 'maa', organizationId: 7, programId: 'p-1' } as Record<string, unknown>,
+    // What the record names (package-identity.ts, QA 2026-10-08 j6): the
+    // project's application number and the organisation's name. A transmit is
+    // refused by name without them, so routing is tested with both recorded.
+    applicationNumber: 'EMEA-H-C-000000',
   },
 }));
 
@@ -52,7 +56,11 @@ vi.mock('../../../db', () => {
     return { rows: [] };
   };
   const pool = {
-    query: async () => ({ rowCount: 0, rows: [] }),
+    query: async (text: string) => {
+      if (/FROM organizations/.test(text)) return { rowCount: 1, rows: [{ name: 'Concept2Cure Therapeutics' }] };
+      if (/FROM regulatory_programs/.test(text)) return { rowCount: 1, rows: [{ application_number: rows.applicationNumber }] };
+      return { rowCount: 0, rows: [] };
+    },
     connect: async () => { throw new Error('not expected'); },
   };
   return { db: { select, execute }, pool };
@@ -151,7 +159,8 @@ describe('selectGateway', () => {
 describe('transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved', () => {
   beforeEach(() => {
     gatewayCalls.length = 0;
-    rows.submission = { id: 1, clientType: 'pharma', applicationType: 'maa', organizationId: 7 };
+    rows.submission = { id: 1, clientType: 'pharma', applicationType: 'maa', organizationId: 7, programId: 'p-1' };
+    rows.applicationNumber = 'EMEA-H-C-000000';
   });
 
   it('throws VALIDATION naming the eSubmission Gateway; getGateway is never called', async () => {
@@ -169,7 +178,8 @@ describe('transmitSequence — an e-signed EU MAA sequence is refused before any
   });
 
   it('positive control: a DCP submission is routed on to ema:cesp', async () => {
-    rows.submission = { id: 1, clientType: 'pharma', applicationType: 'EU_GENERIC_DCP', organizationId: 7 };
+    rows.submission = { id: 1, clientType: 'pharma', applicationType: 'EU_GENERIC_DCP', organizationId: 7, programId: 'p-1' };
+    rows.applicationNumber = 'NL-H-0000-001-DC';
     await transmitSequence({
       sequenceId: 1,
       ctx: { organizationId: 7, userId: 11 },

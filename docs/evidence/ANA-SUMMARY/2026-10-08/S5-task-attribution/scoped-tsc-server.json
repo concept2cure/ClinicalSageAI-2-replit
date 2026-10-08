@@ -1,0 +1,27 @@
+{
+ "extends": "../../../../../tsconfig.json",
+ "compilerOptions": {
+  "noEmit": true,
+  "incremental": false
+ },
+ "files": [
+  "../../../../../shared/ana/turn-timeline.ts",
+  "../../../../../shared/ana/plan-diff.ts",
+  "../../../../../server/services/ana/turn-timeline-emitter.ts",
+  "../../../../../server/services/ana/turn-record.ts",
+  "../../../../../server/types/global.d.ts",
+  "../../../../../server/types/index.d.ts",
+  "../../../../../server/types/ml-stat.d.ts",
+  "../../../../../server/types/pdfkit.d.ts",
+  "../../../../../server/types/xml2js.d.ts",
+  "../../../../../shared/types/common.d.ts",
+  "../../../../../shared/types/database.d.ts",
+  "../../../../../shared/types/express.d.ts",
+  "../../../../../shared/types/jsx-modules.d.ts",
+  "../../../../../shared/types/pdf-parse.d.ts",
+  "../../../../../shared/types/pgvector.d.ts",
+  "../../../../../shared/types/services.d.ts",
+  "../../../../../shared/types/third-party.d.ts"
+ ],
+ "include": []
+}

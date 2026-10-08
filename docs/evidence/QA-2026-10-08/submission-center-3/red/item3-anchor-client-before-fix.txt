@@ -1,0 +1,9 @@
+ ✓ client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > a submission with no project is anchored from its header > says the submission has no project, and the project starts unstated 363ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > a submission with no project is anchored from its header > anchors with the chosen project and the reason; the server confirms it and the control goes 201ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > a submission with no project is anchored from its header > a refusal is shown in the server’s words, and nothing is claimed 81ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > a submission with no project is anchored from its header > a submission that has a project offers no anchor control 37ms
+ × client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > only projects of the submission’s filing type are offered > lists the server’s candidates and none of the other projects 5092ms
+ × client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > only projects of the submission’s filing type are offered > with no project of its type, it says so and offers nothing to anchor to 5095ms
+ × client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx > only projects of the submission’s filing type are offered > when the candidates cannot be read, nothing is offered and it says so 5070ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 4 passed (7)

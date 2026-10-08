@@ -1,0 +1,7 @@
+ × client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx > the co-author document picker > says it shows 50 of 53, and offers the rest 769ms
+ × client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx > the co-author document picker > searches the list by title or module number, on the server 166ms
+ × client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx > the co-author document picker > a search that matches nothing says so and keeps the search box 168ms
+ × client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx > the co-author document picker > a list that fits on one page says all are shown and offers no more 92ms
+ × client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx > the co-author document picker > a failed next page says so and keeps what was shown 537ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed (5)

@@ -1,0 +1,52 @@
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > CRITICAL: rolls the signature back and 500s when the audit write throws 51ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > signs successfully (201) when password verifies and the audit write succeeds 8ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > writes the audit row on the SAME client as the signature (atomicity) 6ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > §11.50: ignores a client-supplied signerTitle and persists the server-resolved one 6ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > rejects a reserved/unknown signatureType (allowlist) 7ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > accepts an allowed signatureType (witness) 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > 403s when the signer role lacks signing authority (§11.10(g)) 3ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > judges the signer's membership role, not the role the request carries 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > 401s when the password fails re-verification (§11.200) 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > fails closed (400) requiring mfaToken when MFA is enabled but none supplied 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — in production an authenticator is required (ADR-0014 P1-2b) > refuses a signer with no authenticator (403), in the decided words, and writes nothing 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — in production an authenticator is required (ADR-0014 P1-2b) > a signer with an authenticator goes on to the code check 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — in production an authenticator is required (ADR-0014 P1-2b) > control: outside production the password alone still signs 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a signature that declares no meaning (400 SIGNATURE_MEANING_REQUIRED) before re-verifying the signer 3ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses an empty string as a meaning with the same code 2ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses null as a meaning with the same code 2ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a number as a meaning with the same code 2ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses an object as a meaning with the same code 2ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses free text outside the vocabulary (400 SIGNATURE_MEANING_UNKNOWN), names what is accepted, and checks no password 2ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a near-miss spelling rather than normalising it (Approval is not approval) 2ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning approval and persists exactly that meaning 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning review and persists exactly that meaning 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning APPROVED and persists exactly that meaning 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning AUTHORSHIP and persists exactly that meaning 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50 signer attribution > REGRESSION: refuses to sign when the signer is not attributable in the org 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > reports an enrolled second factor once the password verified 6ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > reports none when none is enrolled 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > says nothing about enrolment for a wrong password 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > leaves the answer out, not false, when enrolment cannot be read 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.70: the version signed belongs to the document named > refuses a version of another document, and writes nothing 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.70: the version signed belongs to the document named > signs a version of the document it names 4ms
+ ✓ server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a manager with 403 ESIGNATURE_NO_AUTHORITY, before the password is read, writing nothing 28ms
+ ✓ server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a member with 403 ESIGNATURE_NO_AUTHORITY, before the password is read, writing nothing 5ms
+ ✓ server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a viewer with 403 ESIGNATURE_NO_AUTHORITY, before the password is read, writing nothing 4ms
+ ✓ server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses a caller with no membership in the organisation (no role is no authority) 3ms
+ ✓ server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > refuses, and does not sign, when the role cannot be read 5ms
+ ✓ server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > lets a role with signing authority through to the credential check 4ms
+ ✓ server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > applies the same rule to revoking a signature, which writes a signature row too 3ms
+ ✓ server/routes/c2c/__tests__/governed-sign-authority.test.ts > POST /api/c2c/actions/sign — signing authority (21 CFR Part 11 §11.10(g)) > leaves a non-signature command alone (claim needs no signing authority) 4ms
+ ✓ server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > refuses without a reason and password — no approval attempted 27ms
+ ✓ server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > refuses a signer whose password does not re-verify 5ms
+ ✓ server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > refuses a verified signer without signing authority 4ms
+ ✓ server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > asks signing authority before the password: a role that may not sign tests no password 3ms
+ ✓ server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > refuses, unverified, when the signer role cannot be read — and asks for no password 5ms
+ ✓ server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > refuses when no user is on the request — never approves as "system" 3ms
+ ✓ server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > records the verified signer and the reason, and ignores a client signature id 3ms
+ ✓ server/routes/__tests__/pccp-approve-signing.test.ts > POST /api/pccp/plans/:planId/approve > reports an approval that could not be audited as not applied 3ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > reads the server tree 1ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > defines no local signing-authority wrapper by a retired name 212ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > calls the policy predicate directly only where the answer is displayed or judges another person 22ms
+ Test Files  4 passed (4)
+      Tests  50 passed (50)

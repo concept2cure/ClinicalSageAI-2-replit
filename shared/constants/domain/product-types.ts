@@ -160,14 +160,20 @@ const FILING_TYPE_PRODUCT_CLASS: Record<string, ProductType> = {
   ivd: 'ivd',
   ivdr: 'ivd',
   // ── Medicinal ──
-  ind: 'biologic',
+  // Only the filings that fix the class. An NDA or ANDA is a drug application
+  // (21 CFR 314) and a BLA a biologics licence (21 CFR 601).
+  //
+  // `ind`, `cta`, `maa` and `jnda` were listed here as 'biologic' / 'drug' /
+  // 'drug' / 'drug' until 2026-10-08, and they are not facts: an IND goes to
+  // CDER for a drug and to CBER for a biologic, and an EU MAA, an EU CTA and a
+  // Japanese J-NDA each cover both. The wizard recorded an inhaled small
+  // molecule as a biologic because of the first of them (QA 2026-10-08, second
+  // walk, j1/j7). They are absent now, so they resolve to null and the person
+  // states the class (P-21: regulated choices start unstated).
   bla: 'biologic',
   biologic: 'biologic',
   nda: 'drug',
   anda: 'drug',
-  jnda: 'drug',
-  maa: 'drug',
-  cta: 'drug',
 };
 
 /**

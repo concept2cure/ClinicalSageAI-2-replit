@@ -75,9 +75,13 @@ describe('the estate-wide sweep is estate-wide', () => {
     // a turn. Inheriting that turn's scope is what reduced the sweep to one org.
     const { pool, scopes } = recordingPool();
     await runWithTenantScope(REQUEST_SCOPE, () => reapOrphanedRuns(pool));
-    expect(scopes).toHaveLength(1);
-    expect(scopes[0]?.tenantId).toBe('0');
-    expect(scopes[0]?.role).toBe('app_super_admin');
+    // The reap, and (AnA detach DT1) the mirror sweep's two finding queries:
+    // every one of them estate-wide, none in the caller's tenant.
+    expect(scopes.length).toBeGreaterThanOrEqual(1);
+    for (const scope of scopes) {
+      expect(scope?.tenantId).toBe('0');
+      expect(scope?.role).toBe('app_super_admin');
+    }
   });
 
   it('does not inherit the caller tenant — the bug this replaces', async () => {
@@ -141,7 +145,13 @@ function heartbeatPool() {
     writes.push(write); rounds.push(params[1] as number); scopes.push(getTenantScope());
     return write.promise;
   });
-  const pool = { query, connect: vi.fn(async () => { throw new Error('no listener'); }) } as unknown as Pool;
+  // No LISTEN connection; beginRun's locking transaction (AnA detach DT1) gets a
+  // plain client that commits, told apart by the scope the listener opens under.
+  const connect = vi.fn(async () => {
+    if (getTenantScope()?.caller === 'ana-run-control:listen') throw new Error('no listener');
+    return { query: async () => ({ rows: [] }), release: () => undefined };
+  });
+  const pool = { query, connect } as unknown as Pool;
   return { pool, query, writes, rounds, scopes };
 }
 async function beatFlush() { for (let i = 0; i < 12; i++) await Promise.resolve(); }

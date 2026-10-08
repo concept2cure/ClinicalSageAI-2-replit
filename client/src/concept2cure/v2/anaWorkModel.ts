@@ -50,7 +50,19 @@ const STOP_LINES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, string
   ['approval_timeout', 'Stopped: an approval was not answered'],
   ['hold_expired', 'Stopped waiting for you'],
   ['hold_unavailable', 'Stopped: Manual was unavailable'],
+  // A locked phone or a closed tab ended the run (ANA-SUMMARY S4).
+  ['client_disconnected', 'Stopped: this page lost its connection'],
 ]);
+
+/**
+ * The stop line for a reason, as a sentence: the Summary's closing row
+ * ("Stopped: this page lost its connection."). Null for a reason with none —
+ * she finished, or the person's own Stop, which its own branch says.
+ */
+export function stopLineText(reason: AnaStoppedReason | string | null | undefined): string | null {
+  const line = reason ? STOP_LINES.get(reason) : undefined;
+  return line ? `${line}.` : null;
+}
 
 /** A live turn's state line: working, paused, waiting for you, or stopping. */
 /**
@@ -143,6 +155,13 @@ function partialResponseNote(interruptedWithPartialResponse?: boolean): string |
     : null;
 }
 
+/** The stop notes that are one fixed sentence, whatever the turn's numbers or steps. */
+const FIXED_STOP_NOTES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, string>([
+  ['duplicate_thrash', 'AnA stopped because she was repeating the same step. Tell her what to change.'],
+  ['answer_cut_off', "AnA's answer was cut off before she finished it. It ends where it stopped."],
+  ['client_disconnected', 'This page lost its connection, so the run was stopped before AnA finished. Continue picks it up.'],
+]);
+
 /**
  * What the transcript says under a turn the loop or the run policy stopped
  * before she was done, or null when there is nothing to say: she finished
@@ -157,15 +176,13 @@ export function stoppedNoteText(
   interruptedWithPartialResponse?: boolean,
 ): string | null {
   const steps = stepList(pendingSteps);
+  const fixed = reason ? FIXED_STOP_NOTES.get(reason) : undefined;
+  if (fixed) return fixed;
   switch (reason) {
     case 'max_rounds':
       return typeof rounds === 'number' && rounds > 0
         ? `AnA reached this turn's round limit (${rounds} ${rounds === 1 ? 'round' : 'rounds'}) before she said she was done.`
         : "AnA reached this turn's round limit before she said she was done.";
-    case 'duplicate_thrash':
-      return 'AnA stopped because she was repeating the same step. Tell her what to change.';
-    case 'answer_cut_off':
-      return "AnA's answer was cut off before she finished it. It ends where it stopped.";
     case 'budget_exhausted':
       return `AnA reached this turn's time limit (${AUTO_TIME_WORDS}) before she said she was done.`;
     case 'approval_timeout':
@@ -206,6 +223,7 @@ export function isContinuable(reason: AnaStoppedReason | undefined, interruptedW
     case 'approval_timeout':
     case 'hold_expired':
     case 'hold_unavailable':
+    case 'client_disconnected':
       return true;
     default:
       return interruptedWithPartialResponse && (reason === undefined || reason === 'no_more_tools');

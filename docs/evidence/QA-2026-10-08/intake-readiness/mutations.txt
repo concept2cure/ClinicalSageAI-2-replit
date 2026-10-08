@@ -1,0 +1,11 @@
+# Each mutation removes one fix; the test that pins it must fail. Each file is restored after its run.
+M1 the wizard pre-chooses biologic | client/src/concept2cure/v2/surfaces/Projects.tsx |  Tests 2 failed | 5 passed (7) | restored
+M2 the vocabulary maps IND to biologic again | shared/constants/domain/product-types.ts |  Tests 4 failed | 45 passed (49) | restored
+M3 intake writes no registry context | server/routes/c2c/projects.ts |  Tests 2 failed (2) | restored
+M4 the backfill forgets J-NDA/PMDA | migrations/20261008c_projects_registry_context.sql |  Tests 3 failed | 28 passed (31) | restored
+M5 the checklist counts any attachment | server/services/ind-lifecycle/ind-checklist-view-assembler.ts |  Tests 2 failed | 34 passed (36) | restored
+M6 the check ignores an unedited platform render | server/services/ind-forms/attached-form-check.ts |  Tests 1 failed | 63 passed (64) | restored
+M7 the task lookup crosses organisations | server/services/tasking/task-project.ts |  Tests 7 passed (7) | restored
+M8 the task backfill skips nothing by organisation | migrations/20261008d_unified_tasks_authoring_review_project.sql |  Tests 1 failed | 6 passed (7) | restored
+M9 the panel sends no stated fields | client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx |  Tests 1 failed | 2 passed (3) | restored
+M7b (test strengthened with a cross-tenant pointer) the task lookup crosses organisations | server/services/tasking/task-project.ts |  Tests 1 failed | 6 passed (7) | restored

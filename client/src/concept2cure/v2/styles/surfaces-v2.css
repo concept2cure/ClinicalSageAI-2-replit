@@ -397,3 +397,7 @@
 .c2c-v2 .crl-strip-n{font-size:17px;font-weight:600;font-family:var(--font-mono);}
 .c2c-v2 .crl-strip-n.is-verified{color:var(--success);}
 .c2c-v2 .crl-strip-k{font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-400);margin-top:2px;}
+/* Vault versions in review, on the Review & approval board (QA 2026-10-08, walk 2, j3). */
+.c2c-v2 .rv-vault{margin:0 0 16px;}
+.c2c-v2 .rv-vault-h{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-300);margin-bottom:8px;}
+.c2c-v2 .rv-vault-list{display:flex;flex-direction:column;gap:8px;}

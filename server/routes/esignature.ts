@@ -30,7 +30,7 @@ import { isTokenCurrentlyAcceptable, isMfaEnabled } from '../services/mfaService
 import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
 import { writeChainedAuditRow } from '../services/auditService';
 import { buildVersionBindingDigest } from '../services/part11/version-binding.js';
-import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import { reverifySigner, verifySignerPassword } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
 import { ACCOUNT_INACTIVE_MESSAGE } from '../services/account-standing.js';
@@ -215,18 +215,27 @@ router.post('/sign', async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'AUTH_REQUIRED' });
   }
 
-  // 21 CFR Part 11 §11.10(g): identity is not authority. Even a fully
-  // re-authenticated signer (password + MFA below) may apply a signature only
-  // if their organization role carries signing authority. The policy lives in
-  // server/services/part11/signing-authority (the single source of truth every
-  // signing route shares).
-  const signerRole = resolveUserRole(req);
-  if (!isSigningAuthorized(signerRole)) {
+  // The organisation the signature is applied in: authority is a membership's.
+  const session = (req as any).user ?? {};
+  const orgId = Number(session.organizationId);
+  if (!Number.isFinite(orgId)) {
     return res.status(403).json({
-      error: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-      code: 'ESIGNATURE_NO_AUTHORITY',
+      error: 'Organization context required to sign (§11.10).',
+      code: 'ESIGNATURE_ORG_REQUIRED',
     });
   }
+
+  // 21 CFR Part 11 §11.10(g): identity is not authority. Even a fully
+  // re-authenticated signer (password + MFA below) may apply a signature only
+  // if their organization role carries signing authority — the platform's one
+  // policy, checkSigningAuthority, which reads the role from the membership
+  // row. Until 2026-10-08 (P-27) this judged the request's role
+  // (resolveUserRole), so a request claiming a signing role signed.
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
+  // The role the signature manifest records, as before: the request's reading.
+  // It no longer decides whether the signer may sign.
+  const signerRole = resolveUserRole(req);
 
   const {
     documentId,
@@ -293,14 +302,6 @@ router.post('/sign', async (req: Request, res: Response) => {
 
   // Load signer profile so signer_name / signer_email are denormalised on
   // the signature row (required for offline audit reproduction per Part 11).
-  const session = (req as any).user ?? {};
-  const orgId = Number(session.organizationId);
-  if (!Number.isFinite(orgId)) {
-    return res.status(403).json({
-      error: 'Organization context required to sign (§11.10).',
-      code: 'ESIGNATURE_ORG_REQUIRED',
-    });
-  }
 
   // §11.50 printed name, email and title — resolved from the membership record
   // through the shared Part 11 lookup, never from the session and never

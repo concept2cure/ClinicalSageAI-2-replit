@@ -1,0 +1,12 @@
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > takes no application number or applicant from its input, and asks for the project instead 3ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > writes the recorded application number and applicant, never the model-supplied ones 1039ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses by name when the project records no application number, and builds nothing 4ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses by name when the organisation records no usable applicant name 2ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses a call that names no project, even with model-supplied identity, and reads nothing 2ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > does not require source_path, and offers modified_file 2ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > packages a delete declared by modified_file, shipping no bytes for it 223ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete that still carries a source_path, naming the leaf 4ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a non-delete leaf with no source_path instead of reading an empty path 1ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete in sequence 0000, naming the leaf 4ms
+ Test Files  2 passed (2)
+      Tests  10 passed (10)

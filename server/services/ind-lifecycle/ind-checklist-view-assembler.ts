@@ -194,6 +194,12 @@ async function readAuthoredDocuments(orgId: number): Promise<CoauthorDoc[]> {
 
 const norm = (v: unknown): string => str(v).trim().toLowerCase();
 
+/** An absent table (42P01) or column (42703, before 20261008e): nothing is known complete. */
+function isUnprovisioned(err: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code;
+  return code === '42P01' || code === '42703';
+}
+
 /** Shared empty set — a submission with no sponsor-completed form allocates none. */
 const EMPTY_FORM_IDS: ReadonlySet<string> = new Set<string>();
 
@@ -202,6 +208,16 @@ const EMPTY_FORM_IDS: ReadonlySet<string> = new Set<string>();
 /**
  * Which FDA forms each submission has a sponsor-completed, retained document
  * for — keyed by submission id, valued by canonical form id.
+ *
+ * COMPLETED, not merely attached (QA 2026-10-08, second walk, j7). Any attached
+ * file used to count: the product's own unedited 1571 and 1572 were marked
+ * COMPLETE while Build & check reported required fields missing on each, and
+ * readiness rose 0% → 8%. A file counts only when the forms engine's check
+ * recorded with it (`rendered_leaf_files.required_fields_missing`, written by
+ * the upload through services/ind-forms/attached-form-check.ts) found nothing
+ * missing. A file with fields missing, or with no check recorded (a server
+ * render, an attachment from before the check), is not a completed form; nor
+ * is anything when the column is absent here (42703).
  *
  * The tenant gate is the `rendered_leaf_files` row's own organization_id, read
  * here rather than inferred from the leaf: `submission_leaves.document_table` is
@@ -236,12 +252,15 @@ async function resolveSponsorCompletedForms(
   let ownedIds: number[];
   try {
     const res = await pool.query(
-      `SELECT id FROM rendered_leaf_files WHERE id = ANY($1) AND organization_id = $2`,
+      `SELECT id FROM rendered_leaf_files
+        WHERE id = ANY($1) AND organization_id = $2
+          AND required_fields_missing IS NOT NULL
+          AND cardinality(required_fields_missing) = 0`,
       [[...byId.keys()], orgId],
     );
     ownedIds = (res.rows as Array<{ id: number | string }>).map((r) => Number(r.id));
   } catch (err) {
-    if ((err as { code?: string })?.code === '42P01') return out;
+    if (isUnprovisioned(err)) return out;
     throw err;
   }
 

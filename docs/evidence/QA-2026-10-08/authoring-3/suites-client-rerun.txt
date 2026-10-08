@@ -1,0 +1,74 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 475ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 177ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 124ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 369ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 318ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 278ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the dialog states the identity fact and picks real targets > renders the honest derivation statement — never a silent identity swap 288ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the dialog states the identity fact and picks real targets > loads the org submissions on open and the chosen submission’s sequences 88ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the dialog states the identity fact and picks real targets > excludes frozen sequences from selection WITH the reason shown 183ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the dialog states the identity fact and picks real targets > reports a failed submissions read honestly — no target to place into 56ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > files at the code the note announces, not at the keystrokes 99ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > places via GET saved sections → POST snapshot → PUT leaves with the snapshot id 98ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > a refused PUT surfaces the server verdict verbatim and never claims a placement 93ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > a failed snapshot POST stops the chain — the leaves endpoint is never called 78ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > refuses an empty document honestly — nothing is written at all 61ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > blocks placement while the section has unsaved changes, with the reason 40ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > assembleSnapshot mirrors the canonical bridge format > renders "## code — title" headings and skips nothing silently 0ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > assembleSnapshot mirrors the canonical bridge format > keeps bare headings for content-free sections — which is why the component refuses on section content, not on the assembled string 0ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > names the module folder a precise Module 3 section files into — full depth 36ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > canonicalises what the author typed — one CTD section, one folder 42ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > says a Module 1 section goes to the regional folder, whichever spelling is used 51ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > refuses a value that is not a CTD code, and will not place it 58ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > refuses a bare module — a container is not a section a document can be filed at 76ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > writes nothing at all for an unplaceable code — no snapshot, no leaf 48ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > a lost leaf reply is unknown, never nothing placed, and offers reconciliation 72ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > does not report a malformed successful leaf reply null as a refusal 80ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > does not report a malformed successful leaf reply false as a refusal 71ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > does not report a malformed successful leaf reply {} as a refusal 54ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > does not report a malformed successful leaf reply {"id":0} as a refusal 72ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > refuses a mismatched leaf receipt {"sequenceId":32} 52ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > refuses a mismatched leaf receipt {"sectionCode":"3.2.P.8"} 67ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > refuses a mismatched leaf receipt {"documentId":999} 67ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > refuses a mismatched leaf receipt {"lifecycleOp":"replace"} 69ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > states audit confirmation null without rolling back a real placement 55ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > states audit confirmation {"persisted":false} without rolling back a real placement 61ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement confirmation > states audit confirmation {"persisted":true,"chained":false} without rolling back a real placement 56ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing placement context > a document switch resets the dialog and stops the old chain after its pending read 104ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > pending filing receipts > ignores an old snapshot receipt after a project switch 126ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > pending filing receipts > ignores an old leaf receipt after a project switch 109ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot receipts > never places from an invalid snapshot id 0 65ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot receipts > never places from an invalid snapshot id -1 60ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot receipts > never places from an invalid snapshot id 1.5 57ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot receipts > never places from an invalid snapshot id 9007199254740992 64ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot receipts > does not turn malformed saved-section data into an empty document 55ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot source lineage > does not file a copy with unconfirmed source lineage undefined 57ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot source lineage > does not file a copy with unconfirmed source lineage {"source":"authoring-document","docId":"D2"} 71ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > filing snapshot source lineage > does not file a copy with unconfirmed source lineage {"source":"upload","docId":"D1"} 65ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > starts on "Not stated — choose" and records nothing until a decision is chosen (P-21) 788ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > POSTs the verdict and the note to the authoring review transition 248ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > a decline is the authoring "rejected" verdict, and needs grounds 178ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > re-reads the board after the decision, so the row comes from the record 169ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > says the decision was NOT recorded when the server refuses, and stays open 180ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > offers no signature meaning — the board does not sign 132ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > requesting changes > is the authoring "changes_requested" verdict with the reason, and re-reads the board 217ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > there is no delegate on the board > the authoring workflow has no delegate transition, so the board offers none 71ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > POSTs a comment to the document’s section through the authoring router and re-reads the board 117ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > resolving a comment PATCHes it through the authoring router, and a refusal puts it back to open 170ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > the hero call to action > "Open the queue" selects a document still in review instead of doing nothing 120ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > prefills the document’s own code — the parent of its sections — not the open section’s 316ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > refuses one of the document’s own section codes — the leaf would hold the other sections too — and writes nothing 123ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > a one-section document is filed at that section’s code 72ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > a repeat placement the server answers with the existing leaf is reported as already placed, not as a new leaf 108ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > an edited document over a filed copy: the server’s refusal verbatim, and no leaf is requested 118ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > an unchanged re-placement says nothing was written 64ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > a re-placement that promoted the copy’s status says so, and never says nothing was written 89ms
+
+ Test Files  4 passed (4)
+      Tests  65 passed (65)
+   Start at  14:35:30
+   Duration  15.23s (transform 1.59s, setup 558ms, import 2.79s, tests 8.05s, environment 2.80s)
+

@@ -18,10 +18,13 @@
  * with non-empty text is a progress update". Those are her words, so the
  * gateway returns them as text, where the note stood on Opus 5.
  *
- * Only when the request has not asked for visible reasoning. With thinking
- * enabled the display stays "summarized", which is what fills AnA's reasoning
- * panel; the notes arrive there too, mixed into the summary, so they are
- * shown, though not as her words. Under "updates" that summary would be gone.
+ * Only when the request has not asked for visible reasoning, or has asked for
+ * its notes over it (`notesBetweenTools`, ANA-SUMMARY decision 3, A). With
+ * thinking enabled the display otherwise stays "summarized", which is what
+ * fills AnA's reasoning panel; the notes arrive there too, mixed into the
+ * summary, so they are shown, though not as her words. Under "updates" that
+ * summary is gone: the tool rounds of a turn that reasons trade it for her
+ * notes, and the closing round, which offers no tools, keeps it.
  */
 import type { GatewayRequest, ModelConfig } from './types.js';
 
@@ -34,15 +37,20 @@ export const PROGRESS_UPDATES_BETA = 'thinking-display-updates-2026-08-18';
  */
 export const INTERRUPTED_WORK_TEXT = 'This part of the response was interrupted before it finished.';
 
-/** Whether this request asks for the notes between tool calls as progress updates. */
+/**
+ * Whether this request asks for the notes between tool calls as progress
+ * updates: when it has not asked for visible reasoning, or when it asked for
+ * the notes over the reasoning (`notesBetweenTools`, ANA-SUMMARY decision 3,
+ * A — the tool rounds of a turn that reasons; their reasoning stays hidden).
+ */
 export function wantsProgressUpdates(
   modelConfig: Pick<ModelConfig, 'thinkingMode' | 'progressUpdatesInThinking'>,
-  request: Pick<GatewayRequest, 'thinking' | 'tools'>
+  request: Pick<GatewayRequest, 'thinking' | 'tools' | 'notesBetweenTools'>
 ): boolean {
   return (
     modelConfig.thinkingMode === 'adaptive' &&
     modelConfig.progressUpdatesInThinking === true &&
-    !request.thinking?.enabled &&
+    (!request.thinking?.enabled || request.notesBetweenTools === true) &&
     (request.tools?.length ?? 0) > 0
   );
 }

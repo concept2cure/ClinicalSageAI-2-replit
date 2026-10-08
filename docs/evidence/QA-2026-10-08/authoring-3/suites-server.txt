@@ -1,0 +1,9 @@
+# Trimmed: the full run log was 19571 lines. Kept: the failures and the totals.
+Error submitting review: TaskAuditNotRecordedError: Task lineage was not recorded (WRITE_FAILED).
+  reason: 'WRITE_FAILED',
+  code: 'AUDIT_WRITE_FAILED'
+    "err": "Task lineage was not recorded (WRITE_FAILED).",
+    "code": "AUDIT_WRITE_FAILED"
+ Test Files  110 passed | 1 skipped (111)
+      Tests  1402 passed | 2 skipped (1404)
+   Duration  368.93s (transform 12.35s, setup 1.89s, import 130.27s, tests 216.26s, environment 11ms)

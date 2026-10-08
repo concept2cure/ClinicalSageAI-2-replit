@@ -1,0 +1,18 @@
+# M8-added-not-first: shared/ana/plan-diff.ts
+--- /tmp/s5-mut.bak	2026-10-08 15:35:51.500152323 +0000
++++ shared/ana/plan-diff.ts	2026-10-08 15:35:51.502901435 +0000
+@@ -111,5 +111,5 @@
+     change: c.kind,
+     title: c.title,
+   }));
+-  return [...changes.filter((c) => c.change === 'added'), ...changes.filter((c) => c.change !== 'added')];
++  return changes;
+ }
+
+ ✓ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > the single in-progress task's id; null with two in progress; null for update_plan, always 72ms
+ ✓ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > before any plan, a step serves no task 12ms
+ × server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 3. task ids across five update_plan calls > hold for each task while it is in the plan; a title removed and added again is a new task 16ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'added Find t1', …(10) ] to deeply equal [ 'added Find t1', …(10) ]
+      Tests  1 failed | 2 passed (3)
+restored: md5 OK

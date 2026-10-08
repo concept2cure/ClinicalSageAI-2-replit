@@ -25,6 +25,9 @@ export async function hopProject(w: World): Promise<void> {
     productType: 'drug',
     primaryAgency: 'FDA',
     indication: 'Moderate-to-severe disease',
+    // The IND number FDA pre-assigned. A package names only the number its
+    // project records, never the program code (package-identity.ts, QA j6).
+    applicationNumber: '123456',
   });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   k.programId = String(res.body.data.id);

@@ -22,6 +22,7 @@
  * without taking the wheel away from her.
  */
 import React from 'react';
+import { readableReplyText } from './anaReplyText';
 import type { LiveDriveState } from './liveDrive';
 import { I } from './icons';
 
@@ -130,7 +131,7 @@ export function LiveDriveOverlay({
             )}
           </div>
         </div>
-        {replyElsewhere && <div className="ana-drive-narration">{replyElsewhere}</div>}
+        {replyElsewhere && <div className="ana-drive-narration">{readableReplyText(replyElsewhere)}</div>}
       </div>
     );
   }

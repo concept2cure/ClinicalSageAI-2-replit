@@ -18,7 +18,7 @@ import type { Response } from 'express';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import type { UserRole } from '../../services/ana-ri/persona.js';
 import { buildAssistantMetadata, withTurnEnding, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
-import type { AnaRunPolicy, HumanControlEvent, PolicyHold, TurnStoppedReason } from '../../services/ana/run-status.js';
+import { stoppedTurnReason, type AnaRunPolicy, type HumanControlEvent, type PolicyHold, type TurnStoppedReason } from '../../services/ana/run-status.js';
 import {
   checkEvidenceDiscipline,
   validateResponseStructure,
@@ -301,14 +301,6 @@ export async function persistCollectedDrafts(args: {
   }
 }
 
-/**
- * Why a turn ended, as its saved answer says it: the person's Stop is
- * `cancelled` whatever the loop reported, unless the loop named a stop of its
- * own (a hold that ran out, the round limit) — that one says more.
- */
-function stoppedReasonOf(stopped: boolean | undefined, reason: TurnStoppedReason | undefined): TurnStoppedReason | undefined {
-  return stopped && (!reason || reason === 'no_more_tools') ? 'cancelled' : reason;
-}
 
 /**
  * Save the answer of a turn the person stopped, when the stop ended it before
@@ -317,8 +309,13 @@ function stoppedReasonOf(stopped: boolean | undefined, reason: TurnStoppedReason
  * and says it was stopped. Without it the conversation kept the question and
  * nothing after it, and a reload showed exactly that (QA 2026-10-08, j5).
  */
-export async function persistStoppedAnswer(threadId: string, streamed: string): Promise<number | null> {
-  const metadata = withTurnEnding(undefined, { stoppedReason: 'cancelled' }) as Record<string, unknown> | undefined;
+export async function persistStoppedAnswer(
+  threadId: string,
+  streamed: string,
+  // A person's Stop, or the page that lost its connection (S4): the answer says which.
+  stoppedReason: TurnStoppedReason = 'cancelled',
+): Promise<number | null> {
+  const metadata = withTurnEnding(undefined, { stoppedReason }) as Record<string, unknown> | undefined;
   return saveMessage(threadId, 'assistant', streamed, undefined, undefined, metadata);
 }
 
@@ -472,7 +469,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       verification && verification.check.basis === 'sources' ? groundingResultOf(verification.check) : null;
     const assistantMetadata = withTurnEnding(
       buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls, plan),
-      { stoppedReason: stoppedReasonOf(stopped, stoppedReason), rounds, runPolicy, pendingSteps, policyHolds },
+      { stoppedReason: stoppedTurnReason(stopped, stoppedReason), rounds, runPolicy, pendingSteps, policyHolds },
     ) as Record<string, unknown> | undefined;
 
     // Run persistence concurrent with the synchronous evidence / structure

@@ -1,0 +1,5 @@
+# The same scoped tsc with one planted line appended to client/src/concept2cure/v2/turnSummaryRows.ts:
+#   export const s4Planted: number = "not a number";
+# then restored (md5 OK).
+client/src/concept2cure/v2/turnSummaryRows.ts(316,14): error TS2322: Type 'string' is not assignable to type 'number'.
+exit 2

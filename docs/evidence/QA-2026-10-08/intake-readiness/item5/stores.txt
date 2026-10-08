@@ -1,0 +1,19 @@
+-- c2c_qa (the second walk's database), 2026-10-08. Read-only queries.
+
+-- 1. Each program's governed document: its rule-pack OUTLINE size (Authoring's tree header, '${doc_type} · ${agency} · ${filing.flat.length} sections', DocumentWorkbench.tsx:3359, from GET /api/c2c/documents/:id/outline = c2c_rule_packs.required_sections) against its SECTION ROWS (Project home Module completion, GET /api/c2c/projects/:id/workstreams = c2c_document_sections, projects.ts:1080) and the stored c2c_documents.readiness the Projects card does not trust without sections:
+code|document_id|doc_type|agency|stored_readiness|outline_nodes|section_rows
+BX-256|doc_rp_099991d1dac843c5b88a8baab26194ee|ind|fda|62|92|0
+BX-512|doc_rp_50c41bb657964dc6a84872e4d1246ebd|ind|fda|39|92|0
+(2 rows)
+
+-- 2. What the IND lifecycle checklist counts: coauthor_documents placed as leaves in the program's submission sequences (ind-checklist-view-assembler.ts):
+code|submission_id|placed_coauthor_leaves|placed_complete
+BX-256|5|1|1
+BX-512|6|4|4
+(2 rows)
+
+-- 3. What the Author tab's document list counts (authoring_documents by client_program_id):
+code|authoring_documents
+BX-256|0
+BX-512|4
+(2 rows)

@@ -1,0 +1,32 @@
+{
+ "extends": "../../../../../tsconfig.json",
+ "compilerOptions": {
+  "noEmit": true,
+  "incremental": false
+ },
+ "files": [
+  "../../../../../shared/ana/turn-timeline.ts",
+  "../../../../../shared/ana/plan-diff.ts",
+  "../../../../../server/services/ana/run-events.ts",
+  "../../../../../server/services/ana/run-control.ts",
+  "../../../../../server/services/ana/turn-timeline-emitter.ts",
+  "../../../../../server/services/ana/turn-summary.ts",
+  "../../../../../server/services/tenant/tenant-offboarding.ts",
+  "../../../../../server/routes/ana-ri/runs.ts",
+  "../../../../../server/routes/ana-ri/record-access.ts",
+  "../../../../../server/routes/ana-ri/turn-records.ts",
+  "../../../../../server/routes/ana-ri/stream.ts",
+  "../../../../../server/routes/ana-ri.ts",
+  "../../../../../server/services/ana/__tests__/run-events.pglite.test.ts",
+  "../../../../../server/services/ana/__tests__/run-control-begin.pglite.test.ts",
+  "../../../../../server/services/ana/__tests__/run-events-rls.dbtest.ts",
+  "../../../../../server/services/ana/__tests__/run-control.pglite.integration.test.ts",
+  "../../../../../server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts",
+  "../../../../../server/services/ana/__tests__/run-control-cross-instance.dbtest.ts",
+  "../../../../../server/services/ana/__tests__/run-control-tenant-scope.test.ts",
+  "../../../../../server/routes/ana-ri/__tests__/runs-read.pglite.test.ts",
+  "../../../../../server/routes/ana-ri/__tests__/stream-run-events.test.ts",
+  "../../../../../server/routes/ana-ri/__tests__/support/stream-route-harness.ts"
+ ],
+ "include": []
+}

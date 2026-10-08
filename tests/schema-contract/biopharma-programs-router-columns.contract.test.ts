@@ -72,6 +72,10 @@ const REGULATORY_PROGRAMS_DDL = `
     product_code varchar(50),
     indication text,
     application_number text,
+    -- Form FDA 1571's sponsor address and IND type, on the program (aac603a1b,
+    -- migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql).
+    sponsor_address text,
+    ind_type text,
     intended_use text,
     predicate_devices json,
     -- The device-level eSTAR administrative facts (WO-8 Phase 3). They live on

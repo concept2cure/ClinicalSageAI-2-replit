@@ -39,7 +39,9 @@ const connectFn = vi.fn();
 // every signer here is active. Suspended and deprovisioned signers are pinned
 // by reverify-signer.test.ts and tests/db/account-standing.dbtest.ts.
 // The transmitter holds a signing role (approver); only such a role may
-// transmit to an agency (SEC-1008-1, governed-transmit-checks.ts).
+// transmit to an agency (SEC-1008-1). The route asks the signer's role on the
+// membership row (checkSigningAuthority) before the password, and
+// executeGovernedTransmit asks again through the same check.
 // An approver unless a case sets `signerRole.next`, which is used once (SEC-1008-1).
 const signerRole = vi.hoisted(() => ({ next: null as string | null }));
 vi.mock('../server/services/part11/resolve-signer-role', () => ({

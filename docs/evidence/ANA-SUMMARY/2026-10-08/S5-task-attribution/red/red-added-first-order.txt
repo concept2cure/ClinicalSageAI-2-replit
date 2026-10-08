@@ -1,0 +1,59 @@
+# Red for the task-event order found in the browser (four Added rows first): test 3 against plan-diff.ts before the reorder; RLS_ENFORCE=off
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stdout | server/routes/ana-ri/__tests__/stream-task-attribution.test.ts
+{
+  "timestamp": "2026-10-08T14:56:28.438Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T14:56:28.439Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/ana-ri/__tests__/stream-task-attribution.test.ts
+{
+  "timestamp": "2026-10-08T14:56:28.440Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stdout | server/routes/ana-ri/__tests__/stream-task-attribution.test.ts
+Loaded 0 academic documents
+ ✓ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > the single in-progress task's id; null with two in progress; null for update_plan, always 76ms
+ ✓ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > before any plan, a step serves no task 7ms
+ × server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 3. task ids across five update_plan calls > hold for each task while it is in the plan; a title removed and added again is a new task 25ms
+   → expected [ 'added Find t1', …(10) ] to deeply equal [ 'added Find t1', …(10) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 3. task ids across five update_plan calls > hold for each task while it is in the plan; a title removed and added again is a new task
+AssertionError: expected [ 'added Find t1', …(10) ] to deeply equal [ 'added Find t1', …(10) ]
+- Expected
++ Received
+@@ -1,10 +1,10 @@
+  [
+    "added Find t1",
++   "started Find t1",
+    "added Read t2",
+    "added List t3",
+-   "started Find t1",
+    "completed Find t1",
+    "started Read t2",
+    "completed Read t2",
+    "started List t3",
+    "removed List t3",
+ ❯ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts:164:21
+    162|     const changes = taskEvents(t).map(e => `${e.change} ${e.title} ${e…
+    163|     // A plan's new tasks are added first, then its starts and complet…
+    164|     expect(changes).toEqual([
+       |                     ^
+    165|       'added Find t1', 'added Read t2', 'added List t3',
+    166|       'started Find t1',
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  14:56:19
+   Duration  15.38s (transform 10.04s, setup 147ms, import 14.25s, tests 119ms, environment 0ms)

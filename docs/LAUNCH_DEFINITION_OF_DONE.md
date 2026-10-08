@@ -353,6 +353,35 @@ Follow-up decisions from the second Submission Center and IND/reporting passes (
 - **Malformed requests.** A request refused before anything is read voids no signature. Only a refused act does.
 - **Report finalize** keeps one authority check: the ceremony's floor. The route's own copy is removed.
 
+### P-27 — Only a person with signing authority signs, and a package carries only recorded identity
+
+From the third Submission Center pass (`b86baf55e`):
+- **AnA's e-signature tier requires signing authority.** A member or manager cannot place a document in the dossier,
+  revert to a version or submit a document through AnA. Placement through the authoring route is not a signature and
+  stays open to authors.
+- **Task sign-off on an approval-gated task requires signing authority.** Members and managers are refused.
+- **An inspection copy needs a recorded application number.** Until FDA assigns one, an IND's compile fails and says
+  why. It does not print a placeholder.
+- **The applicant's D-U-N-S number is recorded on the organisation.** A package that needs one is refused without
+  it. Until that lands, packages on the sequence path still write `UNASSIGNED-ORG-n` there. That is a known gap,
+  tracked as a follow-up.
+- **AnA's `package_ectd_for_region` takes the sponsor and application number from the package-identity engine, not
+  from model input** (Rule 2). The dry runs (packageability check, `assemble` dry run, orchestrator validation) may
+  keep placeholders only because they produce no package. Their output says it is a dry run.
+- **One signing-authority policy.** The remaining inline checks (`actions.ts` `signingAuthorityRefusal`,
+  `cmc-signer`, and others) move onto `checkSigningAuthority` and are deleted.
+
+Follow-up decisions from the P-27 pass:
+- **Signed orchestrator snapshots made before P-27** keep the placeholder applicant inside their signed `index.xml`.
+  They are not altered, because a signed record is never rewritten. The signed-package export marks them as not
+  submittable. That is a follow-up.
+- **An orchestrator run signs only against a recorded submission** whose project's application number matches the
+  run's. Without one, a run validates as a dry run and cannot be signed.
+- **The MDR/IVDR technical-file assemble and the `submission-ops` package spine** still write placeholder identity
+  into real output. They move onto `package-identity.ts` next.
+- **The signature record carries the membership role that authorised it**, not the role on the request. A follow-up
+  in `esignature` and `document-lifecycle`.
+
 ### P-24 — AnA works like Claude, and the client sees the Summary of the work
 
 The founder asked for this on 2026-10-08, with screenshots of Claude's per-task Summary. The design is

@@ -20,6 +20,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
+const { signerRole } = vi.hoisted(() => ({ signerRole: vi.fn(async (): Promise<string | null> => 'admin') }));
+// §11.10(g): the signer's role, as the membership row holds it.
+vi.mock('../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: (...a: unknown[]) => signerRole(...(a as [])),
+}));
+
 const { st } = vi.hoisted(() => ({
   st: {
     /** Queue of results for each awaited drizzle chain, in order. */
@@ -206,6 +212,7 @@ beforeEach(() => {
   st.inserts = [];
   vi.clearAllMocks();
   (pool.query as any).mockImplementation(async () => ({ rows: [] }));
+  signerRole.mockResolvedValue('admin');
 });
 
 describe('PUT …/status: a lock must cover the approval', () => {
@@ -357,5 +364,38 @@ describe('POST …/audit-report/export: the locked report records its lock, and 
     expect(inserted.publishedAt).toBeInstanceOf(Date);
     expect(inserted.approvedVersionId ?? null).toBeNull();
     expect(artifactApproval(inserted)).toMatchObject({ filable: false, reason: 'no-approved-version' });
+  });
+});
+
+/**
+ * QA 2026-10-08 (j6 sweep): approve and lock re-authenticate the signer and
+ * write a concept2cure_signatures row, and the only role check was the status
+ * table read from the SESSION's role (req.userRole). The platform's one signing
+ * policy, on the membership row's role, before the password: a session that
+ * says admin over a membership row that says manager (P-18) or member signs
+ * nothing.
+ */
+describe('PUT …/status: signing authority before the password', () => {
+  it.each([
+    ['locked', 'manager'],
+    ['approved', 'member'],
+  ])('%s by a %s on the membership row is refused 403 ESIGNATURE_NO_AUTHORITY, no password compared, nothing written', async (status, role) => {
+    const { verifyReauth } = await import('../server/routes/c2c/actions');
+    signerRole.mockResolvedValue(role);
+    const current = status === 'locked' ? ARTIFACT : { ...ARTIFACT, status: 'review', version: 3 };
+    st.queue = [[current], [VERSION_ROW]];
+    const res = await putStatus(status);
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(JSON.stringify(res.body)).toContain('ESIGNATURE_NO_AUTHORITY');
+    expect(signerRole).toHaveBeenCalledWith(777, 99);
+    expect(verifyReauth).not.toHaveBeenCalled();
+    expect(statusWrite(status)).toBeUndefined();
+  });
+
+  it('a move to review is not a signature and does not ask for the role', async () => {
+    signerRole.mockResolvedValue('member');
+    st.queue = [[{ ...ARTIFACT, status: 'draft' }], [{ ...ARTIFACT, status: 'review' }]];
+    await putStatus('review', { attestation: undefined, reauth: undefined });
+    expect(signerRole).not.toHaveBeenCalled();
   });
 });

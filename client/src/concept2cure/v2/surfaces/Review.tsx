@@ -46,12 +46,13 @@ import { assessmentStateFor, hasAnswer } from '../assessmentState';
 import { publishShellProject, readShellProject } from '../shellProject';
 import { setEditorTarget } from '../editorTarget';
 import { ReviewThreadsPane } from './ReviewThreads';
+import { ReviewVaultQueue, type VaultReviewItem } from './ReviewVaultQueue';
 import { reviewStanding, REVIEW_STANDING_PILL_TONE } from './reviewStanding';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
 /** Sub-headline shared by the surface header and its honest empty/error states. */
-const REVIEW_SUB = 'Reviews requested in Authoring: approve, request changes with a reason, or decline.';
+const REVIEW_SUB = 'Reviews requested in Authoring: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.';
 
 /**
  * The render contract of GET /api/review/board (server/routes/review-board-routes.ts),
@@ -62,6 +63,8 @@ interface ReviewBoardData {
   queue: ReviewItem[];
   workflows: Record<string, ReviewWorkflow>;
   thread: ReviewComment[];
+  /** Vault versions in review (QA 2026-10-08, walk 2, j3): null when that read failed. */
+  vaultReviews?: VaultReviewItem[] | null;
 }
 
 type Scope = 'all' | 'mine' | 'requested';
@@ -170,6 +173,12 @@ export function openReviewDocument(
 
 /* ── Review-decision modal ── */
 
+/** What a thrown review request says: the API's own message, or that nothing was reached. */
+function unreachedMessage(e: unknown): string {
+  const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+  return known && (e as Error).message ? (e as Error).message : 'Could not reach the authoring service. Nothing changed.';
+}
+
 function DecisionModal({ onClose, item, onRecorded }: {
   onClose: () => void;
   item: ReviewItem;
@@ -190,16 +199,21 @@ function DecisionModal({ onClose, item, onRecorded }: {
    * exists: server/routes/authoring.router.ts applies a re-verified signature
    * bound to a frozen document version, from the authoring workspace.
    */
-  const [decision, setDecision] = useState<Verdict>('approved');
+  /* P-21 (docs/LAUNCH_DEFINITION_OF_DONE.md): a regulated choice starts
+     unstated. This opened on 'approved' with a "Record approval" button, so one
+     click recorded an approval verdict nobody chose (QA 2026-10-08, walk 2,
+     j4). '' is "Not stated — choose", and nothing is sent until a verdict is. */
+  const [decision, setDecision] = useState<Verdict | ''>('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  const needsReason = decision !== 'approved';
+  const chosen = decision !== '';
+  const needsReason = decision !== 'approved' && chosen;
   const reasonOk = !needsReason || reason.trim().length >= 8;
 
   const record = async () => {
-    if (busy) return;
+    if (busy || decision === '') return;
     if (!reasonOk) {
       setErr('A change request or a rejection needs a reason of at least 8 characters — it is what the author has to act on.');
       return;
@@ -220,8 +234,7 @@ function DecisionModal({ onClose, item, onRecorded }: {
       }
       onRecorded?.(decision);
     } catch (e) {
-      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      setErr(known && (e as Error).message ? (e as Error).message : 'Could not reach the authoring service. Nothing changed.');
+      setErr(unreachedMessage(e));
     } finally {
       setBusy(false);
     }
@@ -234,7 +247,8 @@ function DecisionModal({ onClose, item, onRecorded }: {
   const submitLabel =
     decision === 'approved' ? 'Record approval'
     : decision === 'changes_requested' ? 'Record change request'
-    : 'Record rejection';
+    : decision === 'rejected' ? 'Record rejection'
+    : 'Record decision';
 
   return (
     <div className="esign-bd" onClick={onClose}>
@@ -263,8 +277,9 @@ function DecisionModal({ onClose, item, onRecorded }: {
             <select
               id="rv-decision"
               value={decision}
-              onChange={(e) => setDecision(e.target.value as Verdict)}
+              onChange={(e) => setDecision(e.target.value as Verdict | '')}
             >
+              <option value="">Not stated — choose</option>
               <option value="approved">Approve</option>
               <option value="changes_requested">Request changes — send it back with a reason</option>
               <option value="rejected">Decline — reject this document</option>
@@ -286,9 +301,15 @@ function DecisionModal({ onClose, item, onRecorded }: {
           </div>
           {err && <div className="esign-err" role="alert">{err}</div>}
           <div className="esign-manifest">
-            This records your review verdict — <b>{REVIEW_STATUS_LABEL[decision]}</b> — on
-            the document in the authoring workflow, where the author and the other
-            reviewers see it. It is <b>not</b> a 21 CFR §11.50 signature manifestation —
+            {chosen ? (
+              <>This records your review verdict — <b>{REVIEW_STATUS_LABEL[decision]}</b> — on
+              the document in the authoring workflow, where the author and the other
+              reviewers see it.</>
+            ) : (
+              <>No verdict is chosen yet, and nothing is recorded until one is. The verdict you
+              choose is recorded on the document in the authoring workflow, where the author and
+              the other reviewers see it.</>
+            )} It is <b>not</b> a 21 CFR §11.50 signature manifestation —
             no signer identity is re-verified here and nothing is sealed against a
             frozen document version. Apply a binding signature from the authoring
             workspace, where the signer's password is re-verified and the signature sealed.
@@ -300,7 +321,7 @@ function DecisionModal({ onClose, item, onRecorded }: {
             className="btn primary"
             style={{ flex: 1, justifyContent: 'center' }}
             onClick={record}
-            disabled={busy || !reasonOk}
+            disabled={busy || !chosen || !reasonOk}
           >
             {I.shieldCheck} {busy ? 'Recording…' : submitLabel}
           </button>
@@ -552,8 +573,14 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   }, [sel, queue]);
 
   const scopeBar = (
-    <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={setOnlyProgram} />
+    <>
+      <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={setOnlyProgram} />
+      {/* Send for review on a Vault version assigns nobody, so it was in no
+          queue (QA 2026-10-08, walk 2, j3). Listed here with who has it. */}
+      <ReviewVaultQueue items={board?.vaultReviews} onOpenVault={() => onNav('vault')} />
+    </>
   );
+  const vaultInReview = (board?.vaultReviews ?? []).length;
 
   // ── The three honest states, before any row is dereferenced. No fixture ──
   if (boardState.loading && queue.length === 0) {
@@ -585,8 +612,11 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
        it comes back as `queue: []`. No array means nothing was read, and the
        honest copy says that instead of reassuring. */
     const boardRead = Array.isArray(board?.queue);
-    const emptyTitle =
-      scope === 'mine' ? 'Nothing awaits your review'
+    /* With Vault versions listed above, "nothing" would be untrue: the claim
+       narrows to the Authoring queue. */
+    const emptyTitle = vaultInReview > 0
+      ? 'No Authoring document is in this queue'
+      : scope === 'mine' ? 'Nothing awaits your review'
       : scope === 'requested' ? 'You have not requested a review'
       : 'Nothing is in review';
     const emptyHint =

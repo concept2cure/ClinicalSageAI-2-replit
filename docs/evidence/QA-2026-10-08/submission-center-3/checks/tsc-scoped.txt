@@ -1,0 +1,36 @@
+# Scoped tsc over the 58 changed files (tsconfig extends the repo's, files = the changed .ts/.tsx); NODE_OPTIONS=--max-old-space-size=8192
+# Result: no error in any line this change wrote. Remaining errors are on lines identical at HEAD
+# (golden journey R.step typing, ectd-compile-ident type arguments, estar mock json shape, lineage world reverify mock).
+
+tests/golden-journeys/submission-export-package.journey.test.ts(171,85): error TS2345: Argument of type '() => Promise<AssembleSubmissionResult>' is not assignable to parameter of type '() => Promise<Record<string, unknown>>'.
+  Type 'Promise<AssembleSubmissionResult>' is not assignable to type 'Promise<Record<string, unknown>>'.
+    Type 'AssembleSubmissionResult' is not assignable to type 'Record<string, unknown>'.
+      Index signature for type 'string' is missing in type 'AssembleSubmissionResult'.
+tests/golden-journeys/submission-export-package.journey.test.ts(179,14): error TS18046: 'exported.buffer' is of type 'unknown'.
+tests/golden-journeys/submission-export-package.journey.test.ts(184,14): error TS18046: 'exported.stats' is of type 'unknown'.
+tests/golden-journeys/submission-export-package.journey.test.ts(189,54): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Buffer'.
+tests/golden-journeys/submission-export-package.journey.test.ts(190,43): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'InputFileFormat'.
+tests/golden-journeys/submission-export-package.journey.test.ts(209,43): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'InputFileFormat'.
+tests/lineage/founder-path-lineage.world.ts(328,5): error TS2322: Type '() => Promise<{ ok: true; authenticationMethod: "password+totp"; secondFactorVerified: true; }>' is not assignable to type '(userId: number, credentials: SignerCredentials) => Promise<SignerReverification>'.
+  Type 'Promise<{ ok: true; authenticationMethod: "password+totp"; secondFactorVerified: true; }>' is not assignable to type 'Promise<SignerReverification>'.
+    Type '{ ok: true; authenticationMethod: "password+totp"; secondFactorVerified: true; }' is not assignable to type 'SignerReverification'.
+      Type '{ ok: true; authenticationMethod: "password+totp"; secondFactorVerified: true; }' is not assignable to type 'SignerReverified'.
+        Types of property 'authenticationMethod' are incompatible.
+          Type '"password+totp"' is not assignable to type '"password" | "password+mfa"'.
+tests/routes/ectd-compile-ident.test.ts(22,22): error TS2558: Expected 0-1 type arguments, but got 2.
+tests/routes/ectd-compile-ident.test.ts(23,22): error TS2558: Expected 0-1 type arguments, but got 2.
+tests/routes/ectd-compile-ident.test.ts(24,22): error TS2558: Expected 0-1 type arguments, but got 2.
+tests/routes/ectd-compile-ident.test.ts(54,66): error TS2345: Argument of type '[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(55,63): error TS2345: Argument of type '[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(56,64): error TS2345: Argument of type '[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(64,33): error TS2345: Argument of type '{ section_code: string; title: string; status: string; module: string; required: boolean; word_count: number; updated_at: string; }[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(82,33): error TS2345: Argument of type '{ id: string; code: string; name: string; }[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(101,33): error TS2345: Argument of type '{ id: string; code: string; name: string; }[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(114,33): error TS2345: Argument of type 'never[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(137,33): error TS2345: Argument of type '{ id: string; code: string; name: string; }[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(155,33): error TS2345: Argument of type '{ id: string; code: string; name: string; }[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(173,33): error TS2345: Argument of type '{ id: string; code: string; name: string; }[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(174,33): error TS2345: Argument of type '{ id: number; compilation_name: string; compilation_type: string; status: string; version: string; compiled_at: null; created_at: null; }[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(208,33): error TS2345: Argument of type '{ application_number: string; id: string; code: string; name: string; }[]' is not assignable to parameter of type 'never'.
+tests/routes/ectd-compile-ident.test.ts(217,33): error TS2345: Argument of type '{ id: string; code: string; name: string; }[]' is not assignable to parameter of type 'never'.
+tests/routes/estar-submission-filing.test.ts(142,53): error TS2353: Object literal may only specify known properties, and 'error' does not exist in type '{ ok: boolean; }'.

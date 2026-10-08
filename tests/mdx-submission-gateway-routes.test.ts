@@ -9,7 +9,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-const PROGRAM_ID = '11111111-2222-3333-4444-000000000204';
 
 const queryFn = vi.fn();
 const connectFn = vi.fn();
@@ -17,9 +16,6 @@ const connectFn = vi.fn();
 // The signing ceremony reads the signer's account standing (VSR-001 F-28);
 // every signer here is active. Suspended and deprovisioned signers are pinned
 // by reverify-signer.test.ts and tests/db/account-standing.dbtest.ts.
-// The transmitter holds a signing role (approver); only such a role may
-// transmit to an agency (SEC-1008-1, governed-transmit-checks.ts).
-vi.mock('../server/services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'approver' }));
 vi.mock('../server/services/account-standing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../server/services/account-standing')>()),
   isAccountActive: async () => true,
@@ -58,6 +54,12 @@ vi.mock('../server/services/mfaService', () => ({
   // the answer cannot be read, so the fixture has to state it.
   isMfaEnabled: vi.fn().mockResolvedValue(false),
 }));
+
+/* §11.10(g): the signer's role is read from the membership row
+   (resolveSignerOrgRole), never the token. Each test states it; by default the
+   member row says what the session says. */
+const { signerRole } = vi.hoisted(() => ({ signerRole: vi.fn<(...a: unknown[]) => Promise<string | null>>() }));
+vi.mock('../server/services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: (...a: unknown[]) => signerRole(...a) }));
 
 /** Re-auth body that satisfies verifyReauth in these tests. */
 // §11.50: a transmit is signed under a meaning the signer declares; the body carries it.
@@ -157,6 +159,7 @@ beforeEach(() => {
   ackFn.mockReset();
   isConfigFn.mockReset();
   configStatusFn.mockReset();
+  signerRole.mockReset().mockResolvedValue('admin');
   // Default: empty result, except the re-auth password lookup which must find a
   // user with a password_hash so verifyReauth can run bcrypt.compare (mocked true).
   queryFn.mockImplementation((sql: string) => {
@@ -235,7 +238,8 @@ describe('submission gateway routes — role gate', () => {
     expect(res.body.data.length).toBeGreaterThan(0);
   });
 
-  it.each(['admin', 'manager', 'member'])('a %s may still transmit', async (role) => {
+  it.each(['admin', 'approver', 'reviewer'])('a %s (a signing role) may still transmit', async (role) => {
+    signerRole.mockResolvedValue(role);
     transmitFn.mockResolvedValue({ transmissionId: 'T-1', status: 'sent', receipts: [] });
     const res = await request(makeApp({ withAuth: true, role }))
       .post('/api/mdx/gateways/fda/esg/transmit')
@@ -243,6 +247,9 @@ describe('submission gateway routes — role gate', () => {
     expect(res.status, JSON.stringify(res.body)).not.toBe(403);
   });
 });
+
+/* Signing authority (§11.10(g)) on the two signs here — transmit and technical
+   rejection — is pinned in tests/mdx-submission-gateway-signing-authority.test.ts. */
 
 /* ─── Gateways list + config status ──────────────────────────────── */
 

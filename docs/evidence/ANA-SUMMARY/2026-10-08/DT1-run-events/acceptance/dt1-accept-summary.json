@@ -1,0 +1,22 @@
+{
+ "runId": "run_8ab6b0f9-2f37-46a9-87e6-fadfe16454a6",
+ "timelineFrameCount": 9,
+ "livePolls": 6,
+ "maxLiveRows": 8,
+ "liveRowsEqualFramesSoFar": true,
+ "colleague": 403,
+ "admin": 200,
+ "adminScope": "cancel",
+ "mineLive": 1,
+ "postDone": "recorded",
+ "after": {
+  "status": 200,
+  "runStatus": "finished",
+  "events": 0,
+  "sealed": {
+   "recordId": "8582cbca-fd1f-481e-bcc3-410eabfc4bb4",
+   "assistantMessageId": 22
+  },
+  "releasedAt": "2026-10-08T17:10:20.618Z"
+ }
+}

@@ -1,0 +1,33 @@
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > sends what the person stated with the attachment, and nothing the record holds 402ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > a filed attachment the engine finds incomplete is reported as filed and NOT complete, naming what is missing 116ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > each placement says whether it completes the form: complete, not complete (what is missing), or not checked 41ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > lists the supported forms from the engine 156ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > builds with only the entered metadata and renders the server missingRequired verdict 466ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > downloads the streamed FDA PDF and reports the honest render kind + coverage 111ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > surfaces the regulatory-author role gate honestly 10ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > saves a governed artifact to the open project’s dossier 94ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not call a data-complete artifact "ready" when boxes are left on the form 39ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says "ready" only when the data is complete AND the form leaves nothing 49ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an absent sponsorMustComplete is "not reported", never "nothing left" 61ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a program with no project record: the 409 is reported as nothing saved, never as a save or an audit-logged build 44ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a 200 with no artifact id is not reported as any kind of save 64ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does NOT save (or guess a project) when no project is open 80ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > names the official template and the boxes still left blank on it 82ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > counts a required box the project has no value for, which `unmapped` never names 81ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says the server did not report, rather than implying a clean form 30ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an EMPTY X-Form-Required-Blank is "assessed, none" and claims nothing 55ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not claim the PDF arrived when the browser blocked the download 67ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > asks the engine for the open program and shows the recorded facts, not input boxes 61ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > states what each form will produce BEFORE anything is rendered, and who reviewed the asset 39ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > a reconstruction is never described as the official form 36ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > names the program on every build so the server fills from the record, and never echoes the record back 115ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > the phase and the IND type start on "Not stated — choose", offer the registry's options, and send nothing until chosen 125ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > with no program open it still works standalone and claims no record 33ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > files the completed form into the ORIGINAL 0000 the person chose, although a newer 0001 exists 141ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > sends nothing until a sequence is chosen, and sends the one chosen 309ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > is reachable and operable from the keyboard, and names the form it files 686ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > reports a refusal in the server’s own words and claims nothing was filed 163ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > shows a form already filed in each sequence, with the digest of the bytes the sponsor signed 237ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the form is named once > reads "FDA 1571", not "FDA FDA_1571" — the engine ids are canonical and were pasted after another "FDA" 165ms
+ Test Files  2 passed (2)
+      Tests  31 passed (31)

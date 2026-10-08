@@ -13,7 +13,12 @@
 
 import type { PoolClient } from 'pg';
 import { createSubmissionTx } from '../../services/submission-service/submission-service.js';
-import { listProductTypes } from '../../../shared/constants/domain/product-types.js';
+import {
+  listProductTypes,
+  productTypeForFilingType,
+  DEVICE_FAMILY_PRODUCT_TYPES,
+  MEDICINAL_PRODUCT_TYPES,
+} from '../../../shared/constants/domain/product-types.js';
 
 /** Canonical program / product types accepted by the create endpoint. Program
  *  types line up with WS_CASE in projects.ts; product types match the store's
@@ -157,6 +162,54 @@ export async function ensureSubmissionSpine(params: {
     { organizationId: orgId, userId },
   );
   return { id: Number(row.id), created: true };
+}
+
+/**
+ * The product class a create records, or why it is refused (400). Pure.
+ *
+ * The filing type decides when it can: a 510(k) is a device submission, a BLA a
+ * biologics licence, and the client may not contradict a device filing. When it
+ * cannot — an IND, a CTA, an MAA, a J-NDA or a DMF, each of which covers drugs
+ * and biologics alike — the class is the person's to state (P-21), and a create
+ * that states none is refused. It used to be derived: every IND was recorded as
+ * a biologic, an inhaled small molecule included (QA 2026-10-08, second walk,
+ * j1/j7). `regulatory_programs.product_type` and the spine's
+ * `submissions.client_type` are both NOT NULL, so "not stated" cannot be stored
+ * as empty; it is asked for instead.
+ */
+export function productTypeForIntake(
+  programType: string,
+  stated: string,
+): { productType: string } | { refusal: string } {
+  const implied = productTypeForFilingType(programType);
+  const productType = stated || implied || '';
+  if (!productType) {
+    return {
+      refusal:
+        `State whether the product is a drug or a biologic: a ${programType.toUpperCase()} filing ` +
+        'covers both, and the class is recorded on the program.',
+    };
+  }
+  if (!VALID_PRODUCT_TYPES.has(productType)) {
+    return { refusal: `productType must be one of: ${[...VALID_PRODUCT_TYPES].join(', ')}` };
+  }
+  // A device or IVD filing may not be recorded as a medicinal product, whatever
+  // the client sent: the MDX UAT found a 510(k) submitted as 'biologic' because
+  // the Pharma & Biotech tab was open. The filing type is a regulatory fact.
+  if (implied && DEVICE_FAMILY_PRODUCT_TYPES.includes(implied) && !DEVICE_FAMILY_PRODUCT_TYPES.includes(productType as never)) {
+    return {
+      refusal:
+        `A ${programType} filing is a device submission and cannot be recorded as ` +
+        `"${productType}". Use one of: ${DEVICE_FAMILY_PRODUCT_TYPES.join(', ')}.`,
+    };
+  }
+  // …and a filing whose class the person states is for a drug or a biologic.
+  if (!implied && !MEDICINAL_PRODUCT_TYPES.includes(productType as never)) {
+    return {
+      refusal: `A ${programType.toUpperCase()} filing is for a drug or a biologic, not "${productType}".`,
+    };
+  }
+  return { productType };
 }
 
 /** A word that is itself a program code: "BX-204", "BX204", "HLV-333", "QA-SS-101". */

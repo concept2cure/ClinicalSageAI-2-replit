@@ -1,0 +1,28 @@
+{
+ "extends": "../../../../../tsconfig.json",
+ "compilerOptions": {
+  "noEmit": true,
+  "incremental": false
+ },
+ "files": [
+  "../../../../../client/src/concept2cure/v2/turnSummaryRows.ts",
+  "../../../../../client/src/concept2cure/v2/TurnSummary.tsx",
+  "../../../../../client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx",
+  "../../../../../client/src/concept2cure/v2/__tests__/turnSummary.test.tsx",
+  "../../../../../client/src/App.d.ts",
+  "../../../../../client/src/ErrorBoundary.d.ts",
+  "../../../../../client/src/types/api.d.ts",
+  "../../../../../client/src/types/global.d.ts",
+  "../../../../../client/src/types/html2pdf.d.ts",
+  "../../../../../client/src/types/storybook-react.d.ts",
+  "../../../../../shared/types/common.d.ts",
+  "../../../../../shared/types/database.d.ts",
+  "../../../../../shared/types/express.d.ts",
+  "../../../../../shared/types/jsx-modules.d.ts",
+  "../../../../../shared/types/pdf-parse.d.ts",
+  "../../../../../shared/types/pgvector.d.ts",
+  "../../../../../shared/types/services.d.ts",
+  "../../../../../shared/types/third-party.d.ts"
+ ],
+ "include": []
+}

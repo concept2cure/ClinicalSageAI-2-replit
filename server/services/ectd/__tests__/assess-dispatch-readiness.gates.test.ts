@@ -292,10 +292,42 @@ describe('readinessOptionsForSequence — required sections decided per sequence
     expect(readinessOptionsForSequence({ region: 'fda', type: null, sequenceNumber: '0003' }, 'ind', AS_OF).requiredByRegulation?.codes).toEqual(['1.1']);
   });
 
-  it('a continuing marketing-application sequence is still not held to a Module 1 list', () => {
+  /* Follow-up decision (docs/LAUNCH_DEFINITION_OF_DONE.md, "Form 356h"): every
+     submission to an NDA, BLA or ANDA carries a Form FDA 356h, so a continuing
+     sequence of those kinds is held to 1.1 as a continuing IND sequence is to
+     its 1571. aac603a1b left them held to nothing. */
+  it('a continuing NDA, BLA or ANDA sequence is held to its 1.1 form (Form FDA 356h), as an error, and to nothing else', () => {
     for (const kind of ['nda', 'bla', 'anda']) {
-      expect(readinessOptionsForSequence(amendment, kind, AS_OF).requiredByRegulation, kind).toBeUndefined();
+      const opts = readinessOptionsForSequence(amendment, kind, AS_OF);
+      expect(opts.requiredByRegulation?.codes, kind).toEqual(['1.1']);
+      expect(opts.requiredByRegulation?.basis, kind).toMatch(/Form FDA 356h/);
+      expect(opts.requiredByRegulation?.basis, kind).not.toMatch(/1571/);
+      expect(opts.requiredSections ?? [], kind).toEqual([]);
+      // A labeling supplement with its cover letter and no 356h.
+      const r = computeDispatchReadiness(
+        [
+          { sectionCode: '1.2', title: 'Cover Letter', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 5 },
+          { sectionCode: '1.14.1.3', title: 'Draft labeling text', lifecycleOp: 'replace', documentTable: 'coauthor_documents', documentId: 6 },
+        ],
+        opts,
+      );
+      const missing = r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION');
+      expect(missing.map((f) => [f.sectionCode, f.severity]), kind).toEqual([['1.1', 'error']]);
+      expect(missing[0].message, kind).toMatch(/Form FDA 356h/);
+      // With the form filed, nothing of the original's Module 1 list is missing.
+      const withForm = computeDispatchReadiness(
+        [{ sectionCode: '1.1', title: 'Form FDA 356h', lifecycleOp: 'new', documentTable: 'rendered_leaf_files', documentId: 1 }],
+        opts,
+      );
+      expect(withForm.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION'), kind).toEqual([]);
     }
+    // A sequence numbered past 0000 with no type recorded is continuing too.
+    expect(readinessOptionsForSequence({ region: 'fda', type: null, sequenceNumber: '0004' }, 'bla', AS_OF).requiredByRegulation?.codes).toEqual(['1.1']);
+  });
+
+  it('a continuing sequence outside the US marketing and IND kinds is still not held to a Module 1 list', () => {
+    expect(readinessOptionsForSequence({ region: 'eu', type: 'variation', sequenceNumber: '0001' }, 'maa', AS_OF).requiredByRegulation).toBeUndefined();
+    expect(readinessOptionsForSequence({ region: 'jp', type: 'amendment', sequenceNumber: '0001' }, 'jnda', AS_OF).requiredByRegulation).toBeUndefined();
   });
 
   it('a region or kind the record does not model keeps the profile list as warnings, never errors', () => {

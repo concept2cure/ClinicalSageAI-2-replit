@@ -1,0 +1,25 @@
+# BASE c4da48c9a (git archive export, node_modules symlinked) — classification run
+# cmd: RLS_ENFORCE=off CI=true npx vitest run --config vitest.config.ts <files>
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed 96ms
+   → expected [ 'Focus on the safety endpoints' ] to deeply equal []
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 22ms
+   → expected [ 'list_platform_commands', …(3) ] to not include 'get_cmc_requirements'
+ Test Files  2 failed | 1 passed (3)
+      Tests  2 failed | 24 passed (26)
+
+# cmd: node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression
+    unclassified              : 0
+[ci:requestdb-coverage] 1 route(s) migrated off the shared pool — re-run with --write-baseline to ratchet the backlog down.
+[ci:requestdb-coverage] OK — no new shared-pool routes (227 current, 228 baseline)
+exit=0
+
+# insights-canvas-routes.ts on base imports the shared db?
+no shared-db import on base
+
+# BASE c4da48c9a: tests/schema-contract/biopharma-programs-router-columns.contract.test.ts
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+# BASE c4da48c9a: tests/routes/ind-forms-artifact-ident.test.ts (as committed there)
+ Test Files  1 passed (1)
+      Tests  9 passed (9)

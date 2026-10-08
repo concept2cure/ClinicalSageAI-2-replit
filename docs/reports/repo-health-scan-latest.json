@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T20:16:34.700Z",
+  "generatedAt": "2026-10-08T20:53:43.368Z",
   "git": {
-    "sha": "5d45de89a17653c43c894ea57c41277c04c257fe",
+    "sha": "5c4eef26358682de098edf4dfcfcc4c3336a672a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2064,7 +2064,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 371963
+        "bytes": 373126
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2072,7 +2072,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 277641
+        "bytes": 277896
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2255,12 +2255,12 @@
         "bytes": 101626
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "bytes": 101287
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "bytes": 101346
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 101142
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "bytes": 101287
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2282,7 +2282,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8231
+        "lines": 8248
       },
       {
         "file": "server/statistics-service.ts",
@@ -2290,7 +2290,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5905
+        "lines": 5910
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2466,7 +2466,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2162
+        "lines": 2166
       },
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
@@ -2605,12 +2605,12 @@
         "lines": 1853
       },
       {
-        "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
-        "lines": 1849
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1850
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 1846
+        "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
+        "lines": 1849
       },
       {
         "file": "server/routes/c2c/ai-editing.ts",

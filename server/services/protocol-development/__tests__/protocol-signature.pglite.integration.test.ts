@@ -71,6 +71,8 @@ const STRANGER = 10;
 const VIEWER = 11;
 /** An approver of ORG who authored nothing (P-18): who signs as "someone independent". */
 const SIGNER = 12;
+/** A manager of ORG: writes governed records, holds no signing authority. */
+const MANAGER = 13;
 
 let pglite: PGlite;
 const q = async (sql: string, params?: unknown[]) => {
@@ -133,10 +135,13 @@ beforeAll(async () => {
     INSERT INTO users (id, email, name) VALUES
       (${CREATOR},'c@e.test','Creator'), (${EDITOR},'e@e.test','Editor'),
       (${REVIEWER},'r@e.test','Dr. Reviewer'), (${STRANGER},'s@e.test','Stranger'), (${VIEWER},'v@e.test','Viewer'),
-      (${SIGNER},'a@e.test','Approver');
+      (${SIGNER},'a@e.test','Approver'), (${MANAGER},'m@e.test','Manager');
+    -- REVIEWER holds the reviewer role: a review is assigned only to someone
+    -- who can sign its disposition ("Protocol reviewers", follow-up decision).
     INSERT INTO organization_users (organization_id, user_id, role) VALUES
-      (${ORG},${CREATOR},'admin'), (${ORG},${EDITOR},'member'), (${ORG},${REVIEWER},'member'),
-      (${ORG},${VIEWER},'viewer'), (${OTHER_ORG},${STRANGER},'member'), (${ORG},${SIGNER},'approver');
+      (${ORG},${CREATOR},'admin'), (${ORG},${EDITOR},'member'), (${ORG},${REVIEWER},'reviewer'),
+      (${ORG},${VIEWER},'viewer'), (${OTHER_ORG},${STRANGER},'member'), (${ORG},${SIGNER},'approver'),
+      (${ORG},${MANAGER},'manager');
   `);
   await pglite.exec(migration('migrations/20260527_mutation_primitives.sql'));
   await pglite.exec(migration('db/migrations/20260730_c2c_ana_actions_command_vocab.sql'));
@@ -468,12 +473,46 @@ describe('the ceremony checks authorship before the act writes anything', () => 
 });
 
 describe('who a review can be assigned to', () => {
-  const input = (reviewerUserId: number | null) => ({ reviewerName: 'Dr. Reviewer', reviewerUserId, role: 'scientific' });
+  const input = (reviewerUserId: number | null, reviewerName = 'Dr. Reviewer') => ({ reviewerName, reviewerUserId, role: 'scientific' });
+  const assignmentsOn = async (docId: number) =>
+    Number((await q(`SELECT count(*)::int n FROM protocol_review_assignments WHERE protocol_document_id = $1`, [docId])).rows[0].n);
 
   it('a member who can sign', async () => {
     const { docId } = await protocol();
     const r = await assignReviewerTx(client, ORG, CREATOR, docId, input(REVIEWER));
     expect(r.role).toBe('scientific');
+  });
+
+  /* Follow-up decision "Protocol reviewers" (docs/LAUNCH_DEFINITION_OF_DONE.md):
+     the assignment admitted every writing role, so a member or a manager could
+     be assigned a review whose disposition the ceremony then refused with 403
+     ESIGNATURE_NO_AUTHORITY (505f71263). Nothing reassigns a review, so it
+     could never complete. The assignment now holds the reviewer to the
+     ceremony's own floor, before anything is written. */
+  it.each([
+    ['a member', EDITOR, 'Editor', 'member'],
+    ['a manager', MANAGER, 'Manager', 'manager'],
+  ])('not %s, whose role holds no signing authority: 409, in a plain sentence, and nothing is written', async (_who, userId, name, role) => {
+    const { docId } = await protocol();
+    const err = await assignReviewerTx(client, ORG, CREATOR, docId, input(userId, name)).catch((e) => e);
+    expect(err).toBeInstanceOf(ProtocolReviewError);
+    expect(err.code).toBe('REVIEWER_CANNOT_SIGN');
+    expect(err.message).toBe(
+      `That reviewer's role (${role}) does not permit signing, so they could not sign this review's disposition. ` +
+        'Assign someone who can sign, or name a reviewer who has no account here. Nothing was recorded.',
+    );
+    expect(await assignmentsOn(docId)).toBe(0);
+  });
+
+  it('assignable exactly when the signing ceremony would let them sign the disposition', async () => {
+    const { isSigningAuthorized } = await import('../../part11/signing-authority');
+    const accounts: Array<[number, string]> = [[CREATOR, 'Creator'], [EDITOR, 'Editor'], [REVIEWER, 'Dr. Reviewer'], [VIEWER, 'Viewer'], [SIGNER, 'Approver'], [MANAGER, 'Manager']];
+    for (const [userId, name] of accounts) {
+      const role = (await q(`SELECT role FROM organization_users WHERE organization_id = $1 AND user_id = $2`, [ORG, userId])).rows[0].role;
+      const { docId } = await protocol();
+      const assigned = await assignReviewerTx(client, ORG, CREATOR, docId, input(userId, name)).then(() => true, () => false);
+      expect(assigned, `${role} assignable`).toBe(isSigningAuthorized(role));
+    }
   });
 
   it('a named reviewer with no account', async () => {
@@ -491,9 +530,9 @@ describe('who a review can be assigned to', () => {
 
   it('not a viewer, who cannot sign', async () => {
     const { docId } = await protocol();
-    const err = await assignReviewerTx(client, ORG, CREATOR, docId, input(VIEWER)).catch((e) => e);
-    expect(err.code).toBe('BAD_INPUT');
-    expect(err.message).toMatch(/cannot sign/);
+    const err = await assignReviewerTx(client, ORG, CREATOR, docId, input(VIEWER, 'Viewer')).catch((e) => e);
+    expect(err.code).toBe('REVIEWER_CANNOT_SIGN');
+    expect(err.message).toMatch(/does not permit signing/);
   });
 
   it('the disposition reports the protocol version that was reviewed', async () => {

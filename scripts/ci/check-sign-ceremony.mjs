@@ -71,6 +71,21 @@
  * The baseline is exact: an entry above the current count fails too, so fixing a
  * site means lowering its entry, and a freed allowance cannot absorb a new site.
  *
+ * ── Signing authority (2026-10-08) ────────────────────────────────────────────
+ * Re-authentication proves who is signing; it never proves they may (§11.10(g)).
+ * QA j6 found the Gateway transmit re-verifying a manager's password under a
+ * "Release" meaning with no authority check, and the sweep that followed found
+ * six more handlers doing the same. So a second rule: every handler that calls
+ * verifyReauth / reverifySigner must also ask the platform's one signing policy
+ * in that handler — checkSigningAuthority (services/part11/signing-authority-gate),
+ * and since P-27 (2026-10-08) nothing else: isSigningAuthorized written out in
+ * the handler, and the three wrappers that once applied it (signingAuthorityRefusal
+ * in c2c/actions, assertSigningAuthority, refusedWithoutSigningAuthority in
+ * api/cmc/cmc-signer), no longer count and are deleted. A re-authentication
+ * that is not a signature (a rollback, a lock, a gateway-account change) is
+ * baselined under `authority` with the reason it signs nothing. Same limits as
+ * above: textual, per top-level handler, a helper's caller is not seen.
+ *
  * Usage:
  *   node scripts/ci/check-sign-ceremony.mjs            # fail on new sites
  *   node scripts/ci/check-sign-ceremony.mjs --list     # every site, with verdict
@@ -288,12 +303,61 @@ export function scanSource(src) {
   });
 }
 
+/**
+ * The platform's one signing-authority policy. Since 2026-10-08 (P-27) only the
+ * gate itself counts: the predicate written out in a handler, and the local
+ * wrappers that once applied it (signingAuthorityRefusal, assertSigningAuthority,
+ * refusedWithoutSigningAuthority), were copies that drifted — a failed role
+ * lookup answered 500 in one and threw in another, two read the role from the
+ * request, three asked after the password. They are deleted.
+ */
+const AUTHORITY = /\bcheckSigningAuthority\s*\(/;
+const REAUTH_CALL = /\b(?:verifyReauth|reverifySigner)\s*\(/g;
+
+/**
+ * Every call that re-verifies a signer, with whether its handler also asks the
+ * signing-authority policy. A declaration (`function verifyReauth(`) is not a call.
+ */
+export function scanAuthority(src) {
+  const code = stripComments(src);
+  const out = [];
+  REAUTH_CALL.lastIndex = 0;
+  let m;
+  while ((m = REAUTH_CALL.exec(code))) {
+    if (isDeclaration(code, m.index)) continue;
+    const body = handlerBody(code, m.index);
+    out.push({ line: lineOf(code, m.index), handlerLine: body.startLine, authority: AUTHORITY.test(body.text) });
+  }
+  return out;
+}
+
+/** Compare an authority scan to the baseline's `authority` section. Pure, like `evaluate`. */
+export function evaluateAuthority(scan, section) {
+  return evaluate(
+    Object.fromEntries(Object.entries(scan).map(([f, sites]) => [f, sites.map((x) => ({ ...x, ok: x.authority }))])),
+    section ?? { files: {} },
+  );
+}
+
 function serverFiles() {
   const out = execSync("git ls-files --cached --others --exclude-standard 'server/**/*.ts' 'server/*.ts'", { cwd: ROOT, encoding: 'utf8' });
   return out
     .split('\n')
     .filter(Boolean)
     .filter((f) => !/(^|\/)__tests__\//.test(f) && !/\.(test|spec|dbtest)\.ts$/.test(f) && !f.endsWith('.d.ts'));
+}
+
+export function scanRepoAuthority() {
+  const results = {};
+  for (const f of serverFiles()) {
+    const abs = path.join(ROOT, f);
+    if (!existsSync(abs)) continue;
+    const src = readFileSync(abs, 'utf8');
+    if (!/\b(?:verifyReauth|reverifySigner)\s*\(/.test(src)) continue;
+    const sites = scanAuthority(src);
+    if (sites.length) results[f] = sites;
+  }
+  return results;
 }
 
 export function scanRepo() {
@@ -335,12 +399,16 @@ export function evaluate(scan, baseline) {
 function main() {
   const args = process.argv.slice(2);
   const scan = scanRepo();
+  const authorityScan = scanRepoAuthority();
   if (args.includes('--list')) {
     for (const [f, sites] of Object.entries(scan)) {
       for (const s of sites) {
         const why = s.ok ? 'ok' : s.kind === 'approval-stamp' ? 'no signature row' : [!s.reauth && 'no signer re-verification', !s.signatureRow && 'no signature row'].filter(Boolean).join(', ');
         console.log(`${f}:${s.line}  ${s.kind}  ${why}`);
       }
+    }
+    for (const [f, sites] of Object.entries(authorityScan)) {
+      for (const s of sites) console.log(`${f}:${s.line}  re-authentication  ${s.authority ? 'ok' : 'no signing-authority check in its handler'}`);
     }
     return;
   }
@@ -351,7 +419,12 @@ function main() {
       const n = sites.filter((s) => !s.ok).length;
       if (n) files[f] = { count: n, reason: prior.files?.[f]?.reason ?? 'TODO: write why this file may keep an unceremonied sign write' };
     }
-    writeFileSync(BASELINE, JSON.stringify({ $note: prior.$note, files }, null, 2) + '\n');
+    const authorityFiles = {};
+    for (const [f, sites] of Object.entries(authorityScan)) {
+      const n = sites.filter((s) => !s.authority).length;
+      if (n) authorityFiles[f] = { count: n, reason: prior.authority?.files?.[f]?.reason ?? 'TODO: write why this re-authentication signs nothing, or fix it' };
+    }
+    writeFileSync(BASELINE, JSON.stringify({ $note: prior.$note, files, authority: { $note: prior.authority?.$note, files: authorityFiles } }, null, 2) + '\n');
     console.log(`[ci:sign-ceremony] wrote ${Object.keys(files).length} file(s) to the baseline. Replace every TODO with a reason.`);
     return;
   }
@@ -386,8 +459,31 @@ function main() {
     console.error('[ci:sign-ceremony] FAIL — the baseline allows more than exists. Lower these entries (or remove them at 0) so the freed allowance cannot absorb a new site:');
     for (const x of shrinkable) console.error(`  ✗ ${x.file}: ${x.count} now, baseline ${x.allowed}`);
   }
+  const authority = evaluateAuthority(authorityScan, baseline.authority);
+  if (authority.failures.length) {
+    failed = true;
+    console.error('[ci:sign-ceremony] FAIL — a signer re-verified with no signing-authority check in the same handler (§11.10(g)):');
+    for (const f of authority.failures) {
+      for (const s of f.sites) console.error(`  ✗ ${f.file}:${s.line}  (handler at line ${s.handlerLine})`);
+      if (f.allowed) console.error(`    ${f.file}: ${f.count} site(s), baseline allows ${f.allowed}.`);
+    }
+    console.error('\n  Identity is not authority. Ask checkSigningAuthority(userId, orgId)');
+    console.error('  (server/services/part11/signing-authority-gate.ts) before the password, or');
+    console.error('  baseline the file under `authority` with the reason the act signs nothing.');
+  }
+  if (authority.unreasoned.length) {
+    failed = true;
+    console.error('[ci:sign-ceremony] FAIL — `authority` baseline entries with no written reason:');
+    for (const f of authority.unreasoned) console.error(`  ✗ ${f}`);
+  }
+  if (authority.shrinkable.length) {
+    failed = true;
+    console.error('[ci:sign-ceremony] FAIL — the `authority` baseline allows more than exists. Lower these entries:');
+    for (const x of authority.shrinkable) console.error(`  ✗ ${x.file}: ${x.count} now, baseline ${x.allowed}`);
+  }
   if (failed) process.exit(1);
   console.log(`[ci:sign-ceremony] OK — no new sign write without the ceremony. ${baselined} baselined site(s) remain, exactly as baselined.`);
+  console.log(`[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; ${authority.baselined} baselined re-authentication(s) sign nothing, exactly as baselined.`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) main();

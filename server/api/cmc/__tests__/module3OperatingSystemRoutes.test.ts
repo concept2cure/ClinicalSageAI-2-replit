@@ -9,8 +9,10 @@ vi.mock('../../../services/cmc/project-membership', () => ({ projectBelongsToTen
 const mockRecordGoverned = vi.fn();
 // §11.10(g) gate; its role read is proven in cmc-sign-signature-row.test.ts.
 const mockRefusedAuthority = vi.fn();
-vi.mock('../cmc-signer', () => ({
-  refusedWithoutSigningAuthority: (...a: unknown[]) => mockRefusedAuthority(...a),
+// P-27 (2026-10-08): the route asks the platform's one policy directly
+// (cmc-signer's refusedWithoutSigningAuthority was deleted).
+vi.mock('../../../services/part11/signing-authority-gate', () => ({
+  checkSigningAuthority: (...a: unknown[]) => mockRefusedAuthority(...a),
 }));
 
 vi.mock('../../../db', () => ({
@@ -69,7 +71,7 @@ describe('module3OperatingSystemRoutes', () => {
     mockQuery.mockReset();
     mockQuery.mockResolvedValue({ rows: [] }); // unscripted reads (lineage drift): nothing found
     mockRefusedAuthority.mockReset();
-    mockRefusedAuthority.mockResolvedValue(false);
+    mockRefusedAuthority.mockResolvedValue(null);
     mockVerifyReauth.mockReset();
     mockVerifyReauth.mockResolvedValue({ ok: true });
     mockRecordGoverned.mockReset();

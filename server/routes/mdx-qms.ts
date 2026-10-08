@@ -91,8 +91,7 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome';
  */
 import { reverifySigner } from '../services/part11/reverify-signer';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
-import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
-import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import {
   approveQmsDocumentSigned,
   retireQmsDocumentSigned,
@@ -561,14 +560,22 @@ async function verifyApprovalSigner(
   body: Pick<z.infer<typeof approveBody>, 'password' | 'mfaToken'>,
   act = 'approving a controlled document',
 ): Promise<{ secondFactorVerified: boolean } | null> {
-  const signerRole = await resolveSignerOrgRole(userId, orgId);
-  if (!isSigningAuthorized(signerRole)) {
+  // The platform's one signing-authority policy (P-27, 2026-10-08). This
+  // route keeps its own refusal code and sentence; a role that cannot be read
+  // is the gate's 503 (it threw here before).
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority?.status === 403) {
     clientError(
       res,
       403,
       `Your role does not permit ${act} (21 CFR Part 11 §11.10(g)).`,
       { code: 'QMS_NO_SIGNING_AUTHORITY' },
     );
+    return null;
+  }
+  if (authority) {
+    // clientError's envelope; it takes no 5xx status.
+    res.status(authority.status).json({ error: authority.message, details: { code: authority.code } });
     return null;
   }
   // The platform's one signing ceremony: password, enrolled second factor and

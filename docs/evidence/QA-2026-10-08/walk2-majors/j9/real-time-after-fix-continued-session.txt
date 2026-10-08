@@ -1,0 +1,18 @@
+0.61m poll url /concept2cure/projects dialog 0
+1.11m poll url /concept2cure/projects dialog 0
+1.61m poll url /concept2cure/projects dialog 0
+2.11m poll url /concept2cure/projects dialog 0
+2.61m poll url /concept2cure/projects dialog 0
+3.11m poll url /concept2cure/projects dialog 0
+3.61m poll url /concept2cure/projects dialog 0
+4.12m poll url /concept2cure/projects dialog 0
+4.62m poll url /concept2cure/projects dialog 0
+5.12m poll url /concept2cure/projects dialog 0
+5.62m poll url /concept2cure/projects dialog 0
+6.12m poll url /concept2cure/projects dialog 0
+6.62m poll url /concept2cure/projects dialog 0
+7.12m poll url /concept2cure/projects dialog 0
+7.62m poll url /concept2cure/projects dialog 1
+8.12m poll url /concept2cure/projects dialog 1
+8.51m REQ POST /api/v1/auth/logout
+8.62m poll url /concept2cure/login?returnTo=%2Fconcept2cure%2Fprojects dialog 0

@@ -1,0 +1,29 @@
+# npm run test:ana, RLS_ENFORCE=off
+# Trimmed from the full run: passing test lines are counted per file below, not listed.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+ Test Files  4 passed (4)
+      Tests  303 passed (303)
+   Start at  13:07:05
+   Duration  28.60s (transform 15.01s, setup 146ms, import 10.26s, tests 17.23s, environment 0ms)
+
+## Per file (passed / failed / skipped)
+  22 / 0 / 0  tests/resolution/ana-orchestrator.test.ts
+   7 / 0 / 0  tests/routes/ana-ri-health.test.ts
+  18 / 0 / 0  tests/routes/ana-gap-analysis.test.ts
+ 256 / 0 / 0  server/services/__tests__/ana-ri.test.ts

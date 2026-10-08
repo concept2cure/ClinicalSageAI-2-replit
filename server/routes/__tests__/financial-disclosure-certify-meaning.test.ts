@@ -24,9 +24,14 @@ const h = vi.hoisted(() => ({
   recordGovernedAction: vi.fn(),
   persistGovernedActionSignature: vi.fn(),
   certifyDisclosureTx: vi.fn(),
+  signerRole: vi.fn(),
 }));
 
 vi.mock('../../db', () => ({ pool: { connect: (...a: unknown[]) => h.connect(...a) } }));
+// §11.10(g): the certifier's role, as the membership row holds it.
+vi.mock('../../services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: (...a: unknown[]) => h.signerRole(...a),
+}));
 vi.mock('../c2c/actions', () => ({
   verifyReauth: (...a: unknown[]) => h.verifyReauth(...a),
   recordGovernedAction: (...a: unknown[]) => h.recordGovernedAction(...a),
@@ -84,6 +89,7 @@ beforeEach(() => {
   h.recordGovernedAction.mockResolvedValue({ actionId: 'act-1', auditId: 'aud-1', sha256Chain: 'chain' });
   h.persistGovernedActionSignature.mockResolvedValue({ signatureId: 'sig-1' });
   h.certifyDisclosureTx.mockResolvedValue({ contentHash: 'hash', provenanceLinkId: 'prov' });
+  h.signerRole.mockResolvedValue('approver');
 });
 
 describe('certify: the meaning is required, and one of the governed meanings', () => {
@@ -110,5 +116,35 @@ describe('certify: the meaning is required, and one of the governed meanings', (
     expect(h.certifyDisclosureTx).toHaveBeenCalledWith(client, 7, 5, 12, 'responsibility');
     expect(h.recordGovernedAction.mock.calls[0][1].payload.meaning).toBe('responsibility');
     expect(h.persistGovernedActionSignature.mock.calls[0][1].payload.meaning).toBe('responsibility');
+  });
+});
+
+/* QA 2026-10-08 (j6 sweep): certifying a disclosure is an electronic signature
+   on a Form FDA 3454/3455 that ships in Module 1. The route re-authenticated the
+   certifier and wrote the signature row without asking whether their role may
+   sign, so a member's (or a manager's, P-18) password certified one. */
+describe('certify: signing authority (§11.10(g)) before the password', () => {
+  it.each(['manager', 'member'])('a %s is refused 403 ESIGNATURE_NO_AUTHORITY; no password is asked and nothing is opened', async (role) => {
+    h.signerRole.mockResolvedValue(role);
+    const res = await certify({ meaning: 'responsibility' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(res.body.error.message).toMatch(/Nothing was signed\.$/);
+    expect(h.signerRole).toHaveBeenCalledWith(5, 7);
+    expect(h.verifyReauth).not.toHaveBeenCalled();
+    expect(h.connect).not.toHaveBeenCalled();
+    expect(h.persistGovernedActionSignature).not.toHaveBeenCalled();
+  });
+
+  it('a role lookup that cannot run refuses 503, names no cause, and asks for no password', async () => {
+    h.signerRole.mockRejectedValue(new Error('organization_users unreadable: secret-detail'));
+    const res = await certify({ meaning: 'responsibility' });
+
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('SIGNING_AUTHORITY_UNVERIFIED');
+    expect(JSON.stringify(res.body)).not.toContain('secret-detail');
+    expect(h.verifyReauth).not.toHaveBeenCalled();
+    expect(h.connect).not.toHaveBeenCalled();
   });
 });

@@ -34,6 +34,9 @@ vi.mock('../../../services/ana/run-control.js', async (importOriginal) => ({
     lookups.push({ runId, orgId });
     return pending;
   }),
+  // A refused lookup asks whether the run is held for someone else in the org
+  // (403) or not held at all (404); in this file's cases it is never held.
+  isRunAwaitingApproval: vi.fn(async () => false),
   recordApprovalDecision: vi.fn(async (_c: unknown, runId: string, orgId: number, d: { decided: string }) => {
     writes.push({ runId, orgId, decided: d.decided });
     return true;

@@ -1,0 +1,7 @@
+ × client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > a pack lists only the types an engine computes — no not-computed tile inside it 5121ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > ReportGovernance — the register publishes itself honestly > a FAILED register read publishes the failure, never an empty org 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage at all over a FAILED portfolio read 74ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > a pack lists only the types an engine computes — no not-computed tile inside it
+ Test Files  1 failed | 55 passed (56)
+      Tests  1 failed | 418 passed (419)

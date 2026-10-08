@@ -1,0 +1,18 @@
+# Every golden journey (tests/**/*journey*.test.ts) and tests/lineage; RLS_ENFORCE=off
+# Trimmed: passing tests counted per file, failures (if any) listed in full.
+ Test Files  13 passed (13)
+      Tests  80 passed (80)
+
+      3 tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts
+     10 tests/golden-journeys/__tests__/journey-schema-gaps.test.ts
+      1 tests/golden-journeys/cer-eu-mdr.journey.test.ts
+      1 tests/golden-journeys/device-510k-estar.journey.test.ts
+      1 tests/golden-journeys/drug-nda-ectd.journey.test.ts
+      1 tests/golden-journeys/haq-correction.journey.test.ts
+      1 tests/golden-journeys/ind-authoring.journey.test.ts
+      1 tests/golden-journeys/marketing-application.journey.test.ts
+      1 tests/golden-journeys/submission-export-package.journey.test.ts
+      1 tests/golden-journeys/submission-export-validation.journey.test.ts
+      1 tests/golden-journeys/submission-release-signature.journey.test.ts
+     15 tests/lineage/founder-path-lineage.pglite.test.ts
+     43 tests/module3-e2e-journey.test.ts

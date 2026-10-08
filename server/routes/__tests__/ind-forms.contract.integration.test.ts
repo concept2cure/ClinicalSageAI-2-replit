@@ -1053,3 +1053,93 @@ describe('the listing is scoped to the program', () => {
     expect(await leafRows(sequenceId!)).toHaveLength(0);
   });
 });
+
+/* QA 2026-10-08 (second walk, j7). Attaching the product's OWN unedited 1571
+   and 1572 PDFs marked both forms COMPLETE on the IND checklist — although
+   Build & check reported required fields missing on each — and moved PLR-606's
+   readiness from 0% to 8%. An attached PDF is an attachment; a form is complete
+   only when the forms engine finds no required field missing (Rule 2). The
+   check is recorded with the attachment (rendered_leaf_files.
+   required_fields_missing), from two deterministic sources: the build over the
+   program's record and what the person stated (Build & check), and — when the
+   bytes ARE the platform's own render of that build — the required boxes that
+   render leaves blank. */
+describe('an attached form counts as complete only when the forms engine finds nothing required missing', () => {
+  const SPONSOR_ADDRESS = '1 Harbor Way, Boston MA';
+  async function seedIndWithFacts(code: string) {
+    await seedProgram({ code, name: `${code} (IND)`, productName: `Product ${code}`, indication: 'Ovarian cancer' });
+    const facts = await request(app).put('/api/ind-forms/program-facts')
+      .send({ projectIdent: code, sponsorAddress: SPONSOR_ADDRESS, indType: 'Commercial IND' });
+    expect(facts.status, JSON.stringify(facts.body)).toBe(200);
+    return seedSpine({ title: `${code} (IND)`, productName: `Product ${code}` });
+  }
+  const storedCheck = async (leafId: number) =>
+    (await harness.pglite.query(
+      `SELECT f.required_fields_missing FROM rendered_leaf_files f
+         JOIN submission_leaves l ON l.document_id = f.id AND l.document_table = 'rendered_leaf_files'
+        WHERE l.id = $1`, [leafId],
+    )).rows[0] as { required_fields_missing: string[] | null } | undefined;
+  const checklistForm = async (submissionId: number, formId: string) => {
+    const { assembleOrgIndChecklists } = await import('../../services/ind-lifecycle/ind-checklist-view-assembler');
+    const rows = await assembleOrgIndChecklists(1);
+    const row = rows.find((r) => r.submissionId === submissionId) as { forms: Array<{ id: string; done: boolean }> } | undefined;
+    return row?.forms.find((f) => f.id === formId);
+  };
+
+  it('the product’s own unedited 1572: attached, not complete — the investigator, facility and IRB are missing', async () => {
+    const { submissionId, sequenceId } = await seedIndWithFacts('BX-960');
+    const pdf = await request(app).post('/api/ind-forms/FDA_1572/pdf').send({ projectIdent: 'BX-960' })
+      .buffer(true).parse((res, cb) => { const c: Buffer[] = []; res.on('data', (d: Buffer) => c.push(d)); res.on('end', () => cb(null, Buffer.concat(c))); });
+    expect(pdf.status).toBe(200);
+    const res = await request(app).post('/api/ind-forms/FDA_1572/official-upload')
+      .field('projectIdent', 'BX-960').field('sequenceId', String(sequenceId))
+      .attach('file', pdf.body as Buffer, { filename: 'FDA-1572.pdf', contentType: 'application/pdf' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect((await checklistForm(submissionId, 'FDA_1572'))?.done, 'the checklist counts the unedited 1572 as complete').toBe(false);
+    expect(res.body.complete).toBe(false);
+    expect(res.body.requiredFieldsMissing).toEqual(expect.arrayContaining(['investigator_name', 'facility_name', 'irb_name']));
+    expect((await storedCheck(res.body.leafId))?.required_fields_missing).toEqual(res.body.requiredFieldsMissing);
+  }, 30_000);
+
+  it('the product’s own unedited 1571, phase stated: not complete — the IND type and phase boxes are blank on that file', async () => {
+    const { submissionId, sequenceId } = await seedIndWithFacts('BX-961');
+    const pdf = await request(app).post('/api/ind-forms/FDA_1571/pdf').send({ projectIdent: 'BX-961', studyPhase: 'Phase 1' })
+      .buffer(true).parse((res, cb) => { const c: Buffer[] = []; res.on('data', (d: Buffer) => c.push(d)); res.on('end', () => cb(null, Buffer.concat(c))); });
+    expect(pdf.status).toBe(200);
+    const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-961').field('sequenceId', String(sequenceId)).field('studyPhase', 'Phase 1')
+      .attach('file', pdf.body as Buffer, { filename: 'FDA-1571.pdf', contentType: 'application/pdf' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect((await checklistForm(submissionId, 'FDA_1571'))?.done, 'the checklist counts the unedited 1571 as complete').toBe(false);
+    expect(res.body.complete).toBe(false);
+    expect(res.body.requiredFieldsMissing).toEqual(expect.arrayContaining(['ind_type', 'phase_of_study']));
+  }, 30_000);
+
+  it('a signed 1571 whose phase nobody stated: not complete — Build & check’s missing field', async () => {
+    const { submissionId, sequenceId } = await seedIndWithFacts('BX-962');
+    const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-962').field('sequenceId', String(sequenceId))
+      .attach('file', SIGNED_PDF, 'signed-1571.pdf');
+    expect(res.status).toBe(201);
+    expect((await checklistForm(submissionId, 'FDA_1571'))?.done, 'the checklist counts a 1571 with no phase as complete').toBe(false);
+    expect(res.body.requiredFieldsMissing).toEqual(['phase_of_study']);
+    expect(res.body.complete).toBe(false);
+  });
+
+  it('a signed 1571 with every required field recorded or stated: complete, and the checklist says so', async () => {
+    const { submissionId, sequenceId } = await seedIndWithFacts('BX-963');
+    const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-963').field('sequenceId', String(sequenceId)).field('studyPhase', 'Phase 1')
+      .attach('file', SIGNED_PDF, 'signed-1571.pdf');
+    expect(res.status).toBe(201);
+    expect(res.body.requiredFieldsMissing).toEqual([]);
+    expect(res.body.complete).toBe(true);
+    expect((await storedCheck(res.body.leafId))?.required_fields_missing).toEqual([]);
+    expect((await checklistForm(submissionId, 'FDA_1571'))?.done).toBe(true);
+    // The listing carries the check with the placement.
+    const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-963' });
+    expect(listed.body.placements).toEqual([
+      expect.objectContaining({ formId: 'FDA_1571', requiredFieldsMissing: [] }),
+    ]);
+  });
+});

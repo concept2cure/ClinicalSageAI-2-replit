@@ -52,7 +52,9 @@ const leaf = (ctdSection: string, fileName: string, md5: string, operation = 'ne
 });
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  // The program spine: an export names the organisation and the project's
+  // recorded application number, or it is not built (package-identity.ts, QA j6).
+  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true });
   holder.db = harness.db;
   holder.pglite = harness.pglite;
   await harness.pglite.exec(`
@@ -60,6 +62,9 @@ beforeAll(async () => {
       id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT,
       sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW()
     );
+    INSERT INTO organizations (id, name) VALUES (${ORG}, 'Rehearsal Sponsor Inc.');
+    INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_name, application_number)
+      VALUES ('0e000000-0000-4000-8000-0000000000e1', ${ORG}, 'Rehearsal IND', 'RH-1', 'IND', 'Rehearsalinib', '000101');
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1, 'unfiled original', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (2, 'rehearsal row later sent', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
@@ -68,6 +73,7 @@ beforeAll(async () => {
       (1, 1, 'fda', '0000', ${ORG}, ${USER}, NULL), (2, 1, 'fda', '0001', ${ORG}, ${USER}, NULL),
       (3, 2, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (4, 2, 'fda', '0001', ${ORG}, ${USER}, 'sent'),
       (5, 3, 'fda', '0000', ${ORG}, ${USER}, NULL), (6, 3, 'fda', '0001', ${ORG}, ${USER}, NULL);
+    UPDATE submissions SET program_id = '0e000000-0000-4000-8000-0000000000e1' WHERE id = 1;
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
       (200, ${ORG}, 'Drug Substance General', '<p>v2</p>', '3.2', 'approved'),
       (201, ${ORG}, 'Superseded Specification', '<p>old</p>', '3.2', 'approved'),

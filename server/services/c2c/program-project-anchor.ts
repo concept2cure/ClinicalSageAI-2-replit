@@ -77,6 +77,13 @@ export interface EnsureAnchorInput {
   code: string | null;
   /** regulatory_programs.priority, verbatim. */
   priority: string;
+  /**
+   * `projects.metadata` for the new row: the registry context the readiness
+   * engine reads (services/c2c/program-registry-context.ts), or null when the
+   * program names none. Written only on insert; an existing anchor keeps its
+   * own (its context comes from migrations/20261008c, Rule 1).
+   */
+  metadata?: Record<string, unknown> | null;
 }
 
 interface PreflightRow {
@@ -145,7 +152,7 @@ interface PreflightRow {
  * the way out; refusing the program is.
  */
 export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Promise<AnchorResult> {
-  const { client, orgId, userId, programId, name, code, priority } = input;
+  const { client, orgId, userId, programId, name, code, priority, metadata } = input;
 
   // One round trip for both preconditions. The column presence check comes
   // FIRST and is read from the catalog rather than discovered by a failed
@@ -232,13 +239,17 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
   // unmaterialized path as a supported state (it falls back to the bare id in
   // its prefix scans and can recompute on demand). Writing a path here would
   // assert a hierarchy position nothing established.
+  // `metadata` carries the registry context the readiness engine reads
+  // (projects.metadata.registryId / submissionType, report-os orchestrator).
+  // Intake wrote none, so no program's readiness could ever be computed there
+  // (QA 2026-10-08, j8). NULL when the program names no registry entry.
   const inserted = await client.query<{ id: number | string }>(
     `INSERT INTO projects
        (organization_id, client_workspace_id, name, code, type, status, priority,
-        created_by_id, owner_id, regulatory_program_id)
-     VALUES ($1, $2, $3, $4, 'regulatory', 'active', $5, $6, $6, $7)
+        created_by_id, owner_id, regulatory_program_id, metadata)
+     VALUES ($1, $2, $3, $4, 'regulatory', 'active', $5, $6, $6, $7, $8::json)
      RETURNING id`,
-    [orgId, workspaceId, name, code, priority, userId, programId],
+    [orgId, workspaceId, name, code, priority, userId, programId, metadata ? JSON.stringify(metadata) : null],
   );
   return { projectId: Number(inserted.rows[0].id), created: true };
 }

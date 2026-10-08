@@ -21,7 +21,7 @@ import {
   type SignerReverification,
 } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
-import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services/part11/signing-authority-gate';
 import {
   advanceDocument,
   assertCanonicalIdentity,
@@ -141,12 +141,32 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
    *    applySignature binding, citing whatever `signatureRef` the request body
    *    supplied.
    *
-   * The identity is the authenticated user or nothing (401); the role is the
-   * server's reading (resolveUserRole), never the body's; the role must carry
-   * signing authority (§11.10(g), the same policy every signing route uses);
-   * then the signer re-verifies. Writes the response and returns null on any
+   * The identity is the authenticated user or nothing (401); authority
+   * (§11.10(g)) is the platform's one policy, checkSigningAuthority, which
+   * reads the role from the membership row — until 2026-10-08 (P-27) this
+   * judged the request's role (resolveUserRole), which the membership
+   * resolver's own header calls unreliable on signing routes; then the signer
+   * re-verifies. The role recorded on the signature is still the request's
+   * reading, never the body's. Writes the response and returns null on any
    * refusal.
    */
+  /*
+   * The authority answer, read BEFORE the handler opens its transaction
+   * (askSigningAuthority). checkSigningAuthority reads the membership row on
+   * the runtime pool, not on the handler's transaction; asked inside it, that
+   * read holds a second connection while the document's row lock is held, and
+   * on a single-connection database (the founder-path lineage world, PGlite)
+   * it waits on the transaction forever — hop 6b hung there after P-27. The
+   * answer is the same; only when it is read moves.
+   */
+  const askedAuthority = new WeakMap<Request, SigningAuthorityRefusal | null>();
+  async function askSigningAuthority(req: Request): Promise<void> {
+    const userId = resolveUserId(req);
+    const orgId = resolveOrgId(req);
+    if (userId === null || orgId === null) return;
+    askedAuthority.set(req, await checkSigningAuthority(userId, orgId));
+  }
+
   async function reverifiedSigner(
     req: Request,
     res: Response,
@@ -156,15 +176,19 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       res.status(401).json({ ok: false, error: 'AUTH_REQUIRED' });
       return null;
     }
-    const role = resolveUserRole(req);
-    if (!isSigningAuthorized(role)) {
-      res.status(403).json({
-        ok: false,
-        error: 'ESIGNATURE_NO_AUTHORITY',
-        message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-      });
+    const orgId = resolveOrgId(req);
+    if (orgId === null) {
+      res.status(401).json({ ok: false, error: 'AUTH_REQUIRED' });
       return null;
     }
+    const authority = askedAuthority.has(req)
+      ? (askedAuthority.get(req) ?? null)
+      : await checkSigningAuthority(userId, orgId);
+    if (authority) {
+      res.status(authority.status).json({ ok: false, error: authority.code, message: authority.message });
+      return null;
+    }
+    const role = resolveUserRole(req);
     const verdict = await reverify(userId, { password: req.body?.password, mfaToken: req.body?.mfaToken });
     if (!verdict.ok) {
       res.status(verdict.status).json({ ok: false, error: verdict.code, message: verdict.error });
@@ -447,6 +471,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     if (noReason) return res.status(400).json(noReason);
     const reason = String(req.body.reason).trim();
     const id = String(req.params.id);
+    if (meaning === 'reviewed') await askSigningAuthority(req);
 
     let outcome: Outcome;
     try {
@@ -519,6 +544,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     const noReason = to === 'approved' ? reasonRefusal(req.body?.reason) : null;
     if (noReason) return res.status(400).json(noReason);
     const id = String(req.params.id);
+    if (to === 'approved') await askSigningAuthority(req);
 
     let outcome: Outcome;
     try {

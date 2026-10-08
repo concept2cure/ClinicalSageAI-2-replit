@@ -1,0 +1,40 @@
+# Scoped tsc: npx tsc -p <scratch>/tsconfig.scoped.json
+# A tsconfig extending the repo's tsconfig.json (noEmit), whose files are the 20 TypeScript files this change touches
+# (listed below) plus the ambient declarations (client/src/types, shared/types, server/types, vite/client, vitest/globals).
+# exit=2: three diagnostics, none in a file this change touches. They are the Express Request augmentation
+# (req.dbClient) that a scoped program does not load, the same three earlier passes recorded.
+
+server/middleware/establishRequestTenantScope.ts(163,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(165,9): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(228,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+
+# Files:
+server/services/ectd/assess-dispatch-readiness.ts
+server/services/protocol-reviews/protocol-reviews-service.ts
+server/routes/protocol-reviews.ts
+server/routes/tenant-users.ts
+server/routes/report-os.ts
+client/src/concept2cure/v2/surfaces/ProtocolDevWrites.ts
+client/src/concept2cure/v2/surfaces/Insights.tsx
+server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+server/routes/__tests__/report-os-finalize-signature.test.ts
+tests/db/report-os-registry-seed.dbtest.ts
+tests/db/protocol-reviewer-signing-authority.dbtest.ts
+client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx
+client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx
+client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx
+client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx
+client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx
+client/src/concept2cure/v2/__tests__/protocolReviewerPickerSigners.test.tsx
+
+# Made to fail: the same program (19 files at the time) plus a planted file using this change's ProtocolReviewError union.
+# 'REVIEWER_CANNOT_SIGN' is accepted; 'NOT_A_CODE' is refused (line 4):
+// Planted: the scoped program must type-check this change's own types.
+import { ProtocolReviewError } from '<repo>/server/services/protocol-reviews/protocol-reviews-service';
+export const accepted = new ProtocolReviewError('REVIEWER_CANNOT_SIGN', 'the new code is in the union');
+export const refused = new ProtocolReviewError('NOT_A_CODE', 'a code outside the union must fail');
+
+../../..<scratch>/tscplant/planted.ts(4,48): error TS2345: Argument of type '"NOT_A_CODE"' is not assignable to parameter of type '"NOT_FOUND" | "INVALID_STATE" | "FORBIDDEN" | "BAD_INPUT" | "REVIEWER_CANNOT_SIGN"'.

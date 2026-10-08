@@ -1,0 +1,15 @@
+                    id                    |  status  | stopped_reason | run_policy | thread_stamped | user_message_id | timeline_seq | released | owned 
+------------------------------------------+----------+----------------+------------+----------------+-----------------+--------------+----------+-------
+ run_8ab6b0f9-2f37-46a9-87e6-fadfe16454a6 | finished | no_more_tools  | auto       | t              |              21 |            9 | t        | t
+(1 row)
+
+ mirror_rows_left 
+------------------
+                0
+(1 row)
+
+ outcome  | record_timeline_events 
+----------+------------------------
+ answered |                      9
+(1 row)
+

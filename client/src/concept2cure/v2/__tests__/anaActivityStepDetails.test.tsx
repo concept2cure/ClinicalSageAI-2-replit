@@ -130,7 +130,7 @@ describe('S3 test 6 — the engine glyph needs the capture to have seen no model
     status: 'success',
     source: 'engine',
     usedModel,
-    facts: usedModel ? [{ name: 'Model', value: 'a model wrote part of this result' }] : [],
+    facts: usedModel ? [{ name: 'Model', value: 'a model was used in this step' }] : [],
   });
 
   /** The markup of the engine glyph, to compare a row's glyph against. */
@@ -147,7 +147,7 @@ describe('S3 test 6 — the engine glyph needs the capture to have seen no model
     expect(showsEngineGlyph(engine(true))).toBe(false);
     const { container } = render(<AnaActivity streaming toolCalls={[engine(true)]} />);
     expect(glyphOf(container)).not.toBe(glyph);
-    expect(openedDetails(container)).toContain('Model: a model wrote part of this result');
+    expect(openedDetails(container)).toContain('Model: a model was used in this step');
   });
 
   it('control: the same step whose capture saw no model shows the engine glyph', () => {

@@ -1,0 +1,10 @@
+# mutation: seal-without-await
+# test: server/services/ana/__tests__/run-events.pglite.test.ts -t "3. flush"
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 3. flush, then seal > events emitted just before the end are all in the mirror before the record is inserted 165ms
+ × server/services/ana/__tests__/run-events.pglite.test.ts > 3. flush, then seal > a close that cannot write marks the gap, and the record is sealed anyway 118ms
+   → expected +0 to be 9 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-events.pglite.test.ts > 3. flush, then seal > a close that cannot write marks the gap, and the record is sealed anyway
+AssertionError: expected +0 to be 9 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 14 skipped (16)

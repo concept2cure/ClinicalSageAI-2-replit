@@ -364,12 +364,47 @@ function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
   );
 }
 
-// GET /api/coauthor/documents → { documents } (coauthor_documents rows).
+// GET /api/coauthor/documents → { documents, total, returned, offset } (coauthor_documents rows).
 interface CoauthorDocRow {
   id: number;
   title: string;
   moduleNumber: string | null; // e.g. "3.2.S.4.1" — prefills the section code
   status: string;
+}
+interface CoauthorDocPage {
+  documents: CoauthorDocRow[];
+  /** The organization's count under the page's own search; absent from an older server. */
+  total?: number;
+}
+
+/** The list's page size (the route's default). */
+const DOC_PAGE = 50;
+
+/** The co-author list read: `q` searches title and module number, `offset` pages. */
+function coauthorDocsPath(query: string, offset: number): string {
+  const params = new URLSearchParams();
+  if (query) params.set('q', query);
+  if (offset > 0) params.set('offset', String(offset));
+  const qs = params.toString();
+  return `/api/coauthor/documents${qs ? `?${qs}` : ''}`;
+}
+
+/**
+ * What the picker shows of the list. QA 2026-10-08 (j6): it listed 50 of 53
+ * documents and said nothing, so three could not be placed. Never silent: the
+ * count it shows of how many there are, or that every one is shown.
+ */
+function docCoverage(shown: number, total: number | null, query: string): string {
+  if (query) {
+    if (total === null) return `${shown} document${shown === 1 ? '' : 's'} shown for “${query}”.`;
+    return shown < total
+      ? `${shown} of ${total} documents matching “${query}” shown.`
+      : `${total} document${total === 1 ? ' matches' : 's match'} “${query}”.`;
+  }
+  if (total === null) return `${shown} documents shown; the server did not say how many there are, so search if one is missing.`;
+  return shown < total
+    ? `${shown} of ${total} documents shown, most recently updated first. Search by title or module number, or show more.`
+    : `All ${total} documents shown.`;
 }
 
 /** What a leaf write answers beyond the row: a no-op, or a status it moved. */
@@ -434,6 +469,104 @@ function lifecycleOpNote(seq: SeqRow, op: string): string {
   return `${SC_LIFECYCLE_OPS[op]?.l ?? op} acts on the leaf already filed for this same document in this section, in an earlier sequence that was sent. It is bound when the package is assembled; the freeze check refuses one that binds to no filed leaf, before anyone signs.`;
 }
 
+/**
+ * The co-author documents the Builder can place, read a page at a time:
+ * `search` as typed, asked of the server (`q`) once typing pauses; `showMore`
+ * reads the next page (`offset`) of the same list, and a new search starts over.
+ */
+function useCoauthorDocList(open: boolean) {
+  const [search, setSearch] = React.useState('');
+  const [query, setQuery] = React.useState('');
+  React.useEffect(() => {
+    const t = setTimeout(() => setQuery(search.trim()), 250);
+    return () => clearTimeout(t);
+  }, [search]);
+  const docsPath = open ? coauthorDocsPath(query, 0) : null;
+  const docs = useLiveData<CoauthorDocPage>(docsPath, [docsPath], hasKeys<CoauthorDocPage>('documents'));
+  const [more, setMore] = React.useState<{ forPath: string | null; rows: CoauthorDocRow[]; loading: boolean; error: boolean }>({
+    forPath: null,
+    rows: [],
+    loading: false,
+    error: false,
+  });
+  const extra = more.forPath === docsPath ? more : { rows: [] as CoauthorDocRow[], loading: false, error: false };
+  const rows = [...(Array.isArray(docs.data?.documents) ? docs.data.documents : []), ...extra.rows];
+  const total = typeof docs.data?.total === 'number' ? docs.data.total : null;
+  const showMore = async () => {
+    if (extra.loading || !docsPath) return;
+    const forPath = docsPath;
+    setMore({ forPath, rows: extra.rows, loading: true, error: false });
+    const r = await liveGetOrNull<CoauthorDocPage>(coauthorDocsPath(query, rows.length), hasKeys<CoauthorDocPage>('documents'));
+    const next = Array.isArray(r.data?.documents) ? r.data.documents : null;
+    setMore((m) =>
+      m.forPath !== forPath ? m : { forPath, rows: next ? [...m.rows, ...next] : m.rows, loading: false, error: next === null },
+    );
+  };
+  // The organization has none at all: nothing to search either.
+  const noneAtAll = !query && !docs.loading && !docs.error && docs.data !== null && rows.length === 0;
+  return { search, setSearch, query, docs, rows, total, more: extra, showMore, noneAtAll };
+}
+
+type CoauthorDocList = ReturnType<typeof useCoauthorDocList>;
+
+/** The search box, the document select, and how much of the list it shows — never a silent cut-off. */
+function CoauthorDocField({ list, doc, onChoose }: { list: CoauthorDocList; doc: CoauthorDocRow | null; onChoose: (d: CoauthorDocRow | null) => void }) {
+  const { rows, total, query, docs, more } = list;
+  // The chosen document stays offered when a later search no longer lists it.
+  const options = doc && !rows.some((d) => d.id === doc.id) ? [doc, ...rows] : rows;
+  return (
+    <>
+      <div className="sc-field">
+        <label htmlFor="sc-leaf-doc-find">Find a document</label>
+        <input
+          id="sc-leaf-doc-find"
+          className="sc-subpick"
+          type="search"
+          placeholder="Title or module number, e.g. 4.2.2"
+          value={list.search}
+          onChange={(e) => list.setSearch(e.target.value)}
+        />
+      </div>
+      <div className="sc-field">
+        <label htmlFor="sc-leaf-doc">Source document</label>
+        {options.length === 0 ? (
+          <span id="sc-leaf-doc" className="sp-row-s" role="status">
+            {docs.loading ? 'Searching…' : `No Co-Author document matches “${query}”.`}
+          </span>
+        ) : (
+          <select
+            id="sc-leaf-doc"
+            className="sc-subpick"
+            value={doc?.id ?? ''}
+            aria-describedby="sc-leaf-doc-coverage"
+            onChange={(e) => onChoose(options.find((x) => x.id === Number(e.target.value)) ?? null)}
+          >
+            <option value="">Choose a document…</option>
+            {options.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.title}
+                {d.moduleNumber ? ` · ${d.moduleNumber}` : ''} · {d.status}
+              </option>
+            ))}
+          </select>
+        )}
+        {rows.length > 0 && (
+          <span id="sc-leaf-doc-coverage" className="sp-row-s" role="status">
+            {docs.loading ? 'Searching… ' : ''}
+            {docCoverage(rows.length, total, query)}
+            {more.error ? ' The next documents could not be read; try again.' : ''}
+          </span>
+        )}
+        {total !== null && rows.length < total && (
+          <button type="button" className="sc-trans-b" disabled={more.loading} onClick={() => void list.showMore()}>
+            {more.loading ? 'Reading…' : `Show ${Math.min(DOC_PAGE, total - rows.length)} more`}
+          </button>
+        )}
+      </div>
+    </>
+  );
+}
+
 /** Place a Co-Author document into the sequence as a leaf — a REAL persisted
  *  PUT (upsertLeaf), sourced from the real coauthor_documents list. No source
  *  document, no leaf: the picker never invents a document to place. */
@@ -442,19 +575,14 @@ function AddLeafForm({ seq, onDone }: { seq: SeqRow; onDone: (n: Notice, effect:
   const original = isOriginalSequence(seq);
   const opsOffered = Object.entries(SC_LIFECYCLE_OPS).filter(([v]) => !original || v === 'new');
   const [open, setOpen] = React.useState(false);
-  const docsPath = open ? '/api/coauthor/documents' : null;
-  const docs = useLiveData<{ documents: CoauthorDocRow[] }>(
-    docsPath,
-    [docsPath],
-    hasKeys<{ documents: CoauthorDocRow[] }>('documents'),
-  );
-  const docRows = Array.isArray(docs.data?.documents) ? docs.data.documents : [];
-  const [docId, setDocId] = React.useState<number | null>(null);
+  const list = useCoauthorDocList(open);
+  const { docs } = list;
+  // The chosen document, kept when a later search no longer lists it.
+  const [doc, setDoc] = React.useState<CoauthorDocRow | null>(null);
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
   const [reason, setReason] = React.useState('');
   const [saving, setSaving] = React.useState(false);
-  const doc = docRows.find((d) => d.id === docId) ?? null;
   const effectiveOp = original ? 'new' : op;
 
   if (!open) {
@@ -482,7 +610,7 @@ function AddLeafForm({ seq, onDone }: { seq: SeqRow; onDone: (n: Notice, effect:
     const answer = placementAnswer(seq, doc.title, r);
     onDone(answer.notice, answer.effect);
     if (r.data && typeof r.data.id === 'number') {
-      setDocId(null);
+      setDoc(null);
       setSection('');
       setReason('');
     }
@@ -490,41 +618,27 @@ function AddLeafForm({ seq, onDone }: { seq: SeqRow; onDone: (n: Notice, effect:
 
   return (
     <div className="sc-mt">
-      {docs.loading ? (
+      {docs.loading && docs.data === null ? (
         <div role="status" className="scaf-note">Loading the Co-Author documents…</div>
       ) : docs.error ? (
         <div className="sc-verdict tone-err" role="status">
           Couldn&#39;t load the Co-Author documents — {redactInternals(docs.error, 'the read did not settle')}. Nothing to place.
         </div>
-      ) : docRows.length === 0 ? (
+      ) : list.noneAtAll ? (
         <div className="scaf-note">
           No Co-Author documents in this organization. Place a document from the
           editor or the Vault instead (below).
         </div>
       ) : (
         <div className="sc-leafform">
-          <div className="sc-field">
-            <label htmlFor="sc-leaf-doc">Source document</label>
-            <select
-              id="sc-leaf-doc"
-              className="sc-subpick"
-              value={docId ?? ''}
-              onChange={(e) => {
-                const id = Number(e.target.value);
-                const d = docRows.find((x) => x.id === id) ?? null;
-                setDocId(d ? id : null);
-                if (d?.moduleNumber && !section.trim()) setSection(d.moduleNumber);
-              }}
-            >
-              <option value="">Choose a document…</option>
-              {docRows.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.title}
-                  {d.moduleNumber ? ` · ${d.moduleNumber}` : ''} · {d.status}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CoauthorDocField
+            list={list}
+            doc={doc}
+            onChoose={(d) => {
+              setDoc(d);
+              if (d?.moduleNumber && !section.trim()) setSection(d.moduleNumber);
+            }}
+          />
           <div className="sc-field">
             <label htmlFor="sc-leaf-section">Section code</label>
             <input
@@ -1367,6 +1481,9 @@ export interface TransmitReadiness {
   route: { ok: true; region: string; gateway: string } | { ok: false; reason: string };
   configured: { staging: boolean | null; production: boolean | null };
   recordedApplicationNumber: string | null;
+  /** The organisation's recorded name, which the package names as the applicant
+   *  (absent from a server older than QA 2026-10-08 j6). */
+  recordedApplicant?: string | null;
   gate: { cleared: boolean; blockers: string[] };
   refusal: string | null;
 }
@@ -1437,9 +1554,13 @@ function PackageDownload({ sub, seq }: { sub: SubLike; seq: SeqRow }) {
   );
 }
 
-/** Where the transmit would go and with which credentials, as the server answered. */
+/** Where the transmit would go, with which credentials, and what the package
+ *  names as its applicant and application — all as the server answered, from
+ *  the record (QA 2026-10-08 j6: never a placeholder, never the program code). */
 function TransmitFacts({ t }: { t: TransmitReadiness }) {
   const rows: Array<[string, string]> = [
+    ['Applicant', t.recordedApplicant ?? 'not recorded'],
+    ['Application number', t.recordedApplicationNumber ?? 'not recorded'],
     ['Gateway', t.route.ok ? `${gatewayLabel(t.route.gateway)} (${t.route.region.toUpperCase()})` : 'none for this filing'],
     ['Staging credentials', credentialWord(t.configured.staging)],
     ['Production credentials', credentialWord(t.configured.production)],

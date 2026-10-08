@@ -59,7 +59,8 @@ import { assessRecordedPoolability } from '../../services/cmc/recorded-stability
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/part11/signature-persistence';
 import { clientIpOf } from '../../utils/client-ip';
-import { refusedWithoutSigningAuthority, verifiedReauthFactors } from './cmc-signer';
+import { verifiedReauthFactors } from './cmc-signer';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
 import { governedActorId } from '../../middleware/orgMembership';
 import {
@@ -860,7 +861,7 @@ async function answeredSignedRecordEdit(
 /**
  * The governed qualification of a register record, on the same primitives as
  * the specification approval and the batch release: the signer's authority
- * (refusedWithoutSigningAuthority) and re-authentication first, the state
+ * (checkSigningAuthority) and re-authentication first, the state
  * change and the signature in ONE transaction, then the canonical write-through.
  *
  * `table` is a literal from a closed set, never caller input.
@@ -937,7 +938,8 @@ async function qualifyRegisterRecord(
   // Signing authority (§11.10(g)), then the re-auth gate, before any write.
   // Until the P0-10b fix round only the password was checked, so a viewer
   // could qualify a record.
-  if (await refusedWithoutSigningAuthority(res, { userId, orgId })) return res;
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority) return res.status(authority.status).json({ success: false, error: authority.code, message: authority.message });
   const reauthResult = await verifyReauth(userId, reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');

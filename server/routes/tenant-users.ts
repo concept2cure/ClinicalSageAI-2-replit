@@ -11,6 +11,7 @@ import { ASSIGNABLE_ORG_ROLES } from '../../shared/constants/org-roles';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
 import {
   issueInvitation,
   reissueForUnredeemedInvitee,
@@ -320,7 +321,11 @@ router.post('/invitations/:invitationId/decline', async (req, res) => {
 
 /**
  * GET /api/tenant-users/:tenantId
- * Get users for a specific tenant
+ * Get users for a specific tenant. Each row says whether the member may apply
+ * an electronic signature (`canSign`), read from the signing policy itself
+ * (isSigningAuthorized on the membership role), so a picker that must offer
+ * only signers (the protocol reviewer picker; a review is assigned only to
+ * someone who can sign its disposition) does not keep its own role list.
  */
 router.get('/:tenantId', async (req, res) => {
   try {
@@ -365,7 +370,7 @@ router.get('/:tenantId', async (req, res) => {
       pool.query(query, [tenantId])
     );
     log.debug(`Retrieved ${result.rows.length} users for organization ${tenantId}`);
-    res.json(result.rows);
+    res.json(result.rows.map((row: { role?: string | null }) => ({ ...row, canSign: isSigningAuthorized(row.role) })));
   } catch (error) {
     log.error('Error retrieving tenant users', error);
     res.status(500).json({ error: 'Failed to retrieve tenant users' });

@@ -114,7 +114,7 @@ describe('the auth service on a session the server ended', () => {
     expect(authService.getSessionPolicy()).toMatchObject({ idleMinutes: 15, lifetimeHours: 12 });
     answers['/api/v1/auth/session'] = () => jsonResponse(200, { authenticated: true, user: { id: '1' }, session: { id: 's', idleMinutes: 30, lifetimeHours: 12, expiresAt: '2026-09-26T21:00:00.000Z' } });
     const policy = await authService.refreshSessionPolicy();
-    expect(policy).toEqual({ idleMinutes: 30, lifetimeHours: 12, expiresAt: '2026-09-26T21:00:00.000Z' });
+    expect(policy).toEqual({ idleMinutes: 30, lifetimeHours: 12, expiresAt: '2026-09-26T21:00:00.000Z', sessionId: 's' });
     expect(authService.getSessionPolicy()).toEqual(policy);
   });
 });

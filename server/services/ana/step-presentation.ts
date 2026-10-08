@@ -28,8 +28,8 @@
  *
  * ── Tense ────────────────────────────────────────────────────────────────────
  * A finished step reads in the done form only when it succeeded. A step that
- * failed, was held back, or answered `ok: false` keeps the doing form beside
- * its status sentence: "Validated the eCTD package" over a validation that
+ * failed, was held back, or refused (`ok: false`, refusalOf) keeps the doing
+ * form beside its status sentence: "Validated the eCTD package" over a validation that
  * never completed would be a claim the record does not support.
  *
  * Pure except `resolveStepDocumentTitles`, which runs the one title query.
@@ -49,6 +49,7 @@ import {
   type StepTense,
 } from '@shared/ana/step-verbs';
 import { stepPresentationOf } from './tool-authorization.js';
+import { refusalOf } from './tool-trace.js';
 
 /** How a step ended, as the stream knows it. */
 export type StepStatus = 'success' | 'error' | 'not_found' | 'cancelled' | 'not_run';
@@ -130,10 +131,14 @@ function parseResult(result: string | null | undefined): Record<string, unknown>
   }
 }
 
-/** Succeeded, and did not answer that it did not do the thing. */
-function finishedDone(outcome: StepOutcome | undefined, parsed: Record<string, unknown> | null): boolean {
+/**
+ * Succeeded, and did not answer that it did not do the thing: the one
+ * judgment of a refusal (tool-trace.ts refusalOf), so a check whose `ok` is
+ * its finding reads "Checked", and a refusal never reads done.
+ */
+function finishedDone(outcome: StepOutcome | undefined): boolean {
   if (!outcome || outcome.status !== 'success' || outcome.heldBack) return false;
-  return !(parsed && (parsed.ok === false || parsed.refused === true));
+  return !(outcome.result && refusalOf(outcome.result));
 }
 
 const plural = (n: number, one: string, many: string) => `${n.toLocaleString('en-US')} ${n === 1 ? one : many}`;
@@ -282,7 +287,7 @@ export function presentStep(
   const docId = stepDocumentId(entry, input);
   const title = docId ? cleanStepText(titles?.get(docId)) : null;
   const object = title ? `"${title}"` : entry.object;
-  const tense: StepTense = finishedDone(outcome, parsed) ? 'done' : 'doing';
+  const tense: StepTense = finishedDone(outcome) ? 'done' : 'doing';
   const previewed = previewOf(entry, input);
   const facts = inputFacts(previewed, title);
   if (parsed && outcome) facts.push(...resultFacts(tool, entry, parsed));

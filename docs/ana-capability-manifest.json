@@ -37146,7 +37146,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Assemble a regional eCTD zip from a set of CTD leaves, for any of the twelve regions the gateway layer supports: FDA (United States), EMA / EUDAMED (European Union), PMDA (Japan), Health Canada, MHRA (United Kingdom), NMPA / CDE (China), TGA (Australia), Swissmedic (Switzerland), ANVISA (Brazil), CDSCO / SUGAM (India), MFDS (South Korea), HSA (Singapore). Produces that region's Module 1 folder structure and regional backbone (us-regional.xml / eu-regional.xml / jp-regional.xml / ca-regional.xml / …), computes SHA-256, and returns the bundle metadata for downstream transmit. The bundle carries a regionalBackbone status recording whether the backbone is built to the agency's own Module 1 structure or reuses another region's as a placeholder — read it before telling a user a package is agency-conformant. Use after AnA has gathered the leaf manifest for a submission.",
+      "description": "Assemble a regional eCTD zip from a set of CTD leaves, for any of the twelve regions the gateway layer supports: FDA (United States), EMA / EUDAMED (European Union), PMDA (Japan), Health Canada, MHRA (United Kingdom), NMPA / CDE (China), TGA (Australia), Swissmedic (Switzerland), ANVISA (Brazil), CDSCO / SUGAM (India), MFDS (South Korea), HSA (Singapore). Produces that region's Module 1 folder structure and regional backbone (us-regional.xml / eu-regional.xml / jp-regional.xml / ca-regional.xml / …), computes SHA-256, and returns the bundle metadata for downstream transmit. The bundle carries a regionalBackbone status recording whether the backbone is built to the agency's own Module 1 structure or reuses another region's as a placeholder — read it before telling a user a package is agency-conformant. The application number and the applicant are not inputs: they are read from the record of the project named by program_id (its recorded agency application number, and the organisation's name), and the tool refuses PACKAGE_IDENTITY_MISSING, naming what is missing, when the record lacks either. Use after AnA has gathered the leaf manifest for a submission.",
       "scope": "global",
       "governed": true,
       "renderer": "artifact-xml",
@@ -37159,10 +37159,10 @@
           "description": ""
         },
         {
-          "name": "application_id",
+          "name": "program_id",
           "type": "string",
           "required": true,
-          "description": "IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada)."
+          "description": "The project (regulatory_programs.id, UUID) this package is filed for. The agency application number and the applicant are read from its record and the organisation's; they are never taken from this call."
         },
         {
           "name": "sequence",
@@ -37181,18 +37181,6 @@
           "type": "string",
           "required": false,
           "description": "REQUIRED for region \"fda\": what is being filed — nda | snda | anda | bla | ind | dmf. The us-regional backbone carries this as the application-type attribute, and it is a statement about the filing, so the packager refuses to guess it. Devi"
-        },
-        {
-          "name": "sponsor_id",
-          "type": "string",
-          "required": true,
-          "description": "DUNS / EMA org id / PMDA applicant id."
-        },
-        {
-          "name": "sponsor_name",
-          "type": "string",
-          "required": true,
-          "description": ""
         },
         {
           "name": "product_name",
@@ -37215,11 +37203,9 @@
       ],
       "requiredInputs": [
         "region",
-        "application_id",
+        "program_id",
         "sequence",
         "submission_type",
-        "sponsor_id",
-        "sponsor_name",
         "product_name",
         "leaves"
       ],

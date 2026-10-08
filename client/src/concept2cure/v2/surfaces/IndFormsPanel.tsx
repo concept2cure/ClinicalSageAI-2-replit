@@ -90,6 +90,32 @@ interface Placement {
   fileName: string;
   sha256: string;
   byteSize: number;
+  /**
+   * The forms engine's check recorded with the attachment: [] = complete;
+   * a list = attached, not complete (these are missing); null or absent = never
+   * checked, not complete (QA 2026-10-08, second walk, j7).
+   */
+  requiredFieldsMissing?: string[] | null;
+}
+
+/** What an attachment's recorded check says, in the panel's words. */
+function placementVerdict(p: Placement): { chip: string; tone: string; detail: string | null } {
+  const missing = p.requiredFieldsMissing;
+  if (Array.isArray(missing) && missing.length === 0) return { chip: 'completed form filed', tone: 'tone-ok', detail: null };
+  if (Array.isArray(missing)) return { chip: 'attached · not complete', tone: 'tone-warn', detail: `missing: ${missing.join(', ')}` };
+  return { chip: 'attached · not checked', tone: 'tone-warn', detail: 'Attach it again to have it checked.' };
+}
+
+/** The sentence after a filing: filed, and whether the forms engine counts it as complete. */
+function filedSentence(formId: string, json: Record<string, unknown>): string {
+  const where = `filed at ${String(json.sectionCode)} in sequence ${String(json.sequenceNumber)}${json.replaced ? ', replacing the form previously attached' : ''}`;
+  const missing = json.requiredFieldsMissing;
+  if (json.complete === true && Array.isArray(missing) && missing.length === 0) return `Completed FDA ${shortFormId(formId)} ${where}.`;
+  if (Array.isArray(missing) && missing.length > 0) {
+    return `FDA ${shortFormId(formId)} ${where}, and not counted as complete: ${missing.length} required field(s) missing — `
+      + `${missing.join(', ')}. Record or state them, then attach the completed form again.`;
+  }
+  return `FDA ${shortFormId(formId)} ${where}, and not counted as complete: the forms engine could not check it.`;
 }
 
 const FORM_LABELS: Record<string, string> = {
@@ -470,6 +496,13 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       form.append('file', file);
       form.append('projectIdent', programIdent);
       form.append('sequenceId', String(sequenceId));
+      /* What the person stated in this panel (the phase, the serial number) —
+         the same fields Build & check sends — so the server checks the
+         attachment against the build they saw. The record's facts are read by
+         the server, never echoed from here. */
+      for (const [key, value] of Object.entries(metadataBody())) {
+        if (key !== 'projectIdent' && typeof value === 'string') form.append(key, value);
+      }
       const res = await apiUpload('POST', `/api/ind-forms/${formId}/official-upload`, form);
       const json = await res.json().catch(() => null);
       if (res.status === 401 || res.status === 403) { note('Filing a completed form requires the regulatory-author role.', 'error'); return; }
@@ -482,12 +515,12 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
         ...p,
         [formId]: [json as Placement, ...(p[formId] ?? []).filter((x) => x.sequenceId !== (json as Placement).sequenceId)],
       }));
-      note(`Completed FDA ${shortFormId(formId)} filed at ${json.sectionCode} in sequence ${json.sequenceNumber}${json.replaced ? ', replacing the form previously attached' : ''}.`);
+      note(filedSentence(formId, json as Record<string, unknown>));
       // Re-read rather than trusting the local merge: the listing is what the
       // next visitor sees, and it is the server's record of the placement.
       void load();
     } finally { setBusy(null); }
-  }, [programIdent, target.seqId, note, load]);
+  }, [programIdent, target.seqId, note, load, metadataBody]);
 
   const recordFacts = useMemo(() => {
     if (!program) return null;
@@ -599,12 +632,21 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
                 )}
                 {placedIn.length > 0 && (
                   <div style={{ fontSize: 12, marginTop: 6 }}>
-                    <span className="rd-chip tone-ok">completed form filed</span>
-                    {placedIn.map((placed) => (
-                      <div key={placed.leafId} style={{ color: 'var(--text-400)', marginTop: 2 }}>
-                        {placed.sectionCode} · sequence {placed.sequenceNumber} · {bytesLabel(placed.byteSize)} · SHA-256 {placed.sha256.slice(0, 12)}…
-                      </div>
-                    ))}
+                    {/* One verdict per attachment: an attached PDF completes its
+                        form only when the forms engine's recorded check found
+                        nothing required missing (QA 2026-10-08, j7). */}
+                    {placedIn.map((placed) => {
+                      const verdict = placementVerdict(placed);
+                      return (
+                        <div key={placed.leafId} style={{ marginTop: 4 }}>
+                          <span className={`rd-chip ${verdict.tone}`}>{verdict.chip}</span>
+                          <div style={{ color: 'var(--text-400)', marginTop: 2 }}>
+                            {placed.sectionCode} · sequence {placed.sequenceNumber} · {bytesLabel(placed.byteSize)} · SHA-256 {placed.sha256.slice(0, 12)}…
+                          </div>
+                          {verdict.detail && <div style={{ color: 'var(--text-400)', marginTop: 2 }}>{verdict.detail}</div>}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </td>

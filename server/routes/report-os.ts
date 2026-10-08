@@ -60,8 +60,6 @@ import {
   signerIpAddress,
   type CeremonySignMeaning,
 } from '../services/part11/governed-signature-ceremony';
-import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
-import { isSigningAuthorized } from '../services/part11/signing-authority';
 import { GOVERNED_REVOCATION_SIGNATURE_TYPE, isSignatureWithdrawn } from '../services/part11/signature-persistence';
 import { requireGovernedReason } from './governed-reason';
 import { projectInOrg, projectScopeLabel, projectsInOrg, submissionInProject, workspaceIsOrganisations, WORKSPACE_NOT_IN_ORGANIZATION } from '../services/report-os/ownership';
@@ -1981,8 +1979,12 @@ router.get('/runs/:id/seal', async (req: Request, res: Response) => {
  *   - signing authority (§11.10(g)). Finalize's tier (owner, admin, manager)
  *     is who may finalize; the platform's signing policy
  *     (services/part11/signing-authority.ts) is who may sign, and a finalize
- *     is both. The role is the membership row's (resolveSignerOrgRole), read
- *     before the run or a password, as every other signing route reads it.
+ *     is both. The authority check is the ceremony's floor
+ *     (governed-signature-ceremony, checkSigningAuthority: the membership
+ *     row's role, before any password is compared or transaction opened). The
+ *     route kept its own copy ahead of it until the "Report finalize"
+ *     follow-up decision (docs/LAUNCH_DEFINITION_OF_DONE.md) removed it: one
+ *     check, so the two cannot drift.
  *   - a kept seal. A run with no snapshot was made final with its seal
  *     dropped; it is now refused (409 RUN_HAS_NO_SNAPSHOT), nothing signed.
  * The signature it writes names the seal (its manifest's act.sealHash), and
@@ -2010,26 +2012,6 @@ function finalizeRequest(
     return { runId, organizationId, userId, reason: reason.reason };
   }
   return null;
-}
-
-/**
- * Step 3a of the platform's signing ceremonies (§11.10(g)): the signer's role,
- * from the membership row, must carry signing authority under the one policy.
- * True when it does; otherwise the 403 is sent and nothing has been read or
- * compared. An unreadable membership throws to the route's 500.
- */
-async function hasSigningAuthority(res: Response, userId: number, organizationId: number): Promise<boolean> {
-  if (isSigningAuthorized(await resolveSignerOrgRole(userId, organizationId))) return true;
-  res.status(403).json({
-    success: false,
-    error: {
-      code: 'ESIGNATURE_NO_AUTHORITY',
-      message:
-        'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)), and finalizing a report ' +
-        'signs it. Nothing was finalized.',
-    },
-  });
-  return false;
 }
 
 /** The answer for a finalize that reached the ceremony. */
@@ -2076,7 +2058,6 @@ router.post('/runs/:id/finalize', requireRole(...REPORT_FINALIZE_ROLES), finaliz
     const asked = finalizeRequest(req, res);
     if (!asked) return;
     const { runId, organizationId, userId } = asked;
-    if (!(await hasSigningAuthority(res, userId, organizationId))) return;
 
     const [run] = await db
       .select()

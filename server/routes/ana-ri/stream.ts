@@ -127,6 +127,7 @@ import { toolEvidence, type EvidenceEntry } from '../../services/ana/answer-grou
 import { checkProposal } from '../../services/ana/proposal-check.js';
 import { buildShortfallNote } from '../../services/ana/tool-outcome.js';
 import { persistStoppedAnswer, runStreamPostProcessing } from './post-processing.js';
+import { sealAfterMirror } from '../../services/ana/run-events.js';
 import {
   callSent,
   canonicalJson,
@@ -137,6 +138,7 @@ import {
   type TurnRecorder,
   type TurnRecordStatus,
 } from '../../services/ana/turn-record.js';
+import { TurnTimeline } from '../../services/ana/turn-timeline-emitter.js';
 import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn, SELF_DRIVE_TOOLS } from '../../services/ana/tool-selection.js';
@@ -197,6 +199,7 @@ import {
 } from '../../services/ana/run-control.js';
 import {
   MAX_PAUSE_MS,
+  endStoppedReason,
   isHoldable,
   parseRunPolicy,
   type AnaRunPolicy,
@@ -238,6 +241,29 @@ const dbPool = {
 const COMMAND_FENCE = /```command\s*\n/;
 
 /** The round's model call, if the round's own text holds a command block (commandBlockProposer). */
+/** What the person reads when beginRun refuses (AnA detach §2.8). Fixed copy; no model writes it. */
+const RUN_REFUSAL_COPY: Readonly<Record<'RUN_IN_PROGRESS' | 'RUN_LIMIT', string>> = {
+  RUN_IN_PROGRESS: 'AnA is still working on the last message in this conversation.',
+  RUN_LIMIT: 'You have three turns running. Stop one, or wait for one to finish.',
+};
+
+/**
+ * The frame for a beginRun refusal (run-control RunRefusedError), or null for
+ * any other failure. Read by name and code rather than `instanceof`, so the
+ * route does not hold a second import of the class for a test double to omit.
+ */
+function runRefusalFrame(err: unknown): { type: 'error'; code: string; error: string; runId?: string } | null {
+  const e = err as { name?: unknown; code?: unknown; runId?: unknown } | null;
+  if (!e || e.name !== 'RunRefusedError') return null;
+  if (e.code !== 'RUN_IN_PROGRESS' && e.code !== 'RUN_LIMIT') return null;
+  return {
+    type: 'error',
+    code: e.code,
+    error: RUN_REFUSAL_COPY[e.code],
+    ...(typeof e.runId === 'string' && e.runId ? { runId: e.runId } : {}),
+  };
+}
+
 function commandRoundOf<T>(roundText: string, served: T): T[] {
   return COMMAND_FENCE.test(roundText) ? [served] : [];
 }
@@ -554,16 +580,26 @@ export function mountStreamRoute(router: Router): void {
     // The run is closed exactly once, by whichever of the disconnect handler and
     // the finally block gets there first.
     let runSettled = false;
+    // The turn's policy once the request is read: the error path asks it why a stop ended the turn.
+    let turnPolicyOf: TurnPolicy | null = null;
     // The tenant the run row was stamped with, for the turn-end read-back.
     let runOrgIdForEvents: number | null = null;
-    // The round the keepalive stamps on each heartbeat. Updated at every
-    // checkpoint so a reaped-and-resumed row still reports where it got to.
-    let heartbeatRound = 0;
     // The retained record of this turn (services/ana/turn-record.ts): filled
     // as each fact becomes known, sealed and written once when the turn ends —
     // answered, stopped or failed — and chained. Undefined until the tenant is
     // known; null for a turn that has none, which cannot be filed.
     let turnRecorder: TurnRecorder | null | undefined;
+    // The Summary's events: each one appended to the recorder and written as a
+    // `timeline` frame, the one producer (turn-timeline-emitter.ts, S4).
+    const timeline = new TurnTimeline({
+      write: frame => {
+        if (!res.writableEnded) res.write(frame);
+      },
+      recorder: () => turnRecorder,
+      // The run's live mirror (AnA detach DT1): a durable run's handle carries
+      // one; a turn with no run row has nothing to mirror into.
+      mirror: () => runHandle?.events,
+    });
     /**
      * The human controls taken during this turn, read back from the run row
      * at turn end and projected onto the assistant message's metadata, which
@@ -601,13 +637,19 @@ export function mountStreamRoute(router: Router): void {
     const recordStreamed = (chunk: string): void => turnRecorder?.appendStreamed(chunk);
     const recordServed = (round: number, served: { provider: string | null; model: string | null }, sent?: CallSent): void =>
       turnRecorder?.addServed(round, served, sent);
+    // Flush, then seal, then release (AnA detach §3.4): the mirror's guard
+    // refuses an insert once the record exists, so the record is written only
+    // after the mirror is flushed; its rows then leave through the release
+    // door, and released_at is written whatever came of the record.
     const fileTurnRecord = (outcome: TurnOutcome): Promise<TurnRecordStatus> =>
       turnRecorder === undefined
         ? Promise.resolve({ status: 'not_recorded', reason: 'This turn ended before its record was opened.' })
-        : writeTurnRecordSafely(getPool(), turnRecorder, outcome, {
-            ipAddress: req.ip,
-            userAgent: req.get('user-agent') ?? undefined,
-          });
+        : sealAfterMirror(runHandle?.events, () =>
+            writeTurnRecordSafely(getPool(), turnRecorder ?? null, outcome, {
+              ipAddress: req.ip,
+              userAgent: req.get('user-agent') ?? undefined,
+            }),
+          );
     /**
      * Prompt-cache totals for the WHOLE turn, every model call included.
      *
@@ -673,6 +715,7 @@ export function mountStreamRoute(router: Router): void {
           runBy: 'server',
         });
       }
+      steps.forEach((step, i) => timeline.serverStep(round, step, i));
       if (res.writableEnded) return;
       for (const step of steps) {
         // Source `web`, the query as preview, both tenses (server-tool-steps.ts).
@@ -800,15 +843,12 @@ export function mountStreamRoute(router: Router): void {
         } catch {
           clearInterval(streamKeepalive);
         }
-        // The run's heartbeat rides the keepalive that already exists rather
-        // than a second timer. It has to: the reaper's staleness ceiling
-        // (STALE_AFTER_MS, 5 min) is SHORTER than the pause ceiling
-        // (MAX_PAUSE_MS, 10 min), so a beat taken only at round boundaries left
-        // a paused run — or any single round over five minutes — to be marked
-        // failed/orphaned by another request's sweep while it was still
-        // running. Beating here covers every phase of the turn, including the
-        // final generation after the loop.
-        if (runId && runHandle) void runHandle.heartbeat(heartbeatRound);
+        // The run's heartbeat no longer rides this keepalive (AnA detach DT1,
+        // §2.3): the keepalive is cleared when the socket closes, so a run's
+        // beat depended on a page staying open. One process-wide interval in
+        // run-control.ts (beatOwnedRuns) beats every run this process owns,
+        // at the same 15 s, through every phase of the turn and with or
+        // without a socket. This ping stays for the proxies and touches no row.
       }, STREAM_KEEPALIVE_MS);
       const stopKeepalive = () => clearInterval(streamKeepalive);
       res.on('close', stopKeepalive);
@@ -840,9 +880,11 @@ export function mountStreamRoute(router: Router): void {
             pool: getPool(),
             organizationId: runOrgId,
             userId: runUserId,
+            // Verified inside beginRun before it is stamped (AnA detach §2.8).
             threadId: typeof thread_id === 'string' ? thread_id : null,
             projectId: typeof project_id === 'string' ? project_id : null,
             surface: 'ana-ri-stream',
+            runPolicy: parseRunPolicy(run_policy),
           });
           runId = opened.runId;
           runHandle = opened.handle;
@@ -851,10 +893,23 @@ export function mountStreamRoute(router: Router): void {
           void reapOrphanedRuns(getPool()).catch(() => {});
           res.write(`data: ${JSON.stringify({ type: 'run_started', runId })}\n\n`);
         } catch (err: any) {
+          // A refusal is an answer, not an outage (AnA detach §2.8, D-3): this
+          // conversation already has a live run, or the person has three. Both
+          // come before the question is saved, so nothing of this turn exists
+          // yet to record or roll back.
+          const refusal = runRefusalFrame(err);
+          if (refusal) {
+            res.write(`data: ${JSON.stringify(refusal)}\n\n`);
+            stopKeepalive();
+            res.end();
+            return;
+          }
           // Control is an enhancement; the answer is the product. A run row we
           // could not open costs the person their controls, not their turn —
           // and because no `run_started` is emitted, the strip renders nothing
-          // rather than buttons that would 404.
+          // rather than buttons that would 404. A colleague's conversation
+          // (THREAD_FORBIDDEN) lands here too: no run is opened for it, and
+          // getOrCreateThread below refuses the turn as it always has.
           console.error('[AnA RI Stream] run control unavailable:', err?.message);
         }
       }
@@ -869,11 +924,11 @@ export function mountStreamRoute(router: Router): void {
          only on a run a person can resume; otherwise it fails closed at the
          first hold it would have made (TurnPolicy). */
       const runPolicy = parseRunPolicy(run_policy);
-      const turnPolicy = new TurnPolicy({
+      const turnPolicy = (turnPolicyOf = new TurnPolicy({
         runPolicy,
         holdable: isHoldable({ runId, runUserId }),
         startedAt: streamPhaseStart,
-      });
+      }));
       // Handed to the gateway and the tool dispatcher so a stop lands on work
       // already in flight, rather than waiting for the next round boundary.
       const runSignal = runHandle?.cancelSignal;
@@ -888,6 +943,8 @@ export function mountStreamRoute(router: Router): void {
       const disconnectRun = () => {
         if (runSettled || res.writableEnded) return;
         runSettled = true;
+        // Unless a person's Stop already landed, the turn stopped because the page left (S4).
+        if (!runHandle?.cancelSignal.aborted) turnPolicy.noteDisconnected();
         if (!runId) {
           // The existing local-only handle needs no row to abort the gateway
           // and tools. Record the socket cause, without inventing a person's
@@ -1116,6 +1173,16 @@ export function mountStreamRoute(router: Router): void {
           const userMessageId = await saveMessage(threadId, 'user', message);
           turnRecorder?.setMessageIds({ user: userMessageId });
           stoppedTurnThreadId = threadId;
+          // The verified (or just minted) conversation and the question, on
+          // the run, so another device can find it by thread (§2.8).
+          if (runHandle?.stampThread) {
+            await runHandle
+              .stampThread(threadId, typeof userMessageId === 'number' ? userMessageId : null)
+              .then(ok => {
+                if (!ok) console.warn('[AnA RI Stream] run not stamped with its conversation:', runId);
+              })
+              .catch((err: any) => console.error('[AnA RI Stream] run thread stamp failed:', err?.message));
+          }
         } catch (e: any) {
           /* Matched by code: a conversation bound to another project than the
              one this turn names (chat-thread-helpers getOrCreateThread). */
@@ -2042,6 +2109,8 @@ export function mountStreamRoute(router: Router): void {
         apiEffort,
         ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
         ...(streamTools.length > 0 ? { tools: streamTools } : {}),
+        // Decision 3 (A): a call that offers tools has her notes as her words (gateway: progress-updates.ts).
+        notesBetweenTools: streamTools.length > 0,
         stream: true,
         onStream: (chunk: string, metadata?: any) => {
           // Cancelled mid-generation → stop emitting (and accumulating) at
@@ -2091,6 +2160,8 @@ export function mountStreamRoute(router: Router): void {
       const commandRounds = commandRoundOf(fullContent, lastServedModel);
       turnRecorder?.addServed(1, lastServedModel, callSent({ apiEffort, thinking: streamThinkingConfig, tools: streamTools }));
       recordCacheUsage(gwResponse);
+      // Her words before round 1's steps, when the call also called tools (a note, S4).
+      timeline.noteFromCall(fullContent, gwResponse);
       // The first model call is round 1's call; its server tools ran inside it.
       emitServerToolSteps(gwResponse, 1);
       recordServerToolEvidence(gwResponse);
@@ -2292,6 +2363,7 @@ export function mountStreamRoute(router: Router): void {
             message: `${proposal.message} AnA is waiting on this before she goes on.`,
             ...checked,
           });
+          timeline.awaiting(round, toolUse);
 
           // The wait. Same machinery as pause: woken by the decision, with the
           // ceiling only bounding a wake that never arrives.
@@ -2393,6 +2465,7 @@ export function mountStreamRoute(router: Router): void {
           // run in parallel), and finally emit results in the original order so
           // the client UI stays deterministic.
           for (const toolUse of calls) {
+            const announced = announcedStepFields(toolUse, roundTitles);
             res.write(
               `data: ${JSON.stringify({
                 type: 'tool_use',
@@ -2403,10 +2476,11 @@ export function mountStreamRoute(router: Router): void {
                 // same step, so a name cannot tell them apart (see tool_result).
                 toolUseId: toolUse.id,
                 // Label, source, preview and facts: presentStep, never the tool's name.
-                ...announcedStepFields(toolUse, roundTitles),
+                ...announced,
                 input: toolUse.input,
               })}\n\n`
             );
+            timeline.announced(round, toolUse, announced);
           }
           // ── Anything that needs a person is settled FIRST, one at a time ──
           //
@@ -2554,6 +2628,8 @@ export function mountStreamRoute(router: Router): void {
               // rather than timing the round-trip from its own side.
               return {
                 toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs: Date.now() - toolStart, generated,
+                // Handler dispatch: the wait for a person settled before it (S4).
+                startedAt: toolStart,
                 // From the capture, never from a list of tools (generation-capture.ts).
                 usedModel: stepUsedModel(generated, approval !== undefined),
               };
@@ -2593,7 +2669,7 @@ export function mountStreamRoute(router: Router): void {
             });
           };
           const roundFailures: FailedToolCall[] = [];
-          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs, usedModel } of ran) {
+          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs, usedModel, startedAt } of ran) {
             entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
             // The finished step: its label in the right tense, its facts and the
             // sentence for a step that did not succeed (step-presentation.ts).
@@ -2601,6 +2677,8 @@ export function mountStreamRoute(router: Router): void {
               status: toolStatus, heldBack, why: toolErrorMessage, result: resultStr, latencyMs, usedModel,
             });
             const stepLabel = step.label;
+            // On the timeline, and what the record adds to the step from it (/4).
+            const ended = timeline.finished(round, toolUse, { ...step.frame, status: toolStatus, heldBack, ms: latencyMs, startedAt });
             turnRecorder?.addStep({
               toolUseId: toolUse.id,
               round,
@@ -2611,6 +2689,7 @@ export function mountStreamRoute(router: Router): void {
               input: toolUse.input,
               result: resultStr,
               error: toolErrorMessage ?? null,
+              ...ended,
             });
             // Record this call in the turn's tool-trace memory + evidence corpus.
             toolTrace.push({ ...buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr), ...step.trace });
@@ -2657,6 +2736,7 @@ export function mountStreamRoute(router: Router): void {
               lastPlan = planEvent.steps;
               turnRecorder?.addPlan(round, planEvent.steps);
               res.write(`data: ${JSON.stringify(planEvent)}\n\n`);
+              timeline.planned(round, planEvent.steps);
             }
             if (toolStatus === 'success') {
               try {
@@ -2985,6 +3065,9 @@ export function mountStreamRoute(router: Router): void {
           turnRecorder?.addRoundInput(round, loopMessages.slice(stagedFrom));
         };
 
+        /** Decision 3 (A): a round that offers tools asks for her notes as her words (gateway: progress-updates.ts). */
+        const notesBetweenTools = (includeTools: boolean): boolean => includeTools && streamTools.length > 0;
+
         /** What a follow-up round sends, for its record (MC-RL-8): the closing round is told to call no tool. */
         const roundSent = (thinking: ReturnType<typeof followUpThinking>, includeTools: boolean): CallSent =>
           callSent({ apiEffort, thinking, tools: streamTools, toolChoice: includeTools ? null : 'none' });
@@ -3059,6 +3142,8 @@ export function mountStreamRoute(router: Router): void {
             // outcome, one cache tier instead of none.
             ...(streamTools.length > 0 ? { tools: streamTools } : {}),
             ...(includeTools ? {} : { toolChoice: 'none' as const }),
+            // Decision 3 (A): a tool round has her notes as her words; the closing round keeps the summary.
+            notesBetweenTools: notesBetweenTools(includeTools),
             stream: true,
             onStream: (chunk: string, metadata?: any) => {
               if (runHandle?.cancelSignal.aborted) return;
@@ -3092,6 +3177,8 @@ export function mountStreamRoute(router: Router): void {
           }
           recordCacheUsage(roundResponse);
           lastFinishReason = roundResponse.finishReason;
+          // Her words before the next round's steps, when this call also called tools (a note, S4).
+          timeline.noteFromCall(roundText, roundResponse);
           emitServerToolSteps(roundResponse, round);
           recordServerToolEvidence(roundResponse);
           lastServedModel = servedModelOf(roundResponse);
@@ -3208,7 +3295,6 @@ export function mountStreamRoute(router: Router): void {
                   cancelSignal: runHandle.cancelSignal,
                   cancelled: () => runHandle!.cancelSignal.aborted,
                   heartbeat: (round: number) => {
-                    heartbeatRound = round;
                     void runHandle!.heartbeat(round);
                   },
                   // Steers and screen reports: the drain is atomic and covers
@@ -3228,7 +3314,9 @@ export function mountStreamRoute(router: Router): void {
           // A step she chose that never ran is still a step of this turn: the
           // record says so, with no result ("A step with no recorded result
           // says so").
-          notRun: (call, round, why) =>
+          notRun: (call, round, why) => {
+            // On the timeline whether or not the turn has a record (S4).
+            const ended = timeline.notRun(round, call, why);
             turnRecorder?.addStep({
               toolUseId: call.id,
               round,
@@ -3238,7 +3326,9 @@ export function mountStreamRoute(router: Router): void {
               input: call.input,
               result: null,
               error: why,
-            }),
+              ...ended,
+            });
+          },
         });
 
         // Kept for endRun: until 2026-09-26 the result was discarded and every
@@ -3339,6 +3429,9 @@ export function mountStreamRoute(router: Router): void {
           : undefined,
         thinkingEnabled: !!streamThinkingConfig,
       });
+
+      // The Summary's closing row: how the turn ended, and why it stopped (S4).
+      timeline.end(runSignal?.aborted ? 'stopped' : 'answered', endStoppedReason(Boolean(runSignal?.aborted), loopStoppedReason));
 
       // Emit `done` as soon as the last token is out. Carries the minimal
       // metadata the client needs to close the assistant turn. Heavier
@@ -3469,12 +3562,13 @@ export function mountStreamRoute(router: Router): void {
       // had streamed: otherwise the question stood alone (QA 2026-10-08, j5).
       if (stopped && stoppedTurnThreadId) {
         try {
-          const answerId = await persistStoppedAnswer(stoppedTurnThreadId, turnRecorder?.streamedText ?? '');
+          const answerId = await persistStoppedAnswer(stoppedTurnThreadId, turnRecorder?.streamedText ?? '', turnPolicyOf?.stoppedReason('cancelled'));
           turnRecorder?.setMessageIds({ assistant: answerId });
         } catch (saveErr: any) {
           console.error('[AnA RI Stream] Stopped answer persist failed:', saveErr?.message);
         }
       }
+      timeline.end(stopped ? 'stopped' : 'failed', stopped ? endStoppedReason(true, turnPolicyOf?.stoppedReason('cancelled')) : null);
       const turnRecord = await fileTurnRecord(stopped ? 'stopped' : 'failed');
       if (res.headersSent) {
         res.write(

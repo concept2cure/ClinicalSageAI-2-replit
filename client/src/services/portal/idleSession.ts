@@ -21,6 +21,14 @@ export interface IdleWatchOptions {
   target?: EventTarget;
   /** The clock; Date.now by default. */
   now?: () => number;
+  /**
+   * When the person was last active, if known from before this watch started
+   * (a reload, another tab: the stored clock below). Default: now. A value in
+   * the future is taken as now.
+   */
+  lastActivityAt?: number;
+  /** Called with each recorded activity's time (throttled), so it can be kept. */
+  onActivity?: (at: number) => void;
 }
 
 export interface IdleWatch {
@@ -32,6 +40,13 @@ export interface IdleWatch {
   lastActivityAt(): number;
   /** Whether the warning is standing. */
   warned(): boolean;
+  /**
+   * The person was active elsewhere (another tab of the same session) at
+   * `at`. Later than what this watch has seen, it moves the window and ends a
+   * standing warning; returns whether it did. Not called for this tab's own
+   * events, so a pointer on the dialog still cannot cancel it.
+   */
+  adopt(at: number): boolean;
 }
 
 const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'] as const;
@@ -43,7 +58,10 @@ export function startIdleWatch(options: IdleWatchOptions): IdleWatch {
   const idleMs = Math.max(1000, options.idleMs);
   const warnMs = Math.min(Math.max(0, options.warnMs), idleMs);
 
-  let last = now();
+  const started = now();
+  let last = typeof options.lastActivityAt === 'number' && Number.isFinite(options.lastActivityAt)
+    ? Math.min(options.lastActivityAt, started)
+    : started;
   let warned = false;
   let stopped = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -82,6 +100,7 @@ export function startIdleWatch(options: IdleWatchOptions): IdleWatch {
     const t = now();
     if (t - last < THROTTLE_MS) return;
     last = t;
+    options.onActivity?.(t);
     arm();
   };
 
@@ -112,5 +131,52 @@ export function startIdleWatch(options: IdleWatchOptions): IdleWatch {
     },
     lastActivityAt: () => last,
     warned: () => warned,
+    adopt(at: number) {
+      if (stopped || !Number.isFinite(at) || at <= last) return false;
+      last = Math.min(at, now());
+      const ended = warned;
+      warned = false;
+      arm();
+      return ended;
+    },
   };
+}
+
+// ── The clock kept across reloads and tabs (QA 2026-10-08, walk 2, j9) ──────
+//
+// The watch above lived in memory, so it started again on every mount: a page
+// reloaded while nobody was there (a dev-server reload in the walk; in
+// production an F5, or any reload) counted the window from the reload, and the
+// person was never signed out. The person's last activity is kept per session
+// in localStorage, which every tab of the browser shares: a mount continues
+// the session's clock, and activity in one tab is activity in all of them.
+// Keyed by the server's session id, so a previous session's clock is never
+// applied to a new sign-in. Storage that cannot be read keeps the old
+// behaviour (the clock starts at mount); it never blocks a sign-out.
+
+export const IDLE_ACTIVITY_KEY = 'c2c-idle-last-activity';
+
+/** The stored last activity of this session, or null. */
+export function readSessionActivity(sessionId: string | null, raw?: string | null): number | null {
+  if (!sessionId) return null;
+  try {
+    const value = raw === undefined ? localStorage.getItem(IDLE_ACTIVITY_KEY) : raw;
+    if (!value) return null;
+    const parsed = JSON.parse(value) as { sid?: unknown; at?: unknown };
+    return parsed?.sid === sessionId && typeof parsed.at === 'number' && Number.isFinite(parsed.at) ? parsed.at : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Keep this session's last activity, for the next mount and the other tabs. */
+export function storeSessionActivity(sessionId: string | null, at: number): void {
+  if (!sessionId) return;
+  try {
+    const known = readSessionActivity(sessionId);
+    if (known !== null && known >= at) return;
+    localStorage.setItem(IDLE_ACTIVITY_KEY, JSON.stringify({ sid: sessionId, at }));
+  } catch {
+    /* storage unavailable: this tab's clock still runs */
+  }
 }

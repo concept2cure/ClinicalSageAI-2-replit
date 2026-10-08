@@ -227,3 +227,55 @@ describe('assessSequenceDispatchReadiness — vault-backed leaves resolve', () =
     expect(structural?.blockers.join(' ')).toMatch(/not yet approved/);
   });
 });
+
+/* Follow-up decision "Form 356h" (docs/LAUNCH_DEFINITION_OF_DONE.md): every
+   submission to an NDA, BLA or ANDA carries a Form FDA 356h, so a continuing
+   sequence of those kinds is held to 1.1, as a continuing IND sequence is to
+   its 1571. Read here through the DB-bound assessor, from the application type
+   the submission row records, in either case. */
+describe('assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h', () => {
+  async function continuingSequence(applicationType: string): Promise<number> {
+    const sub = await harness.pglite.query<{ id: number }>(
+      `INSERT INTO submissions (title, product_name, application_type, client_type, primary_region, organization_id, created_by)
+       VALUES ('C2C-101 marketing application', 'C2C-101', $1, 'pharma', 'fda', $2, $3) RETURNING id`,
+      [applicationType, ORG, USER],
+    );
+    const seq = await harness.pglite.query<{ id: number }>(
+      `INSERT INTO ectd_sequences (submission_id, region, sequence_number, type, status, organization_id, created_by)
+       VALUES ($1, 'fda', '0003', 'supplement', 'assembling', $2, $3) RETURNING id`,
+      [Number(sub.rows[0].id), ORG, USER],
+    );
+    return Number(seq.rows[0].id);
+  }
+  async function approvedDoc(title: string, body: string, module: string): Promise<number> {
+    const r = await harness.pglite.query<{ id: number }>(
+      `INSERT INTO coauthor_documents (organization_id, title, content, module_number, status)
+       VALUES ($1, $2, $3, $4, 'approved') RETURNING id`,
+      [ORG, title, body, module],
+    );
+    return Number(r.rows[0].id);
+  }
+
+  it.each(['nda', 'BLA', 'anda'])('a %s supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1', async (kind) => {
+    const sequenceId = await continuingSequence(kind);
+    const cover = await approvedDoc('Cover Letter', 'Supplement cover letter.', 'm1.2');
+    await seedLeaf(sequenceId, { sectionCode: '1.2', title: 'Cover Letter', documentTable: 'coauthor_documents', documentId: cover, pin: sha('Supplement cover letter.') });
+
+    const a = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG });
+    const missing = a.readiness.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION');
+    expect(missing.map((f) => [f.sectionCode, f.severity])).toEqual([['1.1', 'error']]);
+    expect(missing[0].message).toMatch(/Form FDA 356h/);
+    expect(a.validationErrors).toBe(1);
+    expect(a.gate.blockers.join(' ')).toMatch(/1 open error-severity validation finding/);
+  });
+
+  it('with the 356h filed under 1.1, nothing is missing', async () => {
+    const sequenceId = await continuingSequence('nda');
+    const form = await approvedDoc('Form FDA 356h', 'Form FDA 356h, signed.', 'm1.1');
+    await seedLeaf(sequenceId, { sectionCode: '1.1', title: 'Form FDA 356h', documentTable: 'coauthor_documents', documentId: form, pin: sha('Form FDA 356h, signed.') });
+
+    const a = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG });
+    expect(a.readiness.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION')).toEqual([]);
+    expect(a.validationErrors).toBe(0);
+  });
+});

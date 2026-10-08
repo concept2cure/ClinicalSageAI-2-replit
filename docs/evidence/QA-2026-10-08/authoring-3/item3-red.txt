@@ -1,0 +1,1531 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the Document view says the sections are being read, never "no sections yet", while the read is in flight 216ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the masthead never prints "0 sections" over a failed sections read 105ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the tree header never prints "0 documents" over a failed documents read 73ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the History rail says it is reading, never "No prior revisions", while its read is in flight 635ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a rename refused with a 401 changes nothing and never says "Section renamed" 873ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the filing outline does not call every part "not started" while the sections read has failed 113ms
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > with no document open, the outline says so — never that sections are being read 5032ms
+   → Unable to find an element with the title: /Form FDA 1571 — no document is open/.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+      [33mdata-comments[39m=[32m"true"[39m
+      [33mdata-rail[39m=[32m"ana"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mIND 2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0mIND · FDA · 1 sections[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-basis"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-basis-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-chip"[39m
+              [33mdata-tone[39m=[32m"err"[39m
+            [36m>[39m
+              [0mBasis undeclared[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-l"[39m
+            [36m>[39m
+              [0moutline basis[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ed-basis-d"[39m
+          [36m>[39m
+            [0mThis outline does not record what it was built from. Treat nothing in it as verified. Not reviewed by a regulatory professional.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+          [33mstyle[39m=[32m"flex: 0 0 auto; max-height: 46%; border-bottom: 1px solid var(--border);"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ed-tree-row"[39m
+            [33mstyle[39m=[32m"padding-left: 10px; opacity: 1;"[39m
+            [33mtitle[39m=[32m"Form FDA 1571 — this document’s sections have not been read yet"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-num"[39m
+            [36m>[39m
+              [0m1.1.1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-lbl"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [0mForm FDA 1571[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo documents yet[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mDocuments you create in this project appear here.[0m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"c2c-empty-action"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mNew document[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: 0px 16px 12px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mdata-testid[39m=[32m"ask-ana-to-draft"[39m
+              [33mstyle[39m=[32m"height: 28px; font-size: 12px;"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+               ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+      [33mdata-comments[39m=[32m"true"[39m
+      [33mdata-rail[39m=[32m"ana"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mIND 2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0mIND · FDA · 1 sections[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-basis"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-basis-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-chip"[39m
+              [33mdata-tone[39m=[32m"err"[39m
+            [36m>[39m
+              [0mBasis undeclared[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-l"[39m
+            [36m>[39m
+              [0moutline basis[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ed-basis-d"[39m
+          [36m>[39m
+            [0mThis outline does not record what it was built from. Treat nothing in it as verified. Not reviewed by a regulatory professional.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+          [33mstyle[39m=[32m"flex: 0 0 auto; max-height: 46%; border-bottom: 1px solid var(--border);"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ed-tree-row"[39m
+            [33mstyle[39m=[32m"padding-left: 10px; opacity: 1;"[39m
+            [33mtitle[39m=[32m"Form FDA 1571 — this document’s sections have not been read yet"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-num"[39m
+            [36m>[39m
+              [0m1.1.1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-lbl"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [0mForm FDA 1571[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo documents yet[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mDocuments you create in this project appear here.[0m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"c2c-empty-action"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mNew document[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: 0px 16px 12px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mdata-testid[39m=[32m"ask-ana-to-draft"[39m
+              [33mstyle[39m=[32m"height: 28px; font-size: 12px;"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+               ...
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > while the project’s documents are still being read, the outline says that — not that a document’s sections are 5035ms
+   → Unable to find an element with the title: /Form FDA 1571 — this project’s documents are still being read/.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+      [33mdata-comments[39m=[32m"true"[39m
+      [33mdata-rail[39m=[32m"ana"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mIND 2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0mIND · FDA · 1 sections[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-basis"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-basis-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-chip"[39m
+              [33mdata-tone[39m=[32m"err"[39m
+            [36m>[39m
+              [0mBasis undeclared[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-l"[39m
+            [36m>[39m
+              [0moutline basis[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ed-basis-d"[39m
+          [36m>[39m
+            [0mThis outline does not record what it was built from. Treat nothing in it as verified. Not reviewed by a regulatory professional.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+          [33mstyle[39m=[32m"flex: 0 0 auto; max-height: 46%; border-bottom: 1px solid var(--border);"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ed-tree-row"[39m
+            [33mstyle[39m=[32m"padding-left: 10px; opacity: 1;"[39m
+            [33mtitle[39m=[32m"Form FDA 1571 — this document’s sections have not been read yet"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-num"[39m
+            [36m>[39m
+              [0m1.1.1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-lbl"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [0mForm FDA 1571[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note"[39m
+            [33mrole[39m=[32m"status"[39m
+            [33mstyle[39m=[32m"padding: 16px;"[39m
+          [36m>[39m
+            [0mLoading documents…[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0meCTD[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+            [36m>[39m
+              [0mNo document[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+              [33mtitle[39m=[32m"Open a project first — a document belongs to a project."[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-plus"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m New document[0m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-s"[39m
+            [36m>[39m
+              [0mOpen a project first — a document belongs to a project.[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Editor view"[39m
+              [33mclass[39m=[32m"ed-viewtoggle"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+     ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+      [33mdata-comments[39m=[32m"true"[39m
+      [33mdata-rail[39m=[32m"ana"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mIND 2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0mIND · FDA · 1 sections[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-basis"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-basis-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-chip"[39m
+              [33mdata-tone[39m=[32m"err"[39m
+            [36m>[39m
+              [0mBasis undeclared[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-l"[39m
+            [36m>[39m
+              [0moutline basis[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ed-basis-d"[39m
+          [36m>[39m
+            [0mThis outline does not record what it was built from. Treat nothing in it as verified. Not reviewed by a regulatory professional.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+          [33mstyle[39m=[32m"flex: 0 0 auto; max-height: 46%; border-bottom: 1px solid var(--border);"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ed-tree-row"[39m
+            [33mstyle[39m=[32m"padding-left: 10px; opacity: 1;"[39m
+            [33mtitle[39m=[32m"Form FDA 1571 — this document’s sections have not been read yet"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-num"[39m
+            [36m>[39m
+              [0m1.1.1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-lbl"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [0mForm FDA 1571[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note"[39m
+            [33mrole[39m=[32m"status"[39m
+            [33mstyle[39m=[32m"padding: 16px;"[39m
+          [36m>[39m
+            [0mLoading documents…[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0meCTD[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+            [36m>[39m
+              [0mNo document[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+              [33mtitle[39m=[32m"Open a project first — a document belongs to a project."[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-plus"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m New document[0m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-s"[39m
+            [36m>[39m
+              [0mOpen a project first — a document belongs to a project.[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Editor view"[39m
+              [33mclass[39m=[32m"ed-viewtoggle"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+     ...
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > switching documents clears the previous document’s comment threads instead of leaving them live 510ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a citation removal the server refuses is reported with the server’s reason, not silently dropped 304ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a failed filing-outline read is said in the tree header, not degraded silently to the document list 147ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > switching sections never shows the previous section’s sources under the next section’s header 471ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a thrown error carrying internal text never reaches the user — the fallback sentence does 467ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > with no document open, the outline says so — never that sections are being read
+TestingLibraryElementError: Unable to find an element with the title: /Form FDA 1571 — no document is open/.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+      [33mdata-comments[39m=[32m"true"[39m
+      [33mdata-rail[39m=[32m"ana"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mIND 2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0mIND · FDA · 1 sections[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-basis"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-basis-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-chip"[39m
+              [33mdata-tone[39m=[32m"err"[39m
+            [36m>[39m
+              [0mBasis undeclared[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-l"[39m
+            [36m>[39m
+              [0moutline basis[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ed-basis-d"[39m
+          [36m>[39m
+            [0mThis outline does not record what it was built from. Treat nothing in it as verified. Not reviewed by a regulatory professional.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+          [33mstyle[39m=[32m"flex: 0 0 auto; max-height: 46%; border-bottom: 1px solid var(--border);"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ed-tree-row"[39m
+            [33mstyle[39m=[32m"padding-left: 10px; opacity: 1;"[39m
+            [33mtitle[39m=[32m"Form FDA 1571 — this document’s sections have not been read yet"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-num"[39m
+            [36m>[39m
+              [0m1.1.1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-lbl"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [0mForm FDA 1571[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo documents yet[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mDocuments you create in this project appear here.[0m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"c2c-empty-action"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mNew document[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: 0px 16px 12px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mdata-testid[39m=[32m"ask-ana-to-draft"[39m
+              [33mstyle[39m=[32m"height: 28px; font-size: 12px;"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+               ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+      [33mdata-comments[39m=[32m"true"[39m
+      [33mdata-rail[39m=[32m"ana"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mIND 2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0mIND · FDA · 1 sections[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-basis"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-basis-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-chip"[39m
+              [33mdata-tone[39m=[32m"err"[39m
+            [36m>[39m
+              [0mBasis undeclared[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-l"[39m
+            [36m>[39m
+              [0moutline basis[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ed-basis-d"[39m
+          [36m>[39m
+            [0mThis outline does not record what it was built from. Treat nothing in it as verified. Not reviewed by a regulatory professional.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+          [33mstyle[39m=[32m"flex: 0 0 auto; max-height: 46%; border-bottom: 1px solid var(--border);"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ed-tree-row"[39m
+            [33mstyle[39m=[32m"padding-left: 10px; opacity: 1;"[39m
+            [33mtitle[39m=[32m"Form FDA 1571 — this document’s sections have not been read yet"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-num"[39m
+            [36m>[39m
+              [0m1.1.1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-lbl"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [0mForm FDA 1571[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo documents yet[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mDocuments you create in this project appear here.[0m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"c2c-empty-action"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mNew document[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: 0px 16px 12px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mdata-testid[39m=[32m"ask-ana-to-draft"[39m
+              [33mstyle[39m=[32m"height: 28px; font-size: 12px;"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+               ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx:184:33
+    182|       });
+    183|       render(<DocumentAuthoring {...props()} />);
+    184|       const node = await screen.findByTitle(/Form FDA 1571 — no docume…
+       |                                 ^
+    185|       expect(screen.queryByTitle(/have not been read yet/)).toBeNull();
+    186|       fireEvent.click(node);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > while the project’s documents are still being read, the outline says that — not that a document’s sections are
+TestingLibraryElementError: Unable to find an element with the title: /Form FDA 1571 — this project’s documents are still being read/.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+      [33mdata-comments[39m=[32m"true"[39m
+      [33mdata-rail[39m=[32m"ana"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mIND 2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0mIND · FDA · 1 sections[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-basis"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-basis-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-chip"[39m
+              [33mdata-tone[39m=[32m"err"[39m
+            [36m>[39m
+              [0mBasis undeclared[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-l"[39m
+            [36m>[39m
+              [0moutline basis[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ed-basis-d"[39m
+          [36m>[39m
+            [0mThis outline does not record what it was built from. Treat nothing in it as verified. Not reviewed by a regulatory professional.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+          [33mstyle[39m=[32m"flex: 0 0 auto; max-height: 46%; border-bottom: 1px solid var(--border);"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ed-tree-row"[39m
+            [33mstyle[39m=[32m"padding-left: 10px; opacity: 1;"[39m
+            [33mtitle[39m=[32m"Form FDA 1571 — this document’s sections have not been read yet"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-num"[39m
+            [36m>[39m
+              [0m1.1.1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-lbl"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [0mForm FDA 1571[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note"[39m
+            [33mrole[39m=[32m"status"[39m
+            [33mstyle[39m=[32m"padding: 16px;"[39m
+          [36m>[39m
+            [0mLoading documents…[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0meCTD[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+            [36m>[39m
+              [0mNo document[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+              [33mtitle[39m=[32m"Open a project first — a document belongs to a project."[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-plus"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m New document[0m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-s"[39m
+            [36m>[39m
+              [0mOpen a project first — a document belongs to a project.[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Editor view"[39m
+              [33mclass[39m=[32m"ed-viewtoggle"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+     ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+      [33mdata-comments[39m=[32m"true"[39m
+      [33mdata-rail[39m=[32m"ana"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mIND 2026[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0mIND · FDA · 1 sections[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-basis"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-basis-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-chip"[39m
+              [33mdata-tone[39m=[32m"err"[39m
+            [36m>[39m
+              [0mBasis undeclared[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-basis-l"[39m
+            [36m>[39m
+              [0moutline basis[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ed-basis-d"[39m
+          [36m>[39m
+            [0mThis outline does not record what it was built from. Treat nothing in it as verified. Not reviewed by a regulatory professional.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+          [33mstyle[39m=[32m"flex: 0 0 auto; max-height: 46%; border-bottom: 1px solid var(--border);"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ed-tree-row"[39m
+            [33mstyle[39m=[32m"padding-left: 10px; opacity: 1;"[39m
+            [33mtitle[39m=[32m"Form FDA 1571 — this document’s sections have not been read yet"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-num"[39m
+            [36m>[39m
+              [0m1.1.1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ed-lbl"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [0mForm FDA 1571[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note"[39m
+            [33mrole[39m=[32m"status"[39m
+            [33mstyle[39m=[32m"padding: 16px;"[39m
+          [36m>[39m
+            [0mLoading documents…[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0meCTD[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+            [36m>[39m
+              [0mNo document[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-doc-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+              [33mtitle[39m=[32m"Open a project first — a document belongs to a project."[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-plus"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m New document[0m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-s"[39m
+            [36m>[39m
+              [0mOpen a project first — a document belongs to a project.[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Editor view"[39m
+              [33mclass[39m=[32m"ed-viewtoggle"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+     ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx:212:33
+    210|       });
+    211|       render(<DocumentAuthoring {...props()} />);
+    212|       const node = await screen.findByTitle(/Form FDA 1571 — this proj…
+       |                                 ^
+    213|       fireEvent.click(node);
+    214|       await waitFor(() => expect(text()).toMatch(/This project’s docum…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+   Start at  13:46:15
+   Duration  17.69s (transform 2.20s, setup 183ms, import 2.85s, tests 13.99s, environment 511ms)
+

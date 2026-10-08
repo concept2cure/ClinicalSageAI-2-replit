@@ -1,0 +1,104 @@
+# Gates run on the working tree after the S4 change (npm run -s <gate>), exit codes
+
+ci:undefined-css-classes exit=0
+ci:unauthenticated-fetch exit=0
+ci:check-client-api-calls exit=0
+ci:step-presentation exit=0
+ci:step-presentation:selftest exit=0
+ci:internals-in-copy exit=0
+ci:ana-surface-context exit=0
+ci:gateway-bypass exit=0
+ci:action-overclaim exit=0
+ci:success-before-ok exit=0
+ci:empty-state-honesty exit=0
+ci:fabricated-identity exit=0
+ci:server-error-leaks exit=0
+ci:error-envelope exit=0
+ci:duplicate-exported-types exit=1
+ci:untracked-imports exit=0
+ci:canonicalizers exit=0
+ci:check-orphaned-stylesheets exit=0
+ci:check-unrun-tests exit=0
+ci:check-test-imports exit=0
+ci:unreferenced-modules exit=0
+ci:launch-scope-api exit=0
+ci:tenant-entry-points exit=0
+ci:check-css-selector-shadowing exit=0
+ci:check-shell-css-collisions exit=0
+ci:surface-text-ramp exit=0
+ci:dead-audit-catch exit=0
+ci:discarded-audit-write exit=0
+ci:tenant-isolation:no-regression exit=0
+ci:check-client-reachability exit=0
+ci:component-class-coverage exit=2 (no dist build yet) — rerun after `vite build`: exit=0, 0 classes without a rule
+ci:design-system exit=0
+ci:token-contrast exit=0
+ci:check-route-collisions exit=0
+ci:audit-route-mounts:no-regression exit=0
+
+## ci:duplicate-exported-types (pre-existing: 17 names, none from a file this change created; StepStatus already exported at HEAD)
+
+
+🚫 [ci:duplicate-exported-types] 17 NEW exported type name(s) now mean more than one thing:
+
+  AgentRole
+      server/services/ana/sub-agent-limits.ts
+      server/services/multi-agent-council.ts
+  CtqCategory
+      server/services/rbm/rbm-actuator.ts
+      server/services/study-design/ctq-derivation.ts
+  DocumentProvenance
+      server/services/ana-biostats/types.ts
+      server/services/authoring/authoring-from-draft.ts
+  EligibilityAssessment
+      server/services/market-specs/pathway-eligibility.ts
+      server/services/study-design/eligibility-model.ts
+  EuRegulation
+      server/services/gspr-postmarket/post-market-readiness.ts
+      server/services/pathway-engines/mdr-ivdr/tech-doc-assembler.ts
+  ObligationStatus
+      server/services/gspr-postmarket/post-market-readiness.ts
+      server/services/study-design/registry-filing.ts
+  OutlineNode
+      server/services/ectd/pdf-bookmark-generator.ts
+      server/services/ind/ctd/types.ts
+  OutlineSection
+      server/services/ana/cross-reference-check.ts
+      server/services/authoring/authoring-read.ts
+  PrecedentComparison
+      server/services/corpus/precedent-benchmark-reader.ts
+      server/services/precedent-engine.ts
+  Refusal
+      server/services/authoring/authoring-documents.ts
+      server/services/vault/vault-refusal.ts
+  RequirementQuery
+      server/services/cmc/knowledge/index.ts
+      server/services/ind/ctd/requirements-resolver.ts
+  RuleTraceEntry
+      server/services/market-specs/device-classification.ts
+      server/services/regulatory/ivdr-classification.ts
+  SealCheck
+      server/services/audit/compliance-reports/types.ts
+      server/services/report-os/sealing/run-seal.ts
+  SealVerdict
+      server/services/ectd/sign-payload-seal.ts
+      server/services/report-os/sealing/run-seal.ts
+  ServedModel
+      server/services/ana/turn-record-models.ts
+      server/services/ana/turn-tool-context.ts
+  StepStatus
+      server/services/ana/step-presentation.ts
+      server/services/submission-package-orchestrator.ts
+  ToolOutcome
+      server/services/ana/answer-grounding.ts
+      server/services/ana/tool-telemetry.ts
+
+Give each module's type the name of what it actually is. A reader who greps the noun
+must land on the module that owns it — that is the difference between a canonical
+claim and a canonical fact.
+
+
+## ci:component-class-coverage after vite build
+[ci:component-class-coverage] build is current (newer than every source file it is built from).
+[ci:component-class-coverage] 15111 literal class use(s) across the client; 0 class name(s) with no rule in any of the 26 built chunks, 0 site(s) (baseline 0).
+[ci:component-class-coverage] OK — no new class rendered without a rule behind it.

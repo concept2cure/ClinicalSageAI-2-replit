@@ -127,6 +127,8 @@ export class TurnPolicy {
   readonly policyHolds: PolicyHold[] = [];
   private approvalWaitMs = 0;
   private approvalTimedOut = false;
+  /** The page lost its connection before the turn ended (and no Stop had landed). */
+  private disconnected = false;
   private wiring: TurnPolicyWiring | null = null;
   private readonly now: () => number;
 
@@ -175,11 +177,24 @@ export class TurnPolicy {
     });
   };
 
+  /**
+   * The socket dropped while the run was live, before any Stop: the run is
+   * stopped for it, and the turn's reason becomes `client_disconnected`
+   * rather than the `cancelled` the loop sees (ANA-SUMMARY S4: "Stopped: this
+   * page lost its connection." with Continue). A person's Stop lands first —
+   * the client awaits its cancel before dropping the socket — and is not
+   * noted here.
+   */
+  noteDisconnected(): void {
+    this.disconnected = true;
+  }
+
   /** Why the turn stopped, from why its loop did. */
   stoppedReason(loopReason: StoppedReason | TurnStoppedReason): TurnStoppedReason {
     return turnStoppedReason(loopReason, {
       holdExpired: this.wiring?.run?.hold.expired() ?? false,
       holdUnavailable: this.holdUnavailable,
+      disconnected: this.disconnected,
     });
   }
 

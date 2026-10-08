@@ -292,3 +292,75 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
     expect(streamTurns()).toHaveLength(0);
   });
 });
+
+/* QA 2026-10-08, walk 2, j5 (a): after a turn the Progress card stood above
+   the transcript and the pane scrolled to its bottom, so only the suggestion
+   chips were on screen — not the answer. The work card is held to a share of
+   the pane (`ed-ana-work`), and a finished turn brings the START of the newest
+   answer into view. */
+describe('DocumentAuthoring — the answer is on screen after a turn', () => {
+  it('holds the work card to its share of the pane and shows the start of the newest answer', async () => {
+    // jsdom lays nothing out: place the conversation at y=100 and every AnA
+    // answer at y=500, and record where the conversation is scrolled to.
+    const scrolledTo: Array<{ label: string | null; top: unknown }> = [];
+    const proto = Element.prototype as unknown as Record<string, unknown>;
+    const originalRect = Element.prototype.getBoundingClientRect;
+    const originalScrollTo = proto.scrollTo;
+    const originalIntoView = Element.prototype.scrollIntoView;
+    const intoView = vi.fn();
+    Element.prototype.getBoundingClientRect = function (this: Element) {
+      const top = this.hasAttribute('data-ana-answer') ? 500 : this.getAttribute('aria-label') === 'AnA conversation' ? 100 : 0;
+      return { top, bottom: top + 40, left: 0, right: 0, width: 0, height: 40, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
+    };
+    proto.scrollTo = function (this: Element, opts: { top?: number }) {
+      scrolledTo.push({ label: this.getAttribute('aria-label'), top: opts?.top });
+    };
+    Element.prototype.scrollIntoView = intoView;
+    try {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => ({
+          ok: true,
+          status: 200,
+          body: anaStream([
+            { type: 'orchestration', orchestration: { suggestedActions: ['Rewrite Section', 'Create Strategy Note'] } },
+            { type: 'text', content: 'Tightened: the rationale now leads with the unmet need.' },
+            { type: 'done', latencyMs: 420 },
+            { type: 'post_done', cleanedResponse: 'Tightened: the rationale now leads with the unmet need.' },
+          ]),
+        }))
+      );
+      render(<DocumentAuthoring {...props()} />);
+      await screen.findAllByText('General Information');
+      const pane = await screen.findByLabelText(/AnA — document authoring/);
+      expect(pane.querySelector('.ana-work-host')?.classList.contains('ed-ana-work')).toBe(true);
+
+      const composer = await screen.findByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
+      fireEvent.change(composer, { target: { value: 'Tighten this section for an FDA reviewer' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+      await within(pane).findByText(/Tightened: the rationale/);
+      // The conversation is scrolled so the answer's first line sits at its top
+      // (500 - 100 - 8), and nothing else on the page is moved.
+      await waitFor(() => expect(scrolledTo).toContainEqual({ label: 'AnA conversation', top: 392 }));
+      expect(intoView).not.toHaveBeenCalled();
+    } finally {
+      Element.prototype.getBoundingClientRect = originalRect;
+      proto.scrollTo = originalScrollTo;
+      Element.prototype.scrollIntoView = originalIntoView;
+    }
+  });
+});
+
+/* QA 2026-10-08, walk 2, j5 (c): Save, the reason field, E-sign and Place
+   into filing were inside the header's horizontal scroller (.ed-doc-actions,
+   overflow-x:auto), past its right edge at 1440px and at 390px. The governed
+   acts are their own group, which wraps and is never clipped. */
+describe('DocumentAuthoring — the governed acts are never scrolled out of the header', () => {
+  it('Save is in the commit group, outside the panel scroller', async () => {
+    render(<DocumentAuthoring {...props()} />);
+    await screen.findAllByText('General Information');
+    const save = await screen.findByTestId('save-section');
+    expect(save.closest('.ed-doc-commit')).not.toBeNull();
+    expect(save.closest('.ed-doc-actions')).toBeNull();
+  });
+});

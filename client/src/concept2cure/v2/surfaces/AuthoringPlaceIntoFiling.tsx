@@ -177,12 +177,7 @@ interface Placement {
   sectionCode: string;
   sequenceLabel: string;
   snapshotId: number;
-  /** The copy's status as the server filed it; null when it did not say. */
-  copyStatus: string | null;
-  /** The server answered with the leaf that already held this document. */
-  unchanged: boolean;
   seqId: number;
-  sequenceNumber: string;
   /** The submission the sequence belongs to, for "Open in Submission Center". */
   submissionId: number | null;
 }
@@ -222,9 +217,6 @@ function AuthoringPlaceIntoFilingForDocument({
   const [verdict, setVerdict] = React.useState<Verdict>(null);
   const [placement, setPlacement] = React.useState<Placement | null>(null);
   const [needsReconciliation, setNeedsReconciliation] = React.useState(false);
-  const [replaced, setReplaced] = React.useState(false);
-  const [replaceReason, setReplaceReason] = React.useState('');
-  const verdictRef = React.useRef<HTMLDivElement | null>(null);
   const generation = React.useRef(0);
   const pending = React.useRef(false);
   React.useEffect(() => () => { generation.current += 1; }, []);
@@ -234,7 +226,6 @@ function AuthoringPlaceIntoFilingForDocument({
     setVerdict(null);
     setPlacement(null);
     setNeedsReconciliation(false);
-    setReplaced(false);
     setSection(ownCode ?? activeSectionCode ?? '');
     setOp('new');
     target.load();
@@ -289,7 +280,7 @@ function AuthoringPlaceIntoFilingForDocument({
         setVerdict(copy.verdict);
         return;
       }
-      const { snapshotId, copyStatus } = copy;
+      const { snapshotId, written, copyStatus } = copy;
 
       // 3. The canonical write: the leaf, pointing at the snapshot. Verdict verbatim.
       const put = await mutateVerbatim<PlacedLeaf>('PUT', `/api/submissions/sequences/${filing.seq.id}/leaves`, {
@@ -310,22 +301,28 @@ function AuthoringPlaceIntoFilingForDocument({
       const sequenceLabel = `${filing.seq.sequenceNumber} · ${filing.seq.type}`;
       setPlacement({
         leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId,
-        copyStatus, unchanged: !!put.data.unchanged, seqId: filing.seq.id, sequenceNumber: filing.seq.sequenceNumber,
-        submissionId: filing.subId,
+        seqId: filing.seq.id, submissionId: filing.subId,
       });
       /* The server answers a repeat placement of the same document at the same
          section with the leaf that already holds it, and writes nothing
          (QA 2026-10-08: 2.5.1 was placed twice as two live leaves). Said as
-         what it is — not as a placement, and not as an unrecorded one. */
+         what it is — not as a placement, and not as an unrecorded one.
+         Walk 2 (j4 blocker): "Nothing was written" was said over a copy the
+         snapshot step had just rewritten. It is said now only when the server
+         reports that the copy was not written (alreadyPlacedText). */
       if (put.data.unchanged) {
+        /* F17: a copy that is not approved says so, with freeze's refusal. An
+           approved copy needs nothing more: a re-take holds a filed copy's text
+           and only promotes its status (filing-copy-pins.ts), so the leaf
+           already files that text. */
         const text =
-          `Already placed: leaf #${put.data.id} at ${put.data.sectionCode} in sequence ${sequenceLabel} holds this document ` +
-          `(${documentSourceLabel('coauthor_documents', snapshotId)}). The leaf was not changed.` +
-          (copyStatus === 'approved'
-            ? ' The document is now approved: re-place the approved version so the leaf holds the approved text.'
-            : placedCopyNote(copyStatus));
+          alreadyPlacedText({ leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId, written, copyStatus }) +
+          placedCopyNote(copyStatus);
         setVerdict({ tone: 'ok', text });
-        fireToast(`Already placed — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber} holds this document. The leaf was not changed.`);
+        fireToast(
+          `Already placed — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber} holds this document.` +
+            (written === false ? ' Nothing was written.' : ''),
+        );
         return;
       }
       const auditWarning = placementAuditWarning(put.data);
@@ -340,52 +337,6 @@ function AuthoringPlaceIntoFilingForDocument({
       else fireToast(`Placed into filing — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber}.`);
     } finally {
       if (current()) { pending.current = false; setPlacing(false); }
-    }
-  };
-
-  /* Re-place approved version (F17): the leaf that already holds this
-     document is rewritten by id, so the server re-pins it to the approved
-     copy's text. Offered only when the server said the copy is approved. It
-     states what it changes and takes its own reason (design review
-     2026-10-08, Part 11 lens: it re-sent the first placement's reason from a
-     locked field). The button stays mounted while the write runs, so focus
-     does not drop to the page. */
-  const offerReplace = !!placement && placement.unchanged && placement.copyStatus === 'approved' && !replaced;
-  const canReplace = offerReplace && !placing && placementReasonOk(replaceReason);
-  const replaceApproved = async () => {
-    if (!placement || !canReplace || pending.current) return;
-    const started = generation.current;
-    pending.current = true;
-    setPlacing(true);
-    try {
-      const put = await mutateVerbatim<PlacedLeaf>('PUT', `/api/submissions/sequences/${placement.seqId}/leaves`, {
-        leafId: placement.leafId,
-        sectionCode: placement.sectionCode,
-        title: docTitle,
-        lifecycleOp: op,
-        documentTable: 'coauthor_documents',
-        documentId: placement.snapshotId,
-        reason: replaceReason.trim(),
-      });
-      if (started !== generation.current) return;
-      if (!matchingLeafReceipt(put.data, { sequenceId: placement.seqId, sectionCode: placement.sectionCode, documentTable: 'coauthor_documents', documentId: placement.snapshotId, lifecycleOp: op }) || put.data.id !== placement.leafId) {
-        const failure = leafFailure(put, placement.snapshotId, placement.sequenceNumber, placement.sectionCode);
-        setNeedsReconciliation(failure.unconfirmed);
-        setVerdict(failure.verdict);
-        return;
-      }
-      setReplaced(true);
-      const auditWarning = placementAuditWarning(put.data);
-      setVerdict({
-        tone: auditWarning ? 'err' : 'ok',
-        text: `Re-placed: leaf #${put.data.id} at ${put.data.sectionCode} now holds the approved version ` +
-          `(${documentSourceLabel('coauthor_documents', placement.snapshotId)}).` + auditWarning,
-      });
-      // The button goes with the offer: the outcome takes focus, not the page.
-      requestAnimationFrame(() => verdictRef.current?.focus());
-      fireToast(`Re-placed — leaf ${put.data.sectionCode} in sequence ${placement.sequenceNumber} holds the approved version.`);
-    } finally {
-      if (started === generation.current) { pending.current = false; setPlacing(false); }
     }
   };
 
@@ -513,37 +464,10 @@ function AuthoringPlaceIntoFilingForDocument({
               </div>
 
               {verdict && (
-                <div className={verdict.tone === 'err' ? 'de-err' : 'de-gov'} role="status" ref={verdictRef} tabIndex={-1}>
+                <div className={verdict.tone === 'err' ? 'de-err' : 'de-gov'} role="status">
                   {verdict.tone === 'ok' ? <span className="ico">{I.checkCircle}</span> : null}
                   <span className={verdict.tone === 'ok' ? 'de-gov-t' : undefined}>{verdict.text}</span>
                 </div>
-              )}
-
-              {offerReplace && placement && (
-                <>
-                  <div className="de-desc" id="apf-replace-effect">
-                    Re-placing pins leaf #{placement.leafId} at {placement.sectionCode} in sequence {placement.sequenceLabel} to
-                    the approved version&apos;s text. The ledger records the copy as approved, with your reason.
-                  </div>
-                  <PlacementReasonField
-                    value={replaceReason}
-                    onChange={setReplaceReason}
-                    idPrefix="apf-replace"
-                    label="Reason for re-placing"
-                    disabled={placing}
-                  />
-                  <div className="de-field">
-                    <button
-                      type="button"
-                      className="btn primary sm"
-                      disabled={!canReplace}
-                      aria-describedby="apf-replace-effect"
-                      onClick={replaceApproved}
-                    >
-                      Re-place approved version
-                    </button>
-                  </div>
-                </>
               )}
 
               {(placement || needsReconciliation) && (
@@ -604,4 +528,31 @@ function AuthoringPlaceIntoFilingForDocument({
 export function AuthoringPlaceIntoFiling(props: AuthoringPlaceIntoFilingProps) {
   const project = shellProgramId(useShellProject());
   return <AuthoringPlaceIntoFilingForDocument key={JSON.stringify([props.docId, project])} {...props} />;
+}
+
+/**
+ * What a repeat placement did, in words. "Nothing was written" only when the
+ * server said it wrote nothing: a re-take may promote the copy's status (the
+ * same text, now approved) without touching the leaf.
+ */
+export function alreadyPlacedText(a: {
+  leafId: number;
+  sectionCode: string;
+  sequenceLabel: string;
+  snapshotId: number;
+  written: boolean | undefined;
+  copyStatus: string | null;
+}): string {
+  const held =
+    `Already placed: leaf #${a.leafId} at ${a.sectionCode} in sequence ${a.sequenceLabel} holds this document ` +
+    `(${documentSourceLabel('coauthor_documents', a.snapshotId)}).`;
+  if (a.written === false) return `${held} Nothing was written.`;
+  if (a.written === true) {
+    return (
+      `${held} Its filing copy now carries the document’s current status` +
+      (a.copyStatus ? ` (${a.copyStatus})` : '') +
+      '; the text that leaf filed is unchanged, and the leaf was not changed.'
+    );
+  }
+  return `${held} The leaf was not changed.`;
 }

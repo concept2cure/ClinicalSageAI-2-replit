@@ -29,6 +29,7 @@ import { z } from 'zod';
 import { assembleSubmissionEctd } from '../services/ectd/assemble-from-core';
 import { validateEctdPackage } from '../services/submission-gateways/ectd-structural-validator';
 import { EctdCompletenessError } from '../services/ectd/completeness';
+import { PackageIdentityMissingError } from '../services/ectd/package-identity';
 import {
   validatePackage as validateEctdLeafPackage,
   type ECTDLeaf,
@@ -108,6 +109,12 @@ function classifyError(error: unknown): {
   message: string;
 } {
   const raw = error instanceof Error ? error.message : String(error);
+  // The record names no application number or no applicant (QA 2026-10-08, j6):
+  // the package is not built, and the refusal names what to record. Checked
+  // first, so no phrase in it can be read as another class below.
+  if (error instanceof PackageIdentityMissingError) {
+    return { status: 409, code: error.code, message: raw };
+  }
   // Region-unsupported is thrown by the canonical region mapper with a stable
   // prefix (core-to-packager toPackagerRegion).
   if (/does not support region|Unsupported region/i.test(raw)) {

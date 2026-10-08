@@ -197,8 +197,9 @@ describe('GET /:projectIdent/history — program idents filter by the program la
    project got `IND-<id>` — a string shaped exactly like an agency IND number,
    synthesised from a row id, for an application the agency has never seen.
    "Recorded identity we actually hold", which is what the code claimed to be
-   doing, is the number when there is one, the code when there is not, and a
-   handle that says unassigned when there is neither. */
+   doing, is the number when there is one and a handle that says unassigned
+   when there is not. 2026-10-08 (QA j6): the program code is not an agency
+   number and no longer stands in for one. */
 describe('POST /:projectIdent/compile — the draft backbone names the application honestly', () => {
   const backboneOf = (res: any) => String(res.json.mock.calls[0][0].xmlBackbone ?? '');
   const appNumber = (xml: string) => /<ectd:application-number>([^<]*)<\/ectd:application-number>/.exec(xml)?.[1] ?? null;
@@ -212,13 +213,14 @@ describe('POST /:projectIdent/compile — the draft backbone names the applicati
     expect(appNumber(backboneOf(res))).toBe('000512');
   });
 
-  it('falls back to the program code when no number is recorded', async () => {
+  it('with no number recorded, says it is unassigned — never the program code', async () => {
     programRows.mockReturnValue([PROGRAM]);
     const res = createMockResponse() as any;
     await getHandler('/:projectIdent/compile', 'post')(
       makeReq({ params: { projectIdent: UUID }, body: { submissionType: 'initial', region: 'FDA' } }), res,
     );
-    expect(appNumber(backboneOf(res))).toBe('BX-204');
+    expect(appNumber(backboneOf(res))).toBe('UNASSIGNED-PROGRAM');
+    expect(appNumber(backboneOf(res))).not.toBe('BX-204');
   });
 
   it('a legacy numeric project does not get an IND-shaped number invented for it', async () => {

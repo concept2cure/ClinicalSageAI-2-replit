@@ -1,0 +1,9 @@
+# mutation: highwater-rows-only
+# test: server/routes/ana-ri/__tests__/runs-read.pglite.test.ts -t "6. a gap"
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 6. a gap is visible > a dropped batch shows as missing seqs in events and as highWater above the last row 233ms
+   → expected 5 to be 6 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 6. a gap is visible > a dropped batch shows as missing seqs in events and as highWater above the last row
+AssertionError: expected 5 to be 6 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)

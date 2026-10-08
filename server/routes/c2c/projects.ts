@@ -48,11 +48,8 @@ import {
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
-import {
-  productTypeForFilingType,
-  DEVICE_FAMILY_PRODUCT_TYPES,
-  workstreamSqlCase,
-} from '../../../shared/constants/domain/product-types.js';
+import { workstreamSqlCase } from '../../../shared/constants/domain/product-types.js';
+import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
 /* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
    VALID_PRODUCT_TYPES / DRUG_APPLICATION_TYPES) and its canonical
    submission-spine plumbing live in ./project-intake.ts — pure domain helpers
@@ -60,10 +57,10 @@ import {
    line-count gate. */
 import {
   VALID_PROGRAM_TYPES,
-  VALID_PRODUCT_TYPES,
   DRUG_APPLICATION_TYPES,
   ensureSubmissionSpine,
   baseCodeFrom,
+  productTypeForIntake,
 } from './project-intake.js';
 import {
   devicePathFor,
@@ -757,35 +754,13 @@ router.post('/', async (req: Request, res: Response) => {
   };
   const offer = marketOfferGivenOutline(marketInput, true);
   if (offer.tier === 'not_offered') return sendFilingNotOffered(res, offer);
-  // The product class. Derived from the FILING TYPE when the client omits it —
-  // a 510(k) is a device submission, an EU IVDR technical file is about an IVD,
-  // and neither can be about a drug. The old derivation ended in a bare
-  // `return 'drug'`, so `mdr` and `ivdr` — absent from every branch — persisted
-  // EU device and IVD technical files as drug programmes.
-  let productType = str(body.productType).toLowerCase();
-  if (!productType) productType = productTypeForFilingType(programType) ?? '';
-  if (!VALID_PRODUCT_TYPES.has(productType)) {
-    return send400(res, `productType must be one of: ${[...VALID_PRODUCT_TYPES].join(', ')}`);
-  }
-
-  // A device or IVD filing may not be recorded as a medicinal product, whatever
-  // the client sent. This is the defect the MDX UAT found — the wizard derived
-  // the product class from the UI segment, so a 510(k) started while the
-  // Pharma & Biotech tab was open was submitted as `productType: 'biologic'`
-  // and the server accepted it over its own correct derivation. The filing type
-  // is a regulatory fact; the client does not get to contradict it.
-  const impliedClass = productTypeForFilingType(programType);
-  if (
-    impliedClass &&
-    DEVICE_FAMILY_PRODUCT_TYPES.includes(impliedClass) &&
-    !DEVICE_FAMILY_PRODUCT_TYPES.includes(productType as never)
-  ) {
-    return send400(
-      res,
-      `A ${programType} filing is a device submission and cannot be recorded as ` +
-        `"${productType}". Use one of: ${DEVICE_FAMILY_PRODUCT_TYPES.join(', ')}.`,
-    );
-  }
+  // The product class: the filing type's when it fixes one (a 510(k) is a
+  // device, a BLA a biologic), the person's when it does not (an IND, CTA, MAA,
+  // J-NDA or DMF covers drugs and biologics alike — P-21). A device filing may
+  // not be recorded as medicinal. The rules are productTypeForIntake's.
+  const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase());
+  if ('refusal' in classDecision) return send400(res, classDecision.refusal);
+  const { productType } = classDecision;
 
   // Licensed program count. The org's `max_projects` entitlement was sold and
   // billed but never checked on this path, so the wizard could create programs
@@ -985,8 +960,12 @@ router.post('/', async (req: Request, res: Response) => {
       // throws ProgramAnchorUnavailableError and the catch below refuses the
       // creation: until 2026-10-08 a skip here still created the program, and
       // it answered "no record" on every surface keyed by its project.
+      // The project record carries the registry context the readiness digest
+      // reads (projects.metadata). Intake wrote none, so readiness was never
+      // computed for any program (QA 2026-10-08, j8).
       projectAnchor = await requireProgramProjectAnchor({
         client, orgId, userId, programId: newId, name, code: createdCode, priority,
+        metadata: registryContextForProgram({ submissionTypeId, programType, primaryAgency }),
       });
 
       // Domain audit row for the creation, in the SAME transaction as the

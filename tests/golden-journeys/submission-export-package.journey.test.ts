@@ -51,6 +51,7 @@ import { createIndPgliteDb, type IndPgliteDb } from '../../server/db/pglite-harn
 import { assembleSubmissionEctd } from '../../server/services/ectd/assemble-from-core';
 import { validateEctdPackage } from '../../server/services/submission-gateways/ectd-structural-validator';
 import { EctdCompletenessError } from '../../server/services/ectd/completeness';
+import { PackageIdentityMissingError } from '../../server/services/ectd/package-identity';
 import { JourneyRecorder, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
 
 const T = 180_000;
@@ -58,6 +59,11 @@ const T = 180_000;
 const ORG_A = 1;
 const ORG_B = 2;
 const USER = 1;
+// The projects the submissions file under: the application number a package
+// names is the one its project records, and nothing else (QA 2026-10-08, j6).
+const PROGRAM_A = 'a0000000-0000-4000-8000-0000000000a1';
+const PROGRAM_A_INCOMPLETE = 'a0000000-0000-4000-8000-0000000000a3';
+const PROGRAM_A_UNNUMBERED = 'a0000000-0000-4000-8000-0000000000a4';
 
 let harness: IndPgliteDb;
 
@@ -66,21 +72,31 @@ const R = new JourneyRecorder(
   'Drives the canonical export generator (assembleSubmissionEctd over the ' +
     'submission spine) against real canonical DDL: valid package with ' +
     're-verifiable checksums, materialization-backed completeness gate, ' +
-    'tenant isolation, and region honesty.',
+    'tenant isolation, region honesty, and the applicant and application ' +
+    'number taken from the record alone.',
   [
     'server/db/pglite-harness.ts#SUBMISSION_CORE_PGLITE_DDL',
     'server/db/pglite-harness.ts#LEAF_SOURCE_PGLITE_DDL',
+    'server/db/pglite-harness.ts#PROGRAM_SPINE_PGLITE_DDL',
   ],
 );
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true });
   holder.db = harness.db;
 
   await harness.pglite.exec(`
+    -- The sponsor of record is the organisation; each submission files under a
+    -- project that records the number the agency assigned (one records none).
+    INSERT INTO organizations (id, name) VALUES (${ORG_A}, 'Examplinib Therapeutics Inc.'), (${ORG_B}, 'Other Sponsor LLC');
+    INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_name, application_number) VALUES
+      ('${PROGRAM_A}', ${ORG_A}, 'Examplinib (IND)', 'EX-1', 'IND', 'Examplinib', '123456'),
+      ('${PROGRAM_A_INCOMPLETE}', ${ORG_A}, 'Examplinib-2 (IND)', 'EX-2', 'IND', 'Examplinib-2', '123457'),
+      ('${PROGRAM_A_UNNUMBERED}', ${ORG_A}, 'Examplinib-4 (IND)', 'EX-4', 'IND', 'Examplinib-4', NULL);
+
     -- Org A, submission 1: a fully materializable IND dossier (M2 + M3).
-    INSERT INTO submissions (id, title, product_name, application_type, client_type, primary_region, organization_id, created_by)
-    VALUES (1, 'A: complete IND', 'Examplinib', 'ind', 'biotech', 'fda', ${ORG_A}, ${USER});
+    INSERT INTO submissions (id, title, product_name, application_type, client_type, primary_region, organization_id, created_by, program_id)
+    VALUES (1, 'A: complete IND', 'Examplinib', 'ind', 'biotech', 'fda', ${ORG_A}, ${USER}, '${PROGRAM_A}');
     INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by)
     VALUES (1, 1, 'fda', '0000', ${ORG_A}, ${USER});
 
@@ -104,16 +120,23 @@ beforeAll(async () => {
     -- leaf pointing at a document that belongs to ORG B (cross-tenant attack
     -- shape). The resolver must deny it at the DB boundary → unresolved →
     -- completeness gate refusal.
-    INSERT INTO submissions (id, title, product_name, application_type, client_type, primary_region, organization_id, created_by)
-    VALUES (3, 'A: incomplete IND', 'Examplinib-2', 'ind', 'biotech', 'fda', ${ORG_A}, ${USER});
+    INSERT INTO submissions (id, title, product_name, application_type, client_type, primary_region, organization_id, created_by, program_id)
+    VALUES (3, 'A: incomplete IND', 'Examplinib-2', 'ind', 'biotech', 'fda', ${ORG_A}, ${USER}, '${PROGRAM_A_INCOMPLETE}');
     INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by)
     VALUES (3, 3, 'fda', '0000', ${ORG_A}, ${USER});
+
+    -- Org A, submission 4: complete, but its project records no application number.
+    INSERT INTO submissions (id, title, product_name, application_type, client_type, primary_region, organization_id, created_by, program_id)
+    VALUES (4, 'A: IND with no number yet', 'Examplinib-4', 'ind', 'biotech', 'fda', ${ORG_A}, ${USER}, '${PROGRAM_A_UNNUMBERED}');
+    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by)
+    VALUES (4, 4, 'fda', '0000', ${ORG_A}, ${USER});
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number)
     VALUES (300, ${ORG_B}, 'Other-Tenant Secret', '<p>must never appear</p>', '2.5');
     INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by)
     VALUES
       (3, '2.5',   'Clinical Overview', 'new', 'coauthor_documents', 100, ${ORG_A}, ${USER}),
-      (3, '5.3.5', 'Cross-Tenant Study Report', 'new', 'coauthor_documents', 300, ${ORG_A}, ${USER});
+      (3, '5.3.5', 'Cross-Tenant Study Report', 'new', 'coauthor_documents', 300, ${ORG_A}, ${USER}),
+      (4, '2.5',   'Clinical Overview', 'new', 'coauthor_documents', 100, ${ORG_A}, ${USER});
   `);
 }, T);
 
@@ -210,6 +233,18 @@ describe('golden journey — eCTD export to submittable package (canonical)', ()
         return { leafIds: ids.length, filesInManifest: lines.length, verified };
       });
 
+      // 2c. The applicant and the application are the record's: the organisation's
+      //     name and the project's recorded agency number — never a placeholder,
+      //     never the program code (QA 2026-10-08, j6).
+      await R.step('the regional backbone names the recorded applicant and application number', async () => {
+        const zip = await JSZip.loadAsync(exported.buffer as Buffer);
+        const regional = await zip.file('m1/us/us-regional.xml')!.async('string');
+        expect(regional).toContain('<company-name>Examplinib Therapeutics Inc.</company-name>');
+        expect(regional).toMatch(/<application-number[^>]*>123456<\/application-number>/);
+        expect(regional).not.toMatch(/UNASSIGNED \(organization|UNASSIGNED-SEQ|>EX-1</);
+        return { applicant: 'Examplinib Therapeutics Inc.', applicationNumber: '123456' };
+      });
+
       // 3. requireComplete passes for the fully materializable dossier.
       await R.step('submission-grade build succeeds for a complete dossier', async () => {
         const pkg = await assembleSubmissionEctd({
@@ -269,6 +304,20 @@ describe('golden journey — eCTD export to submittable package (canonical)', ()
           }
         },
       );
+
+      // 4c. A project with no recorded application number: refused by name,
+      //     nothing built — the program code is not offered in its place.
+      await R.expectBlocked('a submission whose project records no application number is refused by name', async () => {
+        try {
+          await assembleSubmissionEctd({ submissionId: 4, organizationId: ORG_A, userId: USER });
+          return { blocked: false };
+        } catch (err) {
+          return {
+            blocked: err instanceof PackageIdentityMissingError && /records no agency application number/.test(err.message),
+            missing: (err as PackageIdentityMissingError)?.missing,
+          };
+        }
+      });
 
       // 5. TENANT ISOLATION at the submission boundary: org B cannot export
       //    org A's submission id at all.

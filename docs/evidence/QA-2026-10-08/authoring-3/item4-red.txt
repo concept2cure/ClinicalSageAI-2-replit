@@ -1,0 +1,42 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > starts on "Not stated — choose" and records nothing until a decision is chosen (P-21) 471ms
+   → expected 'approved' to be '' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > POSTs the verdict and the note to the authoring review transition 183ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > a decline is the authoring "rejected" verdict, and needs grounds 200ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > re-reads the board after the decision, so the row comes from the record 130ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > says the decision was NOT recorded when the server refuses, and stays open 129ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > offers no signature meaning — the board does not sign 88ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > requesting changes > is the authoring "changes_requested" verdict with the reason, and re-reads the board 148ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > there is no delegate on the board > the authoring workflow has no delegate transition, so the board offers none 48ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > POSTs a comment to the document’s section through the authoring router and re-reads the board 73ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > resolving a comment PATCHes it through the authoring router, and a refusal puts it back to open 178ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > the hero call to action > "Open the queue" selects a document still in review instead of doing nothing 88ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > starts on "Not stated — choose" and records nothing until a decision is chosen (P-21)
+AssertionError: expected 'approved' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ approved
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx:97:26
+     95|     await openModal();
+     96|     const select = screen.getByLabelText('Decision') as HTMLSelectElem…
+     97|     expect(select.value).toBe('');
+       |                          ^
+     98|     expect(select.selectedOptions[0]?.textContent).toBe('Not stated — …
+     99|     expect(screen.queryByRole('button', { name: /Record approval/ })).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  13:43:24
+   Duration  3.87s (transform 756ms, setup 205ms, import 909ms, tests 1.75s, environment 668ms)
+

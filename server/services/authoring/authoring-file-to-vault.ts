@@ -25,6 +25,14 @@
  *     Part 11 filing-artifact gate stays where it is; the project vault holds
  *     working files as well as sealed ones, and lying about which is which is
  *     the only thing refused.
+ *   • no PDF engine      503 PDF_RENDERER_UNAVAILABLE — 2026-10-08 (QA walk 2,
+ *                          j4): where Puppeteer is absent the PDF renderer falls
+ *                          back to a plain-text stand-in whose first line says
+ *                          not to file it, and this filed it as the governed
+ *                          Vault copy, silently. No decision allows filing it
+ *                          with an acknowledgement (docs/LAUNCH_DEFINITION_OF_DONE.md,
+ *                          docs/design), so it fails closed before ingest. DOCX
+ *                          does not use that engine and is unaffected.
  *
  * ── Never a partial write ───────────────────────────────────────────────────
  * Rendering writes nothing. Ingest is atomic in itself. If the filing or the
@@ -104,6 +112,11 @@ interface DocRow {
 }
 
 const refuse = (status: number, code: string, error: string): FileToVaultOutcome => ({ kind: 'refused', status, code, error });
+
+/** The refusal of a plain-text PDF fallback (see the header). */
+const PDF_FALLBACK_REFUSAL =
+  'The PDF renderer is not available here; this would file a plain-text rendering. Nothing was filed. ' +
+  'Word (.docx) is filed with its formatting.';
 
 /** Postgres: lock_not_available — another transaction holds the row FOR UPDATE. */
 const LOCK_NOT_AVAILABLE = '55P03';
@@ -462,6 +475,7 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
   );
   const rendered = await renderForVaultFiling(args, doc, sectionsRes.rows);
   if ('kind' in rendered) return rendered;
+  if (rendered.rendering === 'plain-text-fallback') return refuse(503, 'PDF_RENDERER_UNAVAILABLE', PDF_FALLBACK_REFUSAL);
 
   const admitted = await ingestAndFile(args, doc, rendered, programId);
   if ('kind' in admitted) return admitted;

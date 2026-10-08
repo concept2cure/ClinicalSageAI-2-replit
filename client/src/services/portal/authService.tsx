@@ -577,9 +577,14 @@ export interface SessionPolicy {
   lifetimeHours: number;
   /** When the lifetime ends (ISO), or null when the probe has not said. */
   expiresAt: string | null;
+  /**
+   * The server's id for this session, or null when the probe has not said.
+   * The idle clock is kept under it across reloads and tabs (idleSession.ts).
+   */
+  sessionId?: string | null;
 }
 
-const DEFAULT_SESSION_POLICY: SessionPolicy = { idleMinutes: 15, lifetimeHours: 12, expiresAt: null };
+const DEFAULT_SESSION_POLICY: SessionPolicy = { idleMinutes: 15, lifetimeHours: 12, expiresAt: null, sessionId: null };
 
 export class AuthService {
   private tokens: AuthTokens | null = null;
@@ -843,11 +848,12 @@ export class AuthService {
 
   /** Keep what GET /session reported under `session`. Unknown or absent fields keep their defaults. */
   rememberSessionPolicy(session: unknown): SessionPolicy {
-    const s = (session ?? {}) as { idleMinutes?: unknown; lifetimeHours?: unknown; expiresAt?: unknown };
+    const s = (session ?? {}) as { idleMinutes?: unknown; lifetimeHours?: unknown; expiresAt?: unknown; id?: unknown };
     const minutes = typeof s.idleMinutes === 'number' && s.idleMinutes > 0 ? s.idleMinutes : DEFAULT_SESSION_POLICY.idleMinutes;
     const hours = typeof s.lifetimeHours === 'number' && s.lifetimeHours > 0 ? s.lifetimeHours : DEFAULT_SESSION_POLICY.lifetimeHours;
     const expiresAt = typeof s.expiresAt === 'string' && !Number.isNaN(Date.parse(s.expiresAt)) ? s.expiresAt : null;
-    this.sessionPolicy = { idleMinutes: minutes, lifetimeHours: hours, expiresAt };
+    const sessionId = typeof s.id === 'string' && s.id ? s.id : null;
+    this.sessionPolicy = { idleMinutes: minutes, lifetimeHours: hours, expiresAt, sessionId };
     return this.sessionPolicy;
   }
 

@@ -18,6 +18,7 @@ import { currentTenantOrgUuid, TenantKeyRequiredError } from '../db/currentTenan
 import { writeChainedAuditRow } from '../services/auditService';
 import { isSigningAuthorized, signingAuthorityRoles } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate.js';
 import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
 import { authedOrgId } from '../utils/authedOrgId';
@@ -32,6 +33,7 @@ import {
   commitSectionToFiling,
   type CommitSectionResult,
 } from '../services/c2c/commit-section-to-filing.js';
+import { filingResponse, signedFilingSectionTexts } from '../services/c2c/filing-section-target.js';
 // Spine F1: the approval signature records the filing sections it approves
 // through the one governed-action writer (audit_logs + c2c_ana_actions).
 import { recordGovernedAction } from './c2c/actions';
@@ -595,46 +597,24 @@ const computeSignatureDigest = (input: {
 const computeDocHash = (docId: string | string[] | undefined, tenantId: number): Promise<string> =>
   computeDocHashOn(pool, docId, tenantId);
 
-/**
+/*
  * 21 CFR Part 11 §11.10(g) — may this signer apply a signature at all?
  *
  * "Use of ... controls to ensure that persons who ... electronically sign
  * records ... have the authority to do so." Identity is NOT authority: this
- * router verified a PIN (§11.200 second component) and a token, and then let
- * any authenticated member sign — including `meaning: 'APPROVER'`, which flips
- * the document to APPROVED and inserts a frozen_documents row. A viewer with a
- * PIN could approve and seal a regulated record.
+ * router once verified a PIN and a token and then let any authenticated member
+ * sign, including `meaning: 'APPROVER'`, which approves and freezes a document.
  *
- * The policy already existed and this router simply never asked it.
- * signing-authority.ts is the single source of truth (its own header names the
- * surfaces that consult it — /api/esignature/sign, sign-release, the AnA
- * verified-seal route — and this file was not among them), and the role comes
- * from resolveSignerOrgRole, which reads `organization_users` rather than
- * `req.user.role`: the resolver's header is explicit that the request-borne
- * role "is not reliably populated on every signing route".
- *
- * Fails closed — no membership row, or a role outside the allowlist, is not
- * authorized. Deployments tune the allowlist with ESIGNATURE_SIGNING_ROLES.
+ * Each signing route here (freeze, e-sign, sign) asks the platform's one
+ * policy, checkSigningAuthority (part11/signing-authority-gate.ts), inline in
+ * its handler and before the credentials: the role from the membership row,
+ * never `req.user.role`, 403 ESIGNATURE_NO_AUTHORITY, or 503
+ * SIGNING_AUTHORITY_UNVERIFIED when the role cannot be read. This router held
+ * its own copy of that check (assertSigningAuthority) until 2026-10-08 (P-27);
+ * a failed lookup there was an unhandled 500.
  *
  * @compliance 21 CFR Part 11 §11.10(d), §11.10(g)
  */
-async function assertSigningAuthority(
-  req: Request,
-  res: Response,
-): Promise<boolean> {
-  const actorId = Number(getActorId(req));
-  const orgId = getTenantId(req);
-  const role = await resolveSignerOrgRole(actorId, orgId);
-  if (!isSigningAuthorized(role)) {
-    res.status(403).json({
-      error:
-        'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-      code: 'ESIGNATURE_NO_AUTHORITY',
-    });
-    return false;
-  }
-  return true;
-}
 
 /**
  * Does this document exist for this tenant?
@@ -1542,8 +1522,8 @@ router.post('/docs/from-draft', async (req: Request, res: Response) => {
                    'approve' → decideAuthoringPermission (OWNER or APPROVER
                    grant, or a global admin role), then — a freeze is signed
                    (DP-35) — the same §11.10(g) check as esign.
-     esign         the same 'approve' decision, then assertSigningAuthority's
-                   §11.10(g) check: resolveSignerOrgRole + isSigningAuthorized.
+     esign         the same 'approve' decision, then the §11.10(g) check
+                   (checkSigningAuthority, as the e-sign route asks it).
      esignReview   the review signature alone (meaning REVIEWER), which the
                    middleware classes as 'review' (REVIEWER, APPROVER or OWNER
                    grant), then the same §11.10(g) check (QA 2026-10-08, j4).
@@ -2274,13 +2254,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       revision_created: content !== undefined,
       // Whether the text reached the filing. Present on every content save:
       // an unbound save is legitimate, a silently unbound one is the drift.
-      ...(governedCommit
-        ? {
-            filing: governedCommit.committed
-              ? { committed: true, documentId: governedCommit.documentId, sectionKey: governedCommit.sectionKey }
-              : { committed: false, reason: governedCommit.reason },
-          }
-        : {}),
+      ...(governedCommit ? { filing: filingResponse(governedCommit) } : {}),
     });
   } catch (error) {
     console.error('Error updating section:', error);
@@ -4195,13 +4169,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       /* Whether the accepted text reached the filing — honest either way, the
          same as the manual save. An unbound accept says it did not, rather than
          letting the two stores drift apart in silence. */
-      ...(governedCommit
-        ? {
-            filing: governedCommit.committed
-              ? { committed: true, documentId: governedCommit.documentId, sectionKey: governedCommit.sectionKey }
-              : { committed: false, reason: governedCommit.reason },
-          }
-        : {}),
+      ...(governedCommit ? { filing: filingResponse(governedCommit) } : {}),
     });
   } catch (error) {
     console.error('Error accepting AI draft:', error);
@@ -4688,7 +4656,8 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
 
     // §11.10(g) authority, before the credentials (see /e-sign for the order).
-    if (!(await assertSigningAuthority(req, res))) return;
+    const authority = await checkSigningAuthority(Number(getActorId(req)), getTenantId(req));
+    if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
     if (!isFreezeMeaning(meaning)) {
       return res.status(400).json({
         error:
@@ -4961,15 +4930,14 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
     // §11.10(g) authority, checked BEFORE the credentials. Order matters: an
     // unauthorized caller must not learn whether a password is correct, and
     // must not be able to use this endpoint as a password oracle.
-    if (!(await assertSigningAuthority(req, res))) return;
+    const authority = await checkSigningAuthority(Number(getActorId(req)), getTenantId(req));
+    if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
 
     if (!meaning || !SIGNATURE_MEANINGS.includes(meaning)) {
       return res.status(400).json({ error: 'Invalid signature meaning' });
     }
 
-    if (!intent) {
-      return res.status(400).json({ error: 'Signature intent is required' });
-    }
+    if (!intent) return res.status(400).json({ error: 'Signature intent is required' });
 
     // §11.70 — a signature must be linked to the record it signs. Without this
     // an unknown or cross-tenant docId produced a signature bound to sha256("").
@@ -6681,9 +6649,11 @@ type ApproveBoundSectionsResult =
  *
  * ── What moves ────────────────────────────────────────────────────────────────
  * Only sections the signer actually signed: a governed section of the BOUND
- * document whose key is the code of one of this document's authored sections,
- * that has written text (sectionHasContentSql's test), and whose filing text is
- * exactly the authored text the signature covers. A section whose filing text
+ * document that one of this document's authored sections files into (its own
+ * code, or the undivided node it sits under — filingSectionKey; 2026-10-08
+ * merge of spine F1 with QA walk 2 j4), that has written text
+ * (sectionHasContentSql's test), and whose filing text is exactly the text the
+ * signature covers: the section's own, or the node's sections assembled. A section whose filing text
  * differs (written elsewhere after the last save) was not signed and is not
  * approved; it is reported in `notApproved`. Only forward: 'todo', 'drafted'
  * and 'review' move; 'approved' stays; 'locked' is never touched.
@@ -6730,23 +6700,28 @@ async function approveBoundFilingSections(
     };
   }
 
-  // Tenant-scoped on both stores: the authored sections by tenant_id, the
-  // governed document by org_id (c2c_document_sections has no org column).
+  // What each node holds when this document's sections are saved as signed:
+  // the section's own text at its own key, or the document's sections under an
+  // undivided node assembled (filingSectionKey / filingSectionText, the rule a
+  // save writes by). Tenant-scoped on both stores: the authored sections by
+  // tenant_id, the governed document by org_id (c2c_document_sections has no
+  // org column).
+  const signed = await signedFilingSectionTexts(client, { authoringDocId, tenantId, documentId });
+  const signedKeys = signed.map((t) => t.key);
   const moved = await client.query(
     `UPDATE c2c_document_sections ds
         SET status = 'approved', updated_at = now()
-       FROM authoring_sections s
+       FROM unnest($2::text[], $3::text[]) AS sig(section_key, text)
       WHERE ds.document_id = $1
-        AND s.doc_id = $2 AND s.tenant_id = $3
-        AND s.code = ds.section_key
+        AND sig.section_key = ds.section_key
         AND ds.status IN ('todo', 'drafted', 'review')
         AND jsonb_typeof(ds.content) = 'object'
         AND (ds.content ->> 'text') !~ '^\\s*$'
-        AND (ds.content ->> 'text') = s.content
+        AND (ds.content ->> 'text') = sig.text
         AND EXISTS (SELECT 1 FROM c2c_documents d
-                     WHERE d.id = ds.document_id AND d.org_id = $3)
+                     WHERE d.id = ds.document_id AND d.org_id = $4)
       RETURNING ds.section_key`,
-    [documentId, authoringDocId, tenantId],
+    [documentId, signedKeys, signed.map((t) => t.text), tenantId],
   );
   // rows, never rowCount: PGlite does not populate rowCount.
   const movedKeys: string[] = moved.rows.map((r: { section_key: string }) => r.section_key);
@@ -6755,10 +6730,12 @@ async function approveBoundFilingSections(
   const left = await client.query(
     `SELECT DISTINCT ds.section_key
        FROM c2c_document_sections ds
-       JOIN authoring_sections s ON s.code = ds.section_key AND s.doc_id = $2 AND s.tenant_id = $3
-      WHERE ds.document_id = $1 AND ds.status NOT IN ('approved', 'locked')
+      WHERE ds.document_id = $1 AND ds.section_key = ANY($2::text[])
+        AND ds.status NOT IN ('approved', 'locked')
+        AND EXISTS (SELECT 1 FROM c2c_documents d
+                     WHERE d.id = ds.document_id AND d.org_id = $3)
       ORDER BY ds.section_key`,
-    [documentId, authoringDocId, tenantId],
+    [documentId, signedKeys, tenantId],
   );
   const notApproved: string[] = left.rows.map((r: { section_key: string }) => r.section_key);
 
@@ -7039,7 +7016,8 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     // This path also advances a workflow step, and it already consulted the
     // caller's roles to decide THAT (below); it never consulted them to decide
     // whether the signature itself could be applied.
-    if (!(await assertSigningAuthority(req, res))) return;
+    const authority = await checkSigningAuthority(Number(getActorId(req)), getTenantId(req));
+    if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
 
     // Validate required fields
     if (!reason) {

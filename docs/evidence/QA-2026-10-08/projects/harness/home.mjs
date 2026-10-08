@@ -15,6 +15,7 @@ console.info('ASIDE CARDS:', JSON.stringify(aside));
 const tools = await page.$$eval('.pj-main .pj-tool .pj-tool-t', (els) => els.map((e) => e.innerText.trim()));
 console.info('TOOLS:', JSON.stringify(tools));
 for (const t of ['FDA CRL library', 'Lifecycle management']) {
+  // nosemgrep: unsafe-formatstring -- t comes from the two-item literal array above
   console.info(`TILE "${t}" offered:`, tools.includes(t));
 }
 if (process.env.CLICK && tools.includes(process.env.CLICK)) {

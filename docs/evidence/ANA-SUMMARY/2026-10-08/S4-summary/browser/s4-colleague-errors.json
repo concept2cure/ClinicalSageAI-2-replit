@@ -1,0 +1,30 @@
+[
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5086/concept2cure/conversation-thread/ana-ri_1791465394750_thc9irtdx?program=50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1791465394750_thc9irtdx/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/turn-records/c8dbd06e-b14a-43f1-a773-2e0b0fd17b29/summary",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "url": "http://localhost:5086/concept2cure/conversation-thread/ana-ri_1791465394750_thc9irtdx?program=50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+  },
+  {
+    "kind": "http",
+    "status": 403,
+    "method": "GET",
+    "url": "/api/ana-ri/turn-records/c8dbd06e-b14a-43f1-a773-2e0b0fd17b29/export",
+    "body": "{\"success\":false,\"error\":{\"message\":\"The full record is available to the person who asked and to administrators.\",\"code\":\"TURN_RECORD_NOT_YOURS\",\"details\":null}}",
+    "at": "http://localhost:5086/concept2cure/conversation-thread/ana-ri_1791465394750_thc9irtdx?program=50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+  }
+]

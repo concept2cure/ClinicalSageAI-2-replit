@@ -19,10 +19,9 @@
  *   - before placing, the dialog says what the copy will be filed as;
  *   - after placing, it states the server's copy status, and a copy that is
  *     not approved carries the freeze refusal;
- *   - where the document was already placed and its copy is now approved, it
- *     offers "Re-place approved version": the same leaf, rewritten by id
- *     through PUT /sequences/:seqId/leaves, so it is re-pinned to the approved
- *     text.
+ *   - where the document was already placed and its copy is now approved, the
+ *     re-take promoted the copy in place and the leaf already files its text
+ *     (filing-copy pins, merged 2026-10-08), and the dialog says so.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -38,12 +37,13 @@ import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { readDocumentAccess } from '../editor/DocumentWorkbench';
 
 const REASON = 'Clinical summary approved for sequence 0000';
-const REPLACE_REASON = 'Re-placing with the approved version after sign-off';
 const SUBS = [{ id: 9, title: 'ZX-9 First-in-Human', applicationType: 'ind', primaryRegion: 'fda', status: 'active' }];
 const SEQS = [{ id: 31, sequenceNumber: '0000', type: 'original', status: 'draft', region: 'fda' }];
 const SECTIONS = { success: true, sections: [{ code: '2.7.3', title: 'Summary of Clinical Efficacy', content: 'ORR 38.6%.' }] };
 
 type Call = { method: string; url: string; body?: unknown };
+/** The snapshot route's `written` (whether this placement wrote the copy); unsent unless a case sets it. */
+const copyWritten: { value: boolean | undefined } = { value: undefined };
 
 function mockApi(copyStatus: string | undefined, leafAnswers: Array<Record<string, unknown>>) {
   const calls: Call[] = [];
@@ -54,7 +54,7 @@ function mockApi(copyStatus: string | undefined, leafAnswers: Array<Record<strin
     if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
     if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
       calls.push({ method, url, body });
-      return ok({ success: true, document: { id: 501, status: copyStatus, metadata: { source: 'authoring-document', docId: 'D1' } } }, 201);
+      return ok({ success: true, ...(copyWritten.value === undefined ? {} : { written: copyWritten.value }), document: { id: 501, status: copyStatus, metadata: { source: 'authoring-document', docId: 'D1' } } }, 201);
     }
     if (method === 'PUT' && url === '/api/submissions/sequences/31/leaves') {
       calls.push({ method, url, body });
@@ -93,7 +93,7 @@ async function openAndTarget() {
 
 const copyLine = () => screen.getByTestId('apf-copy-status').textContent ?? '';
 
-beforeEach(() => apiRequest.mockReset());
+beforeEach(() => { apiRequest.mockReset(); copyWritten.value = undefined; });
 afterEach(() => cleanup());
 
 describe('Place into filing states what the filing copy is (F17)', () => {
@@ -150,36 +150,25 @@ describe('Place into filing states what the filing copy is (F17)', () => {
     expect(document.body.textContent).toMatch(/The filing copy is a draft\. Freeze will refuse it until you re-place it after approval\./);
   });
 
-  it('already placed, and the copy is now approved: "Re-place approved version" rewrites the same leaf by id', async () => {
-    const calls = mockApi('approved', [{ unchanged: true }, {}]);
+  /* Merged 2026-10-08 with the filing-copy pins (Authoring-3,
+     services/coauthor/filing-copy-pins.ts): a re-take never rewrites the text a
+     leaf files and only promotes the copy's status, so the leaf already files
+     the approved text and the dialog says so. The "Re-place approved version"
+     act re-pinned a leaf to text that can no longer differ, and is gone. */
+  it('already placed, and the copy is now approved: the copy is promoted and the leaf already files it', async () => {
+    const calls = mockApi('approved', [{ unchanged: true }]);
+    copyWritten.value = true;
     renderDialog('APPROVED');
     await openAndTarget();
     fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
     await waitFor(() => expect(document.body.textContent).toContain('Already placed'));
-
-    /* Design review 2026-10-08 (Part 11 lens): re-place sent the reason typed
-       for the first placement, from a locked field, with nothing saying what it
-       would change. It states its effect and takes its own reason. */
-    const replace = await screen.findByRole('button', { name: 'Re-place approved version' });
-    expect(replace).toHaveProperty('disabled', true);
-    expect(replace.className).toMatch(/\bbtn\b.*\bprimary\b/);
-    expect(document.body.textContent).toMatch(/Re-placing pins leaf #77 at 2\.7\.3 in sequence 0000 · original to the approved version/);
-    fireEvent.change(screen.getByLabelText(/^Reason for re-placing/), { target: { value: REPLACE_REASON } });
-    expect(replace).toHaveProperty('disabled', false);
-    fireEvent.click(replace);
-    await waitFor(() => expect(document.body.textContent).toMatch(/Re-placed: leaf #77 at 2\.7\.3 now holds the approved version/));
-
-    const puts = calls.filter((c) => c.method === 'PUT');
-    expect(puts).toHaveLength(2);
-    expect(puts[1].body).toEqual({
-      leafId: 77,
-      sectionCode: '2.7.3',
-      title: 'M2.7 Clinical Summary',
-      lifecycleOp: 'new',
-      documentTable: 'coauthor_documents',
-      documentId: 501,
-      reason: REPLACE_REASON,
-    });
+    expect(document.body.textContent).toMatch(/now carries the document’s current status \(approved\)/);
+    expect(document.body.textContent).not.toMatch(/Freeze will refuse/);
+    expect(screen.queryByRole('button', { name: 'Re-place approved version' })).toBeNull();
+    expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(1);
+    // The promotion is the re-take's write, and it carries the person's reason
+    // (62821670f: POST /api/coauthor/documents requires changeReason).
+    expect((calls.find((c) => c.method === 'POST')!.body as { changeReason?: string }).changeReason).toBe(REASON);
   });
 
   it('already placed with a draft copy: no re-place is offered, and the refusal is stated', async () => {

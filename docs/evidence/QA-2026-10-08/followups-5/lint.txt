@@ -1,0 +1,22 @@
+# ESLint (eslint.config.js), errors/warnings per file: HEAD's content (git show HEAD:<file> | eslint --stdin --stdin-filename <file>) against the working tree.
+file                                                                                          HEAD e/w   now e/w
+server/services/ectd/assess-dispatch-readiness.ts                                                  0/1       0/1
+server/services/protocol-reviews/protocol-reviews-service.ts                                       0/0       0/0
+server/routes/protocol-reviews.ts                                                                  0/0       0/0
+server/routes/tenant-users.ts                                                                      0/2       0/2
+server/routes/report-os.ts                                                                         0/6       0/6
+client/src/concept2cure/v2/surfaces/ProtocolDevWrites.ts                                           0/0       0/0
+client/src/concept2cure/v2/surfaces/Insights.tsx                                                   0/7       0/7
+server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts                             0/0       0/0
+server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts       0/0       0/0
+server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts        0/0       0/0
+server/routes/__tests__/report-os-finalize-signature.test.ts                                       0/0       0/0
+tests/db/report-os-registry-seed.dbtest.ts                                                         0/0       0/0
+tests/db/protocol-reviewer-signing-authority.dbtest.ts                                             new       0/0
+client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx                               0/0       0/0
+client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx                       0/0       0/0
+client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx                             0/0       0/0
+client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx                          0/0       0/0
+client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx                         0/0       0/0
+client/src/concept2cure/v2/__tests__/protocolReviewerPickerSigners.test.tsx                        new       0/0
+server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts                 0/0       0/0
