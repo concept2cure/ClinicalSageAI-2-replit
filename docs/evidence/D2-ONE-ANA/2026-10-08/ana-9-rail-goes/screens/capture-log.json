@@ -1,0 +1,2086 @@
+{
+ "1440-01-home": {
+  "at": "2026-10-08T02:33:05.231Z",
+  "clicks": [],
+  "note": "shell prefs cleared, then reload",
+  "url": "/concept2cure",
+  "viewport": "1440x900",
+  "h1": "Good morning, JM",
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "landing",
+    "owner": "div.landing"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "landing",
+    "owner": "div.landing"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "landing",
+    "owner": "div.landing"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [
+   {
+    "tag": "textarea",
+    "label": "How can I help you today? Type @ to name an app.",
+    "placeholder": "How can I help you today? Type @ to name an app.",
+    "value": "",
+    "box": {
+     "x": 429,
+     "y": 306,
+     "w": 638,
+     "h": 92
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   }
+  ],
+  "anaBoxCount": 1,
+  "anaBoxes": [
+   "How can I help you today? Type @ to name an app."
+  ],
+  "composer": null,
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [],
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": null,
+  "conv": null,
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": "I can help you organize your program toward an NDA/BLA and keep the dossier consistent. Set up a submission program Draft product labeling Upload a document to start Dismiss",
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "body"
+ },
+ "1440-02-vault": {
+  "at": "2026-10-08T02:33:22.010Z",
+  "clicks": [
+   "Projects: Vorelinib"
+  ],
+  "url": "/concept2cure/vault",
+  "viewport": "1440x900",
+  "h1": "Vault (DMS)",
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "vd-top",
+    "owner": "div.vd-top"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "vd-dr",
+    "owner": "div.vd-dr"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "",
+    "owner": "div.vd-wrap"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [],
+  "anaBoxCount": 0,
+  "anaBoxes": [],
+  "composer": null,
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [],
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": null,
+  "conv": null,
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "body"
+ },
+ "1440-03-vault-ask-in-composer": {
+  "at": "2026-10-08T02:33:26.606Z",
+  "clicks": [
+   "Projects: Vorelinib",
+   "Search connected sources"
+  ],
+  "standInRequestsSinceClick": 0,
+  "streamRequestsSinceClick": 0,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "h1": null,
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [
+   {
+    "tag": "textarea",
+    "label": "Reply to AnA",
+    "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+    "value": "Search my connected repositories for documents relevant to this project.",
+    "box": {
+     "x": 223,
+     "y": 760,
+     "w": 666,
+     "h": 35
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   }
+  ],
+  "anaBoxCount": 1,
+  "anaBoxes": [
+   "Reply to AnA"
+  ],
+  "composer": {
+   "label": "Reply to AnA",
+   "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+   "value": "Search my connected repositories for documents relevant to this project."
+  },
+  "askOrigin": "From Vault (DMS) × Back to Vault (DMS)",
+  "backToButtons": [
+   "Back to Vault (DMS)"
+  ],
+  "steerButton": [],
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "hidden": true,
+   "hasEditor": false,
+   "text": ""
+  },
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 1000,
+   "h": 789
+  },
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "textarea[Reply to AnA]"
+ },
+ "1440-04-vault-ask-sent-reply-starts": {
+  "at": "2026-10-08T02:33:29.527Z",
+  "clicks": [
+   "Projects: Vorelinib",
+   "Search connected sources",
+   "Enter"
+  ],
+  "msSinceEnter": 2705,
+  "streamRequests": [
+   {
+    "at": "2026-10-08T02:33:26.663Z",
+    "url": "/api/ana-ri/stream",
+    "message": "Search my connected repositories for documents relevant to this project.",
+    "contextScreen": "vault",
+    "moduleContextKeys": [
+     "surface",
+     "summary",
+     "facts",
+     "available_actions",
+     "screen_actions"
+    ],
+    "moduleContextPreview": "{\"surface\":\"vault\",\"summary\":\"Document vault: 0 document(s), folder \\\"Source files · filing cabinet\\\" open\",\"facts\":{\"totalDocuments\":0,\"documentCounts\":{\"authored\":0,\"cmcArtifacts\":null,\"uploads\":0},\"unfiledUploads\":0,\"awaitingConfirmation",
+    "topKeys": [
+     "message",
+     "project_id",
+     "language",
+     "module_context",
+     "context",
+     "conversation_history",
+     "effort_level",
+     "run_policy",
+     "locked_screens",
+     "live_drive",
+     "drive_acks"
+    ]
+   }
+  ],
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "h1": null,
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [
+   {
+    "tag": "textarea",
+    "label": "Steer this run",
+    "placeholder": "Steer this run — AnA takes it at her next step",
+    "value": "",
+    "box": {
+     "x": 223,
+     "y": 738,
+     "w": 639,
+     "h": 35
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   },
+   {
+    "tag": "input",
+    "label": "Ask or steer AnA while she drives",
+    "placeholder": "Ask or steer AnA…",
+    "value": "",
+    "box": {
+     "x": 608,
+     "y": 820,
+     "w": 172,
+     "h": 28
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   }
+  ],
+  "anaBoxCount": 2,
+  "anaBoxes": [
+   "Steer this run",
+   "Ask or steer AnA while she drives"
+  ],
+  "composer": {
+   "label": "Steer this run",
+   "placeholder": "Steer this run — AnA takes it at her next step",
+   "value": ""
+  },
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [
+   "Steer"
+  ],
+  "stopVisible": true,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "hidden": true,
+   "hasEditor": false,
+   "text": ""
+  },
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 1000,
+   "h": 789
+  },
+  "readyNotice": null,
+  "standInText": "Stand-in answer (scripted",
+  "standInReplies": 2,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "textarea[Steer this run]"
+ },
+ "1440-04-meta": {
+  "replyEndedMs": 581,
+  "standInRequestsForTurn": 1,
+  "composerAfterTurn": {
+   "label": "Reply to AnA",
+   "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+   "value": ""
+  },
+  "askOriginAfterTurn": null,
+  "standInText": "Stand-in answer (scripted capture harness, not a model): this reply exists only so the screen shows where an answer lands.",
+  "streamRequests": [
+   {
+    "at": "2026-10-08T02:33:26.663Z",
+    "url": "/api/ana-ri/stream",
+    "message": "Search my connected repositories for documents relevant to this project.",
+    "contextScreen": "vault",
+    "moduleContextKeys": [
+     "surface",
+     "summary",
+     "facts",
+     "available_actions",
+     "screen_actions"
+    ],
+    "moduleContextPreview": "{\"surface\":\"vault\",\"summary\":\"Document vault: 0 document(s), folder \\\"Source files · filing cabinet\\\" open\",\"facts\":{\"totalDocuments\":0,\"documentCounts\":{\"authored\":0,\"cmcArtifacts\":null,\"uploads\":0},\"unfiledUploads\":0,\"awaitingConfirmation",
+    "topKeys": [
+     "message",
+     "project_id",
+     "language",
+     "module_context",
+     "context",
+     "conversation_history",
+     "effort_level",
+     "run_policy",
+     "locked_screens",
+     "live_drive",
+     "drive_acks"
+    ]
+   }
+  ]
+ },
+ "1440-05-back-to-vault": {
+  "at": "2026-10-08T02:33:41.093Z",
+  "clicks": [
+   "(after the turn) Vault loaded by URL",
+   "Search connected sources",
+   "Back to Vault (DMS)"
+  ],
+  "backLabelClicked": "Back to Vault (DMS)",
+  "standInRequestsSinceSecondClick": 0,
+  "url": "/concept2cure/vault",
+  "viewport": "1440x900",
+  "h1": "Vault (DMS)",
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "vd-top",
+    "owner": "div.vd-top"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "vd-dr",
+    "owner": "div.vd-dr"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "",
+    "owner": "div.vd-wrap"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [],
+  "anaBoxCount": 0,
+  "anaBoxes": [],
+  "composer": null,
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [],
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": null,
+  "conv": null,
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "body"
+ },
+ "home-vault-meta": {
+  "handedComposer": {
+   "label": "Reply to AnA",
+   "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+   "value": "Search my connected repositories for documents relevant to this project."
+  },
+  "handedOrigin": "From Vault (DMS) × Back to Vault (DMS)",
+  "handedBack": [
+   "Back to Vault (DMS)"
+  ],
+  "allStreamRequests": [
+   {
+    "at": "2026-10-08T02:33:26.663Z",
+    "url": "/api/ana-ri/stream",
+    "message": "Search my connected repositories for documents relevant to this project.",
+    "contextScreen": "vault",
+    "moduleContextKeys": [
+     "surface",
+     "summary",
+     "facts",
+     "available_actions",
+     "screen_actions"
+    ],
+    "moduleContextPreview": "{\"surface\":\"vault\",\"summary\":\"Document vault: 0 document(s), folder \\\"Source files · filing cabinet\\\" open\",\"facts\":{\"totalDocuments\":0,\"documentCounts\":{\"authored\":0,\"cmcArtifacts\":null,\"uploads\":0},\"unfiledUploads\":0,\"awaitingConfirmation",
+    "topKeys": [
+     "message",
+     "project_id",
+     "language",
+     "module_context",
+     "context",
+     "conversation_history",
+     "effort_level",
+     "run_policy",
+     "locked_screens",
+     "live_drive",
+     "drive_acks"
+    ]
+   }
+  ]
+ },
+ "1440-06-run-approval": {
+  "at": "2026-10-08T02:35:00.029Z",
+  "clicks": [
+   "Projects: Vorelinib",
+   "Send message to AnA (Project home)"
+  ],
+  "note": "the approval card, before confirming",
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "h1": null,
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [
+   {
+    "tag": "textarea",
+    "label": "Steer this run",
+    "placeholder": "Steer this run — AnA takes it at her next step",
+    "value": "",
+    "box": {
+     "x": 223,
+     "y": 738,
+     "w": 639,
+     "h": 35
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   },
+   {
+    "tag": "input",
+    "label": "Ask or steer AnA while she drives",
+    "placeholder": "Ask or steer AnA…",
+    "value": "",
+    "box": {
+     "x": 752,
+     "y": 820,
+     "w": 80,
+     "h": 28
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   }
+  ],
+  "anaBoxCount": 2,
+  "anaBoxes": [
+   "Steer this run",
+   "Ask or steer AnA while she drives"
+  ],
+  "composer": {
+   "label": "Steer this run",
+   "placeholder": "Steer this run — AnA takes it at her next step",
+   "value": ""
+  },
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [
+   "Steer"
+  ],
+  "stopVisible": true,
+  "confirmVisible": true,
+  "openFullEditorVisible": false,
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "hidden": true,
+   "hasEditor": false,
+   "text": ""
+  },
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 1000,
+   "h": 789
+  },
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "button"
+ },
+ "1440-07-during-run": {
+  "at": "2026-10-08T02:35:00.309Z",
+  "clicks": [
+   "Projects: Vorelinib",
+   "Send message to AnA (Project home)",
+   "Confirm and run"
+  ],
+  "msSinceConfirm": 65,
+  "steerLabelSeenMs": 4,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "h1": null,
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [
+   {
+    "tag": "textarea",
+    "label": "Steer this run",
+    "placeholder": "Steer this run — AnA takes it at her next step",
+    "value": "",
+    "box": {
+     "x": 223,
+     "y": 738,
+     "w": 639,
+     "h": 35
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   },
+   {
+    "tag": "input",
+    "label": "Ask or steer AnA while she drives",
+    "placeholder": "Ask or steer AnA…",
+    "value": "",
+    "box": {
+     "x": 752,
+     "y": 820,
+     "w": 80,
+     "h": 28
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   }
+  ],
+  "anaBoxCount": 2,
+  "anaBoxes": [
+   "Steer this run",
+   "Ask or steer AnA while she drives"
+  ],
+  "composer": {
+   "label": "Steer this run",
+   "placeholder": "Steer this run — AnA takes it at her next step",
+   "value": ""
+  },
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [
+   "Steer"
+  ],
+  "stopVisible": true,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "hidden": true,
+   "hasEditor": false,
+   "text": ""
+  },
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 1000,
+   "h": 789
+  },
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "body"
+ },
+ "1440-08-document-opens-while-working": {
+  "at": "2026-10-08T02:35:01.415Z",
+  "clicks": [
+   "Projects: Vorelinib",
+   "Send message to AnA (Project home)",
+   "Confirm and run"
+  ],
+  "msSinceConfirm": 1166,
+  "paneOpenedMsAfterConfirm": 465,
+  "turnRunningWhenPaneOpened": true,
+  "composerWhenPaneOpened": {
+   "label": "Steer this run",
+   "placeholder": "Steer this run — AnA takes it at her next step",
+   "value": ""
+  },
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "h1": "Product Development Rationale",
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "ct-canvas-pane",
+    "owner": "div.ct-canvas-pane"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "ct-canvas-pane",
+    "owner": "div.ct-canvas-pane"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "ct-canvas-pane",
+    "owner": "div.ct-canvas-pane"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [
+   {
+    "tag": "textarea",
+    "label": "Steer this run",
+    "placeholder": "Steer this run — AnA takes it at her next step",
+    "value": "",
+    "box": {
+     "x": 131,
+     "y": 654,
+     "w": 293,
+     "h": 35
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   },
+   {
+    "tag": "div",
+    "label": "Section 2.5.1 — Product Development Rationale",
+    "placeholder": "",
+    "value": "STAND-IN TEXT (scripted, not a model). The development programme was designed around an unmet need for a durable response with a tolerable s",
+    "box": {
+     "x": 805,
+     "y": 469,
+     "w": 577,
+     "h": 320
+    },
+    "coveredBy": null,
+    "isDocBody": true,
+    "searchy": false,
+    "toAna": false
+   },
+   {
+    "tag": "input",
+    "label": "Ask or steer AnA while she drives",
+    "placeholder": "Ask or steer AnA…",
+    "value": "",
+    "box": {
+     "x": 608,
+     "y": 820,
+     "w": 172,
+     "h": 28
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   }
+  ],
+  "anaBoxCount": 2,
+  "anaBoxes": [
+   "Steer this run",
+   "Ask or steer AnA while she drives"
+  ],
+  "composer": {
+   "label": "Steer this run",
+   "placeholder": "Steer this run — AnA takes it at her next step",
+   "value": ""
+  },
+  "askOrigin": null,
+  "backToButtons": [
+   "Back to conversation"
+  ],
+  "steerButton": [
+   "Steer"
+  ],
+  "stopVisible": true,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": {
+   "x": 527,
+   "y": 112,
+   "w": 913,
+   "h": 789,
+   "hidden": false,
+   "hasEditor": true,
+   "text": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Over"
+  },
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 471,
+   "h": 789
+  },
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "button"
+ },
+ "1440-09-turn-ended": {
+  "at": "2026-10-08T02:35:04.774Z",
+  "clicks": [
+   "Projects: Vorelinib",
+   "Send message to AnA (Project home)",
+   "Confirm and run"
+  ],
+  "msSinceConfirm": 4586,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "h1": "Product Development Rationale",
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "ct-canvas-pane",
+    "owner": "div.ct-canvas-pane"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "ct-canvas-pane",
+    "owner": "div.ct-canvas-pane"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "ct-canvas-pane",
+    "owner": "div.ct-canvas-pane"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [
+   {
+    "tag": "textarea",
+    "label": "Reply to AnA",
+    "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+    "value": "",
+    "box": {
+     "x": 131,
+     "y": 693,
+     "w": 320,
+     "h": 35
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   },
+   {
+    "tag": "div",
+    "label": "Section 2.5.1 — Product Development Rationale",
+    "placeholder": "",
+    "value": "STAND-IN TEXT (scripted, not a model). The development programme was designed around an unmet need for a durable response with a tolerable s",
+    "box": {
+     "x": 805,
+     "y": 469,
+     "w": 577,
+     "h": 320
+    },
+    "coveredBy": null,
+    "isDocBody": true,
+    "searchy": false,
+    "toAna": false
+   }
+  ],
+  "anaBoxCount": 1,
+  "anaBoxes": [
+   "Reply to AnA"
+  ],
+  "composer": {
+   "label": "Reply to AnA",
+   "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+   "value": ""
+  },
+  "askOrigin": null,
+  "backToButtons": [
+   "Back to conversation"
+  ],
+  "steerButton": [],
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": {
+   "x": 527,
+   "y": 112,
+   "w": 913,
+   "h": 789,
+   "hidden": false,
+   "hasEditor": true,
+   "text": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Over"
+  },
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 471,
+   "h": 789
+  },
+  "readyNotice": null,
+  "standInText": "Stand-in answer: the draft tool returned {\"saved\":true,\"title\":\"Module 2.5 Clinical Overview (stand-in draft)\",\"status\":\"generated\",\"co",
+  "standInReplies": 1,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "button"
+ },
+ "run-meta": {
+  "ask": "Draft the Module 2.5 clinical overview for Vorelinib BX-512.",
+  "clicks": [
+   "Projects: Vorelinib",
+   "Send message to AnA (Project home)",
+   "Confirm and run"
+  ],
+  "convo": "{\"id\":\"current\",\"seed\":null}",
+  "finalUrl": "http://localhost:5077/concept2cure/conversation-thread",
+  "streamRequests": [
+   {
+    "at": "2026-10-08T02:34:55.959Z",
+    "url": "/api/ana-ri/stream",
+    "message": "Draft the Module 2.5 clinical overview for Vorelinib BX-512.",
+    "contextScreen": "conversation-thread",
+    "moduleContextKeys": null,
+    "moduleContextPreview": null,
+    "topKeys": [
+     "message",
+     "project_id",
+     "language",
+     "context",
+     "conversation_history",
+     "effort_level",
+     "run_policy",
+     "locked_screens",
+     "live_drive",
+     "drive_acks"
+    ]
+   }
+  ],
+  "standInRequestsTotal": 3,
+  "final": {
+   "url": "/concept2cure/conversation-thread",
+   "viewport": "1440x900",
+   "h1": "Product Development Rationale",
+   "shell": {
+    "dataAnaOpen": "false",
+    "gridTemplateColumns": "56px 1384px 0px",
+    "anaSeamVar": "0px",
+    "width": 1440
+   },
+   "railEls": [],
+   "railVisible": false,
+   "rightEdge": [
+    {
+     "y": 135,
+     "tag": "div",
+     "cls": "ct-canvas-pane",
+     "owner": "div.ct-canvas-pane"
+    },
+    {
+     "y": 450,
+     "tag": "div",
+     "cls": "ct-canvas-pane",
+     "owner": "div.ct-canvas-pane"
+    },
+    {
+     "y": 765,
+     "tag": "div",
+     "cls": "ct-canvas-pane",
+     "owner": "div.ct-canvas-pane"
+    }
+   ],
+   "docScrollWidth": 1440,
+   "fields": [
+    {
+     "tag": "textarea",
+     "label": "Reply to AnA",
+     "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+     "value": "",
+     "box": {
+      "x": 131,
+      "y": 693,
+      "w": 320,
+      "h": 35
+     },
+     "coveredBy": null,
+     "isDocBody": false,
+     "searchy": false,
+     "toAna": true
+    },
+    {
+     "tag": "div",
+     "label": "Section 2.5.1 — Product Development Rationale",
+     "placeholder": "",
+     "value": "STAND-IN TEXT (scripted, not a model). The development programme was designed around an unmet need for a durable response with a tolerable s",
+     "box": {
+      "x": 805,
+      "y": 469,
+      "w": 577,
+      "h": 320
+     },
+     "coveredBy": null,
+     "isDocBody": true,
+     "searchy": false,
+     "toAna": false
+    }
+   ],
+   "anaBoxCount": 1,
+   "anaBoxes": [
+    "Reply to AnA"
+   ],
+   "composer": {
+    "label": "Reply to AnA",
+    "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+    "value": ""
+   },
+   "askOrigin": null,
+   "backToButtons": [
+    "Back to conversation"
+   ],
+   "steerButton": [],
+   "stopVisible": false,
+   "confirmVisible": false,
+   "openFullEditorVisible": false,
+   "pane": {
+    "x": 527,
+    "y": 112,
+    "w": 913,
+    "h": 789,
+    "hidden": false,
+    "hasEditor": true,
+    "text": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Over"
+   },
+   "conv": {
+    "x": 56,
+    "y": 112,
+    "w": 471,
+    "h": 789
+   },
+   "readyNotice": null,
+   "standInText": "Stand-in answer: the draft tool returned {\"saved\":true,\"title\":\"Module 2.5 Clinical Overview (stand-in draft)\",\"status\":\"generated\",\"co",
+   "standInReplies": 1,
+   "welcome": null,
+   "coauthorPanel": null,
+   "projectComposer": null,
+   "activeElement": "button"
+  }
+ },
+ "1440-10-during-run-drive-off": {
+  "at": "2026-10-08T02:36:24.127Z",
+  "clicks": [
+   "AnA drives: on (Home) → off",
+   "Projects: Vorelinib",
+   "Send message to AnA (Project home)",
+   "Confirm and run"
+  ],
+  "driveSwitchAriaChecked": "false",
+  "msSinceConfirm": 1029,
+  "paneOpenedMsAfterConfirm": 328,
+  "turnRunningWhenPaneOpened": true,
+  "anaBoxesAtApproval": [
+   "Steer this run"
+  ],
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "h1": "Product Development Rationale",
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "ct-canvas-pane",
+    "owner": "div.ct-canvas-pane"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "ct-canvas-pane",
+    "owner": "div.ct-canvas-pane"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "ct-canvas-pane",
+    "owner": "div.ct-canvas-pane"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [
+   {
+    "tag": "textarea",
+    "label": "Steer this run",
+    "placeholder": "Steer this run — AnA takes it at her next step",
+    "value": "",
+    "box": {
+     "x": 131,
+     "y": 654,
+     "w": 293,
+     "h": 35
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   },
+   {
+    "tag": "div",
+    "label": "Section 2.5.1 — Product Development Rationale",
+    "placeholder": "",
+    "value": "STAND-IN TEXT (scripted, not a model). The development programme was designed around an unmet need for a durable response with a tolerable s",
+    "box": {
+     "x": 805,
+     "y": 469,
+     "w": 577,
+     "h": 320
+    },
+    "coveredBy": null,
+    "isDocBody": true,
+    "searchy": false,
+    "toAna": false
+   }
+  ],
+  "anaBoxCount": 1,
+  "anaBoxes": [
+   "Steer this run"
+  ],
+  "composer": {
+   "label": "Steer this run",
+   "placeholder": "Steer this run — AnA takes it at her next step",
+   "value": ""
+  },
+  "askOrigin": null,
+  "backToButtons": [
+   "Back to conversation"
+  ],
+  "steerButton": [
+   "Steer"
+  ],
+  "stopVisible": true,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": {
+   "x": 527,
+   "y": 112,
+   "w": 913,
+   "h": 789,
+   "hidden": false,
+   "hasEditor": true,
+   "text": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Over"
+  },
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 471,
+   "h": 789
+  },
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "button"
+ },
+ "drive-off-meta": {
+  "clicks": [
+   "AnA drives: on (Home) → off",
+   "Projects: Vorelinib",
+   "Send message to AnA (Project home)",
+   "Confirm and run"
+  ],
+  "final": {
+   "url": "/concept2cure/conversation-thread",
+   "viewport": "1440x900",
+   "h1": "Product Development Rationale",
+   "shell": {
+    "dataAnaOpen": "false",
+    "gridTemplateColumns": "56px 1384px 0px",
+    "anaSeamVar": "0px",
+    "width": 1440
+   },
+   "railEls": [],
+   "railVisible": false,
+   "rightEdge": [
+    {
+     "y": 135,
+     "tag": "div",
+     "cls": "ct-canvas-pane",
+     "owner": "div.ct-canvas-pane"
+    },
+    {
+     "y": 450,
+     "tag": "div",
+     "cls": "ct-canvas-pane",
+     "owner": "div.ct-canvas-pane"
+    },
+    {
+     "y": 765,
+     "tag": "div",
+     "cls": "ct-canvas-pane",
+     "owner": "div.ct-canvas-pane"
+    }
+   ],
+   "docScrollWidth": 1440,
+   "fields": [
+    {
+     "tag": "textarea",
+     "label": "Reply to AnA",
+     "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+     "value": "",
+     "box": {
+      "x": 131,
+      "y": 693,
+      "w": 320,
+      "h": 35
+     },
+     "coveredBy": null,
+     "isDocBody": false,
+     "searchy": false,
+     "toAna": true
+    },
+    {
+     "tag": "div",
+     "label": "Section 2.5.1 — Product Development Rationale",
+     "placeholder": "",
+     "value": "STAND-IN TEXT (scripted, not a model). The development programme was designed around an unmet need for a durable response with a tolerable s",
+     "box": {
+      "x": 805,
+      "y": 469,
+      "w": 577,
+      "h": 320
+     },
+     "coveredBy": null,
+     "isDocBody": true,
+     "searchy": false,
+     "toAna": false
+    }
+   ],
+   "anaBoxCount": 1,
+   "anaBoxes": [
+    "Reply to AnA"
+   ],
+   "composer": {
+    "label": "Reply to AnA",
+    "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+    "value": ""
+   },
+   "askOrigin": null,
+   "backToButtons": [
+    "Back to conversation"
+   ],
+   "steerButton": [],
+   "stopVisible": false,
+   "confirmVisible": false,
+   "openFullEditorVisible": false,
+   "pane": {
+    "x": 527,
+    "y": 112,
+    "w": 913,
+    "h": 789,
+    "hidden": false,
+    "hasEditor": true,
+    "text": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Over"
+   },
+   "conv": {
+    "x": 56,
+    "y": 112,
+    "w": 471,
+    "h": 789
+   },
+   "readyNotice": null,
+   "standInText": "Stand-in answer: the draft tool returned {\"saved\":true,\"title\":\"Module 2.5 Clinical Overview (stand-in draft)\",\"status\":\"generated\",\"co",
+   "standInReplies": 1,
+   "welcome": null,
+   "coauthorPanel": null,
+   "projectComposer": null,
+   "activeElement": "button"
+  }
+ },
+ "1280-projects": {
+  "at": "2026-10-08T02:36:40.182Z",
+  "clicks": [],
+  "url": "/concept2cure/projects",
+  "viewport": "1280x800",
+  "h1": "Projects",
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1224px 0px",
+   "anaSeamVar": "0px",
+   "width": 1280
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 120,
+    "tag": "div",
+    "cls": "pj-index",
+    "owner": "div.pj-index"
+   },
+   {
+    "y": 400,
+    "tag": "div",
+    "cls": "pj-index",
+    "owner": "div.pj-index"
+   },
+   {
+    "y": 680,
+    "tag": "div",
+    "cls": "pj-index",
+    "owner": "div.pj-index"
+   }
+  ],
+  "docScrollWidth": 1280,
+  "fields": [
+   {
+    "tag": "input",
+    "label": "Search projects by title or code",
+    "placeholder": "Search projects",
+    "value": "",
+    "box": {
+     "x": 122,
+     "y": 225,
+     "w": 274,
+     "h": 20
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": true,
+    "toAna": false
+   }
+  ],
+  "anaBoxCount": 0,
+  "anaBoxes": [],
+  "composer": null,
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [],
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": null,
+  "conv": null,
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "body"
+ },
+ "1280-conversation": {
+  "at": "2026-10-08T02:36:52.788Z",
+  "clicks": [
+   "Projects: Vorelinib",
+   "Project home › Conversations: \"Draft the Module 2.5 clinical overview for Vorelinib BX-512.\""
+  ],
+  "rowText": "Draft the Module 2.5 clinical overview for Vorelinib BX-512. Oct 8 · Resume",
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1280x800",
+  "h1": null,
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1224px 0px",
+   "anaSeamVar": "0px",
+   "width": 1280
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 120,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   },
+   {
+    "y": 400,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   },
+   {
+    "y": 680,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   }
+  ],
+  "docScrollWidth": 1280,
+  "fields": [
+   {
+    "tag": "textarea",
+    "label": "Reply to AnA",
+    "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+    "value": "",
+    "box": {
+     "x": 143,
+     "y": 660,
+     "w": 666,
+     "h": 35
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   }
+  ],
+  "anaBoxCount": 1,
+  "anaBoxes": [
+   "Reply to AnA"
+  ],
+  "composer": {
+   "label": "Reply to AnA",
+   "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+   "value": ""
+  },
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [],
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": true,
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "hidden": true,
+   "hasEditor": false,
+   "text": ""
+  },
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 840,
+   "h": 689
+  },
+  "readyNotice": null,
+  "standInText": "Stand-in answer: the draft tool returned {\"saved\":true,\"title\":\"Module 2.5 Clinical Overview (stand-in draft)\",\"status\":\"generated\",\"co",
+  "standInReplies": 1,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "body"
+ },
+ "1280-meta": {
+  "clicks": [
+   "Projects: Vorelinib",
+   "Project home › Conversations: \"Draft the Module 2.5 clinical overview for Vorelinib BX-512.\""
+  ],
+  "final": {
+   "url": "/concept2cure/conversation-thread",
+   "viewport": "1280x800",
+   "h1": null,
+   "shell": {
+    "dataAnaOpen": "false",
+    "gridTemplateColumns": "56px 1224px 0px",
+    "anaSeamVar": "0px",
+    "width": 1280
+   },
+   "railEls": [],
+   "railVisible": false,
+   "rightEdge": [
+    {
+     "y": 120,
+     "tag": "div",
+     "cls": "ct-side-work",
+     "owner": "div.ct-side-work"
+    },
+    {
+     "y": 400,
+     "tag": "div",
+     "cls": "ct-side-work",
+     "owner": "div.ct-side-work"
+    },
+    {
+     "y": 680,
+     "tag": "div",
+     "cls": "ct-side-work",
+     "owner": "div.ct-side-work"
+    }
+   ],
+   "docScrollWidth": 1280,
+   "fields": [
+    {
+     "tag": "textarea",
+     "label": "Reply to AnA",
+     "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+     "value": "",
+     "box": {
+      "x": 143,
+      "y": 660,
+      "w": 666,
+      "h": 35
+     },
+     "coveredBy": null,
+     "isDocBody": false,
+     "searchy": false,
+     "toAna": true
+    }
+   ],
+   "anaBoxCount": 1,
+   "anaBoxes": [
+    "Reply to AnA"
+   ],
+   "composer": {
+    "label": "Reply to AnA",
+    "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+    "value": ""
+   },
+   "askOrigin": null,
+   "backToButtons": [],
+   "steerButton": [],
+   "stopVisible": false,
+   "confirmVisible": false,
+   "openFullEditorVisible": true,
+   "pane": {
+    "x": 0,
+    "y": 0,
+    "w": 0,
+    "h": 0,
+    "hidden": true,
+    "hasEditor": false,
+    "text": ""
+   },
+   "conv": {
+    "x": 56,
+    "y": 112,
+    "w": 840,
+    "h": 689
+   },
+   "readyNotice": null,
+   "standInText": "Stand-in answer: the draft tool returned {\"saved\":true,\"title\":\"Module 2.5 Clinical Overview (stand-in draft)\",\"status\":\"generated\",\"co",
+   "standInReplies": 1,
+   "welcome": null,
+   "coauthorPanel": null,
+   "projectComposer": null,
+   "activeElement": "body"
+  }
+ },
+ "390-projects": {
+  "at": "2026-10-08T02:37:00.001Z",
+  "clicks": [],
+  "url": "/concept2cure/projects",
+  "viewport": "390x844",
+  "h1": "Projects",
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 334px 0px",
+   "anaSeamVar": "0px",
+   "width": 390
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 127,
+    "tag": "div",
+    "cls": "pj-index",
+    "owner": "div.pj-index"
+   },
+   {
+    "y": 422,
+    "tag": "div",
+    "cls": "ws-switch",
+    "owner": "div.ws-switch"
+   },
+   {
+    "y": 717,
+    "tag": "div",
+    "cls": "pj-index",
+    "owner": "div.pj-index"
+   }
+  ],
+  "docScrollWidth": 390,
+  "fields": [
+   {
+    "tag": "input",
+    "label": "Search projects by title or code",
+    "placeholder": "Search projects",
+    "value": "",
+    "box": {
+     "x": 122,
+     "y": 386,
+     "w": 102,
+     "h": 20
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": true,
+    "toAna": false
+   }
+  ],
+  "anaBoxCount": 0,
+  "anaBoxes": [],
+  "composer": null,
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [],
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": null,
+  "conv": null,
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "body"
+ },
+ "390-conversation": {
+  "at": "2026-10-08T02:37:12.599Z",
+  "clicks": [
+   "Projects: Vorelinib",
+   "Project home › Conversations: \"Draft the Module 2.5 clinical overview for Vorelinib BX-512.\""
+  ],
+  "rowText": "Draft the Module 2.5 clinical overview for Vorelinib BX-512. Oct 8 · Resume",
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "390x844",
+  "h1": null,
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 334px 0px",
+   "anaSeamVar": "0px",
+   "width": 390
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 127,
+    "tag": "button",
+    "cls": "btn ghost",
+    "owner": "button.btn.ghost"
+   },
+   {
+    "y": 422,
+    "tag": "div",
+    "cls": "ct-composer-wrap",
+    "owner": "div.ct-composer-wrap"
+   },
+   {
+    "y": 717,
+    "tag": "div",
+    "cls": "ct-side-work",
+    "owner": "div.ct-side-work"
+   }
+  ],
+  "docScrollWidth": 390,
+  "fields": [
+   {
+    "tag": "textarea",
+    "label": "Reply to AnA",
+    "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+    "value": "",
+    "box": {
+     "x": 131,
+     "y": 325,
+     "w": 184,
+     "h": 35
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   }
+  ],
+  "anaBoxCount": 1,
+  "anaBoxes": [
+   "Reply to AnA"
+  ],
+  "composer": {
+   "label": "Reply to AnA",
+   "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+   "value": ""
+  },
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [],
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": true,
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "hidden": true,
+   "hasEditor": false,
+   "text": ""
+  },
+  "conv": {
+   "x": 56,
+   "y": 108,
+   "w": 334,
+   "h": 519
+  },
+  "readyNotice": null,
+  "standInText": "Stand-in answer: the draft tool returned {\"saved\":true,\"title\":\"Module 2.5 Clinical Overview (stand-in draft)\",\"status\":\"generated\",\"co",
+  "standInReplies": 1,
+  "welcome": null,
+  "coauthorPanel": null,
+  "projectComposer": null,
+  "activeElement": "body"
+ },
+ "390-meta": {
+  "clicks": [
+   "Projects: Vorelinib",
+   "Project home › Conversations: \"Draft the Module 2.5 clinical overview for Vorelinib BX-512.\""
+  ],
+  "final": {
+   "url": "/concept2cure/conversation-thread",
+   "viewport": "390x844",
+   "h1": null,
+   "shell": {
+    "dataAnaOpen": "false",
+    "gridTemplateColumns": "56px 334px 0px",
+    "anaSeamVar": "0px",
+    "width": 390
+   },
+   "railEls": [],
+   "railVisible": false,
+   "rightEdge": [
+    {
+     "y": 127,
+     "tag": "button",
+     "cls": "btn ghost",
+     "owner": "button.btn.ghost"
+    },
+    {
+     "y": 422,
+     "tag": "div",
+     "cls": "ct-composer-wrap",
+     "owner": "div.ct-composer-wrap"
+    },
+    {
+     "y": 717,
+     "tag": "div",
+     "cls": "ct-side-work",
+     "owner": "div.ct-side-work"
+    }
+   ],
+   "docScrollWidth": 390,
+   "fields": [
+    {
+     "tag": "textarea",
+     "label": "Reply to AnA",
+     "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+     "value": "",
+     "box": {
+      "x": 131,
+      "y": 325,
+      "w": 184,
+      "h": 35
+     },
+     "coveredBy": null,
+     "isDocBody": false,
+     "searchy": false,
+     "toAna": true
+    }
+   ],
+   "anaBoxCount": 1,
+   "anaBoxes": [
+    "Reply to AnA"
+   ],
+   "composer": {
+    "label": "Reply to AnA",
+    "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+    "value": ""
+   },
+   "askOrigin": null,
+   "backToButtons": [],
+   "steerButton": [],
+   "stopVisible": false,
+   "confirmVisible": false,
+   "openFullEditorVisible": true,
+   "pane": {
+    "x": 0,
+    "y": 0,
+    "w": 0,
+    "h": 0,
+    "hidden": true,
+    "hasEditor": false,
+    "text": ""
+   },
+   "conv": {
+    "x": 56,
+    "y": 108,
+    "w": 334,
+    "h": 519
+   },
+   "readyNotice": null,
+   "standInText": "Stand-in answer: the draft tool returned {\"saved\":true,\"title\":\"Module 2.5 Clinical Overview (stand-in draft)\",\"status\":\"generated\",\"co",
+   "standInReplies": 1,
+   "welcome": null,
+   "coauthorPanel": null,
+   "projectComposer": null,
+   "activeElement": "body"
+  }
+ },
+ "1440-11-project-home": {
+  "at": "2026-10-08T02:37:50.621Z",
+  "clicks": [
+   "Projects: Vorelinib"
+  ],
+  "url": "/concept2cure/project-home",
+  "viewport": "1440x900",
+  "h1": "Vorelinib · KIT-mutant GIST (IND)",
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "page page-full",
+    "owner": "div.page.page-full"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "page page-full",
+    "owner": "div.page.page-full"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "page page-full",
+    "owner": "div.page.page-full"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [],
+  "anaBoxCount": 0,
+  "anaBoxes": [],
+  "composer": null,
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [],
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": null,
+  "conv": null,
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": null,
+  "coauthorPanel": {
+   "header": "AnA · co-author",
+   "inViewport": true,
+   "box": {
+    "x": 603,
+    "y": 462,
+    "w": 203,
+    "h": 19
+   },
+   "panelBox": {
+    "x": 603,
+    "y": 462,
+    "w": 203,
+    "h": 35
+   }
+  },
+  "projectComposer": {
+   "inViewport": false,
+   "box": {
+    "x": 670,
+    "y": 905,
+    "w": 157,
+    "h": 42
+   },
+   "placeholder": "Message AnA about Vorelinib · BX-512…"
+  },
+  "activeElement": "body"
+ },
+ "1440-12-project-home-coauthor-panel": {
+  "at": "2026-10-08T02:37:52.243Z",
+  "clicks": [
+   "Projects: Vorelinib",
+   "(mouse-wheel scroll)"
+  ],
+  "scrollY": 0,
+  "url": "/concept2cure/project-home",
+  "viewport": "1440x900",
+  "h1": "Vorelinib · KIT-mutant GIST (IND)",
+  "shell": {
+   "dataAnaOpen": "false",
+   "gridTemplateColumns": "56px 1384px 0px",
+   "anaSeamVar": "0px",
+   "width": 1440
+  },
+  "railEls": [],
+  "railVisible": false,
+  "rightEdge": [
+   {
+    "y": 135,
+    "tag": "div",
+    "cls": "page page-full",
+    "owner": "div.page.page-full"
+   },
+   {
+    "y": 450,
+    "tag": "div",
+    "cls": "page page-full",
+    "owner": "div.page.page-full"
+   },
+   {
+    "y": 765,
+    "tag": "div",
+    "cls": "page page-full",
+    "owner": "div.page.page-full"
+   }
+  ],
+  "docScrollWidth": 1440,
+  "fields": [
+   {
+    "tag": "textarea",
+    "label": "Message AnA about this project",
+    "placeholder": "Message AnA about Vorelinib · BX-512…",
+    "value": "",
+    "box": {
+     "x": 670,
+     "y": 655,
+     "w": 157,
+     "h": 42
+    },
+    "coveredBy": null,
+    "isDocBody": false,
+    "searchy": false,
+    "toAna": true
+   }
+  ],
+  "anaBoxCount": 1,
+  "anaBoxes": [
+   "Message AnA about this project"
+  ],
+  "composer": null,
+  "askOrigin": null,
+  "backToButtons": [],
+  "steerButton": [],
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "pane": null,
+  "conv": null,
+  "readyNotice": null,
+  "standInText": null,
+  "standInReplies": 0,
+  "welcome": null,
+  "coauthorPanel": {
+   "header": "AnA · co-author",
+   "inViewport": true,
+   "box": {
+    "x": 603,
+    "y": 212,
+    "w": 203,
+    "h": 19
+   },
+   "panelBox": {
+    "x": 603,
+    "y": 212,
+    "w": 203,
+    "h": 35
+   }
+  },
+  "projectComposer": {
+   "inViewport": true,
+   "box": {
+    "x": 670,
+    "y": 655,
+    "w": 157,
+    "h": 42
+   },
+   "placeholder": "Message AnA about Vorelinib · BX-512…"
+  },
+  "activeElement": "body"
+ }
+}
