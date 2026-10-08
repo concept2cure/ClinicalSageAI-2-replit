@@ -700,11 +700,12 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
               <div className="txw-row-l">
                 Multi-factor authentication
                 {/* QA 2026-10-08 (j9): this said "enrolled by each member", but no
-                    screen starts an authenticator enrolment, so it said what sign-in
-                    does instead (routes/auth.ts POST /login). */}
+                    screen started an authenticator enrolment, so it said what sign-in
+                    does instead (routes/auth.ts POST /login). P-25: the account panel
+                    (v2/AccountPanel.tsx) now enrols one, so the row says where. */}
                 <small>
                   Sign-in asks for an emailed code, or for an authenticator app on an account that
-                  already has one.
+                  has one.
                 </small>
               </div>
               <div
@@ -713,8 +714,8 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
               >
                 <span className="txw-help">
                   {I.info} Set per user, not per organization, so there is nothing for an
-                  administrator to switch here. Enrolling an authenticator app is not offered in
-                  this product yet.
+                  administrator to switch here. Each person sets up an authenticator app from
+                  Account in the account menu.
                 </span>
               </div>
             </div>

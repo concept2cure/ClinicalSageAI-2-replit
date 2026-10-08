@@ -73,6 +73,7 @@ import {
   type NavSurfaceEntitlement,
 } from './navEntitlements';
 import { NavUnlockPanel } from './NavUnlockPanel';
+import { AccountPanel } from './AccountPanel';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { renderSafeMarkdown } from '../components/ana/renderSafeMarkdown';
 
@@ -172,6 +173,11 @@ export function Rail({
 }) {
   const { user, logout } = useAuth();
   const [acct, setAcct] = React.useState(false);
+  /* The person's own account — profile, password, authenticator app (P-25,
+     AccountPanel.tsx). A dialog over the shell, not a routed surface, so it has
+     no registry or launch-scope row: it is part of the account menu. */
+  const [accountOpen, setAccountOpen] = React.useState(false);
+  const accountButton = React.useRef<HTMLButtonElement>(null);
   /* Live licence verdicts for this organization. Until the server answers —
      and permanently if it cannot — `verdictFor` returns null for everything and
      the rail renders exactly as it did before: a lock badge is a claim about a
@@ -189,7 +195,9 @@ export function Rail({
     setAcct(false);
     if (id) onNav(id);
   };
-  const ACCT_ITEMS: ({ label: string; ic: string; to?: string; action?: 'logout' } | { sep: true })[] = [
+  const ACCT_ITEMS: ({ label: string; ic: string; to?: string; action?: 'logout' | 'account' } | { sep: true })[] = [
+    // Each person's own account, first, as in Claude's account menu (P-25).
+    { label: 'Account', ic: 'user', action: 'account' },
     // Admin is reached from the bottom-left account menu — the same place and
     // gesture as Claude's admin/settings. Gated to org admins; admin-console
     // itself renders a non-leaky denied state, but we hide the entry entirely
@@ -344,6 +352,7 @@ export function Rail({
       <div className="rail-foot">
         {collapsed && collapseToggle}
         <button
+          ref={accountButton}
           type="button"
           className="rail-account"
           title={name}
@@ -381,6 +390,9 @@ export function Rail({
                       if (it.action === 'logout') {
                         setAcct(false);
                         void logout();
+                      } else if (it.action === 'account') {
+                        setAcct(false);
+                        setAccountOpen(true);
                       } else {
                         acctGo(it.to);
                       }
@@ -395,6 +407,15 @@ export function Rail({
           </>
         )}
       </div>
+      {accountOpen && (
+        <AccountPanel
+          onClose={() => {
+            setAccountOpen(false);
+            // The menu item that opened it is gone; focus returns to the menu's button.
+            accountButton.current?.focus();
+          }}
+        />
+      )}
       {lockedFor && (
         <NavUnlockPanel
           verdict={lockedFor}

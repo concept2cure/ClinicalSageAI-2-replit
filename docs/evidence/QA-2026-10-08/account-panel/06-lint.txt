@@ -1,0 +1,8 @@
+# ESLint per changed file: HEAD (git show HEAD:<file> | npx eslint --stdin --stdin-filename <file> -f json) vs working tree
+file                                                               HEAD     now     
+client/src/services/portal/authService.tsx                         0e/1w    0e/1w   
+client/src/concept2cure/v2/Shell.tsx                               0e/9w    0e/9w   
+client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx              0e/17w   0e/17w  
+client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx    0e/0w    0e/0w   
+client/src/concept2cure/v2/AccountPanel.tsx                        new(0)   0e/0w   
+client/src/concept2cure/v2/__tests__/accountPanel.test.tsx         new(0)   0e/0w   
