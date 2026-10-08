@@ -1,0 +1,678 @@
+{
+  "checks": {
+    "resumeFromPhoneReachedDesktop": true,
+    "stopFromPhoneReachedDesktop": true
+  },
+  "views": {
+    "desktopAtHold": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [],
+      "alerts": [],
+      "stopped": [],
+      "strip": "AnA is waiting for you before: Searching the Vault; Updating the plan Waiting for you before the next step Next: Searching the Vault; Updating the plan If nobody answers within 10 minutes, the turn ends. Run this step Stop",
+      "stripButtons": [
+        "Run this step",
+        "Stop"
+      ],
+      "composer": {
+        "disabled": false,
+        "placeholder": "Or tell AnA what to do instead",
+        "label": "Tell AnA what to do instead"
+      },
+      "composerNotes": [],
+      "rail": [
+        "Find the stability reports — in progress",
+        "List the project documents — not started",
+        "Read the two archived reports — not started",
+        "Summarise the shelf-life claims — not started"
+      ],
+      "summaryRows": [],
+      "summaryFoot": [],
+      "sheetOpen": false
+    },
+    "phoneFollowing": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [
+        "Paused · 11s Summary"
+      ],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Paused after this step Resume Stop",
+      "stripButtons": [
+        "Resume",
+        "Stop"
+      ],
+      "composer": {
+        "disabled": false,
+        "placeholder": "Steer this run — AnA takes it at her next step",
+        "label": "Steer this run"
+      },
+      "composerNotes": [],
+      "rail": [
+        "Find the stability reports — in progress",
+        "List the project documents — not started",
+        "Read the two archived reports — not started",
+        "Summarise the shelf-life claims — not started"
+      ],
+      "summaryRows": [],
+      "summaryFoot": [],
+      "sheetOpen": false
+    },
+    "phonePlanOpen": [
+      "Find the stability reports",
+      "List the project documents",
+      "Read the two archived reports",
+      "Summarise the shelf-life claims"
+    ],
+    "phoneSheet": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [
+        "Paused · 13s Summary",
+        "Working… 13s"
+      ],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Paused after this step Resume Stop",
+      "stripButtons": [
+        "Resume",
+        "Stop"
+      ],
+      "composer": {
+        "disabled": false,
+        "placeholder": "Steer this run — AnA takes it at her next step",
+        "label": "Steer this run"
+      },
+      "composerNotes": [],
+      "rail": [
+        "Find the stability reports — in progress",
+        "List the project documents — not started",
+        "Read the two archived reports — not started",
+        "Summarise the shelf-life claims — not started"
+      ],
+      "summaryRows": [
+        "I will take this in four parts. AnA's words · not checked",
+        "Added task Find the stability reports",
+        "Added task List the project documents",
+        "Added task Read the two archived reports",
+        "Added task Summarise the shelf-life claims",
+        "Started Find the stability reports",
+        "Working… 13s"
+      ],
+      "summaryFoot": [
+        "Recording…"
+      ],
+      "sheetOpen": true
+    },
+    "desktopFollower": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [
+        "Paused · 20s Summary",
+        "Working… 20s"
+      ],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Paused after this step Resume Stop",
+      "stripButtons": [
+        "Resume",
+        "Stop"
+      ],
+      "composer": {
+        "disabled": false,
+        "placeholder": "Steer this run — AnA takes it at her next step",
+        "label": "Steer this run"
+      },
+      "composerNotes": [],
+      "rail": [
+        "Find the stability reports — in progress",
+        "List the project documents — not started",
+        "Read the two archived reports — not started",
+        "Summarise the shelf-life claims — not started"
+      ],
+      "summaryRows": [
+        "I will take this in four parts. AnA's words · not checked",
+        "Added task Find the stability reports",
+        "Added task List the project documents",
+        "Added task Read the two archived reports",
+        "Added task Summarise the shelf-life claims",
+        "Started Find the stability reports",
+        "Working… 20s"
+      ],
+      "summaryFoot": [
+        "Recording…"
+      ],
+      "sheetOpen": false
+    },
+    "adminFollower": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [
+        "Waiting for the person who asked. Summary"
+      ],
+      "alerts": [],
+      "stopped": [],
+      "strip": null,
+      "stripButtons": [],
+      "composer": {
+        "disabled": true,
+        "placeholder": "Only the person who asked can steer AnA.",
+        "label": "Reply to AnA"
+      },
+      "composerNotes": [
+        "Only the person who asked can steer AnA."
+      ],
+      "rail": [
+        "Find the stability reports — in progress",
+        "List the project documents — not started",
+        "Read the two archived reports — not started",
+        "Summarise the shelf-life claims — not started"
+      ],
+      "summaryRows": [],
+      "summaryFoot": [],
+      "sheetOpen": false
+    },
+    "colleague": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [],
+      "alerts": [],
+      "stopped": [],
+      "strip": null,
+      "stripButtons": [],
+      "composer": {
+        "disabled": false,
+        "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+        "label": "Reply to AnA"
+      },
+      "composerNotes": [],
+      "rail": [],
+      "summaryRows": [],
+      "summaryFoot": [],
+      "sheetOpen": false
+    },
+    "phoneAfterReload": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [
+        "Paused · 39s Summary"
+      ],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Paused after this step Resume Stop",
+      "stripButtons": [
+        "Resume",
+        "Stop"
+      ],
+      "composer": {
+        "disabled": false,
+        "placeholder": "Steer this run — AnA takes it at her next step",
+        "label": "Steer this run"
+      },
+      "composerNotes": [],
+      "rail": [
+        "Find the stability reports — in progress",
+        "List the project documents — not started",
+        "Read the two archived reports — not started",
+        "Summarise the shelf-life claims — not started"
+      ],
+      "summaryRows": [],
+      "summaryFoot": [],
+      "sheetOpen": false
+    },
+    "desktopAfterPhoneResume": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [],
+      "alerts": [],
+      "stopped": [],
+      "strip": "AnA is waiting for you before: Listing the Vault documents; Updating the plan Waiting for you before the next step Next: Listing the Vault documents; Updating the plan If nobody answers within 10 minutes, the turn ends. Run this step Stop",
+      "stripButtons": [
+        "Run this step",
+        "Stop"
+      ],
+      "composer": {
+        "disabled": false,
+        "placeholder": "Or tell AnA what to do instead",
+        "label": "Tell AnA what to do instead"
+      },
+      "composerNotes": [],
+      "rail": [
+        "Find the stability reports — done",
+        "List the project documents — in progress",
+        "Read the two archived reports — not started",
+        "Summarise the shelf-life claims — not started"
+      ],
+      "summaryRows": [],
+      "summaryFoot": [],
+      "sheetOpen": false
+    },
+    "phoneAfterResume": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [
+        "Paused · step 1 · 44s Summary"
+      ],
+      "alerts": [],
+      "stopped": [],
+      "strip": "Paused after this step Resume Stop",
+      "stripButtons": [
+        "Resume",
+        "Stop"
+      ],
+      "composer": {
+        "disabled": false,
+        "placeholder": "Steer this run — AnA takes it at her next step",
+        "label": "Steer this run"
+      },
+      "composerNotes": [],
+      "rail": [
+        "Find the stability reports — done",
+        "List the project documents — in progress",
+        "Read the two archived reports — not started",
+        "Summarise the shelf-life claims — not started"
+      ],
+      "summaryRows": [],
+      "summaryFoot": [],
+      "sheetOpen": false
+    },
+    "desktopAfterPhoneStop": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [],
+      "alerts": [],
+      "stopped": [
+        "The run was stopped while AnA waited for you before her next step, so it did not run: Listing the Vault documents; Updating the plan."
+      ],
+      "strip": null,
+      "stripButtons": [],
+      "composer": {
+        "disabled": false,
+        "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+        "label": "Reply to AnA"
+      },
+      "composerNotes": [],
+      "rail": [
+        "Find the stability reports — done",
+        "List the project documents — not finished",
+        "Read the two archived reports — not started",
+        "Summarise the shelf-life claims — not started"
+      ],
+      "summaryRows": [],
+      "summaryFoot": [],
+      "sheetOpen": false
+    },
+    "phoneAfterStop": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [],
+      "alerts": [],
+      "stopped": [
+        "The run was stopped while AnA waited for you before her next step, so it did not run: Listing the Vault documents; Updating the plan."
+      ],
+      "strip": null,
+      "stripButtons": [],
+      "composer": {
+        "disabled": false,
+        "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+        "label": "Reply to AnA"
+      },
+      "composerNotes": [],
+      "rail": [
+        "Find the stability reports — done",
+        "List the project documents — not finished",
+        "Read the two archived reports — not started",
+        "Summarise the shelf-life claims — not started"
+      ],
+      "summaryRows": [],
+      "summaryFoot": [],
+      "sheetOpen": false
+    },
+    "phoneSheetAfterStop": {
+      "userTurns": [
+        "s5 tasks: find the stability reports, list the project documents, read the two archived reports, and summarise the shelf-life claims"
+      ],
+      "phase": [],
+      "alerts": [],
+      "stopped": [
+        "The run was stopped while AnA waited for you before her next step, so it did not run: Listing the Vault documents; Updating the plan."
+      ],
+      "strip": null,
+      "stripButtons": [],
+      "composer": {
+        "disabled": false,
+        "placeholder": "Reply to AnA — ask, request a draft, or type @ to name an app...",
+        "label": "Reply to AnA"
+      },
+      "composerNotes": [],
+      "rail": [
+        "Find the stability reports — done",
+        "List the project documents — not finished",
+        "Read the two archived reports — not started",
+        "Summarise the shelf-life claims — not started"
+      ],
+      "summaryRows": [
+        "I will take this in four parts. AnA's words",
+        "Added task Find the stability reports",
+        "Added task List the project documents",
+        "Added task Read the two archived reports",
+        "Added task Summarise the shelf-life claims",
+        "Started Find the stability reports",
+        "You resumed AnA",
+        "Searching the Vault for the stability reports. AnA's words",
+        "Searched the Vault 1.4s Vault · stability",
+        "Completed Find the stability reports",
+        "Started List the project documents",
+        "You stopped the run",
+        "Listing the Vault documents Vault Listing the Vault documents did not run because the turn stopped first.",
+        "Updating the plan Plan Updating the plan did not run because the turn stopped first.",
+        "Stopped."
+      ],
+      "summaryFoot": [
+        "Recorded 34940378de94"
+      ],
+      "sheetOpen": true
+    }
+  },
+  "shots": {
+    "desktopAtHold": "01-desktop-started-manual-hold.png",
+    "phoneFollowing": "02-phone-following.png",
+    "phonePlanOpen": "03-phone-following-plan-open.png",
+    "phoneSheet": "04-phone-summary-sheet-rows.png",
+    "desktopFollower": "05-desktop-follower-plan-rail-and-rows.png",
+    "adminFollower": "06-admin-phone-no-stop-composer-disabled.png",
+    "colleague": "07-colleague-transcript-only.png",
+    "phoneAfterReload": "08-phone-after-reload-rejoined.png",
+    "desktopAfterPhoneResume": "09-desktop-after-phone-resume.png",
+    "phoneAfterResume": "10-phone-after-resume.png",
+    "desktopAfterPhoneStop": "11-desktop-stopped-from-phone.png",
+    "phoneAfterStop": "12-phone-after-stop-handed-over.png",
+    "phoneSheetAfterStop": "13-phone-summary-after-hand-over.png"
+  },
+  "colleagueRead": {
+    "status": 403,
+    "body": {
+      "ok": false,
+      "code": "RUN_NOT_YOURS",
+      "error": "You don't have access to this conversation's live progress."
+    },
+    "listing": {
+      "runs": [],
+      "serverNow": "2026-10-08T21:52:00.342Z"
+    }
+  },
+  "threadId": "ana-ri_1791496284925_mney7w9fi",
+  "runId": "run_e47bb349-13c0-4cfa-af77-41207ab2dc1f",
+  "desktopFrames": [
+    {
+      "at": 1791496284945,
+      "type": "run_started"
+    },
+    {
+      "at": 1791496284945,
+      "type": "status"
+    },
+    {
+      "at": 1791496284975,
+      "type": "status"
+    },
+    {
+      "at": 1791496286243,
+      "type": "drive_state"
+    },
+    {
+      "at": 1791496286280,
+      "type": "context_used"
+    },
+    {
+      "at": 1791496286280,
+      "type": "status"
+    },
+    {
+      "at": 1791496286280,
+      "type": "thread_id"
+    },
+    {
+      "at": 1791496286280,
+      "type": "orchestration"
+    },
+    {
+      "at": 1791496287314,
+      "type": "text"
+    },
+    {
+      "at": 1791496287463,
+      "type": "text"
+    },
+    {
+      "at": 1791496287612,
+      "type": "text"
+    },
+    {
+      "at": 1791496287763,
+      "type": "text"
+    },
+    {
+      "at": 1791496287939,
+      "type": "status"
+    },
+    {
+      "at": 1791496287939,
+      "type": "step"
+    },
+    {
+      "at": 1791496287939,
+      "type": "tool_use"
+    },
+    {
+      "at": 1791496287939,
+      "type": "timeline",
+      "seq": 1,
+      "kind": "note"
+    },
+    {
+      "at": 1791496287939,
+      "type": "timeline",
+      "seq": 2,
+      "kind": "step"
+    },
+    {
+      "at": 1791496287940,
+      "type": "timeline",
+      "seq": 3,
+      "kind": "step"
+    },
+    {
+      "at": 1791496287940,
+      "type": "tool_result"
+    },
+    {
+      "at": 1791496287940,
+      "type": "plan"
+    },
+    {
+      "at": 1791496287940,
+      "type": "timeline",
+      "seq": 4,
+      "kind": "task"
+    },
+    {
+      "at": 1791496287940,
+      "type": "timeline",
+      "seq": 5,
+      "kind": "task"
+    },
+    {
+      "at": 1791496287940,
+      "type": "timeline",
+      "seq": 6,
+      "kind": "task"
+    },
+    {
+      "at": 1791496287940,
+      "type": "timeline",
+      "seq": 7,
+      "kind": "task"
+    },
+    {
+      "at": 1791496287940,
+      "type": "timeline",
+      "seq": 8,
+      "kind": "task"
+    },
+    {
+      "at": 1791496287940,
+      "type": "status"
+    },
+    {
+      "at": 1791496288951,
+      "type": "text"
+    },
+    {
+      "at": 1791496289101,
+      "type": "text"
+    },
+    {
+      "at": 1791496289252,
+      "type": "text"
+    },
+    {
+      "at": 1791496289402,
+      "type": "text"
+    },
+    {
+      "at": 1791496289561,
+      "type": "paused"
+    },
+    {
+      "at": 1791496325440,
+      "type": "resumed"
+    },
+    {
+      "at": 1791496325474,
+      "type": "status"
+    },
+    {
+      "at": 1791496325474,
+      "type": "step"
+    },
+    {
+      "at": 1791496325474,
+      "type": "tool_use"
+    },
+    {
+      "at": 1791496325474,
+      "type": "timeline",
+      "seq": 9,
+      "kind": "note"
+    },
+    {
+      "at": 1791496325474,
+      "type": "timeline",
+      "seq": 10,
+      "kind": "step"
+    },
+    {
+      "at": 1791496325474,
+      "type": "tool_use"
+    },
+    {
+      "at": 1791496325474,
+      "type": "timeline",
+      "seq": 11,
+      "kind": "step"
+    },
+    {
+      "at": 1791496326856,
+      "type": "timeline",
+      "seq": 12,
+      "kind": "step"
+    },
+    {
+      "at": 1791496326856,
+      "type": "tool_result"
+    },
+    {
+      "at": 1791496326856,
+      "type": "timeline",
+      "seq": 13,
+      "kind": "step"
+    },
+    {
+      "at": 1791496326856,
+      "type": "tool_result"
+    },
+    {
+      "at": 1791496326856,
+      "type": "plan"
+    },
+    {
+      "at": 1791496326856,
+      "type": "timeline",
+      "seq": 14,
+      "kind": "task"
+    },
+    {
+      "at": 1791496326856,
+      "type": "timeline",
+      "seq": 15,
+      "kind": "task"
+    },
+    {
+      "at": 1791496326856,
+      "type": "status"
+    },
+    {
+      "at": 1791496327883,
+      "type": "paused"
+    },
+    {
+      "at": 1791496330093,
+      "type": "timeline",
+      "seq": 16,
+      "kind": "step"
+    },
+    {
+      "at": 1791496330093,
+      "type": "timeline",
+      "seq": 17,
+      "kind": "step"
+    },
+    {
+      "at": 1791496330093,
+      "type": "cancelled"
+    },
+    {
+      "at": 1791496330093,
+      "type": "timeline",
+      "seq": 18,
+      "kind": "end"
+    },
+    {
+      "at": 1791496330093,
+      "type": "done",
+      "stoppedReason": "cancelled"
+    },
+    {
+      "at": 1791496330191,
+      "type": "grounding_strip"
+    },
+    {
+      "at": 1791496330191,
+      "type": "post_done"
+    }
+  ]
+}

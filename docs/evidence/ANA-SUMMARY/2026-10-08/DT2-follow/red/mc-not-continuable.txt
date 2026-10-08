@@ -1,0 +1,18 @@
+# mc-not-continuable: --config vitest.config.ts client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts -t continuable
+# exit 1
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > unattended_limit is continuable 7ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > session_ended is continuable 1ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > server_shutdown is continuable 1ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > orphaned is continuable 1ms
+   → expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed | 19 skipped (23)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > unattended_limit is continuable
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > session_ended is continuable
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > server_shutdown is continuable
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > orphaned is continuable
+AssertionError: expected false to be true // Object.is equality

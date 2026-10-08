@@ -325,6 +325,20 @@ export interface RunControlStripProps {
 }
 
 /**
+ * A live turn's one alert line (AnA detach DT2, §5.1): this reader's network,
+ * a stale owner, a Stop not yet confirmed, or a refusal. Said beside the rows,
+ * which stay; the words are anaWorkModel's `liveAlertLine`.
+ */
+export function LiveAlert({ text }: { text: string }) {
+  return (
+    <p className="ana-activity-unrecorded" role="status">
+      <span className="ana-activity-glyph" aria-hidden="true">{I.alertTriangle}</span>
+      <span>{text}</span>
+    </p>
+  );
+}
+
+/**
  * Mid-run control: the one strip, rendered above the conversation screen's
  * composer (ConversationThread). Moved here from the right rail (row 74, S4),
  * which is deleted (ana-2a), so a Manual hold can be answered wherever AnA is

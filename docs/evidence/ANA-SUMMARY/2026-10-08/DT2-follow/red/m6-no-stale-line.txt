@@ -1,0 +1,12 @@
+# m6-no-stale-line: --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx -t stale
+# exit 1
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. a stale owner says how long it has been silent; the reader’s own network says it is retrying, and the rows stay 31ms
+   → expected null to be 'AnA hasn\'t reported for 2 min. The s…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 6. a stale owner is said beside the rows, with Stop offered 117ms
+ Test Files  2 failed (2)
+      Tests  2 failed | 20 skipped (22)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 6. a stale owner is said beside the rows, with Stop offered
+TestingLibraryElementError: Unable to find an element with the text: AnA hasn't reported for 3 min. The server handling this turn may have stopped.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. a stale owner says how long it has been silent; the reader’s own network says it is retrying, and the rows stay
+AssertionError: expected null to be 'AnA hasn\'t reported for 2 min. The s…' // Object.is equality

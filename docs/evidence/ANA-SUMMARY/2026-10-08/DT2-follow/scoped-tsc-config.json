@@ -1,0 +1,22 @@
+{
+ "extends": "../../../../../tsconfig.json",
+ "compilerOptions": {
+  "noEmit": true,
+  "incremental": false
+ },
+ "files": [
+  "../../../../../client/src/concept2cure/components/ana/useAnaChat.ts",
+  "../../../../../client/src/concept2cure/components/ana/useAnaChat.types.ts",
+  "../../../../../client/src/concept2cure/components/ana/anaTurnTimeline.ts",
+  "../../../../../client/src/concept2cure/components/ana/GovernedActionSignoff.tsx",
+  "../../../../../client/src/concept2cure/components/ana/useGovernedAction.ts",
+  "../../../../../client/src/concept2cure/v2/anaWorkModel.ts",
+  "../../../../../client/src/concept2cure/v2/turnSummaryRows.ts",
+  "../../../../../client/src/concept2cure/v2/TurnSummary.tsx",
+  "../../../../../client/src/concept2cure/v2/AnaActivity.tsx",
+  "../../../../../client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+  "../../../../../server/routes/ana-ri/runs.ts",
+  "../../../../../server/routes/ana-ri/__tests__/runs-read.pglite.test.ts"
+ ],
+ "include": []
+}

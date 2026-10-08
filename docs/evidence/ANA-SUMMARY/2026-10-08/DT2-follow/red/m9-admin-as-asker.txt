@@ -1,0 +1,10 @@
+# m9-admin-as-asker: --config vitest.config.ts client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx
+# exit 1
+ × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > has no Stop (until DT3 accepts it), no Pause, and a composer that says only the asker can steer 335ms
+   → expected <button type="button" …(1)></button> to be null
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > the asker following their own turn keeps every control, and the composer steers 121ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > has no Stop (until DT3 accepts it), no Pause, and a composer that says only the asker can steer
+AssertionError: expected <button type="button" …(1)></button> to be null

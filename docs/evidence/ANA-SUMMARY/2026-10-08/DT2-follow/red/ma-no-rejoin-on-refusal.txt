@@ -1,0 +1,9 @@
+# ma-no-rejoin-on-refusal: --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts -t RUN_IN_PROGRESS
+# exit 1
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > RUN_IN_PROGRESS: the refusal is said in the design’s words, and the run that holds the conversation is followed after its question 141ms
+   → expected [ 'm-501', 'u', 'a' ] to deeply equal [ Array(5) ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > RUN_IN_PROGRESS: the refusal is said in the design’s words, and the run that holds the conversation is followed after its question
+AssertionError: expected [ 'm-501', 'u', 'a' ] to deeply equal [ Array(5) ]

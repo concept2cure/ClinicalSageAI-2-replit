@@ -235,7 +235,6 @@ describe('9. the listings apply the same rule', () => {
     r.setRequest('q');
     r.setAnswer({ streamed: 'a', stored: 'a' });
     await writeTurnRecord(pool, r.seal('answered'));
-    await insertRun({ status: 'finished' }); // terminal, not released: not listed
 
     const asker = await get('asker', '/api/ana-ri/runs?thread_id=th_shared');
     expect(asker.status).toBe(200);
@@ -250,6 +249,39 @@ describe('9. the listings apply the same rule', () => {
     expect((await get('asker', '/api/ana-ri/runs')).status).toBe(400);
   });
 
+});
+
+describe('the recording window (DT2, flagged by DT1 as (b))', () => {
+  /* A run that has ended but whose owner has not yet released it — the ~30 s
+     in which post-processing writes the answer and seals the record — must be
+     listed: a reload in that window otherwise finds nothing, and the turn the
+     person just watched disappears until the record lands. A run in that
+     state that already has its record is not listed: the transcript has it. */
+  it('lists a terminal run that is not yet released and has no record', async () => {
+    const recording = await insertRun({ status: 'finished' }); // ended, released_at null, no record
+    const res = await get('asker', '/api/ana-ri/runs?thread_id=th_shared');
+    expect(res.status).toBe(200);
+    expect(res.body.runs).toEqual([
+      expect.objectContaining({ runId: recording, status: 'finished', releasedAt: null, userMessageId: 501 }),
+    ]);
+  });
+
+  it('does not list a terminal, unreleased run whose record already exists', async () => {
+    const sealedUnreleased = await insertRun({ status: 'finished' });
+    const r = new TurnRecorder();
+    r.setTurn({ organizationId: ORG, runId: sealedUnreleased, actorUserId: ASKER, threadId: 'th_shared' });
+    r.setRequest('q');
+    r.setAnswer({ streamed: 'a', stored: 'a' });
+    await writeTurnRecord(pool, r.seal('answered'));
+    const res = await get('asker', '/api/ana-ri/runs?thread_id=th_shared');
+    expect(res.body.runs).toEqual([]);
+  });
+
+  it('applies the same person rule: a colleague sees none of it', async () => {
+    await insertRun({ status: 'cancelled' });
+    expect((await get('colleague', '/api/ana-ri/runs?thread_id=th_shared')).body.runs).toEqual([]);
+    expect((await get('admin', '/api/ana-ri/runs?thread_id=th_shared')).body.runs).toHaveLength(1);
+  });
 });
 
 describe('the hand-over', () => {

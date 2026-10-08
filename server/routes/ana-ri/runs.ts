@@ -3,8 +3,9 @@
  * DT1; docs/design/ANA_DETACH_2026-10-08.md §3.7).
  *
  *   GET /api/ana-ri/runs?thread_id=<id>          the conversation's runs that are
- *                                                live, or released without a
- *                                                record; newest first; at most 5
+ *                                                live, or ended without a record
+ *                                                (released or still recording,
+ *                                                DT2); newest first; at most 5
  *   GET /api/ana-ri/runs?mine=live               the caller's live runs, in any
  *                                                conversation
  *   GET /api/ana-ri/runs/:runId/events?after=<seq>
@@ -308,6 +309,13 @@ async function listRuns(req: Request, res: Response, pool: RunsQuery): Promise<v
     return;
   }
   // $3 is the person for a member, NULL for an admin (every run).
+  //
+  // Live, or ended without a record — released or not (DT2). An ended run the
+  // owner has not yet released is in its recording window: post-processing is
+  // writing the answer and sealing the record. Listing only released ones left
+  // a reload in that window with nothing to rejoin, so the turn the person had
+  // just watched vanished until the record landed. The follower polls it and
+  // hands over to the record, or says it was not recorded (§4.3).
   const params: unknown[] = [organizationId, threadId, admin ? null : userId, THREAD_RUNS_LIMIT];
   const { rows } = await pool.query(
     `SELECT r.id, r.thread_id, r.user_message_id, r.status, r.stopped_reason, r.run_policy,
@@ -315,9 +323,9 @@ async function listRuns(req: Request, res: Response, pool: RunsQuery): Promise<v
        FROM ana_runs r
       WHERE r.organization_id = $1 AND r.thread_id = $2 AND ($3::integer IS NULL OR r.user_id = $3)
         AND (r.status IN ('running','paused','awaiting_approval')
-             OR (r.released_at IS NOT NULL AND NOT EXISTS (
+             OR NOT EXISTS (
                    SELECT 1 FROM ana_turn_records t
-                    WHERE t.organization_id = r.organization_id AND t.run_id = r.id)))
+                    WHERE t.organization_id = r.organization_id AND t.run_id = r.id))
       ORDER BY r.created_at DESC
       LIMIT $4`,
     params,

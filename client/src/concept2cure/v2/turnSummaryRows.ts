@@ -124,7 +124,7 @@ export type SummaryRow =
   | StepRow
   | TaskRow
   | { kind: 'control'; key: string; text: string; message?: string }
-  | { kind: 'end'; key: string; text: string; reason: string | null; continuable: boolean }
+  | { kind: 'end'; key: string; text: string; reason: string | null; continuable: boolean; notes?: string[] }
   | { kind: 'working'; key: string };
 
 /** A task's row: the change, the plan as it stood then, the task's steps, and (completed) what they came to. */
@@ -275,17 +275,42 @@ export interface SummaryRowOptions {
    * How this view saw the turn end when its events carry no end (the stream
    * dropped, or the person stopped it here). The record's end replaces it.
    */
-  clientEnding?: { outcome: 'stopped' | 'failed'; reason: string | null } | null;
+  clientEnding?: { outcome: 'answered' | 'stopped' | 'failed'; reason: string | null } | null;
+  /**
+   * The turn ended and its owner finished without filing a record (AnA detach
+   * §4.3): the rows are the mirror's, and the closing row says so.
+   */
+  notRecorded?: boolean;
 }
 
-function endRow(outcome: string, reason: string | null, key: string): SummaryRow {
+/** Said in the closing row of a followed turn that ended without a record (§4.3). */
+export const NOT_RECORDED_LINE = 'The steps up to here were saved as they ran. This turn was not recorded.';
+
+/**
+ * Said in the closing row when steps were held back — a person's no, no
+ * answer in time, or an act only a person may take (§2.7, §5.3). Counted from
+ * the timeline's own `heldBack` steps; nothing when there were none.
+ */
+export function notAuthorisedLine(n: number): string | null {
+  if (n < 1) return null;
+  return n === 1 ? '1 step was not authorised and did not run.' : `${n} steps were not authorised and did not run.`;
+}
+
+function endRow(outcome: string, reason: string | null, key: string, notes: string[] = []): SummaryRow {
   return {
     kind: 'end',
     key,
     text: endText(outcome, reason),
     reason,
     continuable: Boolean(reason) && isContinuable(reason as never),
+    ...(notes.length > 0 ? { notes } : {}),
   };
+}
+
+/** The closing row's notes: the held-back steps, and that the turn was not recorded. */
+function endNotes(states: Map<string, StepState>, opts: SummaryRowOptions): string[] {
+  const heldBack = [...states.values()].filter((s) => s.finished?.heldBack === true).length;
+  return [notAuthorisedLine(heldBack), opts.notRecorded ? NOT_RECORDED_LINE : null].filter((l): l is string => l !== null);
 }
 
 function itemRow(item: ReturnType<typeof orderTimeline>[number], ctx: RowContext): SummaryRow | null {
@@ -296,7 +321,7 @@ function itemRow(item: ReturnType<typeof orderTimeline>[number], ctx: RowContext
   const e = item.event;
   if (e.kind === 'note') return { kind: 'note', key: `n-${e.seq}`, text: e.text.trim() };
   if (e.kind === 'task') return taskRow(e, ctx);
-  if (e.kind === 'end') return endRow(e.outcome, e.stoppedReason, `e-${e.seq}`);
+  if (e.kind === 'end') return endRow(e.outcome, e.stoppedReason, `e-${e.seq}`, endNotes(ctx.states, ctx.opts));
   const s = ctx.states.get(e.step);
   // One row per step, where it first appeared. Her plan updates are the task
   // rows; a plan update that did not go through stays a row, never folded away.
@@ -320,8 +345,35 @@ export function summaryRows(
   }
   const ended = rows.some((r) => r.kind === 'end');
   if (!ended && opts.live) rows.push({ kind: 'working', key: 'working' });
-  else if (!ended && opts.clientEnding) rows.push(endRow(opts.clientEnding.outcome, opts.clientEnding.reason, 'e-client'));
+  else if (!ended && opts.clientEnding) rows.push(endRow(opts.clientEnding.outcome, opts.clientEnding.reason, 'e-client', endNotes(states, opts)));
   return rows;
+}
+
+/* ── What the live mirror could not show (AnA detach §3.5, §3.6) ─────────────── */
+
+/** Said once when the mirror missed rows: a seq missing below the last one read, or a released run whose owner emitted more. */
+export const GAP_LINE = 'Some steps could not be shown live. The full list appears when the turn is recorded.';
+/** Said once when the mirror reached its cap of 1,999 rows. */
+export const CAP_LINE = 'Only the first 1,999 steps are shown while AnA works. The full list appears when the turn is recorded.';
+
+/**
+ * The lines a followed turn's rows carry about what they are missing, each
+ * once, never in place of the rows. Only a turn read from the mirror has
+ * them: a live stream and a sealed record are whole.
+ */
+export function mirrorLines(
+  events: readonly TimelineEvent[],
+  mirror: { highWater: number; truncated?: boolean; released?: boolean },
+): string[] {
+  const seqs = [...new Set(events.map((e) => e.seq))].sort((a, b) => a - b);
+  const last = seqs.length > 0 ? seqs[seqs.length - 1] : 0;
+  const holes = seqs.length > 0 && last - seqs[0] + 1 > seqs.length;
+  const missingFromStart = seqs.length > 0 && seqs[0] > 1;
+  const shortOfOwner = Boolean(mirror.released) && mirror.highWater > last && !mirror.truncated;
+  return [
+    holes || missingFromStart || shortOfOwner ? GAP_LINE : null,
+    mirror.truncated ? CAP_LINE : null,
+  ].filter((l): l is string => l !== null);
 }
 
 /** A traced step as a row: its label and source, never a duration (the trace keeps none). */

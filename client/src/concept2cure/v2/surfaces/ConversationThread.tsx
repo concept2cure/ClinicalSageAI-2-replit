@@ -24,7 +24,7 @@ import { TurnSummarySheet, useSummaryTurn } from '../TurnSummary';
 import { RunControlStrip, steerHelpFor } from '../AnaWorkSections';
 import { useAgentActivity } from '../useAgentActivity';
 import { AnaActivity, activityPropsFor, hasReportableWork, type AnaActivityProps } from '../AnaActivity';
-import { CONTINUE_PROMPT, continueTurnIndex } from '../anaWorkModel';
+import { CONTINUE_PROMPT, continueTurnIndex, FOLLOW_LINES } from '../anaWorkModel';
 import { useProgressDock } from '../workDock';
 import { C2CToast, useToast, type FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -1533,7 +1533,11 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
      Manual hold the steer replaces the step shown ("Do this instead"); the
      text is cleared only once the server accepted it; a refusal says so and
      keeps the text. A steer is words only: attachments wait for the next turn. */
-  const steering = busy && !!anaChat.runStatus;
+  /* An organisation admin following someone else's turn (AnA detach DT2,
+     §4.2): the composer does not steer it — only the person who asked can —
+     and it says so rather than taking text it cannot send. */
+  const adminFollowing = anaChat.followScope === 'cancel';
+  const steering = busy && !!anaChat.runStatus && !adminFollowing;
   const manualHold = anaChat.runStatus === 'paused' && anaChat.runHold?.reason === 'manual';
   const steerHelp = steering && anaChat.runStatus ? steerHelpFor(manualHold, anaChat.turnRunPolicy, anaChat.runStatus) : null;
   const [steerBusy, setSteerBusy] = useState(false);
@@ -1787,14 +1791,20 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
               so a Manual hold is answered here (Run this step / Do this
               instead / Stop). Pause, resume and steer only once the run is
               controllable, as the shell gates the rail's; Stop always. */}
+          {/* An admin following a colleague's turn gets no controls here yet.
+              Pause, resume and steer are the asker's alone (§2.5); Stop is the
+              admin's by design, but the server accepts an admin's cancel only
+              from slice DT3, so until then a Stop here would be refused on
+              press. Hidden, not disabled: the turn's own lines say what it is
+              waiting on. Restore `onStop` for controlScope 'cancel' in DT3. */}
           <RunControlStrip
             streaming={anaChat.isStreaming}
             runStatus={anaChat.runStatus}
             runHold={anaChat.runHold}
             runPolicy={anaChat.turnRunPolicy}
-            onPause={anaChat.runStatus ? () => void anaChat.pause() : undefined}
-            onResume={anaChat.runStatus ? () => void anaChat.resume() : undefined}
-            onStop={() => void anaChat.stop()}
+            onPause={anaChat.runStatus && !adminFollowing ? () => void anaChat.pause() : undefined}
+            onResume={anaChat.runStatus && !adminFollowing ? () => void anaChat.resume() : undefined}
+            onStop={adminFollowing ? undefined : () => void anaChat.stop()}
             /* No steer box in the strip here: this screen's composer steers. */
           />
           {askOrigin && (
@@ -1854,8 +1864,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                 {I.paperclip}
               </button>
               <textarea ref={draftRef} rows={1}
+                disabled={adminFollowing || undefined}
                 aria-label={steering ? (manualHold ? 'Tell AnA what to do instead' : 'Steer this run') : 'Reply to AnA'}
-                placeholder={steering ? (manualHold ? 'Or tell AnA what to do instead' : 'Steer this run — AnA takes it at her next step') : 'Reply to AnA — ask, request a draft, or type @ to name an app...'}
+                placeholder={adminFollowing ? FOLLOW_LINES.adminCannotSteer : steering ? (manualHold ? 'Or tell AnA what to do instead' : 'Steer this run — AnA takes it at her next step') : 'Reply to AnA — ask, request a draft, or type @ to name an app...'}
                 aria-invalid={(steering && steerRefused) || undefined}
                 aria-describedby={steering ? [steerRefused ? 'ct-steer-err' : '', steerHelp ? 'ct-steer-help' : ''].filter(Boolean).join(' ') || undefined : undefined}
                 value={draft}
@@ -1892,6 +1903,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
             {steering && steerHelp && (
               <span id="ct-steer-help" className="ana-runctl-help">{steerHelp}</span>
             )}
+            {adminFollowing && <span className="ana-runctl-help" role="note">{FOLLOW_LINES.adminCannotSteer}</span>}
             {steering && steerRefused && (
               <span id="ct-steer-err" className="ana-runctl-err" role="status">
                 Not sent — AnA did not accept this steer. The text is still here.

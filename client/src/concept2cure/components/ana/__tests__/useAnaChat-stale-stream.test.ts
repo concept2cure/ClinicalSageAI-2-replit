@@ -60,6 +60,8 @@ describe('aborted stream isolation', () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({ messages: [] }) })
       // The reloaded conversation's one call for its turn records (S4).
       .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { records: [] } }) })
+      // …and its runs to rejoin (AnA detach DT2): none.
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ runs: [] }) })
       .mockResolvedValueOnce({ ok: true, body: fresh.body });
     if (action === 'reset') fetchMock.mockReset().mockResolvedValueOnce({ ok: true, body: old.body }).mockResolvedValueOnce({ ok: true, body: fresh.body });
     vi.stubGlobal('fetch', fetchMock);
@@ -85,7 +87,7 @@ describe('aborted stream isolation', () => {
     expect(result.current.isStreaming).toBe(true);
     expect(onDriveEvent).not.toHaveBeenCalled();
     // The abandoned turn never asks for its record by run id.
-    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('turn-records?run_id='))).toBe(false);
+    expect(fetchMock.mock.calls.some(([url]) => /turn-records\?run_id=|\/runs\/old-run\/events/.test(String(url)))).toBe(false);
     await act(async () => { fresh.push({ type: 'text', content: 'Fresh answer' }); fresh.push({ type: 'post_done' }); fresh.close(); await newTurn; });
     expect(result.current.messages.at(-1)?.text).toBe('Fresh answer');
     expect(result.current.messages.at(-1)?.stopped).not.toBe(true);
@@ -124,10 +126,11 @@ describe('turn identities', () => {
     let newTurn!: Promise<void>;
     await act(async () => { newTurn = result.current.send('New question'); });
     fresh.push({ type: 'run_started', runId: 'new-run' }); await flush();
-    await act(async () => { old.close(); await oldTurn; await vi.advanceTimersByTimeAsync(1_500); });
-    const lookups = fetchMock.mock.calls.filter(([url]) => String(url).includes('turn-records'));
+    // Since AnA detach DT2 the ask is the run's own read (GET /runs/:id/events).
+    await act(async () => { old.close(); await oldTurn; await vi.advanceTimersByTimeAsync(2_000); });
+    const lookups = fetchMock.mock.calls.filter(([url]) => /\/runs\/[^/]+\/events/.test(String(url)));
     expect(lookups).toHaveLength(1);
-    expect(lookups[0][0]).toContain('run_id=old-run');
+    expect(lookups[0][0]).toContain('/runs/old-run/events');
     expect(result.current.isStreaming).toBe(true);
     await act(async () => { fresh.push({ type: 'post_done' }); fresh.close(); await newTurn; });
   });

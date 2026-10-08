@@ -45,11 +45,11 @@ import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import { downloadBlob, safeFileName } from './download';
 import type { AnaChatMessage, AnaToolCall } from '../components/ana/useAnaChat';
-import type { AnaPlanChange, AnaPlanStep, AnaStoppedReason, AnaTurnRecordStatus } from '../components/ana/useAnaChat.types';
+import type { AnaFollow, AnaPlanChange, AnaPlanStep, AnaStoppedReason, AnaTurnRecordStatus } from '../components/ana/useAnaChat.types';
 import { formatElapsed, LENS_PHRASE, PLAN_TOOL } from '../components/ana/anaProgress';
-import { statusGlyph, StepFactList } from './AnaWorkSections';
+import { LiveAlert, statusGlyph, StepFactList } from './AnaWorkSections';
 import { orderedItems } from './turnSummaryRows';
-import { isContinuable, replacedNoteText, showsEngineGlyph, stepDuration, stepFacts, stoppedNoteText } from './anaWorkModel';
+import { followPhaseLine, isContinuable, liveAlertLine, replacedNoteText, showsEngineGlyph, stepDuration, stepFacts, stoppedNoteText } from './anaWorkModel';
 import { useNow } from './useNow';
 import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { unknownStepLabel } from '@shared/ana/step-verbs';
@@ -121,6 +121,17 @@ export interface AnaActivityProps {
    * mount this only as a spinner for work that is not a recorded turn.
    */
   onSummary?: () => void;
+  /**
+   * Set while this view follows the turn from another device or after a
+   * reload (AnA detach DT2): the phase line is then the follower's
+   * ("Working · step 7 · 4m 12s"), and the turn's alert line — the reader's
+   * network, a stale owner, a refusal — is said beside it.
+   */
+  follow?: AnaFollow;
+  /** The turn's timeline: the follower's phase line counts its steps. */
+  timeline?: AnaChatMessage['timeline'];
+  /** Stop was pressed and the server has not confirmed it (§5.2). */
+  stopUnconfirmed?: boolean;
 }
 
 /** The one mapping from a turn to its record. Every host uses it. */
@@ -148,6 +159,7 @@ export function activityPropsFor(m: AnaChatMessage): AnaActivityProps {
     runPolicy: m.runPolicy,
     pendingSteps: m.pendingSteps,
     replacedSteps: m.replacedSteps,
+    follow: m.follow, timeline: m.timeline, stopUnconfirmed: m.stopUnconfirmed,
   };
 }
 
@@ -432,14 +444,21 @@ export function AnaActivity({
   replacedSteps,
   onContinue,
   onSummary,
+  follow, timeline, stopUnconfirmed,
 }: AnaActivityProps) {
   const calls = toolCalls ?? [];
   const changes = planChanges ?? [];
   const finalPlan = plan ?? [];
   // The clock ticks only while the turn is live AND has a start; a settled turn
   // reads its recorded end, and a turn with no start claims no duration.
-  const now = useNow(Boolean(streaming) && typeof startedAt === 'number');
+  const now = useNow((Boolean(streaming) && typeof startedAt === 'number') || Boolean(follow && streaming));
   const elapsed = typeof startedAt === 'number' ? formatElapsed((completedAt ?? now) - startedAt) : '';
+  /* A followed turn's phase is the follower's line, which carries its own
+     clock read against the server's; the stream's phase is a live turn's. */
+  const followLine = followPhaseLine({ follow, timeline }, now);
+  const phaseLine = followLine ?? phase;
+  const alertText = liveAlertLine({ follow, stopUnconfirmed }, now);
+  const alert = alertText ? <LiveAlert text={alertText} /> : null;
   const work = calls.filter((c) => c.name !== PLAN_TOOL || c.status === 'error' || c.status === 'unconfirmed');
   const ran = work.filter((c) => c.status === 'success' || c.status === 'error').length;
   const failed = work.filter((c) => c.status === 'error').length;
@@ -523,9 +542,10 @@ export function AnaActivity({
        speaks its stop from the region that was already mounted. A role=note
        paragraph is not announced; a region created in the same paint as its
        first content is the case AT misses. */
-    return unrecorded || stopped || replaced ? (
+    return unrecorded || stopped || replaced || alert ? (
       <div className="ana-activity">
         <span aria-live="polite" style={SR_ONLY_STYLE}>{stoppedText ?? ''}</span>
+        {alert}
         {stopped}
         {replaced}
         {unrecorded}
@@ -533,7 +553,7 @@ export function AnaActivity({
       </div>
     ) : null;
   }
-  if (streaming && !hasBody && !phase) return null;
+  if (streaming && !hasBody && !phaseLine && !alert) return null;
 
   const expanded = Boolean(streaming) || open;
   const summary = foldedLine({
@@ -547,7 +567,8 @@ export function AnaActivity({
      its first content is the documented case AT misses). The rows themselves
      are not live. */
   const spoken = [
-    streaming && phase ? phase : null,
+    streaming && phaseLine ? phaseLine : null,
+    alertText,
     failed > 0 ? `${failed} ${failed === 1 ? 'step' : 'steps'} did not complete` : null,
     draftTitle ? `Drafted ${draftTitle}` : null,
     stoppedText,
@@ -572,6 +593,7 @@ export function AnaActivity({
         </button>
       )}
       {!streaming && onSummary && <SummaryButton onClick={onSummary} />}
+      {alert}
       {stopped}
       {replaced}
       {unrecorded}
@@ -692,11 +714,11 @@ export function AnaActivity({
 
           {/* The live phase, last: what she is doing right now, with a running
               clock so a long silent window reads as time passing. */}
-          {streaming && phase && (
+          {streaming && phaseLine && (
             <li className="ana-activity-phase">
               <span className="ana-activity-pulse" aria-hidden="true">{I.dot}</span>
-              <span>{phase}</span>
-              {elapsed && <span className="ana-activity-clock">{elapsed}</span>}
+              <span>{phaseLine}</span>
+              {!followLine && elapsed && <span className="ana-activity-clock">{elapsed}</span>}
               {onSummary && <SummaryButton onClick={onSummary} />}
             </li>
           )}

@@ -1,0 +1,76 @@
+# head-lines: --config vitest.config.ts client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts
+# exit 1
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > unattended_limit reads "Stopped: nobody was watching for 15 minutes." 6ms
+   → expected null to be 'Stopped: nobody was watching for 15 m…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > session_ended reads "Stopped: the session that started this turn ended." 1ms
+   → expected null to be 'Stopped: the session that started thi…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > server_shutdown reads "Stopped: the server restarted for an update." 1ms
+   → expected null to be 'Stopped: the server restarted for an …' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > orphaned reads "Stopped: the server handling this turn stopped responding." 1ms
+   → expected null to be 'Stopped: the server handling this tur…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > error reads "Stopped: the turn ended with an error." 1ms
+   → expected null to be 'Stopped: the turn ended with an error.' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > admin_cancelled reads "Stopped by an administrator." 1ms
+   → expected null to be 'Stopped by an administrator.' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > unattended_limit is continuable 2ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > session_ended is continuable 1ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > server_shutdown is continuable 1ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > orphaned is continuable 1ms
+   → expected false to be true // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > cancelled is not: a decision, or an error to look at 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > admin_cancelled is not: a decision, or an error to look at 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > error is not: a decision, or an error to look at 0ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > the phase line counts announced steps, not plan updates, and reads the server’s clock 1ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > an admin sees who is being waited on, not the work 2ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > nothing once the run has ended 0ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > a stale owner after four missed beats (60 s), in whole minutes 1ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > the alert line, most urgent first 0ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > one held-back step 4ms
+   → expected { kind: 'end', key: 'e-3', …(3) } to match object { kind: 'end', …(1) }
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > the count, and nothing at zero 0ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a missing seq is a gap 0ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a released run whose owner emitted more than was mirrored is a gap 0ms
+ × client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > the cap says so 0ms
+ Test Files  1 failed (1)
+      Tests  20 failed | 3 passed (23)
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > unattended_limit reads "Stopped: nobody was watching for 15 minutes."
+AssertionError: expected null to be 'Stopped: nobody was watching for 15 m…' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > session_ended reads "Stopped: the session that started this turn ended."
+AssertionError: expected null to be 'Stopped: the session that started thi…' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > server_shutdown reads "Stopped: the server restarted for an update."
+AssertionError: expected null to be 'Stopped: the server restarted for an …' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > orphaned reads "Stopped: the server handling this turn stopped responding."
+AssertionError: expected null to be 'Stopped: the server handling this tur…' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > error reads "Stopped: the turn ended with an error."
+AssertionError: expected null to be 'Stopped: the turn ended with an error.' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > admin_cancelled reads "Stopped by an administrator."
+AssertionError: expected null to be 'Stopped by an administrator.' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > unattended_limit is continuable
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > session_ended is continuable
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > server_shutdown is continuable
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > orphaned is continuable
+AssertionError: expected false to be true // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > the phase line counts announced steps, not plan updates, and reads the server’s clock
+TypeError: followPhaseLine is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > an admin sees who is being waited on, not the work
+TypeError: followPhaseLine is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > nothing once the run has ended
+TypeError: followPhaseLine is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > a stale owner after four missed beats (60 s), in whole minutes
+TypeError: staleOwnerLine is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > the alert line, most urgent first
+TypeError: liveAlertLine is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > one held-back step
+AssertionError: expected { kind: 'end', key: 'e-3', …(3) } to match object { kind: 'end', …(1) }
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > the count, and nothing at zero
+TypeError: notAuthorisedLine is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a missing seq is a gap
+TypeError: mirrorLines is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a released run whose owner emitted more than was mirrored is a gap
+TypeError: mirrorLines is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > the cap says so
+TypeError: mirrorLines is not a function

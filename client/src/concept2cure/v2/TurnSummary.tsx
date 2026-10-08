@@ -37,7 +37,8 @@ import { statusGlyph, StepFactList } from './AnaWorkSections';
 import { sourceGlyph } from './anaSourceGlyphs';
 import { useDialog } from './useDialog';
 import { useNow } from './useNow';
-import { footerState, summaryRows, traceRows, type StepRow, type SummaryRow, type TaskRow } from './turnSummaryRows';
+import { footerState, mirrorLines, summaryRows, traceRows, type StepRow, type SummaryRow, type TaskRow } from './turnSummaryRows';
+import { LIVE_RUN_STATUSES } from '../components/ana/anaTurnTimeline';
 
 /* ── The record's Summary, read once per record ───────────────────────────── */
 
@@ -145,6 +146,18 @@ function TaskDetail({ row }: { row: TaskRow }) {
   );
 }
 
+/** The closing row's notes: steps not authorised, and that the turn was not recorded. */
+function EndNotes({ notes }: { notes?: string[] }) {
+  if (!notes) return null;
+  return (
+    <>
+      {notes.map((n) => (
+        <span key={n} className="ana-activity-note">{n}</span>
+      ))}
+    </>
+  );
+}
+
 function SummaryRowView({ row, checked, onContinue, now, startedAt }: { row: SummaryRow; checked: boolean; onContinue?: () => void; now: number; startedAt?: number }) {
   switch (row.kind) {
     case 'note':
@@ -181,6 +194,7 @@ function SummaryRowView({ row, checked, onContinue, now, startedAt }: { row: Sum
             <span className="ana-activity-text"><span className="ana-activity-verb">{row.text}</span></span>
             {onContinue && row.continuable ? <button type="button" className="ana-activity-continue" onClick={onContinue}>Continue</button> : null}
           </span>
+          <EndNotes notes={row.notes} />
         </li>
       );
     case 'working':
@@ -194,11 +208,28 @@ function SummaryRowView({ row, checked, onContinue, now, startedAt }: { row: Sum
   }
 }
 
-/** How this view saw the turn end, when its events carry no end of their own. */
+/**
+ * How this view saw the turn end, when its events carry no end of their own.
+ * A followed turn (DT2) ends as its run row says: the row's reason, said by
+ * its stop line — never "the page lost its connection", which this page did not.
+ */
 function clientEndingOf(turn: AnaChatMessage) {
+  const f = turn.follow;
+  if (f && !LIVE_RUN_STATUSES.has(f.status)) {
+    const reason = turn.stoppedReason ?? null;
+    if (f.status === 'finished' && !reason) return { outcome: 'answered' as const, reason: null };
+    if (f.status === 'failed' && !reason) return { outcome: 'failed' as const, reason: null };
+    return { outcome: 'stopped' as const, reason: reason ?? 'cancelled' };
+  }
   if (turn.stopped) return { outcome: 'stopped' as const, reason: 'cancelled' };
   if (turn.interrupted) return { outcome: 'stopped' as const, reason: 'client_disconnected' };
   return null;
+}
+
+/** A followed turn that ended and whose owner finished without filing a record (§4.3). */
+function endedUnrecorded(turn: AnaChatMessage, live: boolean): boolean {
+  const f = turn.follow;
+  return Boolean(f) && !live && !LIVE_RUN_STATUSES.has(f!.status) && !turn.turnRecord && !turn.recordConfirming;
 }
 
 function SummaryFooter({ turn, read }: { turn: AnaChatMessage; read: SummaryRead }) {
@@ -251,8 +282,17 @@ function eventsOf(turn: AnaChatMessage, payload: SummaryPayload | null): Timelin
 
 function rowsOf(turn: AnaChatMessage, events: TimelineEvent[] | null, payload: SummaryPayload | null, live: boolean): SummaryRow[] {
   // A live turn before its first event is working, not a turn that ran nothing.
-  if (!events) return live ? summaryRows([], [], { live }) : traceRows(turn);
-  return summaryRows(events, payload?.controls ?? [], { live, clientEnding: live ? null : clientEndingOf(turn) });
+  if (!events) {
+    if (live) return summaryRows([], [], { live });
+    // A followed turn that ended before its first row was mirrored still
+    // says how it ended; a reopened turn without events reads its trace.
+    return turn.follow ? summaryRows([], [], { live, clientEnding: clientEndingOf(turn), notRecorded: endedUnrecorded(turn, live) }) : traceRows(turn);
+  }
+  return summaryRows(events, payload?.controls ?? [], {
+    live,
+    clientEnding: live ? null : clientEndingOf(turn),
+    notRecorded: !payload && endedUnrecorded(turn, live),
+  });
 }
 
 /** The header line (every number the server's) and the models that narrated the turn. */
@@ -276,9 +316,14 @@ export function TurnSummary({ turn, live, onContinue }: TurnSummaryProps) {
   const events = eventsOf(turn, payload);
   const rows = rowsOf(turn, events, payload, live);
   const checked = !live && Boolean(turn.evidence?.check);
+  // Only rows read from the live mirror can be missing some (§3.5, §3.6).
+  const missing = !payload && turn.follow ? mirrorLines(events ?? [], turn.follow) : [];
   return (
     <div className="ana-summary" data-live={live ? 'true' : 'false'}>
       <SummaryHead events={events} payload={payload} />
+      {missing.map((line) => (
+        <p key={line} className="ana-summary-foot" role="note">{line}</p>
+      ))}
       {rows.length === 0 ? (
         <p className="ana-work-empty">This turn ran no steps.</p>
       ) : (

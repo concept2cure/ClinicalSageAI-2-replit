@@ -86,13 +86,22 @@ import { MAX_INTERJECTION_CHARS, type AnaRunPolicy } from '@shared/ana/run-contr
 import { unknownStepLabel, type StepFact, type StepSource } from '@shared/ana/step-verbs';
 import { readGroundingStrip, readStoredVerification } from './anaAnswerCheck';
 import {
+  applyRunPoll,
   applyTimelineFrame,
-  confirmRecordByRun,
   fetchThreadRecords,
+  followedTurn,
   joinTurnRecords,
+  listThreadRuns,
+  LIVE_RUN_STATUSES,
+  placeFollowedTurn,
+  pollRun,
+  readSealedRecord,
   readServerId,
+  runToRejoin,
   settleRecordConfirm,
+  type RunPoll,
 } from './anaTurnTimeline';
+import { MIRROR_TRUNCATED_SEQ } from '@shared/ana/turn-timeline';
 
 import type {
   AnaChatAction,
@@ -111,6 +120,7 @@ import type {
   DriveTurnControls,
   AnaSendOptions,
   AnaRunHold,
+  AnaTurnRecordStatus,
 } from './useAnaChat.types';
 
 
@@ -175,8 +185,145 @@ function fetchHistoryHeaders(threadId: string, signal: AbortSignal) {
   });
 }
 
-/** When to ask the server, by run id, for the record of a turn that ended here first. */
-const RECORD_CONFIRM_WAITS_MS = [1_500, 4_000];
+/** A history row as GET /api/chat/threads/:id/messages returns it. */
+type HistoryRow = {
+  id?: unknown;
+  role?: string;
+  content?: string;
+  metadata?: {
+    reasoning?: string;
+    toolTrace?: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }>;
+    humanControls?: Array<{ action?: string; message?: string }>;
+    plan?: unknown;
+    stoppedReason?: unknown;
+    rounds?: unknown;
+    verification?: unknown;
+  } | null;
+};
+
+/**
+ * A conversation's stored messages as the transcript keeps them. The one
+ * reading of history: a load, a rejoin and a hand-over each read it this way.
+ */
+function hydrateHistory(rows: HistoryRow[], threadId: string): AnaChatMessage[] {
+  return rows
+    .filter(
+      m =>
+        (m.role === 'user' || m.role === 'assistant') &&
+        typeof m.content === 'string' &&
+        // An empty answer is kept only when it says why it is empty: a
+        // turn stopped before AnA wrote a word (QA 2026-10-08, j5).
+        (m.content.length > 0 || (m.role === 'assistant' && readTurnEnding(m.metadata).stoppedReason !== undefined))
+    )
+    .map((m, idx) => {
+      // Rehydrate AnA's persisted reasoning (thought process) so the
+      // "Reasoning" collapsible on the assistant turn survives reload,
+      // matching what streamed live during the original turn.
+      const reasoning =
+        m.role === 'assistant' && typeof m.metadata?.reasoning === 'string'
+          ? m.metadata.reasoning
+          : undefined;
+      // The persisted tool trace (server/services/ana/tool-trace.ts) is
+      // the turn's real step record: which tools ran, under which label,
+      // and whether each succeeded. Rehydrating it is what lets a reopened
+      // conversation show the work AnA did, rather than an answer with no
+      // visible steps behind it. Durations are not persisted, so none are
+      // claimed. The recorded steers come back the same way.
+      const toolCalls = m.role === 'assistant' ? hydrateToolTrace(m.metadata?.toolTrace) : [];
+      const interjections =
+        m.role === 'assistant'
+          ? (m.metadata?.humanControls ?? [])
+              .filter(c => c?.action === 'interject' && typeof c.message === 'string' && c.message)
+              .map(c => c.message as string)
+          : [];
+      // Her last declared plan, as the server validated it. Only the final
+      // list is persisted, not when each step changed, so no plan changes
+      // are invented for it.
+      const plan = m.role === 'assistant' ? readPlanSteps(m.metadata?.plan) : null;
+      // Why the turn stopped, when it was not because she was done — so a
+      // turn the round limit cut short does not reopen as a finished one.
+      const ending = m.role === 'assistant' ? readTurnEnding(m.metadata) : {};
+      // What was checked about the answer, as the person was shown it.
+      // A message stored before checks were kept has none, and shows none.
+      const evidence = m.role === 'assistant' ? readStoredVerification(m.metadata) : undefined;
+      // The stored message's own id, which its turn's record names (S4).
+      const serverId = readServerId(m.id);
+      return {
+        id: serverId !== undefined ? `m-${serverId}` : `t-${threadId}-${idx}`,
+        ...(serverId !== undefined ? { serverId } : {}),
+        role: m.role as 'user' | 'assistant',
+        text: m.content as string,
+        ...(plan ? { plan } : {}),
+        ...ending,
+        ...(reasoning ? { thinking: reasoning } : {}),
+        ...(toolCalls.length > 0 ? { toolCalls } : {}),
+        ...(interjections.length > 0 ? { interjections } : {}),
+        ...(evidence ? { evidence } : {}),
+      };
+    });
+}
+
+/**
+ * The conversation's stored messages, read once without the load's deadline
+ * or its error state: null when they could not be read, and the caller keeps
+ * what it has (a rejoin and a hand-over; AnA detach DT2).
+ */
+async function readHistory(threadId: string, signal?: AbortSignal): Promise<AnaChatMessage[] | null> {
+  try {
+    const res = await fetchHistoryHeaders(threadId, signal ?? new AbortController().signal);
+    if (!res.ok) return null;
+    const body = (await res.json().catch(() => null)) as { messages?: HistoryRow[] } | null;
+    return Array.isArray(body?.messages) ? hydrateHistory(body.messages, threadId) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** How often a followed turn is read while its page is on screen (§4.1). */
+const FOLLOW_POLL_MS = 2_000;
+/** The reader's backoff while its own network fails: 2, 4, 8 … 30 s (§5.1). Stop's retries use it too (§5.2). */
+const BACKOFF_FIRST_MS = 2_000;
+const BACKOFF_MAX_MS = 30_000;
+const nextBackoff = (ms: number) => (ms <= 0 ? BACKOFF_FIRST_MS : Math.min(ms * 2, BACKOFF_MAX_MS));
+/** A run that ended without a record is waited on this long from its terminal status, then "Not recorded" (§4.3). */
+const RECORD_WAIT_MS = 30_000;
+/** And a turn that ended here asks no longer than this in all, however long its run takes to end. */
+const RECORD_ASK_MAX_MS = 90_000;
+
+/** A run this view follows by polling (DT2). Mutable, held in a ref: one at a time. */
+interface Follower {
+  runId: string;
+  messageId: string;
+  /** The highest seq read: the next read starts after it. */
+  after: number;
+  ctl: AbortController;
+  timer: ReturnType<typeof setTimeout> | null;
+  backoffMs: number;
+  /** When this view first read the run ended (client ms). */
+  terminalAt: number | null;
+  /** How many of the run's controls have been read (steer receipts). */
+  controlsSeen: number;
+  /** Placed after its question. */
+  placed: boolean;
+  inFlight: boolean;
+}
+
+/** Said when the server released a run that ended here without filing its record. */
+const RELEASED_UNRECORDED = 'the server finished this turn without filing its record.';
+
+/** Wait, or stop waiting when `signal` aborts. */
+function sleepUnless(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    const t = setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(t);
+      resolve();
+    }, { once: true });
+  });
+}
+
+/** Whether this page is on screen. A hidden page does not poll (§4.1, §2.2). */
+const pageVisible = () => typeof document === 'undefined' || document.visibilityState !== 'hidden';
 
 
 
@@ -429,15 +576,29 @@ function framePresentation(event: Record<string, unknown>): Partial<AnaToolCall>
  * "AnA is unreachable — the network or the AI gateway did not respond", which
  * sent people to check a connection that was fine.
  */
-function streamFailure(event: { error?: unknown; code?: unknown; status?: unknown }) {
-  const failure = new Error(serverMessage(event) ?? 'Stream error') as Error & { code?: string; status?: number };
+function streamFailure(event: { error?: unknown; code?: unknown; status?: unknown; runId?: unknown }) {
+  const failure = new Error(serverMessage(event) ?? 'Stream error') as Error & { code?: string; status?: number; runId?: string };
   failure.code = errorCodeOf(event);
   if (typeof event.status === 'number') failure.status = event.status;
+  // RUN_IN_PROGRESS names the live run that holds the conversation (§2.8).
+  if (typeof (event as { runId?: unknown }).runId === 'string') failure.runId = (event as { runId: string }).runId;
   return failure;
 }
 
+/**
+ * What the person reads when the server refuses to start a run (AnA detach
+ * §2.8). The server's fixed copy, word for word. RUN_IN_PROGRESS is followed
+ * by rejoining the run that holds the conversation; RUN_LIMIT's link to the
+ * Working conversations arrives with them (DT3, §5.1).
+ */
+export const RUN_REFUSAL_TEXT = {
+  RUN_IN_PROGRESS: 'AnA is still working on the last message in this conversation.',
+  RUN_LIMIT: 'You have three turns running. Stop one, or wait for one to finish.',
+} as const;
+
 export function streamRefusalText(err: unknown): string {
   const failure = err as { code?: string; status?: number } | undefined;
+  if (failure?.code === 'RUN_IN_PROGRESS' || failure?.code === 'RUN_LIMIT') return RUN_REFUSAL_TEXT[failure.code];
   if (failure?.code === 'THREAD_FORBIDDEN') {
     return 'That conversation belongs to another user. Select your own conversation or start a new one. Your request was not sent to the AI provider.';
   }
@@ -628,14 +789,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
    * the run in flight NOW: a drive turn's controls are bound to the run that
    * turn started (see `send`). `control` below is the in-flight case.
    */
-  const controlRun = useCallback(
-    async (
-      runId: string | null,
-      action: RunControlAction,
-      message?: string,
-      moveId?: string,
-    ): Promise<boolean> => {
-      if (!runId) return false;
+  /**
+   * POST one control and answer with the HTTP status, or null when the request
+   * did not complete (a network failure or the control timeout). Stop needs
+   * the status: a 409 says the run is already stopped (§2.5, §5.2).
+   */
+  const postControl = useCallback(
+    async (runId: string, action: RunControlAction, message?: string, moveId?: string): Promise<number | null> => {
       const controlAbort = new AbortController();
       const timeout = setTimeout(() => controlAbort.abort(), CONTROL_REQUEST_TIMEOUT_MS);
       try {
@@ -653,25 +813,40 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             }),
           },
         );
-        if (!res.ok) return false;
-        // A control response can arrive after its turn ended and another
-        // began. It still succeeded for the old run, but cannot change the
-        // replacement turn's pause/cancel state.
-        if (runIdRef.current !== runId) return true;
-        // Optimistic local status; the server also echoes control SSE events.
-        if (action === 'pause') setRunStatus('paused');
-        else if (action === 'resume') setRunStatus('running');
-        else if (action === 'cancel') setRunStatus('cancelled');
-        // Run this step and Stop both answer a hold; the server's frame follows.
-        if (action === 'resume' || action === 'cancel') setRunHold(null);
-        return true;
+        // `ok` is the answer; the status says which one (a 409 is "already stopped").
+        return typeof res.status === 'number' && res.status > 0 ? res.status : res.ok ? 200 : 500;
       } catch {
-        return false;
+        return null;
       } finally {
         clearTimeout(timeout);
       }
     },
     [],
+  );
+
+  const controlRun = useCallback(
+    async (
+      runId: string | null,
+      action: RunControlAction,
+      message?: string,
+      moveId?: string,
+    ): Promise<boolean> => {
+      if (!runId) return false;
+      const status = await postControl(runId, action, message, moveId);
+      if (status === null || status < 200 || status >= 300) return false;
+      // A control response can arrive after its turn ended and another
+      // began. It still succeeded for the old run, but cannot change the
+      // replacement turn's pause/cancel state.
+      if (runIdRef.current !== runId) return true;
+      // Optimistic local status; the server also echoes control SSE events.
+      if (action === 'pause') setRunStatus('paused');
+      else if (action === 'resume') setRunStatus('running');
+      else if (action === 'cancel') setRunStatus('cancelled');
+      // Run this step and Stop both answer a hold; the server's frame follows.
+      if (action === 'resume' || action === 'cancel') setRunHold(null);
+      return true;
+    },
+    [postControl],
   );
   /** A control action for the run in flight now. */
   const control = useCallback(
@@ -726,23 +901,362 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     [steerRun],
   );
 
+  /* ── Following a run without its socket (AnA detach DT2, §4) ─────────────
+     A run this view did not start — opened on another device, rejoined after a
+     reload, or the one a send was refused for (RUN_IN_PROGRESS) — is followed
+     by polling GET /runs/:runId/events every 2 s while the page is on screen.
+     Its rows reach the turn through `applyTimelineFrame`, the reader the live
+     frames use, so a row seen twice is one row. While it runs it is the run in
+     flight here: `isStreaming`, `runStatus` and the run's id are set from the
+     poll, so the strip, the composer's steer and Stop work as for a live turn. */
+  const followerRef = useRef<Follower | null>(null);
+  const followTickRef = useRef<(f: Follower) => Promise<void>>(async () => undefined);
+  const [followScope, setFollowScope] = useState<'all' | 'cancel' | null>(null);
+  /** The turn in flight in this view, by message id: the stream's, or the one followed. */
+  const liveTurnIdRef = useRef<string | null>(null);
+  /** The in-flight stream asked to drive the screen: such a turn is not detachable (§2.1, D-7). */
+  const turnDriveRequestedRef = useRef(false);
+  /** The stream's run and message while the stream is open: a page coming back on screen merges one poll into it (§5.4). */
+  const sseTurnRef = useRef<{ runId: string; messageId: string } | null>(null);
+  /** The stream a 'leave' aborted: its turn is not shown Stopped (§5.2). */
+  const leftRef = useRef<AbortController | null>(null);
+  /** Record asks in flight, ended with the view. */
+  const recordAsksRef = useRef(new Set<AbortController>());
+
+  const stopFollowing = useCallback(() => {
+    const f = followerRef.current;
+    followerRef.current = null;
+    setFollowScope(null);
+    if (!f) return;
+    if (f.timer) clearTimeout(f.timer);
+    f.ctl.abort();
+  }, []);
+
+  /** The followed run is over here: nothing left to control, and the composer is free. */
+  const releaseFollowedRun = (f: Follower) => {
+    setFollowScope(null);
+    if (liveTurnIdRef.current === f.messageId) liveTurnIdRef.current = null;
+    if (runIdRef.current !== f.runId) return;
+    runIdRef.current = null;
+    isStreamingRef.current = false;
+    setIsStreaming(false);
+    setRunStatus(null);
+    setRunHold(null);
+    setTurnRunPolicy(null);
+    steerLedgerRef.current = null;
+    setPendingSteers([]);
+  };
+
+  const scheduleFollow = (f: Follower, delayMs: number) => {
+    if (followerRef.current !== f) return;
+    if (f.timer) clearTimeout(f.timer);
+    f.timer = setTimeout(() => {
+      f.timer = null;
+      void followTickRef.current(f);
+    }, delayMs);
+  };
+
+  /** One poll onto the followed turn: its rows, its plan, its approval, and the run's state for the controls. */
+  const applyFollowPoll = (f: Follower, poll: RunPoll, clientNow: number) => {
+    f.after = Math.max(f.after, poll.lastSeq);
+    const live = LIVE_RUN_STATUSES.has(poll.status);
+    // The asker's pending approval opens the sign-off; one no longer pending closes it (§5.6).
+    const signoff = poll.approval ? pendingSignoffFromApproval(poll.approval) : null;
+    // Read before the update: React runs the updater later, after this returns.
+    const place = !f.placed;
+    f.placed = true;
+    setMessages((prev) => {
+      let next = prev.map((m) => {
+        if (m.id !== f.messageId) return m;
+        const applied = applyRunPoll(m, poll, clientNow);
+        const mine = (applied.pendingSignoffs ?? []).filter((p) => p.runId === f.runId);
+        const others = (applied.pendingSignoffs ?? []).filter((p) => p.runId !== f.runId);
+        const kept = signoff ? (mine.find((p) => p.toolUseId === signoff.toolUseId) ?? signoff) : null;
+        const pendingSignoffs = kept ? [...others, kept] : others;
+        return { ...applied, streaming: live, pendingSignoffs: pendingSignoffs.length > 0 ? pendingSignoffs : undefined };
+      });
+      // Placed once, after the question the run answers.
+      const turn = next.find((m) => m.id === f.messageId);
+      if (place && turn) next = placeFollowedTurn(next, turn, poll.userMessageId);
+      return next;
+    });
+    // A steer typed here is confirmed by the run's own record of it.
+    for (const c of poll.controls.slice(f.controlsSeen)) {
+      if (c.action !== 'interject' || typeof c.message !== 'string') continue;
+      const waiting = recordSteerReceipt(steerLedgerRef.current, f.runId, runIdRef.current, c.message);
+      if (waiting) setPendingSteers(waiting);
+    }
+    f.controlsSeen = Math.max(f.controlsSeen, poll.controls.length);
+    if (!live || (runIdRef.current !== null && runIdRef.current !== f.runId)) return;
+    runIdRef.current = f.runId;
+    liveTurnIdRef.current = f.messageId;
+    isStreamingRef.current = true;
+    setIsStreaming(true);
+    // A confirmed Stop stays "Stopping" until the poll reads the run ended.
+    setRunStatus((prev) => (prev === 'cancelled' ? prev : poll.status === 'paused' ? 'paused' : 'running'));
+    setRunHold(poll.status === 'paused' && poll.hold ? readRunHold(poll.hold) : null);
+    if (poll.runPolicy) setTurnRunPolicy(poll.runPolicy);
+    setFollowScope(poll.scope);
+  };
+
+  /**
+   * The followed run ended (§4.3). With a record: hand over to it. Without one
+   * while the owner is still trying (`released_at` null): "Recording…", for up
+   * to 30 s from the terminal status. Then: the run's reason, its saved rows,
+   * and "Not recorded".
+   */
+  const followEnded = async (f: Follower, poll: RunPoll, clientNow: number) => {
+    releaseFollowedRun(f);
+    if (poll.sealed) {
+      stopFollowing();
+      await handOver(f, poll.sealed);
+      return;
+    }
+    f.terminalAt ??= clientNow;
+    const done = poll.releasedAt !== null || clientNow - f.terminalAt >= RECORD_WAIT_MS;
+    setMessages((prev) => prev.map((m) => (m.id === f.messageId ? { ...m, streaming: false, recordConfirming: !done } : m)));
+    if (done) stopFollowing();
+    else scheduleFollow(f, FOLLOW_POLL_MS);
+  };
+
+  /**
+   * The record exists: the stored answer takes the followed turn's place,
+   * under the same id so an open Summary stays open, and its rows become the
+   * record's own — the same events, so they read the same (§4.3).
+   */
+  const handOver = async (f: Follower, sealed: NonNullable<RunPoll['sealed']>) => {
+    const threadId = threadIdRef.current;
+    const [record, history] = await Promise.all([
+      readSealedRecord(sealed.recordId),
+      threadId ? readHistory(threadId) : Promise.resolve(null),
+    ]);
+    if (threadId !== threadIdRef.current) return;
+    const answer =
+      sealed.assistantMessageId === null
+        ? undefined
+        : history?.find((h) => h.role === 'assistant' && h.serverId === sealed.assistantMessageId);
+    // A record that could not be read is not shown as filed, nor as absent.
+    const turnRecord = record ?? { status: 'unconfirmed' as const };
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== f.messageId) return m;
+        if (!answer) return { ...m, streaming: false, recordConfirming: false, turnRecord };
+        return { ...answer, id: m.id, timeline: m.timeline, turnRecord };
+      }),
+    );
+  };
+
+  followTickRef.current = async (f: Follower) => {
+    if (followerRef.current !== f || f.inFlight) return;
+    // A hidden page does not poll; coming back on screen polls at once (§4.1).
+    if (!pageVisible()) return;
+    f.inFlight = true;
+    let r;
+    try {
+      r = await pollRun(f.runId, f.after, { visible: true, signal: f.ctl.signal });
+    } finally {
+      f.inFlight = false;
+    }
+    if (followerRef.current !== f) return;
+    const clientNow = Date.now();
+    if (!r.ok) {
+      if (r.kind === 'unreachable') {
+        // This reader's network: say so, keep the last known state, back off.
+        setMessages((prev) => prev.map((m) => (m.id === f.messageId && m.follow ? { ...m, follow: { ...m.follow, unreachable: true } } : m)));
+        f.backoffMs = nextBackoff(f.backoffMs);
+        scheduleFollow(f, f.backoffMs);
+        return;
+      }
+      // Refused (403, in the server's words) or gone (404): nothing more to read.
+      const forbidden = r.kind === 'forbidden' ? r.message : undefined;
+      stopFollowing();
+      releaseFollowedRun(f);
+      setMessages((prev) =>
+        prev
+          .filter((m) => !(m.id === f.messageId && !forbidden && !(m.timeline?.length)))
+          .map((m) =>
+            m.id === f.messageId
+              ? { ...m, streaming: false, recordConfirming: false, ...(forbidden && m.follow ? { follow: { ...m.follow, forbidden } } : {}) }
+              : m,
+          ),
+      );
+      return;
+    }
+    f.backoffMs = 0;
+    applyFollowPoll(f, r.poll, clientNow);
+    if (r.poll.more) return scheduleFollow(f, 0);
+    if (LIVE_RUN_STATUSES.has(r.poll.status)) return scheduleFollow(f, FOLLOW_POLL_MS);
+    await followEnded(f, r.poll, clientNow);
+  };
+
+  /**
+   * Follow a run: a working turn, placed after its question (or at the end
+   * until the first read names it), and read at once. A run that has already
+   * ended is in its recording window: "Recording…" until it hands over.
+   */
+  const followRun = useCallback(
+    (runId: string, opts: { status?: string; runPolicy?: AnaRunPolicy | null; userMessageId?: number | null } = {}) => {
+      stopFollowing();
+      const base = followedTurn(runId);
+      const live = !opts.status || LIVE_RUN_STATUSES.has(opts.status);
+      const turn: AnaChatMessage = live
+        ? base
+        : { ...base, streaming: false, recordConfirming: true, follow: { ...base.follow!, status: opts.status! } };
+      setMessages((prev) => placeFollowedTurn(prev, turn, opts.userMessageId ?? null));
+      if (live && runIdRef.current === null) {
+        runIdRef.current = runId;
+        liveTurnIdRef.current = turn.id;
+        isStreamingRef.current = true;
+        setIsStreaming(true);
+        setRunStatus('running');
+        setRunHold(null);
+        setTurnRunPolicy(opts.runPolicy ?? null);
+        steerLedgerRef.current = null;
+        setPendingSteers([]);
+      }
+      const f: Follower = {
+        runId,
+        messageId: turn.id,
+        after: 0,
+        ctl: new AbortController(),
+        timer: null,
+        backoffMs: 0,
+        terminalAt: null,
+        controlsSeen: 0,
+        placed: opts.userMessageId !== undefined && opts.userMessageId !== null,
+        inFlight: false,
+      };
+      followerRef.current = f;
+      void followTickRef.current(f);
+    },
+    [stopFollowing],
+  );
+
+  /**
+   * A send refused because a run already holds the conversation
+   * (RUN_IN_PROGRESS, §2.8): re-read the conversation so the question that run
+   * answers is on screen, keep this view's refused question and its notice at
+   * the end, and follow the run.
+   */
+  const rejoinRun = useCallback(
+    async (runId: string, keepIds: readonly string[]) => {
+      const threadId = threadIdRef.current;
+      const history = threadId ? await readHistory(threadId) : null;
+      if (threadId !== threadIdRef.current || isStreamingRef.current) return;
+      if (history && threadId) {
+        setMessages((prev) => [...history, ...prev.filter((m) => keepIds.includes(m.id))]);
+        void fetchThreadRecords(threadId).then((records) => {
+          if (threadIdRef.current === threadId) setMessages((prev) => joinTurnRecords(prev, records));
+        });
+      }
+      followRun(runId);
+    },
+    [followRun],
+  );
+
+  /* A page coming back on screen reads at once (§4.1, §5.4): the followed run,
+     or — for a turn still on its own stream — one poll merged by seq, so a row
+     the stream already delivered is not shown twice. */
+  const mergeVisibleTurnRef = useRef<() => Promise<void>>(async () => undefined);
+  mergeVisibleTurnRef.current = async () => {
+    const sse = sseTurnRef.current;
+    if (!sse) return;
+    const turn = messagesRef.current.find((m) => m.id === sse.messageId);
+    const after = Math.max(0, ...(turn?.timeline ?? []).map((e) => e.seq));
+    const r = await pollRun(sse.runId, after, { visible: true });
+    if (!r.ok || sseTurnRef.current !== sse) return;
+    setMessages((prev) =>
+      prev.map((m) => (m.id === sse.messageId ? r.poll.events.reduce((acc, e) => (e ? applyTimelineFrame(acc, e) : acc), m) : m)),
+    );
+  };
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const onVisibility = () => {
+      if (!pageVisible()) return;
+      const f = followerRef.current;
+      if (f) {
+        if (f.timer) clearTimeout(f.timer);
+        f.timer = null;
+        void followTickRef.current(f);
+        return;
+      }
+      void mergeVisibleTurnRef.current();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
   /**
    * A turn that ended here before the server said whether it filed the
    * record — Stop, a timeout, a dropped connection — is shown "not confirmed".
-   * The server usually did file it (a stopped turn is recorded as stopped), and
-   * the record carries the run id, so ask for it: once shortly after, once
-   * more a little later. Only a turn still unconfirmed is updated; anything
-   * the server cannot confirm stays unconfirmed, never recorded by default.
+   * The server usually did file it (a stopped turn is recorded as stopped), so
+   * ask the run (§4.3): the same poll a follower reads, until it names its
+   * record, says it was released without one, or 30 s pass from its end. Only
+   * a turn still unconfirmed is updated; anything the server cannot confirm
+   * stays unconfirmed, never recorded by default.
    */
   const confirmTurnRecordByRun = useCallback((runId: string, messageId: string) => {
-    // While the waits run the Summary reads "Recording…" (anaTurnTimeline.ts).
+    // While the poll runs the Summary reads "Recording…" (anaTurnTimeline.ts).
     setMessages((prev) => settleRecordConfirm(prev, messageId, { confirming: true }));
-    void confirmRecordByRun(runId, RECORD_CONFIRM_WAITS_MS).then((record) =>
-      setMessages((prev) => settleRecordConfirm(prev, messageId, { confirming: false, record })),
+    const ask = new AbortController();
+    recordAsksRef.current.add(ask);
+    void (async () => {
+      const began = Date.now();
+      let terminalAt: number | null = null;
+      let record: AnaTurnRecordStatus | undefined;
+      for (;;) {
+        // One poll interval first: the owner files the record after the turn
+        // ends, so an ask at once only finds it still recording.
+        await sleepUnless(FOLLOW_POLL_MS, ask.signal);
+        if (ask.signal.aborted) return;
+        // The run's state only: no rows are wanted, so read from past the cap.
+        const r = await pollRun(runId, MIRROR_TRUNCATED_SEQ, { signal: ask.signal });
+        if (ask.signal.aborted) return;
+        const now = Date.now();
+        if (r.ok && r.poll.sealed) {
+          record = await readSealedRecord(r.poll.sealed.recordId, ask.signal);
+          break;
+        }
+        if (r.ok && !LIVE_RUN_STATUSES.has(r.poll.status)) {
+          terminalAt ??= now;
+          if (r.poll.releasedAt) {
+            record = { status: 'not_recorded', reason: RELEASED_UNRECORDED };
+            break;
+          }
+          if (now - terminalAt >= RECORD_WAIT_MS) break;
+        }
+        if (!r.ok && r.kind !== 'unreachable') break;
+        if (now - began >= RECORD_ASK_MAX_MS) break;
+      }
+      recordAsksRef.current.delete(ask);
+      if (!ask.signal.aborted) setMessages((prev) => settleRecordConfirm(prev, messageId, { confirming: false, record }));
+    })();
+  }, []);
+
+  /** Say, or stop saying, that the turn's Stop is not confirmed (§5.2). */
+  const markStopUnconfirmed = useCallback((messageId: string | null, on: boolean) => {
+    if (!messageId) return;
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId && Boolean(m.stopUnconfirmed) !== on ? { ...m, stopUnconfirmed: on || undefined } : m)),
     );
   }, []);
 
-  const stop = useCallback(async () => {
+  /**
+   * One cancel for Stop: 'stopped' on a 2xx or a 409 (already stopped, §2.5),
+   * 'refused' on another answer the server gave (not found, not yours), and
+   * 'unconfirmed' when it could not be asked or failed on its side.
+   */
+  const cancelOnce = useCallback(
+    async (runId: string): Promise<'stopped' | 'refused' | 'unconfirmed'> => {
+      const status = await postControl(runId, 'cancel');
+      if (status !== null && ((status >= 200 && status < 300) || status === 409)) return 'stopped';
+      if (status !== null && status >= 400 && status < 500 && status !== 408 && status !== 429) return 'refused';
+      return 'unconfirmed';
+    },
+    [postControl],
+  );
+
+  const stop = useCallback(async (abortIntent: 'stop' | 'leave' = 'stop') => {
     // Cancel server-side too (the fetch abort alone leaves the server
     // generating and running the tool loop to completion — the pre-existing
     // "Stop doesn't stop AnA" gap).
@@ -759,17 +1273,59 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     const stoppedController = abortRef.current;
     const stoppedRunId = runIdRef.current;
     haltTurnDrive();
-    if (stoppedRunId) {
-      try {
-        await controlRun(stoppedRunId, 'cancel');
-      } catch {
-        // A failed cancel must not leave the client streaming; abort anyway.
+    if (abortIntent === 'leave') {
+      // This view is going away (§5.2): it never cancels and never says Stopped.
+      stopFollowing();
+      if (stoppedController && abortRef.current === stoppedController) {
+        leftRef.current = stoppedController;
+        stoppedController.abort();
       }
+      return;
     }
-    // The stopped turn may have finished naturally while its cancellation
-    // was in flight. A newly started demo owns a different controller.
-    if (abortRef.current === stoppedController) stoppedController?.abort();
-  }, [controlRun, haltTurnDrive]);
+    // A turn with a durable run that did not ask to drive is detachable (§2.1).
+    // A followed turn has no stream of its own and is always one.
+    const detachable = stoppedRunId !== null && (stoppedController === null || !turnDriveRequestedRef.current);
+    if (!detachable) {
+      if (stoppedRunId) {
+        try {
+          await controlRun(stoppedRunId, 'cancel');
+        } catch {
+          // A failed cancel must not leave the client streaming; abort anyway.
+        }
+      }
+      // The stopped turn may have finished naturally while its cancellation
+      // was in flight. A newly started demo owns a different controller.
+      if (abortRef.current === stoppedController) stoppedController?.abort();
+      return;
+    }
+    // Detachable (§5.2): Stopped is shown only when the server confirms it —
+    // a 2xx or a 409, or a polled terminal status. A cancel that failed does
+    // not abort: the turn goes on, says "Stop not confirmed. Retrying.", and
+    // the cancel is retried with backoff until it is answered or the run ends.
+    const messageId = liveTurnIdRef.current;
+    const settle = (outcome: 'stopped' | 'refused') => {
+      markStopUnconfirmed(messageId, false);
+      if (outcome !== 'stopped' || runIdRef.current !== stoppedRunId) return;
+      setRunStatus('cancelled');
+      setRunHold(null);
+      if (stoppedController && abortRef.current === stoppedController) stoppedController.abort();
+    };
+    const first = await cancelOnce(stoppedRunId);
+    if (first !== 'unconfirmed') return settle(first);
+    if (runIdRef.current !== stoppedRunId) return;
+    markStopUnconfirmed(messageId, true);
+    void (async () => {
+      let wait = 0;
+      for (;;) {
+        wait = nextBackoff(wait);
+        await sleepUnless(wait);
+        // The run ended or was replaced meanwhile: nothing is left to stop here.
+        if (runIdRef.current !== stoppedRunId) return markStopUnconfirmed(messageId, false);
+        const outcome = await cancelOnce(stoppedRunId);
+        if (outcome !== 'unconfirmed') return settle(outcome);
+      }
+    })();
+  }, [controlRun, haltTurnDrive, stopFollowing, cancelOnce, markStopUnconfirmed]);
   const stopRef = useRef(stop);
   stopRef.current = stop;
 
@@ -786,11 +1342,20 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   // over / Stop still end it on request. A turn that was allowed to drive but
   // has not moved is aborted like any other: the person left, not AnA.
   useEffect(() => {
+    const asks = recordAsksRef.current;
     return () => {
       const loading = threadLoadRef.current;
       threadLoadRef.current = null;
       loading?.abort();
+      // Following is only reading: leaving ends it here and nowhere else.
+      const f = followerRef.current;
+      followerRef.current = null;
+      if (f?.timer) clearTimeout(f.timer);
+      f?.ctl.abort();
+      for (const ask of asks) ask.abort();
+      asks.clear();
       if (drivingRef.current) return;
+      leftRef.current = abortRef.current;
       abortRef.current?.abort();
     };
   }, []);
@@ -799,8 +1364,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   // settle later, but its controls must no longer target the selected conversation.
   const abandonTurn = useCallback(() => {
     haltTurnDrive();
+    stopFollowing();
     const abandoned = abortRef.current;
     runIdRef.current = null;
+    liveTurnIdRef.current = null;
+    sseTurnRef.current = null;
     drivingRef.current = false;
     isStreamingRef.current = false;
     setIsStreaming(false);
@@ -809,8 +1377,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     setTurnRunPolicy(null);
     steerLedgerRef.current = null;
     setPendingSteers([]);
+    // Leaving, not stopping (§5.2).
+    leftRef.current = abandoned;
     abandoned?.abort();
-  }, [haltTurnDrive]);
+  }, [haltTurnDrive, stopFollowing]);
 
   const reset = useCallback(() => {
     abandonTurn();
@@ -853,86 +1423,24 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         recoveryMessage = historyRecoveryText(res.status);
         throw new Error(`loadThread ${res.status}`);
       }
-      const body = (await Promise.race([deadline.promise, res.json()])) as {
-        messages?: Array<{
-          id?: unknown;
-          role?: string;
-          content?: string;
-          metadata?: {
-            reasoning?: string;
-            toolTrace?: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }>;
-            humanControls?: Array<{ action?: string; message?: string }>;
-            plan?: unknown;
-            stoppedReason?: unknown;
-            rounds?: unknown;
-            verification?: unknown;
-          } | null;
-        }>;
-      };
+      const body = (await Promise.race([deadline.promise, res.json()])) as { messages?: HistoryRow[] };
       if (threadLoadRef.current !== loading) return;
       if (!Array.isArray(body?.messages)) throw new Error('Incomplete conversation history response');
-      const rows = body.messages;
-      const hydrated: AnaChatMessage[] = rows
-        .filter(
-          m =>
-            (m.role === 'user' || m.role === 'assistant') &&
-            typeof m.content === 'string' &&
-            // An empty answer is kept only when it says why it is empty: a
-            // turn stopped before AnA wrote a word (QA 2026-10-08, j5).
-            (m.content.length > 0 || (m.role === 'assistant' && readTurnEnding(m.metadata).stoppedReason !== undefined))
-        )
-        .map((m, idx) => {
-          // Rehydrate AnA's persisted reasoning (thought process) so the
-          // "Reasoning" collapsible on the assistant turn survives reload,
-          // matching what streamed live during the original turn.
-          const reasoning =
-            m.role === 'assistant' && typeof m.metadata?.reasoning === 'string'
-              ? m.metadata.reasoning
-              : undefined;
-          // The persisted tool trace (server/services/ana/tool-trace.ts) is
-          // the turn's real step record: which tools ran, under which label,
-          // and whether each succeeded. Rehydrating it is what lets a reopened
-          // conversation show the work AnA did, rather than an answer with no
-          // visible steps behind it. Durations are not persisted, so none are
-          // claimed. The recorded steers come back the same way.
-          const toolCalls = m.role === 'assistant' ? hydrateToolTrace(m.metadata?.toolTrace) : [];
-          const interjections =
-            m.role === 'assistant'
-              ? (m.metadata?.humanControls ?? [])
-                  .filter(c => c?.action === 'interject' && typeof c.message === 'string' && c.message)
-                  .map(c => c.message as string)
-              : [];
-          // Her last declared plan, as the server validated it. Only the final
-          // list is persisted, not when each step changed, so no plan changes
-          // are invented for it.
-          const plan = m.role === 'assistant' ? readPlanSteps(m.metadata?.plan) : null;
-          // Why the turn stopped, when it was not because she was done — so a
-          // turn the round limit cut short does not reopen as a finished one.
-          const ending = m.role === 'assistant' ? readTurnEnding(m.metadata) : {};
-          // What was checked about the answer, as the person was shown it.
-          // A message stored before checks were kept has none, and shows none.
-          const evidence = m.role === 'assistant' ? readStoredVerification(m.metadata) : undefined;
-          // The stored message's own id, which its turn's record names (S4).
-          const serverId = readServerId(m.id);
-          return {
-            id: serverId !== undefined ? `m-${serverId}` : `t-${threadId}-${idx}`,
-            ...(serverId !== undefined ? { serverId } : {}),
-            role: m.role as 'user' | 'assistant',
-            text: m.content as string,
-            ...(plan ? { plan } : {}),
-            ...ending,
-            ...(reasoning ? { thinking: reasoning } : {}),
-            ...(toolCalls.length > 0 ? { toolCalls } : {}),
-            ...(interjections.length > 0 ? { interjections } : {}),
-            ...(evidence ? { evidence } : {}),
-          };
-        });
+      const hydrated = hydrateHistory(body.messages, threadId);
       threadIdRef.current = threadId;
       messagesRef.current = hydrated;
       setMessages(hydrated);
       // One call for the conversation's records, each attached to the message it names.
       void fetchThreadRecords(threadId, loading.signal).then((records) => {
         if (threadIdRef.current === threadId) setMessages((prev) => joinTurnRecords(prev, records));
+      });
+      // A turn still working on this conversation — on another device, or
+      // the one this page was showing before it reloaded — or in its
+      // recording window, is rejoined after its question (§4.2).
+      void listThreadRuns(threadId, loading.signal).then((runs) => {
+        if (threadIdRef.current !== threadId || !runs || followerRef.current || isStreamingRef.current) return;
+        const run = runToRejoin(messagesRef.current, runs);
+        if (run) followRun(run.runId, { status: run.status, runPolicy: run.runPolicy, userMessageId: run.userMessageId });
       });
     } catch (err: any) {
       // Aborting alone cannot cancel an already-resolved response/body. Only
@@ -952,7 +1460,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         setIsLoadingThread(false);
       }
     }
-  }, [abandonTurn]);
+  }, [abandonTurn, followRun]);
 
   const send = useCallback(
     async (
@@ -1037,6 +1545,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       setRunHold(null);
       const sentPolicy = sendOpts?.runPolicy ?? options.runPolicy;
       setTurnRunPolicy(isAnaRunPolicy(sentPolicy) ? sentPolicy : null);
+      liveTurnIdRef.current = assistantId;
+      // Read at request parse, as the server reads it (§2.1): a turn that asked
+      // to drive is not detachable, whether or not it ever moved.
+      turnDriveRequestedRef.current = (sendOpts?.liveDrive ?? options.liveDrive) === true;
 
       const abortCtl = new AbortController();
       abortRef.current = abortCtl;
@@ -1232,6 +1744,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       });
 
       let streamedText = '';
+      /* Set when the server refused this send because a run already holds the
+         conversation (RUN_IN_PROGRESS): that run is followed once this turn's
+         own cleanup below has run, so the cleanup cannot clear it. */
+      let rejoinAfter: { runId: string; keep: string[] } | null = null;
 
       try {
         // Include the wait for response headers: starting this only after
@@ -1390,6 +1906,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // and bind this turn's drive controls to it (see turnRunId).
               runIdRef.current = typeof event.runId === 'string' ? event.runId : null;
               turnRunId = runIdRef.current;
+              sseTurnRef.current = turnRunId ? { runId: turnRunId, messageId: assistantId } : null;
               setRunStatus('running');
             } else if (event.type === 'approval_required') {
               // AnA has HELD the turn at an action only a person may take.
@@ -1564,6 +2081,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 // only: a promotion arriving after Stop must not re-arm it.
                 if (event.enabled === true && !turnDriveEnabled) {
                   turnDriveEnabled = true;
+                  // The server enabled a drive: whatever the request said, this
+                  // turn's work is a screen, and it is not detachable (D-7).
+                  if (abortRef.current === abortCtl) turnDriveRequestedRef.current = true;
                   if (abortRef.current === abortCtl) haltDriveRef.current = haltThisTurn;
                 }
               } else {
@@ -1904,8 +2424,26 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         // The run this turn was served under, while it is still known: the
         // record of an interrupted turn is looked up by it.
         const interruptedRunId = turnRunId;
+        const left = err?.name === 'AbortError' && leftRef.current === abortCtl;
+        // Asked whether or not this view left the turn: its record is its own run's.
         if (interruptedRunId && !serverStatedRecord) confirmTurnRecordByRun(interruptedRunId, assistantId);
-        if (err?.name === 'AbortError' && didTimeout) {
+        if (left) {
+          // This view left the turn (§5.2): it is not the person's Stop, and
+          // is never shown as one.
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === assistantId
+                ? {
+                    ...m,
+                    streaming: false,
+                    statusPhase: undefined,
+                    progress: closeProgress(m.progress, 'stopped', Date.now()),
+                    toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — this view was closed.', Date.now()),
+                  }
+                : m
+            )
+          );
+        } else if (err?.name === 'AbortError' && didTimeout) {
           // Idle timeout — the stream went silent. Seal any partial tokens and
           // tell the user, rather than leaving a half-rendered reply.
           setMessages(prev =>
@@ -1951,6 +2489,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             )
           );
         } else {
+          if (err?.code === 'RUN_IN_PROGRESS' && typeof err?.runId === 'string' && err.runId) {
+            rejoinAfter = { runId: err.runId, keep: [userMsg.id, assistantId] };
+          }
           console.warn('[useAnaChat] stream failed:', err?.message);
           setMessages(prev =>
             prev.map(m => {
@@ -2013,8 +2554,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           // A steer the run never reached is not pending anymore; it was lost
           // with the run, and the transcript's interjections say which landed.
           setPendingSteers([]);
+          sseTurnRef.current = null;
+          if (liveTurnIdRef.current === assistantId) liveTurnIdRef.current = null;
+          // A Stop still being retried has nothing left to stop.
+          setMessages(prev => prev.map(m => (m.id === assistantId && m.stopUnconfirmed ? { ...m, stopUnconfirmed: undefined } : m)));
         }
+        if (leftRef.current === abortCtl) leftRef.current = null;
       }
+      // §2.8: "AnA is still working on the last message in this conversation."
+      // The asker's client rejoins that run rather than leaving an error.
+      if (rejoinAfter) void rejoinRun(rejoinAfter.runId, rejoinAfter.keep);
     },
     [
       isStreaming,
@@ -2035,6 +2584,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       controlRun,
       steerRun,
       confirmTurnRecordByRun,
+      rejoinRun,
     ]
   );
 
@@ -2050,6 +2600,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     resume,
     interject,
     pendingSteers,
+    followScope,
     reset,
     loadThread,
     threadId: threadIdRef.current,

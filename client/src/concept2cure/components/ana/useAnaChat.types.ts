@@ -222,6 +222,17 @@ export type AnaTurnRecordStatus =
  *   client_disconnected  the page lost its connection (a phone locked, a tab
  *                        closed), so the run was stopped
  *
+ * And the run row's own reasons (AnA detach §2.10; the client reads them from
+ * DT2, the server writes the first four from DT3), which a follower reads off
+ * the run when the turn ended without a record:
+ *   unattended_limit  nobody was watching for 15 minutes
+ *   session_ended     the session that started the turn ended
+ *   server_shutdown   the server restarted for an update
+ *   orphaned          the server handling the turn stopped responding
+ *   error             the turn ended with an error
+ *   admin_cancelled   an administrator stopped it (the admin-cancel variant
+ *                     of `cancelled`; see anaWorkModel STOP_LINES)
+ *
  * Distinct from `stopped` (the person's Stop, seen by this client) and
  * `interrupted` (the stream failed): a round-limit stop is neither, and must
  * not borrow their flags.
@@ -238,7 +249,46 @@ export type AnaStoppedReason =
   /** The answer she was writing was cut off: the model's length limit, or a
    *  stream that stalled mid-answer. */
   | 'answer_cut_off'
-  | 'client_disconnected';
+  | 'client_disconnected'
+  | 'unattended_limit'
+  | 'session_ended'
+  | 'server_shutdown'
+  | 'orphaned'
+  | 'error'
+  | 'admin_cancelled';
+
+/**
+ * A turn this view follows by polling GET /runs/:runId/events instead of by
+ * its own stream (AnA detach DT2, docs/design/ANA_DETACH_2026-10-08.md §4):
+ * opened on another device, or rejoined after a reload. Every field is the
+ * last poll's, and every time is the server's (ms), read against the poll's
+ * own `serverNow` through `skewMs`.
+ */
+export interface AnaFollow {
+  runId: string;
+  /** 'all' for the person who asked; 'cancel' for an organisation admin (§2.5). */
+  scope: 'all' | 'cancel';
+  /** The run row's status. */
+  status: string;
+  /** When the run started (server ms). */
+  startedAt: number | null;
+  /** The server's clock minus this client's, at the last poll. */
+  skewMs: number;
+  /** The owner's last heartbeat (server ms). */
+  lastBeatAt: number | null;
+  /** The highest seq the owner emitted; above the rows read, a gap (§3.6). */
+  highWater: number;
+  /** The mirror reached its cap (§3.5). */
+  truncated?: boolean;
+  /** The owner finished trying to record the turn (`released_at`). */
+  released?: boolean;
+  /** Waiting on an approval this reader cannot give (an admin's view). */
+  approvalWaiting?: boolean;
+  /** This reader's own network is failing; the last known state stays (§5.1). */
+  unreachable?: boolean;
+  /** The server refused this reader the live progress (403), in its words. */
+  forbidden?: string;
+}
 
 export interface AnaContextUsed {
   uploads: Array<{ fileId: string; fileName: string; mimeType: string; read: 'content' | 'name_only' }>;
@@ -357,6 +407,14 @@ export interface AnaChatMessage {
    * "Recording…", never "Not recorded".
    */
   recordConfirming?: boolean;
+  /** Set while this view follows the turn by polling rather than by its own stream (DT2). */
+  follow?: AnaFollow;
+  /**
+   * The person pressed Stop and the server has not confirmed it (§5.2): the
+   * cancel failed and is being retried. The turn stays as it is meanwhile;
+   * Stopped is shown only once the server says so.
+   */
+  stopUnconfirmed?: boolean;
   /** Files attached to this (user) turn, shown as chips above the bubble. */
   attachments?: MessageAttachment[];
   /** True while tokens are still arriving for this message. */
@@ -832,8 +890,21 @@ export interface UseAnaChatReturn {
     attachments?: MessageAttachment[],
     sendOpts?: AnaSendOptions,
   ) => Promise<void>;
-  /** Abort the current stream (and cancel the run server-side). */
-  stop: () => void;
+  /**
+   * Stop the run in flight. `'stop'` (the default) is the person's Stop: it
+   * cancels the run on the server and, for a run that has a durable id, shows
+   * Stopped only once the server confirms it — a failed cancel is retried and
+   * the turn goes on meanwhile (§5.2). `'leave'` is this view going away: it
+   * never cancels and never shows Stopped.
+   */
+  stop: (abortIntent?: 'stop' | 'leave') => void | Promise<void>;
+  /**
+   * Who this view is to the turn it follows: 'all' when it is the person who
+   * asked (every control, and the composer steers), 'cancel' when it is an
+   * organisation admin watching (no steer; Stop only once DT3 accepts an
+   * admin's cancel). Null while no turn is followed.
+   */
+  followScope?: 'all' | 'cancel' | null;
   /** Control status of the in-flight run (drives the pause/resume UI). */
   runStatus: RunControlStatus;
   /**

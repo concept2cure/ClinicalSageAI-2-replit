@@ -1,0 +1,17 @@
+=== npm run --silent ci:pushed-lint-warnings
+[ci:eslint-warning-ratchet] --since db835afeddef43b482e1d69f2f0a49800181ee57 (db835afed) -- 16 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since db835afeddef43b482e1d69f2f0a49800181ee57.
+EXIT 0
+=== npm run --silent ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+EXIT 0
+=== npm run --silent ci:sql-interpolation
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1006 baselined interpolation(s) in 213 file(s); the baseline may only shrink.
+EXIT 0
+=== npm run --silent ci:untracked-imports
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+EXIT 0
+=== node scripts/ci/check-untracked-imports.mjs --all  (the default mode reads commits only; nothing here is committed)
+findings in DT2 files: 0
+=== tsc (scoped, docs/evidence/ANA-SUMMARY/2026-10-08/DT2-follow/scoped-tsc-config.json), errors in DT2-changed files
+(none above = 0 errors; the rest of the scoped run reports ambient-declaration gaps in files DT2 does not touch)
