@@ -1,0 +1,14 @@
+[
+  {
+    "command": "git diff --check",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": "node scripts/ci/check-db-test-isolation.mjs",
+    "exitCode": 0,
+    "stdout": "[ci:db-test-isolation] OK \u2014 150 real-database test file(s) run unmocked, and every mocked vitest config excludes them.\n",
+    "stderr": ""
+  }
+]

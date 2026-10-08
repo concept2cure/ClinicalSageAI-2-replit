@@ -90,11 +90,12 @@ export async function resolveEvidenceSourceIdsByArtifact(
     const m = CRE_SOURCE_RE.exec(s);
     if (m) {
       const n = Number(m[1]);
-      if (Number.isInteger(n) && n > 0) directByNumericId.set(n, s);
-      // a malformed 'cre_source:<non-numeric>' is treated as a plain artifact
-      // id below (it will simply not match) — never resolved.
-      else byArtifactId.push(s);
+      // cre_evidence_sources.id is SERIAL: an unavailable id outside int32
+      // must not abort the whole batch at the int[] bind. A numeric direct-id
+      // key cannot fall back to another source's metadata.artifactId.
+      if (Number.isSafeInteger(n) && n > 0 && n <= 2147483647) directByNumericId.set(n, s);
     } else {
+      // A malformed 'cre_source:<non-numeric>' remains a plain artifact id.
       byArtifactId.push(s);
     }
   }
