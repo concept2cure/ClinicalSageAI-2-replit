@@ -80,9 +80,12 @@ describe('offer — not offered, with the reason', () => {
     ['nda', 'MFDS', /^MFDS has no governed NDA outline here/],
     ['nda', 'EMA', /^EMA has no governed NDA outline here/],
     ['ind', 'MHRA', /^Not offered: the UK has no IND/],
-    ['nda', 'ANVISA', /^Refused at creation: /],
-    ['nda', 'EU / Notified Body', /^Refused at creation: A Notified Body assesses EU MDR and IVDR technical documentation and clinical evaluation reports; it takes no NDA\.$/],
-    ['device', 'EU / Notified Body', /^Refused at creation: No document class is defined for program type 'device'\.$/],
+    // Amended 2026-10-08 (filing-spine design review, .design/filing-spine/DESIGN_REVIEW.md, merged with F19b):
+    // an unmapped market reads "Not supported: …", claiming no refusal and naming no internals; a Notified Body
+    // asked for a class it does not assess reads "Not offered: …" with its reason.
+    ['nda', 'ANVISA', /^Not supported: the platform has no filing outline or channel for ANVISA\.$/],
+    ['nda', 'EU / Notified Body', /^Not offered: A Notified Body assesses EU MDR and IVDR technical documentation and clinical evaluation reports; it takes no NDA\.$/],
+    ['device', 'EU / Notified Body', /^Not supported: the platform has no filing outline for the application type 'device'\.$/],
     ['device', 'FDA', /^FDA has no governed DEVICE outline here/],
     ['jnda', 'PMDA', /^PMDA requires eCTD v4\.0 for new applications, and this platform builds eCTD v3\.2\.2 only\.$/],
   ])('(%s, %s)', (t, market, reason) => {

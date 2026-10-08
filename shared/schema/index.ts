@@ -531,7 +531,7 @@ export * from './lifecycle';
 
 // AI-native eTMF (C2C-08): Trial Master File against the DIA TMF Reference Model
 // — per-study container + classified artifacts + completeness gap-check feeding
-// inspection readiness. ICH E6(R2) §8. Service: server/services/etmf; migration:
+// inspection readiness. ICH E6(R3) Appendix C. Service: server/services/etmf; migration:
 // migrations/20260610_etmf.sql.
 export * from './etmf';
 

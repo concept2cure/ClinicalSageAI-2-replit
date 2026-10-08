@@ -48,7 +48,7 @@
  * the platform's internal one, assessed by a person; it is not the regulatory
  * "important deviation" category. "Reportable" is is_reportable: a PROMPT IRB
  * report is indicated. Every deviation is still documented and reported to
- * the sponsor (ICH E6(R2) 4.5.3), so the rest are not "not reported".
+ * the sponsor (ICH E6(R3) Annex 1 §2.5), so the rest are not "not reported".
  *
  * ## The honesty contract
  *  - Pure: no model call, no randomness, no clock (`today` is injected), no
@@ -103,7 +103,7 @@ import {
 export { utcDayOf, LEGACY_DEFAULTS_THROUGH, MAX_LISTED_IDS, type DeviationRow } from './deviation-trends-rows';
 
 export const DEVIATION_TRENDS_BASIS =
-  'ICH E6(R3) — risk-based quality management: deviations trended as a quality signal; TransCelerate RBM KRI methodology';
+  'ICH E6(R3) Annex 1 §3.10 — risk-based quality management: deviations trended as a quality signal; TransCelerate RBM KRI methodology';
 
 export const DEVIATION_TREND_DEFAULT_WINDOW_MONTHS = 6;
 export const DEVIATION_TREND_MIN_WINDOW_MONTHS = 1;
@@ -130,7 +130,7 @@ export const SITE_BREAKDOWN_UNAVAILABLE_REASON = 'protocol_deviations carries no
 /** What `rates.reportableShare` measures, carried in the output so it is never read as "the rest need not be reported". */
 export const REPORTABLE_SHARE_MEANING =
   'Share of deviations with a determination for which a prompt IRB report is indicated (is_reportable true). ' +
-  'It is not the share that must be reported: every deviation is documented and reported to the sponsor (ICH E6(R2) 4.5.3), and the IRB\'s written procedures decide which deviations it requires.';
+  'It is not the share that must be reported: every deviation is documented and reported to the sponsor (ICH E6(R3) Annex 1 §2.5), and the IRB\'s written procedures decide which deviations it requires.';
 
 export const AGING_FROM_RECORD_DATE_NOTE =
   'Ageing is counted from the record date (createdAt), not the discovery date, which is not supplied. A deviation discovered before it was recorded is older than shown, so the ageing buckets and DEV-AGING may understate age.';

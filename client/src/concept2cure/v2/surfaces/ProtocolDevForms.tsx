@@ -104,7 +104,7 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
   },
   'risk-residual': {
     eyebrow: 'Protocol · risk register', title: 'Record residual risk',
-    sub: 'ICH E6(R2) §5.0 — the rating that remains after the mitigation is in place.',
+    sub: 'ICH E6(R3) Annex 1 §3.10.1 (risk management) — the rating that remains after the mitigation is in place.',
     governed: true, submitLabel: 'Save risk',
     fields: [
       { key: 'residualLikelihood', label: 'Residual likelihood', type: 'select', options: LIKELIHOOD, half: true },

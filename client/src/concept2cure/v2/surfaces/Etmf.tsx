@@ -44,7 +44,7 @@ import {
   type VaultIngestDocumentType,
 } from '@shared/constants/domain/vault-taxonomy';
 // tmfArtifactName maps a reference-model code → its human name. It reads the
-// DIA TMF Reference Model catalog (ICH E6(R2) §8) — canonical reference config,
+// DIA TMF Reference Model catalog (ICH E6(R3) Appendix C) — canonical reference config,
 // not fixture DATA — so a `missing` code the backend returns can be labelled.
 import { tmfArtifactName } from '../fixtures/etmf';
 import type { TmfCompletenessResult } from '../fixtures/etmf';
@@ -71,14 +71,14 @@ function readinessReportMd(
 ): string {
   let s = '# Trial Master File — Inspection-Readiness Package\n\n';
   s += '**Trial:** ' + trialId + '\n\n';
-  s += '**Reference model:** DIA TMF Reference Model (ICH E6(R2) §8)  —  **Scope:** ' + (scope === 'all' ? 'All artifacts' : 'Essential (ICH E6(R2) §8)') + '\n\n';
+  s += '**Reference model:** DIA TMF Reference Model (ICH E6(R3) Appendix C)  —  **Scope:** ' + (scope === 'all' ? 'All artifacts' : 'Essential (ICH E6(R3) Appendix C)') + '\n\n';
   s += '**Verdict (completeness):** ' + (ready ? 'INSPECTION-READY' : 'NOT INSPECTION-READY') + '  —  Zones complete ' + R.summary.zonesComplete + '/' + R.summary.zoneCount + '  —  Open gaps ' + R.summary.totalMissing + '\n\n';
   s += '## Zone index\n\n| Zone | Name | Filed | Status |\n|---|---|---|---|\n';
   (R.zones || []).forEach((z) => { s += '| ' + z.number + ' | ' + z.name + ' | ' + z.present.length + '/' + z.required.length + ' | ' + (z.complete ? 'complete' : (z.required.length - z.present.length) + ' open') + ' |\n'; });
   s += '\n## Open essential documents\n\n';
   if (!missing.length) s += '_None — every required document is filed._\n';
   else { s += '| Zone | Document | Code |\n|---|---|---|\n'; missing.forEach((m) => { s += '| ' + m.zone + ' | ' + m.name + ' | ' + m.code + ' |\n'; }); }
-  s += '\n---\n_This package is the inspection index and completeness picture — not the document bytes, which live in the systems of record referenced per artifact. Assessed against the DIA TMF Reference Model (ICH E6(R2) §8) from the trial\'s filed artifacts. Completeness only; timeliness and QC are not yet persisted._\n';
+  s += '\n---\n_This package is the inspection index and completeness picture — not the document bytes, which live in the systems of record referenced per artifact. Assessed against the DIA TMF Reference Model (ICH E6(R3) Appendix C) from the trial\'s filed artifacts. Completeness only; timeliness and QC are not yet persisted._\n';
   return s;
 }
 
@@ -393,7 +393,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
-  const scopeLabel = scope === 'all' ? 'All artifacts' : 'Essential (ICH E6(R2) §8)';
+  const scopeLabel = scope === 'all' ? 'All artifacts' : 'Essential (ICH E6(R3) Appendix C)';
 
   return (
     <div className="page-inner etmf">
@@ -401,7 +401,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
         <div>
           <div className="surface-kicker">{I.vault || I.folder} Vault — CRO / service view — Trial Master File (DIA Reference Model v3)</div>
           <h1>Inspection readiness</h1>
-          <p className="surface-sub">{tid ? 'Trial ' + tid : 'Name a trial to begin'} — completeness against the DIA TMF Reference Model (ICH E6(R2) §8)</p>
+          <p className="surface-sub">{tid ? 'Trial ' + tid : 'Name a trial to begin'} — completeness against the DIA TMF Reference Model (ICH E6(R3) Appendix C)</p>
         </div>
         <div className="surface-head-actions">
           <input
@@ -425,7 +425,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
         <EmptyState
           icon={I.folder}
           title="Name a trial to assess its TMF"
-          hint="Enter a trial identifier above. AnA computes inspection readiness from that trial's filed TMF artifacts against the DIA TMF Reference Model (ICH E6(R2) §8) — the essential-document completeness an inspector would check."
+          hint="Enter a trial identifier above. AnA computes inspection readiness from that trial's filed TMF artifacts against the DIA TMF Reference Model (ICH E6(R3) Appendix C) — the essential-record completeness an inspector would check."
         />
       ) : tmfState === 'loading' ? (
         /* First, not last. This branch now also catches the whole window in
@@ -451,7 +451,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
           title={'No TMF assessment for ' + tid + ' yet'}
           hint={readEmpty
             ? "The completeness service returned no assessment for this trial identifier, so nothing has been assessed against the DIA TMF Reference Model and no readiness verdict is stated here. Check the identifier, or file this trial's essential documents and the readiness picture will populate."
-            : 'The completeness read returned no reference-model zones or required artifacts for this trial, so nothing was evaluated against the DIA TMF Reference Model (ICH E6(R2) §8). No readiness verdict is stated on an assessment with nothing in it.'}
+            : 'The completeness read returned no reference-model zones or required artifacts for this trial, so nothing was evaluated against the DIA TMF Reference Model (ICH E6(R3) Appendix C). No readiness verdict is stated on an assessment with nothing in it.'}
         />
       ) : (
         <>
@@ -584,7 +584,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                     <div className="etmf-cover-badge" data-ready={clear || undefined}>{clear ? 'INSPECTION-READY' : 'NOT INSPECTION-READY'}</div>
                     <h2>Trial Master File — Inspection-Readiness Package</h2>
                     <div className="etmf-cover-meta">
-                      <span>Trial {tid}</span><span>DIA TMF Reference Model (ICH E6(R2) §8)</span>
+                      <span>Trial {tid}</span><span>DIA TMF Reference Model (ICH E6(R3) Appendix C)</span>
                       <span>Scope: {scopeLabel}</span>
                       <span>Generated {new Date().toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                     </div>

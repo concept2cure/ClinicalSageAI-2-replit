@@ -2,7 +2,7 @@
  * eTMF REST surface — Trial Master File completeness / inspection-readiness.
  *
  * Deterministic assessment of a trial's filed artifacts against the DIA TMF
- * Reference Model (ICH E6(R2) §8 essential documents). Mounted at /api/etmf
+ * Reference Model (ICH E6(R3) Appendix C essential records). Mounted at /api/etmf
  * with authenticateToken applied at mount time.
  */
 

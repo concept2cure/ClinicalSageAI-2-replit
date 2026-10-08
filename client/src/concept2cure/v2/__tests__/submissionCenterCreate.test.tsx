@@ -78,7 +78,7 @@ describe('SubmissionCenter — create posts the live schema', () => {
     fireEvent.change(screen.getByLabelText(/Application type/), { target: { value: 'maa' } });
     fireEvent.change(screen.getByLabelText(/Primary region/), { target: { value: 'eu' } });
     fireEvent.change(screen.getByLabelText(/Client type/), { target: { value: 'biotech' } });
-    fireEvent.change(screen.getByLabelText(/Programme/), { target: { value: 'prog-uuid-1' } });
+    fireEvent.change(screen.getByRole('combobox', { name: /^Project/ }), { target: { value: 'prog-uuid-1' } });
     fireEvent.click(screen.getByRole('button', { name: /Create submission/ }));
 
     await waitFor(() => expect(posts).toHaveLength(1));

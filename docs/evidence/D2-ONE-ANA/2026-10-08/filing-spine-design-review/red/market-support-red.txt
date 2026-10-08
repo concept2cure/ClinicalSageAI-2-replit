@@ -1,0 +1,139 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T17:15:42.181Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:15:42.182Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T17:15:42.183Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (maa, EMA) → Flat Module 1, no channel 3ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, FDA) → Structured Module 1 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nds, Health_Canada) → No outline, no channel 1ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, ANVISA) → Not supported 8ms
+   → expected 'Unmapped' to be 'Not supported' // Object.is equality
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > a market is named by its agency, its region code or its submission region alike 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > FDA: transmit is wired but not proven, and the line says why 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA MAA: flat Module 1, and the applicant uploads it 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA CTA goes through the CTIS portal only 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > Health Canada: no outline; its adapter posts to an endpoint written from no agency source, so no channel 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > NMPA, MFDS and TGA: no outline; no channel. NMPA and MFDS are gate-checked, TGA is not 1ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > MHRA "IND" is not offered: the UK has no IND, and the ind:mhra pack is mislabelled 2ms
+   → expected 'Not offered: the UK has no IND, and t…' to be 'Not offered: the UK has no IND applic…' // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > an unmapped agency is not supported: no outline or channel, and no refusal is claimed 1ms
+   → ANVISA: expected 'Unmapped' to be 'Not supported' // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no line names a rule pack, an adapter or a signature format 2ms
+   → ind:MHRA: expected 'Not offered: the UK has no IND, and t…' not to match /rule pack|adapter|ind:mhra|ema:|PKCS|…/
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no pack is borrowed from another agency: an FDA NDA pack does not give Health Canada an outline 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > module1ShapeForAgency is the backbone classification, by agency 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport reads the active packs once, from c2c_rule_packs > asks only for packs not superseded, and composes every requested market from that one read 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > EMA and PMDA are no longer reported buildable; FDA is 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > PMDA is not reported submit-supported while its adapter refuses every transmit 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > the coverage matrix agrees with the plan 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, ANVISA) → Not supported
+AssertionError: expected 'Unmapped' to be 'Not supported' // Object.is equality
+
+Expected: "Not supported"
+Received: "Unmapped"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:47:71
+     45|     ['nda', 'ANVISA', 'Not supported'],
+     46|   ])('(%s, %s) → %s', (applicationType, market, summary) => {
+     47|     expect(marketSupport({ applicationType, market }, packs).summary).…
+       |                                                                       ^
+     48|   });
+     49|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > MHRA "IND" is not offered: the UK has no IND, and the ind:mhra pack is mislabelled
+AssertionError: expected 'Not offered: the UK has no IND, and t…' to be 'Not offered: the UK has no IND applic…' // Object.is equality
+
+Expected: "Not offered: the UK has no IND application type"
+Received: "Not offered: the UK has no IND, and the ind:mhra rule pack is mislabelled"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:113:20
+    111|     expect(s.summary).toBe('Not offered');
+    112|     expect(s.offered).toBe(false);
+    113|     expect(s.line).toBe('Not offered: the UK has no IND application ty…
+       |                    ^
+    114|   });
+    115|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > an unmapped agency is not supported: no outline or channel, and no refusal is claimed
+AssertionError: ANVISA: expected 'Unmapped' to be 'Not supported' // Object.is equality
+
+Expected: "Not supported"
+Received: "Unmapped"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:124:33
+    122|     for (const market of ['ANVISA', 'Swissmedic', 'CDSCO', 'HSA', 'br'…
+    123|       const s = marketSupport({ applicationType: 'nda', market }, pack…
+    124|       expect(s.summary, market).toBe('Not supported');
+       |                                 ^
+    125|       expect(s.offered, market).toBe(false);
+    126|       expect(s.line, market).toMatch(/^Not supported: the platform has…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no line names a rule pack, an adapter or a signature format
+AssertionError: ind:MHRA: expected 'Not offered: the UK has no IND, and t…' not to match /rule pack|adapter|ind:mhra|ema:|PKCS|…/
+
+- Expected:
+/rule pack|adapter|ind:mhra|ema:|PKCS|AS2/
+
++ Received:
+"Not offered: the UK has no IND, and the ind:mhra rule pack is mislabelled"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:135:58
+    133|     for (const [applicationType, market] of [['ind', 'MHRA'], ['maa', …
+    134|       const s = marketSupport({ applicationType, market }, packs);
+    135|       expect(s.line, `${applicationType}:${market}`).not.toMatch(/rule…
+       |                                                          ^
+    136|     }
+    137|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 16 passed (20)
+   Start at  17:15:39
+   Duration  4.05s (transform 2.36s, setup 101ms, import 3.55s, tests 34ms, environment 0ms)
+

@@ -4,7 +4,7 @@
  * Simulates an FDA GCP/GMP inspector scrutinizing a Standard Operating
  * Procedure during a facility inspection. Each rule represents a question
  * a seasoned FDA field investigator would ask when reviewing SOPs against
- * 21 CFR 211 (cGMP), 21 CFR 820 (QSR), ICH E6(R2) (GCP), and
+ * 21 CFR 211 (cGMP), 21 CFR 820 (QSR), ICH E6(R3) (GCP), and
  * 21 CFR Part 11 (electronic records).
  *
  * @module server/services/ana/intelligence-questions/war-game/auditors/sop-auditor
@@ -76,9 +76,9 @@ export function createSopAuditor(): WarGameAuditor {
             `The SOP title is ${title.length === 0 ? 'blank' : `only ${title.length} characters ("${title}")`}. ` +
             'A clear, descriptive title is essential for document control, cross-referencing, and training records.',
           requirement:
-            '21 CFR 211.186 requires that records be identifiable. ICH E6(R2) Section 5.5.3 requires that SOPs be documented, ' +
+            '21 CFR 211.100(a) requires written, approved procedures, and EU GMP Chapter 4 (Documentation) requires controlled documents; ' +
             'and an identifiable title is the baseline for any document control system.',
-          reference: '21 CFR 211.186; ICH E6(R2) Section 5.5.3',
+          reference: '21 CFR 211.100(a); EudraLex Volume 4, Chapter 4',
           recommendation:
             'Assign a descriptive title that identifies the process, department, and scope. ' +
             'Example: "Standard Operating Procedure for Environmental Monitoring in Aseptic Manufacturing Areas".',
@@ -144,9 +144,9 @@ export function createSopAuditor(): WarGameAuditor {
           requirement:
             '21 CFR 211.22(d) requires written procedures for production and process controls. 21 CFR 820.20(a) requires a quality policy ' +
             'that includes compliance with applicable regulatory requirements. Each SOP should reference the specific regulations it implements.',
-          reference: '21 CFR 211.22(d); 21 CFR 820.20(a); ICH E6(R2) Section 5.1.1',
+          reference: '21 CFR 211.22(d); 21 CFR 820.20(a); ICH E6(R3) Annex 1 §3.10',
           recommendation:
-            'Add a "Regulatory References" section listing all applicable regulations (e.g., 21 CFR 211, 21 CFR 820, ICH E6(R2), ' +
+            'Add a "Regulatory References" section listing all applicable regulations (e.g., 21 CFR 211, 21 CFR 820, ICH E6(R3), ' +
             '21 CFR Part 11) and the specific sections this SOP addresses.',
           relatedFields: ['applicable_regulations'],
         };
@@ -177,8 +177,8 @@ export function createSopAuditor(): WarGameAuditor {
             'A well-defined purpose statement establishes the intent, applicability, and expected outcome of the procedure.',
           requirement:
             '21 CFR 820.40 requires procedures to be adequate for their intended purpose. ' +
-            'ICH E6(R2) Section 5.1.1 requires the sponsor to implement a system to manage quality, including documented procedures with clear objectives.',
-          reference: '21 CFR 820.40; ICH E6(R2) Section 5.1.1',
+            'ICH E6(R3) Annex 1 §3.10 (Quality Management) requires the sponsor to implement a system to manage quality, including documented procedures with clear objectives.',
+          reference: '21 CFR 820.40; ICH E6(R3) Annex 1 §3.10',
           recommendation:
             'Write a purpose statement that clearly defines: (1) the objective of the procedure, ' +
             '(2) the regulatory requirement it satisfies, and (3) the expected outcome when the procedure is correctly followed.',
@@ -228,7 +228,7 @@ export function createSopAuditor(): WarGameAuditor {
       dimension: 'completeness',
       title: 'Roles and responsibilities not defined',
       question:
-        'This SOP does not define who is responsible for performing each step. Per ICH E6(R2), responsibilities must be clearly assigned. Who performs this procedure, who supervises, and who approves?',
+        'This SOP does not define who is responsible for performing each step. Per ICH E6(R3) Principle 10, responsibilities must be clearly assigned. Who performs this procedure, who supervises, and who approves?',
       check(answers): WarGameFinding | null {
         if (!isEmpty(answers.roles_responsibilities)) return null;
         return {
@@ -237,15 +237,15 @@ export function createSopAuditor(): WarGameAuditor {
           severity: 'critical',
           title: 'Roles and responsibilities not defined',
           question:
-            'This SOP does not define who is responsible for performing each step. Per ICH E6(R2), responsibilities must be clearly assigned. Who performs this procedure, who supervises, and who approves?',
+            'This SOP does not define who is responsible for performing each step. Per ICH E6(R3) Principle 10, responsibilities must be clearly assigned. Who performs this procedure, who supervises, and who approves?',
           observation:
             'The roles and responsibilities section is empty. Without clearly defined roles, ' +
             'there is no accountability for execution, verification, or approval of the process described in this SOP.',
           requirement:
-            'ICH E6(R2) Section 5.1.1 requires that responsibilities be clearly assigned. ' +
+            'ICH E6(R3) Principle 10 requires that roles, tasks and responsibilities be clear and documented. ' +
             '21 CFR 211.25 requires that each person engaged in activities shall have the education, training, and experience to perform assigned functions. ' +
             'Responsibility assignment is the prerequisite for verifying qualified personnel execute each step.',
-          reference: 'ICH E6(R2) Section 5.1.1; 21 CFR 211.25; 21 CFR 820.20(b)(1)',
+          reference: 'ICH E6(R3) Principle 10; 21 CFR 211.25; 21 CFR 820.20(b)(1)',
           recommendation:
             'Add a Roles and Responsibilities section that specifies: the performing role, the reviewing/verifying role, ' +
             'the approving role, and the Quality Assurance oversight role for this procedure.',
@@ -279,7 +279,7 @@ export function createSopAuditor(): WarGameAuditor {
           requirement:
             '21 CFR 211.100(a) requires written procedures for production and process control designed to assure that drug products have the identity, strength, quality, and purity they purport to possess. ' +
             '21 CFR 820.75 requires documented procedures for process validation.',
-          reference: '21 CFR 211.100(a); 21 CFR 820.75; ICH E6(R2) Section 5.5.3',
+          reference: '21 CFR 211.100(a); 21 CFR 820.75; ICH E6(R3) Annex 1 §3.16',
           recommendation:
             'Document every step of the procedure in sequential order. Each step should be actionable, include acceptance criteria where applicable, ' +
             'and specify the responsible role. Use numbered steps with sufficient detail that a trained operator can execute the procedure consistently.',
@@ -312,7 +312,7 @@ export function createSopAuditor(): WarGameAuditor {
           requirement:
             '21 CFR 211.192 requires investigation of any unexplained discrepancy or the failure of a batch or any of its components to meet specifications. ' +
             '21 CFR 820.90(a) requires procedures for controlling nonconforming product. Deviation handling is a foundational element of both cGMP and QSR compliance.',
-          reference: '21 CFR 211.192; 21 CFR 820.90(a); ICH E6(R2) Section 5.20.1',
+          reference: '21 CFR 211.192; 21 CFR 820.90(a); ICH E6(R3) Annex 1 §3.12',
           recommendation:
             'Add a Deviation Handling section that either describes the deviation process or references the site deviation SOP. ' +
             'Include instructions for immediate actions, documentation requirements, notification thresholds, and timelines for investigation.',
@@ -377,8 +377,8 @@ export function createSopAuditor(): WarGameAuditor {
             'have the necessary knowledge and skills, creating risk to product quality and patient safety.',
           requirement:
             '21 CFR 211.25(a) requires that each person engaged in manufacture, processing, packing, or holding of a drug product shall have education, training, and experience. ' +
-            '21 CFR 820.25(b) requires that training be documented. ICH E6(R2) Section 5.2.1 requires that qualified individuals perform trial-related duties.',
-          reference: '21 CFR 211.25(a); 21 CFR 820.25(b); ICH E6(R2) Section 5.2.1',
+            '21 CFR 820.25(b) requires that training be documented. ICH E6(R3) Principle 5 and Annex 1 §3.4 require that qualified individuals perform trial-related duties.',
+          reference: '21 CFR 211.25(a); 21 CFR 820.25(b); ICH E6(R3) Principle 5; ICH E6(R3) Annex 1 §3.4',
           recommendation:
             'Define training prerequisites including: required read-and-understand of this SOP, any prerequisite SOPs, ' +
             'hands-on demonstration requirements, initial qualification criteria, and retraining frequency.',
@@ -410,8 +410,8 @@ export function createSopAuditor(): WarGameAuditor {
             'Without a practical assessment, there is no evidence that trained personnel can correctly execute the procedure.',
           requirement:
             '21 CFR 820.25(b) requires that training be documented and shall include verification of training effectiveness. ' +
-            'ICH E6(R2) Section 5.2.1 requires that individuals be qualified by education, training, and experience.',
-          reference: '21 CFR 820.25(b); ICH E6(R2) Section 5.2.1',
+            'ICH E6(R3) Principle 5 and Annex 1 §3.4 require that individuals be qualified by education, training, and experience.',
+          reference: '21 CFR 820.25(b); ICH E6(R3) Principle 5; ICH E6(R3) Annex 1 §3.4',
           recommendation:
             'Define a competency assessment method appropriate to the procedure complexity: written exam, practical demonstration, ' +
             'observed performance, or a combination. Include pass/fail criteria, documentation requirements, and reassessment frequency.',
@@ -611,9 +611,9 @@ export function createSopAuditor(): WarGameAuditor {
             'Without a review cycle, there is no mechanism to ensure the SOP remains current and accurate.',
           requirement:
             '21 CFR 820.40 implicitly requires periodic review through its requirement for document adequacy. ' +
-            'ICH E6(R2) Section 5.1.1 requires that the sponsor implement systems to ensure the quality of every aspect of the trial, ' +
+            'ICH E6(R3) Annex 1 §3.10 requires that the sponsor implement systems to ensure the quality of every aspect of the trial, ' +
             'which includes keeping procedures current. Industry standard is a review cycle of no more than 2-3 years.',
-          reference: '21 CFR 820.40; ICH E6(R2) Section 5.1.1',
+          reference: '21 CFR 820.40; ICH E6(R3) Annex 1 §3.10',
           recommendation:
             'Establish a periodic review cycle (typically every 2 years for GMP SOPs, annually for high-risk procedures). ' +
             'Document the review date, reviewer, and outcome (no change needed, revision initiated, or SOP retired).',
@@ -646,9 +646,9 @@ export function createSopAuditor(): WarGameAuditor {
             'The SOP does not include a definitions or abbreviations section. Technical terms, acronyms, and process-specific language ' +
             'may be interpreted differently by different personnel, leading to inconsistent execution.',
           requirement:
-            'ICH E6(R2) and cGMP best practices call for clear, unambiguous procedures. ' +
+            'ICH E6(R3) and cGMP best practices call for clear, unambiguous procedures. ' +
             'A definitions section reduces the risk of misinterpretation, particularly for multi-disciplinary or multi-site SOPs.',
-          reference: 'ICH E6(R2); 21 CFR 211.100; FDA Guidance on Quality Systems Approach',
+          reference: 'ICH E6(R3); 21 CFR 211.100; FDA Guidance on Quality Systems Approach',
           recommendation:
             'Add a Definitions and Abbreviations section that defines all technical terms, abbreviations, and acronyms used in the SOP. ' +
             'Consider referencing a site-level glossary for commonly used terms.',
@@ -681,8 +681,8 @@ export function createSopAuditor(): WarGameAuditor {
           requirement:
             '21 CFR 211.180(a) requires that records for drug products be retained for at least one year after the expiry date of the batch. ' +
             '21 CFR 820.184 requires that device records be retained for the design and expected life of the device, but no less than two years from product release. ' +
-            'ICH E6(R2) Section 4.9.5 requires essential documents to be retained for at least two years after the last approval of a marketing application.',
-          reference: '21 CFR 211.180(a); 21 CFR 820.184; ICH E6(R2) Section 4.9.5',
+            'ICH E6(R3) Annex 1 §2.12 and Appendix C require essential records to be retained for the period set by applicable regulatory requirements (e.g. 21 CFR 312.62(c): 2 years after a marketing application is approved for the drug for the indication investigated or, if none is filed or approved, 2 years after the investigation is discontinued and FDA is notified).',
+          reference: '21 CFR 211.180(a); 21 CFR 820.184; ICH E6(R3) Annex 1 §2.12; ICH E6(R3) Appendix C',
           recommendation:
             'Define the retention period for all records generated by this SOP. Reference the site record retention schedule and ensure the period meets the longest applicable regulatory requirement.',
           relatedFields: ['record_retention_period'],
@@ -713,8 +713,8 @@ export function createSopAuditor(): WarGameAuditor {
             'Without a documented risk assessment, critical process parameters and risk mitigation measures may not be adequately identified.',
           requirement:
             'ICH Q9 establishes the framework for quality risk management in pharmaceutical manufacturing. ' +
-            '21 CFR 820.30(g) requires risk analysis for device design. ICH E6(R2) Section 5.0 requires risk-based approaches to clinical trial quality.',
-          reference: 'ICH Q9; 21 CFR 820.30(g); ICH E6(R2) Section 5.0',
+            '21 CFR 820.30(g) requires risk analysis for device design. ICH E6(R3) Annex 1 §3.10.1 (Risk Management) requires risk-based approaches to clinical trial quality.',
+          reference: 'ICH Q9; 21 CFR 820.30(g); ICH E6(R3) Annex 1 §3.10.1',
           recommendation:
             'Perform and document a process risk assessment using an appropriate methodology (FMEA, HACCP, fishbone diagram). ' +
             'Reference the risk assessment document number in the SOP and ensure control measures identified in the risk assessment are reflected in the procedure steps.',
@@ -780,7 +780,7 @@ export function createSopAuditor(): WarGameAuditor {
           requirement:
             '21 CFR 211.186 requires complete records that trace all steps. ' +
             'A quality system must maintain traceability between procedures, and cross-references are essential for holistic process understanding.',
-          reference: '21 CFR 211.186; 21 CFR 820.40; ICH E6(R2) Section 5.5.3',
+          reference: '21 CFR 211.186; 21 CFR 820.40; ICH E6(R3) Annex 1 §3.16',
           recommendation:
             'Add a Related Documents section listing all associated SOPs, work instructions, forms, templates, specifications, ' +
             'and regulatory guidance that personnel need to reference when executing this procedure.',
@@ -1018,14 +1018,14 @@ export function createSopAuditor(): WarGameAuditor {
     },
 
     // ───────────────────────────────────────────────────────────────────────
-    // sop_029 — regulatory_alignment: Clinical SOP missing ICH E6(R2)
+    // sop_029 — regulatory_alignment: Clinical SOP missing ICH E6(R3)
     // ───────────────────────────────────────────────────────────────────────
     {
       id: rid('029'),
       dimension: 'regulatory_alignment',
-      title: 'Clinical SOP missing ICH E6(R2) reference',
+      title: 'Clinical SOP missing ICH E6(R3) reference',
       question:
-        'This appears to be a clinical operations SOP, yet it does not reference ICH E6(R2). GCP is the foundational regulation for clinical trial conduct. How do you demonstrate GCP compliance without referencing the applicable guideline?',
+        'This appears to be a clinical operations SOP, yet it does not reference ICH E6(R3). GCP is the foundational regulation for clinical trial conduct. How do you demonstrate GCP compliance without referencing the applicable guideline?',
       check(answers): WarGameFinding | null {
         const dept = str(answers.department).toLowerCase();
         const scope = str(answers.process_scope).toLowerCase();
@@ -1041,18 +1041,18 @@ export function createSopAuditor(): WarGameAuditor {
           id: rid('029'),
           dimension: 'regulatory_alignment',
           severity: 'critical',
-          title: 'Clinical SOP missing ICH E6(R2) reference',
+          title: 'Clinical SOP missing ICH E6(R3) reference',
           question:
-            'This appears to be a clinical operations SOP, yet it does not reference ICH E6(R2). GCP is the foundational regulation for clinical trial conduct. How do you demonstrate GCP compliance without referencing the applicable guideline?',
+            'This appears to be a clinical operations SOP, yet it does not reference ICH E6(R3). GCP is the foundational regulation for clinical trial conduct. How do you demonstrate GCP compliance without referencing the applicable guideline?',
           observation:
             'The SOP appears to relate to clinical operations based on its title, scope, or department, ' +
-            'but does not reference ICH E6(R2) Good Clinical Practice in the applicable regulations section.',
+            'but does not reference ICH E6(R3) Good Clinical Practice in the applicable regulations section.',
           requirement:
-            'ICH E6(R2) is the international ethical and scientific quality standard for designing, conducting, recording, and reporting trials that involve human subjects. ' +
+            'ICH E6(R3) is the international ethical and scientific quality standard for designing, conducting, recording, and reporting trials that involve human participants. ' +
             'All clinical SOPs must be traceable to GCP requirements.',
-          reference: 'ICH E6(R2); 21 CFR Part 312; 21 CFR Part 50; 21 CFR Part 56',
+          reference: 'ICH E6(R3); 21 CFR Part 312; 21 CFR Part 50; 21 CFR Part 56',
           recommendation:
-            'Add ICH E6(R2) to the applicable regulations. Map specific GCP requirements to the relevant procedure steps ' +
+            'Add ICH E6(R3) to the applicable regulations. Map specific GCP requirements to the relevant procedure steps ' +
             'to demonstrate that the SOP fulfills its intended GCP obligations.',
           relatedFields: ['applicable_regulations', 'department', 'process_scope', 'sop_title'],
         };
@@ -1103,7 +1103,7 @@ export function createSopAuditor(): WarGameAuditor {
     description:
       'Simulates an FDA GCP/GMP inspector scrutinizing a Standard Operating Procedure during a facility inspection, ' +
       'examining document control, training adequacy, deviation handling, regulatory traceability, and compliance with ' +
-      '21 CFR 211 (cGMP), 21 CFR 820 (QSR), ICH E6(R2) (GCP), and 21 CFR Part 11 (electronic records).',
+      '21 CFR 211 (cGMP), 21 CFR 820 (QSR), ICH E6(R3) (GCP), and 21 CFR Part 11 (electronic records).',
     rules,
   };
 }

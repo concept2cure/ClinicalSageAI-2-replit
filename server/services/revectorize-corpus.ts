@@ -29,9 +29,10 @@
  * the tenant-scoping decision is explicit and human-reviewed per corpus (the
  * org column differs across the eight corpus tables).
  *
- * @compliance ICH E6(R2) data integrity — the same query against the same
- *   corpus must yield a reproducible result set; a half-migrated index (mixed
- *   models/dimensions) silently breaks that, which the warnings guard against.
+ * @compliance ICH E6(R3) Annex 1 §4 (Data Governance) data integrity — the same
+ *   query against the same corpus must yield a reproducible result set; a
+ *   half-migrated index (mixed models/dimensions) silently breaks that, which
+ *   the warnings guard against.
  * @module server/services/revectorize-corpus
  */
 

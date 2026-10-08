@@ -13,7 +13,7 @@
  *    'human' or 'mt_postedited' methods are accepted by store(). This mirrors the
  *    contract in shared/types/translation.ts (machine drafts are never approvable)
  *    and the TmMatch.method type in ./types (machine is never a TM source).
- *  - DNT identifiers (21 CFR, ICH E6(R2), M1..M5, FDA/EMA/PMDA, INN/drug names,
+ *  - DNT identifiers (21 CFR, ICH E6(R3), M1..M5, FDA/EMA/PMDA, INN/drug names,
  *    MedDRA terms, codes, JSON keys, slash commands) are NOT touched here:
  *    normalization is meaning-preserving and identifier-preserving — it only folds
  *    whitespace/case for *match keying* and never mutates stored target text.

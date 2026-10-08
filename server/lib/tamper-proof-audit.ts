@@ -16,11 +16,11 @@
  * Compliance Requirements Met:
  * - FDA 21 CFR Part 11.10(e): Audit trails
  * - FDA 21 CFR Part 11.10(k.2): Electronic signatures
- * - ICH E6(R2) 5.5.3: Data integrity
+ * - ICH E6(R3) Annex 1 §4.3: Computerised systems (data integrity)
  *
  * @module TamperProofAuditLog
  * @version 1.0.0
- * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5
+ * @compliance FDA 21 CFR Part 11, ICH E6(R3), GAMP 5
  */
 
 import { Pool } from 'pg';

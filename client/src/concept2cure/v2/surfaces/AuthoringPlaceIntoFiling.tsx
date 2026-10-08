@@ -176,12 +176,14 @@ export function ownSectionRefusal(canonical: string | null, sectionCodes: Readon
 export function copyStatusLine(docStatus: string | null | undefined): string {
   if (docStatus == null || String(docStatus).trim() === '') {
     return 'The filing copy takes this document’s state when it is placed, and keeps it. ' +
-      'Freeze, dispatch and transmit release only an approved copy.';
+      'Freeze, dispatch and transmit accept only an approved copy.';
   }
+  /* A forecast from the status as loaded: nothing is filed yet, and only the
+     server reads the approval seal (it refuses an unsealed or altered source). */
   const copy = snapshotStatusFor(docStatus);
-  if (copy === 'approved') return 'Filed as approved: this document carries its approval signature.';
-  if (copy === 'finalized') return 'Filed as finalized, not approved. Freeze will refuse it until you re-place it after approval.';
-  return 'Filed as draft. Freeze will refuse it until you re-place it after approval.';
+  if (copy === 'approved') return 'Will be filed as approved once the server verifies its approval seal.';
+  if (copy === 'finalized') return 'Will be filed as finalized, not approved. Freeze refuses it until you re-place the document after approval.';
+  return 'Will be filed as a draft. Freeze refuses it until you re-place the document after approval.';
 }
 
 /** The server's copy status after placing, as a sentence; empty when it is
@@ -264,6 +266,8 @@ function AuthoringPlaceIntoFilingForDocument({
   const [placement, setPlacement] = React.useState<Placement | null>(null);
   const [needsReconciliation, setNeedsReconciliation] = React.useState(false);
   const [replaced, setReplaced] = React.useState(false);
+  const [replaceReason, setReplaceReason] = React.useState('');
+  const verdictRef = React.useRef<HTMLDivElement | null>(null);
   const generation = React.useRef(0);
   const pending = React.useRef(false);
   React.useEffect(() => () => { generation.current += 1; }, []);
@@ -321,7 +325,7 @@ function AuthoringPlaceIntoFilingForDocument({
     setVerdict(null);
     setPlacement(null);
     try {
-      const copy = await takeFilingCopy(docId, docTitle, sectionCode, current);
+      const copy = await takeFilingCopy(docId, docTitle, sectionCode, reason.trim(), current);
       if (!copy || !current()) return;
       if (!copy.ok) {
         setNeedsReconciliation(copy.unconfirmed);
@@ -361,10 +365,10 @@ function AuthoringPlaceIntoFilingForDocument({
           `Already placed: leaf #${put.data.id} at ${put.data.sectionCode} in sequence ${sequenceLabel} holds this document ` +
           `(${documentSourceLabel('coauthor_documents', snapshotId)}). The leaf was not changed.` +
           (copyStatus === 'approved'
-            ? ' Its copy is now the approved version; re-place it to pin the leaf to that text.'
+            ? ' The document is now approved: re-place the approved version so the leaf holds the approved text.'
             : placedCopyNote(copyStatus));
         setVerdict({ tone: 'ok', text });
-        fireToast(`Already placed — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber} holds this document. Nothing was written.`);
+        fireToast(`Already placed — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber} holds this document. The leaf was not changed.`);
         return;
       }
       const auditWarning = placementAuditWarning(put.data);
@@ -384,8 +388,13 @@ function AuthoringPlaceIntoFilingForDocument({
 
   /* Re-place approved version (F17): the leaf that already holds this
      document is rewritten by id, so the server re-pins it to the approved
-     copy's text. Offered only when the server said the copy is approved. */
-  const canReplace = !!placement && placement.unchanged && placement.copyStatus === 'approved' && !replaced && !placing;
+     copy's text. Offered only when the server said the copy is approved. It
+     states what it changes and takes its own reason (design review
+     2026-10-08, Part 11 lens: it re-sent the first placement's reason from a
+     locked field). The button stays mounted while the write runs, so focus
+     does not drop to the page. */
+  const offerReplace = !!placement && placement.unchanged && placement.copyStatus === 'approved' && !replaced;
+  const canReplace = offerReplace && !placing && placementReasonOk(replaceReason);
   const replaceApproved = async () => {
     if (!placement || !canReplace || pending.current) return;
     const started = generation.current;
@@ -399,7 +408,7 @@ function AuthoringPlaceIntoFilingForDocument({
         lifecycleOp: op,
         documentTable: 'coauthor_documents',
         documentId: placement.snapshotId,
-        reason: reason.trim(),
+        reason: replaceReason.trim(),
       });
       if (started !== generation.current) return;
       if (!matchingLeafReceipt(put.data, { sequenceId: placement.seqId, sectionCode: placement.sectionCode, documentTable: 'coauthor_documents', documentId: placement.snapshotId, lifecycleOp: op }) || put.data.id !== placement.leafId) {
@@ -413,8 +422,10 @@ function AuthoringPlaceIntoFilingForDocument({
       setVerdict({
         tone: auditWarning ? 'err' : 'ok',
         text: `Re-placed: leaf #${put.data.id} at ${put.data.sectionCode} now holds the approved version ` +
-          `(${documentSourceLabel('coauthor_documents', placement.snapshotId)}), server-confirmed.` + auditWarning,
+          `(${documentSourceLabel('coauthor_documents', placement.snapshotId)}).` + auditWarning,
       });
+      // The button goes with the offer: the outcome takes focus, not the page.
+      requestAnimationFrame(() => verdictRef.current?.focus());
       fireToast(`Re-placed — leaf ${put.data.sectionCode} in sequence ${placement.sequenceNumber} holds the approved version.`);
     } finally {
       if (started === generation.current) { pending.current = false; setPlacing(false); }
@@ -515,7 +526,16 @@ function AuthoringPlaceIntoFilingForDocument({
               <PlacementReasonField value={reason} onChange={setReason} idPrefix="apf" disabled={placing} />
               </fieldset>
 
-              <div className="de-desc" data-testid="apf-copy-status">{copyStatusLine(docStatus)}</div>
+              {/* Until placement; after it, the verdict states the server's copy status. */}
+              {!placement && (
+                <div
+                  id="apf-copy-status"
+                  className={String(docStatus ?? '').trim() !== '' && snapshotStatusFor(docStatus) !== 'approved' ? 'de-gov' : 'de-desc'}
+                  data-testid="apf-copy-status"
+                >
+                  {copyStatusLine(docStatus)}
+                </div>
+              )}
 
               {dirty && (
                 <div className="de-err" role="status">
@@ -533,18 +553,37 @@ function AuthoringPlaceIntoFilingForDocument({
               </div>
 
               {verdict && (
-                <div className={verdict.tone === 'err' ? 'de-err' : 'de-gov'} role="status">
+                <div className={verdict.tone === 'err' ? 'de-err' : 'de-gov'} role="status" ref={verdictRef} tabIndex={-1}>
                   {verdict.tone === 'ok' ? <span className="ico">{I.checkCircle}</span> : null}
                   <span className={verdict.tone === 'ok' ? 'de-gov-t' : undefined}>{verdict.text}</span>
                 </div>
               )}
 
-              {canReplace && (
-                <div className="de-field">
-                  <button className="btn" style={{ height: 30 }} onClick={replaceApproved}>
-                    Re-place approved version
-                  </button>
-                </div>
+              {offerReplace && placement && (
+                <>
+                  <div className="de-desc" id="apf-replace-effect">
+                    Re-placing pins leaf #{placement.leafId} at {placement.sectionCode} in sequence {placement.sequenceLabel} to
+                    the approved version&apos;s text. The ledger records the copy as approved, with your reason.
+                  </div>
+                  <PlacementReasonField
+                    value={replaceReason}
+                    onChange={setReplaceReason}
+                    idPrefix="apf-replace"
+                    label="Reason for re-placing"
+                    disabled={placing}
+                  />
+                  <div className="de-field">
+                    <button
+                      type="button"
+                      className="btn primary sm"
+                      disabled={!canReplace}
+                      aria-describedby="apf-replace-effect"
+                      onClick={replaceApproved}
+                    >
+                      Re-place approved version
+                    </button>
+                  </div>
+                </>
               )}
 
               {(placement || needsReconciliation) && (
@@ -615,7 +654,7 @@ type CopyResult =
 
 /** Read saved content and request the existing governed snapshot. A context
  * switch after the read stops the next write; an already-sent write may commit. */
-async function takeFilingCopy(docId: string, docTitle: string, sectionCode: string, current: () => boolean): Promise<CopyResult | null> {
+async function takeFilingCopy(docId: string, docTitle: string, sectionCode: string, changeReason: string, current: () => boolean): Promise<CopyResult | null> {
   const read = await liveGetOrNull<{ sections?: SavedSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
   if (!current()) return null;
   if (read.error || !read.data) return {
@@ -632,7 +671,7 @@ async function takeFilingCopy(docId: string, docTitle: string, sectionCode: stri
     verdict: { tone: 'err', text: 'This document has no saved section content yet — there is nothing to file. Nothing was created.' },
   };
   const snap = await mutateVerbatim<{ success?: boolean; document?: SnapshotRow }>('POST', '/api/coauthor/documents', {
-    title: docTitle, moduleNumber: sectionCode, content: assembleSnapshot(saved), sourceAuthoringDocId: docId,
+    title: docTitle, moduleNumber: sectionCode, content: assembleSnapshot(saved), sourceAuthoringDocId: docId, changeReason,
   });
   if (!current()) return null;
   return copyReceipt(snap.data, docId) ?? snapshotFailure(snap);

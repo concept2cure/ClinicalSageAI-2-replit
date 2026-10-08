@@ -6,8 +6,8 @@
  * review comments (section-anchored, severity-graded, resolvable). Soft-links to
  * the authored document via protocol_document_id. Consensus + readiness are
  * derived deterministically from the assignment dispositions and open blocking
- * comments. Grounded in ICH E6(R2) §5.0 (quality / review) and 45 CFR 46.111
- * (IRB approval criteria) for the review-role taxonomy and dispositions.
+ * comments. Grounded in ICH E6(R3) Annex 1 §1 (IRB/IEC) and
+ * 45 CFR 46.111 (IRB approval criteria) for the review-role taxonomy and dispositions.
  *
  * Conventions match the platform; status/role/severity columns are CHECK-
  * constrained. Mutations are governed + audited under domain 'protocol_development'.

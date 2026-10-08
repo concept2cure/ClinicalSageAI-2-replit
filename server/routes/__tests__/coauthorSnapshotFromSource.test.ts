@@ -227,10 +227,13 @@ const auditFor = async (id: number) =>
   ).rows;
 const sha = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex');
 
+/* 2026-10-08 (filing-spine design review, Part 11 lens): taking a filing copy
+   states the person's reason, as the leaf write does. */
+const PLACE_REASON = 'Placing the cover letter into sequence 0000';
 const place = (sourceAuthoringDocId: string, extra: Record<string, unknown> = {}) =>
   request(app)
     .post('/api/coauthor/documents')
-    .send({ title: 'Cover letter', moduleNumber: 'm1.2', content: '<p>client copy</p>', sourceAuthoringDocId, ...extra });
+    .send({ title: 'Cover letter', moduleNumber: 'm1.2', content: '<p>client copy</p>', sourceAuthoringDocId, changeReason: PLACE_REASON, ...extra });
 
 const APPROVED_TEXT = '## 1.2 — Cover\n\nThe approved cover letter.\n\n## 1.2.1 — Annex\n\nApproved annex.';
 
@@ -716,9 +719,61 @@ describe('re-taking an existing copy is recorded', () => {
       // said 'coauthor document deleted', a sentence the code wrote in the
       // person's place (routes/governed-reason.ts statedReasonOrNull).
       { event_type: 'coauthor_document.deleted', reason: null, ...flags },
-      { event_type: 'coauthor_document.retaken', reason: 'deleted filing copy re-created from its source authoring document', ...flags },
-      { event_type: 'coauthor_document.retaken', reason: 'filing copy re-taken from its source authoring document', ...flags },
+      /* 2026-10-08 (filing-spine design review, Part 11 lens): the person's
+         stated reason. These read 'deleted filing copy re-created from its
+         source authoring document' and 'filing copy re-taken from its source
+         authoring document', sentences the code wrote in the person's place;
+         what the system did is in the event's own fields (recreated, before,
+         after). */
+      { event_type: 'coauthor_document.retaken', reason: PLACE_REASON, ...flags },
+      { event_type: 'coauthor_document.retaken', reason: PLACE_REASON, ...flags },
     ]);
+  });
+});
+
+/* ── 2026-10-08 (filing-spine design review, Part 11 lens) ───────────────────
+ * Placing a document takes, or re-takes, its one filing copy: the copy every
+ * leaf that places it points at. The leaf write asks for the regulatory-author
+ * role and a reason; this write asked for neither, so a viewer could re-take a
+ * filing copy, and its ledger reason was a sentence the code composed. */
+describe('a filing copy is written by an author, for a stated reason', () => {
+  const viewer = express();
+  viewer.use(express.json());
+  viewer.use((req: any, _res, next) => {
+    req.user = { id: 4, userId: 4, organizationId: ORG, role: 'viewer', roles: expandRoleClaims('viewer', undefined) };
+    next();
+  });
+  viewer.use('/api/coauthor', coauthorRoutes);
+
+  it('without a reason it is refused, and nothing is taken or re-taken', async () => {
+    const SRC = '10000000-0000-4000-8000-0000000000a1';
+    await source(SRC, 'draft', [['1.2', 'Cover', 'v1']]);
+    const first = await place(SRC, { changeReason: undefined });
+    expect(first.status).toBe(400);
+    expect(first.body.error).toBe('REASON_REQUIRED');
+    expect(await rowsFor(SRC)).toEqual([]);
+
+    const id = (await place(SRC)).body.document.id;
+    await h.pglite.query("UPDATE authoring_sections SET content = 'v2' WHERE doc_id = $1", [SRC]);
+    const again = await place(SRC, { changeReason: 'short' });
+    expect(again.status).toBe(400);
+    expect((await row(id))?.content).toContain('v1');
+  });
+
+  it('a viewer is refused, and nothing is taken', async () => {
+    const SRC = '10000000-0000-4000-8000-0000000000a2';
+    await source(SRC, 'draft', [['1.2', 'Cover', 'v1']]);
+    const res = await request(viewer)
+      .post('/api/coauthor/documents')
+      .send({ title: 'Cover letter', sourceAuthoringDocId: SRC, changeReason: PLACE_REASON });
+    expect(res.status).toBe(403);
+    expect(await rowsFor(SRC)).toEqual([]);
+  });
+
+  it('a document with no source is not this write: no reason or author role is asked of it here', async () => {
+    const res = await request(viewer).post('/api/coauthor/documents').send({ title: 'Scratch', content: '<p>x</p>' });
+    expect(res.status).not.toBe(403);
+    expect(res.body.error).not.toBe('REASON_REQUIRED');
   });
 });
 

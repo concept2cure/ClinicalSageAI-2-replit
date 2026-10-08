@@ -91,6 +91,8 @@ export interface VaultFileDigest {
   catalogStatus: string;
   documentKind?: string | null;
   purpose?: string | null;
+  /** suggested | confirmed | corrected (S4); absent or null reads as not confirmed. */
+  catalogState?: string | null;
 }
 
 /** A chat-uploaded file the client attached in some past conversation. */
@@ -168,17 +170,31 @@ export function formatVaultScopeLine(scope: VaultFileScope): string {
   return parts.join(' ');
 }
 
+/**
+ * Whose description this is (S4). AnA's own suggestion is recalled as hers and
+ * unconfirmed, so she does not repeat it to the user as an established fact.
+ */
+function catalogProvenance(state: string | null | undefined): string {
+  if (state === 'confirmed') return ' (confirmed by a person)';
+  if (state === 'corrected') return ' (corrected by a person)';
+  return ' (your suggestion, not yet confirmed by a person)';
+}
+
 /** One recall line per file — location first, then what it is (or, honestly, that it awaits study). */
 export function formatVaultFileLine(f: VaultFileDigest): string {
+  const filed = [f.folderId, f.ctdSection].filter(Boolean).join(' · ');
+  // A suggested folder is a proposal no person has confirmed; said so (S4).
   const location =
     f.placementStatus === 'unfiled'
       ? 'unfiled — needs review'
-      : [f.folderId, f.ctdSection].filter(Boolean).join(' · ') || f.placementStatus;
+      : f.placementStatus === 'suggested'
+        ? `${filed ? `${filed}, ` : ''}filing suggested, not yet confirmed by a person`
+        : filed || f.placementStatus;
   const name = clip(f.documentTitle || f.fileName, 90);
   const where = `${f.programName ? `${clip(f.programName, 40)} / ` : ''}${location}`;
   if (f.catalogStatus === 'cataloged') {
     const what = [f.documentKind, f.purpose].filter(Boolean).map(s => clip(String(s), 160)).join(' — ');
-    return `- **${name}** (${where}): ${what || 'cataloged'}`;
+    return `- **${name}** (${where}): ${what || 'cataloged'}${catalogProvenance(f.catalogState)}`;
   }
   if (f.catalogStatus === 'extraction_failed') {
     return `- **${name}** (${where}): extraction FAILED — the content is not readable yet; say so if asked.`;

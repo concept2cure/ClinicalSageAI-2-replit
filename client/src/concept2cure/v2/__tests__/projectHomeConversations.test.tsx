@@ -31,11 +31,12 @@ const THREADS = [
   { id: 'ana-ri_2', title: null, created_at: '2026-09-01T10:00:00Z', updated_at: null, program_id: PID },
 ];
 
-function route(threads: 'ok' | 'empty' | 'error') {
+function route(threads: 'ok' | 'empty' | 'error' | 'shapeless') {
   apiRequest.mockImplementation(async (_m: string, url: string) => {
     if (url === `/api/c2c/projects/${PID}`) return ok({ title: 'BX-301', readiness: 42 });
     if (url.startsWith('/api/chat/threads?program_id=')) {
       if (threads === 'error') return fail(503);
+      if (threads === 'shapeless') return ok({ data: [] });
       return ok({ threads: threads === 'ok' ? THREADS : [] });
     }
     return ok({});
@@ -62,15 +63,27 @@ describe('ProjectHome — conversations', () => {
     expect(p.onNav).toHaveBeenCalledWith('conversation-thread');
   });
 
+  /* Amended 2026-10-08 (filing-spine design review, honest-state lens): the
+     server lists only the caller's own threads (chat/threads.ts), so "No
+     project conversations yet" was untrue for a colleague's project. The empty
+     says whose list it is, in one line (the dashed block pushed the five tabs
+     below the fold), and a reply with no `threads` is a failed read. */
   it('shows an honest empty when the program has no threads, and a failure as a failure', async () => {
     route('empty');
     render(<ProjectHome {...props()} />);
-    expect(await screen.findByText(/No project conversations yet/)).toBeTruthy();
+    const empty = await screen.findByText(/You have no conversations on this project yet\./);
+    expect(empty.tagName).toBe('P');
+    expect(screen.queryByText(/No project conversations yet/)).toBeNull();
     cleanup();
     route('error');
     render(<ProjectHome {...props()} />);
     expect(await screen.findByText(/Couldn't load conversations/)).toBeTruthy();
-    expect(screen.queryByText(/No project conversations yet/)).toBeNull();
+    expect(screen.queryByText(/You have no conversations on this project yet/)).toBeNull();
+    cleanup();
+    route('shapeless');
+    render(<ProjectHome {...props()} />);
+    expect(await screen.findByText(/Couldn't load conversations/)).toBeTruthy();
+    expect(screen.queryByText(/You have no conversations on this project yet/)).toBeNull();
   });
 
   it('the composer leads the main column and the readiness ring sits in the aside', async () => {

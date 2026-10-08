@@ -24,7 +24,7 @@ export const ICH_M11_PROTOCOL_LIMITATIONS: readonly string[] = [
   'The required flags mean retain these level 1/2 headings when using M11. They do not require every possible assessment, intervention, objective or analysis; establish applicability from the approved design and use an explicit, justified not-applicable statement where appropriate.',
   'Only front matter and level 1/2 headings are encoded. Consult the final template for deeper headings, conditional text, repeatable objectives, fields and formatting. Remove its instructional section 0 and authoring prompts before finalisation.',
   'Purpose notes are platform authoring summaries of where approved sponsor material belongs; they are not a complete or verbatim agency content specification.',
-  'Confirm current country and agency implementation, ethics requirements, client template, protocol version and amendment scope. Existing E6(R2) projects require a reviewed mapping before adopting the changed M11 section numbers.',
+  'Confirm current country and agency implementation, ethics requirements, client template, protocol version and amendment scope. Existing E6(R2) projects require a reviewed mapping before adopting the changed M11 section numbers (E6(R2) is superseded by E6(R3), 2025-01-06).',
   'This outline does not implement or validate M11 technical specification exchange, establish a filing format or demonstrate agency acceptance, source completeness, scientific adequacy or approval.',
 ];
 

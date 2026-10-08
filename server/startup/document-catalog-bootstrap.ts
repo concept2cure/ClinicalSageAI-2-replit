@@ -24,11 +24,19 @@
  * and then logs the state it resolves — including which way it is on, and, when
  * it is off, the two ways to turn it on.
  *
- * It does NOT enable anything. Defaulting the catalog on for every tenant is a
- * product decision with a per-upload embedding cost behind it (chunking embeds
- * every document at ingest), and an agent is not the right place to make it.
- * What this removes is the part that was not a decision at all: nobody could
- * see the switch.
+ * The catalog row is created ON (founder decision, 2026-10-08, Data Room
+ * catalog S4: docs/design/DATA_ROOM_CATALOG_AND_CLINICAL_DATA_2026-10-08.md).
+ * The cost that kept it off is gone: since S1 the passage index chunks every
+ * upload with no embedder, and the per-upload embedding is the separate
+ * ana.vault_chunking row, still created off. And what AnA writes is now a
+ * suggestion that names its model and turn and waits for a person's
+ * confirmation (document-catalog-governance.service.ts), so turning it on no
+ * longer lets a model's reading stand as fact.
+ *
+ * Only a row that does not exist is created ON. A row that exists keeps its
+ * state, on or off, so an environment an operator turned off stays off, and
+ * an environment bootstrapped before this change keeps the off row it was
+ * given until an operator enables it.
  *
  * @module server/startup/document-catalog-bootstrap
  */
@@ -133,8 +141,9 @@ export async function bootstrapDocumentCatalogToggles(): Promise<CatalogToggleSt
   await FeatureToggleService.initializeFeatureToggle(
     DOCUMENT_CATALOG_FEATURE_KEY,
     "AnA's project-file surface: list, read (with a full-coverage gate), catalog, file and semantically " +
-      "search the client's vault documents, and recall them at session start.",
-    false,
+      "search the client's vault documents, and recall them at session start. AnA's descriptions are " +
+      'suggestions a person confirms in the Vault.',
+    true,
   ).catch(rowNotCreated(DOCUMENT_CATALOG_FEATURE_KEY));
   await FeatureToggleService.initializeFeatureToggle(
     VAULT_CHUNKING_FEATURE_KEY,

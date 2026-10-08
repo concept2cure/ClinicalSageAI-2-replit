@@ -1,0 +1,47 @@
+{
+  "observed_at": "2026-10-08T16:42:45.859Z",
+  "runs": [
+    {
+      "name": "Repo Health Baseline Refresh",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "head_sha": "40b1f05fd4c8d06883a0dfad4158daa8e27080a4",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37795413494"
+    },
+    {
+      "name": "Semgrep",
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "40b1f05fd4c8d06883a0dfad4158daa8e27080a4",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37795413584"
+    },
+    {
+      "name": "Tier 5 Browser Smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "40b1f05fd4c8d06883a0dfad4158daa8e27080a4",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37795413558"
+    },
+    {
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "40b1f05fd4c8d06883a0dfad4158daa8e27080a4",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37795414300"
+    },
+    {
+      "name": "C2C Agent — Validate & Audit",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "40b1f05fd4c8d06883a0dfad4158daa8e27080a4",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37795413744"
+    },
+    {
+      "name": "CI",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "40b1f05fd4c8d06883a0dfad4158daa8e27080a4",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37795414127"
+    }
+  ]
+}

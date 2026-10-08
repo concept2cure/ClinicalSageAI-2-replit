@@ -409,7 +409,7 @@ const rules: AuditRule[] = [
           this.question,
           'No documentation of GCP compliance or IRB oversight is referenced for the pivotal clinical investigation sites.',
           'Clinical investigations supporting a PMA must comply with GCP requirements per 21 CFR 812, 21 CFR 50, and 21 CFR 56.',
-          '21 CFR 812; 21 CFR 50; 21 CFR 56; ICH E6(R2)',
+          '21 CFR 812; 21 CFR 50; 21 CFR 56; ICH E6(R3)',
           'Provide documentation of GCP compliance for all clinical sites, including IRB approval letters, monitoring reports, and a statement of compliance with 21 CFR Parts 50 and 56.',
           ['gcp_compliance', 'irb_approval', 'pivotal_study_id'],
         );
