@@ -31,6 +31,9 @@ import {
   commitSectionToFiling,
   type CommitSectionResult,
 } from '../services/c2c/commit-section-to-filing.js';
+// Spine F1: the approval signature records the filing sections it approves
+// through the one governed-action writer (audit_logs + c2c_ana_actions).
+import { recordGovernedAction } from './c2c/actions';
 // Span lineage: every span of an authored document must trace to where it came
 // from. The gate is factored into one helper so every authored-content write
 // (interactive save AND section create) applies the identical rule.
@@ -4990,6 +4993,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
     // or roll back together.
     const client = await pool.connect();
     let signatureDigest = '';
+    let filingApproval: ApproveBoundSectionsResult | null = null;
     try {
       await client.query('BEGIN');
 
@@ -5023,6 +5027,13 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         signatureDigest,
         covered,
         tenantId,
+      });
+
+      // Spine F1: the approval signature approves the filing sections it
+      // covers, in this transaction, recorded through recordGovernedAction.
+      // Only APPROVER means approval; AUTHOR and REVIEWER move no section.
+      filingApproval = await filingApprovalForSignature(client, req, {
+        approves: meaning === 'APPROVER', docId: String(docId), tenantId, signatureId, meaning, reason: intent, via: 'e-sign',
       });
 
       // Create audit trail
@@ -5079,6 +5090,9 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       // The frozen snapshot this signature attests to (§11.70), or null.
       covers: covered,
       signedAt: new Date().toISOString(),
+      // Spine F1: what the approval did to the filing's sections; null for a
+      // signature that does not mean approval.
+      filingApproval: filingApprovalReply(filingApproval),
     });
   } catch (error) {
     console.error('Error creating electronic signature:', error);
@@ -6602,6 +6616,211 @@ router.get('/docs/:docId/workflow', async (req: Request, res: Response) => {
   }
 });
 
+interface ApproveBoundSectionsInput {
+  /** The signing handler's OPEN transaction — the one that writes the signature. */
+  client: Queryable;
+  /** authoring_documents.id that the approval signature was applied to. */
+  authoringDocId: string;
+  /** Verified tenant. */
+  tenantId: number;
+  /** Verified signer id (numeric; the sign paths re-verify it before this runs). */
+  actorId: string;
+  /** authoring_signatures.id of the approval signature — the §11.70 link. */
+  signatureId: string;
+  /** The signature's meaning, as recorded on the signature. */
+  meaning: string;
+  /** The signer's stated reason / intent, as recorded on the signature. */
+  reason: string;
+  /** Which signing path approved: '/e-sign' (APPROVER) or '/sign' (last workflow step). */
+  via: 'e-sign' | 'sign';
+}
+
+type ApproveBoundSectionsResult =
+  | {
+      /** Sections moved to 'approved' by this signature. */
+      approved: string[];
+      /** Bound sections this signature did not approve, and still not approved —
+       *  no text, or filing text that is not the text signed. */
+      notApproved: string[];
+      documentId: string;
+      /** c2c_ana_actions id of the governed-action record; null when nothing moved. */
+      actionId: string | null;
+    }
+  | { approved: []; notApproved: []; documentId: null; actionId: null; reason: string };
+
+/**
+ * The approval signature approves the filing's sections it covers (spine F1).
+ *
+ * ── The defect ────────────────────────────────────────────────────────────────
+ * Approving a document in the editor — the APPROVER e-signature, or the
+ * signature that clears the last step of its approval workflow — flipped
+ * authoring_documents.status and froze the working copy, and left every
+ * c2c_document_sections row where it was. Readiness counts only 'approved' and
+ * 'locked' sections (c2c_recompute_document_readiness), so a signed, approved
+ * filing read 0% ready, and the dispatch gate (leaf-source-resolver) reported
+ * its sections unfinalized.
+ *
+ * ── What moves ────────────────────────────────────────────────────────────────
+ * Only sections the signer actually signed: a governed section of the BOUND
+ * document whose key is the code of one of this document's authored sections,
+ * that has written text (sectionHasContentSql's test), and whose filing text is
+ * exactly the authored text the signature covers. A section whose filing text
+ * differs (written elsewhere after the last save) was not signed and is not
+ * approved; it is reported in `notApproved`. Only forward: 'todo', 'drafted'
+ * and 'review' move; 'approved' stays; 'locked' is never touched.
+ *
+ * ── Recorded, in the signature's transaction ──────────────────────────────────
+ * One recordGovernedAction row (audit_logs + c2c_ana_actions, hash-chained) on
+ * the caller's client, naming the sections and the signature. A throw anywhere
+ * aborts the caller's transaction, so the signature and the section approval
+ * land together or not at all.
+ */
+async function approveBoundFilingSections(
+  input: ApproveBoundSectionsInput,
+): Promise<ApproveBoundSectionsResult> {
+  const { client, authoringDocId, tenantId, actorId, signatureId, meaning, reason, via } = input;
+
+  // The same can-not-fail probe commitSectionToFiling makes, for the same
+  // reason: this runs inside the signing transaction, and the governed store
+  // (and the binding column) is optional per deployment. Absent is "not
+  // applicable"; a write failing against a present store aborts the signature.
+  const capable = await client.query(
+    `SELECT (to_regclass('public.c2c_document_sections') IS NOT NULL
+             AND to_regclass('public.c2c_documents') IS NOT NULL
+             AND EXISTS (SELECT 1 FROM information_schema.columns
+                          WHERE table_schema = 'public'
+                            AND table_name = 'authoring_documents'
+                            AND column_name = 'c2c_document_id')) AS ok`,
+  );
+  if (!capable.rows[0]?.ok) {
+    return {
+      approved: [], notApproved: [], documentId: null, actionId: null,
+      reason: 'The governed document store is not provisioned here, so there is no filing to approve.',
+    };
+  }
+
+  const bound = await client.query(
+    `SELECT c2c_document_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2 LIMIT 1`,
+    [authoringDocId, tenantId],
+  );
+  const documentId: string | null = bound.rows[0]?.c2c_document_id ?? null;
+  if (!documentId) {
+    return {
+      approved: [], notApproved: [], documentId: null, actionId: null,
+      reason: 'This document is not bound to a filing, so no governed section was approved.',
+    };
+  }
+
+  // Tenant-scoped on both stores: the authored sections by tenant_id, the
+  // governed document by org_id (c2c_document_sections has no org column).
+  const moved = await client.query(
+    `UPDATE c2c_document_sections ds
+        SET status = 'approved', updated_at = now()
+       FROM authoring_sections s
+      WHERE ds.document_id = $1
+        AND s.doc_id = $2 AND s.tenant_id = $3
+        AND s.code = ds.section_key
+        AND ds.status IN ('todo', 'drafted', 'review')
+        AND jsonb_typeof(ds.content) = 'object'
+        AND (ds.content ->> 'text') !~ '^\\s*$'
+        AND (ds.content ->> 'text') = s.content
+        AND EXISTS (SELECT 1 FROM c2c_documents d
+                     WHERE d.id = ds.document_id AND d.org_id = $3)
+      RETURNING ds.section_key`,
+    [documentId, authoringDocId, tenantId],
+  );
+  // rows, never rowCount: PGlite does not populate rowCount.
+  const movedKeys: string[] = moved.rows.map((r: { section_key: string }) => r.section_key);
+  const approved = [...new Set(movedKeys)].sort();
+
+  const left = await client.query(
+    `SELECT DISTINCT ds.section_key
+       FROM c2c_document_sections ds
+       JOIN authoring_sections s ON s.code = ds.section_key AND s.doc_id = $2 AND s.tenant_id = $3
+      WHERE ds.document_id = $1 AND ds.status NOT IN ('approved', 'locked')
+      ORDER BY ds.section_key`,
+    [documentId, authoringDocId, tenantId],
+  );
+  const notApproved: string[] = left.rows.map((r: { section_key: string }) => r.section_key);
+
+  if (approved.length === 0) {
+    return { approved: [], notApproved, documentId, actionId: null };
+  }
+
+  const userId = Number(actorId);
+  if (!Number.isInteger(userId)) {
+    // The sign paths refuse a non-numeric signer before this runs
+    // (reverifyAuthoringSigner). Reaching here without one is a fault: fail
+    // the whole signing transaction rather than approve without a record.
+    throw new Error('approveBoundFilingSections: the signer id is not a user id');
+  }
+  const recorded = await recordGovernedAction(client, {
+    orgId: tenantId,
+    userId,
+    command: 'approve',
+    target: `c2c_document:${documentId}`,
+    reason: reason && reason.trim() ? reason.trim() : null,
+    payload: {
+      sections: approved,
+      notApproved,
+      status: 'approved',
+      signatureId,
+      meaning,
+      via,
+      authoringDocumentId: authoringDocId,
+    },
+    domain: 'documents',
+    surface: `authoring-${via}`,
+  });
+
+  return { approved, notApproved, documentId, actionId: recorded.actionId };
+}
+
+/**
+ * The signing handlers' one call into approveBoundFilingSections: null when this
+ * signature does not approve the document (`approves` false), so a signature of
+ * any other meaning moves no section. The signer id is the verified principal.
+ */
+async function filingApprovalForSignature(
+  client: Queryable,
+  req: Request,
+  args: {
+    approves: boolean;
+    docId: string;
+    tenantId: number;
+    signatureId: string;
+    meaning: string;
+    reason: string;
+    via: 'e-sign' | 'sign';
+  },
+): Promise<ApproveBoundSectionsResult | null> {
+  if (!args.approves) return null;
+  return approveBoundFilingSections({
+    client,
+    authoringDocId: args.docId,
+    tenantId: args.tenantId,
+    actorId: String(getActorId(req) ?? ''),
+    signatureId: args.signatureId,
+    meaning: args.meaning,
+    reason: args.reason,
+    via: args.via,
+  });
+}
+
+/**
+ * What a signing response says the approval did to the filing's sections.
+ * `documentId` names the filing; when there is none (no governed store, or the
+ * document is not bound) it is null and `reason` says why, so "no filing" never
+ * reads like "every bound section was already approved".
+ */
+function filingApprovalReply(
+  result: ApproveBoundSectionsResult | null,
+): { approved: string[]; notApproved: string[]; documentId: string | null; reason?: string } | null {
+  if (!result) return null;
+  const reply = { approved: result.approved, notApproved: result.notApproved, documentId: result.documentId };
+  return 'reason' in result ? { ...reply, reason: result.reason } : reply;
+}
+
 /**
  * The last workflow signature has cleared the chain: approve the document and
  * leave the immutable record that approval means.
@@ -6686,7 +6905,7 @@ async function advanceWorkflowForSignature(args: {
   meaning: string;
   reason: string;
   contentHash: string;
-}): Promise<void> {
+}): Promise<boolean> {
   const { client, req, docId, tenantId, signerEmail, meaning, reason, contentHash } = args;
   // Update workflow step if applicable. Roles come from the VERIFIED token
   // (req.user.roles), not from the x-roles header — the header is derived from
@@ -6696,12 +6915,18 @@ async function advanceWorkflowForSignature(args: {
   const userRoles = (((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[])
     .map((r) => String(r).toUpperCase());
   if (userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC')) {
-    await client.query(
+    // RETURNING, read as rows (PGlite does not populate rowCount): whether THIS
+    // signature decided a pending step. Spine F1 approves filing sections only
+    // for the signature that clears the last step, never for a later signature
+    // on a workflow that was already complete (that one decides nothing).
+    const decided = await client.query(
       `UPDATE authoring_workflow_steps
        SET status = 'APPROVED', decision_note = $1, decided_at = NOW()
-       WHERE doc_id = $2 AND approver_email = $3 AND status = 'PENDING' AND tenant_id = $4`,
+       WHERE doc_id = $2 AND approver_email = $3 AND status = 'PENDING' AND tenant_id = $4
+       RETURNING id`,
       [reason, docId, signerEmail, tenantId]
     );
+    const decidedAStep = (decided?.rows ?? []).length > 0;
 
     /* Are all approvals in — or were there never any?
        This counted only PENDING steps and treated '0' as "all approved".
@@ -6732,8 +6957,13 @@ async function advanceWorkflowForSignature(args: {
 
     if (totalSteps > 0 && pendingCount === 0) {
       await approveAndFreezeDocument({ client, docId, tenantId, signerEmail, contentHash });
+      // Spine F1: true only when this signature cleared the last pending step.
+      // A signature after the workflow was complete decided no step, so it is
+      // not the approval and approves no filing section.
+      return decidedAStep;
     }
   }
+  return false;
 }
 
 /**
@@ -6833,6 +7063,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     // left un-approved. A single BEGIN/COMMIT makes the whole signing act land
     // together or roll back together; the pending-step count is read on the same
     // client so it sees this transaction's own step update.
+    let filingApproval: ApproveBoundSectionsResult | null = null;
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -6859,7 +7090,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         ]
       );
 
-      await advanceWorkflowForSignature({
+      const approvedDocument = await advanceWorkflowForSignature({
         client,
         req,
         docId: String(docId),
@@ -6868,6 +7099,14 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         meaning,
         reason,
         contentHash,
+      });
+
+      // Spine F1: only the signature that approves the document — the one that
+      // clears the last step of an existing workflow — approves the filing
+      // sections it covers, in this transaction, through recordGovernedAction.
+      // Any other signature on this path moves no section.
+      filingApproval = await filingApprovalForSignature(client, req, {
+        approves: approvedDocument, docId: String(docId), tenantId, signatureId, meaning, reason, via: 'sign',
       });
 
       // Create audit event
@@ -6923,6 +7162,8 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
       message: 'Document signed successfully',
       signatureId,
       digest: signatureDigest,
+      // Spine F1: what the approval did to the filing's sections, or null.
+      filingApproval: filingApprovalReply(filingApproval),
     });
   } catch (error) {
     console.error('Sign error:', error);

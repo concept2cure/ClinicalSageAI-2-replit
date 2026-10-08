@@ -1,0 +1,486 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-10-08T17:30:42.140Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:30:42.141Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-10-08T17:30:42.141Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > for every catalog row, a tile is shown exactly when the server offers the filing, and author-only ones say so 1309ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > offers no Health Canada filing, and a search for one says why, in the server's words 74ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a filing whose agency the server names no market for is not offered, and its reason is the server's 70ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > the chosen filing states its offer as text 45ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > lists nothing while the verdict is pending 13ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a failed read is an error with Retry, never an empty or a full list 81ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a filing that creates an NDA without being one (a Type A meeting) states no tier; the NDA itself says Build and sequence 115ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market 70ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a search lists not-offered filings by the same fields as offered ones (an eCTD search finds Health Canada) 78ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the not-offered note counts the tab it is shown on 373ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > Retry stays mounted and busy while it reads again, and focus lands on the search box when the list arrives 53ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > is a labelled region, not a modal dialog 194ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > closes on Escape and hands focus into the view on open 13ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > offers a named way back to the portfolio 159ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > states the current step in text, not only in colour 13ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the human sentence and never the enum token 345ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > offers a retry that re-runs the create 311ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the correlation id as the support handle 268ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > renders nothing internal even if an internal string reaches it 233ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > does not render a browser-native fetch message 259ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — created but not scaffolded > is a polite status with no retry, because the project exists 261ms
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 531ms
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)"
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 195ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 136ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 225ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 195ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 192ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > states the reason, offers no "Try again", and "Choose another filing" returns to step 1 without sending again 634ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > any other failure keeps "Try again" 263ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an NDA · FDA project opens on NDA · FDA (US), with the project's client type 319ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an MAA · EMA project opens on MAA · EU (EMA), not on a US IND 83ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a Health Canada project preselects Health Canada, whatever its spelling 62ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when that market already exists on the project, no region is preselected 71ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a type the form does not offer (J-NDA) is not guessed 48ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project record that could not be read preselects nothing, and says why 65ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when the project's submissions cannot be read, no region is preselected, and the drawer says why 59ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type 70ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission with no project open (F20) > preselects no application type, region or client type 42ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > each submission row shows its market's support, in the server's words 169ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > a failed read says it failed and offers a retry; it never reads as a market with nothing to say 222ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a read in flight claims nothing about the market 3ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > says nothing, and reads nothing, without both an application type and a market 1ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > does not repeat the summary when the line says the same thing 0ms
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+{
+  "timestamp": "2026-10-08T17:30:59.679Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an MHRA "IND" with 422 FILING_NOT_OFFERED and its reason, before any SQL 33ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a new Japanese NDA with 422 FILING_NOT_OFFERED and its reason, before any SQL 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency nothing maps (Swissmedic) with 422 FILING_NOT_OFFERED and its reason, before any SQL 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a drug application at a Notified Body with 422 FILING_NOT_OFFERED and its reason, before any SQL 12ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Health Canada (an NDS, sent as the wizard sends it) once the scaffold finds no outline, rolled back, nothing committed 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency with no outline (TGA) once the scaffold finds no outline, rolled back, nothing committed 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an EMA application with no EU outline (an NDA) once the scaffold finds no outline, rolled back, nothing committed 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > an EU MAA: created, "Author documents for this market", with the reason 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a continuing PMDA application (an approval number on file): created, author-only 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a US commercial IND: created, build and sequence 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU mdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU ivdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code us: scaffolded against FDA and created 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code US: scaffolded against FDA and created 3ms
+stdout | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-10-08T17:31:02.768Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:31:02.769Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-10-08T17:31:02.770Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/submissions-market-support.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-10-08T17:31:03.145Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > a failed pack read is a failure, never a market with no outline
+{
+  "timestamp": "2026-10-08T17:31:05.078Z",
+  "level": "error",
+  "message": "[submissions-routes] submissions route error",
+  "context": {
+    "err": "connection reset",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > without a market, states every region the platform names for the application type, from one pack read 35ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > with a market, states that one 8ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > refuses a request with no application type 4ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > a failed pack read is a failure, never a market with no outline 5ms
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T17:31:06.200Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:31:06.201Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T17:31:06.201Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (maa, EMA) → Flat Module 1, no channel 3ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, FDA) → Structured Module 1 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nds, Health_Canada) → No outline, no channel 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, ANVISA) → Unmapped 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > a market is named by its agency, its region code or its submission region alike 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > FDA: transmit is wired but not proven, and the line says why 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA MAA: flat Module 1, and the applicant uploads it 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA CTA goes through the CTIS portal only 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > Health Canada: no outline; its adapter posts to an endpoint written from no agency source, so no channel 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > NMPA, MFDS and TGA: no outline; no channel. NMPA and MFDS are gate-checked, TGA is not 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > MHRA "IND" is not offered: the UK has no IND, and the ind:mhra pack is mislabelled 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > an unmapped agency is refused at creation, with the reason 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no pack is borrowed from another agency: an FDA NDA pack does not give Health Canada an outline 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > module1ShapeForAgency is the backbone classification, by agency 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport reads the active packs once, from c2c_rule_packs > asks only for packs not superseded, and composes every requested market from that one read 2ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > EMA and PMDA are no longer reported buildable; FDA is 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > PMDA is not reported submit-supported while its adapter refuses every transmit 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > the coverage matrix agrees with the plan 1ms
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-10-08T17:31:07.470Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:31:07.471Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-10-08T17:31:07.471Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (ind, FDA) is built and sequenced, and says transmit is not proven 3ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (nda, FDA) is built and sequenced, and says transmit is not proven 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (bla, FDA) is built and sequenced, and says transmit is not proven 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (anda, FDA) is built and sequenced, and says transmit is not proven 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU MAA: Module 1 is flat, so no EMA sequence is built 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU clinical trial (CTA through CTIS) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (510k): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (de_novo): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (pma): authored, no sequence 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (ide): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a master file: bound to the harmonised Module 3 outline, as creation binds it, and authored 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a continuing PMDA application (approval number on file): authored, Module 1 flat 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nds, Health_Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, Health Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (cta, Health_Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, TGA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, NMPA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, MFDS) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EMA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (ind, MHRA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, ANVISA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EU / Notified Body) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, EU / Notified Body) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, FDA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (jnda, PMDA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > refuses a variation for FDA, however the region is named 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > an EU variation, and every other FDA type, is not refused here 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA NDA names the NDA and the marketing applications of its family, and no meeting, designation, supplement, report or QMS record 2ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA BLA names the BLA and the 351(k), not the supplement 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an author-only or refused offer is not scoped to named filings 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (mdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (ivdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (cer, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > however the catalog or an API caller names it 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, us) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, US) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, EU) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, eu) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, FDA) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Health Canada) → Health_Canada 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (mdr, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (ivdr, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (cer, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, EU / Notified Body) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Swissmedic) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (device, EU / Notified Body) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > Health Canada: the channel says nothing is sent, not that an adapter posts > the statement uses the Health Canada sentence, which the adapter refusal also uses 0ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-refuses.test.ts > Health Canada refuses to transmit > refuses before the wire, with the reason, and records no transmittal 4ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-refuses.test.ts > Health Canada refuses to transmit > is never configured, whatever variables are set 1ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-refuses.test.ts > Health Canada refuses to transmit > never polls Health Canada for status: the stored row comes back, saying why 1ms
+stdout | tests/services/regulatory/submission-resolver.test.ts
+{
+  "timestamp": "2026-10-08T17:31:09.144Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:31:09.145Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+{
+  "timestamp": "2026-10-08T17:31:09.146Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/services/regulatory/submission-resolver.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > resolves a biologic marketing filing: US by gateway; EU and JP neither region-correct nor sent 5ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > routes by product class — BLA and NDA pick different US filings 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > honours an explicit region subset 0ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > never tells a client their MAA can be sent through CESP 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > does not tell an orphan, PIP or PRIME applicant the centralised procedure applies (fix round 2) 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > sends an EU clinical trial application to CTIS, not to a dossier gateway 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — coverage matrix > US cells support build + submit; EU and JP cells support neither (F19) 2ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — registry lookups > picks a regional entry by family + product class 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > an EU CTA is a CTA, not an NDA 2ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the eu_cta registry row actually carries a pathwayKey 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the eu_cta row no longer claims to be an eCTD five-module dossier 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > a 505(b)(2) is an NDA, a 351(k) is a BLA, a DMF is a master file — none of them is an IND 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the controls still map correctly 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ctn_au is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cta_hc is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ctn_jp is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cta_nmpa is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_i routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iia routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iib routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iii routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_sig_change routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_clin_inv routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_a routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_b routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_cd routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cdx_ivdr_d routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivdr_perf_study routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivdr_pmpf routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivd_pms_plan routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > uk_ukca is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > pmda_shonin is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > nmpa_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > tga_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > hc_mdl is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > br_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > pmda_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > nmpa_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > tga_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > hc_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivd_vigilance is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > no device or IVD filing resolves to a drug marketing application 1ms
+stderr | server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts
+{
+  "timestamp": "2026-10-08T17:31:11.537Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts > createSequence refuses an FDA variation > refuses type variation on an FDA submission, with the reason, and writes nothing 5ms
+ ✓ server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts > createSequence refuses an FDA variation > refuses it when only the submission is FDA, whatever region the caller names 1ms
+ ✓ server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts > createSequence refuses an FDA variation > still creates an EU variation, and an FDA amendment 1ms
+stdout | server/services/ectd/__tests__/fda-variation-not-coded.test.ts
+{
+  "timestamp": "2026-10-08T17:31:12.808Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:31:12.809Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ectd/__tests__/fda-variation-not-coded.test.ts
+{
+  "timestamp": "2026-10-08T17:31:12.810Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/fda-variation-not-coded.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ectd/__tests__/fda-variation-not-coded.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ectd/__tests__/fda-variation-not-coded.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ectd/__tests__/fda-variation-not-coded.test.ts > FDA variation > an FDA variation sequence is refused with the reason, never coded as an amendment 2ms
+ ✓ server/services/ectd/__tests__/fda-variation-not-coded.test.ts > FDA variation > an FDA variation does not reach the packager input 1ms
+ ✓ server/services/ectd/__tests__/fda-variation-not-coded.test.ts > FDA variation > an EU variation sequence still packages: the FDA coding is not derived for it 1ms
+ ✓ server/services/ectd/__tests__/fda-variation-not-coded.test.ts > FDA variation > an FDA amendment is still an Original Application, sub-type amendment 1ms
+
+ Test Files  15 passed (15)
+      Tests  180 passed (180)
+   Start at  17:30:38
+   Duration  34.47s (transform 7.58s, setup 835ms, import 18.68s, tests 8.23s, environment 4.05s)
+

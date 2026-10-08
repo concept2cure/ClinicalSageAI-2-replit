@@ -1,0 +1,56 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ectd/__tests__/fda-variation-not-coded.test.ts > FDA variation > an FDA variation sequence is refused with the reason, never coded as an amendment 13ms
+   → expected [Function] to throw an error
+ × server/services/ectd/__tests__/fda-variation-not-coded.test.ts > FDA variation > an FDA variation does not reach the packager input 2ms
+   → expected [Function] to throw an error
+ ✓ server/services/ectd/__tests__/fda-variation-not-coded.test.ts > FDA variation > an EU variation sequence still packages: the FDA coding is not derived for it 1ms
+ ✓ server/services/ectd/__tests__/fda-variation-not-coded.test.ts > FDA variation > an FDA amendment is still an Original Application, sub-type amendment 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/fda-variation-not-coded.test.ts > FDA variation > an FDA variation sequence is refused with the reason, never coded as an amendment
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/__tests__/fda-variation-not-coded.test.ts:29:106
+     27| describe('FDA variation', () => {
+     28|   it('an FDA variation sequence is refused with the reason, never code…
+     29|     expect(() => fdaSubmissionTypeFor({ sequenceNumber: '0005', region…
+       |                                                                                                          ^
+     30|       /'Variation' is the EU term\. An FDA post-approval change is a s…
+     31|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ectd/__tests__/fda-variation-not-coded.test.ts > FDA variation > an FDA variation does not reach the packager input
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/__tests__/fda-variation-not-coded.test.ts:35:81
+     33|
+     34|   it('an FDA variation does not reach the packager input', () => {
+     35|     expect(() => buildPackagerInputFromCore(args('fda', 'variation') a…
+       |                                                                                 ^
+     36|   });
+     37|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  16:38:05
+   Duration  479ms (transform 106ms, setup 99ms, import 33ms, tests 22ms, environment 0ms)
+
