@@ -340,6 +340,27 @@ function describeReview(state: 'confirmed' | 'corrected', changes: Array<{ field
   return `Catalog record corrected. ${changes.map(c => `${name[c.field]}: ${c.field === 'summary' ? 'changed' : `${shown(c.field, c.from)} to ${shown(c.field, c.to)}`}`).join('; ')}`;
 }
 
+type FieldChange = { field: keyof CatalogFields; from: string | null; to: string };
+
+/** What the decision changes, or why it is refused on this record. */
+function decisionPlan(
+  args: ReviewCatalogArgs,
+  row: ReviewRow,
+  fields: Partial<CatalogFields>,
+): { current: CatalogFields; changes: FieldChange[] } | ReviewCatalogResult {
+  if (args.action === 'confirm' && row.state !== 'suggested') {
+    return refuse(409, 'ALREADY_DECIDED', `This record is already ${row.state}. Nothing was saved.`);
+  }
+  const current: CatalogFields = { documentKind: row.document_kind ?? '', purpose: row.purpose ?? '', summary: row.summary ?? '' };
+  const changes = (Object.entries(fields) as Array<[keyof CatalogFields, string]>)
+    .filter(([f, to]) => current[f] !== to)
+    .map(([field, to]) => ({ field, from: current[field] || null, to }));
+  if (args.action === 'correct' && changes.length === 0) {
+    return refuse(400, 'NOTHING_TO_CHANGE', 'The values given match the record. Change at least one field. Nothing was saved.');
+  }
+  return { current, changes };
+}
+
 /**
  * Confirm AnA's description as written, or correct it with a reason. The
  * UPDATE and its chained audit row commit together or not at all.
@@ -355,18 +376,12 @@ export async function reviewCatalogRecord(args: ReviewCatalogArgs): Promise<Revi
       await client.query('ROLLBACK');
       return row as ReviewCatalogResult;
     }
-    if (args.action === 'confirm' && row.state !== 'suggested') {
+    const plan = decisionPlan(args, row, pre.fields);
+    if ('ok' in plan) {
       await client.query('ROLLBACK');
-      return refuse(409, 'ALREADY_DECIDED', `This record is already ${row.state}. Nothing was saved.`);
+      return plan as ReviewCatalogResult;
     }
-    const current: CatalogFields = { documentKind: row.document_kind ?? '', purpose: row.purpose ?? '', summary: row.summary ?? '' };
-    const changes = (Object.entries(pre.fields) as Array<[keyof CatalogFields, string]>)
-      .filter(([f, to]) => current[f] !== to)
-      .map(([field, to]) => ({ field, from: current[field] || null, to }));
-    if (args.action === 'correct' && changes.length === 0) {
-      await client.query('ROLLBACK');
-      return refuse(400, 'NOTHING_TO_CHANGE', 'The values given match the record. Change at least one field. Nothing was saved.');
-    }
+    const { current, changes } = plan;
     const state = args.action === 'confirm' ? 'confirmed' : 'corrected';
     const next = { ...current, ...pre.fields };
     await client.query(

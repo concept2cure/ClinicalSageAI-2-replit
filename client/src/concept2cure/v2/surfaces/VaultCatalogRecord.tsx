@@ -168,6 +168,15 @@ function RecordView({ r }: { r: CatalogRecordView }) {
   );
 }
 
+/** A correction changes a field, keeps a vocabulary kind and both texts, and carries a reason. */
+function correctionReady(draft: Draft, r: CatalogRecordView): boolean {
+  const changed = draft.documentKind !== (r.documentKind ?? '') || draft.purpose.trim() !== (r.purpose ?? '')
+    || draft.summary.trim() !== (r.summary ?? '');
+  const inVocabulary = VAULT_DOC_KINDS.some((k) => k.value === draft.documentKind);
+  return changed && inVocabulary && draft.purpose.trim() !== '' && draft.summary.trim() !== ''
+    && draft.reason.trim().length >= GOVERNED_REASON_MIN;
+}
+
 function CorrectForm({ r, busy, onSave, onCancel }: {
   r: CatalogRecordView; busy: boolean; onSave: (d: Draft) => void; onCancel: () => void;
 }) {
@@ -175,11 +184,7 @@ function CorrectForm({ r, busy, onSave, onCancel }: {
     documentKind: r.documentKind ?? '', purpose: r.purpose ?? '', summary: r.summary ?? '', reason: '',
   });
   const set = (patch: Partial<Draft>) => setDraft({ ...draft, ...patch });
-  const changed = draft.documentKind !== (r.documentKind ?? '') || draft.purpose.trim() !== (r.purpose ?? '')
-    || draft.summary.trim() !== (r.summary ?? '');
-  const inVocabulary = VAULT_DOC_KINDS.some((k) => k.value === draft.documentKind);
-  const canSave = !busy && changed && inVocabulary && draft.purpose.trim() !== '' && draft.summary.trim() !== ''
-    && draft.reason.trim().length >= GOVERNED_REASON_MIN;
+  const canSave = !busy && correctionReady(draft, r);
   return (
     <div className="vd-d-filing" data-testid="vault-catalog-correct-form">
       <label className="vd-d-filing-row">
