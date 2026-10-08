@@ -1152,6 +1152,8 @@
    --border is the token for a hairline. --radius-md is 6px, the literal it
    replaces. */
 .c2c-v2 .indf-record{border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 12px;margin-bottom:12px;}
+/* The forms panel's filing-target picker: the sequence completed forms are filed into (QA 2026-10-08). */
+.c2c-v2 .indf-target{margin-bottom:12px;}
 .c2c-v2 .indf-record-lead{font-size:12px;color:var(--text-400);margin-bottom:6px;}
 .c2c-v2 .indf-record-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,max-content));gap:6px 24px;}
 .c2c-v2 .indf-fact{margin:0;}

@@ -1308,7 +1308,7 @@ function AuthorWorkspace({
               <div className="pj-map-ring"><Ring value={completion} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
             </div>
           ) : (
-            <p className="pj-card-note" style={{ margin: 0, fontSize: 12, color: 'var(--text-300)' }}>
+            <p className="pj-card-note">
               {DOSSIER_READINESS_MEANS} There are no governed sections to measure on this program yet, or the
               figure could not be read.
             </p>

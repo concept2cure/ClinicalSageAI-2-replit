@@ -432,7 +432,7 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       </div>
 
       {programIdent && (
-        <section className="indf-target" aria-label="Where completed forms are filed" style={{ marginBottom: 12 }}>
+        <section className="indf-target" aria-label="Where completed forms are filed">
           <div style={{ fontSize: 12, marginBottom: 4 }}>
             File completed, signed forms into — choose the submission and the sequence. Nothing is filed until you choose.
           </div>
