@@ -1,0 +1,241 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > the exact native callback passes with a database ledger later within the same JavaScript millisecond 2147ms
+   → expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+ × server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > a verifier strictly after the ledger yields archived/unverifiable, never verified 1298ms
+   → expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+ × server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger at the anchor 1277ms
+   → expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+ × server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger after the verifier 1207ms
+   → expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+ × server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger cutoff in the hot window 1244ms
+   → expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+ × server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger insufficient deletion budget 1159ms
+   → expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > the exact native callback passes with a database ledger later within the same JavaScript millisecond
+AssertionError: expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "archived": [
++   "archived": [],
++   "breaks": [
+      {
+        "anchoredRows": 3,
+        "currentRows": 0,
+        "kind": "head_missing",
+        "organizationId": 11,
+        "rowId": "cdbb54d1-6b14-4ca6-a421-29f743ae6a26",
+      },
+    ],
+-   "breaks": [],
+-   "status": "unverifiable",
++   "status": "broken",
+  }
+
+ ❯ run server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:19:10
+     17| function compiled<T>(source: string, bindings: Record<string, unknown>…
+     18|   const javascript = ts.transpileModule(source, { compilerOptions: { t…
+     19|   return new Function(...Object.keys(bindings), javascript + `\nreturn…
+       |          ^
+     20| }
+     21|
+ ❯ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:98:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > a verifier strictly after the ledger yields archived/unverifiable, never verified
+AssertionError: expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "archived": [
++   "archived": [],
++   "breaks": [
+      {
+        "anchoredRows": 3,
+        "currentRows": 0,
+        "kind": "head_missing",
+        "organizationId": 11,
+        "rowId": "80b14a83-aed1-4296-85c9-e2921ef07f9a",
+      },
+    ],
+-   "breaks": [],
+-   "status": "unverifiable",
++   "status": "broken",
+  }
+
+ ❯ run server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:19:10
+     17| function compiled<T>(source: string, bindings: Record<string, unknown>…
+     18|   const javascript = ts.transpileModule(source, { compilerOptions: { t…
+     19|   return new Function(...Object.keys(bindings), javascript + `\nreturn…
+       |          ^
+     20| }
+     21|
+ ❯ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:111:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger at the anchor
+AssertionError: expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "archived": [
++   "archived": [],
++   "breaks": [
+      {
+        "anchoredRows": 3,
+        "currentRows": 0,
+        "kind": "head_missing",
+        "organizationId": 11,
+        "rowId": "18c393b5-69af-4a8f-961c-d2b61e8a1517",
+      },
+    ],
+-   "breaks": [],
+-   "status": "unverifiable",
++   "status": "broken",
+  }
+
+ ❯ run server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:19:10
+     17| function compiled<T>(source: string, bindings: Record<string, unknown>…
+     18|   const javascript = ts.transpileModule(source, { compilerOptions: { t…
+     19|   return new Function(...Object.keys(bindings), javascript + `\nreturn…
+       |          ^
+     20| }
+     21|
+ ❯ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:122:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger after the verifier
+AssertionError: expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "archived": [
++   "archived": [],
++   "breaks": [
+      {
+        "anchoredRows": 3,
+        "currentRows": 0,
+        "kind": "head_missing",
+        "organizationId": 11,
+        "rowId": "ff866886-f83b-4b93-988d-e633c5e6f967",
+      },
+    ],
+-   "breaks": [],
+-   "status": "unverifiable",
++   "status": "broken",
+  }
+
+ ❯ run server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:19:10
+     17| function compiled<T>(source: string, bindings: Record<string, unknown>…
+     18|   const javascript = ts.transpileModule(source, { compilerOptions: { t…
+     19|   return new Function(...Object.keys(bindings), javascript + `\nreturn…
+       |          ^
+     20| }
+     21|
+ ❯ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:122:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger cutoff in the hot window
+AssertionError: expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "archived": [
++   "archived": [],
++   "breaks": [
+      {
+        "anchoredRows": 3,
+        "currentRows": 0,
+        "kind": "head_missing",
+        "organizationId": 11,
+        "rowId": "22a8f5da-345e-4a31-9c5f-57ffe474a21b",
+      },
+    ],
+-   "breaks": [],
+-   "status": "unverifiable",
++   "status": "broken",
+  }
+
+ ❯ run server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:19:10
+     17| function compiled<T>(source: string, bindings: Record<string, unknown>…
+     18|   const javascript = ts.transpileModule(source, { compilerOptions: { t…
+     19|   return new Function(...Object.keys(bindings), javascript + `\nreturn…
+       |          ^
+     20| }
+     21|
+ ❯ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:122:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger insufficient deletion budget
+AssertionError: expected { …(7) } to match object { status: 'unverifiable', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "archived": [
++   "archived": [],
++   "breaks": [
+      {
+        "anchoredRows": 3,
+        "currentRows": 0,
+        "kind": "head_missing",
+        "organizationId": 11,
+        "rowId": "6999faa5-9404-41c1-bab3-f40ec8c39074",
+      },
+    ],
+-   "breaks": [],
+-   "status": "unverifiable",
++   "status": "broken",
+  }
+
+ ❯ run server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:19:10
+     17| function compiled<T>(source: string, bindings: Record<string, unknown>…
+     18|   const javascript = ts.transpileModule(source, { compilerOptions: { t…
+     19|   return new Function(...Object.keys(bindings), javascript + `\nreturn…
+       |          ^
+     20| }
+     21|
+ ❯ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts:122:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  09:13:06
+   Duration  9.57s (transform 363ms, setup 104ms, import 783ms, tests 8.34s, environment 0ms)
+
