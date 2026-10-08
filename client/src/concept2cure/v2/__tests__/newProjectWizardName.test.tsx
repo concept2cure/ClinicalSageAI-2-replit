@@ -109,8 +109,11 @@ describe('New Project wizard — the review is what is saved', () => {
     fireEvent.click(continueBtn());
     const shown = { name: reviewValue('Project name'), product: reviewValue('Product') };
     fireEvent.click(await screen.findByRole('button', { name: /create project/i }));
-    await vi.waitFor(() => expect(apiRequest).toHaveBeenCalled());
-    const body = apiRequest.mock.calls[0][2] as { name: string; productName: string };
+    /* The create is found by what it is, not by call order: the Configure step
+       also reads what the platform can carry for the chosen market (F19). */
+    const createCall = () => apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/c2c/projects');
+    await vi.waitFor(() => expect(createCall()).toBeTruthy());
+    const body = createCall()![2] as { name: string; productName: string };
     return { shown, body };
   }
 

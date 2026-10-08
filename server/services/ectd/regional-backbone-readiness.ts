@@ -68,6 +68,23 @@ const PLACEHOLDER_OF: Partial<Record<Region, Region>> = {
   uk: 'ema', ch: 'ema', au: 'ema', cn: 'ema', br: 'ema', in: 'ema', kr: 'ema', sg: 'ema',
 };
 
+/**
+ * How a region's Module 1 is built, from the same three sets the classification
+ * below reads. Not a conformance verdict (that needs a build's own report):
+ *   structured  — the builder writes the agency's own Module 1 headings (FDA);
+ *   flat        — the agency's own root element, leaves filed flat under it;
+ *   placeholder — another region's backbone structure reused.
+ * server/services/regulatory/market-support.ts states it on every market
+ * (FILING_SPINE.md F19), so a market's line and the packager cannot disagree.
+ */
+export type Module1Shape = 'structured' | 'flat' | 'placeholder';
+
+export function module1ShapeOf(region: Region): Module1Shape {
+  if (STRUCTURE_REPORTING_REGIONS.has(region)) return 'structured';
+  if (FLAT_MODULE1_GAP[region]) return 'flat';
+  return 'placeholder';
+}
+
 /** Status recorded on the bundle. Structural (no cross-layer import). */
 export interface RegionalBackboneStatus {
   region: Region;

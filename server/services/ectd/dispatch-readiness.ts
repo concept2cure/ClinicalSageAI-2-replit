@@ -261,6 +261,13 @@ export const PMDA_ECTD_V4_FACT_ID = 'pmda-ectd-v4-mandatory';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** The dated fact that PMDA takes only eCTD v4.0 for new applications, as at
+ *  `asOf`, or undefined when the registry no longer carries it. Read by the
+ *  readiness finding below and by the market line (market-support.ts, F19). */
+export function pmdaEctdV4Fact(asOf: string) {
+  return findFacts({ jurisdiction: 'JP', asOf }).find((f) => f.id === PMDA_ECTD_V4_FACT_ID);
+}
+
 /**
  * JP_ECTD_V4_REQUIRED: an original sequence for a Japanese application, on or
  * after the date in force for fact `pmda-ectd-v4-mandatory`, is not a package
@@ -286,7 +293,7 @@ function jpEctdV4Findings(opts: ComputeReadinessOptions): ReadinessFinding[] {
         'This platform builds Japan packages in v3.2.2 only.',
     }];
   }
-  const fact = findFacts({ jurisdiction: 'JP', asOf }).find((f) => f.id === PMDA_ECTD_V4_FACT_ID);
+  const fact = pmdaEctdV4Fact(asOf);
   if (!fact || !ISO_DATE.test(fact.effectiveDate)) {
     return [{
       severity: 'error',

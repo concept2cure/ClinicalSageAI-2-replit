@@ -59,6 +59,7 @@ import { recordGovernedAction } from '../../routes/c2c/actions.js';
 // The regulatory-class mapping lives in one module so this path and
 // POST /api/authoring/docs cannot disagree about what a project files.
 import { AGENCY_FALLBACKS, resolveDocumentClass, describeUnmappedClass } from './document-class.js';
+import { findActiveRulePack } from './rule-pack-lookup.js';
 
 export interface ScaffoldInput {
   /** Caller-owned transaction. This module never opens or commits one. */
@@ -126,15 +127,8 @@ export async function scaffoldProjectDocuments(input: ScaffoldInput): Promise<Sc
   let pack: RulePackRow | undefined;
   let resolvedAgency = agency;
   for (const candidate of [agency, ...AGENCY_FALLBACKS]) {
-    const { rows } = await client.query<RulePackRow>(
-      `SELECT version, label, required_sections
-         FROM c2c_rule_packs
-        WHERE doc_type = $1 AND agency = $2 AND superseded_by IS NULL
-        ORDER BY effective_from DESC
-        LIMIT 1`,
-      [docType, candidate],
-    );
-    if (rows[0]) { pack = rows[0]; resolvedAgency = candidate; break; }
+    const found = await findActiveRulePack(client, docType, candidate);
+    if (found) { pack = found; resolvedAgency = candidate; break; }
   }
   if (!pack) {
     return {

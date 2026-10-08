@@ -434,6 +434,7 @@ Two corrections to the readers:
 | F2: five tabs; start box above them | The commit that adds `__tests__/projectHomeStages.test.tsx` | Landed 2026-10-08 | Yes | Nothing. F15 replaces Respond's tool list; F21 and F22 put the Planner and Add a market on Submit. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f2-five-tabs/` |
 | F16: no dead ends on the filing path | The commit that adds `__tests__/filingPathNoDeadEnds.test.tsx` | Landed 2026-10-08 | Yes | Nothing. Doors on launch screens ask `surfaceAvailable.ts`. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f16-no-dead-ends/` |
 | F17: placement states the filing copy's status | The commit that adds `__tests__/placeIntoFilingApprovalState.test.tsx` | Landed 2026-10-08 | Yes | Nothing. The copy-status rule lives in `shared/regulatory/filing-copy-status.ts`. Re-place from the Builder's rows needs a leaf's link to its authoring source (as F18 does). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f17-filing-copy-status/` |
+| F19: each market states what the platform can carry | The commit that adds `server/services/regulatory/market-support.ts` | Landed 2026-10-08 | Yes | F9's market rows reuse `MarketSupportLine`; F20's region options use `useMarketSupport`. The New project picker shows the line for the chosen filing, not on all 234 entries. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f19-market-support/` |
 
 ### 7.2 New slices
 

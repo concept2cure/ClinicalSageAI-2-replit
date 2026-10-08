@@ -1,0 +1,925 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > each submission row shows its market's support, in the server's words 5168ms
+   → Unable to find an element by: [data-testid="market-support"]
+
+Ignored nodes: comments, script, style
+<div
+  class="pj-file"
+  data-testid="pj-submission"
+  role="listitem"
+>
+  <div
+    class="pj-file-top"
+  >
+    <span
+      class="pj-file-badge"
+    >
+      NDA
+    </span>
+    <span
+      class="pj-file-status"
+      data-s="acc"
+    >
+      Active
+    </span>
+  </div>
+  <div
+    class="pj-file-n"
+  >
+    ONC-221 NDA
+  </div>
+  <div
+    class="pj-file-m"
+  >
+    FDA (US) · original stage
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-crumb"
+        >
+          <span
+            class="pj-crumb-i"
+            data-cur="true"
+          >
+            <span
+              class="pj-crumb-k"
+            >
+              Project
+            </span>
+            ONC-221
+          </span>
+        </div>
+        <div
+          class="pj-top"
+        >
+          <div
+            class="pj-top-l"
+          >
+            <h1
+              class="pj-title"
+            >
+              ONC-221
+            </h1>
+            <div
+              class="pj-tags"
+            >
+              <span
+                class="rd-chip tone-ok"
+              >
+                active
+              </span>
+            </div>
+            <section
+              aria-label="Program identity"
+              class="pj-facts"
+            >
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Sponsor
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Product
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Indication
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Application number
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not assigned
+                  </span>
+                </dd>
+              </dl>
+            </section>
+          </div>
+        </div>
+        <div
+          class="pj-start"
+        >
+          <section
+            aria-labelledby="pj-start-h"
+            class="pj-convo"
+          >
+            <div
+              class="pj-start-h"
+            >
+              <h2
+                id="pj-start-h"
+              >
+                Start a conversation in 
+                ONC-221
+              </h2>
+              <span
+                class="sec-sub"
+              >
+                AnA works with this project's sources, documents and submissions.
+              </span>
+            </div>
+            <div
+              class="pj-composer"
+            >
+              <textarea
+                aria-labelledby="pj-start-h"
+                placeholder="Ask AnA to draft, reconcile or review…"
+                rows="2"
+              />
+              <div
+                class="pj-composer-row"
+              >
+                <span
+                  class="sp"
+                />
+                <button
+                  aria-label="Start the conversation"
+                  class="pj-comp-send"
+                  disabled=""
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-arrow-up"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                  ...
+ × client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > a failed read says it failed and offers a retry; it never reads as a market with nothing to say 5072ms
+   → Unable to find an element by: [data-testid="market-support"]
+
+Ignored nodes: comments, script, style
+<div
+  class="pj-file"
+  data-testid="pj-submission"
+  role="listitem"
+>
+  <div
+    class="pj-file-top"
+  >
+    <span
+      class="pj-file-badge"
+    >
+      NDA
+    </span>
+    <span
+      class="pj-file-status"
+      data-s="acc"
+    >
+      Active
+    </span>
+  </div>
+  <div
+    class="pj-file-n"
+  >
+    ONC-221 NDA
+  </div>
+  <div
+    class="pj-file-m"
+  >
+    FDA (US) · original stage
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-crumb"
+        >
+          <span
+            class="pj-crumb-i"
+            data-cur="true"
+          >
+            <span
+              class="pj-crumb-k"
+            >
+              Project
+            </span>
+            ONC-221
+          </span>
+        </div>
+        <div
+          class="pj-top"
+        >
+          <div
+            class="pj-top-l"
+          >
+            <h1
+              class="pj-title"
+            >
+              ONC-221
+            </h1>
+            <div
+              class="pj-tags"
+            >
+              <span
+                class="rd-chip tone-ok"
+              >
+                active
+              </span>
+            </div>
+            <section
+              aria-label="Program identity"
+              class="pj-facts"
+            >
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Sponsor
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Product
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Indication
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Application number
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not assigned
+                  </span>
+                </dd>
+              </dl>
+            </section>
+          </div>
+        </div>
+        <div
+          class="pj-start"
+        >
+          <section
+            aria-labelledby="pj-start-h"
+            class="pj-convo"
+          >
+            <div
+              class="pj-start-h"
+            >
+              <h2
+                id="pj-start-h"
+              >
+                Start a conversation in 
+                ONC-221
+              </h2>
+              <span
+                class="sec-sub"
+              >
+                AnA works with this project's sources, documents and submissions.
+              </span>
+            </div>
+            <div
+              class="pj-composer"
+            >
+              <textarea
+                aria-labelledby="pj-start-h"
+                placeholder="Ask AnA to draft, reconcile or review…"
+                rows="2"
+              />
+              <div
+                class="pj-composer-row"
+              >
+                <span
+                  class="sp"
+                />
+                <button
+                  aria-label="Start the conversation"
+                  class="pj-comp-send"
+                  disabled=""
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-arrow-up"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                  ...
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a read in flight claims nothing about the market 4ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > says nothing, and reads nothing, without both an application type and a market 2ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > does not repeat the summary when the line says the same thing 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > each submission row shows its market's support, in the server's words
+TestingLibraryElementError: Unable to find an element by: [data-testid="market-support"]
+
+Ignored nodes: comments, script, style
+<div
+  class="pj-file"
+  data-testid="pj-submission"
+  role="listitem"
+>
+  <div
+    class="pj-file-top"
+  >
+    <span
+      class="pj-file-badge"
+    >
+      NDA
+    </span>
+    <span
+      class="pj-file-status"
+      data-s="acc"
+    >
+      Active
+    </span>
+  </div>
+  <div
+    class="pj-file-n"
+  >
+    ONC-221 NDA
+  </div>
+  <div
+    class="pj-file-m"
+  >
+    FDA (US) · original stage
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-crumb"
+        >
+          <span
+            class="pj-crumb-i"
+            data-cur="true"
+          >
+            <span
+              class="pj-crumb-k"
+            >
+              Project
+            </span>
+            ONC-221
+          </span>
+        </div>
+        <div
+          class="pj-top"
+        >
+          <div
+            class="pj-top-l"
+          >
+            <h1
+              class="pj-title"
+            >
+              ONC-221
+            </h1>
+            <div
+              class="pj-tags"
+            >
+              <span
+                class="rd-chip tone-ok"
+              >
+                active
+              </span>
+            </div>
+            <section
+              aria-label="Program identity"
+              class="pj-facts"
+            >
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Sponsor
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Product
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Indication
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Application number
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not assigned
+                  </span>
+                </dd>
+              </dl>
+            </section>
+          </div>
+        </div>
+        <div
+          class="pj-start"
+        >
+          <section
+            aria-labelledby="pj-start-h"
+            class="pj-convo"
+          >
+            <div
+              class="pj-start-h"
+            >
+              <h2
+                id="pj-start-h"
+              >
+                Start a conversation in 
+                ONC-221
+              </h2>
+              <span
+                class="sec-sub"
+              >
+                AnA works with this project's sources, documents and submissions.
+              </span>
+            </div>
+            <div
+              class="pj-composer"
+            >
+              <textarea
+                aria-labelledby="pj-start-h"
+                placeholder="Ask AnA to draft, reconcile or review…"
+                rows="2"
+              />
+              <div
+                class="pj-composer-row"
+              >
+                <span
+                  class="sp"
+                />
+                <button
+                  aria-label="Start the conversation"
+                  class="pj-comp-send"
+                  disabled=""
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-arrow-up"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                  ...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx:79:11
+     77|     await openSubmit();
+     78|     const [nda, maa] = screen.getAllByTestId('pj-submission');
+     79|     await waitFor(() => expect(within(nda).getByTestId('market-support…
+       |           ^
+     80|     expect(within(nda).getByTestId('market-support').textContent).toBe…
+     81|     await waitFor(() => expect(within(maa).getByTestId('market-support…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > a failed read says it failed and offers a retry; it never reads as a market with nothing to say
+TestingLibraryElementError: Unable to find an element by: [data-testid="market-support"]
+
+Ignored nodes: comments, script, style
+<div
+  class="pj-file"
+  data-testid="pj-submission"
+  role="listitem"
+>
+  <div
+    class="pj-file-top"
+  >
+    <span
+      class="pj-file-badge"
+    >
+      NDA
+    </span>
+    <span
+      class="pj-file-status"
+      data-s="acc"
+    >
+      Active
+    </span>
+  </div>
+  <div
+    class="pj-file-n"
+  >
+    ONC-221 NDA
+  </div>
+  <div
+    class="pj-file-m"
+  >
+    FDA (US) · original stage
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-crumb"
+        >
+          <span
+            class="pj-crumb-i"
+            data-cur="true"
+          >
+            <span
+              class="pj-crumb-k"
+            >
+              Project
+            </span>
+            ONC-221
+          </span>
+        </div>
+        <div
+          class="pj-top"
+        >
+          <div
+            class="pj-top-l"
+          >
+            <h1
+              class="pj-title"
+            >
+              ONC-221
+            </h1>
+            <div
+              class="pj-tags"
+            >
+              <span
+                class="rd-chip tone-ok"
+              >
+                active
+              </span>
+            </div>
+            <section
+              aria-label="Program identity"
+              class="pj-facts"
+            >
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Sponsor
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Product
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Indication
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Application number
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not assigned
+                  </span>
+                </dd>
+              </dl>
+            </section>
+          </div>
+        </div>
+        <div
+          class="pj-start"
+        >
+          <section
+            aria-labelledby="pj-start-h"
+            class="pj-convo"
+          >
+            <div
+              class="pj-start-h"
+            >
+              <h2
+                id="pj-start-h"
+              >
+                Start a conversation in 
+                ONC-221
+              </h2>
+              <span
+                class="sec-sub"
+              >
+                AnA works with this project's sources, documents and submissions.
+              </span>
+            </div>
+            <div
+              class="pj-composer"
+            >
+              <textarea
+                aria-labelledby="pj-start-h"
+                placeholder="Ask AnA to draft, reconcile or review…"
+                rows="2"
+              />
+              <div
+                class="pj-composer-row"
+              >
+                <span
+                  class="sp"
+                />
+                <button
+                  aria-label="Start the conversation"
+                  class="pj-comp-send"
+                  disabled=""
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-arrow-up"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                  ...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx:91:11
+     89|     await openSubmit();
+     90|     const [nda] = screen.getAllByTestId('pj-submission');
+     91|     await waitFor(() => expect(within(nda).getByTestId('market-support…
+       |           ^
+     92|     expect(within(nda).getByTestId('market-support').textContent).toMa…
+     93|     serve(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  14:11:44
+   Duration  12.77s (transform 1.15s, setup 186ms, import 1.40s, tests 10.25s, environment 724ms)
+
