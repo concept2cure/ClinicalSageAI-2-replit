@@ -459,7 +459,7 @@ describe('DocumentCanvas — acts the server will refuse', () => {
   it('disables File to vault and Send for review with the reason as described text', async () => {
     withAccess({
       fileToVault: { allowed: false, reason: 'Filing to the vault needs an Owner or Author grant on this document. Your grants on it: Reviewer.' },
-      assignReview: { allowed: false, reason: 'Assigning a review needs an editing role in this organization. Your role: viewer.' },
+      assignReview: { allowed: false, reason: 'Sending for review needs an editing role in this organization. Your role: viewer.' },
       freeze: null,
       esign: null,
     });

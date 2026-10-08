@@ -1,12 +1,397 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > the confirmation shows the signature the server recorded: its printed name and its time 446ms
+   → expected 'ActionComplete approval-gated taskSig…' to contain 'Olivia Q. Signer'
+ × client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > a success that does not carry the recorded signature is not shown as one, and closing re-reads the board 5147ms
+   → expected 'Signature appliedApproval signature r…' to contain 'did not carry the signature the serve…'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner tb"
+      >
+        <div
+          class="ph"
+        >
+          <div>
+            <div
+              class="ph-eyebrow"
+            >
+              Project — collaboration
+            </div>
+            <h1
+              class="ph-title"
+            >
+              Task board
+            </h1>
+            <div
+              class="ph-sub"
+            >
+              The organisation's tasks from every store: the board's own, and the schedule's, agency correspondence's and tracked filings' work, each labelled with where it lives. Filter to a project below. Work from another store opens where it lives to be changed.
+            </div>
+          </div>
+          <div
+            style="display: flex; gap: 8px;"
+          >
+            <button
+              class="btn ghost"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-workflow"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="8"
+                  rx="2"
+                  width="8"
+                  x="3"
+                  y="3"
+                />
+                <path
+                  d="M7 11v4a2 2 0 0 0 2 2h4"
+                />
+                <rect
+                  height="8"
+                  rx="2"
+                  width="8"
+                  x="13"
+                  y="13"
+                />
+              </svg>
+               Start workflow
+            </button>
+            <button
+              class="btn primary"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               New task
+            </button>
+          </div>
+        </div>
+        <div
+          class="al-lead al-calm"
+        >
+          <div
+            class="al-k"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            What is on the critical path — and what needs you first
+          </div>
+          <div
+            class="al-h"
+          >
+            No task on this board is marked critical-path, so there is no path to report on yet.
+          </div>
+          <div
+            class="al-b"
+          >
+            Workload is balanced across the team.
+             
+            1
+             approval
+             pending an e-signature.
+          </div>
+          <div
+            class="al-act"
+          >
+            <button
+              class="al-btn"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-l...
+ × client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > the board holds no ceremony of its own: one task sign-off, imported from the editor 4ms
+   → expected 'import React, { useState, useMemo, us…' to match /import \{ TaskSignOffDialog \}…/editor\
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardSignature.test.tsx > TaskBoard — approval-gated completion > opens the shared signing dialog, and sends the password and meaning, never a PIN 411ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > the confirmation shows the signature the server recorded: its printed name and its time
+AssertionError: expected 'ActionComplete approval-gated taskSig…' to contain 'Olivia Q. Signer'
+
+Expected: "Olivia Q. Signer"
+Received: "ActionComplete approval-gated taskSigned byTester · t@example.comMeaningApprovalReasonReviewed against the acceptance criteria.When2026-10-08 06:29:35 UTCOct 08, 2026, 06:29 · UTC"
+
+ ❯ client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx:102:34
+    100|     const manifest = dialog.querySelector('.es-manifest') as HTMLEleme…
+    101|     // The server's printed name, not the signed-in user the board hol…
+    102|     expect(manifest.textContent).toContain('Olivia Q. Signer');
+       |                                  ^
+    103|     expect(manifest.textContent).not.toContain('Tester');
+    104|     // The server's time, not the browser's clock.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > a success that does not carry the recorded signature is not shown as one, and closing re-reads the board
+AssertionError: expected 'Signature appliedApproval signature r…' to contain 'did not carry the signature the serve…'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner tb"
+      >
+        <div
+          class="ph"
+        >
+          <div>
+            <div
+              class="ph-eyebrow"
+            >
+              Project — collaboration
+            </div>
+            <h1
+              class="ph-title"
+            >
+              Task board
+            </h1>
+            <div
+              class="ph-sub"
+            >
+              The organisation's tasks from every store: the board's own, and the schedule's, agency correspondence's and tracked filings' work, each labelled with where it lives. Filter to a project below. Work from another store opens where it lives to be changed.
+            </div>
+          </div>
+          <div
+            style="display: flex; gap: 8px;"
+          >
+            <button
+              class="btn ghost"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-workflow"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="8"
+                  rx="2"
+                  width="8"
+                  x="3"
+                  y="3"
+                />
+                <path
+                  d="M7 11v4a2 2 0 0 0 2 2h4"
+                />
+                <rect
+                  height="8"
+                  rx="2"
+                  width="8"
+                  x="13"
+                  y="13"
+                />
+              </svg>
+               Start workflow
+            </button>
+            <button
+              class="btn primary"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               New task
+            </button>
+          </div>
+        </div>
+        <div
+          class="al-lead al-calm"
+        >
+          <div
+            class="al-k"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            What is on the critical path — and what needs you first
+          </div>
+          <div
+            class="al-h"
+          >
+            No task on this board is marked critical-path, so there is no path to report on yet.
+          </div>
+          <div
+            class="al-b"
+          >
+            Workload is balanced across the team.
+             
+            1
+             approval
+             pending an e-signature.
+          </div>
+          <div
+            class="al-act"
+          >
+            <button
+              class="al-btn"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-l...
+
+Expected: "did not carry the signature the server recorded"
+Received: "Signature appliedApproval signature recorded against Approve the CSR synopsis. The 21 CFR Part 11 audit trail has a new entry. This cannot be undone.ActionComplete approval-gated taskSigned byTester · t@example.comMeaningApprovalReasonReviewed against the acceptance criteria.When2026-10-08 06:29:35 UTCOct 08, 2026, 06:29 · UTCDone"
+
+ ❯ client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx:112:52
+    110|     const dialog = await sign();
+    111|
+    112|     await waitFor(() => expect(dialog.textContent).toContain('did not …
+       |                                                    ^
+    113|     expect(within(dialog).queryByText('Signature applied')).toBeNull();
+    114|     const before = boardReads();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > the board holds no ceremony of its own: one task sign-off, imported from the editor
+AssertionError: expected 'import React, { useState, useMemo, us…' to match /import \{ TaskSignOffDialog \}…/editor\
+
+- Expected:
+/import \{ TaskSignOffDialog \} from '\.\.\/editor\/TaskSignOffDialog';/
+
++ Received:
+"import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
 import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { canGovernedWrite } from '@shared/constants/permissions';
-import { esignSignerOf } from '../../_shared/components/EsignModal';
-import { TaskSignOffDialog } from '../editor/TaskSignOffDialog';
+import { EsignModal, esignSignerOf, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
+import type { EsigMeaning } from '../../hooks/useEsignature';
 import { describeSignatureMethod } from '@shared/part11/signature-method';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -31,7 +416,7 @@ import '../styles/project-home-v2.css';
    below. Tasks from sections, the pyramid engine, the legacy WBS and
    modules are surfaced here with their origin store labelled.
 
-   Registers as both "task-board" and "tasks" in SURFACE_VIEWS.
+   Registers as both \"task-board\" and \"tasks\" in SURFACE_VIEWS.
    ═══════════════════════════════════════════════════════════════════ */
 
 /**
@@ -128,7 +513,7 @@ const HOME_LABEL: Record<string, string> = {
 
 /** A store the board could not read (meta.unreadSources), as a person reads it. */
 const STORE_LABEL: Record<string, string> = {
-  unified_tasks: "the board's own tasks",
+  unified_tasks: \"the board's own tasks\",
   project_tasks: 'the schedule and Communication Center',
   c2c_project_work_items: 'agency correspondence',
   estar_submissions: 'tracked filings',
@@ -161,7 +546,7 @@ function sessionExpired(notDone: string): string {
 }
 /** A caught write failure as user copy: the server's sentence (a viewer's 403,
  *  an AUDIT_WRITE_FAILED) when it sent one, else this surface's own fallback.
- *  A browser-native throw ("Failed to fetch") is never shown. */
+ *  A browser-native throw (\"Failed to fetch\") is never shown. */
 function refusalText(e: unknown, fallback: string): string {
   return e instanceof ApiRequestError && e.message ? e.message : fallback;
 }
@@ -169,7 +554,7 @@ function refusalText(e: unknown, fallback: string): string {
 /**
  * Resolve a task's assignee id to a display name, from the org's real roster.
  *
- * Completes the "projects/roster follow-up flag" this file already carried. The
+ * Completes the \"projects/roster follow-up flag\" this file already carried. The
  * project half landed on concept2cure-v2 (TB_PROJECTS retired, filters wired to
  * GET /api/projects); the roster half did not, so names were still looked up in
  * TB_TEAM — keyed on FIXTURE short-ids ('jc', 'mw', 'sm') — while the live board
@@ -181,8 +566,8 @@ function refusalText(e: unknown, fallback: string): string {
  * The endpoint was already being read one component below, by TaskCreate's
  * picker, and is org-scoped exactly like getOptimalAssignee.
  *
- * Unresolvable ids read 'Unknown' rather than blank, because "assigned to
- * someone this client cannot name" and "not assigned to anyone" are different
+ * Unresolvable ids read 'Unknown' rather than blank, because \"assigned to
+ * someone this client cannot name\" and \"not assigned to anyone\" are different
  * facts. Neither ever falls back to a fixture name.
  */
 function makeNameOf(rows: AssigneeOpt[]): (id: string | null | undefined) => string {
@@ -197,8 +582,8 @@ function makeNameOf(rows: AssigneeOpt[]): (id: string | null | undefined) => str
    GET /api/project-rules (server/routes/project-rules.ts) lists the
    `project_rules` rows for the signed-in organization, active ones by default.
 
-   The panel this replaces was hard-coded prose in the JSX: "24 trigger event
-   types -- 9 action types defined in project-rules", followed by four strings —
+   The panel this replaces was hard-coded prose in the JSX: \"24 trigger event
+   types -- 9 action types defined in project-rules\", followed by four strings —
    task_overdue -> escalate, review_completed -> advance_stage,
    approval_rejected -> create_task, deadline_approaching -> send_notification —
    typeset exactly like a list of the automation this organization has running.
@@ -208,7 +593,7 @@ function makeNameOf(rows: AssigneeOpt[]): (id: string | null | undefined) => str
    authenticated user was shown invented figures about their own tenant, and an
    organization with no rules at all was shown four it does not have. Same four
    honest states as every other slice on this board: loading, the real rules,
-   "none configured", or a failed read said plainly. */
+   \"none configured\", or a failed read said plainly. */
 interface RuleRow {
   rule_id: string;
   name: string;
@@ -230,7 +615,7 @@ function ruleActions(r: RuleRow): string {
 function AutomationCard() {
   // The payload is `{ rules, total }` — no `data` key, so the envelope unwrapper
   // leaves it alone. The guard turns a 200 of some other shape into the error
-  // branch rather than a silent "no rules configured", which would be a lie.
+  // branch rather than a silent \"no rules configured\", which would be a lie.
   const rules = useLiveData<{ rules: RuleRow[]; total: number }>(
     '/api/project-rules',
     ['/api/project-rules'],
@@ -239,26 +624,26 @@ function AutomationCard() {
   const rows = Array.isArray(rules.data?.rules) ? rules.data!.rules : [];
 
   return (
-    <div className="tb-an-card">
-      <div className="tb-an-h">Automation</div>
+    <div className=\"tb-an-card\">
+      <div className=\"tb-an-h\">Automation</div>
       {rules.loading ? (
-        <div role="status" className="tb-an-auto">Loading this organization&rsquo;s rules…</div>
+        <div role=\"status\" className=\"tb-an-auto\">Loading this organization&rsquo;s rules…</div>
       ) : rules.error ? (
         <>
-          <div className="tb-an-auto">Couldn&rsquo;t load the automation rules.</div>
-          <div className="tb-an-foot" data-warn="true">{I.alertTriangle} {rules.error}</div>
+          <div className=\"tb-an-auto\">Couldn&rsquo;t load the automation rules.</div>
+          <div className=\"tb-an-foot\" data-warn=\"true\">{I.alertTriangle} {rules.error}</div>
         </>
       ) : rows.length === 0 ? (
-        <div className="tb-an-auto">
+        <div className=\"tb-an-auto\">
           No active automation rules are configured for this organization.
         </div>
       ) : (
         <>
-          <div className="tb-an-auto">
+          <div className=\"tb-an-auto\">
             <b>{rows.length}</b> active rule{rows.length === 1 ? '' : 's'} in{' '}
             <code>project-rules</code>.
           </div>
-          <div className="tb-an-auto-rules">
+          <div className=\"tb-an-auto-rules\">
             {rows.slice(0, 8).map(r => (
               <span key={r.rule_id} title={r.description || r.name}>
                 {r.trigger_event} -&gt; {ruleActions(r)}
@@ -266,14 +651,14 @@ function AutomationCard() {
             ))}
           </div>
           {rows.length > 8 && (
-            <div className="tb-an-foot">…and {rows.length - 8} more.</div>
+            <div className=\"tb-an-foot\">…and {rows.length - 8} more.</div>
           )}
         </>
       )}
       {/* Verified, not assumed: `getRulesEngine()` is called only from the
           project-rules routes (create / dry-run). No event source in the server
           dispatches to it, so a stored rule does not fire on its own. */}
-      <div className="tb-an-foot" data-warn="true">
+      <div className=\"tb-an-foot\" data-warn=\"true\">
         {I.alertTriangle} Rules are stored; the background executor is not yet wired, so
         nothing here fires on its own.
       </div>
@@ -314,8 +699,8 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
   );
 
   /* The org's REAL programmes, for the project filter below. This filter used to
-     be driven by TB_PROJECTS — three invented programmes ("BX-204 -- NDA 212345",
-     "OR-902 Spinal Implant", "IV-415 Companion Dx") shown to every tenant as
+     be driven by TB_PROJECTS — three invented programmes (\"BX-204 -- NDA 212345\",
+     \"OR-902 Spinal Implant\", \"IV-415 Companion Dx\") shown to every tenant as
      their own. Worse, it could never work: the board emits `project` as the
      stringified numeric projects.id (taskBoard.routes.ts), so selecting a fixture
      slug matched zero rows and silently emptied the board. The same endpoint was
@@ -327,7 +712,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
   const roster = useLiveRows<AssigneeOpt>('/api/task-management/assignees');
   const nameOf = useMemo(() => makeNameOf(roster.rows), [roster.rows]);
 
-  /* "My tasks" needs the signed-in user's real id. It used to compare against
+  /* \"My tasks\" needs the signed-in user's real id. It used to compare against
      the fixture short-id 'jc', which no real row can carry — so the filter
      returned an empty board for every user of the product. */
   const { user } = useAuth();
@@ -360,8 +745,8 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
      `tasks.filter(...)` it was a new array every render, so every one of those
      memos recomputed, the publish effect re-ran, `setSurfaceContext` emitted,
      the shell's `useSyncExternalStore` re-rendered the shell, and the board
-     re-rendered — which built the next new array. That is the "Maximum update
-     depth exceeded" the error boundary caught: the loop had no fixed point
+     re-rendered — which built the next new array. That is the \"Maximum update
+     depth exceeded\" the error boundary caught: the loop had no fixed point
      because each turn manufactured the input for the next.
      Same class as the `NO_ROWS` defect in dataConnect.tsx — an unstable
      reference feeding an effect — and it is why `useLiveRows` returns one
@@ -401,7 +786,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
       if (guarded) return guarded;
       const target = (params.view ?? '').trim();
       if (!['board', 'path', 'analytics', 'table'].includes(target)) {
-        return { ok: false, reason: `No board view named "${params.view}".` };
+        return { ok: false, reason: `No board view named \"${params.view}\".` };
       }
       if (liveTasks.error) return { ok: false, reason: 'The task board could not be read.' };
       // Not-ready, not failed: the views render only after the read settles,
@@ -437,8 +822,8 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
               ok: false,
               reason:
                 contains.length > 1
-                  ? `"${params.project}" matches ${contains.length} projects — name one exactly.`
-                  : `No project named "${params.project}" on this board.`,
+                  ? `\"${params.project}\" matches ${contains.length} projects — name one exactly.`
+                  : `No project named \"${params.project}\" on this board.`,
             };
           }
           setProj(String(match.id));
@@ -448,13 +833,13 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
       if (params.module) {
         const wanted = params.module.trim().toLowerCase();
         const match = modules.find((m) => m.toLowerCase() === wanted);
-        if (!match) return { ok: false, reason: `No module named "${params.module}" on this board.` };
+        if (!match) return { ok: false, reason: `No module named \"${params.module}\" on this board.` };
         setMod(match);
         applied.push(match === 'all' ? 'all modules' : `module ${match}`);
       }
       if (params.mine) {
         setMine(params.mine === 'true');
-        applied.push(params.mine === 'true' ? 'my tasks only' : "everyone's tasks");
+        applied.push(params.mine === 'true' ? 'my tasks only' : \"everyone's tasks\");
       }
       if (applied.length === 0) return { ok: false, reason: 'No filter named.' };
       return { ok: true, detail: `Filtered to ${applied.join(', ')}` };
@@ -485,8 +870,8 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
           ok: false,
           reason:
             contains.length > 1
-              ? `"${params.task}" matches ${contains.length} tasks — name one exactly.`
-              : `No task named "${params.task}" on the board under the current filters.`,
+              ? `\"${params.task}\" matches ${contains.length} tasks — name one exactly.`
+              : `No task named \"${params.task}\" on the board under the current filters.`,
         };
       }
       setSel(match);
@@ -512,8 +897,8 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
   const move = async (t: TaskItem, dir: number) => {
     // Explicit map, not index arithmetic over TB_COLS. Blocked now has a column
     // (so a blocked task is visible and movable at all), but it is NOT a step on
-    // the happy path — stepping by index would make Advance from "In progress"
-    // land on "Blocked". Every pair below is legal under TASK_TRANSITIONS
+    // the happy path — stepping by index would make Advance from \"In progress\"
+    // land on \"Blocked\". Every pair below is legal under TASK_TRANSITIONS
     // (server/services/tasking/task-state-machine.ts); from `blocked`, Advance
     // resumes the work and Retreat sends it back to the queue.
     const ADVANCE: Record<string, string | undefined> = {
@@ -543,7 +928,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
         setActionErr(
           res.status === 401
             ? sessionExpired('The task was not moved.')
-            : `Could not move "${t.title}" (HTTP ${res.status}).`,
+            : `Could not move \"${t.title}\" (HTTP ${res.status}).`,
         );
       }
     } catch (e) {
@@ -620,7 +1005,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
       return { ok: true };
     } catch (e) {
       // A viewer's 403 or an unrecorded create (500 AUDIT_WRITE_FAILED) throws
-      // here; calling either a "network error" misstated why nothing was made.
+      // here; calling either a \"network error\" misstated why nothing was made.
       return { ok: false, error: refusalText(e, 'Network error while creating the task.') };
     }
   };
@@ -647,7 +1032,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
   }, [list]);
 
   /* What AnA can see of this screen. Until now she was told the user was on
-     "task-board" and nothing more, so "what should I do next?" had to be
+     \"task-board\" and nothing more, so \"what should I do next?\" had to be
      answered from the message text — on the one surface whose entire purpose is
      answering that question. Published as the nouns and numbers a user would
      point at, never raw API bodies and never anything the screen is hiding.
@@ -663,7 +1048,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
      scripts/ci/check-ana-surface-context.mjs now resolves aliases and fails a
      publish into an alias source rather than merely checking membership. */
   const anaContext = useMemo(() => {
-    // A failed board read must NOT publish "0 tasks, 0 open, 0 blocked" — that
+    // A failed board read must NOT publish \"0 tasks, 0 open, 0 blocked\" — that
     // is a dead store reported to AnA as a clean board (the fail-open the
     // repo's own rule forbids: an error is never rendered as an empty result).
     // These two branches sit above the summary for the same reason every
@@ -692,7 +1077,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
         (unreadStores.length
           ? ` These counts are incomplete: ${unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')} could not be read.`
           : '') +
-        (sel0 ? ` The task "${sel0.title}" (${sel0.taskId}) is open in the detail panel.` : ''),
+        (sel0 ? ` The task \"${sel0.title}\" (${sel0.taskId}) is open in the detail panel.` : ''),
       facts: {
         view,
         unreadStores,
@@ -730,7 +1115,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
   /* The tasks a person marked critical-path (unified_tasks.critical_path), in
      dependency order over dependsOn. Not a computed critical path: nothing here
      weighs durations or finds a longest chain, and the header must not say it
-     does (it read "computed from the taskDependencies DAG (getCriticalPath)",
+     does (it read \"computed from the taskDependencies DAG (getCriticalPath)\",
      an endpoint this surface never calls). */
   const critChain = useMemo(() => {
     const crit = list.filter(t => t.criticalPath);
@@ -763,11 +1148,11 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
   /* Has anything actually been DESIGNATED critical-path?
      `unified_tasks.critical_path` is a real column that defaults FALSE, and no
      write path in the repo ever sets it true — not the three insert sites, not
-     the workflow-template instantiation the "clear" branch itself offers as its
+     the workflow-template instantiation the \"clear\" branch itself offers as its
      call to action. So `critChain` is permanently empty, and the headline
-     asserted "The critical path is clear — nothing open is blocking the
-     milestone" in AnA's voice over every board, with a forward commitment ("I
-     will flag the moment anything threatens") that no watcher implements —
+     asserted \"The critical path is clear — nothing open is blocking the
+     milestone\" in AnA's voice over every board, with a forward commitment (\"I
+     will flag the moment anything threatens\") that no watcher implements —
      while the Blocked column on the same screen showed a non-zero count.
 
      An empty designation is not a cleared path. Nothing designated means the
@@ -776,62 +1161,62 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
   const milestone = critChain[critChain.length - 1];
 
   return (
-    <div className="page-inner tb">
-      <div className="ph">
+    <div className=\"page-inner tb\">
+      <div className=\"ph\">
         <div>
-          <div className="ph-eyebrow">Project — collaboration</div>
-          <h1 className="ph-title">Task board</h1>
-          <div className="ph-sub">The organisation's tasks from every store: the board's own, and the schedule's, agency correspondence's and tracked filings' work, each labelled with where it lives. Filter to a project below. Work from another store opens where it lives to be changed.</div>
+          <div className=\"ph-eyebrow\">Project — collaboration</div>
+          <h1 className=\"ph-title\">Task board</h1>
+          <div className=\"ph-sub\">The organisation's tasks from every store: the board's own, and the schedule's, agency correspondence's and tracked filings' work, each labelled with where it lives. Filter to a project below. Work from another store opens where it lives to be changed.</div>
         </div>
         {canWrite ? (
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn ghost" onClick={() => setWf(true)}>{I.workflow} Start workflow</button>
-            <button className="btn primary" onClick={() => setCreating(true)}>{I.plus} New task</button>
+            <button className=\"btn ghost\" onClick={() => setWf(true)}>{I.workflow} Start workflow</button>
+            <button className=\"btn primary\" onClick={() => setCreating(true)}>{I.plus} New task</button>
           </div>
         ) : (
-          <div className="ph-sub" role="note" data-testid="tb-view-only">
+          <div className=\"ph-sub\" role=\"note\" data-testid=\"tb-view-only\">
             {I.lock} View only. Creating and changing tasks needs an editor role in this organization.
           </div>
         )}
       </div>
 
       {actionErr && (
-        <div className="tb-alert" role="alert">
+        <div className=\"tb-alert\" role=\"alert\">
           {I.alertTriangle} <span>{actionErr}</span>
-          <button onClick={() => setActionErr('')} aria-label="Dismiss error">{I.close}</button>
+          <button onClick={() => setActionErr('')} aria-label=\"Dismiss error\">{I.close}</button>
         </div>
       )}
 
       {liveTasks.loading ? (
-        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the task board…</div>
+        <div role=\"status\" className=\"scaf-note\" style={{ padding: '18px 10px' }}>Loading the task board…</div>
       ) : liveTasks.error ? (
         <EmptyState
-          tone="error"
+          tone=\"error\"
           icon={I.alertTriangle}
-          title="Couldn't load the task board"
-          hint="The org-wide task board didn't respond. These are the organization's tasks — sign in and retry, or check that the task service is reachable."
+          title=\"Couldn't load the task board\"
+          hint=\"The org-wide task board didn't respond. These are the organization's tasks — sign in and retry, or check that the task service is reachable.\"
         />
       ) : liveTasks.empty ? (
         <EmptyState
           icon={I.checkSquare}
-          title="No tasks on the board yet"
-          hint="This is the org-wide unified task board. Create a task or start a workflow from a template and it appears here once it is persisted, with its origin store labelled."
+          title=\"No tasks on the board yet\"
+          hint=\"This is the org-wide unified task board. Create a task or start a workflow from a template and it appears here once it is persisted, with its origin store labelled.\"
         />
       ) : (
       <>
       <AnswerLead
         tone={critBlocked || overdue.length ? 'urgent' : 'calm'}
-        eyebrow="What is on the critical path — and what needs you first"
+        eyebrow=\"What is on the critical path — and what needs you first\"
         headline={critBlocked
-          ? <>Your path to {milestone ? <b>"{milestone.title}"</b> : 'the milestone'} is <b>blocked</b> at "{critBlocked.title}".</>
+          ? <>Your path to {milestone ? <b>\"{milestone.title}\"</b> : 'the milestone'} is <b>blocked</b> at \"{critBlocked.title}\".</>
           : critOpen.length
-            ? <>{critOpen.length} {critOpen.length === 1 ? 'task stands' : 'tasks stand'} between you and <b>{milestone ? '"' + milestone.title + '"' : 'the milestone'}</b>{overdue.length ? <>, and <b>{overdue.length} {overdue.length === 1 ? 'task is' : 'tasks are'} overdue</b></> : ''}.</>
+            ? <>{critOpen.length} {critOpen.length === 1 ? 'task stands' : 'tasks stand'} between you and <b>{milestone ? '\"' + milestone.title + '\"' : 'the milestone'}</b>{overdue.length ? <>, and <b>{overdue.length} {overdue.length === 1 ? 'task is' : 'tasks are'} overdue</b></> : ''}.</>
             : critDesignated
               ? <>The critical path is clear — nothing open is blocking the milestone right now.</>
               : <>No task on this board is marked critical-path, so there is no path to report on yet.</>}
         body={critBlocked
           ? <>{critBlocked.blockedReason || 'It is blocked'} — nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
-          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{/* "Workload is balanced across the team." used to fire whenever `heaviest`
+          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{/* \"Workload is balanced across the team.\" used to fire whenever `heaviest`
     was undefined — i.e. the filter matched zero tasks. Absence of workload
     data was presented as a measured balance. Balance is claimed only when
     there is assigned open work to be balanced. */}
@@ -841,7 +1226,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
             ? 'I will help you unblock the path and rebalance the team, one step at a time.'
             : critDesignated
               ? 'I will flag the moment anything threatens the milestone.'
-              /* No "You are on track" over an undesignated board, and no promise
+              /* No \"You are on track\" over an undesignated board, and no promise
                  to watch a path that does not exist. */
               : undefined
         }
@@ -850,42 +1235,42 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
           onClick: () => { if (critBlocked || overdue.length) { setView('path'); } else { setWf(true); } },
           alt: { label: 'Auto-balance assignments', onClick: () => onAsk && onAsk('Rebalance open task assignments by workload using getOptimalAssignee') },
         } : { label: 'See the critical path', onClick: () => setView('path') }}
-        secondary="Or work the board, critical path, and analytics below."
+        secondary=\"Or work the board, critical path, and analytics below.\"
       />
 
       {unreadStores.length > 0 && (
-        <div className="ph-sub" role="status" data-testid="tb-partial">
+        <div className=\"ph-sub\" role=\"status\" data-testid=\"tb-partial\">
           {I.alertTriangle} Not every task store could be read: {unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')}. The columns and counts show only what was read.
         </div>
       )}
 
       {/* Provenance strip -- the 7-table fragmentation made visible (Gap 1) */}
-      <div className="tb-src">
-        <span className="tb-src-h">Task sources</span>
+      <div className=\"tb-src\">
+        <span className=\"tb-src-h\">Task sources</span>
         {Object.keys(TB_SRC).map(k => {
           const n = list.filter(t => t.source === k).length;
           return (
-            <span key={k} className="tb-src-chip" data-src={k} title={TB_SRC[k].t}>
+            <span key={k} className=\"tb-src-chip\" data-src={k} title={TB_SRC[k].t}>
               <b>{TB_SRC[k].l}</b> {n}<em>{TB_SRC[k].t}</em>
             </span>
           );
         })}
-        <span className="tb-src-note">other stores read through the cross-store work view; their cards open where they live</span>
+        <span className=\"tb-src-note\">other stores read through the cross-store work view; their cards open where they live</span>
       </div>
 
       {/* Filters + views */}
-      <div className="tb-bar">
-        <div className="tb-filters">
-          <select id="tb-filter-project" aria-label="Filter by project" className="tb-sel" value={proj} onChange={e => setProj(e.target.value)}>
-            <option value="all">All projects (org-scoped)</option>
+      <div className=\"tb-bar\">
+        <div className=\"tb-filters\">
+          <select id=\"tb-filter-project\" aria-label=\"Filter by project\" className=\"tb-sel\" value={proj} onChange={e => setProj(e.target.value)}>
+            <option value=\"all\">All projects (org-scoped)</option>
             {projectOpts.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
           </select>
-          <select id="tb-filter-module" aria-label="Filter by module" className="tb-sel" value={mod} onChange={e => setMod(e.target.value)}>
+          <select id=\"tb-filter-module\" aria-label=\"Filter by module\" className=\"tb-sel\" value={mod} onChange={e => setMod(e.target.value)}>
             {modules.map(m => <option key={m} value={m}>{m === 'all' ? 'All modules' : m}</option>)}
           </select>
           <button className={`tb-chip${mine ? ' on' : ''}`} onClick={() => setMine(m => !m)}>{I.user} My tasks</button>
         </div>
-        <div className="seg">
+        <div className=\"seg\">
           {([['board', 'Board'], ['path', 'Critical path'], ['analytics', 'Analytics'], ['table', 'Table']] as const).map(([v, l]) => (
             <button key={v} className={`seg-b${view === v ? ' on' : ''}`} onClick={() => setView(v)}>{l}</button>
           ))}
@@ -893,18 +1278,18 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       {/* data-cols below is required, not decorative: .tb-kanban defaults to a
-          4-column grid and only [data-cols="5"] widens it (app-v2.css:452,459).
+          4-column grid and only [data-cols=\"5\"] widens it (app-v2.css:452,459).
           Adding the Blocked column made this five, so without the attribute
-          row-major auto-placement wrapped "Done" onto a second row. Driven off
+          row-major auto-placement wrapped \"Done\" onto a second row. Driven off
           TB_COLS.length so it cannot drift again if a column is added. */}
       {view === 'board' && (
-        <div className="tb-kanban" data-cols={String(TB_COLS.length)}>
+        <div className=\"tb-kanban\" data-cols={String(TB_COLS.length)}>
           {TB_COLS.map(col => {
             const items = byCol(col.id);
             return (
-              <div key={col.id} className="tb-col">
-                <div className="tb-col-h"><span className="kdot" data-tone={col.tone} /><span>{col.label}</span><span className="kn">{items.length}</span></div>
-                <div className="tb-col-b">
+              <div key={col.id} className=\"tb-col\">
+                <div className=\"tb-col-h\"><span className=\"kdot\" data-tone={col.tone} /><span>{col.label}</span><span className=\"kn\">{items.length}</span></div>
+                <div className=\"tb-col-b\">
                   {items.map(t => (
                     // role/tabIndex/key handling, not a bare div+onClick: the
                     // card is the board's primary affordance and was reachable
@@ -914,9 +1299,9 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
                     // explicit role rather than a native element.
                     <div
                       key={t.taskId}
-                      className="tb-card"
+                      className=\"tb-card\"
                       data-blocked={t.blocked || undefined}
-                      role="button"
+                      role=\"button\"
                       tabIndex={0}
                       aria-label={`Open ${t.title}`}
                       onClick={() => setSel(t)}
@@ -925,35 +1310,35 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
                         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(t); }
                       }}
                     >
-                      <div className="tb-card-top">
-                        {t.moduleType && <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>}
-                        {t.criticalPath && <span className="tb-flag crit" title="On critical path">{I.zap}</span>}
-                        {t.regulatoryImpact && <span className="tb-flag reg" title="Regulatory impact">{I.shieldCheck}</span>}
+                      <div className=\"tb-card-top\">
+                        {t.moduleType && <span className=\"tb-mod\" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>}
+                        {t.criticalPath && <span className=\"tb-flag crit\" title=\"On critical path\">{I.zap}</span>}
+                        {t.regulatoryImpact && <span className=\"tb-flag reg\" title=\"Regulatory impact\">{I.shieldCheck}</span>}
                       </div>
-                      <div className="tb-card-title">{t.title}</div>
-                      {t.blocked && <div className="tb-blocked">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
-                      <div className="tb-card-meta">
-                        <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
+                      <div className=\"tb-card-title\">{t.title}</div>
+                      {t.blocked && <div className=\"tb-blocked\">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
+                      <div className=\"tb-card-meta\">
+                        <span className=\"tb-type\" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
                         {t.priority && <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>}
-                        {t.approvalRequired && <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus === 'approved' ? 'approved' : t.approvalStatus === 'pending' ? 'approval — pending' : 'needs approval'}</span>}
+                        {t.approvalRequired && <span className=\"tb-appr\" data-s={t.approvalStatus}>{t.approvalStatus === 'approved' ? 'approved' : t.approvalStatus === 'pending' ? 'approval — pending' : 'needs approval'}</span>}
                       </div>
-                      {t.progress > 0 && t.progress < 100 && <div className="tb-prog"><span style={{ width: t.progress + '%' }} /></div>}
-                      <div className="tb-card-foot">
-                        <span className="tb-src-tag" data-src={t.source} title={SRC(t.source).t}>{SRC(t.source).l}</span>
-                        {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className="tb-deps" title={t.dependsOn.length + ' upstream — ' + t.blocks.length + ' downstream'}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
-                        {t.comments > 0 && <span className="tb-cmt">{t.comments}</span>}
-                        <span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
-                        {!t.readOnly && <span className="tb-av" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>}
+                      {t.progress > 0 && t.progress < 100 && <div className=\"tb-prog\"><span style={{ width: t.progress + '%' }} /></div>}
+                      <div className=\"tb-card-foot\">
+                        <span className=\"tb-src-tag\" data-src={t.source} title={SRC(t.source).t}>{SRC(t.source).l}</span>
+                        {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className=\"tb-deps\" title={t.dependsOn.length + ' upstream — ' + t.blocks.length + ' downstream'}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
+                        {t.comments > 0 && <span className=\"tb-cmt\">{t.comments}</span>}
+                        <span className=\"tb-due\" data-over={isOverdue(t) || undefined}>{t.due}</span>
+                        {!t.readOnly && <span className=\"tb-av\" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>}
                       </div>
                       {canWrite && !t.readOnly && (
-                        <div className="tb-move" onClick={e => e.stopPropagation()}>
-                          <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back" aria-label="Move back">{I.left}</button>
-                          <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title="Advance" aria-label="Advance">{I.chevRight}</button>
+                        <div className=\"tb-move\" onClick={e => e.stopPropagation()}>
+                          <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title=\"Move back\" aria-label=\"Move back\">{I.left}</button>
+                          <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title=\"Advance\" aria-label=\"Advance\">{I.chevRight}</button>
                         </div>
                       )}
                     </div>
                   ))}
-                  {!items.length && <div className="tb-empty">No tasks</div>}
+                  {!items.length && <div className=\"tb-empty\">No tasks</div>}
                 </div>
               </div>
             );
@@ -962,17 +1347,17 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
       )}
 
       {view === 'path' && (
-        <div className="tb-path">
-          <div className="tb-path-h">Critical path — {critChain.length} {critChain.length === 1 ? 'task' : 'tasks'} marked critical-path, in dependency order</div>
+        <div className=\"tb-path\">
+          <div className=\"tb-path-h\">Critical path — {critChain.length} {critChain.length === 1 ? 'task' : 'tasks'} marked critical-path, in dependency order</div>
           {critChain.map((t, i) => (
             <div
               key={t.taskId}
-              className="tb-path-row"
+              className=\"tb-path-row\"
               data-status={t.status}
-              role="button"
+              role=\"button\"
               tabIndex={0}
               /* The rail dot carried completed / in-progress / pending in its
-                 colour alone, and the row's name said only "Open <title>", so
+                 colour alone, and the row's name said only \"Open <title>\", so
                  the one thing the critical path is read for was the one thing
                  not stated. */
               aria-label={`Open ${t.title} — ${t.status}`}
@@ -982,16 +1367,16 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(t); }
               }}
             >
-              <div className="tb-path-rail"><span className="tb-path-dot" data-status={t.status} aria-hidden="true" />{i < critChain.length - 1 && <span className="tb-path-line" />}</div>
-              <div className="tb-path-card">
-                <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
-                <div className="tb-path-m">
-                  <span>{t.phase || '—'}</span><span className="tb-dot">--</span><span>{nameOf(t.assignee)}</span><span className="tb-dot">--</span>
-                  <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">--</span><span>impact {t.impactScore ?? '—'}/10</span>
-                  {t.blocked && <span className="tb-path-blk">{I.alertTriangle} blocked</span>}
-                  <span className="sp" /><span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
+              <div className=\"tb-path-rail\"><span className=\"tb-path-dot\" data-status={t.status} aria-hidden=\"true\" />{i < critChain.length - 1 && <span className=\"tb-path-line\" />}</div>
+              <div className=\"tb-path-card\">
+                <div className=\"tb-path-t\">{t.title}<span className=\"tb-mod\" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
+                <div className=\"tb-path-m\">
+                  <span>{t.phase || '—'}</span><span className=\"tb-dot\">--</span><span>{nameOf(t.assignee)}</span><span className=\"tb-dot\">--</span>
+                  <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className=\"tb-dot\">--</span><span>impact {t.impactScore ?? '—'}/10</span>
+                  {t.blocked && <span className=\"tb-path-blk\">{I.alertTriangle} blocked</span>}
+                  <span className=\"sp\" /><span className=\"tb-due\" data-over={isOverdue(t) || undefined}>{t.due}</span>
                 </div>
-                {t.dependsOn.length > 0 && <div className="tb-path-dep">depends on {t.dependsOn.map(d => (byId(d) || { title: d }).title || d).join(' — ')}</div>}
+                {t.dependsOn.length > 0 && <div className=\"tb-path-dep\">depends on {t.dependsOn.map(d => (byId(d) || { title: d }).title || d).join(' — ')}</div>}
               </div>
             </div>
           ))}
@@ -1000,27 +1385,27 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
 
       {view === 'analytics' && (
         <div>
-          <div className="metrics">
+          <div className=\"metrics\">
             {([['Open tasks', stats.open, ''], ['On critical path', stats.crit, 'ai'], ['Regulatory impact', stats.reg, 'warn'], ['Blocked', stats.blocked, stats.blocked ? 'err' : ''], ['Approvals pending', stats.appr, 'warn']] as const).map((m, i) => (
-              <div key={i} className="metric" data-tone={m[2]}><div className="metric-l">{m[0]}</div><div className="metric-n">{m[1]}</div></div>
+              <div key={i} className=\"metric\" data-tone={m[2]}><div className=\"metric-l\">{m[0]}</div><div className=\"metric-n\">{m[1]}</div></div>
             ))}
           </div>
-          <div className="tb-an-grid">
-            <div className="tb-an-card">
-              <div className="tb-an-h">By module</div>
+          <div className=\"tb-an-grid\">
+            <div className=\"tb-an-card\">
+              <div className=\"tb-an-h\">By module</div>
               {Object.keys(stats.byMod).map(k => {
                 const max = Math.max(...Object.values(stats.byMod));
                 return (
-                  <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-an-dot" style={{ background: TB_MOD[k] || MODULE_COLOR_UNKNOWN }} />{k}</span><div className="tb-an-bar"><span style={{ width: (stats.byMod[k] / max * 100) + '%', background: TB_MOD[k] || MODULE_COLOR_UNKNOWN }} /></div><span className="tb-an-n">{stats.byMod[k]}</span></div>
+                  <div key={k} className=\"tb-an-row\"><span className=\"tb-an-k\"><span className=\"tb-an-dot\" style={{ background: TB_MOD[k] || MODULE_COLOR_UNKNOWN }} />{k}</span><div className=\"tb-an-bar\"><span style={{ width: (stats.byMod[k] / max * 100) + '%', background: TB_MOD[k] || MODULE_COLOR_UNKNOWN }} /></div><span className=\"tb-an-n\">{stats.byMod[k]}</span></div>
                 );
               })}
             </div>
-            <div className="tb-an-card">
-              <div className="tb-an-h">Team productivity</div>
+            <div className=\"tb-an-card\">
+              <div className=\"tb-an-h\">Team productivity</div>
               {Object.keys(stats.byAsg).map(k => (
-                <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-av sm">{tbAvatar(nameOf(k))}</span>{nameOf(k)}</span><div className="tb-an-split"><span className="tb-an-open">{stats.byAsg[k].open} open</span><span className="tb-an-done">{stats.byAsg[k].done} done</span></div></div>
+                <div key={k} className=\"tb-an-row\"><span className=\"tb-an-k\"><span className=\"tb-av sm\">{tbAvatar(nameOf(k))}</span>{nameOf(k)}</span><div className=\"tb-an-split\"><span className=\"tb-an-open\">{stats.byAsg[k].open} open</span><span className=\"tb-an-done\">{stats.byAsg[k].done} done</span></div></div>
               ))}
-              <div className="tb-an-foot">Auto-assign on a saved task balances workload server-side via <code>getOptimalAssignee()</code>; the per-module default shown here does not.</div>
+              <div className=\"tb-an-foot\">Auto-assign on a saved task balances workload server-side via <code>getOptimalAssignee()</code>; the per-module default shown here does not.</div>
             </div>
             <AutomationCard />
           </div>
@@ -1028,13 +1413,13 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
       )}
 
       {view === 'table' && (
-        <div className="ctable tb-table">
-          <div className="ct-head" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }}><div>Task ID</div><div>Title</div><div>Module</div><div>Status</div><div>Priority</div><div>Owner</div><div>Due</div></div>
+        <div className=\"ctable tb-table\">
+          <div className=\"ct-head\" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }}><div>Task ID</div><div>Title</div><div>Module</div><div>Status</div><div>Priority</div><div>Owner</div><div>Due</div></div>
           {list.map(t => (
-            <button key={t.taskId} className="ct-row" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }} onClick={() => setSel(t)}>
-              <div className="ct-strong mono" style={{ fontSize: 10.5 }}>{t.taskId}</div>
-              <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className="tb-flag crit inline">{I.zap}</span>}{t.blocked && <span className="tb-flag blk inline">{I.alertTriangle}</span>}</div>
-              <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
+            <button key={t.taskId} className=\"ct-row\" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }} onClick={() => setSel(t)}>
+              <div className=\"ct-strong mono\" style={{ fontSize: 10.5 }}>{t.taskId}</div>
+              <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className=\"tb-flag crit inline\">{I.zap}</span>}{t.blocked && <span className=\"tb-flag blk inline\">{I.alertTriangle}</span>}</div>
+              <div><span className=\"tb-mod\" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
               <div style={{ fontSize: 11 }}>{(TB_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
               <div><span className={`tb-pri pri-${t.priority}`}>{t.priority}</span></div>
               <div style={{ fontSize: 11 }}>{nameOf(t.assignee)}</div>
@@ -1048,15 +1433,15 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
           Every bullet here is re-verified against the server, because three of
           the four this replaces had gone false while still being shown to
           authenticated users — and the audit one was the dangerous kind of
-          false. It read "task-audit.ts … is coded but NOT CALLED from task
+          false. It read \"task-audit.ts … is coded but NOT CALLED from task
           mutation handlers -- task creates/transitions are currently
-          unaudited", telling a user of a Part 11 tool that their governed
+          unaudited\", telling a user of a Part 11 tool that their governed
           actions left no ledger entry. `auditTaskAction` is imported and
           awaited on every mutation this board fires: create, transition
           (unifiedTasks.routes.ts), archive, link, assign, notify and
           from-template (taskManagement.routes.ts).
-          Likewise "Notifications: stub only (io.to('tasks').emit commented
-          out)" — that expression appears nowhere in the server; assignment,
+          Likewise \"Notifications: stub only (io.to('tasks').emit commented
+          out)\" — that expression appears nowhere in the server; assignment,
           transition and create all call `notifyTaskEvent`
           (services/tasking/task-side-effects.ts). And the route note pointed at
           a client file, `taskingService.ts`, that does not exist in this
@@ -1068,7 +1453,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
           tour: it named five tables and a source file, always rendered, to
           every user. The governance claims are the valuable part and are kept;
           the identifiers are not. */}
-      <details className="tb-gaps">
+      <details className=\"tb-gaps\">
         <summary>What is enforced, and what is not yet</summary>
         <ul>
           <li><b>One canonical record.</b> Schedule-of-events tasks keep their own lifecycle and mirror forward into the canonical record with a deterministic id; the unified work view excludes those mirrored rows so nothing is counted twice. Origin is shown per card.</li>
@@ -1127,15 +1512,10 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
           onArchived={() => { setSel(null); setReloadKey((k) => k + 1); }}
         />
       )}
-      {/* An approval-gated completion (the server answered 428 ESIGN_REQUIRED) is
-          signed in the product's one task sign-off, editor/TaskSignOffDialog.tsx,
-          the dialog the document's Tasks rail mounts too: meaning, reason,
-          password and the authenticator code when one is enrolled, re-verified by
-          the server, and a confirmation that shows the signature the server
-          recorded. This board held its own copy until 2026-10-08 (wave 2D). */}
       {signReq && (
-        <TaskSignOffDialog
-          req={{ taskId: signReq.t.taskId, title: signReq.t.title, status: signReq.status, progress: signReq.progress }}
+        <ESignTaskModal
+          req={signReq}
+          taskTitle={signReq.t.title}
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
           onClose={() => setSignReq(null)}
           onSigned={() => { setSignReq(null); setReloadKey((k) => k + 1); }}
@@ -1189,14 +1569,14 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome }: {
   const project = t.project ? projLabel(t.project) : null;
   const dialogRef = useDialog(onClose);
   return (
-    <div className="tb-detail-bd" onClick={onClose}>
-      <div className="tb-detail" role="dialog" aria-modal="true" aria-label="Task detail" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
-        <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>{t.taskId}</span><h3>{t.title}</h3></div>
-          <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
+    <div className=\"tb-detail-bd\" onClick={onClose}>
+      <div className=\"tb-detail\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Task detail\" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
+        <div className=\"tb-detail-h\">
+          <div><span className=\"mono\" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>{t.taskId}</span><h3>{t.title}</h3></div>
+          <button className=\"tb-detail-x\" onClick={onClose} aria-label=\"Close\">{I.close}</button>
         </div>
-        {t.blocked && <div className="tb-blocked lg">{I.alertTriangle} {t.detail || 'Blocked'}</div>}
-        <div className="tb-detail-grid">
+        {t.blocked && <div className=\"tb-blocked lg\">{I.alertTriangle} {t.detail || 'Blocked'}</div>}
+        <div className=\"tb-detail-grid\">
           <div><label>Project</label><span>{project ?? '—'}</span></div>
           <div><label>Status</label><span>{status}</span></div>
           <div><label>Due</label><span style={{ color: isOverdue(t) ? 'var(--error)' : 'inherit' }}>{t.due || '—'}</span></div>
@@ -1204,10 +1584,10 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome }: {
           {t.priority && <div><label>Priority</label><span>{t.priority}</span></div>}
           {t.detail && !t.blocked && <div><label>Note</label><span>{t.detail}</span></div>}
         </div>
-        <div className="tb-detail-sec">
-          <div className="tb-detail-note">{whereItLives(home, project)}</div>
+        <div className=\"tb-detail-sec\">
+          <div className=\"tb-detail-note\">{whereItLives(home, project)}</div>
           {home && (
-            <button className="btn primary" onClick={() => onOpenHome(t)}>Open in {home}</button>
+            <button className=\"btn primary\" onClick={() => onOpenHome(t)}>Open in {home}</button>
           )}
         </div>
       </div>
@@ -1275,21 +1655,21 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
   const dialogRef = useDialog(onClose);
 
   return (
-    <div className="tb-detail-bd" onClick={onClose}>
-      <div className="tb-detail" role="dialog" aria-modal="true" aria-label="Task detail" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
-        <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>{t.taskId}</span><h3>{t.title}</h3></div>
-          <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
+    <div className=\"tb-detail-bd\" onClick={onClose}>
+      <div className=\"tb-detail\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Task detail\" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
+        <div className=\"tb-detail-h\">
+          <div><span className=\"mono\" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>{t.taskId}</span><h3>{t.title}</h3></div>
+          <button className=\"tb-detail-x\" onClick={onClose} aria-label=\"Close\">{I.close}</button>
         </div>
-        <div className="tb-detail-chips">
-          <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
-          <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
+        <div className=\"tb-detail-chips\">
+          <span className=\"tb-mod\" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
+          <span className=\"tb-type\" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
           <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
-          {t.criticalPath && <span className="tb-flag crit lg">{I.zap} critical path</span>}
-          {t.regulatoryImpact && <span className="tb-flag reg lg">{I.shieldCheck} regulatory</span>}
+          {t.criticalPath && <span className=\"tb-flag crit lg\">{I.zap} critical path</span>}
+          {t.regulatoryImpact && <span className=\"tb-flag reg lg\">{I.shieldCheck} regulatory</span>}
         </div>
-        {t.blocked && <div className="tb-blocked lg">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
-        <div className="tb-detail-grid">
+        {t.blocked && <div className=\"tb-blocked lg\">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
+        <div className=\"tb-detail-grid\">
           <div><label>Project</label><span>{projLabel(t.project)}</span></div>
           <div><label>Phase</label><span>{t.phase || '—'}</span></div>
           <div><label>Assignee</label><span>{owner}</span></div>
@@ -1300,8 +1680,8 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
           <div><label>Progress</label><span>{t.progress}%</span></div>
         </div>
         {t.approvalRequired && (
-          <div className="tb-detail-sec">
-            <div className="tb-detail-sec-h">Approval checkpoint <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus.replace('_', ' ')}</span></div>
+          <div className=\"tb-detail-sec\">
+            <div className=\"tb-detail-sec-h\">Approval checkpoint <span className=\"tb-appr\" data-s={t.approvalStatus}>{t.approvalStatus.replace('_', ' ')}</span></div>
             {/* §11.50 manifestation. This section previously showed only the
                 status badge, so a signature could be captured, verified and
                 written to the ledger with no way for anyone to see who signed,
@@ -1309,37 +1689,37 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
                 to the person relying on it. approvalHistory now rides the board
                 read model for exactly this. */}
             {t.approvalHistory.length > 0 ? (
-              <div className="tb-sig-list">
+              <div className=\"tb-sig-list\">
                 {t.approvalHistory.map((s, i) => (
-                  <div className="tb-sig" key={`${s.signedAt}-${i}`}>
-                    <div className="tb-sig-h">
+                  <div className=\"tb-sig\" key={`${s.signedAt}-${i}`}>
+                    <div className=\"tb-sig-h\">
                       {I.shieldCheck}
                       <b>{s.signedByName}</b>
-                      <span className="tb-sig-meaning">{s.meaning.toLowerCase()}</span>
-                      <span className="sp" />
+                      <span className=\"tb-sig-meaning\">{s.meaning.toLowerCase()}</span>
+                      <span className=\"sp\" />
                       <time dateTime={s.signedAt}>{fmtSigned(s.signedAt)}</time>
                     </div>
-                    {s.reason && <div className="tb-sig-reason">{s.reason}</div>}
-                    <div className="tb-sig-meta">{describeSignatureMethod(s.method, s.method === 'pin')}.</div>
+                    {s.reason && <div className=\"tb-sig-reason\">{s.reason}</div>}
+                    <div className=\"tb-sig-meta\">{describeSignatureMethod(s.method, s.method === 'pin')}.</div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="tb-detail-note">
+              <div className=\"tb-detail-note\">
                 Not signed yet. Completing this task requires an electronic signature — your
                 password (and your authenticator code, if you use one), the meaning of the
                 signature, and a reason — recorded under
                 21 CFR Part 11 §11.50.
               </div>
             )}
-            {/* The copy here used to claim "Quorum/role-based gate types
-                supported." Neither is implemented. What IS enforced: where a
+            {/* The copy here used to claim \"Quorum/role-based gate types
+                supported.\" Neither is implemented. What IS enforced: where a
                 task names designated approvers, only they can sign (see
                 task-signoff.ts); where it names none, any org member who can
                 sign can. Saying so plainly beats advertising a control
                 that does not exist. */}
             {t.approvalStatus === 'pending' && t.approvalHistory.length > 0 && (
-              <div className="tb-detail-note" data-warn="true">
+              <div className=\"tb-detail-note\" data-warn=\"true\">
                 This task was reopened after signing, so the signature above no longer
                 approves the current version. Completing it again requires a new signature.
               </div>
@@ -1347,14 +1727,14 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
           </div>
         )}
         {(t.dependsOn.length > 0 || t.blocks.length > 0) && (
-          <div className="tb-detail-sec">
-            <div className="tb-detail-sec-h">Dependencies <code>taskDependencies</code></div>
-            {t.dependsOn.map(d => <div key={d} className="tb-dep-row up">{I.arrowUp} depends on <b>{dep(d)}</b></div>)}
-            {t.blocks.map(d => <div key={d} className="tb-dep-row dn">{I.arrowRight} blocks <b>{dep(d)}</b></div>)}
+          <div className=\"tb-detail-sec\">
+            <div className=\"tb-detail-sec-h\">Dependencies <code>taskDependencies</code></div>
+            {t.dependsOn.map(d => <div key={d} className=\"tb-dep-row up\">{I.arrowUp} depends on <b>{dep(d)}</b></div>)}
+            {t.blocks.map(d => <div key={d} className=\"tb-dep-row dn\">{I.arrowRight} blocks <b>{dep(d)}</b></div>)}
           </div>
         )}
         {/* Same correction as the board's engineering-reality block: this said
-            the change "would not be written to the c2c_ana_actions ledger",
+            the change \"would not be written to the c2c_ana_actions ledger\",
             beside the very buttons that write it. Advance/Move back PATCH
             /api/tasks/tasks/:taskId, and that handler writes `task.transition`
             on the transition's own transaction (auditTaskActionInTx) — with the
@@ -1362,62 +1742,148 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
             so a change whose ledger row fails is rolled back, not kept. Archive
             is audited as `task.delete`. Telling a regulated user their action is
             unaudited when it is audited is not a conservative error. */}
-        <div className="tb-detail-sec">
-          <div className="tb-detail-sec-h">Audit</div>
-          <div className="tb-detail-note">{I.shieldCheck} Advancing, moving back or archiving this task is recorded in the Part 11 audit ledger with your identity, the from/to state and any reason you give.</div>
+        <div className=\"tb-detail-sec\">
+          <div className=\"tb-detail-sec-h\">Audit</div>
+          <div className=\"tb-detail-note\">{I.shieldCheck} Advancing, moving back or archiving this task is recorded in the Part 11 audit ledger with your identity, the from/to state and any reason you give.</div>
         </div>
         {confirmArchive && (
-          <div className="tb-detail-note" role="group" aria-label="Archive this task">
+          <div className=\"tb-detail-note\" role=\"group\" aria-label=\"Archive this task\">
             <div style={{ marginBottom: 6 }}>
               Archiving removes “{t.title}” from the board. There is no way to restore it from
               here, and the reason below is written to the Part 11 audit trail.
             </div>
-            <div className="tb-field full">
-              <label htmlFor="tb-archive-reason">Reason for archiving<i>*</i></label>
+            <div className=\"tb-field full\">
+              <label htmlFor=\"tb-archive-reason\">Reason for archiving<i>*</i></label>
               <textarea
-                id="tb-archive-reason"
+                id=\"tb-archive-reason\"
                 rows={2}
                 autoFocus
                 required
-                aria-required="true"
+                aria-required=\"true\"
                 maxLength={ARCHIVE_REASON_MAX}
                 aria-describedby={archiveReasonTooLong ? 'tb-archive-reason-len' : undefined}
                 value={archiveReason}
                 onChange={(e) => setArchiveReason(e.target.value)}
-                placeholder="e.g. Superseded by TASK-1043 after the content-lock plan changed."
+                placeholder=\"e.g. Superseded by TASK-1043 after the content-lock plan changed.\"
               />
             </div>
             {archiveReasonTooLong && (
-              <div id="tb-archive-reason-len" className="tb-auto-note" data-warn="true"><span className="ico">{I.alertTriangle}</span><span>{archiveReasonTooLongText}</span></div>
+              <div id=\"tb-archive-reason-len\" className=\"tb-auto-note\" data-warn=\"true\"><span className=\"ico\">{I.alertTriangle}</span><span>{archiveReasonTooLongText}</span></div>
             )}
-            {archiveErr && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{archiveErr}</span></div>}
+            {archiveErr && <div className=\"tb-auto-note\" data-warn=\"true\" role=\"alert\"><span className=\"ico\">{I.alertTriangle}</span><span>{archiveErr}</span></div>}
           </div>
         )}
-        <div className="tb-detail-f">
-          <button className="btn ghost" onClick={() => { onAsk && onAsk('Draft a status update for ' + t.taskId + ': ' + t.title); onClose(); }}>{I.sparkles} Ask AnA</button>
+        <div className=\"tb-detail-f\">
+          <button className=\"btn ghost\" onClick={() => { onAsk && onAsk('Draft a status update for ' + t.taskId + ': ' + t.title); onClose(); }}>{I.sparkles} Ask AnA</button>
           {canWrite && confirmArchive && (
-            <button className="btn ghost" onClick={() => { setConfirmArchive(false); setArchiveReason(''); setArchiveErr(''); }}>Cancel</button>
+            <button className=\"btn ghost\" onClick={() => { setConfirmArchive(false); setArchiveReason(''); setArchiveErr(''); }}>Cancel</button>
           )}
           {canWrite && (
             <button
-              className="btn ghost"
+              className=\"btn ghost\"
               style={confirmArchive ? { color: 'var(--error)', borderColor: 'var(--error)' } : undefined}
               disabled={archiving || (confirmArchive && !archiveReasonOk)}
               onClick={archive}
               title={confirmArchive && !archiveReasonOk ? (archiveReasonTooLong ? archiveReasonTooLongText : 'Give a reason to archive') : undefined}
-              aria-label={confirmArchive ? `Confirm archiving "${t.title}"` : `Archive "${t.title}"`}
+              aria-label={confirmArchive ? `Confirm archiving \"${t.title}\"` : `Archive \"${t.title}\"`}
             >{archiving ? 'Archiving…' : confirmArchive ? 'Confirm archive' : 'Archive'}</button>
           )}
-          <span className="sp" />
+          <span className=\"sp\" />
           {canWrite && (
             <>
-              <button className="btn ghost" disabled={t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
-              <button className="btn primary" disabled={t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
+              <button className=\"btn ghost\" disabled={t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
+              <button className=\"btn primary\" disabled={t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
             </>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── E-signature ceremony — approval-gated task completion (21 CFR 11 §11.50).
+   Opened when the server answers 428 ESIGN_REQUIRED on a completion. It is the
+   product's one signing dialog, the shared EsignModal: meaning, reason, the
+   account password, and the authenticator code when one is enrolled. The
+   server re-verifies them in server/services/tasking/task-signoff.ts through
+   server/services/part11/reverify-signer.ts, the ceremony every other
+   signature uses, and only then writes the transition with the manifestation
+   (printed name, time, meaning, method) into the task's approval history and
+   the governed audit ledger. The credentials are never logged, audited, or
+   echoed back. Until 2026-09-23 this was a bespoke dialog asking for a
+   separate signing PIN (VSR-001 §13.3 item 3). ── */
+
+/** The task sign-off vocabulary (TASK_SIGNATURE_MEANINGS), as the shared dialog names it. */
+const TASK_MEANING: Partial<Record<EsigMeaning, string>> = {
+  approval: 'APPROVED',
+  review: 'REVIEWED',
+  responsibility: 'RESPONSIBILITY',
+  authorship: 'AUTHORSHIP',
+};
+const TASK_MEANINGS: ReadonlyArray<EsigMeaning> = ['approval', 'review', 'responsibility', 'authorship'];
+
+interface ESignTaskModalProps {
+  req: { t: TaskItem; status: string; progress: number };
+  taskTitle: string;
+  /** Who the dialog shows as signing (the board's signed-in user). */
+  signer?: EsignSigner;
+  onClose: () => void;
+  onSigned: () => void;
+}
+
+function ESignTaskModal({ req, taskTitle, signer, onClose, onSigned }: ESignTaskModalProps) {
+  // Set once the server has confirmed the signature — or could not say whether
+  // it landed (OUTCOME_UNKNOWN) — so closing the dialog reloads the board to
+  // the state that holds rather than reading as a cancel.
+  const reloadOnClose = useRef(false);
+
+  // Re-run the same transition, now carrying the signature. The server
+  // verifies it and, only if it holds, writes the transition + the §11.50
+  // manifestation atomically. A refusal (ESIGN_*) is thrown by apiRequest with
+  // the server's sentence, which the dialog shows; nothing is written.
+  const onSign = async (input: { meaning: EsigMeaning; reason: string; password: string; totp?: string }): Promise<EsigSignedManifest> => {
+    const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(req.t.taskId), {
+      status: req.status,
+      progress: req.progress,
+      reason: input.reason,
+      signature: {
+        password: input.password,
+        ...(input.totp ? { mfaToken: input.totp } : {}),
+        meaning: TASK_MEANING[input.meaning] ?? input.meaning,
+      },
+    }).catch((e: unknown) => {
+      // The dialog shows the server's sentence; the board must not keep
+      // showing a state the lost COMMIT may have changed.
+      if (e instanceof ApiRequestError && e.code === 'OUTCOME_UNKNOWN') reloadOnClose.current = true;
+      throw e;
+    });
+    // apiRequest RETURNS a 401 rather than throwing it. Usually that is the
+    // session — but the sign-off answers 401 ESIGN_IDENTITY_REQUIRED itself when
+    // the session names no verified signer (task-signoff.ts), a different fact
+    // with its own sentence. Branch on the code, never on the text.
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { code?: unknown } | null;
+      const own = typeof body?.code === 'string' && body.code.startsWith('ESIGN_') ? serverMessage(body) : null;
+      throw new Error(own
+        ? `${own} The task was not completed.`
+        : 'Your session is not signed in any more. Sign in again; the task was not completed.');
+    }
+    reloadOnClose.current = true;
+    return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString() };
+  };
+
+  return (
+    <EsignModal
+      open
+      action=\"Complete approval-gated task\"
+      target={taskTitle}
+      targetMeta=\"Completing it applies your electronic signature, recorded with the task and in the audit ledger.\"
+      defaultMeaning=\"approval\"
+      meanings={TASK_MEANINGS}
+      signer={signer}
+      onClose={() => (reloadOnClose.current ? onSigned() : onClose())}
+      onSign={onSign}
+    />
   );
 }
 
@@ -1529,58 +1995,58 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
   const dialogRef = useDialog(onClose);
 
   return (
-    <div className="tb-detail-bd tb-create-bd" onClick={onClose}>
-      <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="New task" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
-        <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>unifiedTasks — new</span><h3>New task</h3></div>
-          <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
+    <div className=\"tb-detail-bd tb-create-bd\" onClick={onClose}>
+      <div className=\"tb-detail tb-create\" role=\"dialog\" aria-modal=\"true\" aria-label=\"New task\" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
+        <div className=\"tb-detail-h\">
+          <div><span className=\"mono\" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>unifiedTasks — new</span><h3>New task</h3></div>
+          <button className=\"tb-detail-x\" onClick={onClose} aria-label=\"Close\">{I.close}</button>
         </div>
-        <div className="tb-form">
-          <div className="tb-field full"><label htmlFor="tb-title">Title<i>*</i></label><input id="tb-title" type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Reconcile 2.5.4 efficacy claim with CSR-201 dataset" /></div>
-          <div className="tb-frow">
-            <div className="tb-field"><label htmlFor="tb-project">Project</label><select id="tb-project" value={f.project} onChange={e => set('project', e.target.value)}>{projects.rows.length ? projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>) : <option value="">No projects available</option>}</select></div>
-            <div className="tb-field"><label htmlFor="tb-module">Module</label><select id="tb-module" value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>{Object.keys(TB_MOD).map(m => <option key={m} value={m}>{m}</option>)}</select></div>
+        <div className=\"tb-form\">
+          <div className=\"tb-field full\"><label htmlFor=\"tb-title\">Title<i>*</i></label><input id=\"tb-title\" type=\"text\" autoFocus value={f.title} onChange={e => set('title', e.target.value)} placeholder=\"e.g. Reconcile 2.5.4 efficacy claim with CSR-201 dataset\" /></div>
+          <div className=\"tb-frow\">
+            <div className=\"tb-field\"><label htmlFor=\"tb-project\">Project</label><select id=\"tb-project\" value={f.project} onChange={e => set('project', e.target.value)}>{projects.rows.length ? projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>) : <option value=\"\">No projects available</option>}</select></div>
+            <div className=\"tb-field\"><label htmlFor=\"tb-module\">Module</label><select id=\"tb-module\" value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>{Object.keys(TB_MOD).map(m => <option key={m} value={m}>{m}</option>)}</select></div>
           </div>
-          <div className="tb-frow">
-            <div className="tb-field"><label htmlFor="tb-task-type">Task type</label><select id="tb-task-type" value={f.taskType} onChange={e => set('taskType', e.target.value)}>{Object.keys(TB_TYPE).map(t => <option key={t} value={t}>{TB_TYPE[t]}</option>)}</select></div>
+          <div className=\"tb-frow\">
+            <div className=\"tb-field\"><label htmlFor=\"tb-task-type\">Task type</label><select id=\"tb-task-type\" value={f.taskType} onChange={e => set('taskType', e.target.value)}>{Object.keys(TB_TYPE).map(t => <option key={t} value={t}>{TB_TYPE[t]}</option>)}</select></div>
             {/* Exactly the server's accepted vocabulary. createTaskSchema
                 (taskManagement.routes.ts) validates priority against
                 z.enum(['low','medium','high','critical']), so the 'urgent'
                 option this picker used to offer was a guaranteed HTTP 400: the
                 task simply failed to create for anyone who chose it. */}
-            <div className="tb-field"><label htmlFor="tb-priority">Priority</label><select id="tb-priority" value={f.priority} onChange={e => set('priority', e.target.value)}>{['low', 'medium', 'high', 'critical'].map(p => <option key={p} value={p}>{p}</option>)}</select></div>
+            <div className=\"tb-field\"><label htmlFor=\"tb-priority\">Priority</label><select id=\"tb-priority\" value={f.priority} onChange={e => set('priority', e.target.value)}>{['low', 'medium', 'high', 'critical'].map(p => <option key={p} value={p}>{p}</option>)}</select></div>
           </div>
-          <div className="tb-frow">
-            <div className="tb-field"><label htmlFor="tb-status">Status</label><select id="tb-status" value={f.status} onChange={e => set('status', e.target.value)}>{TB_COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
-            <div className="tb-field"><label htmlFor="tb-assignee">Assignee</label><select id="tb-assignee" value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto — optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.label ?? a.name}</option>)}</select></div>
+          <div className=\"tb-frow\">
+            <div className=\"tb-field\"><label htmlFor=\"tb-status\">Status</label><select id=\"tb-status\" value={f.status} onChange={e => set('status', e.target.value)}>{TB_COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
+            <div className=\"tb-field\"><label htmlFor=\"tb-assignee\">Assignee</label><select id=\"tb-assignee\" value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value=\"auto\">Auto — optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.label ?? a.name}</option>)}</select></div>
           </div>
-          <div className="tb-frow">
-            <div className="tb-field"><label htmlFor="tb-impact-score-10">Impact score — {f.impactScore}/10</label><input id="tb-impact-score-10" type="range" min="0" max="10" value={f.impactScore} onChange={e => set('impactScore', +e.target.value)} /></div>
-            <div className="tb-field"><label htmlFor="tb-due-in-days">Due in (days)</label><input id="tb-due-in-days" type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} /></div>
+          <div className=\"tb-frow\">
+            <div className=\"tb-field\"><label htmlFor=\"tb-impact-score-10\">Impact score — {f.impactScore}/10</label><input id=\"tb-impact-score-10\" type=\"range\" min=\"0\" max=\"10\" value={f.impactScore} onChange={e => set('impactScore', +e.target.value)} /></div>
+            <div className=\"tb-field\"><label htmlFor=\"tb-due-in-days\">Due in (days)</label><input id=\"tb-due-in-days\" type=\"number\" min=\"0\" max=\"120\" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} /></div>
           </div>
-          <div className="tb-field full"><label>Flags</label>
-            <div className="tb-toggles">
-              <button type="button" className={`tb-tog${f.criticalPath ? ' on' : ''}`} onClick={() => set('criticalPath', !f.criticalPath)}><span className="ico">{I.zap}</span>Critical path</button>
-              <button type="button" className={`tb-tog${f.regulatoryImpact ? ' on' : ''}`} onClick={() => set('regulatoryImpact', !f.regulatoryImpact)}><span className="ico">{I.shieldCheck}</span>Regulatory impact</button>
-              <button type="button" className={`tb-tog${f.approvalRequired ? ' on' : ''}`} onClick={() => set('approvalRequired', !f.approvalRequired)}><span className="ico">{I.checkSquare}</span>Approval required</button>
+          <div className=\"tb-field full\"><label>Flags</label>
+            <div className=\"tb-toggles\">
+              <button type=\"button\" className={`tb-tog${f.criticalPath ? ' on' : ''}`} onClick={() => set('criticalPath', !f.criticalPath)}><span className=\"ico\">{I.zap}</span>Critical path</button>
+              <button type=\"button\" className={`tb-tog${f.regulatoryImpact ? ' on' : ''}`} onClick={() => set('regulatoryImpact', !f.regulatoryImpact)}><span className=\"ico\">{I.shieldCheck}</span>Regulatory impact</button>
+              <button type=\"button\" className={`tb-tog${f.approvalRequired ? ' on' : ''}`} onClick={() => set('approvalRequired', !f.approvalRequired)}><span className=\"ico\">{I.checkSquare}</span>Approval required</button>
             </div>
           </div>
-          <div className="tb-field full"><label>Depends on <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>-- taskDependencies DAG</span></label>
-            <div className="tb-dep-pick">
+          <div className=\"tb-field full\"><label>Depends on <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>-- taskDependencies DAG</span></label>
+            <div className=\"tb-dep-pick\">
               {allTasks.filter(t => t.project === f.project).slice(0, 6).map(t => (
-                <button type="button" key={t.taskId} className={`tb-dep-opt${f.dependsOn.includes(t.taskId) ? ' on' : ''}`} onClick={() => toggleDep(t.taskId)} title={t.title}>
+                <button type=\"button\" key={t.taskId} className={`tb-dep-opt${f.dependsOn.includes(t.taskId) ? ' on' : ''}`} onClick={() => toggleDep(t.taskId)} title={t.title}>
                   {f.dependsOn.includes(t.taskId) ? I.check : I.plus}<span>{t.title}</span>
                 </button>
               ))}
             </div>
           </div>
-          {f.assignee === 'auto' && <div className="tb-auto-note"><span className="ico">{I.sparkles}</span><span>Auto-assign picks the lowest-workload member of this organization for <b>{f.moduleType}</b> — balanced server-side via <code>getOptimalAssignee()</code>.</span></div>}
-          {err && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
+          {f.assignee === 'auto' && <div className=\"tb-auto-note\"><span className=\"ico\">{I.sparkles}</span><span>Auto-assign picks the lowest-workload member of this organization for <b>{f.moduleType}</b> — balanced server-side via <code>getOptimalAssignee()</code>.</span></div>}
+          {err && <div className=\"tb-auto-note\" data-warn=\"true\" role=\"alert\"><span className=\"ico\">{I.alertTriangle}</span><span>{err}</span></div>}
         </div>
-        <div className="tb-detail-f">
+        <div className=\"tb-detail-f\">
           
-          <button className="btn ghost" onClick={onClose}>Cancel</button>
-          <button className="btn primary" disabled={!f.title.trim() || busy} onClick={doCreate}>{I.plus} {busy ? 'Creating...' : 'Create task'}</button>
+          <button className=\"btn ghost\" onClick={onClose}>Cancel</button>
+          <button className=\"btn primary\" disabled={!f.title.trim() || busy} onClick={doCreate}>{I.plus} {busy ? 'Creating...' : 'Create task'}</button>
         </div>
       </div>
     </div>
@@ -1611,7 +2077,7 @@ async function autoAssignCreated(ids: string[], created: number): Promise<string
     const res = await apiRequest('POST', '/api/tasks/tasks/auto-assign', { taskIds: ids });
     if (res.status === 401) return sessionExpired(notAssigned);
     if (!res.ok) return notAssigned;
-    // A 200 is not "all assigned": the route leaves out a task nobody could
+    // A 200 is not \"all assigned\": the route leaves out a task nobody could
     // take, or one archived meanwhile, and answers with the count it made.
     const body = (await res.json().catch(() => null)) as { count?: unknown; data?: unknown } | null;
     const assigned = typeof body?.count === 'number' ? body.count : Array.isArray(body?.data) ? body.data.length : null;
@@ -1647,9 +2113,9 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
   /* Real org templates. The picker used to be populated from TB_WORKFLOWS, a
      fixture constant, and `instantiate` fabricated the entire task set in the
      browser: ids from 'C2C-TASK-' + Math.random(), assignees defaulting to the
-     fixture identity 'jc', due dates as "in N days" strings, and nothing
+     fixture identity 'jc', due dates as \"in N days\" strings, and nothing
      persisted — the tasks vanished on reload, and the footer said so
-     ("not yet wired").
+     (\"not yet wired\").
 
      The write half already existed and is thorough:
      POST /api/task-management/tasks/from-template/:templateId inserts real
@@ -1732,7 +2198,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
       onInstantiate(created, warning);
     } catch (e) {
       // `e instanceof Error` also matched a browser-native fetch rejection, so a
-      // dropped connection surfaced as "Failed to fetch" / "Load failed" in the
+      // dropped connection surfaced as \"Failed to fetch\" / \"Load failed\" in the
       // dialog. Only ApiRequestError carries a message that has been reduced to
       // user copy; everything else falls back to this surface's own sentence.
       setErr(refusalText(e, 'Could not reach the task service.'));
@@ -1744,78 +2210,24 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
   const dialogRef = useDialog(onClose);
 
   return (
-    <div className="tb-detail-bd" onClick={onClose}>
-      <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="Start workflow from template" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
-        <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>taskTemplates — from-template</span><h3>Start a workflow</h3></div>
-          <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
-        </div>
+    <div className=\"tb-detail-bd\" onClick={onClose}>
+      <div className=\"tb-detail tb-create\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Start workflow from template\" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
+        <div className=\"tb-detail-h\">
+          <div><span clas...
 
-        {templates.loading ? (
-          <div className="tb-form"><div role="status" className="scaf-note">Loading workflow templates…</div></div>
-        ) : templates.error ? (
-          <div className="tb-form">
-            <EmptyState
-              tone="error"
-              icon={I.alertTriangle}
-              title="Couldn't load workflow templates"
-              hint={templates.error}
-            />
-          </div>
-        ) : !templates.rows.length ? (
-          <div className="tb-form">
-            <EmptyState
-              icon={I.layers}
-              title="No workflow templates yet"
-              hint="Workflow templates define a reusable set of dependency-linked, date-offset tasks. None are configured for this organization, so there is nothing to start from."
-            />
-          </div>
-        ) : (
-        <div className="tb-form">
-          <div className="tb-frow">
-            <div className="tb-field"><label htmlFor="tb-workflow-template">Workflow template</label><select id="tb-workflow-template" value={tid} onChange={e => setTid(e.target.value)}>{templates.rows.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}</select></div>
-            <div className="tb-field"><label htmlFor="tb-project-2">Project</label><select id="tb-project-2" value={project} onChange={e => setProject(e.target.value)}><option value="">Select a project…</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
-          </div>
-          {tpl && (
-            <>
-              <div className="wf-meta">
-                <span><b>{tpl.taskCount}</b> tasks</span><span className="tb-dot">--</span>
-                <span><b>{tpl.spanDays}</b>-day span</span><span className="tb-dot">--</span>
-                <span><b>{tpl.estimatedHours}</b>h effort</span><span className="tb-dot">--</span>
-                <span><b>{tpl.dependencyCount}</b> dependencies</span>
-              </div>
-              {tpl.description && <div className="scaf-note" style={{ padding: '2px 0 6px' }}>{tpl.description}</div>}
-              <div className="tb-field full"><label>Tasks this creates <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>-- dependency-linked, date-offset</span></label>
-                <div className="wf-tasks">
-                  {tpl.tasks.map((t, i) => (
-                    <div key={t.id || i} className="wf-task">
-                      <span className="wf-task-n">{i + 1}</span>
-                      <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
-                      <span className="wf-task-t">{t.title}</span>
-                      <span className="wf-task-d">day +{t.dayOffset} — {t.duration}d</span>
-                      <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
-                    </div>
-                  ))}
-                  {tpl.tasksTruncated && (
-                    <div className="scaf-note">Showing the first {tpl.tasks.length} of {tpl.taskCount} tasks — all {tpl.taskCount} are created.</div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-          <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Workload-balanced auto-assign (a separate step, after the tasks are created)</button>
-          {err && <div className="scaf-note" role="alert" style={{ color: 'var(--error)' }}>{err}</div>}
-        </div>
-        )}
+ ❯ client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx:122:17
+    120|   it('the board holds no ceremony of its own: one task sign-off, impor…
+    121|     const src = fs.readFileSync(path.resolve(__dirname, '../surfaces/T…
+    122|     expect(src).toMatch(/import \{ TaskSignOffDialog \} from '\.\.\/ed…
+       |                 ^
+    123|     expect(src).not.toMatch(/function ESignTaskModal|TASK_MEANINGS|<Es…
+    124|   });
 
-        <div className="tb-detail-f">
-          <div className="tb-endpoint"><b>POST</b> /tasks/from-template/{tid || '…'}</div>
-          <button className="btn ghost" disabled={busy} onClick={onClose}>Cancel</button>
-          <button className="btn primary" disabled={!tpl || !project || busy} onClick={() => { void instantiate(); }}>
-            {I.plus} {busy ? 'Creating…' : tpl ? 'Create ' + tpl.taskCount + ' tasks' : 'Create tasks'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 1 passed (4)
+   Start at  06:29:33
+   Duration  9.03s (transform 778ms, setup 280ms, import 1.19s, tests 6.02s, environment 1.18s)
+

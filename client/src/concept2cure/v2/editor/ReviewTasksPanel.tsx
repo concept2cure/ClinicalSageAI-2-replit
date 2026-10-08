@@ -37,14 +37,16 @@
  *
  * ── A review task and its review request ─────────────────────────────────────
  * Send for review writes two records: the review request the Review board
- * reads (authoring_reviews) and each reviewer's task. Nothing on the server
- * joins them: the verdict route does not close the task, and completing the
- * task records no verdict. So this panel reads the document's review requests
- * too (GET /api/authoring/documents/:id/reviews) and states which is which.
- * While a review task's assignee has a pending request, the task is not
- * offered for completion: the verdict comes first, on the Review board, and a
- * completed task whose review is still pending says so. A review task whose
- * requests could not be read is not offered for completion either.
+ * reads (authoring_reviews) and each reviewer's task. Since wave 2D the
+ * verdict completes the reviewer's open review tasks on the document, in the
+ * verdict's own transaction (authoring.router.ts closeReviewTasksOnVerdict),
+ * except an approval-gated task, whose completion is a signature, and a
+ * blocked one. Completing a task still records no verdict. So this panel reads
+ * the document's review requests too (GET /api/authoring/documents/:id/reviews)
+ * and states which is which (reviewTaskState.ts). While a review task's
+ * assignee has a pending request, the task is not offered for completion: the
+ * verdict comes first, on the Review board. A review task whose requests could
+ * not be read is not offered for completion either.
  */
 import React, { useCallback, useEffect, useId, useState } from 'react';
 import { apiRequest, redactInternals, serverMessage, type ApiRequestError } from '@/lib/queryClient';
@@ -53,6 +55,9 @@ import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import type { FireToast } from '../toast';
 import { TaskSignOffDialog, type TaskSignOffRequest } from './TaskSignOffDialog';
+import { CLOSED_TASK, reviewStateNote, taskReviewState, type TaskReviewState } from './reviewTaskState';
+
+export { reviewStatusLabel } from './reviewTaskState';
 
 /** The columns this panel reads from a unified_tasks row. */
 export interface AuthoringTaskRow {
@@ -295,18 +300,6 @@ export interface StandingReview {
   reviewedAt: string | null;
 }
 
-/** How a review state reads. Text, never colour alone. */
-const REVIEW_STATUS_LABEL: Record<string, string> = {
-  pending: 'Pending',
-  approved: 'Approved',
-  changes_requested: 'Changes requested',
-  rejected: 'Declined',
-};
-
-export function reviewStatusLabel(status: string): string {
-  return REVIEW_STATUS_LABEL[status] ?? (status ? status.replace(/_/g, ' ') : 'status not reported');
-}
-
 /** The first non-blank string among the values, trimmed. */
 function firstText(...values: unknown[]): string | null {
   for (const v of values) if (typeof v === 'string' && v.trim()) return v.trim();
@@ -384,49 +377,6 @@ export function useDocumentReviews(docId: string | null, refreshKey = 0): Docume
 
   const reload = useCallback(() => setEpoch(e => e + 1), []);
   return { state, rows, reload };
-}
-
-/** What the review request says about one task, for the row to state. */
-export type TaskReviewState =
-  | { kind: 'none' }
-  | { kind: 'reading' }
-  | { kind: 'unread' }
-  | { kind: 'pending'; reviewer: string }
-  | { kind: 'recorded'; verdict: string };
-
-/**
- * The review request behind a review task: the request naming its assignee on
- * this document. 'none' for a task that is not a review task, or a review task
- * no request names (a task-only assignment); completion then works as before.
- */
-export function taskReviewState(task: AuthoringTaskRow, reviews: Pick<DocumentReviewsRead, 'state' | 'rows'>): TaskReviewState {
-  if (task.taskType !== 'review' || task.assigneeId == null) return { kind: 'none' };
-  if (reviews.state === 'error') return { kind: 'unread' };
-  if (reviews.state !== 'ready') return { kind: 'reading' };
-  const row = reviews.rows.find(r => r.reviewerId === String(task.assigneeId));
-  if (!row) return { kind: 'none' };
-  return row.status === 'pending' ? { kind: 'pending', reviewer: row.reviewer } : { kind: 'recorded', verdict: reviewStatusLabel(row.status) };
-}
-
-const CLOSED_TASK = new Set(['completed', 'cancelled']);
-
-/** The sentence a review task carries about its verdict, or null when there is nothing to say. */
-function reviewStateNote(task: AuthoringTaskRow, review: TaskReviewState): string | null {
-  const closed = CLOSED_TASK.has(task.status);
-  switch (review.kind) {
-    case 'pending':
-      return closed
-        ? `This task is ${task.status}, but no verdict is recorded: ${review.reviewer}’s review is still pending on the Review board.`
-        : `Completing this task does not record a verdict. ${review.reviewer}’s review is pending on the Review board; the task can be completed once the verdict is recorded there.`;
-    case 'recorded':
-      return `Verdict recorded on the Review board: ${review.verdict}.`;
-    case 'unread':
-      return closed
-        ? 'Whether a verdict is recorded on the Review board could not be read.'
-        : 'Whether a verdict is recorded on the Review board could not be read, so this review task is not offered for completion. Refresh to read it again.';
-    default:
-      return null;
-  }
 }
 
 interface ReviewTaskRowProps {

@@ -1,0 +1,42 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > archive — a refusal is shown in the panel, and the task is not reported archived > says the session expired when the DELETE comes back 401 373ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > archive — a refusal is shown in the panel, and the task is not reported archived > shows a viewer the server’s refusal, in the panel they are looking at 143ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > archive — a refusal is shown in the panel, and the task is not reported archived > refuses a reason over 1000 characters with a sentence that says so, and sends nothing 123ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > archive — a refusal is shown in the panel, and the task is not reported archived > shows an unrecorded archive as a failure in the server’s words 127ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > §11.50 signing — an expired session is not a silent reset > reports a 401 on the signed completion inside the ceremony 118ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > §11.50 signing — an expired session is not a silent reset > shows the sign-off’s own 401 sentence when the server sent one 141ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > stale board — a completion someone else already made is not reported as this user's > shows the server's CONFLICT_STALE sentence and re-reads the board 82ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > an unknown outcome — a move whose COMMIT was lost is not reported as failed > a board move shows the server’s sentence and re-reads the board 103ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > an unknown outcome — a move whose COMMIT was lost is not reported as failed > a signed completion says it is unknown, not "not completed", and closing the dialog re-reads the board 182ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > new task — a refusal is not a "network error" > shows a viewer’s 403 in the server’s words 104ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > workflow auto-assign — an assignment that did not happen is not reported as done > surfaces a 401 on the auto-assign step after the tasks were created 90ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > workflow auto-assign — an assignment that did not happen is not reported as done > reports the tasks auto-assign did not assign when it answers 200 with fewer than it was sent 90ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > workflow auto-assign — an assignment that did not happen is not reported as done > keeps a thrown auto-assign refusal visible after the dialog closes 80ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > labels another store's card with its store and offers no move; the board's own card keeps its controls 331ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > counts work blocked in another store in the Blocked column 77ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > opening it says where it lives and opens that screen on its project, with no board edit control 129ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > opens a filing in the Submission Center 90ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > names a store it could not read, and says nothing when every store was read 93ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > opens the shared signing dialog in place and sends the signed transition, never sending the signer to the Task board 367ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > the confirmation shows the signature the server recorded: its printed name and its time 76ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > a success that does not carry the recorded signature is not shown as one, and closing re-reads the task 74ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > closing the dialog without signing changes nothing and claims nothing 36ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardViewOnly.test.tsx > TaskBoard — write controls follow the session permission > offers a viewer no task write, and says why 281ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardViewOnly.test.tsx > TaskBoard — write controls follow the session permission > offers a writer every control 112ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardViewOnly.test.tsx > TaskBoard — write controls follow the session permission > keeps the controls when the session says nothing about permissions — the server still decides 26ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > the confirmation shows the signature the server recorded: its printed name and its time 375ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > a success that does not carry the recorded signature is not shown as one, and closing re-reads the board 163ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx > TaskBoard — the gated completion is signed in the shared task sign-off > the board holds no ceremony of its own: one task sign-off, imported from the editor 2ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardSignature.test.tsx > TaskBoard — approval-gated completion > opens the shared signing dialog, and sends the password and meaning, never a PIN 424ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardModalA11y.test.tsx > TaskBoard modals — named controls and a keyboard way out > names every control in the new-task intake form 325ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardModalA11y.test.tsx > TaskBoard modals — named controls and a keyboard way out > announces the intake form as a dialog and closes it on Escape 110ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardCriticalPathHonesty.test.tsx > TaskBoard — critical path view > describes a hand-marked list in dependency order, not a computed path 325ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardWorkloadHonesty.test.tsx > TaskBoard — workload honesty > does not call a board with no open assigned work a balanced team 99ms
+
+ Test Files  9 passed (9)
+      Tests  33 passed (33)
+   Start at  07:36:59
+   Duration  15.44s (transform 871ms, setup 818ms, import 2.83s, tests 5.32s, environment 4.69s)
+

@@ -1,0 +1,29 @@
+# red: reviewTaskVerdict.test.tsx as rail-earlier-request.patch changes it, against ReviewTasksPanel.tsx as it is in the tree.
+# The test file is substituted at load time by a vitest plugin (scratch config); nothing in the tree was written.
+# command: PROPOSED_TEST_ONLY=1 npx vitest run --config <scratch>/vitest.proposed.config.ts client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx
+ × client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > does not offer Complete while the assignee’s review is pending, says why, and offers the Review board 191ms
+   → expected ' Completing this task does not record…' to contain 'OQ Signer’s review is pending on the …'
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > offers Complete once the verdict is recorded, and names it 41ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > a completed review task whose review is still pending says no verdict is recorded 19ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after a refused read, a review task is not offered for completion, and a task that is not a review task is 43ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after an answer with no rows, a review task is not offered for completion, and a task that is not a review task is 49ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after rows of another document, a review task is not offered for completion, and a task that is not a review task is 48ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > Refresh reads the review requests again with the tasks 363ms
+ × client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > the first task, closed by the change request, belongs to the earlier request; it is not called closed without a verdict 26ms
+   → expected 'pending' to be 'earlier' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > after the approval, the first task does not take the new verdict as its own 21ms
+   → expected 'recorded' to be 'earlier' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > a task with no recorded creation time is judged against the current request, as before 28ms
+ × client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > an approval-gated review task says the verdict does not complete it: a signature does 29ms
+   → expected ' Completing this task does not record…' to contain 'OQ Signer’s review is pending on the …'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > does not offer Complete while the assignee’s review is pending, says why, and offers the Review board
+AssertionError: expected ' Completing this task does not record…' to contain 'OQ Signer’s review is pending on the …'
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > the first task, closed by the change request, belongs to the earlier request; it is not called closed without a verdict
+AssertionError: expected 'pending' to be 'earlier' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > after the approval, the first task does not take the new verdict as its own
+AssertionError: expected 'recorded' to be 'earlier' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a reviewer asked again after a verdict > an approval-gated review task says the verdict does not complete it: a signature does
+AssertionError: expected ' Completing this task does not record…' to contain 'OQ Signer’s review is pending on the …'
+ Test Files  1 failed (1)
+      Tests  4 failed | 7 passed (11)

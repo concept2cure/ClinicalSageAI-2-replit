@@ -1,0 +1,202 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review
+{
+  "timestamp": "2026-10-08T07:36:06.714Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review/
+{
+  "timestamp": "2026-10-08T07:36:06.723Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review/",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Request-Review
+{
+  "timestamp": "2026-10-08T07:36:06.730Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/Request-Review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/Documents/10000000-0000-4000-8000-000000000001/request-review
+{
+  "timestamp": "2026-10-08T07:36:06.736Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/Documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/documents/10000000-0000-4000-8000-000000000001/request-review
+{
+  "timestamp": "2026-10-08T07:36:06.745Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/Authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /API/AUTHORING/DOCUMENTS/10000000-0000-4000-8000-000000000001/REQUEST-REVIEW/
+{
+  "timestamp": "2026-10-08T07:36:06.751Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/AUTHORING/DOCUMENTS/10000000-0000-4000-8000-000000000001/REQUEST-REVIEW/",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/
+{
+  "timestamp": "2026-10-08T07:36:06.756Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Tracked-Change-Decisions
+{
+  "timestamp": "2026-10-08T07:36:06.762Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/Tracked-Change-Decisions",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/docs/10000000-0000-4000-8000-000000000001/freeze/
+{
+  "timestamp": "2026-10-08T07:36:06.768Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/freeze/",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/Docs/10000000-0000-4000-8000-000000000001/Freeze
+{
+  "timestamp": "2026-10-08T07:36:06.773Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/Authoring/Docs/10000000-0000-4000-8000-000000000001/Freeze",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ↓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member of the organization with no role on the document: 403, the standard body
+ ↓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is REVIEWER
+ ↓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is APPROVER
+ ↓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is VIEWER
+ ↓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits the document’s OWNER, classified as an edit of this document
+ ↓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits the document’s AUTHOR, classified as an edit of this document
+ ↓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits a global admin without a grant, as on every other authoring object
+ ↓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > answers 404 for a document this tenant does not have, before any grant is read
+ ↓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a sealed document with 409: a request would reopen verdicts on a signed record
+ ↓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > leaves the verdict route alone: a reviewer has no grant, and still reaches POST /documents/:id/review
+ ↓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > matches the request path exactly, not a longer path that only begins with it
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review 33ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review/ 7ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Request-Review 7ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/Documents/10000000-0000-4000-8000-000000000001/request-review 6ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/documents/10000000-0000-4000-8000-000000000001/request-review 9ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /API/AUTHORING/DOCUMENTS/10000000-0000-4000-8000-000000000001/REQUEST-REVIEW/ 6ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/ 6ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Tracked-Change-Decisions 5ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/docs/10000000-0000-4000-8000-000000000001/freeze/ 6ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/Docs/10000000-0000-4000-8000-000000000001/Freeze 5ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > decides on the document the handler acts on: the id keeps the spelling the caller sent 4ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > a path that only begins like an authoring route is still not classified 5ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed | 11 skipped (23)
+   Start at  07:36:06
+   Duration  733ms (transform 164ms, setup 91ms, import 236ms, tests 104ms, environment 0ms)
+

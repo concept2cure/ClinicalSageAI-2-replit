@@ -15,20 +15,24 @@
  *    reviewer the request actually asked (their row came back pending),
  *    POST /api/tasks/tasks, through AssignReviewDialog's create and its
  *    confirmation, so the request also appears in each reviewer's My work.
+ *    The reviewer's verdict on the Review board completes that task on the
+ *    server, on the verdict's own transaction (POST /documents/:id/review,
+ *    wave 2D), so the verdict and the task do not disagree.
  *    A task that was refused is reported as not created; a task whose answer
  *    was lost is reported as unknown, never as absent. The request stands
  *    either way, and the dialog says which is which.
  *
  * ── Who has already been asked ───────────────────────────────────────────────
- * The route's ON CONFLICT keeps an existing row's verdict and refreshes only
- * requested_at (authoring.router.ts, request-review). A second request to a
- * reviewer who has decided therefore reopens nothing: the board would not list
- * the document as awaiting them, and a task would be one they cannot finish
- * with a verdict. So the dialog reads the document's review requests first
- * (useDocumentReviews, shared with the Tasks rail) and a member who already
- * has one is shown with it and cannot be chosen: pending (already asked), or
- * the verdict that stands. If that read fails, no one can be chosen. A row
- * that still comes back with a verdict (a request made in between) gets no
+ * The dialog reads the document's review requests first (useDocumentReviews,
+ * shared with the Tasks rail), and a member who already has one is shown with
+ * it. One whose review is pending cannot be chosen: they are already asked. One
+ * whose verdict is recorded can be asked again, the usual loop (changes
+ * requested, revised, asked again): since wave 2D the route reopens their row
+ * to pending (authoring.router.ts, request-review), and the note beside them
+ * says their verdict stays in the record and a new review is requested. The
+ * earlier verdict keeps its own document_reviewed audit row. If that read
+ * fails, no one can be chosen. A task is made only for a row that comes back
+ * pending; a row that comes back with a verdict was not reopened, gets no
  * task, and the receipt and the toast say the verdict stands.
  *
  * ── The reviewer identity ────────────────────────────────────────────────────
@@ -60,6 +64,7 @@ import {
   ReviewerChecklist,
   buildReviewTaskBody,
   createReviewTask,
+  alreadyAsked,
   isSubmittableReviewer,
   useAssigneeRoster,
   type AssignOutcome,
@@ -113,8 +118,12 @@ const REFUSED = 'The review request was refused: ';
 const UNKNOWN = 'Whether the review request was recorded is unknown: ';
 const RECONCILE = ' Check the Review board before sending again.';
 
-/** Added to every review task, so the task never reads as the place a verdict is recorded. */
-export const VERDICT_ON_THE_BOARD = 'Record your verdict on the Review board; completing this task does not record one.';
+/**
+ * Added to every review task, so the task never reads as the place a verdict is
+ * recorded. The verdict completes the task (POST /documents/:id/review closes
+ * the reviewer's review task on this document since wave 2D).
+ */
+export const VERDICT_ON_THE_BOARD = 'Record your verdict on the Review board; recording it completes this task. Completing the task does not record a verdict.';
 
 const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
 
@@ -179,8 +188,22 @@ function answeredFailure(status: number, json: unknown): RequestOutcome {
   return { ok: false, unconfirmed: false, message: REFUSED + said };
 }
 
+/**
+ * The object gate's refusal of this act, said as what it means here. Its
+ * standard body names "the authoring object", an internal word (wave 2D: the
+ * request is now gated as an edit of the document). The control is normally
+ * not offered to such a sender (access.assignReview); this covers a grant
+ * revoked after the document was read.
+ */
+const GATE_REFUSAL: Record<string, string> = {
+  AUTHORING_OBJECT_FORBIDDEN: 'Sending this document for review needs an Owner or Author grant on it.',
+};
+
 /** A thrown failure: a refusal the server stated, or an outcome nobody can confirm. */
 function thrownFailure(e: unknown): RequestOutcome {
+  if (e instanceof ApiRequestError && e.code && GATE_REFUSAL[e.code]) {
+    return { ok: false, unconfirmed: false, message: REFUSED + GATE_REFUSAL[e.code] };
+  }
   if (e instanceof ApiRequestError && (e.code === 'AUDIT_WRITE_FAILED' || (e.status >= 400 && e.status < 500 && e.status !== 408))) {
     return { ok: false, unconfirmed: false, message: REFUSED + redactInternals(e.message, 'the request was not accepted.') };
   }
@@ -396,10 +419,11 @@ function useSendForReview(props: SendForReviewDialogProps) {
   const [needsReconciliation, setNeedsReconciliation] = useState(false);
   const [result, setResult] = useState<SendForReviewResult | null>(null);
 
-  /* Only members with no request on this document yet: the checklist offers no
-     other, and this holds even if the read changed after a box was ticked. */
+  /* Only members not already asked (no pending request on this document): the
+     checklist offers no other, and this holds even if the read changed after a
+     box was ticked. A member whose verdict is recorded is asked again. */
   const chosen = standing.state === 'ready'
-    ? roster.filter(a => selected.includes(a.id) && !standing.rows.some(r => r.reviewerId === a.id))
+    ? roster.filter(a => selected.includes(a.id) && !alreadyAsked(standing.rows.find(r => r.reviewerId === a.id)))
     : [];
   const reasonProblem = reviewReasonProblem(reason);
   const canSend = phase === 'form' && !needsReconciliation && chosen.length > 0 && !reasonProblem;
@@ -542,7 +566,7 @@ function SendForReviewDialogForSource(props: SendForReviewDialogProps) {
               <div className="de-gov">
                 <span className="ico">{I.lock}</span>
                 <span className="de-gov-t">
-                  One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board, and complete their task after that; a binding §11.50 signature is applied on the document.
+                  One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board, which completes their task; a binding §11.50 signature is applied on the document.
                 </span>
               </div>
             </>

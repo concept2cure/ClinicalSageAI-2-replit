@@ -1,0 +1,33 @@
+--- a/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
++++ b/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+@@ -3816,7 +3816,9 @@
+                 2026-10-08: "Assign review" created a task the Review board
+                 never reads. Send for review records the review request the
+                 board lists, and each reviewer's task with it, as one act. The
+-                gate stays the task create's, which is part of that act. */}
++                gate is that act's: the task create's role check, then the
++                request's Owner or Author grant on a document that is not
++                sealed (wave 2D, authoring.router.ts callerDocumentAccess). */}
+             {activeDoc && (
+               <button
+                 className="btn ghost"
+--- a/server/routes/authoring.router.ts
++++ b/server/routes/authoring.router.ts
+@@ -1541,9 +1541,14 @@
+                    'export' (any status; OWNER, AUTHOR or APPROVER), then the
+                    vault ingest's vaultWriteRefusal() on the request's
+                    tenant-scope role.
+-     assignReview  POST /api/tasks/tasks runs requireEditorAccess, whose role
+-                   rule is membership of GOVERNED_WRITE_ROLES on the request's
+-                   role — the same set, read the same way, here.
++     assignReview  Send for review. POST /api/tasks/tasks runs
++                   requireEditorAccess, whose role rule is membership of
++                   GOVERNED_WRITE_ROLES on the request's role — the same set,
++                   read the same way, here. Then POST
++                   /documents/:id/request-review, which
++                   authoringObjectAuthorization classifies as 'edit' (wave 2D):
++                   an OWNER or AUTHOR grant, or a global admin, on a document
++                   that is not sealed.
+ 
+    Each entry is `{ allowed, reason }`, or null when this read could not
+    determine it (a lookup failed, no tenant scope): the client treats null as

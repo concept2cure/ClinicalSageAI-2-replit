@@ -255,12 +255,18 @@ describe('a decision on the board is the authoring workflow’s own transition',
   it('re-requesting after changes puts it back on the reviewer’s queue; approving takes it off', async () => {
     await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docA}/request-review`))
       .send({ reviewers: [{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }] });
-    // The upsert refreshes requested_at/requested_by but keeps the verdict —
-    // that is the authoring store's own rule; the board reports what it holds.
+    // A new request reopens the recorded verdict (wave 2D): the row is pending
+    // again, so the document is back on the reviewer's queue. Until 2026-10-08
+    // the upsert kept the verdict, and this test pinned that the document did
+    // NOT come back, under a title that said it did. The earlier verdict stays
+    // in its document_reviewed audit row.
     const after = queueOf(await board(AUTHOR, '?scope=requested')).find((q) => q.id === docA);
     expect(after).toBeTruthy();
     expect(after!.awaitingMyReview).toBe(false);
-    expect(queueOf(await board(REVIEWER, '?scope=mine')).find((q) => q.id === docA)).toBeUndefined();
+    const back = queueOf(await board(REVIEWER, '?scope=mine')).find((q) => q.id === docA);
+    expect(back, 'the re-requested document is not back on the reviewer’s queue').toBeTruthy();
+    expect(back!.awaitingMyReview).toBe(true);
+    expect(back!.myReviewStatus).toBe('pending');
 
     const ok = await as(REVIEWER)(request(app).post(`/api/authoring/documents/${docA}/review`))
       .send({ review_status: 'approved', review_comments: 'Software version stated.' });

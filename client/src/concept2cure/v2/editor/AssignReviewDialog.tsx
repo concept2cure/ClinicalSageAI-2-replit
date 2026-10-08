@@ -22,21 +22,21 @@
  *
  * ── The task half of Send for review (2026-10-08) ────────────────────────────
  * A task is not a review request: the Review board reads authoring_reviews,
- * never unified_tasks, so a document assigned only through this dialog never
- * reached the board. The workbench now sends a document for review through
- * `SendForReviewDialog.tsx`, which records the review request first and then
- * creates each reviewer's task with the helpers exported here (the roster
- * read, the reviewer checklist, the task body, the create and its
- * confirmation), so the task write has one implementation. This dialog's own
- * form remains only for the document canvas card (`DocumentCanvas.tsx`), until
- * that file opens the send-for-review dialog instead
- * (docs/evidence/D2-ONE-ANA/2026-10-08/ana-2c-send-for-review/).
+ * never unified_tasks, so a document assigned only through a task never
+ * reached the board. The workbench and the canvas card send a document for
+ * review through `SendForReviewDialog.tsx`, which records the review request
+ * first and then creates each reviewer's task with the helpers exported here
+ * (the roster read, the reviewer checklist, the task body, the create and its
+ * confirmation), so the task write has one implementation.
+ *
+ * The task-only "Assign review" form that stood here is deleted (wave 2D). Its
+ * last caller, the canvas card (`DocumentCanvas.tsx`), opens
+ * SendForReviewDialog since 71492adc0, and its tests moved onto that dialog
+ * (`__tests__/workbenchAssignReview.test.tsx`). The file keeps its name and the
+ * helpers above (docs/evidence/D2-ONE-ANA/2026-10-08/ana-2d-review-loop-closes/).
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
-import { I } from '../icons';
-import { useDialog } from '../useDialog';
-import type { FireToast } from '../toast';
 import {
   AUTHORING_TASK_ENTITY,
   AUTHORING_TASK_MODULE,
@@ -52,23 +52,11 @@ export interface Assignee {
   label?: string;
 }
 
-export interface AssignReviewDialogProps {
-  docId: string;
-  docTitle: string;
-  programId: string | null;
-  sectionCode: string | null;
-  onClose: () => void;
-  onCreated: (task: { taskId: string; assigneeName: string | null }) => void;
-  fireToast: FireToast;
-  /** Open the existing task list to reconcile an unconfirmed creation. */
-  onCheckTasks?: () => void;
-}
-
 export const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
 export type Priority = (typeof PRIORITIES)[number];
 export type RosterState = 'loading' | 'ready' | 'error';
 
-/** What POST /api/tasks/tasks answers with, as much of it as this dialog reads. */
+/** What POST /api/tasks/tasks answers with, as much of it as the create reads. */
 type CreatedTaskEnvelope = { success?: boolean; error?: string; data?: { taskId?: string; assigneeName?: string | null; assigneeId?: number | null; sourceEntityType?: string | null; sourceEntityId?: string | null } } | null;
 
 /** The create either produced a server-issued task, or it did not and says why. */
@@ -194,9 +182,9 @@ function refusalMessage(status: number, json: CreatedTaskEnvelope): string {
 }
 
 /**
- * The sentence for a create that never reached an answer. Shared by the request
- * and the dialog so an unreachable server reads the same either way, and so no
- * internal text escapes into the UI.
+ * The sentence for a create that never reached an answer, so an unreachable
+ * server reads the same however it failed, and no internal text escapes into
+ * the UI.
  */
 function unreachableMessage(e: unknown): string {
   return 'The review task outcome is unknown — ' + redactInternals(e instanceof Error ? e.message : '', 'no confirmed response was received') + '. Reload the task list before retrying.';
@@ -235,45 +223,6 @@ export async function createReviewTask(body: Record<string, unknown>): Promise<A
   }
 }
 
-/**
- * The reviewer field. Its own component because a roster that could not be read
- * is reported in place of the control, never as an empty list of people.
- */
-function ReviewerSelect({ roster, rosterState, onReload, value, onChange }: {
-  roster: Assignee[];
-  rosterState: RosterState;
-  onReload: () => void;
-  value: string;
-  onChange: (id: string) => void;
-}) {
-  if (rosterState === 'error') {
-    return <ReadFailed label="Reviewer" message={ROSTER_UNREAD} againLabel="Read the roster again" onAgain={onReload} />;
-  }
-  const placeholder = rosterState === 'loading'
-    ? 'Reading the roster…'
-    : roster.length === 0 ? 'No members in this organization' : 'Choose a reviewer';
-  return (
-    <div className="de-field">
-      <label className="de-label" htmlFor="ar-assignee">
-        Reviewer<span className="req">*</span>
-      </label>
-      <select
-        id="ar-assignee"
-        className="c2c-input"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        disabled={rosterState === 'loading'}
-        data-testid="ar-assignee"
-      >
-        <option value="">{placeholder}</option>
-        {roster.map(a => (
-          <option key={a.id} value={a.id}>{a.label ?? a.name}</option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
 const DATE = { year: 'numeric', month: 'short', day: 'numeric' } as const;
 
 /** " on <date>" for a valid timestamp, and nothing for anything else. */
@@ -282,17 +231,29 @@ function onDate(iso: string | null): string {
   return d && Number.isFinite(d.getTime()) ? ` on ${d.toLocaleDateString(undefined, DATE)}` : '';
 }
 
-/** Why a member with a review request on this document cannot be asked again. */
+/**
+ * Whether a member's request on this document leaves them nobody to ask: their
+ * review is pending, so a second request would ask for what is already asked.
+ * A member whose verdict is recorded can be asked again: the request reopens
+ * their review (wave 2D, authoring.router.ts request-review).
+ */
+export function alreadyAsked(r: StandingReview | null | undefined): boolean {
+  return r?.status === 'pending';
+}
+
+/** What a member's earlier request on this document means for asking them now. */
 export function priorRequestNote(r: StandingReview): string {
-  if (r.status === 'pending') return `Already asked${onDate(r.requestedAt)}; their review is pending.`;
-  return `${reviewStatusLabel(r.status)}${onDate(r.reviewedAt)}. A new request does not reopen a recorded verdict, so they cannot be asked again here.`;
+  if (alreadyAsked(r)) return `Already asked${onDate(r.requestedAt)}; their review is pending.`;
+  return `${reviewStatusLabel(r.status)}${onDate(r.reviewedAt)}. That verdict stays in the record; choosing them requests a new review.`;
 }
 
 /**
  * The reviewers, one checkbox each. A roster, or the document's existing
  * requests, that could not be read is reported in place of the list with the
  * way to read it again, never as an organisation with no members. A member who
- * already has a request on this document is shown with it and cannot be chosen.
+ * already has a request on this document is shown with it: one whose review is
+ * pending cannot be chosen; one whose verdict is recorded can be, and is told
+ * that the verdict stays in the record and a new review is requested.
  */
 export function ReviewerChecklist({ roster, rosterState, onReloadRoster, standing, selected, onToggle }: {
   roster: Assignee[];
@@ -335,7 +296,7 @@ export function ReviewerChecklist({ roster, rosterState, onReloadRoster, standin
   );
 }
 
-/** One member: a checkbox, or, when they already have a request here, that request instead. */
+/** One member: a checkbox, with their earlier request here when they have one; disabled while it is pending. */
 function ReviewerOption({ member, prior, checked, onToggle }: {
   member: Assignee;
   prior: StandingReview | null;
@@ -343,13 +304,14 @@ function ReviewerOption({ member, prior, checked, onToggle }: {
   onToggle: (id: string) => void;
 }) {
   const noteId = `sfr-prior-${member.id}`;
+  const pending = alreadyAsked(prior);
   return (
     <div>
       <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
         <input
           type="checkbox"
-          checked={!prior && checked}
-          disabled={!!prior}
+          checked={!pending && checked}
+          disabled={pending}
           onChange={() => onToggle(member.id)}
           aria-describedby={prior ? noteId : undefined}
           data-testid={`sfr-reviewer-${member.id}`}
@@ -363,138 +325,4 @@ function ReviewerOption({ member, prior, checked, onToggle }: {
       )}
     </div>
   );
-}
-
-/**
- * The instructions field, with the example it offers keyed to the section in
- * view. Its own component to keep that one piece of wording out of the dialog.
- */
-function ReviewInstructionsField({ value, onChange, sectionCode }: {
-  value: string;
-  onChange: (text: string) => void;
-  sectionCode: string | null;
-}) {
-  return (
-    <div className="de-field">
-      <label className="de-label" htmlFor="ar-instructions">Instructions to the reviewer</label>
-      <div className="de-desc">What to check, and what a finding should say. Recorded as the task description.</div>
-      <textarea
-        id="ar-instructions"
-        className="c2c-input"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={sectionCode ? `e.g. Review §${sectionCode} against the cited sources.` : 'e.g. Review the clinical claims against the cited sources.'}
-        style={{ width: '100%', minHeight: 72, resize: 'vertical', fontSize: 13 }}
-        data-testid="ar-instructions"
-      />
-    </div>
-  );
-}
-
-function AssignReviewDialogForSource({ docId, docTitle, programId, sectionCode, onClose, onCreated, fireToast, onCheckTasks }: AssignReviewDialogProps) {
-  const [saving, setSaving] = useState(false);
-  const generation = useRef(0);
-  const pendingWrite = useRef(false);
-  useEffect(() => () => { generation.current++; }, []);
-  const ref = useDialog(() => {
-    if (!saving) onClose();
-  });
-  const { roster, rosterState, reload: reloadRoster } = useAssigneeRoster();
-  const [assignee, setAssignee] = useState('');
-  const [due, setDue] = useState('');
-  const [priority, setPriority] = useState<Priority>('medium');
-  const [instructions, setInstructions] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [needsReconciliation, setNeedsReconciliation] = useState(false);
-
-  const canSubmit = !saving && !needsReconciliation && isSubmittableReviewer(assignee) && roster.some(a => a.id === assignee);
-
-  const submit = async () => {
-    if (pendingWrite.current || !canSubmit) return;
-    pendingWrite.current = true;
-    const seq = generation.current;
-    setSaving(true);
-    setError(null);
-    try {
-      const chosen = roster.find(a => a.id === assignee) ?? null;
-      const outcome = await createReviewTask(
-        buildReviewTaskBody({ docId, docTitle, programId, sectionCode, assignee, due, priority, instructions }),
-      );
-      if (seq !== generation.current) return;
-      if (!outcome.ok) {
-        setError(outcome.message);
-        setNeedsReconciliation(outcome.unconfirmed);
-        return;
-      }
-      const assigneeName = outcome.assigneeName ?? chosen?.name ?? null;
-      fireToast(`Review task ${outcome.taskId} assigned${assigneeName ? ` to ${assigneeName}` : ''} — linked to “${docTitle}” on the task ledger.`);
-      onCreated({ taskId: outcome.taskId, assigneeName });
-      onClose();
-    } catch (e) {
-      if (seq === generation.current) { setError(unreachableMessage(e)); setNeedsReconciliation(true); }
-    } finally {
-      pendingWrite.current = false;
-      if (seq === generation.current) setSaving(false);
-    }
-  };
-
-  return (
-    <div
-      className="de-bd"
-      onMouseDown={e => {
-        if (e.target === e.currentTarget && !saving) onClose();
-      }}
-    >
-      <div className="de" ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="ar-title" data-testid="assign-review-dialog">
-        <div className="de-h">
-          <div>
-            <div className="de-h-eye">Tasking</div>
-            <div className="de-h-t" id="ar-title">Assign review</div>
-            <div className="de-h-s">Creates a review task linked to “{docTitle}” on the organization’s task ledger.</div>
-          </div>
-          <button className="de-x" onClick={onClose} aria-label="Close" disabled={saving}>
-            {I.close}
-          </button>
-        </div>
-        <div className="de-body">
-          <ReviewerSelect roster={roster} rosterState={rosterState} onReload={reloadRoster} value={assignee} onChange={setAssignee} />
-          <div className="de-field half">
-            <label className="de-label" htmlFor="ar-due">Due date</label>
-            <input id="ar-due" className="c2c-input" type="date" value={due} onChange={e => setDue(e.target.value)} data-testid="ar-due" />
-          </div>
-          <div className="de-field half">
-            <label className="de-label" htmlFor="ar-priority">Priority</label>
-            <select id="ar-priority" className="c2c-input" value={priority} onChange={e => setPriority(e.target.value as Priority)}>
-              {PRIORITIES.map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-          </div>
-          <ReviewInstructionsField value={instructions} onChange={setInstructions} sectionCode={sectionCode} />
-          <div className="de-gov">
-            <span className="ico">{I.lock}</span>
-            <span className="de-gov-t">
-              The task is written to the task ledger with its origin recorded as this document. The create is audited and an assignment notification is requested; completing an approval-gated task requires a §11.50 e-signature, taken on the document’s Tasks rail or the Task board. This task is not a review request: the Review board does not list it.
-            </span>
-          </div>
-          {needsReconciliation && <button className="de-btn ghost" onClick={onCheckTasks ?? onClose}>Check existing review tasks</button>}
-          {error && (
-            <div className="de-err" role="alert" data-testid="ar-error">{error}</div>
-          )}
-        </div>
-        <div className="de-f">
-          <button className="de-btn ghost" onClick={onClose} disabled={saving}>Cancel</button>
-          <button className="de-btn primary" onClick={() => void submit()} disabled={!canSubmit} data-testid="ar-submit">
-            {saving ? 'Assigning…' : 'Assign review'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-/** Each document/program/section gets its own ask and request lifetime. */
-export function AssignReviewDialog(props: AssignReviewDialogProps) {
-  return <AssignReviewDialogForSource key={JSON.stringify([props.programId, props.docId, props.sectionCode])} {...props} />;
 }
