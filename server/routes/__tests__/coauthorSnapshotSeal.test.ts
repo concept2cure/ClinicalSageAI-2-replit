@@ -180,7 +180,8 @@ async function frozenDocument(docId: string, sectionId: string, text: string): P
 }
 
 const place = (docId: string) =>
-  request(app).post('/api/coauthor/documents').send({ moduleNumber: 'm3.2.p.5', sourceAuthoringDocId: docId });
+  // The stated reason a filing copy now requires (2026-10-08, filing-spine design review).
+  request(app).post('/api/coauthor/documents').send({ moduleNumber: 'm3.2.p.5', sourceAuthoringDocId: docId, changeReason: 'Placing this document into the filing' });
 const applyTemplate = (docId: string) =>
   request(app)
     .post(`/api/authoring/docs/${docId}/apply-template`)

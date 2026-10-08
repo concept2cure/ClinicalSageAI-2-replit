@@ -322,7 +322,7 @@ function AuthoringPlaceIntoFilingForDocument({
     setVerdict(null);
     setPlacement(null);
     try {
-      const copy = await takeFilingCopy(docId, docTitle, sectionCode, current);
+      const copy = await takeFilingCopy(docId, docTitle, sectionCode, reason.trim(), current);
       if (!copy || !current()) return;
       if (!copy.ok) {
         setNeedsReconciliation(copy.unconfirmed);
@@ -644,7 +644,7 @@ type CopyResult =
 
 /** Read saved content and request the existing governed snapshot. A context
  * switch after the read stops the next write; an already-sent write may commit. */
-async function takeFilingCopy(docId: string, docTitle: string, sectionCode: string, current: () => boolean): Promise<CopyResult | null> {
+async function takeFilingCopy(docId: string, docTitle: string, sectionCode: string, changeReason: string, current: () => boolean): Promise<CopyResult | null> {
   const read = await liveGetOrNull<{ sections?: SavedSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
   if (!current()) return null;
   if (read.error || !read.data) return {
@@ -661,7 +661,7 @@ async function takeFilingCopy(docId: string, docTitle: string, sectionCode: stri
     verdict: { tone: 'err', text: 'This document has no saved section content yet — there is nothing to file. Nothing was created.' },
   };
   const snap = await mutateVerbatim<{ success?: boolean; document?: SnapshotRow }>('POST', '/api/coauthor/documents', {
-    title: docTitle, moduleNumber: sectionCode, content: assembleSnapshot(saved), sourceAuthoringDocId: docId,
+    title: docTitle, moduleNumber: sectionCode, content: assembleSnapshot(saved), sourceAuthoringDocId: docId, changeReason,
   });
   if (!current()) return null;
   return copyReceipt(snap.data, docId) ?? snapshotFailure(snap);

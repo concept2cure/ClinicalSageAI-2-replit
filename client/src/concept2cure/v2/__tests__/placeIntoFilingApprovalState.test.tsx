@@ -138,11 +138,14 @@ describe('Place into filing states what the filing copy is (F17)', () => {
   });
 
   it("after placing, the server's copy status is stated, and a draft copy carries the refusal", async () => {
-    mockApi('draft', [{}]);
+    const calls = mockApi('draft', [{}]);
     renderDialog('DRAFT');
     await openAndTarget();
     fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
     await waitFor(() => expect(document.body.textContent).toContain('server-confirmed (leaf #77'));
+    // Taking the filing copy states the placement's reason: the server now
+    // requires one on that write (2026-10-08, filing-spine design review).
+    expect((calls.find((c) => c.method === 'POST')!.body as { changeReason?: string }).changeReason).toBe(REASON);
     expect(document.body.textContent).toMatch(/The filing copy is a draft\. Freeze will refuse it until you re-place it after approval\./);
   });
 

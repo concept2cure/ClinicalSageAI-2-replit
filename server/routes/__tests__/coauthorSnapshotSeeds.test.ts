@@ -171,7 +171,8 @@ async function expectRouterSeal(docId: string): Promise<void> {
 }
 
 const place = (docId: string, moduleNumber: string) =>
-  request(app).post('/api/coauthor/documents').send({ moduleNumber, sourceAuthoringDocId: docId });
+  // The stated reason a filing copy now requires (2026-10-08, filing-spine design review).
+  request(app).post('/api/coauthor/documents').send({ moduleNumber, sourceAuthoringDocId: docId, changeReason: 'Placing this document into the filing' });
 
 /** The authoring document a seed wrote, found by the title it gives it. */
 async function docByTitle(title: string): Promise<{ id: string; status: string }> {

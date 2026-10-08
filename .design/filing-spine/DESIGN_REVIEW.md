@@ -109,12 +109,16 @@ Each fix has a test that fails on the code before it, saved under `docs/evidence
 
 ## Open: not fixed here, with the reason
 
-1. **The write that changes a filing copy has no reason and no role check (Part 11, §11.10(d)(e)(g)).**
+1. **Fixed after the review** (`docs/evidence/D2-ONE-ANA/2026-10-08/filing-spine-review-followups/`): a sourced snapshot now requires `regulatory-author` and a stated reason, and the retake event records that reason. What follows is the finding as raised.
+
+   **The write that changes a filing copy has no reason and no role check (Part 11, §11.10(d)(e)(g)).**
    - Placing a document calls `POST /api/coauthor/documents` (`server/routes/coauthor.ts:166`). It is guarded by `authMiddleware` only.
    - That call retakes the one shared copy in place (`retakeAliasedCopy`, `coauthor-snapshot.ts`), under every leaf that points at it, with a sentence composed in code as its audit text.
    - The leaf PUT requires `regulatory-author` and a reason. The copy write does not.
    - This predates the spine, and it is the authoring store's route. It needs the authoring lane or the weekly security review, not a UI slice. **Raised to the founder.**
-2. **A model's verdict on the Validation tab (CLAUDE.md Rule 2).**
+2. **Fixed after the review** (same evidence folder): the findings and their severities are the validator's, the model's prose is bound to them by index under its label (prompt `validation-explain@v1.1`), and "Blocking." is gone. What follows is the finding as raised.
+
+   **A model's verdict on the Validation tab (CLAUDE.md Rule 2).**
    - `SubmissionSeqWorkspaces.tsx` (the "Explain" panel) prints the model's `blocking` flag as "Blocking.", with severity chips, and no model label.
    - This is the same class as the Cross-region verdict F21 retired, and it predates this work. It is the next retirement or relabel.
 3. **No visible history.**
