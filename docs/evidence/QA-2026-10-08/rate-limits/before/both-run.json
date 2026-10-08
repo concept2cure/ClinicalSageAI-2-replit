@@ -1,0 +1,3228 @@
+{
+  "startedAt": "2026-10-08T01:12:37.687Z",
+  "app": "http://localhost:5077",
+  "phases": {},
+  "documentsOpened": [
+    {
+      "index": 1,
+      "title": "Open filing cabinet",
+      "documentScopedGetsIssued": 0,
+      "documentScopedResponses": 0,
+      "byEndpointAndStatus": {},
+      "firstRefusal": null,
+      "rateLimitHeaders": null
+    },
+    {
+      "index": 2,
+      "title": "Protocol-Stability",
+      "documentScopedGetsIssued": 0,
+      "documentScopedResponses": 0,
+      "byEndpointAndStatus": {},
+      "firstRefusal": null,
+      "rateLimitHeaders": null
+    },
+    {
+      "index": 3,
+      "title": "Vorelinib DS Stability Protocol STB-0042",
+      "documentScopedGetsIssued": 8,
+      "documentScopedResponses": 8,
+      "byEndpointAndStatus": {
+        "relationships": {
+          "200": 2
+        },
+        "annotations": {
+          "200": 2
+        },
+        "history": {
+          "200": 2
+        },
+        "versions": {
+          "200": 2
+        }
+      },
+      "firstRefusal": null,
+      "rateLimitHeaders": {
+        "limit": "20",
+        "lastRemaining": "5"
+      }
+    },
+    {
+      "index": 4,
+      "title": "Vorelinib-Stability-Protocol-STB-0042",
+      "documentScopedGetsIssued": 8,
+      "documentScopedResponses": 8,
+      "byEndpointAndStatus": {
+        "relationships": {
+          "200": 1,
+          "429": 1
+        },
+        "versions": {
+          "200": 1,
+          "429": 1
+        },
+        "history": {
+          "200": 1,
+          "429": 1
+        },
+        "annotations": {
+          "200": 1,
+          "429": 1
+        }
+      },
+      "firstRefusal": "Too many document requests. Please wait.",
+      "rateLimitHeaders": {
+        "limit": "20",
+        "lastRemaining": "0"
+      }
+    },
+    {
+      "index": 5,
+      "title": "Vorelinib-Batch-Analysis-DS",
+      "documentScopedGetsIssued": 8,
+      "documentScopedResponses": 8,
+      "byEndpointAndStatus": {
+        "versions": {
+          "429": 2
+        },
+        "annotations": {
+          "429": 2
+        },
+        "relationships": {
+          "429": 2
+        },
+        "history": {
+          "429": 2
+        }
+      },
+      "firstRefusal": "Too many document requests. Please wait.",
+      "rateLimitHeaders": {
+        "limit": "20",
+        "lastRemaining": "0"
+      }
+    },
+    {
+      "index": 6,
+      "title": "Vorelinib-DS-Specification-J3",
+      "documentScopedGetsIssued": 8,
+      "documentScopedResponses": 8,
+      "byEndpointAndStatus": {
+        "versions": {
+          "429": 2
+        },
+        "annotations": {
+          "429": 2
+        },
+        "relationships": {
+          "429": 2
+        },
+        "history": {
+          "429": 2
+        }
+      },
+      "firstRefusal": "Too many document requests. Please wait.",
+      "rateLimitHeaders": {
+        "limit": "20",
+        "lastRemaining": "0"
+      }
+    },
+    {
+      "index": 7,
+      "title": "Vorelinib-DS-Specification-J3-r2",
+      "documentScopedGetsIssued": 8,
+      "documentScopedResponses": 8,
+      "byEndpointAndStatus": {
+        "versions": {
+          "429": 2
+        },
+        "annotations": {
+          "429": 2
+        },
+        "relationships": {
+          "429": 2
+        },
+        "history": {
+          "429": 2
+        }
+      },
+      "firstRefusal": "Too many document requests. Please wait.",
+      "rateLimitHeaders": {
+        "limit": "20",
+        "lastRemaining": "0"
+      }
+    },
+    {
+      "index": 8,
+      "title": "Vorelinib-Investigator-Brochure-Ed3",
+      "documentScopedGetsIssued": 8,
+      "documentScopedResponses": 8,
+      "byEndpointAndStatus": {
+        "versions": {
+          "429": 2
+        },
+        "annotations": {
+          "429": 2
+        },
+        "relationships": {
+          "429": 2
+        },
+        "history": {
+          "429": 2
+        }
+      },
+      "firstRefusal": "Too many document requests. Please wait.",
+      "rateLimitHeaders": {
+        "limit": "20",
+        "lastRemaining": "0"
+      }
+    }
+  ],
+  "dataRoomDrop": {
+    "filesDropped": 15,
+    "responses": [
+      {
+        "n": 1,
+        "status": 200,
+        "message": null,
+        "limit": "10",
+        "remaining": "6"
+      },
+      {
+        "n": 2,
+        "status": 200,
+        "message": null,
+        "limit": "10",
+        "remaining": "8"
+      },
+      {
+        "n": 3,
+        "status": 200,
+        "message": null,
+        "limit": "10",
+        "remaining": "4"
+      },
+      {
+        "n": 4,
+        "status": 200,
+        "message": null,
+        "limit": "10",
+        "remaining": "5"
+      },
+      {
+        "n": 5,
+        "status": 200,
+        "message": null,
+        "limit": "10",
+        "remaining": "9"
+      },
+      {
+        "n": 6,
+        "status": 429,
+        "message": "Too many file uploads. Please wait.",
+        "limit": "10",
+        "remaining": "0"
+      },
+      {
+        "n": 7,
+        "status": 429,
+        "message": "Too many file uploads. Please wait.",
+        "limit": "10",
+        "remaining": "0"
+      },
+      {
+        "n": 8,
+        "status": 429,
+        "message": "Too many file uploads. Please wait.",
+        "limit": "10",
+        "remaining": "0"
+      },
+      {
+        "n": 9,
+        "status": 429,
+        "message": "Too many file uploads. Please wait.",
+        "limit": "10",
+        "remaining": "0"
+      },
+      {
+        "n": 10,
+        "status": 429,
+        "message": "Too many file uploads. Please wait.",
+        "limit": "10",
+        "remaining": "0"
+      },
+      {
+        "n": 11,
+        "status": 200,
+        "message": null,
+        "limit": "10",
+        "remaining": "7"
+      },
+      {
+        "n": 12,
+        "status": 200,
+        "message": null,
+        "limit": "10",
+        "remaining": "3"
+      },
+      {
+        "n": 13,
+        "status": 200,
+        "message": null,
+        "limit": "10",
+        "remaining": "0"
+      },
+      {
+        "n": 14,
+        "status": 200,
+        "message": null,
+        "limit": "10",
+        "remaining": "1"
+      },
+      {
+        "n": 15,
+        "status": 200,
+        "message": null,
+        "limit": "10",
+        "remaining": "2"
+      }
+    ],
+    "byStatus": {
+      "200": 10,
+      "429": 5
+    },
+    "sectionText": "Data room\n15 sources · 15 readable — what this project's documents are written from\nAdd sources — drop files here or click to browse. They’re read on upload and become available to AnA for this project.\nrl-small-08.txt read · 13 words\nrl-small-01.txt · read · 13 words\nrl-small-02.txt · read · 13 words\nrl-small-03.txt · read · 13 words\nrl-small-04.txt · read · 13 words\nrl-small-05.txt · read · 13 words\nrl-small-06.txt · read · 13 words\nrl-small-07.txt · read · 13 words\nrl-small-08.txt · read · 13 words\nrl-small-09.txt · read · 13 words\nrl-small-10.txt · read · 13 words\nrl-small-11.txt · Too many file uploads. Please wait.\nrl-small-12.txt · Too many file uploads. Please wait.\nrl-small-13.txt · Too many file uploads. Please wait.\nrl-small-14.txt · Too many file uploads. Please wait.\nrl-small-15.txt · Too many file uploads. Please wait.\nrl-small-09.txt\nText · 88 B · added Oct 8\nNot cited yet\nRead\nReview file removal\nrl-small-10.txt\nText · 88 B · added Oct 8\nNot cited yet\nRead\nReview file removal\nrl-small-08.txt\nText · 88 B · added Oct 8\nNot cited yet\nRead\nReview file removal\nrl-small-07.txt\nText · 88 B · added Oct 8\nNot cited yet\nRead\nReview file removal\nrl-small-05.txt\nText · 88 B · added Oct 8\nNot cited yet\nRead\nReview file removal\nrl-small-03.txt\nText · 88 B · added Oct 8\nNot cited yet\nRead\nReview file removal\nrl-small-06.txt\nText · 88 B · added Oct 8\nNot cited yet\nRead\nReview file removal\nrl-small-01.txt\nText · 88 B · added Oct 8\nNot cited yet\nRead\nReview file removal\nrl-smal"
+  },
+  "finishedAt": "2026-10-08T01:13:33.677Z",
+  "events": [
+    {
+      "ms": 2368,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/tenants"
+    },
+    {
+      "ms": 2369,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/users/me"
+    },
+    {
+      "ms": 2369,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 2369,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/tenants"
+    },
+    {
+      "ms": 2369,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/users/me"
+    },
+    {
+      "ms": 2369,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 2378,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "297"
+    },
+    {
+      "ms": 2387,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/users/me",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "597"
+    },
+    {
+      "ms": 2400,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/tenants",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "598"
+    },
+    {
+      "ms": 2400,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/clients"
+    },
+    {
+      "ms": 2408,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "296"
+    },
+    {
+      "ms": 2432,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/users/me",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "596"
+    },
+    {
+      "ms": 2460,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/clients",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "594"
+    },
+    {
+      "ms": 2461,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/tenants",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "595"
+    },
+    {
+      "ms": 2466,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/clients"
+    },
+    {
+      "ms": 2497,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/clients",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "593"
+    },
+    {
+      "ms": 2652,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 2653,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 2665,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "295"
+    },
+    {
+      "ms": 2671,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 2671,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 2683,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "294"
+    },
+    {
+      "ms": 2713,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "293"
+    },
+    {
+      "ms": 2973,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "292"
+    },
+    {
+      "ms": 3001,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/src/lib/api/query-options.ts"
+    },
+    {
+      "ms": 3006,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/src/lib/api/query-options.ts",
+      "status": 200,
+      "xRateLimitLimit": null,
+      "xRateLimitRemaining": null
+    },
+    {
+      "ms": 3152,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/task-management/my-work"
+    },
+    {
+      "ms": 3154,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/mdx/notifications/unread-count"
+    },
+    {
+      "ms": 3154,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/ana-ri/agent-activity"
+    },
+    {
+      "ms": 3154,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/module-subscriptions/navigation"
+    },
+    {
+      "ms": 3154,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/ana-ri/live-drive/state"
+    },
+    {
+      "ms": 3154,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/organizations/1"
+    },
+    {
+      "ms": 3158,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/task-management/my-work"
+    },
+    {
+      "ms": 3158,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/mdx/notifications/unread-count"
+    },
+    {
+      "ms": 3158,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/ana-ri/agent-activity"
+    },
+    {
+      "ms": 3158,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/module-subscriptions/navigation"
+    },
+    {
+      "ms": 3158,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/ana-ri/live-drive/state"
+    },
+    {
+      "ms": 3158,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/organizations/1"
+    },
+    {
+      "ms": 3179,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/ana-ri/live-drive/state",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "588"
+    },
+    {
+      "ms": 3203,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/mdx/notifications/unread-count",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "591"
+    },
+    {
+      "ms": 3216,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/ana-ri/agent-activity",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "590"
+    },
+    {
+      "ms": 3221,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/organizations/1",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "587"
+    },
+    {
+      "ms": 3284,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/module-subscriptions/navigation",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "589"
+    },
+    {
+      "ms": 3299,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/task-management/my-work",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "592"
+    },
+    {
+      "ms": 3302,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/mdx/notifications/unread-count",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "585"
+    },
+    {
+      "ms": 3323,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/ana-ri/live-drive/state",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "586"
+    },
+    {
+      "ms": 3323,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/ana-ri/agent-activity",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "584"
+    },
+    {
+      "ms": 3347,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/organizations/1",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "583"
+    },
+    {
+      "ms": 3354,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/module-subscriptions/navigation",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "582"
+    },
+    {
+      "ms": 3376,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/task-management/my-work",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "581"
+    },
+    {
+      "ms": 3409,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects"
+    },
+    {
+      "ms": 3409,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects"
+    },
+    {
+      "ms": 3415,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "580"
+    },
+    {
+      "ms": 3440,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "579"
+    },
+    {
+      "ms": 5897,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/conversation-files"
+    },
+    {
+      "ms": 5897,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/sources"
+    },
+    {
+      "ms": 5897,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/source-changes"
+    },
+    {
+      "ms": 5897,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/records"
+    },
+    {
+      "ms": 5898,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/chat/threads"
+    },
+    {
+      "ms": 5898,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+    },
+    {
+      "ms": 5899,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/team"
+    },
+    {
+      "ms": 5899,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/activity"
+    },
+    {
+      "ms": 5899,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/workstreams"
+    },
+    {
+      "ms": 5899,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/drafts"
+    },
+    {
+      "ms": 5899,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/conversation-files"
+    },
+    {
+      "ms": 5899,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/sources"
+    },
+    {
+      "ms": 5900,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/source-changes"
+    },
+    {
+      "ms": 5900,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/records"
+    },
+    {
+      "ms": 5900,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/chat/threads"
+    },
+    {
+      "ms": 5900,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+    },
+    {
+      "ms": 5901,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/team"
+    },
+    {
+      "ms": 5901,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/activity"
+    },
+    {
+      "ms": 5902,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/workstreams"
+    },
+    {
+      "ms": 5902,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/drafts"
+    },
+    {
+      "ms": 5959,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "573"
+    },
+    {
+      "ms": 5961,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/source-changes",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "576"
+    },
+    {
+      "ms": 5987,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/chat/threads",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "574"
+    },
+    {
+      "ms": 5987,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/records",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "575"
+    },
+    {
+      "ms": 5987,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/conversation-files",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "578"
+    },
+    {
+      "ms": 6017,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/sources",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "577"
+    },
+    {
+      "ms": 6060,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/team",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "572"
+    },
+    {
+      "ms": 6072,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/workstreams",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "570"
+    },
+    {
+      "ms": 6083,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/activity",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "571"
+    },
+    {
+      "ms": 6111,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "568"
+    },
+    {
+      "ms": 6156,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/drafts",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "569"
+    },
+    {
+      "ms": 6156,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/source-changes",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "567"
+    },
+    {
+      "ms": 6215,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/chat/threads",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "566"
+    },
+    {
+      "ms": 6223,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/conversation-files",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "564"
+    },
+    {
+      "ms": 6224,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/team",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "562"
+    },
+    {
+      "ms": 6263,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/activity",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "560"
+    },
+    {
+      "ms": 6264,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/sources",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "563"
+    },
+    {
+      "ms": 6264,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/workstreams",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "561"
+    },
+    {
+      "ms": 6264,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/records",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "565"
+    },
+    {
+      "ms": 6317,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/drafts",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "559"
+    },
+    {
+      "ms": 9910,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+    },
+    {
+      "ms": 9910,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+    },
+    {
+      "ms": 9975,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "558"
+    },
+    {
+      "ms": 10044,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "557"
+    },
+    {
+      "ms": 10163,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/versions"
+    },
+    {
+      "ms": 10163,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/annotations"
+    },
+    {
+      "ms": 10163,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/relationships"
+    },
+    {
+      "ms": 10163,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/history"
+    },
+    {
+      "ms": 10166,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/versions"
+    },
+    {
+      "ms": 10166,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/annotations"
+    },
+    {
+      "ms": 10166,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/relationships"
+    },
+    {
+      "ms": 10166,
+      "phase": "vault",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/history"
+    },
+    {
+      "ms": 10177,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/relationships",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "17"
+    },
+    {
+      "ms": 10260,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/relationships",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "15"
+    },
+    {
+      "ms": 10308,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/annotations",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "18"
+    },
+    {
+      "ms": 10318,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/versions",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "19"
+    },
+    {
+      "ms": 10338,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/history",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "16"
+    },
+    {
+      "ms": 10460,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/annotations",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "14"
+    },
+    {
+      "ms": 10464,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/versions",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "13"
+    },
+    {
+      "ms": 10488,
+      "phase": "vault",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/history",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "12"
+    },
+    {
+      "ms": 19233,
+      "phase": "open#3",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/versions"
+    },
+    {
+      "ms": 19233,
+      "phase": "open#3",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/annotations"
+    },
+    {
+      "ms": 19233,
+      "phase": "open#3",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/relationships"
+    },
+    {
+      "ms": 19233,
+      "phase": "open#3",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/history"
+    },
+    {
+      "ms": 19233,
+      "phase": "open#3",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/versions"
+    },
+    {
+      "ms": 19233,
+      "phase": "open#3",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/annotations"
+    },
+    {
+      "ms": 19233,
+      "phase": "open#3",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/relationships"
+    },
+    {
+      "ms": 19233,
+      "phase": "open#3",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/history"
+    },
+    {
+      "ms": 19259,
+      "phase": "open#3",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/relationships",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "9"
+    },
+    {
+      "ms": 19335,
+      "phase": "open#3",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/relationships",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "7"
+    },
+    {
+      "ms": 19352,
+      "phase": "open#3",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "10"
+    },
+    {
+      "ms": 19406,
+      "phase": "open#3",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "8"
+    },
+    {
+      "ms": 19414,
+      "phase": "open#3",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "11"
+    },
+    {
+      "ms": 19456,
+      "phase": "open#3",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "6"
+    },
+    {
+      "ms": 19528,
+      "phase": "open#3",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "4"
+    },
+    {
+      "ms": 19565,
+      "phase": "open#3",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "5"
+    },
+    {
+      "ms": 22892,
+      "phase": "open#4",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/versions"
+    },
+    {
+      "ms": 22893,
+      "phase": "open#4",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/annotations"
+    },
+    {
+      "ms": 22893,
+      "phase": "open#4",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/relationships"
+    },
+    {
+      "ms": 22893,
+      "phase": "open#4",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/history"
+    },
+    {
+      "ms": 22893,
+      "phase": "open#4",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/versions"
+    },
+    {
+      "ms": 22894,
+      "phase": "open#4",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/annotations"
+    },
+    {
+      "ms": 22897,
+      "phase": "open#4",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/relationships"
+    },
+    {
+      "ms": 22897,
+      "phase": "open#4",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/history"
+    },
+    {
+      "ms": 22995,
+      "phase": "open#4",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/relationships",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "1"
+    },
+    {
+      "ms": 22999,
+      "phase": "open#4",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/relationships",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 23130,
+      "phase": "open#4",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/versions",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "3"
+    },
+    {
+      "ms": 23138,
+      "phase": "open#4",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/versions",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 23143,
+      "phase": "open#4",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/history",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0"
+    },
+    {
+      "ms": 23145,
+      "phase": "open#4",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/history",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 23150,
+      "phase": "open#4",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/ana-ri/agent-activity"
+    },
+    {
+      "ms": 23172,
+      "phase": "open#4",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/ana-ri/agent-activity",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "556"
+    },
+    {
+      "ms": 23183,
+      "phase": "open#4",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/annotations",
+      "status": 200,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "2"
+    },
+    {
+      "ms": 23187,
+      "phase": "open#4",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/b9b008cf-0c7b-4230-a05b-e3b3354c8728/annotations",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 26501,
+      "phase": "open#5",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/versions"
+    },
+    {
+      "ms": 26502,
+      "phase": "open#5",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/annotations"
+    },
+    {
+      "ms": 26502,
+      "phase": "open#5",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/relationships"
+    },
+    {
+      "ms": 26502,
+      "phase": "open#5",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/history"
+    },
+    {
+      "ms": 26502,
+      "phase": "open#5",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/versions"
+    },
+    {
+      "ms": 26502,
+      "phase": "open#5",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/annotations"
+    },
+    {
+      "ms": 26502,
+      "phase": "open#5",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/relationships"
+    },
+    {
+      "ms": 26502,
+      "phase": "open#5",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/history"
+    },
+    {
+      "ms": 26511,
+      "phase": "open#5",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/versions",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 26513,
+      "phase": "open#5",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/annotations",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 26513,
+      "phase": "open#5",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/relationships",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 26513,
+      "phase": "open#5",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/history",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 26604,
+      "phase": "open#5",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/annotations",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 26610,
+      "phase": "open#5",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/relationships",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 26612,
+      "phase": "open#5",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/history",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 26612,
+      "phase": "open#5",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/6f92b826-c135-48e1-bfee-d999ad94b3ed/versions",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 30133,
+      "phase": "open#6",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/versions"
+    },
+    {
+      "ms": 30136,
+      "phase": "open#6",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/annotations"
+    },
+    {
+      "ms": 30136,
+      "phase": "open#6",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/relationships"
+    },
+    {
+      "ms": 30137,
+      "phase": "open#6",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/history"
+    },
+    {
+      "ms": 30137,
+      "phase": "open#6",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/versions"
+    },
+    {
+      "ms": 30137,
+      "phase": "open#6",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/annotations"
+    },
+    {
+      "ms": 30137,
+      "phase": "open#6",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/relationships"
+    },
+    {
+      "ms": 30137,
+      "phase": "open#6",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/history"
+    },
+    {
+      "ms": 30155,
+      "phase": "open#6",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/versions",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 30155,
+      "phase": "open#6",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/annotations",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 30156,
+      "phase": "open#6",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/relationships",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 30158,
+      "phase": "open#6",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/history",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 30160,
+      "phase": "open#6",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/versions",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 30160,
+      "phase": "open#6",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/annotations",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 30160,
+      "phase": "open#6",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/relationships",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 30161,
+      "phase": "open#6",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/history",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 33839,
+      "phase": "open#7",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/versions"
+    },
+    {
+      "ms": 33839,
+      "phase": "open#7",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/annotations"
+    },
+    {
+      "ms": 33839,
+      "phase": "open#7",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/relationships"
+    },
+    {
+      "ms": 33840,
+      "phase": "open#7",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/history"
+    },
+    {
+      "ms": 33840,
+      "phase": "open#7",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/versions"
+    },
+    {
+      "ms": 33844,
+      "phase": "open#7",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/annotations"
+    },
+    {
+      "ms": 33844,
+      "phase": "open#7",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/relationships"
+    },
+    {
+      "ms": 33844,
+      "phase": "open#7",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/history"
+    },
+    {
+      "ms": 33943,
+      "phase": "open#7",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/versions",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 33943,
+      "phase": "open#7",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/annotations",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 33943,
+      "phase": "open#7",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/relationships",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 33944,
+      "phase": "open#7",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/history",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 33944,
+      "phase": "open#7",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/versions",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 33944,
+      "phase": "open#7",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/annotations",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 33944,
+      "phase": "open#7",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/relationships",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 33945,
+      "phase": "open#7",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/45224282-30b0-4f3f-b30c-0d4c2cb859f6/history",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 37546,
+      "phase": "open#8",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/versions"
+    },
+    {
+      "ms": 37551,
+      "phase": "open#8",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/annotations"
+    },
+    {
+      "ms": 37551,
+      "phase": "open#8",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/relationships"
+    },
+    {
+      "ms": 37551,
+      "phase": "open#8",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/history"
+    },
+    {
+      "ms": 37551,
+      "phase": "open#8",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/versions"
+    },
+    {
+      "ms": 37571,
+      "phase": "open#8",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/annotations"
+    },
+    {
+      "ms": 37571,
+      "phase": "open#8",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/relationships"
+    },
+    {
+      "ms": 37571,
+      "phase": "open#8",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/history"
+    },
+    {
+      "ms": 37574,
+      "phase": "open#8",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/versions",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 37574,
+      "phase": "open#8",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/annotations",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 37575,
+      "phase": "open#8",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/relationships",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 37575,
+      "phase": "open#8",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/history",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 37576,
+      "phase": "open#8",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/versions",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 37577,
+      "phase": "open#8",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/annotations",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 37577,
+      "phase": "open#8",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/relationships",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 37577,
+      "phase": "open#8",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/c07aeb8d-59d4-4060-a9e5-3ff34d9581e8/history",
+      "status": 429,
+      "xRateLimitLimit": "20",
+      "xRateLimitRemaining": "0",
+      "message": "Too many document requests. Please wait."
+    },
+    {
+      "ms": 41620,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/tenants"
+    },
+    {
+      "ms": 41621,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/users/me"
+    },
+    {
+      "ms": 41621,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 41622,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/tenants"
+    },
+    {
+      "ms": 41622,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/users/me"
+    },
+    {
+      "ms": 41622,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 41669,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "291"
+    },
+    {
+      "ms": 41669,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/users/me",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "554"
+    },
+    {
+      "ms": 41675,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/tenants",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "555"
+    },
+    {
+      "ms": 41683,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/clients"
+    },
+    {
+      "ms": 41708,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "290"
+    },
+    {
+      "ms": 41708,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/users/me",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "553"
+    },
+    {
+      "ms": 41768,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/tenants",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "552"
+    },
+    {
+      "ms": 41768,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/clients",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "551"
+    },
+    {
+      "ms": 41779,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/clients"
+    },
+    {
+      "ms": 41813,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/clients",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "550"
+    },
+    {
+      "ms": 41903,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 41903,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 41920,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "289"
+    },
+    {
+      "ms": 41927,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 41927,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "ms": 41951,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "288"
+    },
+    {
+      "ms": 42083,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "287"
+    },
+    {
+      "ms": 42161,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "xRateLimitLimit": "300",
+      "xRateLimitRemaining": "286"
+    },
+    {
+      "ms": 42178,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/src/lib/api/query-options.ts"
+    },
+    {
+      "ms": 42182,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/src/lib/api/query-options.ts",
+      "status": 200,
+      "xRateLimitLimit": null,
+      "xRateLimitRemaining": null
+    },
+    {
+      "ms": 42331,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/task-management/my-work"
+    },
+    {
+      "ms": 42331,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/mdx/notifications/unread-count"
+    },
+    {
+      "ms": 42331,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/ana-ri/agent-activity"
+    },
+    {
+      "ms": 42331,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/module-subscriptions/navigation"
+    },
+    {
+      "ms": 42331,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/ana-ri/live-drive/state"
+    },
+    {
+      "ms": 42332,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/organizations/1"
+    },
+    {
+      "ms": 42332,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/task-management/my-work"
+    },
+    {
+      "ms": 42332,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/mdx/notifications/unread-count"
+    },
+    {
+      "ms": 42332,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/ana-ri/agent-activity"
+    },
+    {
+      "ms": 42332,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/module-subscriptions/navigation"
+    },
+    {
+      "ms": 42332,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/ana-ri/live-drive/state"
+    },
+    {
+      "ms": 42332,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/organizations/1"
+    },
+    {
+      "ms": 42378,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/mdx/notifications/unread-count",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "548"
+    },
+    {
+      "ms": 42403,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/ana-ri/agent-activity",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "547"
+    },
+    {
+      "ms": 42429,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/ana-ri/live-drive/state",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "545"
+    },
+    {
+      "ms": 42433,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/organizations/1",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "544"
+    },
+    {
+      "ms": 42451,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/module-subscriptions/navigation",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "546"
+    },
+    {
+      "ms": 42459,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/task-management/my-work",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "549"
+    },
+    {
+      "ms": 42482,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/ana-ri/agent-activity",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "542"
+    },
+    {
+      "ms": 42493,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/ana-ri/live-drive/state",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "541"
+    },
+    {
+      "ms": 42509,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/mdx/notifications/unread-count",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "543"
+    },
+    {
+      "ms": 42525,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects"
+    },
+    {
+      "ms": 42525,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects"
+    },
+    {
+      "ms": 42530,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/organizations/1",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "540"
+    },
+    {
+      "ms": 42542,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/task-management/my-work",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "538"
+    },
+    {
+      "ms": 42550,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/module-subscriptions/navigation",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "539"
+    },
+    {
+      "ms": 42565,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "537"
+    },
+    {
+      "ms": 42588,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "536"
+    },
+    {
+      "ms": 45039,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/conversation-files"
+    },
+    {
+      "ms": 45043,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/sources"
+    },
+    {
+      "ms": 45043,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/source-changes"
+    },
+    {
+      "ms": 45043,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/records"
+    },
+    {
+      "ms": 45043,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/chat/threads"
+    },
+    {
+      "ms": 45043,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+    },
+    {
+      "ms": 45043,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/team"
+    },
+    {
+      "ms": 45043,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/activity"
+    },
+    {
+      "ms": 45043,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/workstreams"
+    },
+    {
+      "ms": 45044,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/drafts"
+    },
+    {
+      "ms": 45044,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/conversation-files"
+    },
+    {
+      "ms": 45044,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/sources"
+    },
+    {
+      "ms": 45044,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/source-changes"
+    },
+    {
+      "ms": 45044,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/records"
+    },
+    {
+      "ms": 45044,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/chat/threads"
+    },
+    {
+      "ms": 45044,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+    },
+    {
+      "ms": 45044,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/team"
+    },
+    {
+      "ms": 45044,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/activity"
+    },
+    {
+      "ms": 45045,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/workstreams"
+    },
+    {
+      "ms": 45045,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/drafts"
+    },
+    {
+      "ms": 45066,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "530"
+    },
+    {
+      "ms": 45081,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/conversation-files",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "535"
+    },
+    {
+      "ms": 45120,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/chat/threads",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "531"
+    },
+    {
+      "ms": 45129,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/source-changes",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "533"
+    },
+    {
+      "ms": 45129,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/sources",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "534"
+    },
+    {
+      "ms": 45140,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/team",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "529"
+    },
+    {
+      "ms": 45146,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/records",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "532"
+    },
+    {
+      "ms": 45168,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/activity",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "528"
+    },
+    {
+      "ms": 45170,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/workstreams",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "527"
+    },
+    {
+      "ms": 45190,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "525"
+    },
+    {
+      "ms": 45196,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/chat/threads",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "523"
+    },
+    {
+      "ms": 45235,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/drafts",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "526"
+    },
+    {
+      "ms": 45237,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/conversation-files",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "524"
+    },
+    {
+      "ms": 45292,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/source-changes",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "522"
+    },
+    {
+      "ms": 45293,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/team",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "520"
+    },
+    {
+      "ms": 45294,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/activity",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "518"
+    },
+    {
+      "ms": 45294,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/workstreams",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "517"
+    },
+    {
+      "ms": 45295,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/sources",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "521"
+    },
+    {
+      "ms": 45295,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/records",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "519"
+    },
+    {
+      "ms": 45295,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/drafts",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "516"
+    },
+    {
+      "ms": 48880,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48906,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48906,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48907,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48907,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48916,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48916,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48916,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48916,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48916,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48916,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48916,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48916,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48916,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 48916,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "POST",
+      "path": "/api/chat/upload"
+    },
+    {
+      "ms": 50429,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 200,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "6"
+    },
+    {
+      "ms": 50528,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 200,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "8"
+    },
+    {
+      "ms": 50657,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 200,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "4"
+    },
+    {
+      "ms": 50658,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 200,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "5"
+    },
+    {
+      "ms": 50685,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 200,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "9"
+    },
+    {
+      "ms": 50685,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 429,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "0",
+      "message": "Too many file uploads. Please wait."
+    },
+    {
+      "ms": 50687,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 429,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "0",
+      "message": "Too many file uploads. Please wait."
+    },
+    {
+      "ms": 50687,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 429,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "0",
+      "message": "Too many file uploads. Please wait."
+    },
+    {
+      "ms": 50687,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 429,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "0",
+      "message": "Too many file uploads. Please wait."
+    },
+    {
+      "ms": 50688,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 429,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "0",
+      "message": "Too many file uploads. Please wait."
+    },
+    {
+      "ms": 50756,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 200,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "7"
+    },
+    {
+      "ms": 52045,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 200,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "3"
+    },
+    {
+      "ms": 52138,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 200,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "0"
+    },
+    {
+      "ms": 52157,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 200,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "1"
+    },
+    {
+      "ms": 52349,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "POST",
+      "path": "/api/chat/upload",
+      "status": 200,
+      "xRateLimitLimit": "10",
+      "xRateLimitRemaining": "2"
+    },
+    {
+      "ms": 52399,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/sources"
+    },
+    {
+      "ms": 52399,
+      "phase": "dataroom",
+      "ev": "request",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/source-changes"
+    },
+    {
+      "ms": 52446,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/source-changes",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "514"
+    },
+    {
+      "ms": 52470,
+      "phase": "dataroom",
+      "ev": "response",
+      "method": "GET",
+      "path": "/api/c2c/projects/50c41bb6-5796-4dc6-a848-72e4d1246ebd/sources",
+      "status": 200,
+      "xRateLimitLimit": "600",
+      "xRateLimitRemaining": "515"
+    }
+  ]
+}
