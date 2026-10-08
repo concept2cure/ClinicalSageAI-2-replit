@@ -80,7 +80,7 @@ import {
   type TransmitRequest,
 } from './SubmissionSeqWorkspaces';
 import '../styles/submission-v2.css';
-import { C2CForm } from '../C2CForm';
+import { NewSubmissionForm } from './NewSubmissionForm';
 import { gatewayLabel } from '../gatewayLabels';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
@@ -1223,54 +1223,15 @@ export function SubmissionCenter({
       <VerdictNote notice={notice} />
 
       {newOpen && (
-        <C2CForm
-          config={{
-            eyebrow: 'Submission',
-            title: 'Create a submission',
-            sub: 'The canonical submission record. Its sequences, validation profile and regional Module 1 are derived from the type and agency chosen here.',
-            submitLabel: creating ? 'Creating…' : 'Create submission',
-            fields: [
-              {
-                key: 'title', label: 'Title', type: 'text',
-                placeholder: 'e.g. BX-701 — Initial IND', required: true,
-              },
-              {
-                key: 'applicationType', label: 'Application type', type: 'select',
-                // The canonical vocabulary the rest of this surface renders —
-                // including the non-US applications (MAA, CTA) a global team
-                // opens as its second market.
-                options: SC_APPTYPES.map((a) => ({ value: a.v, label: a.l })),
-                default: 'ind', required: true, half: true,
-              },
-              {
-                key: 'primaryRegion', label: 'Primary region', type: 'select',
-                options: SC_REGIONS.map((r0) => ({ value: r0.v, label: r0.l })),
-                default: 'fda', required: true, half: true,
-              },
-              {
-                key: 'clientType', label: 'Client type', type: 'select',
-                options: [
-                  { value: 'pharma', label: 'Pharma' },
-                  { value: 'biotech', label: 'Biotech' },
-                  { value: 'mdx', label: 'Medical device' },
-                  { value: 'ivd', label: 'IVD' },
-                ],
-                default: 'biotech', required: true, half: true,
-              },
-              /* With a project open the submission is that project's: it is
-                 named here, read-only, and there is no picker. */
-              openProjectName
-                ? { key: 'project', label: 'Project', type: 'text', half: true, derive: () => openProjectName }
-                : {
-                    key: 'projectId', label: 'Programme', type: 'select',
-                    options: programmes.rows.map((p) => ({
-                      value: p.id,
-                      label: [p.code, p.title].filter(Boolean).join(' · ') || p.id,
-                    })),
-                    required: true, half: true,
-                  },
-            ],
-          }}
+        <NewSubmissionForm
+          openProgramId={openProgramId}
+          openProjectName={openProjectName}
+          workspace={shell?.ws}
+          projectSubmissions={openProgramId ? list.filter((x) => x.programId === openProgramId) : []}
+          submissionsSettled={!subs.loading}
+          submissionsUnread={!!subs.error}
+          programmes={programmes.rows}
+          creating={creating}
           onCancel={() => setNewOpen(false)}
           onSubmit={createSubmission}
         />

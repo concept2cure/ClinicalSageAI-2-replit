@@ -1,0 +1,1387 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an NDA · FDA project opens on NDA · FDA (US), with the project's client type 347ms
+   → expected 'ind' to be 'nda' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an MAA · EMA project opens on MAA · EU (EMA), not on a US IND 58ms
+   → expected 'ind' to be 'maa' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a Health Canada project preselects Health Canada, whatever its spelling 57ms
+   → expected 'fda' to be 'ca' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when that market already exists on the project, no region is preselected 59ms
+   → expected 'ind' to be 'nda' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a type the form does not offer (J-NDA) is not guessed 52ms
+   → expected 'ind' to be '' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project record that could not be read preselects nothing, and says why 44ms
+   → expected 'ind' to be '' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type 5062ms
+   → expected 'FDA (US)' to contain 'Structured Module 1'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="sp sc-page"
+      >
+        <div
+          class="sp-head"
+        >
+          <div>
+            <div
+              class="sp-eyebrow"
+            >
+              Submission
+            </div>
+            <h1
+              class="sp-title"
+            >
+              Submission center
+            </h1>
+            <p
+              class="sp-state"
+            >
+              Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+            </p>
+          </div>
+        </div>
+        <p
+          class="sp-state sc-mb"
+          data-testid="sc-scope"
+        >
+          <span>
+            Submissions of 
+            <b>
+              ONC-221
+            </b>
+            , the open project.
+             Your organization has no other submissions.
+          </span>
+           
+        </p>
+        <div
+          class="sc-wsbar"
+          role="tablist"
+        >
+          <button
+            aria-selected="true"
+            class="sc-ws on"
+            role="tab"
+            type="button"
+          >
+            Submissions
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Planner
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Builder
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Sequences
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Validation
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Shadow review
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Cross-region
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Dispatch
+          </button>
+        </div>
+        <div
+          class="de-bd"
+        >
+          <div
+            aria-label="Create a submission"
+            aria-modal="true"
+            class="de"
+            role="dialog"
+            tabindex="-1"
+          >
+            <div
+              class="de-h"
+            >
+              <div>
+                <div
+                  class="de-h-eye"
+                >
+                  Submission
+                </div>
+                <div
+                  class="de-h-t"
+                >
+                  Create a submission
+                </div>
+                <div
+                  class="de-h-s"
+                >
+                  The canonical submission record. Its sequences, validation profile and regional Module 1 are derived from the type and agency chosen here.
+                </div>
+              </div>
+              <button
+                aria-label="Close"
+                class="de-x"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-x"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M18 6 6 18"
+                  />
+                  <path
+                    d="m6 6 12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div
+              class="de-body"
+            >
+              <div
+                class="de-field"
+              >
+                <label
+                  class="de-label"
+                  for="_r_6_-title"
+                  id="_r_6_-title-label"
+                >
+                  Title
+                  <span
+                    aria-hidden="true"
+                    class="req"
+                  >
+                    *
+                  </span>
+                </label>
+                <input
+                  aria-required="true"
+                  class="de-input"
+                  id="_r_6_-title"
+                  placeholder="e.g. BX-701 — Initial IND"
+                  type="text"
+                  value=""
+                />
+              </div>
+              <div
+                class="de-field half"
+              >
+                <label
+                  class="de-label"
+                  for="_r_6_-applicationType"
+                  id="_r_6_-applicationType-label"
+                >
+                  Application type
+                  <span
+                    aria-hidden="true"
+                    class="req"
+                  >
+                    *
+                  </span>
+                </label>
+                <select
+                  aria-required="true"
+                  class="de-select"
+                  id="_r_6_-applicationType"
+                >
+                  <option
+                    value=""
+                  >
+                    Select…
+                  </option>
+                  <option
+                    value="ind"
+                  >
+                    IND
+                  </option>
+                  <option
+                    value="nda"
+                  >
+                    NDA
+                  </option>
+                  <option
+                    value="bla"
+                  >
+                    BLA
+                  </option>
+                  <option
+                    value="anda"
+                  >
+                    ANDA
+                  </option>
+                  <option
+                    value="maa"
+                  >
+                    MAA
+                  </option>
+                  <option
+                    value="510k"
+                  >
+                    510(k)
+                  </option>
+                  <option
+                    value="de_novo"
+                  >
+                    De Novo
+                  </option>
+                  <option
+                    value="pma"
+                  >
+                    PMA
+                  </option>
+                  <option
+                    value="cta"
+                  >
+                    CTA
+                  </option>
+                </select>
+              </div>
+              <div
+                class="de-field half"
+              >
+                <label
+                  class="de-label"
+                  for="_r_6_-primaryRegion"
+                  id="_r_6_-primaryRegion-label"
+                >
+                  Primary region
+                  <span
+                    aria-hidden="true"
+                    class="req"
+                  >
+                    *
+                  </span>
+                </label>
+                <select
+                  aria-required="true"
+                  class="de-select"
+                  id="_r_6_-primaryRegion"
+                >
+                  <option
+                    value=""
+                  >
+                    Select…
+                  </option>
+                  <option
+                    value="fda"
+                  >
+                    FDA (US)
+                  </option>
+                  <option
+                    value="eu"
+                  >
+                    EU (EMA)
+                  </option>
+                  <option
+                    value="jp"
+                  >
+                    PMDA (Japan)
+                  </option>
+                  <option
+                    value="ca"
+                  >
+                    Health Canada
+                  </option>
+                  <option
+                    value="uk"
+                  >
+                    MHRA (UK)
+                  </option>
+                  <option
+                    value="ch"
+                  >
+                    Swissmedic
+                  </option>
+                  <option
+                    value="au"
+                  >
+                    TGA (Australia)
+                  </option>
+                  <option
+                    value="cn"
+                  >
+                    NMPA (China)
+                  </option>
+                  <option
+                    value="br"
+                  >
+                    ANVISA (Brazil)
+                  </option>
+                  <option
+                    value="in"
+                  >
+                    CDSCO (India)
+                  </option>
+                  <option
+                    value="kr"
+                  >
+                    MFDS (Korea)
+                  </option>
+                  <option
+                    value="sg"
+                  >
+                    HSA (Singapore)
+                  </option>
+                </select>
+              </div>
+              <div
+                class="de-field half"
+              >
+                <label
+                  class="de-label"
+                  for="_r_6_-clientType"
+                  id="_r_6_-clientType-label"
+                >
+                  Client type
+                  <span
+                    aria-hidden="true"
+                    class="req"
+                  >
+                    *
+                  </span>
+                </label>
+                <select
+                  aria-required="true"
+                  class="de-select"
+                  id="_r_6_-clientType"
+                >
+                  <option
+                    value=""
+                  >
+                    Select…
+                  </option>
+                  <option
+                    value="pharma"
+                  >
+                    Pharma
+                  </option>
+                  <option
+                    value="biotech"
+                  >
+                    Biotech
+                  </option>
+                  <option
+                    value="mdx"
+                  >
+                    Medical device
+                  </option>
+                  <option
+                    value="ivd"
+                  >
+                    IVD
+                  </option>
+                </select>
+              </div>
+              <div
+                class="de-field half"
+              >
+                <label
+                  class="de-label"
+                  for="_r_6_-project"
+                  id="_r_6_-project-label"
+                >
+                  Project
+                </label>
+                <input
+                  aria-readonly="true"
+                  class="de-input"
+                  id="_r_6_-project"
+                  readonly=""
+                  type="text"
+                  value="ONC-221"
+                />
+              </div>
+            </div>
+            <div
+              class="de-f"
+            >
+              <button
+                class="de-btn ghost"
+              >
+                Cancel
+              </button>
+              <button
+                class="de-btn primary"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-check"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                  />
+                </svg>
+                 
+                Create submission
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Submissions
+            </span>
+            <button
+              class="pj-card-h-go"
+              type="button"
+            >
+              + New submission
+            </button>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <div
+              aria-live="polite"
+              class="c2c-empty-state tone-idle"
+              role="status"
+            >
+              <span
+                aria-hidden="true"
+                class="c2c-empty-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-file-text"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+                  />
+                  <path
+                    d="M14 2v4a2 2 0 0 0 2 2h4"
+                  />
+                  <path
+                    d="M10 9H8"
+                  />
+                  <path
+                    d="M16 13H8"
+                  />
+                  <path
+                    d="M16 17H8"
+                  />
+                </svg>
+              </span>
+              <div
+                class="c2c-empty-t"
+              >
+                No submissions for ONC-221 yet
+              </div>
+              <div
+                class="c2c-empty-h"
+              >
+                Create this project's first submission to plan, assemble, validate and dispatch a regulatory sequence.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Device filings · eSTAR
+            </span>
+            <span
+              class="s"
+            >
+              510(k) device assembly readiness unavailable right now
+            </span>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <div
+              aria-live="assertive"
+              class="c2c-error-state variant-panel"
+              role="alert"
+            >
+              <span
+                aria-hidden="true"
+                class="c2c-error-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-triangle-alert"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+                  />
+                  <path
+                    d="M12 9v4"
+                  />
+                  <path
+                    d="M12 17h.01"
+                  />
+                </svg>
+              </span>
+              <div
+                class="c2c-error-body"
+              >
+                <div
+                  class="c2c-error-t"
+                >
+                  Couldn't load the device filings
+                </div>
+                <div
+                  class="c2c-error-h"
+                >
+                  The eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission with no project open (F20) > preselects no application type, region or client type 45ms
+   → expected 'ind' to be '' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an NDA · FDA project opens on NDA · FDA (US), with the project's client type
+AssertionError: expected 'ind' to be 'nda' // Object.is equality
+
+Expected: "nda"
+Received: "ind"
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:93:46
+     91|     serve();
+     92|     await openNew();
+     93|     expect(select(/Application type/).value).toBe('nda');
+       |                                              ^
+     94|     expect(select(/Primary region/).value).toBe('fda');
+     95|     expect(select(/Client type/).value).toBe('pharma');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an MAA · EMA project opens on MAA · EU (EMA), not on a US IND
+AssertionError: expected 'ind' to be 'maa' // Object.is equality
+
+Expected: "maa"
+Received: "ind"
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:101:46
+     99|     serve({ program: { id: PID, name: 'ONC-221', program_type: 'MAA', …
+    100|     await openNew();
+    101|     expect(select(/Application type/).value).toBe('maa');
+       |                                              ^
+    102|     expect(select(/Primary region/).value).toBe('eu');
+    103|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a Health Canada project preselects Health Canada, whatever its spelling
+AssertionError: expected 'fda' to be 'ca' // Object.is equality
+
+Expected: "ca"
+Received: "fda"
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:108:44
+    106|     serve({ program: { id: PID, name: 'ONC-221', program_type: 'NDA', …
+    107|     await openNew();
+    108|     expect(select(/Primary region/).value).toBe('ca');
+       |                                            ^
+    109|   });
+    110|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when that market already exists on the project, no region is preselected
+AssertionError: expected 'ind' to be 'nda' // Object.is equality
+
+Expected: "nda"
+Received: "ind"
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:114:46
+    112|     serve({ existing: [{ applicationType: 'nda', primaryRegion: 'fda' …
+    113|     await openNew();
+    114|     expect(select(/Application type/).value).toBe('nda');
+       |                                              ^
+    115|     expect(select(/Primary region/).value).toBe('');
+    116|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a type the form does not offer (J-NDA) is not guessed
+AssertionError: expected 'ind' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ ind
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:121:46
+    119|     serve({ program: { id: PID, name: 'ONC-221', program_type: 'JNDA',…
+    120|     await openNew();
+    121|     expect(select(/Application type/).value).toBe('');
+       |                                              ^
+    122|     expect(select(/Primary region/).value).toBe('jp');
+    123|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project record that could not be read preselects nothing, and says why
+AssertionError: expected 'ind' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ ind
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:128:46
+    126|     serve({ program: null });
+    127|     await openNew();
+    128|     expect(select(/Application type/).value).toBe('');
+       |                                              ^
+    129|     expect(select(/Primary region/).value).toBe('');
+    130|     expect(document.body.textContent).toMatch(/project record could no…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type
+AssertionError: expected 'FDA (US)' to contain 'Structured Module 1'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="sp sc-page"
+      >
+        <div
+          class="sp-head"
+        >
+          <div>
+            <div
+              class="sp-eyebrow"
+            >
+              Submission
+            </div>
+            <h1
+              class="sp-title"
+            >
+              Submission center
+            </h1>
+            <p
+              class="sp-state"
+            >
+              Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+            </p>
+          </div>
+        </div>
+        <p
+          class="sp-state sc-mb"
+          data-testid="sc-scope"
+        >
+          <span>
+            Submissions of 
+            <b>
+              ONC-221
+            </b>
+            , the open project.
+             Your organization has no other submissions.
+          </span>
+           
+        </p>
+        <div
+          class="sc-wsbar"
+          role="tablist"
+        >
+          <button
+            aria-selected="true"
+            class="sc-ws on"
+            role="tab"
+            type="button"
+          >
+            Submissions
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Planner
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Builder
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Sequences
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Validation
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Shadow review
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Cross-region
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Dispatch
+          </button>
+        </div>
+        <div
+          class="de-bd"
+        >
+          <div
+            aria-label="Create a submission"
+            aria-modal="true"
+            class="de"
+            role="dialog"
+            tabindex="-1"
+          >
+            <div
+              class="de-h"
+            >
+              <div>
+                <div
+                  class="de-h-eye"
+                >
+                  Submission
+                </div>
+                <div
+                  class="de-h-t"
+                >
+                  Create a submission
+                </div>
+                <div
+                  class="de-h-s"
+                >
+                  The canonical submission record. Its sequences, validation profile and regional Module 1 are derived from the type and agency chosen here.
+                </div>
+              </div>
+              <button
+                aria-label="Close"
+                class="de-x"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-x"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M18 6 6 18"
+                  />
+                  <path
+                    d="m6 6 12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div
+              class="de-body"
+            >
+              <div
+                class="de-field"
+              >
+                <label
+                  class="de-label"
+                  for="_r_6_-title"
+                  id="_r_6_-title-label"
+                >
+                  Title
+                  <span
+                    aria-hidden="true"
+                    class="req"
+                  >
+                    *
+                  </span>
+                </label>
+                <input
+                  aria-required="true"
+                  class="de-input"
+                  id="_r_6_-title"
+                  placeholder="e.g. BX-701 — Initial IND"
+                  type="text"
+                  value=""
+                />
+              </div>
+              <div
+                class="de-field half"
+              >
+                <label
+                  class="de-label"
+                  for="_r_6_-applicationType"
+                  id="_r_6_-applicationType-label"
+                >
+                  Application type
+                  <span
+                    aria-hidden="true"
+                    class="req"
+                  >
+                    *
+                  </span>
+                </label>
+                <select
+                  aria-required="true"
+                  class="de-select"
+                  id="_r_6_-applicationType"
+                >
+                  <option
+                    value=""
+                  >
+                    Select…
+                  </option>
+                  <option
+                    value="ind"
+                  >
+                    IND
+                  </option>
+                  <option
+                    value="nda"
+                  >
+                    NDA
+                  </option>
+                  <option
+                    value="bla"
+                  >
+                    BLA
+                  </option>
+                  <option
+                    value="anda"
+                  >
+                    ANDA
+                  </option>
+                  <option
+                    value="maa"
+                  >
+                    MAA
+                  </option>
+                  <option
+                    value="510k"
+                  >
+                    510(k)
+                  </option>
+                  <option
+                    value="de_novo"
+                  >
+                    De Novo
+                  </option>
+                  <option
+                    value="pma"
+                  >
+                    PMA
+                  </option>
+                  <option
+                    value="cta"
+                  >
+                    CTA
+                  </option>
+                </select>
+              </div>
+              <div
+                class="de-field half"
+              >
+                <label
+                  class="de-label"
+                  for="_r_6_-primaryRegion"
+                  id="_r_6_-primaryRegion-label"
+                >
+                  Primary region
+                  <span
+                    aria-hidden="true"
+                    class="req"
+                  >
+                    *
+                  </span>
+                </label>
+                <select
+                  aria-required="true"
+                  class="de-select"
+                  id="_r_6_-primaryRegion"
+                >
+                  <option
+                    value=""
+                  >
+                    Select…
+                  </option>
+                  <option
+                    value="fda"
+                  >
+                    FDA (US)
+                  </option>
+                  <option
+                    value="eu"
+                  >
+                    EU (EMA)
+                  </option>
+                  <option
+                    value="jp"
+                  >
+                    PMDA (Japan)
+                  </option>
+                  <option
+                    value="ca"
+                  >
+                    Health Canada
+                  </option>
+                  <option
+                    value="uk"
+                  >
+                    MHRA (UK)
+                  </option>
+                  <option
+                    value="ch"
+                  >
+                    Swissmedic
+                  </option>
+                  <option
+                    value="au"
+                  >
+                    TGA (Australia)
+                  </option>
+                  <option
+                    value="cn"
+                  >
+                    NMPA (China)
+                  </option>
+                  <option
+                    value="br"
+                  >
+                    ANVISA (Brazil)
+                  </option>
+                  <option
+                    value="in"
+                  >
+                    CDSCO (India)
+                  </option>
+                  <option
+                    value="kr"
+                  >
+                    MFDS (Korea)
+                  </option>
+                  <option
+                    value="sg"
+                  >
+                    HSA (Singapore)
+                  </option>
+                </select>
+              </div>
+              <div
+                class="de-field half"
+              >
+                <label
+                  class="de-label"
+                  for="_r_6_-clientType"
+                  id="_r_6_-clientType-label"
+                >
+                  Client type
+                  <span
+                    aria-hidden="true"
+                    class="req"
+                  >
+                    *
+                  </span>
+                </label>
+                <select
+                  aria-required="true"
+                  class="de-select"
+                  id="_r_6_-clientType"
+                >
+                  <option
+                    value=""
+                  >
+                    Select…
+                  </option>
+                  <option
+                    value="pharma"
+                  >
+                    Pharma
+                  </option>
+                  <option
+                    value="biotech"
+                  >
+                    Biotech
+                  </option>
+                  <option
+                    value="mdx"
+                  >
+                    Medical device
+                  </option>
+                  <option
+                    value="ivd"
+                  >
+                    IVD
+                  </option>
+                </select>
+              </div>
+              <div
+                class="de-field half"
+              >
+                <label
+                  class="de-label"
+                  for="_r_6_-project"
+                  id="_r_6_-project-label"
+                >
+                  Project
+                </label>
+                <input
+                  aria-readonly="true"
+                  class="de-input"
+                  id="_r_6_-project"
+                  readonly=""
+                  type="text"
+                  value="ONC-221"
+                />
+              </div>
+            </div>
+            <div
+              class="de-f"
+            >
+              <button
+                class="de-btn ghost"
+              >
+                Cancel
+              </button>
+              <button
+                class="de-btn primary"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-check"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                  />
+                </svg>
+                 
+                Create submission
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Submissions
+            </span>
+            <button
+              class="pj-card-h-go"
+              type="button"
+            >
+              + New submission
+            </button>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <div
+              aria-live="polite"
+              class="c2c-empty-state tone-idle"
+              role="status"
+            >
+              <span
+                aria-hidden="true"
+                class="c2c-empty-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-file-text"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+                  />
+                  <path
+                    d="M14 2v4a2 2 0 0 0 2 2h4"
+                  />
+                  <path
+                    d="M10 9H8"
+                  />
+                  <path
+                    d="M16 13H8"
+                  />
+                  <path
+                    d="M16 17H8"
+                  />
+                </svg>
+              </span>
+              <div
+                class="c2c-empty-t"
+              >
+                No submissions for ONC-221 yet
+              </div>
+              <div
+                class="c2c-empty-h"
+              >
+                Create this project's first submission to plan, assemble, validate and dispatch a regulatory sequence.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Device filings · eSTAR
+            </span>
+            <span
+              class="s"
+            >
+              510(k) device assembly readiness unavailable right now
+            </span>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <div
+              aria-live="assertive"
+              class="c2c-error-state variant-panel"
+              role="alert"
+            >
+              <span
+                aria-hidden="true"
+                class="c2c-error-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-triangle-alert"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+                  />
+                  <path
+                    d="M12 9v4"
+                  />
+                  <path
+                    d="M12 17h.01"
+                  />
+                </svg>
+              </span>
+              <div
+                class="c2c-error-body"
+              >
+                <div
+                  class="c2c-error-t"
+                >
+                  Couldn't load the device filings
+                </div>
+                <div
+                  class="c2c-error-h"
+                >
+                  The eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+Expected: "Structured Module 1"
+Received: "FDA (US)"
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:136:69
+    134|     serve();
+    135|     await openNew();
+    136|     await waitFor(() => expect(optionText(/Primary region/, 'fda')).to…
+       |                                                                     ^
+    137|     expect(optionText(/Primary region/, 'eu')).toContain('No outline, …
+    138|     fireEvent.change(select(/Application type/), { target: { value: 'm…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission with no project open (F20) > preselects no application type, region or client type
+AssertionError: expected 'ind' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ ind
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:148:46
+    146|     serve();
+    147|     await openNew();
+    148|     expect(select(/Application type/).value).toBe('');
+       |                                              ^
+    149|     expect(select(/Primary region/).value).toBe('');
+    150|     expect(select(/Client type/).value).toBe('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  15:03:02
+   Duration  8.29s (transform 1.23s, setup 193ms, import 1.51s, tests 5.73s, environment 662ms)
+
