@@ -63,22 +63,29 @@ describe.each([
   });
 
   it('is reported as skipped by the repository search, never as a document', async () => {
+    // Even from a catalog that calls it configured and healthy. Since AnA
+    // Summary S2 (2026-10-08) the repository search refuses every source that
+    // is not one of the five repositories before any search runs, so the
+    // connector's own refusal is never reached: the reason is the repository
+    // refusal, and nothing is searched.
+    const searchConnectors = vi.fn(async (_org: number, ids: string[], query: { keywords?: string[] }) =>
+      Promise.all(ids.map(async (connectorId) => {
+        try {
+          return { connectorId, results: await make().search(query) };
+        } catch (err) {
+          return { connectorId, results: [], error: (err as Error).message };
+        }
+      })));
     const out = await searchConnectedRepositories(
       7,
       { query: 'pembrolizumab', connectors: [id] },
       {
         getConnectorCatalog: async () => [{ id, configured: true, healthy: true }] as never,
-        searchConnectors: async (_org, ids, query) =>
-          Promise.all(ids.map(async (connectorId) => {
-            try {
-              return { connectorId, results: await make().search(query) };
-            } catch (err) {
-              return { connectorId, results: [], error: (err as Error).message };
-            }
-          })),
+        searchConnectors,
       },
     );
     expect(out.documents).toEqual([]);
-    expect(out.skipped).toEqual([{ connector: id, reason: expect.stringMatching(/no .* search is connected/i) }]);
+    expect(searchConnectors).not.toHaveBeenCalled();
+    expect(out.skipped).toEqual([{ connector: id, reason: expect.stringMatching(/search_literature or the agency lookups/) }]);
   });
 });

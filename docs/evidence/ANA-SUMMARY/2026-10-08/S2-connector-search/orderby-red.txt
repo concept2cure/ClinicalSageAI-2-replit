@@ -1,0 +1,62 @@
+# Delta red: orderBy on a fullText query. google-drive.ts as fixed for S2 (escaping + shared drives), orderBy still sent. 2026-10-08T09:50:18Z, RLS_ENFORCE=off
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stdout | server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > escapes a backslash before a quote: O'Brien \ x → fullText contains 'O\'Brien \\ x'
+{
+  "timestamp": "2026-10-08T09:50:21.354Z",
+  "level": "info",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "context": {}
+}
+stdout | server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > a trailing backslash cannot swallow the closing quote
+{
+  "timestamp": "2026-10-08T09:50:21.466Z",
+  "level": "info",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "context": {}
+}
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > escapes a backslash before a quote: O'Brien \ x → fullText contains 'O\'Brien \\ x' 175ms
+stdout | server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > searches shared drives: supportsAllDrives, includeItemsFromAllDrives and corpora=allDrives
+{
+  "timestamp": "2026-10-08T09:50:21.506Z",
+  "level": "info",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "context": {}
+}
+stdout | server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > sends no orderBy with a fullText query: Drive refuses sorting on fullText terms
+{
+  "timestamp": "2026-10-08T09:50:21.752Z",
+  "level": "info",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "context": {}
+}
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > a trailing backslash cannot swallow the closing quote 107ms
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > searches shared drives: supportsAllDrives, includeItemsFromAllDrives and corpora=allDrives 39ms
+stdout | server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > still returns the files Drive found
+{
+  "timestamp": "2026-10-08T09:50:21.843Z",
+  "level": "info",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "context": {}
+}
+ × server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > sends no orderBy with a fullText query: Drive refuses sorting on fullText terms 259ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > still returns the files Drive found 78ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > sends no orderBy with a fullText query: Drive refuses sorting on fullText terms
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ server/services/connectors/__tests__/google-drive-search.test.ts:81:45
+     79|     const url = await searchRequest('stability protocol');
+     80|     expect(url.searchParams.get('q')).toMatch(/fullText contains/);
+     81|     expect(url.searchParams.has('orderBy')).toBe(false);
+       |                                             ^
+     82|   });
+     83|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  09:50:19
+   Duration  1.98s (transform 239ms, setup 195ms, import 100ms, tests 665ms, environment 0ms)

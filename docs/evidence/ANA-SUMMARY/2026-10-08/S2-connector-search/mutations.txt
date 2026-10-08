@@ -1,0 +1,53 @@
+# Mutations: each S2 fix undone on its own; the named tests must turn red. 2026-10-08T09:33:04Z, RLS_ENFORCE=off
+
+## M1 backslash not escaped (quote only)
+file: server/services/connectors/google-drive.ts
+ × server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > escapes a backslash before a quote: O'Brien \ x → fullText contains 'O\'Brien \\ x' 102ms
+ × server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > a trailing backslash cannot swallow the closing quote 96ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 4 passed (5)
+      Tests  2 failed | 35 passed (37)
+
+## M2 shared-drive parameters removed
+file: server/services/connectors/google-drive.ts
+ × server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > searches shared drives: supportsAllDrives, includeItemsFromAllDrives and corpora=allDrives 71ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 36 passed (37)
+
+## M3 no id normalisation
+file: server/services/connectors/connector-interface.ts
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the Drive id > a search with ['google-drive'] reaches Drive 161ms
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — an organisation without Drive > is told the same when Drive is asked for beside a repository that is connected 5ms
+ × server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > resolves org connectors when an organizationId is given (live names listed) 6ms
+ × server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > searches only configured+healthy connectors and reports the rest as skipped 9ms
+ × server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > surfaces per-connector errors as skipped and clamps the limit 5ms
+ × server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > does not list a connector whose search failed as searched 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 2 passed (5)
+      Tests  6 failed | 31 passed (37)
+
+## M4 default searches the whole catalog again
+file: server/services/integrations/connector-search.ts
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > with connectors omitted and PubMed configured, PubMed is not called (publicSourceEgress true) 44ms
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > with connectors omitted and PubMed configured, PubMed is not called (publicSourceEgress false) 31ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 4 passed (5)
+      Tests  2 failed | 35 passed (37)
+
+## M5 no repository check (a public source asked for by name is searched)
+file: server/services/integrations/connector-search.ts
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > a public source asked for by name is refused and never called 10ms
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document 5ms
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 3 passed (5)
+      Tests  3 failed | 34 passed (37)
+
+## M6 no 'not connected for your organisation' sentence
+file: server/services/integrations/connector-search.ts
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — an organisation without Drive > is told "Google Drive is not connected for your organisation." 7ms
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — an organisation without Drive > is told the same when Drive is asked for beside a repository that is connected 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 4 passed (5)
+      Tests  2 failed | 35 passed (37)

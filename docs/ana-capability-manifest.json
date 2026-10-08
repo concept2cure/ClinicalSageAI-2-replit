@@ -8923,7 +8923,7 @@
         "id": "evidence",
         "label": "Evidence & intelligence"
       },
-      "description": "Search the organization's connected external document repositories (Google Drive, Box, OneDrive, SharePoint, Veeva Vault, …) for source material relevant to a query. Use when the user references documents that live in their own connected systems rather than this project's uploaded corpus (use project_knowledge_search for the latter). Returns matching documents with their source system, summary, and a link. Reports which systems are not yet connected.",
+      "description": "Search the organization's own connected document repositories (Google Drive, including shared drives; Box; OneDrive; SharePoint; Veeva Vault) for source material relevant to a query. Use when the user references documents that live in their own systems rather than this project's uploaded corpus (use project_knowledge_search for the latter). Returns matching documents with their source system, summary, and a link, and names each system that was not searched and why. It never searches public sources: use search_literature for published literature and the agency lookups (search_drug_approvals, search_drug_labels, search_ema_epar, search_clinical_evidence, …) for regulatory and trial data.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -8939,7 +8939,7 @@
           "name": "connectors",
           "type": "array",
           "required": false,
-          "description": "Optional connector ids to restrict the search (e.g. ['google-drive']). Omit to search all connected systems."
+          "description": "Optional: restrict the search to these repositories (e.g. ['google_drive']). Omit to search every repository connected for this organization."
         },
         {
           "name": "max_results",

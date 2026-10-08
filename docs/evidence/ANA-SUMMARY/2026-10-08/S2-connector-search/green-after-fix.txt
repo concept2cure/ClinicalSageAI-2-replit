@@ -1,0 +1,33 @@
+# Green: the S2 tests on the fixed tree (base 6c58f587b + S2 working-tree changes), 2026-10-08T09:32:04Z, RLS_ENFORCE=off
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the Drive id > a search with ['google-drive'] reaches Drive 112ms
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:box] Box connector authenticated",
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > with connectors omitted and PubMed configured, PubMed is not called (publicSourceEgress true) 139ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > with connectors omitted and PubMed configured, PubMed is not called (publicSourceEgress false) 49ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > an organisation with no repository connected sends nothing anywhere 1ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > a public source asked for by name is refused and never called 1ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — an organisation without Drive > is told "Google Drive is not connected for your organisation." 1ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — an organisation without Drive > is told the same when Drive is asked for beside a repository that is connected 2ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the schema > is byte-identical for two tenants with different connectors configured, and lists the five repositories 131ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the schema > tells the model where public sources are searched instead 7ms
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > escapes a backslash before a quote: O'Brien \ x → fullText contains 'O\'Brien \\ x' 99ms
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > a trailing backslash cannot swallow the closing quote 73ms
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > searches shared drives: supportsAllDrives, includeItemsFromAllDrives and corpora=allDrives 42ms
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > still returns the files Drive found 42ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > public APIs are always live; env-gated integrations reflect the env 2ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > reports env-gated integrations as live when their env is set, for the organisation they belong to 1ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > resolves org connectors when an organizationId is given (live names listed) 2ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > counts only document repositories: a credential-free public source is not a connected repository (S2) 1ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > reports connectors as unknown without org context, and on catalog failure 0ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > summarizeStatuses counts live / notConfigured / unknown 0ms
+ Test Files  3 passed (3)
+      Tests  19 passed (19)
+   Start at  09:32:05
+   Duration  10.33s (transform 6.28s, setup 137ms, import 8.90s, tests 718ms, environment 0ms)
