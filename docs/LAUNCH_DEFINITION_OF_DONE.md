@@ -289,6 +289,20 @@ the release gates already refuse an unapproved leaf.
 A signature collected for a freeze or transmit that the server then refuses is void. It cannot be reused later when the
 gate clears. Transmit checks a typed application number against the program's recorded one, as the export already does.
 
+### P-25 — Each person manages their own account; administrators manage membership
+
+The 2026-10-08 onboarding fix (`ddc8c0db5`) raised these:
+- **An account panel is built.** A person can see their profile, change their password, and enrol or remove an
+  authenticator from the shell's account menu. It is a shell surface, so it is inside the launch catalog. The server
+  routes already exist (`/password/change`, `/mfa/setup`, `/mfa/enable`, `/mfa/disable`). Without the panel, the
+  authenticator that ADR-0014 expects of signers cannot be enrolled anywhere in the product.
+- **Removing a member is the organisation-level deactivation.** No "disabled but kept" membership state is added.
+  Suspending an account globally stays a platform action.
+- **A setup link is re-issued** by re-inviting a member who never activated, through the existing invite route. The
+  link is never logged, in any environment.
+- **Scopes are derived from the checks that enforce them.** Organisations do not edit them, and the "Edit scopes"
+  control does not offer it. Approver and reviewer as SCIM groups come after launch.
+
 ### P-24 — AnA works like Claude, and the client sees the Summary of the work
 
 The founder asked for this on 2026-10-08, with screenshots of Claude's per-task Summary. The design is
