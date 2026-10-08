@@ -67,27 +67,46 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 /** Why a query cannot be run as asked: the caller says it, never a widened result. */
 export class DataRoomQueryError extends Error {}
 
-/** Validate what a request asked for; an unreadable filter is refused, not ignored. */
-export function parseDataRoomQuery(programId: string, raw: Record<string, unknown>): DataRoomQuery {
-  const str = (k: string) => (typeof raw[k] === 'string' ? String(raw[k]).trim() : '');
-  const q = str('q');
-  if (q.length > 200) throw new DataRoomQueryError('The search is longer than 200 characters.');
-  const status = str('status');
-  if (status && !(EXTRACTION_STATUSES as readonly string[]).includes(status)) {
+/** A query parameter as a trimmed string ('' when absent or not a string). */
+const param = (raw: Record<string, unknown>, k: string): string => (typeof raw[k] === 'string' ? String(raw[k]).trim() : '');
+
+/** A whole number within [min, max], or the default when absent; refused otherwise. */
+function wholeNumber(value: string, fallback: number, min: number, max: number, message: string): number {
+  if (!value) return fallback;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < min || n > max) throw new DataRoomQueryError(message);
+  return n;
+}
+
+function checkStatus(status: string): ExtractionStatus | null {
+  if (!status) return null;
+  if (!(EXTRACTION_STATUSES as readonly string[]).includes(status)) {
     throw new DataRoomQueryError(`status must be one of: ${EXTRACTION_STATUSES.join(', ')}.`);
   }
-  const kind = str('kind');
+  return status as ExtractionStatus;
+}
+
+function checkDate(value: string, name: string): string | null {
+  if (value && !DATE_RE.test(value)) throw new DataRoomQueryError(`${name} must be a date, YYYY-MM-DD.`);
+  return value || null;
+}
+
+/** Validate what a request asked for; an unreadable filter is refused, not ignored. */
+export function parseDataRoomQuery(programId: string, raw: Record<string, unknown>): DataRoomQuery {
+  const q = param(raw, 'q');
+  if (q.length > 200) throw new DataRoomQueryError('The search is longer than 200 characters.');
+  const kind = param(raw, 'kind');
   if (kind && !/^[a-z0-9_-]{1,60}$/i.test(kind)) throw new DataRoomQueryError('kind is not a valid evidence kind.');
-  for (const k of ['from', 'to']) {
-    if (str(k) && !DATE_RE.test(str(k))) throw new DataRoomQueryError(`${k} must be a date, YYYY-MM-DD.`);
-  }
-  const limit = str('limit') ? Number(str('limit')) : 200;
-  const offset = str('offset') ? Number(str('offset')) : 0;
-  if (!Number.isInteger(limit) || limit < 1 || limit > 200) throw new DataRoomQueryError('limit must be a whole number from 1 to 200.');
-  if (!Number.isInteger(offset) || offset < 0 || offset > 100000) throw new DataRoomQueryError('offset must be a whole number from 0.');
   return {
-    programId, q: q || null, status: (status || null) as ExtractionStatus | null, kind: kind || null,
-    from: str('from') || null, to: str('to') || null, currentOnly: str('current') === 'true', limit, offset,
+    programId,
+    q: q || null,
+    status: checkStatus(param(raw, 'status')),
+    kind: kind || null,
+    from: checkDate(param(raw, 'from'), 'from'),
+    to: checkDate(param(raw, 'to'), 'to'),
+    currentOnly: param(raw, 'current') === 'true',
+    limit: wholeNumber(param(raw, 'limit'), 200, 1, 200, 'limit must be a whole number from 1 to 200.'),
+    offset: wholeNumber(param(raw, 'offset'), 0, 0, 100000, 'offset must be a whole number from 0.'),
   };
 }
 
