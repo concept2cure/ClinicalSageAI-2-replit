@@ -303,6 +303,22 @@ The 2026-10-08 onboarding fix (`ddc8c0db5`) raised these:
 - **Scopes are derived from the checks that enforce them.** Organisations do not edit them, and the "Edit scopes"
   control does not offer it. Approver and reviewer as SCIM groups come after launch.
 
+### P-26 — A report shows only what an engine computed, for the program asked about
+
+From the reporting fix (`4ac15bdd1`):
+- **No program is picked for the person.** With none open, the canvas asks which program the report is for. The
+  earlier "flagship" fallback chose by lowest id.
+- **Confidence is a measured figure or nothing.** The executive digest does not require one, and finalizes on the
+  readiness evaluator's verdict. The evidence & provenance trace does require one, so it stays below final until its
+  confidence is the lineage engine's measured provenance completeness. That is a follow-up, and the registry change is
+  a new version row, never an edit in place (Rule 1).
+- **Packs list only types an engine computes.** Engine-less types are listed once, as "not computed in this release",
+  rather than as tiles inside packs.
+- **Registers are organisation-wide.** They live in Audit & compliance reports and are not offered on a program's
+  canvas.
+- An older run with no blockers that was never signed now renders below final and can be finalized. This is
+  accepted: it was never final.
+
 ### P-24 — AnA works like Claude, and the client sees the Summary of the work
 
 The founder asked for this on 2026-10-08, with screenshots of Claude's per-task Summary. The design is
