@@ -41,9 +41,15 @@ import type {
 } from '../../../shared/types/database';
 import { writeChainedAuditRow } from '../auditService';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
-import { deriveGovernedTargetBinding, BINDING_BASIS, isSignatureWithdrawn } from '../part11/signature-persistence';
+import {
+  deriveGovernedTargetBinding,
+  BINDING_BASIS,
+  isSignatureWithdrawn,
+  voidSignatureForRefusedAct,
+  VOIDED_VERIFICATION_STATUS,
+} from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
-import { programInOrganization } from '../c2c/program-access';
+import { canMutateProgram, programInOrganization } from '../c2c/program-access';
 import { requiresIndependence } from '../governance/separation-of-duties';
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
 import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
@@ -71,7 +77,8 @@ export type SubmissionErrorCode =
   | 'CROSS_PROJECT'
   | 'ALREADY_PLACED'
   | 'VALIDATION_FAILED'
-  | 'UNANCHORED_SUBMISSION';
+  | 'UNANCHORED_SUBMISSION'
+  | 'APPLICATION_NUMBER_MISMATCH';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -103,6 +110,8 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   ALREADY_PLACED: 409,
   VALIDATION_FAILED: 422,
   UNANCHORED_SUBMISSION: 409,
+  // The status the eCTD export answers for the same contradiction (ectd-export.ts).
+  APPLICATION_NUMBER_MISMATCH: 409,
 };
 
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
@@ -309,6 +318,156 @@ export async function getSubmission(
     .limit(1);
   if (!row) throw new SubmissionError('NOT_FOUND', 'Submission not found for this organization.');
   return row as Submission;
+}
+
+// ── Anchoring a submission to its project (P-14's remedy) ───────────────────
+
+/** Who is anchoring: the caller, with their organisation role from the membership row. */
+export type AnchorContext = { organizationId: number; userId: number; orgRole: string | null };
+
+/**
+ * The live leaves of a submission whose document belongs to a project other
+ * than `programId`, described for a refusal ("sequence 0000, m5.3.5"). A leaf
+ * whose store records no project is not judged, as at placement.
+ */
+async function leavesOfAnotherProgram(submissionId: number, programId: string, organizationId: number): Promise<string[]> {
+  const res = await pool.query(
+    `SELECT s.sequence_number, l.section_code, l.document_table, l.document_id, l.document_uuid
+       FROM submission_leaves l
+       JOIN ectd_sequences s ON s.id = l.sequence_id AND s.organization_id = l.organization_id
+      WHERE s.submission_id = $1 AND s.organization_id = $2 AND s.deleted_at IS NULL
+        AND l.deleted_at IS NULL AND l.document_table IS NOT NULL
+      ORDER BY s.sequence_number, l.section_code`,
+    [submissionId, organizationId],
+  );
+  type Row = { sequence_number: string; section_code: string; document_table: string; document_id: number | null; document_uuid: string | null };
+  const foreign: string[] = [];
+  for (const l of (res.rows ?? []) as Row[]) {
+    const owner = await leafSourceProgram(
+      l.document_table,
+      { documentId: l.document_id ?? null, documentUuid: l.document_uuid ?? null },
+      organizationId,
+    );
+    if (owner && owner !== programId) foreign.push(`sequence ${l.sequence_number}, ${l.section_code}`);
+  }
+  return foreign;
+}
+
+/**
+ * Anchor a submission that records no project to one (P-14,
+ * docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08: "A legacy submission with no
+ * program is anchored first, through the Submission Center, and then accepts
+ * placements"). Until this, nothing wrote submissions.program_id after creation,
+ * so the UNANCHORED_SUBMISSION refusal had no remedy.
+ *
+ * Refused, with nothing changed:
+ *   - NOT_FOUND: the submission, or the project, is not a live record of the
+ *     caller's organization (programInOrganization, the one tenancy answer);
+ *   - FORBIDDEN: the caller neither leads the project nor manages the
+ *     organization (canMutateProgram, the rule for changing a project's
+ *     records). Anchoring makes the project's documents placeable here and puts
+ *     this filing under the project's recorded application number;
+ *   - INVALID_STATE: the submission already has a project. A project holds
+ *     several submissions (one per market), so there is no "one submission per
+ *     project" rule; what is not done here is moving a filing between projects;
+ *   - CROSS_PROJECT: the submission already files another project's document,
+ *     placed before P-14 refused it. A filing holds only its own project's
+ *     documents (PF-11), so those leaves are removed first.
+ * The update is a compare-and-set on program_id IS NULL, and it commits with
+ * its chained SUBMISSION_PROGRAM_ANCHORED audit row, carrying the reason, or
+ * neither does (§11.10(e)).
+ */
+export async function anchorSubmissionToProgram(
+  input: { submissionId: number; programId: string; reason: string },
+  ctx: AnchorContext,
+): Promise<Submission> {
+  const reason = input.reason.trim();
+  if (!reason) throw new SubmissionError('VALIDATION', 'A reason for anchoring the submission is required. Nothing was changed.');
+  const current = await getSubmission(input.submissionId, ctx);
+  if (current.programId) throw alreadyAnchoredRefusal(current.programId, input.programId);
+  await assertMayAnchorTo(input.programId, ctx);
+  const foreign = await leavesOfAnotherProgram(input.submissionId, input.programId, ctx.organizationId);
+  if (foreign.length > 0) throw foreignLeavesRefusal(foreign);
+  await writeSubmissionAnchor(input.submissionId, input.programId, reason, ctx);
+  logger.info('Anchored submission to its project', {
+    submissionId: input.submissionId, programId: input.programId, organizationId: ctx.organizationId,
+  });
+  return getSubmission(input.submissionId, ctx);
+}
+
+/** A submission that has a project keeps it: anchoring is not a move between projects. */
+function alreadyAnchoredRefusal(current: string, requested: string): SubmissionError {
+  return new SubmissionError(
+    'INVALID_STATE',
+    current === requested
+      ? 'This submission is already anchored to that project. Nothing was changed.'
+      : 'This submission is already anchored to another project, and a submission is not moved between projects here. Nothing was changed.',
+  );
+}
+
+/** The project is a live one of this organization, and the caller leads it or manages the organization. */
+async function assertMayAnchorTo(programId: string, ctx: AnchorContext): Promise<void> {
+  if (!(await programInOrganization(pool, programId, ctx.organizationId))) {
+    throw new SubmissionError('NOT_FOUND', 'Project not found for this organization. Nothing was changed.');
+  }
+  const lead = await pool.query(
+    `SELECT lead_user_id FROM regulatory_programs WHERE id = $1 AND organization_id = $2`,
+    [programId, ctx.organizationId],
+  );
+  const raw = lead.rows[0]?.lead_user_id;
+  const leadUserId = raw == null ? null : Number(raw);
+  if (!canMutateProgram({ actor: { userId: ctx.userId, orgRole: ctx.orgRole }, program: { leadUserId } })) {
+    throw new SubmissionError(
+      'FORBIDDEN',
+      'Only the project’s lead or an organization manager can anchor a submission to it. Nothing was changed.',
+    );
+  }
+}
+
+/** The refusal for a submission that already files another project's documents. */
+function foreignLeavesRefusal(foreign: string[]): SubmissionError {
+  const what = foreign.length === 1 ? 'a document' : `${foreign.length} documents`;
+  const more = foreign.length > 5 ? `; and ${foreign.length - 5} more` : '';
+  return new SubmissionError(
+    'CROSS_PROJECT',
+    `This submission already files ${what} of another project (${foreign.slice(0, 5).join('; ')}${more}). A filing holds only ` +
+      'its own project’s documents, so remove those leaves before anchoring it to this project. Nothing was changed.',
+  );
+}
+
+/** The anchor and its chained audit row, in one transaction; a compare-and-set on program_id IS NULL. */
+async function writeSubmissionAnchor(submissionId: number, programId: string, reason: string, ctx: AnchorContext): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const updated = (await client.query(
+      `UPDATE submissions SET program_id = $1, updated_at = NOW()
+        WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND program_id IS NULL
+        RETURNING id`,
+      [programId, submissionId, ctx.organizationId],
+    )) as { rows?: unknown[]; rowCount?: number | null };
+    if (!(updated.rowCount ?? updated.rows?.length ?? 0)) {
+      throw new SubmissionError(
+        'INVALID_STATE',
+        'This submission was anchored to a project while this request was being checked. Nothing was changed.',
+      );
+    }
+    await writeChainedAuditRow(client, {
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'SUBMISSION_PROGRAM_ANCHORED',
+      resourceType: 'submission',
+      resourceId: submissionId,
+      reason,
+      details: { previousProgramId: null, programId, reason },
+    });
+    await client.query('COMMIT');
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch { /* the failure below is the one to report */ }
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // ── Sequences ───────────────────────────────────────────────────────────────
@@ -624,17 +783,16 @@ async function governedSignatureVerdict(
     );
   }
 
-  const sequenceId = target.slice(target.indexOf(':') + 1);
-  const spent = await db.execute(sql`
-    SELECT 1 FROM audit_logs
-    WHERE tenant_id = ${ctx.organizationId}
-      AND table_name = 'ectd_sequence'
-      AND record_id = ${sequenceId}
-      AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED')
-      AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
-    LIMIT 1
-  `);
-  if (((spent as { rows?: unknown[] }).rows?.length ?? 0) > 0) {
+  // Spent by a performed step, or void because the step it was given for was
+  // refused (P-23, voidRefusedStepSignature). The void is also on the signature
+  // row (checked below); this ledger read holds even where that write failed.
+  const spentBy = await signatureSpentBy(signatureActionId, target, ctx.organizationId);
+  if (spentBy === SIGNATURE_VOIDED_ACTION) {
+    return refuse(
+      `this signature was given for a ${step} the server refused, so it is void; sign again for a new attempt`,
+    );
+  }
+  if (spentBy !== null) {
     return refuse('this sign action already authorized a governed transition; each step needs its own signature');
   }
 
@@ -673,6 +831,11 @@ async function governedSignatureVerdict(
     }>;
   }).rows ?? [])[0];
   if (!sig) return refuse('no electronic signature record is bound to this sign action');
+  if (String(sig.verification_status ?? '') === VOIDED_VERIFICATION_STATUS) {
+    return refuse(
+      `this signature was given for a ${step} the server refused, so it is void; sign again for a new attempt`,
+    );
+  }
   if (isSignatureWithdrawn(sig)) {
     return refuse('the electronic signature authorizing this step has been revoked; obtain a new signature');
   }
@@ -692,6 +855,154 @@ async function governedSignatureVerdict(
 
 function safeJson(text: string): Record<string, unknown> | null {
   try { return JSON.parse(text) as Record<string, unknown>; } catch { return null; }
+}
+
+/** The audit action that records a signature voided by a refused step (P-23). */
+const SIGNATURE_VOIDED_ACTION = 'GOVERNED_SIGNATURE_VOIDED';
+
+/**
+ * The audit action that spent this sign action on this sequence — a performed
+ * freeze, dispatch or transmit, or the void a refused one recorded — or null
+ * when nothing has. Each signature serves one act.
+ */
+async function signatureSpentBy(signatureActionId: string, target: string, organizationId: number): Promise<string | null> {
+  const sequenceId = target.slice(target.indexOf(':') + 1);
+  const spent = await db.execute(sql`
+    SELECT action FROM audit_logs
+    WHERE tenant_id = ${organizationId}
+      AND table_name = 'ectd_sequence'
+      AND record_id = ${sequenceId}
+      AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', ${SIGNATURE_VOIDED_ACTION})
+      AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
+    LIMIT 1
+  `);
+  const row = ((spent as { rows?: Array<{ action?: unknown }> }).rows ?? [])[0];
+  return row ? String(row.action ?? '') : null;
+}
+
+/** What became of the signature a refused governed step was given. */
+type SignatureVoidOutcome = 'voided' | 'not-voidable' | 'failed';
+
+/**
+ * P-23 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08): a signature collected
+ * for a freeze, dispatch or transmit that the server then refuses is void. It
+ * cannot be reused later when the gate clears.
+ *
+ * QA 2026-10-08 (j6) recorded a freeze signature for a freeze the server
+ * refused at its dispatch gate. The single-use check read only the audit row a
+ * PERFORMED step writes, and a refused step writes none, so that signature —
+ * given while the gate refused — stayed able to freeze the sequence once the
+ * gate cleared, at a time and on a state its signer never saw.
+ *
+ * Only the caller's own executed `sign` on this sequence that declares this
+ * step is voided. A signature someone else gave, or one given for another
+ * step, is refused by Gate 1 and left alone: naming a colleague's signature
+ * must not be a way to cancel it. One that a performed step already spent, or
+ * that is already void, is left as it is.
+ *
+ * Two independent records, each enough on its own for Gate 1 to refuse the
+ * signature again: the signature row is taken out of force
+ * (voidSignatureForRefusedAct, the row every reader checks through
+ * isSignatureWithdrawn), and a chained GOVERNED_SIGNATURE_VOIDED audit row
+ * names it, the step and the refusal (signatureSpentBy). The audit row is
+ * written also when the signature-row write failed, so a void survives the
+ * loss of either. A void that reached neither is 'failed' and is logged.
+ * Never throws: the refusal is the answer the caller gives either way.
+ */
+async function voidRefusedStepSignature(
+  signatureActionId: string,
+  sequenceId: number,
+  ctx: { organizationId: number; userId: number },
+  step: GovernedSequenceStep,
+  refusal: string,
+): Promise<SignatureVoidOutcome> {
+  const target = `ectd-sequence:${sequenceId}`;
+  try {
+    const action = await db.execute(sql`
+      SELECT payload FROM c2c_ana_actions
+      WHERE id = ${signatureActionId}
+        AND org_id = ${ctx.organizationId}
+        AND command = 'sign'
+        AND target = ${target}
+        AND state = 'executed'
+        AND proposed_by = ${ctx.userId}
+      LIMIT 1
+    `);
+    const row = ((action as { rows?: Array<{ payload?: unknown }> }).rows ?? [])[0];
+    if (!row) return 'not-voidable';
+    const payload = typeof row.payload === 'string' ? safeJson(row.payload) : (row.payload as Record<string, unknown> | null);
+    if (payload?.intent !== step) return 'not-voidable';
+    if ((await signatureSpentBy(signatureActionId, target, ctx.organizationId)) !== null) return 'not-voidable';
+  } catch (err) {
+    logger.error('A refused governed step could not read the signature it was given, so it was not voided', {
+      sequenceId, step, signatureActionId, organizationId: ctx.organizationId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return 'failed';
+  }
+
+  let signatureId: number | null = null;
+  let signatureRowFailed = false;
+  try {
+    signatureId = await voidSignatureForRefusedAct(asQueryable(pool), {
+      orgId: ctx.organizationId, target, actionId: signatureActionId, occurredAt: new Date(),
+    });
+  } catch (err) {
+    signatureRowFailed = true;
+    logger.error('A refused governed step could not void its signature row', {
+      sequenceId, step, signatureActionId, organizationId: ctx.organizationId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  }
+  // No live signature row and no failure: nothing was persisted for this action,
+  // or it is already out of force. Gate 1 refuses it either way.
+  if (signatureId === null && !signatureRowFailed) return 'not-voidable';
+
+  const audit = await recordAuditRow({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    action: SIGNATURE_VOIDED_ACTION,
+    resourceType: 'ectd_sequence',
+    resourceId: sequenceId,
+    details: { signatureActionId, signatureId, signatureRowVoided: signatureId !== null, step, refusal },
+  });
+  if (signatureId !== null || audit.persisted) return 'voided';
+  logger.error('A refused governed step voided its signature nowhere', { sequenceId, step, signatureActionId, organizationId: ctx.organizationId });
+  return 'failed';
+}
+
+/** What the signer is told about the signature a refused step was given. */
+function voidedSignatureSentence(outcome: SignatureVoidOutcome, step: GovernedSequenceStep): string {
+  if (outcome === 'voided') return ` The signature given for this ${step} is now void; sign again for a new attempt.`;
+  if (outcome === 'failed') {
+    return ` The signature given for this ${step} could not be marked void right now; do not reuse it, sign again for a new attempt.`;
+  }
+  return '';
+}
+
+/**
+ * Run a governed step; when it is refused, void the signature it was given
+ * (voidRefusedStepSignature) and say so in the refusal. `voidable(err)` decides
+ * whether a failure is a refusal of the act — false only where the act may have
+ * happened (a transmit that reached the gateway).
+ */
+async function voidingSignatureOnRefusal<T>(
+  run: () => Promise<T>,
+  sig: { signatureActionId: string; sequenceId: number; ctx: { organizationId: number; userId: number }; step: GovernedSequenceStep },
+  voidable: (err: unknown) => boolean | Promise<boolean> = () => true,
+): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    if (!(await voidable(err))) throw err;
+    const refusal = err instanceof Error ? err.message : String(err);
+    const outcome = await voidRefusedStepSignature(sig.signatureActionId, sig.sequenceId, sig.ctx, sig.step, refusal);
+    const sentence = voidedSignatureSentence(outcome, sig.step);
+    if (!sentence) throw err;
+    if (err instanceof SubmissionError) throw new SubmissionError(err.code, `${err.message}${sentence}`);
+    if (err instanceof Error) err.message = `${err.message}${sentence}`;
+    throw err;
+  }
 }
 
 
@@ -1097,10 +1408,10 @@ export async function precheckGovernedStep(
   id: number,
   step: GovernedSequenceStep,
   ctx: { organizationId: number; userId: number },
-  opts: { environment?: 'staging' | 'production' } = {},
+  opts: { environment?: 'staging' | 'production'; applicationId?: string } = {},
 ): Promise<GovernedStepPrecheck> {
   if (step === 'transmit') {
-    const transmit = await sequenceTransmitReadiness(id, ctx, opts.environment);
+    const transmit = await sequenceTransmitReadiness(id, ctx, opts.environment, opts.applicationId);
     return { step, cleared: transmit.refusal === null, refusal: transmit.refusal, transmit };
   }
   const seq = await getSequence(id, ctx);
@@ -1230,23 +1541,31 @@ async function applyGovernedSequenceTransition(
   return getSequence(id, ctx);
 }
 
-/** Freeze a validated sequence. Governed: requires e-signature + a clear dispatch gate. */
+/** Freeze a validated sequence. Governed: requires e-signature + a clear dispatch gate.
+ *  A refused freeze voids the signature it was given (P-23). */
 export function freezeSequence(
   id: number,
   ctx: { organizationId: number; userId: number },
   signatureActionId: string
 ): Promise<EctdSequence> {
-  return applyGovernedSequenceTransition(id, 'frozen', ctx, signatureActionId);
+  return voidingSignatureOnRefusal(
+    () => applyGovernedSequenceTransition(id, 'frozen', ctx, signatureActionId),
+    { signatureActionId, sequenceId: id, ctx, step: 'freeze' },
+  );
 }
 
 /** Mark a frozen sequence dispatched. Governed: requires e-signature + a clear gate.
- *  This records intent; actual transmission stays behind transmit_submission. */
+ *  This records intent; actual transmission stays behind transmit_submission.
+ *  A refused dispatch voids the signature it was given (P-23). */
 export function dispatchSequence(
   id: number,
   ctx: { organizationId: number; userId: number },
   signatureActionId: string
 ): Promise<EctdSequence> {
-  return applyGovernedSequenceTransition(id, 'dispatched', ctx, signatureActionId);
+  return voidingSignatureOnRefusal(
+    () => applyGovernedSequenceTransition(id, 'dispatched', ctx, signatureActionId),
+    { signatureActionId, sequenceId: id, ctx, step: 'dispatch' },
+  );
 }
 
 // ── Transmit (the TRANSMIT step — assemble → send to the agency gateway) ──────
@@ -1424,6 +1743,12 @@ export interface TransmitSequenceResult {
   preTransmitFailedChecks?: string[] | null;
   /** The transmit guard's warnings (e.g. evidence it could not check). */
   preTransmitWarnings?: string[] | null;
+  /**
+   * Set when nothing was transmitted (`transmitted: false`): whether the
+   * signature given for this attempt is now void (P-23). It must not serve a
+   * later attempt either way; false only when the void could not be recorded.
+   */
+  signatureVoided?: boolean;
 }
 
 /**
@@ -1494,6 +1819,55 @@ export interface SequenceTransmitReadiness {
 }
 
 /**
+ * The program's recorded agency application number, when one is usable; null
+ * for a submission with no program, or a program with no usable number.
+ */
+async function programApplicationNumber(programId: string | null | undefined, organizationId: number): Promise<string | null> {
+  if (!programId) return null;
+  const [program] = await db
+    .select({ applicationNumber: regulatoryPrograms.applicationNumber })
+    .from(regulatoryPrograms)
+    .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, organizationId)))
+    .limit(1);
+  return usableIdentifier('applicationNumber', program?.applicationNumber ?? null);
+}
+
+/**
+ * Why `typed` may not be transmitted as this filing's application number, or
+ * null. P-23 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08): transmit checks a
+ * typed number against the program's recorded one, as the eCTD export already
+ * does (assemble-from-core.ts exportApplicationId, answered 409
+ * APPLICATION_NUMBER_MISMATCH by ectd-export.ts). The record is authoritative;
+ * a number it contradicts would be written into the backbone and the package
+ * name and sent to the agency. A program with no usable recorded number accepts
+ * any usable one: there is nothing to contradict.
+ */
+export function transmitApplicationNumberRefusal(typed: string, recorded: string | null): SubmissionError | null {
+  const usable = usableIdentifier('applicationNumber', typed);
+  if (usable === null) {
+    return new SubmissionError(
+      'VALIDATION',
+      `"${typed.trim()}" is not a usable application number: it must start with a letter or digit and hold only ` +
+        'letters, digits, ".", "_" or "-" (up to 64). Nothing was sent.',
+    );
+  }
+  if (recorded !== null && usable !== recorded) {
+    return new SubmissionError(
+      'APPLICATION_NUMBER_MISMATCH',
+      `Application number "${usable}" does not match the program's recorded application number "${recorded}". ` +
+        'The record is authoritative: transmit under the recorded number, or correct the program record first. Nothing was sent.',
+    );
+  }
+  return null;
+}
+
+/** transmitApplicationNumberRefusal's sentence for a number the person typed; null when none was typed. */
+function typedApplicationNumberRefusal(typed: string | undefined, recorded: string | null): string | null {
+  if (typeof typed !== 'string' || !typed.trim()) return null;
+  return transmitApplicationNumberRefusal(typed, recorded)?.message ?? null;
+}
+
+/**
  * The pre-signature half of transmitSequence, as a read: status, re-send rule,
  * the dispatch gate, the route, and the gateway's credentials. Same functions,
  * same order, minus Gate 1 (the signature that has not been taken yet).
@@ -1508,6 +1882,9 @@ export async function sequenceTransmitReadiness(
   sequenceId: number,
   ctx: { organizationId: number; userId: number },
   environment?: 'staging' | 'production',
+  /** The number the person typed, when they have: judged against the record
+   *  here, before anyone signs (P-23), by the rule transmit applies. */
+  applicationId?: string,
 ): Promise<SequenceTransmitReadiness> {
   const seq = await getSequence(sequenceId, ctx);
   const submission = await getSubmission(seq.submissionId, ctx);
@@ -1534,15 +1911,8 @@ export async function sequenceTransmitReadiness(
   const assessment = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ctx.organizationId });
   const gate = { cleared: assessment.gate.cleared, blockers: [...assessment.gate.blockers] };
 
-  let recordedApplicationNumber: string | null = null;
-  if (submission.programId) {
-    const [program] = await db
-      .select({ applicationNumber: regulatoryPrograms.applicationNumber })
-      .from(regulatoryPrograms)
-      .where(and(eq(regulatoryPrograms.id, submission.programId), eq(regulatoryPrograms.organizationId, ctx.organizationId)))
-      .limit(1);
-    recordedApplicationNumber = usableIdentifier('applicationNumber', program?.applicationNumber ?? null);
-  }
+  const recordedApplicationNumber = await programApplicationNumber(submission.programId, ctx.organizationId);
+  const typedNumberRefusal = typedApplicationNumberRefusal(applicationId, recordedApplicationNumber);
 
   const gatewayRefusal = (): string | null => {
     if (!route.ok) return route.reason;
@@ -1559,6 +1929,7 @@ export async function sequenceTransmitReadiness(
       ? `Sequence must be dispatched before transmit (current: ${seq.status}).`
       : resendRefusal(seq.dispatchStatus) ??
         (!gate.cleared ? `Dispatch gate blocks transmit: ${gate.blockers.join(' ')}` : null) ??
+        typedNumberRefusal ??
         gatewayRefusal();
 
   return {
@@ -1576,6 +1947,14 @@ export async function sequenceTransmitReadiness(
  * Transmit a dispatched sequence to its regional agency gateway. Governed:
  * requires a valid e-signature on the sequence target AND a clear dispatch gate.
  * Real transmission only occurs when the gateway is configured for the org.
+ *
+ * P-23: an attempt that sends nothing voids the signature it was given — a
+ * refusal before the gateway, a refusal the gateway guard made before the wire
+ * (refusedBeforeWire), and `transmitted: false`. A failure once the package
+ * may have reached the agency voids nothing: that signature is the one of
+ * record for whatever the agency holds. The request's own shape (environment,
+ * a usable application number) is checked before anything is read; a request
+ * missing them is malformed, not refused, and voids nothing.
  */
 export async function transmitSequence(params: TransmitSequenceParams): Promise<TransmitSequenceResult> {
   const { sequenceId, ctx, signatureActionId } = params;
@@ -1583,20 +1962,58 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     throw new SubmissionError('VALIDATION', 'Transmit requires an explicit environment: staging or production.');
   }
   const environment = params.environment;
-  const applicationId = typeof params.applicationId === 'string' ? params.applicationId.trim() : '';
-  if (!applicationId || /^UNASSIGNED/i.test(applicationId)) {
+  const typed = typeof params.applicationId === 'string' ? params.applicationId.trim() : '';
+  if (!typed || /^UNASSIGNED/i.test(typed)) {
     throw new SubmissionError(
       'VALIDATION',
       'Transmit requires the agency application number; a sequence with none recorded is assembled for inspection only, never sent.',
     );
   }
+  const unusable = transmitApplicationNumberRefusal(typed, null);
+  if (unusable) throw unusable;
+  const applicationId = usableIdentifier('applicationNumber', typed) ?? typed;
 
+  const attempt = { reachedGateway: false };
+  const result = await voidingSignatureOnRefusal(
+    () => transmitDispatchedSequence(params, { environment, applicationId }, attempt),
+    { signatureActionId, sequenceId, ctx, step: 'transmit' },
+    async (err) => {
+      if (!attempt.reachedGateway) return true;
+      const { refusedBeforeWire } = await import('../submission-gateways/index');
+      return refusedBeforeWire(err);
+    },
+  );
+  if (result.transmitted) return result;
+  const voided = await voidRefusedStepSignature(
+    signatureActionId, sequenceId, ctx, 'transmit', `Not transmitted: ${result.reason ?? 'the gateway did not send it'}.`,
+  );
+  return { ...result, signatureVoided: voided === 'voided' };
+}
+
+/** transmitSequence past the request's shape: every gate, then the gateway.
+ *  `attempt.reachedGateway` is set as the package is handed to it. */
+async function transmitDispatchedSequence(
+  params: TransmitSequenceParams,
+  checked: { environment: 'staging' | 'production'; applicationId: string },
+  attempt: { reachedGateway: boolean },
+): Promise<TransmitSequenceResult> {
+  const { sequenceId, ctx, signatureActionId } = params;
+  const { environment, applicationId } = checked;
   const seq = await getSequence(sequenceId, ctx);
   if (seq.status !== 'dispatched') {
     throw new SubmissionError('INVALID_STATE', `Sequence must be dispatched before transmit (current: ${seq.status}).`);
   }
   const resend = resendRefusal(seq.dispatchStatus);
   if (resend) throw new SubmissionError('INVALID_STATE', resend);
+
+  // The typed application number against the program's record (P-23), as the
+  // eCTD export judges it. The submission is read here, once, for the route too.
+  const submission = await getSubmission(seq.submissionId, ctx);
+  const numberRefusal = transmitApplicationNumberRefusal(
+    applicationId,
+    await programApplicationNumber(submission.programId, ctx.organizationId),
+  );
+  if (numberRefusal) throw numberRefusal;
 
   // Gate 1 — Part 11 e-signature on this sequence, for transmit, by this actor.
   const target = `ectd-sequence:${sequenceId}`;
@@ -1619,7 +2036,6 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   // EU dossier → CESP only for a national/MRP/DCP filing — see transmitRouteFor).
   // The submission's applicationType names the filing; seq.type is the
   // lifecycle (original|amendment|…) and is read only when it is empty.
-  const submission = await getSubmission(seq.submissionId, ctx);
   const route = transmitRouteFor(seq.region, submission.clientType, submission.applicationType || seq.type);
   if (!route.ok) {
     throw new SubmissionError('VALIDATION', route.reason);
@@ -1752,6 +2168,7 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
 
   let result;
   try {
+    attempt.reachedGateway = true;
     result = await gw.transmit({
       organizationId: ctx.organizationId,
       userId: ctx.userId,
@@ -2500,7 +2917,8 @@ export async function upsertLeaf(
     throw new SubmissionError(
       'UNANCHORED_SUBMISSION',
       'This submission is not anchored to a project, and this document belongs to one. A project’s document is placed ' +
-        'only into a submission anchored to that project, so the submission must be anchored to it first. Nothing was placed.',
+        'only into a submission anchored to that project, so anchor the submission first: in Submission Center, open ' +
+        'this submission and choose “Anchor to a project”. Nothing was placed.',
     );
   }
   /* What the ledger records about the document placed (LX-11): which document,

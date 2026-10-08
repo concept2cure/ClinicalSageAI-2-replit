@@ -47,6 +47,14 @@ describe('transmitSequence refusals (no database access)', () => {
       transmitSequence({ sequenceId: 1, ctx, signatureActionId: 'sig-1', environment: 'production', applicationId: '   ' }),
     ).rejects.toMatchObject({ code: 'VALIDATION' });
   });
+
+  it('refuses a number the identifier rule cannot carry, as the eCTD export does (P-23)', async () => {
+    // Slashes are path separators (REGULATORY_IDENTIFIER_PATTERN); the number
+    // goes into the backbone and the package name. It used to be sent as typed.
+    await expect(
+      transmitSequence({ sequenceId: 1, ctx, signatureActionId: 'sig-1', environment: 'staging', applicationId: 'EMEA/H/C/001234' }),
+    ).rejects.toMatchObject({ code: 'VALIDATION', message: /"EMEA\/H\/C\/001234" is not a usable application number/ });
+  });
 });
 
 describe('resendRefusal — a transmitted sequence is not sent again', () => {

@@ -26,6 +26,7 @@
  *   Cross-region POST /api/submissions/:id/cross-region
  *   Dispatch     GET /api/submissions/sequences/:seqId/dispatch-readiness
  *                POST /api/submissions/:id/dispatch-qc  (deterministic verdict; model narrates)
+ *                GET /api/mdx/gateways/transmittals?program_id=&region=  (the market's transmissions, F13)
  */
 import React from 'react';
 import { I } from '../icons';
@@ -36,7 +37,7 @@ import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { PlacementReasonField, placementReasonOk } from './filingTarget';
 import { downloadBlob } from '../download';
-import { gatewayLabel } from '../gatewayLabels';
+import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -65,6 +66,9 @@ export interface SubLike {
   title: string;
   applicationType: string;
   primaryRegion: string;
+  /** The project it belongs to (submissions.program_id); null when the server
+   *  recorded none. The Dispatch tab lists the project's transmissions by it. */
+  programId?: string | null;
 }
 
 export interface Notice {
@@ -1529,6 +1533,96 @@ function TransmitFacts({ t }: { t: TransmitReadiness }) {
   );
 }
 
+/** A row of GET /api/mdx/gateways/transmittals, as the Dispatch tab lists it. */
+interface DossierTransmittal {
+  id: number;
+  status?: string | null;
+  transmission_id?: string | null;
+  error_message?: string | null;
+  submitted_at?: string | null;
+  ack_received_at?: string | null;
+  submitted_by?: number | null;
+  submitted_by_name?: string | null;
+  /** transmitSequence records the sequence NUMBER it filed and the environment. */
+  metadata?: { sequence?: string | null; environment?: string | null } | null;
+}
+
+const whenOf = (iso: string | null | undefined): string | null => (iso ? new Date(iso).toLocaleString() : null);
+
+/**
+ * The market's transmissions and acknowledgements (FILING_SPINE F13): GET
+ * /api/mdx/gateways/transmittals?program_id=&region=, for the project this
+ * submission belongs to and the region its gateway serves (`region`, from the
+ * server's transmit route). A transmittal row records the sequence number it
+ * filed, not the sequence, so the list says it is filtered by project and
+ * region and marks this sequence's rows. A failed or misshapen read is an
+ * error, never "none sent"; a submission with no project is not listed.
+ */
+function DossierTransmissions({ programId, region, sequenceNumber }: { programId: string | null | undefined; region: string; sequenceNumber: string }) {
+  const path = programId
+    ? `/api/mdx/gateways/transmittals?program_id=${encodeURIComponent(programId)}&region=${encodeURIComponent(region)}`
+    : null;
+  const live = useLiveRows<DossierTransmittal>(path, [path], isRowsWith<DossierTransmittal>('id'));
+  const market = region.toUpperCase();
+  let body: React.ReactNode;
+  if (!programId) {
+    body = (
+      <div className="scaf-note">
+        This submission is not anchored to a project, so its transmissions cannot be listed by project here. Anchor it to its project,
+        under the submission&#39;s title, to list them.
+      </div>
+    );
+  } else if (live.loading) {
+    body = <div role="status" className="scaf-note">Reading the transmissions…</div>;
+  } else if (live.error) {
+    body = (
+      <div className="sc-verdict tone-err" role="status">
+        The transmissions could not be read, so whether any were sent is not shown here. Open the Dispatch tab again to retry.
+      </div>
+    );
+  } else if (live.rows.length === 0) {
+    body = <div className="scaf-note">No transmissions are recorded for this project in {market}.</div>;
+  } else {
+    body = (
+      <div className="tl-spec-grid sc-spec">
+        {live.rows.map((t) => {
+          const filed = t.metadata?.sequence ?? null;
+          const acked = whenOf(t.ack_received_at);
+          const sender = t.submitted_by_name ?? (t.submitted_by != null ? `user #${t.submitted_by}` : 'sender not recorded');
+          return (
+            <div key={t.id} className="tl-spec-row">
+              <span className="tl-spec-k">
+                Transmittal #{t.id}
+                {filed ? ` · sequence ${filed}${filed === sequenceNumber ? ' (this one)' : ''}` : ' · sequence not recorded'}
+              </span>
+              <span className="tl-spec-v">
+                {t.status ? <span className={`rd-chip tone-${transmittalStatusTone(t.status)}`}>{t.status}</span> : 'status not recorded'}
+                {t.transmission_id ? ` · ${t.transmission_id}` : ''}
+                {` · ${acked ? `acknowledged ${acked}` : 'not acknowledged'}`}
+                {` · sent by ${sender}`}
+                {whenOf(t.submitted_at) ? ` on ${whenOf(t.submitted_at)}` : ''}
+                {t.metadata?.environment ? ` (${t.metadata.environment})` : ''}
+                {t.error_message ? ` · ${t.error_message}` : ''}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+  return (
+    <div className="sc-mt" role="region" aria-label="Transmissions and acknowledgements">
+      <div className="tl-spec-k sc-mb">Transmissions and acknowledgements</div>
+      {programId && !live.loading && !live.error && (
+        <div className="scaf-note sc-mb">
+          Filtered by project and {market}, not by sequence: a transmittal records the number of the sequence it filed.
+        </div>
+      )}
+      {body}
+    </div>
+  );
+}
+
 /**
  * The transmit of a dispatched sequence: POST /sequences/:seqId/transmit, run
  * by the parent's Part 11 chain. Where it would go and whether that gateway
@@ -1536,7 +1630,7 @@ function TransmitFacts({ t }: { t: TransmitReadiness }) {
  * "not configured" is said here, before a password is typed — never
  * discovered after (QA 2026-10-08, j6, the blocker).
  */
-function TransmitPanel({ seq, onTransmit, canSign }: { seq: SeqRow; onTransmit: (req: TransmitRequest) => void; canSign: boolean }) {
+function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; programId: string | null | undefined; onTransmit: (req: TransmitRequest) => void; canSign: boolean }) {
   const [ready, setReady] = React.useState<{ phase: 'loading' | 'done' | 'error'; t?: TransmitReadiness; error?: string }>({ phase: 'loading' });
   const [environment, setEnvironment] = React.useState<'staging' | 'production'>('staging');
   const [applicationId, setApplicationId] = React.useState('');
@@ -1599,6 +1693,7 @@ function TransmitPanel({ seq, onTransmit, canSign }: { seq: SeqRow; onTransmit: 
           No agency application number is recorded for this program. Enter the number the agency assigned; a package is never sent without one.
         </div>
       ) : null}
+      {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} sequenceNumber={seq.sequenceNumber} />}
     </div>
   );
 }
@@ -1610,7 +1705,7 @@ function PackageAndTransmit({ sub, seq, onTransmit, canSign }: { sub: SubLike; s
       <div className="tl-spec-k sc-mb">Package and transmit</div>
       <PackageDownload sub={sub} seq={seq} />
       {seq.status === 'dispatched' ? (
-        <TransmitPanel seq={seq} onTransmit={onTransmit} canSign={canSign} />
+        <TransmitPanel seq={seq} programId={sub.programId} onTransmit={onTransmit} canSign={canSign} />
       ) : (
         <div className="scaf-note sc-mt">
           Transmit opens once sequence {seq.sequenceNumber} is dispatched. It sends this package to the region&#39;s agency gateway,

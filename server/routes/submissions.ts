@@ -35,8 +35,10 @@ import {
   listLeaves,
   upsertLeaf,
   removeLeaf,
+  anchorSubmissionToProgram,
   SUBMISSION_ERROR_STATUS,
 } from '../services/submission-service/submission-service';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 import {
   isPlaceableDocumentTable,
   unplaceableDocumentTableMessage,
@@ -909,6 +911,37 @@ router.post('/:id/sequences', limiter, requireRole(AUTHOR), async (req, res) => 
   }
 });
 
+// ── Anchor a submission to its project (P-14's remedy) ───────────────────────
+// A submission created before submissions recorded their project accepts no
+// placement of a project's document (409 UNANCHORED_SUBMISSION, P-14). This is
+// where it is anchored: by the project's lead or an organization manager, with
+// a reason, on the audit chain (anchorSubmissionToProgram). The role is the
+// membership row's, never the token's or the body's.
+const anchorProgramSchema = z.object({ programId: z.string().uuid() });
+router.post('/:id/program-anchor', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const parsed = anchorProgramSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) {
+    return res.status(400).json({ error: { code: 'REASON_REQUIRED', message: reason.error }, field: 'reason' });
+  }
+  try {
+    const orgRole = await resolveSignerOrgRole(ctx.userId, ctx.organizationId);
+    res.json(
+      await anchorSubmissionToProgram(
+        { submissionId: id, programId: parsed.data.programId, reason: reason.reason },
+        { ...ctx, orgRole },
+      ),
+    );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 router.post('/sequences/:seqId/transition', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -1737,6 +1770,9 @@ const governedTransitionSchema = z.object({ signatureActionId: z.string().min(1)
 const governedPrecheckSchema = z.object({
   step: z.enum(['freeze', 'dispatch', 'transmit']),
   environment: z.enum(['staging', 'production']).optional(),
+  // Transmit: the number the person typed, judged against the program record
+  // before anyone signs (P-23), by the rule transmit itself applies.
+  applicationId: z.string().min(1).max(128).optional(),
 });
 router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
@@ -1747,7 +1783,12 @@ router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR),
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
     const { precheckGovernedStep } = await import('../services/submission-service/submission-service');
-    res.json(await precheckGovernedStep(seqId, parsed.data.step, ctx, { environment: parsed.data.environment }));
+    res.json(
+      await precheckGovernedStep(seqId, parsed.data.step, ctx, {
+        environment: parsed.data.environment,
+        applicationId: parsed.data.applicationId,
+      }),
+    );
   } catch (err) {
     fail(res, err);
   }

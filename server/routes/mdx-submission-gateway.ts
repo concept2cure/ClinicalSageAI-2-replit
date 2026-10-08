@@ -116,9 +116,13 @@ router.get('/gateways', async (req: Request, res: Response) => {
 
 /* ─── GET /api/mdx/gateways/transmittals ─────────────────────────── */
 
+/* The list filters by any region a registered gateway serves, not only the
+   four the package-transmit route above takes: transmitSequence routes to every
+   registered gateway and records its region on the row, and the Dispatch tab
+   lists a market's transmittals by that region (FILING_SPINE F13). */
 const listQuery = z.object({
   program_id: z.string().regex(UUID_RE).optional(),
-  region:     z.enum(REGION_SET).optional(),
+  region:     z.string().refine((r) => listGateways().some((g) => g.region === r), { message: 'region is not one a registered gateway serves' }).optional(),
   status:     z.string().optional(),
   limit:      z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(500)).optional(),
 });

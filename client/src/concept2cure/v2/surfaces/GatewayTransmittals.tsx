@@ -52,7 +52,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
-import { gatewayLabel } from '../gatewayLabels';
+import { gatewayLabel, transmittalStatusTone as statusTone } from '../gatewayLabels';
 
 interface GatewayInfo { region?: string; gateway?: string; name?: string; configured?: boolean; environment?: string; [k: string]: unknown; }
 interface Transmittal {
@@ -232,13 +232,6 @@ async function readData<T = any>(method: 'GET' | 'POST' | 'PUT', path: string, b
     return { ok: false, status: 0, data: null, raw: null };
   }
 }
-function statusTone(s: string) {
-  const v = s.toLowerCase();
-  if (v.includes('ack') || v.includes('complete') || v.includes('success')) return 'ok';
-  if (v.includes('fail') || v.includes('error') || v.includes('reject')) return 'err';
-  return 'warn';
-}
-
 const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · §11 re-authentication',
   title: 'Transmit to agency gateway',

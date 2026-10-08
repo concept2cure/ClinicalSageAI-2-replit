@@ -28,3 +28,17 @@ export const GATEWAY_LABEL: Record<string, string> = {
 };
 export const gatewayLabel = (key: string | null | undefined): string =>
   key ? (GATEWAY_LABEL[key] ?? key) : '—';
+
+/**
+ * The tone a transmittal's gateway status is shown in: acknowledged or complete
+ * reads ok, failed or rejected reads as an error, anything else is still in
+ * flight. Moved here from GatewayTransmittals.tsx on 2026-10-08 (FILING_SPINE
+ * F13) when the Dispatch tab began listing a market's transmittals, so the two
+ * lists cannot colour one status differently.
+ */
+export function transmittalStatusTone(status: string): 'ok' | 'err' | 'warn' {
+  const v = status.toLowerCase();
+  if (v.includes('ack') || v.includes('complete') || v.includes('success')) return 'ok';
+  if (v.includes('fail') || v.includes('error') || v.includes('reject')) return 'err';
+  return 'warn';
+}

@@ -189,6 +189,63 @@ describe('the dispatched sequence has a package and a transmit (the blocker)', (
   });
 });
 
+/* P-23 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08): a signature serves only
+   the act it was given for. The server voids the signature of a transmit it
+   refuses; the screen asks the typed number of the server before anyone signs,
+   and says when a signature was spent on an attempt that sent nothing. */
+describe('a transmit signature serves only the transmit it was given for (P-23)', () => {
+  const TRANSMIT = {
+    sequenceStatus: 'dispatched', dispatchStatus: 'pending', route: { ok: true, region: 'fda', gateway: 'esg' },
+    configured: { staging: true, production: false }, recordedApplicationNumber: '000512', gate: CLEAR, refusal: null,
+  };
+
+  it('the pre-sign check carries the typed number; one the record contradicts takes no signature', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    const prechecks: unknown[] = [];
+    mockApi((method, url, body) => {
+      if (method !== 'POST' || url !== '/api/submissions/sequences/21/governed-precheck') return undefined;
+      prechecks.push(body);
+      const typed = (body as { applicationId?: string }).applicationId;
+      return typed && typed !== '000512'
+        ? ok({ step: 'transmit', cleared: false, refusal: `Application number "${typed}" does not match the program's recorded application number "000512". The record is authoritative: transmit under the recorded number, or correct the program record first. Nothing was sent.`, transmit: TRANSMIT })
+        : ok({ step: 'transmit', cleared: true, refusal: null, transmit: TRANSMIT });
+    });
+    await ready();
+    openWorkspace('Dispatch');
+    const transmit = await screen.findByRole('button', { name: /Transmit sequence 0000/ });
+    fireEvent.change(screen.getByLabelText('Agency application number'), { target: { value: '000999' } });
+    await waitFor(() => expect((transmit as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(transmit);
+    await waitFor(() => expect(document.body.textContent).toContain('does not match the program\'s recorded application number "000512"'));
+    expect(document.body.textContent).toContain('Nothing was signed.');
+    expect(prechecks.at(-1)).toEqual({ step: 'transmit', environment: 'staging', applicationId: '000999' });
+    expect(calledWith('POST', '/api/c2c/actions/sign')).toHaveLength(0);
+    expect(calledWith('POST', '/api/submissions/sequences/21/transmit')).toHaveLength(0);
+  });
+
+  it('a transmit that sent nothing says the signature given for it is void', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    mockApi((method, url) => {
+      if (method !== 'POST') return undefined;
+      if (url === '/api/submissions/sequences/21/governed-precheck') return ok({ step: 'transmit', cleared: true, refusal: null, transmit: TRANSMIT });
+      if (url === '/api/c2c/actions/sign') return ok({ actionId: 'act_tx2', sha256Chain: 'beef' });
+      if (url === '/api/submissions/sequences/21/transmit') {
+        return ok({ transmitted: false, reason: 'gateway_not_configured', gateway: 'esg', dispatchStatus: 'pending', signatureVoided: true });
+      }
+      return undefined;
+    });
+    await ready();
+    openWorkspace('Dispatch');
+    const transmit = await screen.findByRole('button', { name: /Transmit sequence 0000/ });
+    await waitFor(() => expect((transmit as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(transmit);
+    expect(await screen.findByRole('dialog')).toBeTruthy();
+    await sign();
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Not transmitted — FDA ESG has no staging credentials'));
+    expect(screen.getByRole('alert').textContent).toContain('The signature given for it is now void; a new attempt is signed again.');
+  });
+});
+
 describe('the Builder says what the server knows about each leaf', () => {
   const LEAF = (over: Record<string, unknown> = {}) => ({
     id: 60, sectionCode: '3.2.P.8', title: 'Stability Protocol', granularity: null, lifecycleOp: 'new',

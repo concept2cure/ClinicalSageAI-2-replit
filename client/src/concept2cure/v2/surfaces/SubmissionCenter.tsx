@@ -82,6 +82,7 @@ import {
 import '../styles/submission-v2.css';
 import { C2CForm } from '../C2CForm';
 import { gatewayLabel } from '../gatewayLabels';
+import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -335,14 +336,17 @@ type GovernedFlow = { seq: SeqRow; kind: GovernedKind; transmit?: TransmitReques
 const GOVERNED_LABEL: Record<GovernedKind, string> = { freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit' };
 const GOVERNED_PAST: Record<GovernedKind, string> = { freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted' };
 
-/** What POST /sequences/:id/transmit answers. */
-type TransmitAnswer = { transmitted?: boolean; reason?: string; gateway?: string; transmittalId?: number; status?: string; dispatchStatus?: string };
+/** What POST /sequences/:id/transmit answers. `signatureVoided`: on a
+ *  transmit that sent nothing, whether the signature given for it is now void
+ *  (P-23). */
+type TransmitAnswer = { transmitted?: boolean; reason?: string; gateway?: string; transmittalId?: number; status?: string; dispatchStatus?: string; signatureVoided?: boolean };
 
 /** The server's honest "nothing was sent" (`transmitted: false`), as a sentence. */
 function notTransmittedSentence(a: TransmitAnswer, environment: string | undefined): string {
-  return a.reason === 'gateway_not_configured'
+  const sentence = a.reason === 'gateway_not_configured'
     ? `Not transmitted — ${gatewayLabel(a.gateway)} has no ${environment ?? ''} credentials configured for this organization. Nothing was sent; the attempt is recorded.`
     : `Not transmitted — ${clause(a.reason ?? 'the server did not send it')}. Nothing was sent.`;
+  return a.signatureVoided ? `${sentence} The signature given for it is now void; a new attempt is signed again.` : sentence;
 }
 
 /** A performed transmit, as the server reported it. */
@@ -733,9 +737,11 @@ export function SubmissionCenter({
    *  only then did the freeze refuse. A refusal or an unreadable answer is
    *  returned as the sentence to show; null means the gates clear. */
   const precheckRefusal = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest): Promise<string | null> => {
+    // A transmit's typed number is judged against the program record here,
+    // before the signature, by the rule transmit applies (P-23).
     const r = await mutateVerbatim<GovernedPrecheck>('POST', `/api/submissions/sequences/${s.id}/governed-precheck`, {
       step: kind,
-      ...(transmit ? { environment: transmit.environment } : {}),
+      ...(transmit ? { environment: transmit.environment, applicationId: transmit.applicationId } : {}),
     });
     if (!r.data || typeof r.data.cleared !== 'boolean') {
       return `Whether the server would accept this could not be checked — ${clause(r.error ?? 'no answer')}. Nothing was signed.`;
@@ -1180,6 +1186,19 @@ export function SubmissionCenter({
                 : { label: 'Open the Sequences workspace', onClick: () => setWs('sequences') }
           }
           secondary="Or move through the workspaces below — plan, build, validate, dispatch."
+        />
+      )}
+      {/* P-14's remedy: a submission the server records with no project is
+          anchored here (POST /api/submissions/:id/program-anchor). */}
+      {sub && sub.programId === null && (
+        <SubmissionProgramAnchor
+          submission={sub}
+          programmes={programmes.rows}
+          programmesUnreadable={Boolean(programmes.error)}
+          onAnchored={(n) => {
+            setNotice(n);
+            setSubsBump((b) => b + 1);
+          }}
         />
       )}
 
