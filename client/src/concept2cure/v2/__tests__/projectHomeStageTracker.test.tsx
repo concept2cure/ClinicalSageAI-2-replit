@@ -12,6 +12,9 @@
  *
  * Nothing Project home reads records per-stage completion, so the only state
  * the tracker may state is which stage is open.
+ *
+ * Plan and Lifecycle were removed in FILING_SPINE.md F2; the five tabs are
+ * held by projectHomeStages.test.tsx.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -51,23 +54,22 @@ describe('Project home — lifecycle tracker', () => {
   it('marks no stage done on a real project; only the open stage is marked', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
     render(<ProjectHome {...props()} />);
-    await waitFor(() => expect(stages().length).toBe(7));
+    await waitFor(() => expect(stages().length).toBe(5));
 
     const done = stages().filter((b) => b.getAttribute('data-status') === 'done');
     expect(done.map((b) => b.textContent), 'a stage is marked completed from tab position alone').toEqual([]);
     expect(statusOf('Author')).toBe('active');
-    expect(statusOf('Plan')).toBeNull();
     expect(statusOf('Evidence')).toBeNull();
   });
 
   it('opening a later stage does not complete the ones before it', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
     render(<ProjectHome {...props()} />);
-    await waitFor(() => expect(stages().length).toBe(7));
+    await waitFor(() => expect(stages().length).toBe(5));
 
     fireEvent.click(stages().find((b) => b.textContent?.includes('Submit'))!);
     await waitFor(() => expect(statusOf('Submit')).toBe('active'));
-    for (const earlier of ['Plan', 'Evidence', 'Author', 'Review']) {
+    for (const earlier of ['Evidence', 'Author', 'Review']) {
       expect(statusOf(earlier), `${earlier} became "done" because Submit was opened`).toBeNull();
     }
   });

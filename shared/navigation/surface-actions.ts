@@ -484,13 +484,13 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'project-home',
     label: 'Open a lifecycle stage',
     description:
-      'On the project home, open a programme lifecycle stage tab. Note: leaving the author stage unmounts its composer — do not switch away from author uninvited if the user may be mid-message there.',
+      'On the project home, open one of its five tabs: evidence, author, review, submit or respond. "plan" and "lifecycle" are accepted and open submit, which now holds market choice and follow-up sequences. The start box is above the tabs, so switching tabs keeps a half-typed message.',
     params: [
       {
         name: 'stage',
         required: true,
-        description: 'The lifecycle stage tab to open.',
-        enum: ['plan', 'evidence', 'author', 'review', 'submit', 'respond', 'lifecycle'],
+        description: 'The tab to open. "plan" and "lifecycle" are aliases for submit.',
+        enum: ['evidence', 'author', 'review', 'submit', 'respond', 'plan', 'lifecycle'],
       },
     ],
   },

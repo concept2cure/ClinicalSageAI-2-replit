@@ -66,10 +66,13 @@ const toolIds = (onNav: ReturnType<typeof vi.fn>) => {
 };
 
 describe('Project home and the launch scope', () => {
-  it.each(['Respond', 'Lifecycle', 'Plan'])('the %s stage offers no locked tool, and says when it has none', async (label) => {
+  /* Plan and Lifecycle had only locked tools and were removed in
+     FILING_SPINE.md F2 (projectHomeStages.test.tsx). Respond keeps its tools
+     until F15 gives it its own actions. */
+  it.each(['Respond'])('the %s stage offers no locked tool, and says when it has none', async (label) => {
     const onNav = vi.fn();
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project home' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" />);
-    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(7));
+    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(5));
     fireEvent.click(stage(label));
     await waitFor(() => expect(stage(label).getAttribute('data-status')).toBe('active'));
     const ids = toolIds(onNav);
@@ -83,7 +86,7 @@ describe('Project home and the launch scope', () => {
 
   it('never offers the source tracer, which this release does not carry', async () => {
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project home' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biotech" />);
-    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(7));
+    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(5));
     expect(screen.queryByText(/Trace a claim to its source/)).toBeNull();
   });
 

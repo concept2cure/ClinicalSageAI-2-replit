@@ -281,32 +281,25 @@ export interface StageTool {
 
 /* ── Lifecycle ── */
 
+/* The five tabs follow the work of building the filing, in order
+   (docs/design/FILING_SPINE.md §1, F2). Plan and Lifecycle were removed: every
+   tool they listed is outside this release, so both said "Not in this
+   release". Market choice and follow-up sequences belong to Submit, and what
+   those tabs promised is named there as coming later. `project-home.set-stage`
+   still accepts 'plan' and 'lifecycle', as aliases for Submit. */
 export const PJ_LIFECYCLE: LifecycleStage[] = [
-  { id: 'plan', label: 'Plan', icon: 'calendar', blurb: 'Strategy, precedent, agency meetings & timeline' },
-  { id: 'evidence', label: 'Evidence', icon: 'search', blurb: 'Vault, RAG search & claim↔evidence linking' },
-  { id: 'author', label: 'Author', icon: 'penLine', blurb: 'Draft eCTD sections with AnA, track changes' },
-  { id: 'review', label: 'Review', icon: 'checkCircle', blurb: 'Review, approve & e-sign' },
-  { id: 'submit', label: 'Submit', icon: 'rocket', blurb: 'Assemble eCTD, validate & transmit' },
-  { id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Health-authority questions & responses' },
-  { id: 'lifecycle', label: 'Lifecycle', icon: 'globe', blurb: 'Registrations, variations, market access & PV' },
+  { id: 'evidence', label: 'Evidence', icon: 'search', blurb: 'The sources this filing is written from' },
+  { id: 'author', label: 'Author', icon: 'penLine', blurb: 'Write the documents each market needs' },
+  { id: 'review', label: 'Review', icon: 'checkCircle', blurb: 'Review, approve and sign' },
+  { id: 'submit', label: 'Submit', icon: 'rocket', blurb: 'Each market: build, check, freeze and dispatch' },
+  { id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Answer the agency' },
 ];
 
-
 export const PJ_STAGE_TOOLS: Record<string, StageTool[]> = {
-  plan: [
-    { id: 'global-ri', label: 'Regulatory intelligence', desc: 'Pathways, precedent & global landscape', icon: 'globe' },
-    { id: 'precedent-intelligence', label: 'Precedent intelligence', desc: 'Approved analogues in this therapeutic area', icon: 'scale' },
-    { id: 'agency-meetings', label: 'Agency meetings', desc: 'Briefing books, questions & minutes', icon: 'calendar' },
-  ],
   respond: [
     { id: 'haq-manager', label: 'HA questions', desc: 'Track & respond to deficiency letters', icon: 'messageCircle' },
     { id: 'global-ri', label: 'Precedent responses', desc: 'How analogues answered similar questions', icon: 'globe' },
     { id: 'document-authoring', label: 'Response authoring', desc: 'Draft governed responses with AnA', icon: 'penLine' },
-  ],
-  lifecycle: [
-    { id: 'registrations', label: 'Registrations', desc: 'Market registrations & variations', icon: 'globe' },
-    { id: 'market-access', label: 'Market access', desc: 'Pricing, reimbursement & HTA', icon: 'barChart' },
-    { id: 'safety-narrative', label: 'Pharmacovigilance', desc: 'Safety narratives & signal detection', icon: 'shieldCheck' },
   ],
 };
 

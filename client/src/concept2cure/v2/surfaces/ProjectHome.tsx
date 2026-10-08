@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { I } from '../icons';
-import { EmptyState, useLiveData, useLiveRows, hasKeys, liveMutateOrNull, type DataState, type ListState } from '../dataConnect';
+import { EmptyState, useLiveData, useLiveRows, hasKeys, type DataState, type ListState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
@@ -71,9 +71,11 @@ declare global {
    memory/instructions/intelligence, agency meetings, eTMF, grants) are
    rendered as an honest EmptyState rather than a fabricated fixture. The
    project's files, conversations, dispatch readiness and submissions are read
-   by the project's UUID (slices 23 and 24 of ONE_ANA_ONE_CANVAS.md). The schedule-of-events panel
-   (plan stage) is live for numeric-keyed projects and renders the same honest
-   id-space empty for UUID programs — see SchedulePanel.
+   by the project's UUID (slices 23 and 24 of ONE_ANA_ONE_CANVAS.md). The
+   schedule-of-events panel went with the Plan tab (FILING_SPINE.md F2): it
+   fetched only numeric project ids, so it never loaded for a program opened
+   from Projects, and its "Ask AnA to generate one" asked a model for dated
+   milestones (CLAUDE.md Rule 2).
    ════════════════════════════════════════════════════════════════════════ */
 
 /** GET /api/c2c/projects/:id — regulatory_programs metadata (bare object). */
@@ -205,6 +207,13 @@ function Anchored<T>(props: {
    including with no project loaded at all, and opening Submit "completed"
    Review. Nothing this surface reads records per-stage completion, so the one
    state stated is the one that is true: which stage is open. */
+
+/** Stage ids that no longer have a tab, and the tab that now holds their job
+    (FILING_SPINE.md F2). AnA's `project-home.set-stage` still accepts them. */
+const STAGE_ALIASES: Record<string, string> = {
+  plan: 'submit',
+  lifecycle: 'submit',
+};
 
 function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string) => void }) {
   return (
@@ -515,6 +524,13 @@ function ProjectSubmitStage({ pid, onNav, available }: {
     <>
       <ProjectReadiness discovery={discovery} r={readiness} onRetry={() => setReload((k) => k + 1)} onNav={onNav} available={available} />
       <ProjectSubmissions subs={subs} onRetry={() => setBump((b) => b + 1)} discovery={discovery} onNav={onNav} available={available} />
+      {/* What the Plan and Lifecycle tabs promised (FILING_SPINE.md F2). None
+          of it is in this release, so it is named here as text, with nothing
+          to click. */}
+      <p className="pj-desc" data-testid="pj-submit-later">
+        Coming later: regulatory intelligence and precedent, agency meetings,
+        registrations and variations, market access and pharmacovigilance.
+      </p>
     </>
   );
 }
@@ -969,66 +985,6 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   );
 }
 
-/* ════ Schedule of events — the 'plan' step's screen ════════════════════════
-   AnA's regulatory-aware milestone schedule, read from the REAL store
-   (GET /api/concept2cure/projects/:id/schedule-of-events — plan header in
-   project_schedule_of_events, milestones reusing project_workflow_stages).
-
-   IDENTITY: that store is keyed by the NUMERIC projects.id, while this
-   surface's window.C2C_PROJECT.id is normally a regulatory_programs UUID (see
-   the header comment). The panel therefore fetches ONLY when the open ident is
-   numeric-keyed ('12' / 'proj_12' — the SubmissionTwin idiom), and renders the
-   honest id-space empty for UUID programs instead of sending a doomed request
-   or borrowing another project's schedule. Milestone STATUS is displayed as
-   stored; nothing here invents progress, dates, or health. */
-
-/** GET …/schedule-of-events → milestones[] (ScheduleMilestoneView subset). */
-interface ScheduleMilestoneRow {
-  id: number;
-  key: string;
-  title: string;
-  status: string; // not_started | in_progress | at_risk | slipped | blocked | completed
-  targetDate: string | null;
-  isCritical: boolean;
-  regulatoryBasis: string | null;
-  ownerRole: string | null;
-  slipDays: number | null;
-}
-
-/** GET …/schedule-of-events → plan (SchedulePlanView subset); null = none generated. */
-interface SchedulePlanRow {
-  regulatoryFramework: string | null;
-  version: number;
-  targetDate: string | null;
-  confidence: string | null;
-}
-
-interface ScheduleViewRow {
-  plan: SchedulePlanRow | null;
-  milestones: ScheduleMilestoneRow[];
-  health?: { overallStatus?: string; summary?: string } | null;
-}
-
-/** The numeric-keyed ident space the schedule store resolves ('12' / 'proj_12'). */
-const SCHED_IDENT_RE = /^(?:proj_)?\d+$/;
-const SCHED_SHOWN = 8;
-
-/** Real ISO date → display with year (schedules span years); null stays null. */
-function fmtDue(v: string | null): string | null {
-  if (!v) return null;
-  const d = new Date(v);
-  return Number.isNaN(d.getTime())
-    ? null
-    : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-const SCHED_STATUS_TONE: Record<string, string> = {
-  completed: 'tone-ok',
-  at_risk: 'tone-warn',
-  slipped: 'tone-warn',
-  blocked: 'tone-warn',
-};
-
 /**
  * The program-header status chip was hardcoded `tone-ok`, so a program whose
  * recorded status was blocked, at_risk or on_hold wore a GREEN pill — a health
@@ -1056,156 +1012,6 @@ const PRIORITY_TONE: Record<string, string> = {
   critical: 'tone-warn',
   high: 'tone-warn',
 };
-
-function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) => void }) {
-  const ident = pid && SCHED_IDENT_RE.test(pid) ? pid : null;
-  const [reloadKey, setReloadKey] = useState(0);
-  const [genBusy, setGenBusy] = useState(false);
-  const [genError, setGenError] = useState<string | null>(null);
-
-  const state = useLiveData<ScheduleViewRow>(
-    ident ? `/api/concept2cure/projects/${ident}/schedule-of-events` : null,
-    [ident, reloadKey],
-    hasKeys<ScheduleViewRow>('plan', 'milestones'),
-  );
-
-  const askGenerate = () =>
-    onAsk(
-      'Generate a schedule of events for this project — the regulatory milestone plan for its pathway, with dates toward our target submission.',
-    );
-
-  // Real POST /projects/:id/schedule-of-events/generate (routes/
-  // project-schedule-of-events.ts) — offered only in the numeric id-space where
-  // that endpoint actually resolves this project.
-  const generate = async () => {
-    if (!ident || genBusy) return;
-    setGenBusy(true);
-    setGenError(null);
-    const res = await liveMutateOrNull<ScheduleViewRow>(
-      'POST',
-      `/api/concept2cure/projects/${ident}/schedule-of-events/generate`,
-      {},
-    );
-    setGenBusy(false);
-    if (res.error) {
-      setGenError(res.error);
-    } else {
-      setReloadKey((k) => k + 1);
-    }
-  };
-
-  return (
-    <section className="pj-sec">
-      <div className="pj-sec-h">
-        <h2>Schedule</h2>
-        <span className="sec-sub">
-          {state.data?.plan
-            ? [
-                state.data.plan.regulatoryFramework,
-                `v${state.data.plan.version}`,
-                fmtDue(state.data.plan.targetDate) ? `target ${fmtDue(state.data.plan.targetDate)}` : null,
-              ]
-                .filter(Boolean)
-                .join(' · ')
-            : "AnA's regulatory milestone plan for this project"}
-        </span>
-      </div>
-
-      {!ident ? (
-        /* UUID program — the schedule store is keyed by the numeric project
-           record, which this workspace doesn't resolve (same identity gap as
-           tasks & readiness). Stated honestly; no phantom generate action. */
-        <EmptyState
-          icon={I.calendar}
-          title="Schedule isn't wired to this workspace yet"
-          hint="AnA's schedule of events is keyed to the numeric project record, which this workspace doesn't resolve yet — so no milestones can be shown or generated from here."
-        />
-      ) : (
-        <Anchored
-          state={state}
-          loadingText="Loading the schedule of events…"
-          errorTitle="Couldn't load the schedule"
-          errorHint="The schedule-of-events read didn't respond. Sign in and retry, or check the service is reachable."
-          emptyTitle="No schedule generated"
-          emptyHint="Ask AnA to generate one — a regulatory milestone plan grounded in this project's pathway — or generate it from the pathway template below."
-          isEmpty={(d) => !d.plan && (d.milestones ?? []).length === 0}
-          render={(d) => {
-            const milestones = d.milestones ?? [];
-            const open = milestones.filter((m) => m.status !== 'completed');
-            const completed = milestones.length - open.length;
-            const shown = open.slice(0, SCHED_SHOWN);
-            return (
-              <>
-                {d.health?.summary && (
-                  <div className="scaf-note" style={{ padding: '4px 0 10px', fontSize: 12.5 }}>{d.health.summary}</div>
-                )}
-                <div className="pj-sched" style={{ display: 'grid', gap: 0 }}>
-                  {shown.map((m) => {
-                    const due = fmtDue(m.targetDate);
-                    return (
-                      <div
-                        key={m.key || m.id}
-                        style={{
-                          display: 'flex', alignItems: 'baseline', gap: 10, padding: '7px 2px',
-                          borderBottom: '1px solid var(--border-subtle)',
-                        }}
-                      >
-                        <span className={`rd-chip ${SCHED_STATUS_TONE[m.status] ?? 'tone-idle'}`} style={{ whiteSpace: 'nowrap' }}>
-                          {String(m.status || 'not_started').replace(/_/g, ' ')}
-                        </span>
-                        <span style={{ flex: 1, minWidth: 0 }}>
-                          <span style={{ display: 'block', fontSize: 13, fontWeight: 600 }}>
-                            {m.title}
-                            {m.isCritical && <span className="sp-tone-warn" style={{ fontSize: 11, marginLeft: 6 }}>critical path</span>}
-                          </span>
-                          <span className="sec-sub" style={{ fontSize: 11.5 }}>
-                            {[m.regulatoryBasis, m.ownerRole].filter(Boolean).join(' · ')}
-                          </span>
-                        </span>
-                        <span className="sec-sub" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
-                          {due ?? 'no due date'}
-                          {m.slipDays != null && m.slipDays > 0 && (
-                            <span className="sp-tone-warn"> · {m.slipDays}d late</span>
-                          )}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="sec-sub" style={{ fontSize: 11.5, marginTop: 8 }}>
-                  {open.length > SCHED_SHOWN ? `+${open.length - SCHED_SHOWN} more upcoming · ` : ''}
-                  {completed > 0 ? `${completed} completed · ` : ''}
-                  {milestones.length} milestone{milestones.length === 1 ? '' : 's'} total
-                </div>
-              </>
-            );
-          }}
-        />
-      )}
-
-      {/* Empty-state affordances — both real: the composer prompt reaches the
-          generate_schedule_of_events AnA tool, and the button calls the real
-          POST generate endpoint. Rendered only in the numeric id-space where
-          they can actually act on THIS project. */}
-      {ident && !state.loading && !state.error && state.data && !state.data.plan
-        && (state.data.milestones ?? []).length === 0 && (
-        <div className="cm-pushbar" style={{ marginTop: 10 }}>
-          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={askGenerate}>
-            {I.sparkles} Ask AnA to generate one
-          </button>
-          <button className="btn" style={{ fontSize: 12, padding: '4px 12px' }} disabled={genBusy} onClick={generate}>
-            {genBusy ? 'Generating…' : 'Generate schedule'}
-          </button>
-        </div>
-      )}
-      {genError && (
-        <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>
-          Couldn&rsquo;t generate the schedule: {genError}
-        </div>
-      )}
-    </section>
-  );
-}
 
 /* ════ Inline conversation composer ════
    An ENTRY POINT to the one conversation, not a conversation of its own.
@@ -1304,6 +1110,48 @@ function MyWorkLine({ onNav, available }: { onNav: (id: string) => void; availab
   );
 }
 
+/* ════ The project's conversations ═══════════════════════════════════════════
+   The program's own AnA threads, listed above the tabs with the start box
+   (FILING_SPINE.md F2), so they are on every tab. Threads carry the program they
+   were started in (chat_threads.program_id, bound when the stream mints the
+   thread, only to a program of its organization), so this lists exactly the
+   conversations held on this project, newest first, and opens one back into
+   the thread surface. */
+function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string) => void }) {
+  const threadsState = useLiveData<{ threads: ThreadRow[] }>(
+    `/api/chat/threads?program_id=${encodeURIComponent(pid)}&limit=8`,
+    [pid],
+  );
+  const resumeThread = (id: string) => {
+    window.C2C_CONVO = { id };
+    onNav('conversation-thread');
+  };
+  return (
+    <section className="pj-sec" aria-labelledby="pj-convos-h">
+      <div className="pj-sec-h"><h2 id="pj-convos-h">Conversations</h2><span className="sec-sub">resume a thread held on this project</span></div>
+      <Anchored
+        state={threadsState}
+        loadingText="Loading conversations…"
+        errorTitle="Couldn't load conversations"
+        errorHint="The conversation store didn't respond. Sign in and retry, or check that the service is reachable."
+        emptyTitle="No project conversations yet"
+        emptyHint="Start one in the box above. Conversations started here are kept on this project and listed for resuming."
+        isEmpty={(d) => (d.threads ?? []).length === 0}
+        render={(d) => (
+          <div className="pj-files" data-testid="pj-threads">
+            {(d.threads ?? []).map((t) => (
+              <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
+                <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
+                <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
+              </button>
+            ))}
+          </div>
+        )}
+      />
+    </section>
+  );
+}
+
 function AuthorWorkspace({
   seg, pid, completion, onNav, onAsk, teamState, activityState, wsState, draftsState,
 }: {
@@ -1322,20 +1170,6 @@ function AuthorWorkspace({
   /* Launch-scope verdicts, for the workspace tool grid below. */
   const { verdictFor } = useNavEntitlements();
   const available = useSurfaceAvailable();
-  /* The program's own AnA threads — REAL. Threads carry the program they were
-     started in (chat_threads.program_id, bound when the stream mints the
-     thread, only to a program of its organization), so this lists exactly the conversations held on this
-     project, newest first, and opens one back into the thread surface. Until
-     that key existed this section was an honest empty with nothing behind it:
-     there was no way to resume a project chat from the project. */
-  const threadsState = useLiveData<{ threads: ThreadRow[] }>(
-    pid ? `/api/chat/threads?program_id=${encodeURIComponent(pid)}&limit=8` : null,
-    [pid],
-  );
-  const resumeThread = (id: string) => {
-    window.C2C_CONVO = { id };
-    onNav('conversation-thread');
-  };
   return (
     <div className="pj-grid">
       <div className="pj-main">
@@ -1371,30 +1205,6 @@ function AuthorWorkspace({
               </div>
             </div>
           ))}
-        </section>
-
-        {/* Conversations — the program's persisted AnA threads, resumable */}
-        <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Conversations</h2><span className="sec-sub">resume a thread held on this project</span></div>
-          <Anchored
-            state={threadsState}
-            loadingText="Loading conversations…"
-            errorTitle="Couldn't load conversations"
-            errorHint="The conversation store didn't respond. Sign in and retry, or check that the service is reachable."
-            emptyTitle="No project conversations yet"
-            emptyHint="Start one in the composer above — threads started here are kept on this project and listed for resuming."
-            isEmpty={(d) => (d.threads ?? []).length === 0}
-            render={(d) => (
-              <div className="pj-files" data-testid="pj-threads">
-                {(d.threads ?? []).map((t) => (
-                  <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
-                    <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
-                    <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
-                  </button>
-                ))}
-              </div>
-            )}
-          />
         </section>
 
         {/* Linked modules — REAL: per-CTD-module section rollup */}
@@ -1756,20 +1566,22 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
      same reasoning as vault.search — applying it mid-load is correct, not
      early, and there is no loading refusal and no retry.
 
-     Known gap, not expressible today: leaving the 'author' stage unmounts its
-     composer, whose in-progress draft is child-local state this handler cannot
-     see — a mid-message guard would need that state lifted out of the child.
-     The registry entry's description already warns AnA not to switch away from
-     author uninvited. */
+     The start box sits above the tabs (F2), so switching stage no longer
+     unmounts a half-typed message. */
   useSurfaceActionHandlers('project-home', {
     'project-home.set-stage': (params) => {
       if (noProject)
         return { ok: false, reason: 'No project is selected — open one from All projects.' };
-      const target = (params.stage ?? '').trim();
+      const asked = (params.stage ?? '').trim();
+      // Plan and Lifecycle have no tab now; their jobs moved to Submit (F2).
+      const target = STAGE_ALIASES[asked] ?? asked;
       const meta = PJ_LIFECYCLE.find((s) => s.id === target);
       if (!meta) return { ok: false, reason: `No lifecycle stage named "${params.stage}".` };
       setStage(meta.id);
-      return { ok: true, detail: `Opened the ${meta.id} stage` };
+      return {
+        ok: true,
+        detail: target === asked ? `Opened the ${meta.id} stage` : `The ${asked} stage is part of ${meta.label} now; opened ${meta.label}`,
+      };
     },
   });
   /* Ready signal — harmless even though set-stage never answers retry: a
@@ -1856,6 +1668,11 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
           human's controls do not offer what hers cannot. */}
       {!noProject && (
         <>
+          {/* The start box and the project's conversations are above the
+              tabs, outside the stage switch (FILING_SPINE.md F2): a message
+              typed here survives opening another tab. */}
+          {!progState.error && <StartConversation productName={productName} onNav={onNav} />}
+          {pid && !progState.error && <ProjectConversations pid={pid} onNav={onNav} />}
           <StageTracker stage={stage} setStage={setStage} />
           <div className="pj-stageband">
             <div className="pj-stageband-l">
@@ -1901,33 +1718,9 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             </section>
           )}
 
-          {/* Plan — the live schedule-of-events panel, the canonical tool
-              catalog, and honest empties for the panels whose backends are
-              org-shaped/absent here (meetings, eTMF, grants). */}
-          {stage === 'plan' && (<>
-            <SchedulePanel pid={pid} onAsk={ask} />
-            <StagePanel stage="plan" onNav={onNav} available={available} />
-            {/* Said only while one of those surfaces can be opened: in this
-                release none can, and the sentence would point at tools that
-                are not there. */}
-            {['agency-meetings', 'etmf'].some(available) && (
-            <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Agency meetings &amp; planning data</h2></div>
-              <EmptyState
-                icon={I.calendar}
-                title="Meetings, eTMF and grants open in their own surfaces"
-                hint="Agency meetings, the Trial Master File and grant milestones are managed in their dedicated surfaces, each wired to its real store. Use the tools above to open them."
-              />
-            </section>
-            )}
-          </>)}
-
           {stage === 'respond' && <StagePanel stage="respond" onNav={onNav} available={available} />}
-          {stage === 'lifecycle' && <StagePanel stage="lifecycle" onNav={onNav} available={available} />}
 
           {stage === 'author' && (<>
-            <StartConversation productName={productName} onNav={onNav} />
-
             <AuthorWorkspace
               seg={seg}
               pid={pid}
