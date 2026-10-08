@@ -827,6 +827,13 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onOpenAsDocument, project
   );
 }
 
+/** Where a handed-over question was asked: the screen, by id and name, and what it showed. */
+export interface AskOrigin {
+  surfaceId: string;
+  label: string;
+  moduleContext?: Record<string, unknown> | null;
+}
+
 /* ---- Conversation thread (main export) ---- */
 
 export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurfaceViewProps) {
@@ -840,7 +847,22 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
     seed?: string | null;
     /** Files the seeding composer attached, by upload id. */
     seedFiles?: SentAttachment[];
+    /** A question asked from another screen, put in the composer, not sent. */
+    prefill?: string | null;
+    /** The screen it was asked from, with the context it had published. */
+    origin?: AskOrigin | null;
+    /** ⌘K's typed question: the person's own words, sent on arrival. */
+    sendOnArrival?: boolean;
   };
+  /* ── Every ask lands here (docs/design/ONE_ANA_ONE_CANVAS.md, slice 8) ──────
+     A question asked from another screen arrives in the composer, not sent:
+     the person reads it, edits it, and presses Enter. Its screen travels with
+     it as a chip, "From <screen>", and the turn it is sent in carries that
+     screen's published context, as the rail's turns did. "Back to <screen>"
+     returns to where it was asked. Consumed once: the effect below records the
+     arrival as the conversation in progress. */
+  const [askOrigin, setAskOrigin] = useState<AskOrigin | null>(() => asked.origin ?? null);
+  const arrivedPrefill = typeof asked.prefill === 'string' && asked.prefill.trim() ? asked.prefill : null;
   /* With the shell's chat, a "new" that carries nothing to ask is the
      conversation in progress. It used to be read as "start over": the mount
      reset the shell's chat, and the shell's chat is the ONE conversation — the
@@ -928,7 +950,14 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
   /* With nothing open a turn is sent exactly as before; the third argument
      only when there is a document to name. */
   const sendTurn = (text: string, files?: Parameters<typeof anaChat.send>[1]) => {
-    if (turnOpts) return anaChat.send(text, files, turnOpts);
+    /* The screen a handed-over question came from rides on the turn that
+       sends it, once. */
+    const fromOrigin = askOrigin
+      ? { moduleContext: askOrigin.moduleContext ?? null, screenName: askOrigin.surfaceId }
+      : null;
+    if (fromOrigin) setAskOrigin(null);
+    const opts = turnOpts || fromOrigin ? { ...(turnOpts ?? {}), ...(fromOrigin ?? {}) } : undefined;
+    if (opts) return anaChat.send(text, files, opts);
     return files === undefined ? anaChat.send(text) : anaChat.send(text, files);
   };
   const wasStreamingRef = useRef(false);
@@ -1112,6 +1141,25 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
      timeout fires, the value this mount captured is a render old. */
   const shellChatRef = useRef(shellChat);
   shellChatRef.current = shellChat;
+  /* A question handed over from another screen: in the composer, once; sent
+     on arrival only when it was typed as a question (⌘K) and AnA is not still
+     answering (deferred one task, for the same StrictMode reason as a seed). */
+  useEffect(() => {
+    if (!arrivedPrefill) return;
+    if (!asked.sendOnArrival) {
+      prefillComposer(arrivedPrefill);
+      return;
+    }
+    const t = setTimeout(() => {
+      if (shellChatRef.current?.isStreaming) {
+        prefillComposer(arrivedPrefill);
+        return;
+      }
+      void sendTurn(arrivedPrefill);
+    }, 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadConversation = (threadId: string) => {
     setLoadErr(false);
@@ -1431,6 +1479,24 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
             onStop={() => void anaChat.stop()}
             /* No steer box in the strip here: this screen's composer steers. */
           />
+          {askOrigin && (
+            <div className="ct-ask-origin" data-testid="ct-ask-origin">
+              <span className="ct-ask-origin-chip">
+                From <b>{askOrigin.label}</b>
+                <button
+                  type="button"
+                  className="ct-ready-doc-x"
+                  aria-label={`Do not send what ${askOrigin.label} shows with this question`}
+                  onClick={() => setAskOrigin(null)}
+                >
+                  {'×'}
+                </button>
+              </span>
+              <button type="button" className="btn ghost" onClick={() => onNav(askOrigin.surfaceId)}>
+                Back to {askOrigin.label}
+              </button>
+            </div>
+          )}
           {/* Announced, never focus-stealing: the person may be typing. */}
           <div className="ct-ready-doc" role="status" aria-live="polite">
             {readyDoc && (

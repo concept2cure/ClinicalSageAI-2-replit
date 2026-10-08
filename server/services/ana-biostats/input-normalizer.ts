@@ -63,7 +63,7 @@ export class InputNormalizer {
     } else if (attritionRate > 0.30) {
       warnings.push({ field: 'attritionRate', message: `Attrition rate of ${(attritionRate * 100).toFixed(0)}% is high. Ensure this is justified.` });
     }
-    if (!raw.attritionRate) prefilled.push('attritionRate');
+    if (raw.attritionRate == null) prefilled.push('attritionRate');
 
     const allocationRatio = raw.allocationRatio ?? 1;
     if (allocationRatio <= 0) {

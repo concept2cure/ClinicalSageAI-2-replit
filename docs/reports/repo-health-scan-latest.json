@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T01:48:48.706Z",
+  "generatedAt": "2026-10-08T02:03:33.075Z",
   "git": {
-    "sha": "a8b0dbf87000b9b575638950ba7bcde90e67cc08",
+    "sha": "f5efe8a5a72d11b70bb82be143c9505172af1a60",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2648,6 +2648,10 @@
         "lines": 1672
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 1664
+      },
+      {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
         "lines": 1650
       },
@@ -2682,10 +2686,6 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 1598
       },
       {
         "file": "server/routes/mdx-qms.ts",

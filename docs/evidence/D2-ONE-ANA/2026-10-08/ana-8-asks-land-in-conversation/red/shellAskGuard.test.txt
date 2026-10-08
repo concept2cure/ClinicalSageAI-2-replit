@@ -1,0 +1,814 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > renders the rail on a surface that keeps it 96ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > does not render the rail on a surface that owns its conversation 38ms
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > seeds the conversation surface and goes there, instead of arming a hidden rail
+[useAnaChat] stream failed: Stream request failed: 503
+
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > re-seeds when the user is already on the conversation surface
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > seeds the conversation surface and goes there, instead of arming a hidden rail 1303ms
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > a seeded conversation carries its files > sends the seeding composer's uploads by id, so the stream can open them
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > re-seeds when the user is already on the conversation surface 136ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > a seeded conversation carries its files > sends the seeding composer's uploads by id, so the stream can open them 61ms
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that keeps the rail > goes to the conversation and sends there, naming the screen it was asked from
+[useAnaChat] stream failed: Stream request failed: 503
+An update to V2App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to V2App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to V2App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to V2App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to V2App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to V2App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that keeps the rail > goes to the conversation and sends there, naming the screen it was asked from 5145ms
+   → expected '/concept2cure/crl-library' to be '/concept2cure/conversation-thread' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-v2 shell"[39m
+        [33mdata-ana-open[39m=[32m"true"[39m
+        [33mdata-collapsed[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#c2c-page"[39m
+        [36m>[39m
+          [0mSkip to content[0m
+        [36m</a>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary"[39m
+          [33mclass[39m=[32m"rail"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-top"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Document workspace"[39m
+              [33mclass[39m=[32m"rail-logo"[39m
+              [33mtitle[39m=[32m"Document workspace"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%20fill='none'%3e%3cdefs%3e%3cradialGradient%20id='bgGlow'%20cx='50%25'%20cy='45%25'%20r='60%25'%3e%3cstop%20offset='0%25'%20stop-color='%237EC8F8'%20stop-opacity='0.6'/%3e%3cstop%20offset='100%25'%20stop-color='%231B6CA8'%20stop-opacity='0'/%3e%3c/radialGradient%3e%3clinearGradient%20id='dnaGold'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23F5D76E'/%3e%3cstop%20offset='50%25'%20stop-color='%23E8A317'/%3e%3cstop%20offset='100%25'%20stop-color='%23C67800'/%3e%3c/linearGradient%3e%3clinearGradient%20id='dnaGoldLight'%20x1='100%25'%20y1='0%25'%20x2='0%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23FFE082'/%3e%3cstop%20offset='50%25'%20stop-color='%23F5C518'/%3e%3cstop%20offset='100%25'%20stop-color='%23E8A317'/%3e%3c/linearGradient%3e%3clinearGradient%20id='bgMain'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%231A7BC4'/%3e%3cstop%20offset='50%25'%20stop-color='%232196D4'/%3e%3cstop%20offset='100%25'%20stop-color='%231565A0'/%3e%3c/linearGradient%3e%3cfilter%20id='glow'%20x='-20%25'%20y='-20%25'%20width='140%25'%20height='140%25'%3e%3cfeGaussianBlur%20stdDeviation='1.5'%20result='blur'/%3e%3cfeFlood%20flood-color='%23FFD700'%20flood-opacity='0.3'/%3e%3cfeComposite%20in2='blur'%20operator='in'/%3e%3cfeMerge%3e%3cfeMergeNode/%3e%3cfeMergeNode%20in='SourceGraphic'/%3e%3c/feMerge%3e%3c/filter%3e%3c/defs%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgMain)'/%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgGlow)'/%3e%3cg%20transform='translate(32,%2032)'%20filter='url(%23glow)'%3e%3cpath%20d='M-8,-22%20C-12,-15%20-12,-8%20-8,-1%20C-4,6%20-4,13%20-8,22'%20stroke='url(%23dnaGold)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cpath%20d='M8,-22%20C12,-15%2012,-8%208,-1%20C4,6%204,13%208,22'%20stroke='url(%23dnaGoldLight)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cline%20x1='-7'%20y1='-18'%20x2='7'%20y2='-18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-11'%20y1='-10'%20x2='11'%20y2='-10'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-6'%20y1='-1'%20x2='6'%20y2='-1'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3cline%20x1='-10'%20y1='8'%20x2='10'%20y2='8'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-7'%20y1='18'%20x2='7'%20y2='18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3c/g%3e%3c/svg%3e"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rail-logo-text"[39m
+              [36m>[39m
+                [0mConcept2Cure[0m
+                [36m<span>[39m
+                  [0m.RI[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-section"[39m
+            [36m>[39m
+              [0mClient categories[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-nav"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"nav-item"[39m
+                [33mtitle[39m=[32m"Medical Device & IVD"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ico"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-stethoscope"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 15a6 6 0 0 0 12 0v-3"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"20"[39m
+                      [33mcy[39m=[32m"10"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"lbl"[39m
+                [36m>[39m
+                  [0mMedical Device & IVD[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                ...
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named
+[useAnaChat] stream failed: Stream request failed: 503
+
+stderr | client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > "Back to" returns to the screen it was asked from
+[useAnaChat] stream failed: Stream request failed: 503
+
+ × client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named 6578ms
+   → expected '/concept2cure/vault' to be '/concept2cure/conversation-thread' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-v2 shell"[39m
+        [33mdata-ana-open[39m=[32m"true"[39m
+        [33mdata-collapsed[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#c2c-page"[39m
+        [36m>[39m
+          [0mSkip to content[0m
+        [36m</a>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary"[39m
+          [33mclass[39m=[32m"rail"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-top"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Document workspace"[39m
+              [33mclass[39m=[32m"rail-logo"[39m
+              [33mtitle[39m=[32m"Document workspace"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%20fill='none'%3e%3cdefs%3e%3cradialGradient%20id='bgGlow'%20cx='50%25'%20cy='45%25'%20r='60%25'%3e%3cstop%20offset='0%25'%20stop-color='%237EC8F8'%20stop-opacity='0.6'/%3e%3cstop%20offset='100%25'%20stop-color='%231B6CA8'%20stop-opacity='0'/%3e%3c/radialGradient%3e%3clinearGradient%20id='dnaGold'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23F5D76E'/%3e%3cstop%20offset='50%25'%20stop-color='%23E8A317'/%3e%3cstop%20offset='100%25'%20stop-color='%23C67800'/%3e%3c/linearGradient%3e%3clinearGradient%20id='dnaGoldLight'%20x1='100%25'%20y1='0%25'%20x2='0%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23FFE082'/%3e%3cstop%20offset='50%25'%20stop-color='%23F5C518'/%3e%3cstop%20offset='100%25'%20stop-color='%23E8A317'/%3e%3c/linearGradient%3e%3clinearGradient%20id='bgMain'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%231A7BC4'/%3e%3cstop%20offset='50%25'%20stop-color='%232196D4'/%3e%3cstop%20offset='100%25'%20stop-color='%231565A0'/%3e%3c/linearGradient%3e%3cfilter%20id='glow'%20x='-20%25'%20y='-20%25'%20width='140%25'%20height='140%25'%3e%3cfeGaussianBlur%20stdDeviation='1.5'%20result='blur'/%3e%3cfeFlood%20flood-color='%23FFD700'%20flood-opacity='0.3'/%3e%3cfeComposite%20in2='blur'%20operator='in'/%3e%3cfeMerge%3e%3cfeMergeNode/%3e%3cfeMergeNode%20in='SourceGraphic'/%3e%3c/feMerge%3e%3c/filter%3e%3c/defs%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgMain)'/%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgGlow)'/%3e%3cg%20transform='translate(32,%2032)'%20filter='url(%23glow)'%3e%3cpath%20d='M-8,-22%20C-12,-15%20-12,-8%20-8,-1%20C-4,6%20-4,13%20-8,22'%20stroke='url(%23dnaGold)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cpath%20d='M8,-22%20C12,-15%2012,-8%208,-1%20C4,6%204,13%208,22'%20stroke='url(%23dnaGoldLight)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cline%20x1='-7'%20y1='-18'%20x2='7'%20y2='-18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-11'%20y1='-10'%20x2='11'%20y2='-10'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-6'%20y1='-1'%20x2='6'%20y2='-1'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3cline%20x1='-10'%20y1='8'%20x2='10'%20y2='8'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-7'%20y1='18'%20x2='7'%20y2='18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3c/g%3e%3c/svg%3e"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rail-logo-text"[39m
+              [36m>[39m
+                [0mConcept2Cure[0m
+                [36m<span>[39m
+                  [0m.RI[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-section"[39m
+            [36m>[39m
+              [0mClient categories[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-nav"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"nav-item"[39m
+                [33mtitle[39m=[32m"Medical Device & IVD"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ico"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-stethoscope"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 15a6 6 0 0 0 12 0v-3"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"20"[39m
+                      [33mcy[39m=[32m"10"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"lbl"[39m
+                [36m>[39m
+                  [0mMedical Device & IVD[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                ...
+ × client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > "Back to" returns to the screen it was asked from 5238ms
+   → expected '/concept2cure/vault' to be '/concept2cure/conversation-thread' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-v2 shell"[39m
+        [33mdata-ana-open[39m=[32m"true"[39m
+        [33mdata-collapsed[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#c2c-page"[39m
+        [36m>[39m
+          [0mSkip to content[0m
+        [36m</a>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary"[39m
+          [33mclass[39m=[32m"rail"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-top"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Document workspace"[39m
+              [33mclass[39m=[32m"rail-logo"[39m
+              [33mtitle[39m=[32m"Document workspace"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%20fill='none'%3e%3cdefs%3e%3cradialGradient%20id='bgGlow'%20cx='50%25'%20cy='45%25'%20r='60%25'%3e%3cstop%20offset='0%25'%20stop-color='%237EC8F8'%20stop-opacity='0.6'/%3e%3cstop%20offset='100%25'%20stop-color='%231B6CA8'%20stop-opacity='0'/%3e%3c/radialGradient%3e%3clinearGradient%20id='dnaGold'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23F5D76E'/%3e%3cstop%20offset='50%25'%20stop-color='%23E8A317'/%3e%3cstop%20offset='100%25'%20stop-color='%23C67800'/%3e%3c/linearGradient%3e%3clinearGradient%20id='dnaGoldLight'%20x1='100%25'%20y1='0%25'%20x2='0%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23FFE082'/%3e%3cstop%20offset='50%25'%20stop-color='%23F5C518'/%3e%3cstop%20offset='100%25'%20stop-color='%23E8A317'/%3e%3c/linearGradient%3e%3clinearGradient%20id='bgMain'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%231A7BC4'/%3e%3cstop%20offset='50%25'%20stop-color='%232196D4'/%3e%3cstop%20offset='100%25'%20stop-color='%231565A0'/%3e%3c/linearGradient%3e%3cfilter%20id='glow'%20x='-20%25'%20y='-20%25'%20width='140%25'%20height='140%25'%3e%3cfeGaussianBlur%20stdDeviation='1.5'%20result='blur'/%3e%3cfeFlood%20flood-color='%23FFD700'%20flood-opacity='0.3'/%3e%3cfeComposite%20in2='blur'%20operator='in'/%3e%3cfeMerge%3e%3cfeMergeNode/%3e%3cfeMergeNode%20in='SourceGraphic'/%3e%3c/feMerge%3e%3c/filter%3e%3c/defs%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgMain)'/%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgGlow)'/%3e%3cg%20transform='translate(32,%2032)'%20filter='url(%23glow)'%3e%3cpath%20d='M-8,-22%20C-12,-15%20-12,-8%20-8,-1%20C-4,6%20-4,13%20-8,22'%20stroke='url(%23dnaGold)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cpath%20d='M8,-22%20C12,-15%2012,-8%208,-1%20C4,6%204,13%208,22'%20stroke='url(%23dnaGoldLight)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cline%20x1='-7'%20y1='-18'%20x2='7'%20y2='-18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-11'%20y1='-10'%20x2='11'%20y2='-10'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-6'%20y1='-1'%20x2='6'%20y2='-1'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3cline%20x1='-10'%20y1='8'%20x2='10'%20y2='8'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-7'%20y1='18'%20x2='7'%20y2='18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3c/g%3e%3c/svg%3e"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rail-logo-text"[39m
+              [36m>[39m
+                [0mConcept2Cure[0m
+                [36m<span>[39m
+                  [0m.RI[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-section"[39m
+            [36m>[39m
+              [0mClient categories[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-nav"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"nav-item"[39m
+                [33mtitle[39m=[32m"Medical Device & IVD"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ico"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-stethoscope"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 15a6 6 0 0 0 12 0v-3"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"20"[39m
+                      [33mcy[39m=[32m"10"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"lbl"[39m
+                [36m>[39m
+                  [0mMedical Device & IVD[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                ...
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘\ toggles only a rail that exists > persists anaOpen on a surface that draws the rail 61ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘\ toggles only a rail that exists > is inert on a surface that owns its conversation 71ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that keeps the rail > goes to the conversation and sends there, naming the screen it was asked from
+AssertionError: expected '/concept2cure/crl-library' to be '/concept2cure/conversation-thread' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-v2 shell"[39m
+        [33mdata-ana-open[39m=[32m"true"[39m
+        [33mdata-collapsed[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#c2c-page"[39m
+        [36m>[39m
+          [0mSkip to content[0m
+        [36m</a>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary"[39m
+          [33mclass[39m=[32m"rail"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-top"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Document workspace"[39m
+              [33mclass[39m=[32m"rail-logo"[39m
+              [33mtitle[39m=[32m"Document workspace"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%20fill='none'%3e%3cdefs%3e%3cradialGradient%20id='bgGlow'%20cx='50%25'%20cy='45%25'%20r='60%25'%3e%3cstop%20offset='0%25'%20stop-color='%237EC8F8'%20stop-opacity='0.6'/%3e%3cstop%20offset='100%25'%20stop-color='%231B6CA8'%20stop-opacity='0'/%3e%3c/radialGradient%3e%3clinearGradient%20id='dnaGold'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23F5D76E'/%3e%3cstop%20offset='50%25'%20stop-color='%23E8A317'/%3e%3cstop%20offset='100%25'%20stop-color='%23C67800'/%3e%3c/linearGradient%3e%3clinearGradient%20id='dnaGoldLight'%20x1='100%25'%20y1='0%25'%20x2='0%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23FFE082'/%3e%3cstop%20offset='50%25'%20stop-color='%23F5C518'/%3e%3cstop%20offset='100%25'%20stop-color='%23E8A317'/%3e%3c/linearGradient%3e%3clinearGradient%20id='bgMain'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%231A7BC4'/%3e%3cstop%20offset='50%25'%20stop-color='%232196D4'/%3e%3cstop%20offset='100%25'%20stop-color='%231565A0'/%3e%3c/linearGradient%3e%3cfilter%20id='glow'%20x='-20%25'%20y='-20%25'%20width='140%25'%20height='140%25'%3e%3cfeGaussianBlur%20stdDeviation='1.5'%20result='blur'/%3e%3cfeFlood%20flood-color='%23FFD700'%20flood-opacity='0.3'/%3e%3cfeComposite%20in2='blur'%20operator='in'/%3e%3cfeMerge%3e%3cfeMergeNode/%3e%3cfeMergeNode%20in='SourceGraphic'/%3e%3c/feMerge%3e%3c/filter%3e%3c/defs%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgMain)'/%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgGlow)'/%3e%3cg%20transform='translate(32,%2032)'%20filter='url(%23glow)'%3e%3cpath%20d='M-8,-22%20C-12,-15%20-12,-8%20-8,-1%20C-4,6%20-4,13%20-8,22'%20stroke='url(%23dnaGold)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cpath%20d='M8,-22%20C12,-15%2012,-8%208,-1%20C4,6%204,13%208,22'%20stroke='url(%23dnaGoldLight)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cline%20x1='-7'%20y1='-18'%20x2='7'%20y2='-18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-11'%20y1='-10'%20x2='11'%20y2='-10'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-6'%20y1='-1'%20x2='6'%20y2='-1'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3cline%20x1='-10'%20y1='8'%20x2='10'%20y2='8'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-7'%20y1='18'%20x2='7'%20y2='18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3c/g%3e%3c/svg%3e"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rail-logo-text"[39m
+              [36m>[39m
+                [0mConcept2Cure[0m
+                [36m<span>[39m
+                  [0m.RI[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-section"[39m
+            [36m>[39m
+              [0mClient categories[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-nav"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"nav-item"[39m
+                [33mtitle[39m=[32m"Medical Device & IVD"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ico"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-stethoscope"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 15a6 6 0 0 0 12 0v-3"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"20"[39m
+                      [33mcy[39m=[32m"10"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"lbl"[39m
+                [36m>[39m
+                  [0mMedical Device & IVD[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                ...
+
+Expected: "/concept2cure/conversation-thread"
+Received: "/concept2cure/crl-library"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx:220:58
+    218|     await askThroughPalette('summarise this letter');
+    219|
+    220|     await waitFor(() => expect(window.location.pathname).toBe(location…
+       |                                                          ^
+    221|     await waitFor(() => expect(streamTurns()).toContainEqual({
+    222|       message: 'summarise this letter',
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named
+AssertionError: expected '/concept2cure/vault' to be '/concept2cure/conversation-thread' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-v2 shell"[39m
+        [33mdata-ana-open[39m=[32m"true"[39m
+        [33mdata-collapsed[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#c2c-page"[39m
+        [36m>[39m
+          [0mSkip to content[0m
+        [36m</a>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary"[39m
+          [33mclass[39m=[32m"rail"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-top"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Document workspace"[39m
+              [33mclass[39m=[32m"rail-logo"[39m
+              [33mtitle[39m=[32m"Document workspace"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%20fill='none'%3e%3cdefs%3e%3cradialGradient%20id='bgGlow'%20cx='50%25'%20cy='45%25'%20r='60%25'%3e%3cstop%20offset='0%25'%20stop-color='%237EC8F8'%20stop-opacity='0.6'/%3e%3cstop%20offset='100%25'%20stop-color='%231B6CA8'%20stop-opacity='0'/%3e%3c/radialGradient%3e%3clinearGradient%20id='dnaGold'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23F5D76E'/%3e%3cstop%20offset='50%25'%20stop-color='%23E8A317'/%3e%3cstop%20offset='100%25'%20stop-color='%23C67800'/%3e%3c/linearGradient%3e%3clinearGradient%20id='dnaGoldLight'%20x1='100%25'%20y1='0%25'%20x2='0%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23FFE082'/%3e%3cstop%20offset='50%25'%20stop-color='%23F5C518'/%3e%3cstop%20offset='100%25'%20stop-color='%23E8A317'/%3e%3c/linearGradient%3e%3clinearGradient%20id='bgMain'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%231A7BC4'/%3e%3cstop%20offset='50%25'%20stop-color='%232196D4'/%3e%3cstop%20offset='100%25'%20stop-color='%231565A0'/%3e%3c/linearGradient%3e%3cfilter%20id='glow'%20x='-20%25'%20y='-20%25'%20width='140%25'%20height='140%25'%3e%3cfeGaussianBlur%20stdDeviation='1.5'%20result='blur'/%3e%3cfeFlood%20flood-color='%23FFD700'%20flood-opacity='0.3'/%3e%3cfeComposite%20in2='blur'%20operator='in'/%3e%3cfeMerge%3e%3cfeMergeNode/%3e%3cfeMergeNode%20in='SourceGraphic'/%3e%3c/feMerge%3e%3c/filter%3e%3c/defs%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgMain)'/%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgGlow)'/%3e%3cg%20transform='translate(32,%2032)'%20filter='url(%23glow)'%3e%3cpath%20d='M-8,-22%20C-12,-15%20-12,-8%20-8,-1%20C-4,6%20-4,13%20-8,22'%20stroke='url(%23dnaGold)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cpath%20d='M8,-22%20C12,-15%2012,-8%208,-1%20C4,6%204,13%208,22'%20stroke='url(%23dnaGoldLight)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cline%20x1='-7'%20y1='-18'%20x2='7'%20y2='-18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-11'%20y1='-10'%20x2='11'%20y2='-10'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-6'%20y1='-1'%20x2='6'%20y2='-1'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3cline%20x1='-10'%20y1='8'%20x2='10'%20y2='8'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-7'%20y1='18'%20x2='7'%20y2='18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3c/g%3e%3c/svg%3e"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rail-logo-text"[39m
+              [36m>[39m
+                [0mConcept2Cure[0m
+                [36m<span>[39m
+                  [0m.RI[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-section"[39m
+            [36m>[39m
+              [0mClient categories[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-nav"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"nav-item"[39m
+                [33mtitle[39m=[32m"Medical Device & IVD"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ico"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-stethoscope"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 15a6 6 0 0 0 12 0v-3"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"20"[39m
+                      [33mcy[39m=[32m"10"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"lbl"[39m
+                [36m>[39m
+                  [0mMedical Device & IVD[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                ...
+
+Expected: "/concept2cure/conversation-thread"
+Received: "/concept2cure/vault"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx:241:58
+    239|     fireEvent.click(button);
+    240|
+    241|     await waitFor(() => expect(window.location.pathname).toBe(location…
+       |                                                          ^
+    242|     const composer = (await screen.findByLabelText('Reply to AnA')) as…
+    243|     await waitFor(() => expect(composer.value).toBe('Search my connect…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > "Back to" returns to the screen it was asked from
+AssertionError: expected '/concept2cure/vault' to be '/concept2cure/conversation-thread' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-v2 shell"[39m
+        [33mdata-ana-open[39m=[32m"true"[39m
+        [33mdata-collapsed[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#c2c-page"[39m
+        [36m>[39m
+          [0mSkip to content[0m
+        [36m</a>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Primary"[39m
+          [33mclass[39m=[32m"rail"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-top"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Document workspace"[39m
+              [33mclass[39m=[32m"rail-logo"[39m
+              [33mtitle[39m=[32m"Document workspace"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%20fill='none'%3e%3cdefs%3e%3cradialGradient%20id='bgGlow'%20cx='50%25'%20cy='45%25'%20r='60%25'%3e%3cstop%20offset='0%25'%20stop-color='%237EC8F8'%20stop-opacity='0.6'/%3e%3cstop%20offset='100%25'%20stop-color='%231B6CA8'%20stop-opacity='0'/%3e%3c/radialGradient%3e%3clinearGradient%20id='dnaGold'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23F5D76E'/%3e%3cstop%20offset='50%25'%20stop-color='%23E8A317'/%3e%3cstop%20offset='100%25'%20stop-color='%23C67800'/%3e%3c/linearGradient%3e%3clinearGradient%20id='dnaGoldLight'%20x1='100%25'%20y1='0%25'%20x2='0%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23FFE082'/%3e%3cstop%20offset='50%25'%20stop-color='%23F5C518'/%3e%3cstop%20offset='100%25'%20stop-color='%23E8A317'/%3e%3c/linearGradient%3e%3clinearGradient%20id='bgMain'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%231A7BC4'/%3e%3cstop%20offset='50%25'%20stop-color='%232196D4'/%3e%3cstop%20offset='100%25'%20stop-color='%231565A0'/%3e%3c/linearGradient%3e%3cfilter%20id='glow'%20x='-20%25'%20y='-20%25'%20width='140%25'%20height='140%25'%3e%3cfeGaussianBlur%20stdDeviation='1.5'%20result='blur'/%3e%3cfeFlood%20flood-color='%23FFD700'%20flood-opacity='0.3'/%3e%3cfeComposite%20in2='blur'%20operator='in'/%3e%3cfeMerge%3e%3cfeMergeNode/%3e%3cfeMergeNode%20in='SourceGraphic'/%3e%3c/feMerge%3e%3c/filter%3e%3c/defs%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgMain)'/%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgGlow)'/%3e%3cg%20transform='translate(32,%2032)'%20filter='url(%23glow)'%3e%3cpath%20d='M-8,-22%20C-12,-15%20-12,-8%20-8,-1%20C-4,6%20-4,13%20-8,22'%20stroke='url(%23dnaGold)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cpath%20d='M8,-22%20C12,-15%2012,-8%208,-1%20C4,6%204,13%208,22'%20stroke='url(%23dnaGoldLight)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cline%20x1='-7'%20y1='-18'%20x2='7'%20y2='-18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-11'%20y1='-10'%20x2='11'%20y2='-10'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-6'%20y1='-1'%20x2='6'%20y2='-1'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3cline%20x1='-10'%20y1='8'%20x2='10'%20y2='8'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-7'%20y1='18'%20x2='7'%20y2='18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3c/g%3e%3c/svg%3e"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rail-logo-text"[39m
+              [36m>[39m
+                [0mConcept2Cure[0m
+                [36m<span>[39m
+                  [0m.RI[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-section"[39m
+            [36m>[39m
+              [0mClient categories[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-nav"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"nav-item"[39m
+                [33mtitle[39m=[32m"Medical Device & IVD"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ico"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-stethoscope"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 2v2"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 15a6 6 0 0 0 12 0v-3"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"20"[39m
+                      [33mcy[39m=[32m"10"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"lbl"[39m
+                [36m>[39m
+                  [0mMedical Device & IVD[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                ...
+
+Expected: "/concept2cure/conversation-thread"
+Received: "/concept2cure/vault"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx:258:58
+    256|     renderShellAt('vault');
+    257|     fireEvent.click(await screen.findByRole('button', { name: 'Search …
+    258|     await waitFor(() => expect(window.location.pathname).toBe(location…
+       |                                                          ^
+    259|     fireEvent.click(await screen.findByRole('button', { name: /^Back t…
+    260|     await waitFor(() => expect(window.location.pathname).toBe(location…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  01:51:26
+   Duration  21.40s (transform 2.74s, setup 140ms, import 1.91s, tests 18.73s, environment 468ms)
+

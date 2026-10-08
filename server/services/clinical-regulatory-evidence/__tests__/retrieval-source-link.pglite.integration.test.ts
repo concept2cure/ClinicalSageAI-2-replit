@@ -34,6 +34,7 @@ import {
   resolveEvidenceSourceIdsByArtifact,
   resolveEvidenceSourceId,
 } from '../retrieval-source-link';
+import { resolveDraftSources } from '../../ana/drafting-source-lineage';
 
 const ORG_A = 711;
 const ORG_B = 822;
@@ -76,6 +77,14 @@ beforeAll(async () => {
   idA1 = await makeSourceWithArtifact(ORG_A, 'art-1');
   idA2 = await makeSourceWithArtifact(ORG_A, 'art-2');
   idB3 = await makeSourceWithArtifact(ORG_B, 'art-3');
+  await pool.query(
+    `INSERT INTO cre_evidence_sources
+       (id, organization_id, visibility_class, source_type, title, checksum,
+        ingestion_status, extraction_status, metadata)
+     VALUES (2147483647, $1, 'tenant_private', 'client_document', 'last-source.pdf',
+             'sum-last-source', 'ingested', 'extracted', '{}'::jsonb)`,
+    [ORG_A],
+  );
 }, 90_000);
 
 afterAll(async () => {
@@ -157,5 +166,33 @@ describe('resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embe
     expect(map.get('art-1')).toBe(idA1);
     expect(map.get(`cre_source:${idA2}`)).toBe(idA2);
     expect(map.size).toBe(2);
+  });
+
+  it('resolves the inclusive SERIAL maximum only for its owning organization', async () => {
+    expect(await resolveEvidenceSourceId(ORG_A, 'cre_source:2147483647', pool)).toBe(2147483647);
+    expect(await resolveEvidenceSourceId(ORG_B, 'cre_source:2147483647', pool)).toBeNull();
+    expect(await resolveEvidenceSourceId(ORG_A, 'cre_source:2147483646', pool)).toBeNull();
+  });
+
+  it.each(['2147483648', '9007199254740992', '999999999999999999999999999999'])(
+    'keeps valid citations when an unavailable direct source ID exceeds SERIAL: %s', async unavailableId => {
+      const key = `cre_source:${idA2}`;
+      const map = await resolveEvidenceSourceIdsByArtifact(
+        ORG_A, ['art-1', key, `cre_source:${unavailableId}`, `cre_source:${idB3}`], pool,
+      );
+      expect([...map.entries()].sort()).toEqual([['art-1', idA1], [key, idA2]]);
+    },
+  );
+
+  it.each([
+    { evidence_source_id: 2147483648 },
+    { artifact_id: 'cre_source:2147483648' },
+  ])('drops and names an out-of-range drafting source without aborting the valid sources: %j', async unavailable => {
+    const result = await resolveDraftSources(ORG_A, [
+      { evidence_source_id: idA1, excerpt: 'The primary endpoint was assessed at twelve weeks.' },
+      { ...unavailable, excerpt: 'An unavailable source passage.' },
+    ], pool);
+    expect(result.sources.map(source => source.sourceId)).toEqual([idA1]);
+    expect(result.dropped).toEqual([{ index: 1, reason: 'not a Data Room source visible to this organization' }]);
   });
 });
