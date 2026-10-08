@@ -1,0 +1,178 @@
+# 2026-10-08T06:32:55Z npx vitest run --config vitest.config.ts server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+# sources: before review: the implementer's stream.ts and context-enrichment.ts, program-project-anchor.ts at HEAD (chat-context-builder.ts and relational-profile-service.ts are the same in both)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-08T06:33:02.458Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T06:33:02.459Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-08T06:33:02.460Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true
+[AnA RI] Intelligence prefix failed: recall unavailable
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=false 38ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true 7ms
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 13ms
+   → expected [ { type: 'run_started', …(1) }, …(9) ] to deep equally contain { type: 'warning', …(1) }
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 11ms
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 8ms
+   → expected [ 'list_platform_commands', …(3) ] to not include 'get_cmc_requirements'
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[AnA RI Stream] Conversation preparation failed: database unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[AnA RI Stream] Refused caller-supplied thread id: undefined
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice
+AssertionError: expected [ { type: 'run_started', …(1) }, …(9) ] to deep equally contain { type: 'warning', …(1) }
+
+- Expected:
+{
+  "message": "The claims and evidence records took too long to read for this reply. The answer does not draw on them.",
+  "type": "warning",
+}
+
++ Received:
+[
+  {
+    "runId": "run_test",
+    "type": "run_started",
+  },
+  {
+    "message": "Planning response…",
+    "phase": "orchestrating",
+    "type": "status",
+  },
+  {
+    "message": "Loading project memory…",
+    "phase": "loading_context",
+    "type": "status",
+  },
+  {
+    "message": "The claims took too long to read for this reply. The answer does not draw on them.",
+    "type": "warning",
+  },
+  {
+    "memory": [],
+    "memoryStatus": "unavailable",
+    "type": "context_used",
+    "unresolvedUploads": 0,
+    "uploads": [],
+  },
+  {
+    "message": "Generating response…",
+    "phase": "generating",
+    "type": "status",
+  },
+  {
+    "thread_id": "thread-1",
+    "type": "thread_id",
+  },
+  {
+    "orchestration": {
+      "activeWorkstream": null,
+      "appliedRole": "regulatory_affairs",
+      "detectedDocumentTemplate": null,
+      "detectedIntent": {
+        "confidence": 0.9,
+        "lens": "general",
+      },
+      "suggestedActions": [],
+      "workstreamHandoff": null,
+    },
+    "type": "orchestration",
+  },
+  {
+    "content": "Done.",
+    "type": "text",
+  },
+  {
+    "effortUsed": "thorough",
+    "latencyMs": 1,
+    "model": "m",
+    "modelTier": null,
+    "provider": "p",
+    "response": "Done.",
+    "rounds": 0,
+    "runPolicy": null,
+    "stoppedReason": "no_more_tools",
+    "telemetry": {
+      "phases": {
+        "contextMs": 1,
+        "firstTokenMs": 1,
+        "gatewayMs": 0,
+        "orchestrationMs": 0,
+      },
+    },
+    "type": "done",
+    "usage": {},
+  },
+]
+
+ ❯ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts:317:20
+    315|     // Names the source and why (ana-14), not "Some project context co…
+    316|     const warning = 'The claims and evidence records took too long to …
+    317|     expect(frames).toContainEqual({ type: 'warning', message: warning …
+       |                    ^
+    318|     expect(h.state.gatewayCalls[0].messages.some(m => m.role === 'syst…
+    319|     const { body } = h.state.post.turnRecorder.seal('answered');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was
+AssertionError: expected [ 'list_platform_commands', …(3) ] to not include 'get_cmc_requirements'
+ ❯ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts:379:47
+    377|     thread([{ tool: 'get_cmc_requirements', status: 'error' }], 'and f…
+    378|     await turn('and for the EU?');
+    379|     expect(h.state.gatewayCalls[0].tools).not.toContain('get_cmc_requi…
+       |                                               ^
+    380|
+    381|     h.state.gatewayCalls = [];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  06:32:56
+   Duration  10.59s (transform 6.71s, setup 106ms, import 10.08s, tests 115ms, environment 0ms)
+

@@ -1,0 +1,64 @@
+# 2026-10-08T06:31:19Z npx vitest run --config vitest.config.ts server/services/c2c/__tests__/project-ref-anchor-read.test.ts
+# sources: working tree (the fix)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > a database without the anchor column is no project
+{
+  "timestamp": "2026-10-08T06:31:22.634Z",
+  "level": "warn",
+  "message": "[program-project-anchor] projects.regulatory_program_id absent — program exports stay registry-unplaced (apply migrations/20260814_projects_regulatory_program_anchor.sql)",
+  "context": {
+    "context": "test"
+  }
+}
+
+stderr | server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > any other failed lookup is no project here (not strict), and is rethrown where strict is asked for
+{
+  "timestamp": "2026-10-08T06:31:22.637Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "test",
+    "err": "terminating connection"
+  }
+}
+
+stderr | server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > a database without the anchor column is still no project: no anchor can exist
+{
+  "timestamp": "2026-10-08T06:31:22.641Z",
+  "level": "warn",
+  "message": "[program-project-anchor] projects.regulatory_program_id absent — program exports stay registry-unplaced (apply migrations/20260814_projects_regulatory_program_anchor.sql)",
+  "context": {
+    "context": "test"
+  }
+}
+
+stderr | server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > a lookup that could not complete throws, where integerProjectForRef answers no project
+{
+  "timestamp": "2026-10-08T06:31:22.642Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "test",
+    "err": "terminating connection"
+  }
+}
+
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > an integer, or proj_ and an integer, is itself, with no read 2ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > a linked program UUID is its lowest-id projects row, read lower-cased and org-scoped 5ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > an unlinked program UUID is no project 1ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > a database without the anchor column is no project 3ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > any other failed lookup is no project here (not strict), and is rethrown where strict is asked for 2ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > never the integer a UUID starts with, and nothing else is read 1ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > answers as integerProjectForRef does for every ref, linked and unlinked 1ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > a database without the anchor column is still no project: no anchor can exist 1ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > a lookup that could not complete throws, where integerProjectForRef answers no project 3ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > a program with no organization to scope it throws and reads nothing; an integer needs no organization 1ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > takes a loader, and loads only for a program UUID 2ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  06:31:20
+   Duration  2.41s (transform 1.09s, setup 133ms, import 1.73s, tests 37ms, environment 0ms)
+

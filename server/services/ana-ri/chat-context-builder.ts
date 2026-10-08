@@ -35,6 +35,7 @@ import {
   buildContradictionWatchBlock,
 } from '../ana/contradiction-watch.js';
 import { getSessionBriefing } from '../ana/session-briefing.js';
+import { parseIntegerProjectId } from '../../lib/project-id.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -130,6 +131,12 @@ type ProjectPrefetchResults = [
 
 export async function prefetchRouteIntelligenceContext(params: {
   projectId?: string | number | null;
+  /**
+   * The integer projects.id the route resolved from `projectId` (a program UUID
+   * through its linked projects row, services/c2c/project-ref.ts). Omitted:
+   * only an integer `projectId` names a project here.
+   */
+  projectIdNumber?: number | null;
   organizationId?: number | null;
   authoringContext?: Record<string, unknown>;
   /** Numeric user id — enables AnA's per-user relational personality overlay. */
@@ -141,7 +148,13 @@ export async function prefetchRouteIntelligenceContext(params: {
 }): Promise<PrefetchedRouteIntelligenceContext> {
   const { projectId, organizationId, authoringContext, userId, targetAgency, sessionStart } =
     params;
-  const projectIdNumber = projectId != null ? Number(projectId) : null;
+  /* Number(projectId) was NaN for a program UUID (ana-14): the project reads
+     below were skipped, and the relational overlay and session briefing were
+     sent NaN and failed. parseIntegerProjectId is fail-closed: never NaN, and
+     never the integer a UUID's leading digits spell. */
+  const projectIdNumber = params.projectIdNumber !== undefined
+    ? params.projectIdNumber
+    : parseIntegerProjectId(projectId);
   const unavailable = new Set<string>();
   const bounded = async <T>(source: string, load: () => Promise<T>, ms = OPTIONAL_PREFETCH_TIMEOUT_MS): Promise<T> => {
     let timer: ReturnType<typeof setTimeout> | undefined;

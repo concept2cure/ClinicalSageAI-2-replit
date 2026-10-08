@@ -123,10 +123,14 @@ export async function loadRelationalOverlay(input: {
   const { organizationId, userId, projectId } = input;
   if (!organizationId || !userId || !Number.isFinite(Number(userId))) return '';
   try {
+    /* Only an integer projects.id names a project row. A program UUID that
+       reached here as Number(uuid) = NaN failed the whole read, the person's
+       own notes included (ana-14); the caller resolves the id first, and
+       anything else reads the person's notes alone, as reflectAfterTurn does. */
     const { user, project } = await loadProfiles(
       Number(organizationId),
       Number(userId),
-      projectId != null ? Number(projectId) : null
+      Number.isSafeInteger(projectId) && (projectId as number) > 0 ? (projectId as number) : null
     );
     if (!user && !project) return '';
 

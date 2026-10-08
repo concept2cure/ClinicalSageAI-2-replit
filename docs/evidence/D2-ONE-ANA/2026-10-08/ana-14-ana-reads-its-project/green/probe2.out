@@ -1,0 +1,31 @@
+# npx tsx probe2.ts — DATABASE_URL=local c2c_ui_screens (no program has a linked projects row)
+[unlinked /safety] unavailable=[] reasons={}
+   affirmative absence ("No ... data found for this project yet"): false
+   "## Project records" notice: true
+[unlinked /cmc] unavailable=[] reasons={}
+   affirmative absence ("No ... data found for this project yet"): false
+   "## Project records" notice: true
+[unlinked /workflow] unavailable=[] reasons={}
+   affirmative absence ("No ... data found for this project yet"): false
+   "## Project records" notice: true
+[unlinked Draft the Module 2.5 cli] unavailable=[] reasons={}
+   affirmative absence ("No ... data found for this project yet"): false
+   "## Project records" notice: true
+
+# the same probe with DATABASE_URL pointing at a database that does not exist (the anchor lookup fails)
+[lookup-fails /safety] unavailable=["project-record"] reasons={"project-record":"error"}
+   affirmative absence ("No ... data found for this project yet"): false
+   "## Project records" notice: false
+   model is told: Enrichment context unavailable: project-record (read failed). Do not infer that missing context or unresolved findings do not exist. Check the relevant records 
+[lookup-fails /cmc] unavailable=["project-record"] reasons={"project-record":"error"}
+   affirmative absence ("No ... data found for this project yet"): false
+   "## Project records" notice: false
+   model is told: Enrichment context unavailable: project-record (read failed). Do not infer that missing context or unresolved findings do not exist. Check the relevant records 
+[lookup-fails /workflow] unavailable=["project-record"] reasons={"project-record":"error"}
+   affirmative absence ("No ... data found for this project yet"): false
+   "## Project records" notice: false
+   model is told: Enrichment context unavailable: project-record (read failed). Do not infer that missing context or unresolved findings do not exist. Check the relevant records 
+[lookup-fails Draft the Module 2.5 cli] unavailable=["project-record"] reasons={"project-record":"error"}
+   affirmative absence ("No ... data found for this project yet"): false
+   "## Project records" notice: false
+   model is told: Enrichment context unavailable: project-record (read failed). Do not infer that missing context or unresolved findings do not exist. Check the relevant records 

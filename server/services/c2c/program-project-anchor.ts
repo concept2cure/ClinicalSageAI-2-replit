@@ -28,6 +28,7 @@ import type { PoolClient } from 'pg';
 import { and, asc, eq } from 'drizzle-orm';
 import { projects } from '../../../shared/schema';
 import type { RequestDb } from '../../db/requestDb';
+import { looksLikeProgramUuid, parseIntegerProjectId } from '../../lib/project-id.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { DEFAULT_WORKSPACE_MARKER } from './organization-default-workspace';
 
@@ -331,4 +332,45 @@ export async function resolveProgramProjectAnchor(
     });
     return null;
   }
+}
+
+/**
+ * The integer `projects.id` a project ref names, for a reader that must tell
+ * "no linked project" from "could not tell" (ana-14, 2026-10-08).
+ *
+ * The same answer as integerProjectForRef (services/c2c/project-ref.ts): an
+ * integer (parseIntegerProjectId, fail-closed) is itself, a program UUID is
+ * its anchor row (resolveProgramProjectAnchor, the lowest id, org-scoped), and
+ * anything else is null. One difference: this is strict. A lookup that could
+ * not complete THROWS, where integerProjectForRef logs it and answers null.
+ *
+ * project-ref.ts is not strict on purpose (its callers are best-effort, and a
+ * wrong project is worse than none), and it directs a caller that must fail on
+ * "could not tell" to pass strict to resolveProgramProjectAnchor itself. AnA's
+ * turn is such a caller: null lets it treat the program as having no project
+ * records, while a failed lookup must be reported, never read as "nothing
+ * recorded". This is that call, in one place, for the stream route and context
+ * enrichment. An absent anchor column is still null (no anchor can exist), as
+ * in resolveProgramProjectAnchor.
+ */
+export async function strictProjectRowForRef(
+  /** The db, or a loader for it: only a program UUID needs a read. */
+  db: RequestDb | (() => Promise<RequestDb>),
+  params: { ref: unknown; orgId: number; context: string },
+): Promise<number | null> {
+  const asInteger = parseIntegerProjectId(params.ref);
+  if (asInteger !== null) return asInteger;
+  if (!looksLikeProgramUuid(params.ref)) return null;
+  // A program is read inside its organization. With none, the lookup cannot be
+  // made, which is "could not tell", not "no linked project".
+  if (!Number.isSafeInteger(params.orgId) || params.orgId <= 0) {
+    throw new Error('no organization to scope the program lookup');
+  }
+  const handle = typeof db === 'function' ? await db() : db;
+  return resolveProgramProjectAnchor(handle, {
+    programId: String(params.ref).trim().toLowerCase(),
+    orgId: params.orgId,
+    context: params.context,
+    strict: true,
+  });
 }

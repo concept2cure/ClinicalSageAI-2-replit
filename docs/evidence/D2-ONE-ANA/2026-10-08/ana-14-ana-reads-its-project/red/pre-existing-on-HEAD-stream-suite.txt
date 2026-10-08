@@ -1,0 +1,9 @@
+    "error": "[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on"
+    "error": "[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on"
+    "error": "[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was
+AssertionError: expected [ 'list_platform_commands', …(3) ] to not include 'get_cmc_requirements'
+ ❯ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts:373:47
+ Test Files  1 failed | 32 passed (33)
+      Tests  1 failed | 288 passed (289)

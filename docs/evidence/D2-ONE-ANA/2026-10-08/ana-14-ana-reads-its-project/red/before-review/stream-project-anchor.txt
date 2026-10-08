@@ -1,0 +1,536 @@
+# 2026-10-08T06:32:03Z npx vitest run --config vitest.config.ts server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+# sources: before review: the implementer's stream.ts and context-enrichment.ts, program-project-anchor.ts at HEAD (chat-context-builder.ts and relational-profile-service.ts are the same in both)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-08T06:32:11.492Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T06:32:11.494Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-08T06:32:11.494Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > memory, prefetch, enrichment, bootstrap, the tool-run log and the reflection get 42, resolved once, org-scoped 108ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "project": {
+-       "id": 42,
+-       "status": "linked",
+-     },
++   {
++     "message": "Review the project",
++     "organizationId": 7,
+      "projectId": "d6160c9f-33d2-4be9-b779-eb27375f6e49",
++     "projectIdNumber": 42,
++     "submissionType": undefined,
++     "userRole": "general",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > a program with no linked project reads no project: memory gets no project id, nothing NaN 92ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "project": {
+-       "status": "none",
+-     },
++   {
++     "message": "Review the project",
++     "organizationId": 7,
++     "projectId": "d6160c9f-33d2-4be9-b779-eb27375f6e49",
++     "projectIdNumber": null,
++     "submissionType": undefined,
++     "userRole": "general",
+    },
+  ]
+
+
+Number of calls: 1
+
+stderr | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a failed lookup reaches enrichment as unresolved (error), so it is reported; no reader gets a project
+[AnA RI Stream] Project id not resolved: terminating connection due to administrator command
+
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a failed lookup reaches enrichment as unresolved (error), so it is reported; no reader gets a project 21ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "project": {
+-       "reason": "error",
+-       "status": "unresolved",
+-     },
++   {
++     "message": "/safety",
++     "organizationId": 7,
++     "projectId": "d6160c9f-33d2-4be9-b779-eb27375f6e49",
++     "projectIdNumber": null,
++     "submissionType": undefined,
++     "userRole": "general",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a stalled lookup holds the turn no longer than the deadline, and reaches enrichment as unresolved (timeout) 15003ms
+   → Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > names the sources in plain words on the stream 8ms
+   → expected [ Array(1) ] to include 'Could not read for this reply: projec…'
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"error"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["ectd"] {"ectd":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","recommendations"] {"readiness":"timeout","recommendations":"timeout"} 0ms
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile","workflow"] {"project-profile":"error","workflow":"timeout"} 2ms
+   → expected 'Could not read for this reply: projec…' to be 'Could not read for this reply: projec…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"error"} 1ms
+   → expected 'Could not read the workflow status fo…' to be 'Could not read the submission workflo…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"timeout"} 1ms
+   → expected 'The workflow status took too long to …' to be 'The submission workflow status took t…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"error"} 2ms
+   → expected 'Could not read the project record for…' to be 'Could not read the project records fo…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"timeout"} 1ms
+   → expected 'The project record took too long to r…' to be 'The project records took too long to …' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:safety/safety"] undefined 1ms
+   → expected 'Could not read the app:safety/safety …' to be 'Could not read the safety records for…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:fda/ectd"] {"app:fda/ectd":"error"} 2ms
+   → expected 'Could not read the app:fda/ectd for t…' to be 'Could not read the eCTD records for t…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc"] {"cmc":"error"} 2ms
+   → expected 'Could not read the cmc for this reply…' to be 'Could not read the CMC records for th…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc-build-state"] {"cmc-build-state":"timeout"} 1ms
+   → expected 'The cmc-build-state took too long to …' to be 'The Module 3 build state took too lon…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["iss"] {"iss":"error"} 1ms
+   → expected 'Could not read the iss for this reply…' to be 'Could not read the safety records for…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["simulation"] {"simulation":"timeout"} 3ms
+   → expected 'The simulation took too long to read …' to be 'The deficiency patterns took too long…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-agent-activity"] {"proactive-agent-activity":"timeout"} 1ms
+   → expected 'The proactive-agent-activity took too…' to be 'The recent agent activity took too lo…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-client-journey"] {"proactive-client-journey":"error"} 0ms
+   → expected 'Could not read the proactive-client-j…' to be 'Could not read the client journey sum…' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["tour-guide"] {"tour-guide":"timeout"} 0ms
+   → expected 'The tour-guide took too long to read …' to be 'The requested context took too long t…' // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","proactive-readiness"] {"readiness":"error","proactive-readiness":"error"} 0ms
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > every key the enrichment budget can record reads as plain words, never as the key 1ms
+   → project-record -> Could not read the project record for this reply. The answer does not draw on it.: expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > memory, prefetch, enrichment, bootstrap, the tool-run log and the reflection get 42, resolved once, org-scoped
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "project": {
+-       "id": 42,
+-       "status": "linked",
+-     },
++   {
++     "message": "Review the project",
++     "organizationId": 7,
+      "projectId": "d6160c9f-33d2-4be9-b779-eb27375f6e49",
++     "projectIdNumber": 42,
++     "submissionType": undefined,
++     "userRole": "general",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:107:23
+    105|     expect(io.prefetch).toHaveBeenCalledWith(expect.objectContaining({…
+    106|     // Enrichment keeps the UUID for the reads keyed on the program (C…
+    107|     expect(io.enrich).toHaveBeenCalledWith(expect.objectContaining({ p…
+       |                       ^
+    108|     expect(io.bootstrap).toHaveBeenCalledWith(expect.objectContaining(…
+    109|     expect(io.logToolRun).toHaveBeenCalledWith(expect.objectContaining…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > a program with no linked project reads no project: memory gets no project id, nothing NaN
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "project": {
+-       "status": "none",
+-     },
++   {
++     "message": "Review the project",
++     "organizationId": 7,
++     "projectId": "d6160c9f-33d2-4be9-b779-eb27375f6e49",
++     "projectIdNumber": null,
++     "submissionType": undefined,
++     "userRole": "general",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:119:23
+    117|     expect(io.memory.mock.calls[0][0].projectId).toBeUndefined();
+    118|     expect(io.prefetch).toHaveBeenCalledWith(expect.objectContaining({…
+    119|     expect(io.enrich).toHaveBeenCalledWith(expect.objectContaining({ p…
+       |                       ^
+    120|     expect(io.reflect).toHaveBeenCalledWith(expect.objectContaining({ …
+    121|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a failed lookup reaches enrichment as unresolved (error), so it is reported; no reader gets a project
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "project": {
+-       "reason": "error",
+-       "status": "unresolved",
+-     },
++   {
++     "message": "/safety",
++     "organizationId": 7,
++     "projectId": "d6160c9f-33d2-4be9-b779-eb27375f6e49",
++     "projectIdNumber": null,
++     "submissionType": undefined,
++     "userRole": "general",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:131:23
+    129|     await streamTurn(app, { message: '/safety', project_id: PROGRAM });
+    130|
+    131|     expect(io.enrich).toHaveBeenCalledWith(expect.objectContaining({ p…
+       |                       ^
+    132|     expect(io.prefetch).toHaveBeenCalledWith(expect.objectContaining({…
+    133|     expect(io.memory.mock.calls[0][0].projectId).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a stalled lookup holds the turn no longer than the deadline, and reaches enrichment as unresolved (timeout)
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:136:3
+    134|   });
+    135|
+    136|   it('a stalled lookup holds the turn no longer than the deadline, and…
+       |   ^
+    137|     io.resolve.mockImplementation(() => new Promise<never>(() => {}));
+    138|     let prefetchAt = 0;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > names the sources in plain words on the stream
+AssertionError: expected [ Array(1) ] to include 'Could not read for this reply: projec…'
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:163:22
+    161|     const warnings = events.filter(e => e.type === 'warning').map(e =>…
+    162|
+    163|     expect(warnings).toContain('Could not read for this reply: project…
+       |                      ^
+    164|     expect(warnings.join(' ')).not.toContain('Some project context cou…
+    165|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile","workflow"] {"project-profile":"error","workflow":"timeout"}
+AssertionError: expected 'Could not read for this reply: projec…' to be 'Could not read for this reply: projec…' // Object.is equality
+
+Expected: "Could not read for this reply: project profile. Took too long to read: submission workflow status. The answer does not draw on them."
+Received: "Could not read for this reply: project profile. Took too long to read: workflow status. The answer does not draw on them."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"error"}
+AssertionError: expected 'Could not read the workflow status fo…' to be 'Could not read the submission workflo…' // Object.is equality
+
+Expected: "Could not read the submission workflow status for this reply. The answer does not draw on it."
+Received: "Could not read the workflow status for this reply. The answer does not draw on them."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"timeout"}
+AssertionError: expected 'The workflow status took too long to …' to be 'The submission workflow status took t…' // Object.is equality
+
+Expected: "The submission workflow status took too long to read for this reply. The answer does not draw on it."
+Received: "The workflow status took too long to read for this reply. The answer does not draw on them."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"error"}
+AssertionError: expected 'Could not read the project record for…' to be 'Could not read the project records fo…' // Object.is equality
+
+Expected: "Could not read the project records for this reply. The answer does not draw on them."
+Received: "Could not read the project record for this reply. The answer does not draw on it."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"timeout"}
+AssertionError: expected 'The project record took too long to r…' to be 'The project records took too long to …' // Object.is equality
+
+Expected: "The project records took too long to read for this reply. The answer does not draw on them."
+Received: "The project record took too long to read for this reply. The answer does not draw on it."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:safety/safety"] undefined
+AssertionError: expected 'Could not read the app:safety/safety …' to be 'Could not read the safety records for…' // Object.is equality
+
+Expected: "Could not read the safety records for this reply. The answer does not draw on them."
+Received: "Could not read the app:safety/safety for this reply. The answer does not draw on it."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:fda/ectd"] {"app:fda/ectd":"error"}
+AssertionError: expected 'Could not read the app:fda/ectd for t…' to be 'Could not read the eCTD records for t…' // Object.is equality
+
+Expected: "Could not read the eCTD records for this reply. The answer does not draw on them."
+Received: "Could not read the app:fda/ectd for this reply. The answer does not draw on it."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc"] {"cmc":"error"}
+AssertionError: expected 'Could not read the cmc for this reply…' to be 'Could not read the CMC records for th…' // Object.is equality
+
+Expected: "Could not read the CMC records for this reply. The answer does not draw on them."
+Received: "Could not read the cmc for this reply. The answer does not draw on it."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc-build-state"] {"cmc-build-state":"timeout"}
+AssertionError: expected 'The cmc-build-state took too long to …' to be 'The Module 3 build state took too lon…' // Object.is equality
+
+Expected: "The Module 3 build state took too long to read for this reply. The answer does not draw on it."
+Received: "The cmc-build-state took too long to read for this reply. The answer does not draw on it."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["iss"] {"iss":"error"}
+AssertionError: expected 'Could not read the iss for this reply…' to be 'Could not read the safety records for…' // Object.is equality
+
+Expected: "Could not read the safety records for this reply. The answer does not draw on them."
+Received: "Could not read the iss for this reply. The answer does not draw on them."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["simulation"] {"simulation":"timeout"}
+AssertionError: expected 'The simulation took too long to read …' to be 'The deficiency patterns took too long…' // Object.is equality
+
+Expected: "The deficiency patterns took too long to read for this reply. The answer does not draw on them."
+Received: "The simulation took too long to read for this reply. The answer does not draw on it."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-agent-activity"] {"proactive-agent-activity":"timeout"}
+AssertionError: expected 'The proactive-agent-activity took too…' to be 'The recent agent activity took too lo…' // Object.is equality
+
+Expected: "The recent agent activity took too long to read for this reply. The answer does not draw on it."
+Received: "The proactive-agent-activity took too long to read for this reply. The answer does not draw on it."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-client-journey"] {"proactive-client-journey":"error"}
+AssertionError: expected 'Could not read the proactive-client-j…' to be 'Could not read the client journey sum…' // Object.is equality
+
+Expected: "Could not read the client journey summary for this reply. The answer does not draw on it."
+Received: "Could not read the proactive-client-journey for this reply. The answer does not draw on it."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["tour-guide"] {"tour-guide":"timeout"}
+AssertionError: expected 'The tour-guide took too long to read …' to be 'The requested context took too long t…' // Object.is equality
+
+Expected: "The requested context took too long to read for this reply. The answer does not draw on it."
+Received: "The tour-guide took too long to read for this reply. The answer does not draw on it."
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:194:21
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+    194|     expect(warning).toBe(expected);
+       |                     ^
+    195|     expect(warning).not.toMatch(/!/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/20]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > every key the enrichment budget can record reads as plain words, never as the key
+AssertionError: project-record -> Could not read the project record for this reply. The answer does not draw on it.: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:221:79
+    219|       const warning = unavailableContextWarning([key], { [key]: 'error…
+    220|       const named = /^Could not read the (.+) for this reply\. The ans…
+    221|       expect(named !== undefined && words.has(named), `${key} -> ${war…
+       |                                                                               ^
+    222|     }
+    223|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/20]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed | 5 passed (25)
+   Start at  06:32:04
+   Duration  28.64s (transform 9.12s, setup 110ms, import 12.84s, tests 15.26s, environment 0ms)
+

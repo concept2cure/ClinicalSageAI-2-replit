@@ -154,6 +154,8 @@ import {
 import {
   enrichContextForChat,
   type EnrichmentResult,
+  type EnrichmentUnavailableReason,
+  type TurnProject,
 } from '../../services/ana-ri/context-enrichment.js';
 import {
   buildAuthoringContextBlock,
@@ -317,6 +319,169 @@ export const APPROVAL_TIMEOUT_WHY = 'nobody decided in time';
  * (row 74, F1).
  */
 type SettledApproval = { ok: boolean; result: unknown; why?: string; heldBack?: boolean };
+
+/**
+ * How long a turn waits to learn which project row it is in: the deadline every
+ * other optional pre-gateway read has (the route prefetch's 3 s, the enrichment
+ * budget's 3 s). The lookup is awaited before the prefetch, so without one a
+ * slow database held the whole turn (up to the pool's 5 s connect plus 30 s
+ * statement timeout) before any context read started.
+ */
+export const TURN_PROJECT_DEADLINE_MS = 3000;
+const TURN_PROJECT_TIMED_OUT = new Error('project lookup deadline exceeded');
+
+/**
+ * The project row this turn is in (ana-14): an integer projects.id as itself, a
+ * program UUID through its linked projects row (lowest id, org-scoped), and
+ * anything else no project. Resolved once and handed to every reader keyed on
+ * projects.id.
+ *
+ * Strict and bounded (strictProjectRowForRef, TURN_PROJECT_DEADLINE_MS): a
+ * lookup that fails or runs out of time is 'unresolved', with why, and context
+ * enrichment reports it to the person. It is never "no linked project": that
+ * reads as "nothing recorded", and the readers then told the model a project
+ * had no safety, CMC or CSR data when nobody had looked.
+ */
+async function resolveTurnProject(ref: unknown, orgId: unknown): Promise<TurnProject> {
+  if (ref === null || ref === undefined || ref === '') return { status: 'none' };
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const id = await Promise.race([
+      (async () => {
+        const { strictProjectRowForRef } = await import('../../services/c2c/program-project-anchor.js');
+        return strictProjectRowForRef(async () => (await import('../../db.js')).db, {
+          ref,
+          orgId: Number(orgId),
+          context: 'ana-ri.stream',
+        });
+      })(),
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => reject(TURN_PROJECT_TIMED_OUT), TURN_PROJECT_DEADLINE_MS);
+      }),
+    ]);
+    return id === null ? { status: 'none' } : { status: 'linked', id };
+  } catch (err) {
+    const reason: EnrichmentUnavailableReason = err === TURN_PROJECT_TIMED_OUT ? 'timeout' : 'error';
+    console.warn('[AnA RI Stream] Project not resolved:', reason, err instanceof Error ? err.message : String(err));
+    return { status: 'unresolved', reason };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** A source's name in the person's words, and whether it reads as one thing or several. */
+type ContextSourceLabel = { text: string; plural: boolean };
+const single = (text: string): ContextSourceLabel => ({ text, plural: false });
+const several = (text: string): ContextSourceLabel => ({ text, plural: true });
+
+/**
+ * The person's words for every source context enrichment can report missing,
+ * keyed by the reader (context-enrichment.ts budget keys). A key the budget can
+ * record that is not here is reached through READER_FOR_KEY, or by its app or
+ * proactive prefix; anything else is "requested context", never the key.
+ */
+const CONTEXT_SOURCE_LABELS: Record<string, ContextSourceLabel> = {
+  'project-record': several('project records'),
+  'project-profile': single('project profile'),
+  workflow: single('submission workflow status'),
+  readiness: single('readiness score'),
+  recommendations: several('recommended next steps'),
+  signals: several('regulatory signals'),
+  foresight: several('risk forecasts'),
+  deficiency: several('deficiency patterns'),
+  deficiencies: single('deficiency taxonomy'),
+  precedent: several('precedents'),
+  claims: several('claims and evidence records'),
+  consistency: single('cross-module consistency check'),
+  knowledge: single('project knowledge base'),
+  decisions: several('decision records'),
+  biostatistics: several('biostatistics records'),
+  safety: several('safety records'),
+  cmc: several('CMC records'),
+  'cmc-build-state': single('Module 3 build state'),
+  csr: several('clinical study report records'),
+  device: several('device records'),
+  diagnostics: several('diagnostics records'),
+  cms: several('coverage and reimbursement records'),
+  ectd: several('eCTD records'),
+  amend: single('amendment history'),
+  'client-journey': single('client journey summary'),
+  'agent-activity': single('recent agent activity'),
+};
+
+/**
+ * Slash commands and natural-language triggers recorded under their own name,
+ * mapped to the reader they ran (context-enrichment.ts enrichMap and triggers).
+ */
+const READER_FOR_KEY: Record<string, string> = {
+  recommend: 'recommendations',
+  next: 'recommendations',
+  checklist: 'readiness',
+  simulate: 'deficiency',
+  simulation: 'deficiency',
+  brief: 'deficiency',
+  memo: 'foresight',
+  ask: 'knowledge',
+  sap: 'biostatistics',
+  power: 'biostatistics',
+  dose: 'biostatistics',
+  defensibility: 'biostatistics',
+  design: 'biostatistics',
+  narrative: 'safety',
+  iss: 'safety',
+  smpc: 'safety',
+  rmp: 'safety',
+  uspi: 'safety',
+  ise: 'claims',
+  freeze: 'ectd',
+  sign: 'ectd',
+};
+
+/** The person's words for a source key: `app:<id>/<source>` and `proactive-<source>` read as the source. */
+function contextSourceLabel(key: string): ContextSourceLabel {
+  const own = <T>(table: Record<string, T>, k: string): T | undefined =>
+    Object.prototype.hasOwnProperty.call(table, k) ? table[k] : undefined;
+  const bare = key.startsWith('app:') ? key.slice(key.indexOf('/') + 1) : key.replace(/^proactive-/, '');
+  return own(CONTEXT_SOURCE_LABELS, own(READER_FOR_KEY, bare) ?? bare) ?? single('requested context');
+}
+
+/**
+ * What the person reads when context this reply should have drawn on could not
+ * be read: which context, whether the read failed or took too long, and that
+ * the answer does not draw on it. It replaced one sentence for every case,
+ * "Some project context could not be loaded for this reply", which named
+ * nothing the person could check, and which every project-scoped turn showed
+ * while the cause was a wrong project id (ana-14).
+ */
+export function unavailableContextWarning(
+  sources: string[],
+  reasons?: Record<string, EnrichmentUnavailableReason>,
+): string {
+  const labelsFor = (reason: EnrichmentUnavailableReason) => {
+    const seen = new Map<string, ContextSourceLabel>();
+    for (const source of sources) {
+      if ((reasons?.[source] ?? 'error') !== reason) continue;
+      const label = contextSourceLabel(source);
+      if (!seen.has(label.text)) seen.set(label.text, label);
+    }
+    return [...seen.values()];
+  };
+  const failed = labelsFor('error');
+  // A source both failed and timed out (two readers, one label) is named once, as failed.
+  const slow = labelsFor('timeout').filter(label => !failed.some(f => f.text === label.text));
+  const all = [...failed, ...slow];
+  const names = (labels: ContextSourceLabel[]) => labels.map(label => label.text).join(', ');
+  const tail = `The answer does not draw on ${all.length === 1 && !all[0].plural ? 'it' : 'them'}.`;
+  if (all.length === 1) {
+    return failed.length > 0
+      ? `Could not read the ${all[0].text} for this reply. ${tail}`
+      : `The ${all[0].text} took too long to read for this reply. ${tail}`;
+  }
+  const parts: string[] = [];
+  if (failed.length > 0) parts.push(`Could not read for this reply: ${names(failed)}.`);
+  if (slow.length > 0) parts.push(`${failed.length > 0 ? 'Took too long to read' : 'Took too long to read for this reply'}: ${names(slow)}.`);
+  return `${parts.join(' ')} ${tail}`;
+}
 
 /** What the person reads for a step that did not run because it was not authorised. */
 function heldBackMessage(step: string, why: string | undefined): string {
@@ -885,6 +1050,14 @@ export function mountStreamRoute(router: Router): void {
       const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
 
       const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
+      /* The integer projects.id this turn's project is, resolved once and handed
+         to every reader keyed on it: the project prefetch and relational
+         overlay, memory, enrichment, the session bootstrap, the tool-run log and
+         the relational reflection. The v2 app sends the program UUID, and each
+         of them used to take Number(uuid), which is NaN (ana-14). Started here,
+         awaited before the first reader needs it, and bounded
+         (TURN_PROJECT_DEADLINE_MS). */
+      const streamProjectPromise = resolveTurnProject(streamProjectId, orgId);
       const streamAuthoringContext =
         authoring_context && typeof authoring_context === 'object'
           ? ({ ...authoring_context } as Record<string, unknown>)
@@ -993,8 +1166,11 @@ export function mountStreamRoute(router: Router): void {
         return '';
       });
 
+      const streamProject = await streamProjectPromise;
+      const streamProjectIdNumber = streamProject.status === 'linked' ? streamProject.id : null;
       const prefetchedStreamContext = await prefetchRouteIntelligenceContext({
         projectId: streamProjectId,
+        projectIdNumber: streamProjectIdNumber,
         organizationId: orgId,
         authoringContext: streamAuthoringContext,
         userId: typeof userId === 'number' ? userId : Number(userId) || null,
@@ -1085,7 +1261,7 @@ export function mountStreamRoute(router: Router): void {
         buildMemoryContextForChat({
           threadId: threadId || '',
           organizationId: orgId ? Number(orgId) : undefined,
-          projectId: streamProjectId || undefined,
+          projectId: streamProjectIdNumber ?? undefined,
           query: message,
           limitPerLayer: 4,
           maxChars: 3500,
@@ -1096,6 +1272,8 @@ export function mountStreamRoute(router: Router): void {
         enrichContextForChat({
           message,
           projectId: streamProjectId,
+          // Unresolved is reported there, as 'project-record', with why.
+          project: streamProject,
           organizationId: orgId ? Number(orgId) : undefined,
           submissionType: orchestration.detectedSubmissionType || undefined,
           userRole: effectiveRole,
@@ -1107,7 +1285,10 @@ export function mountStreamRoute(router: Router): void {
       streamContextMs = Date.now() - streamContextStart;
 
       if (enrichment.enrichmentMeta?.unavailableSources?.length) {
-        const warning = 'Some project context could not be loaded for this reply. Check the relevant records before relying on missing information.';
+        const warning = unavailableContextWarning(
+          enrichment.enrichmentMeta.unavailableSources,
+          enrichment.enrichmentMeta.unavailableReasons,
+        );
         turnRecorder?.warn(warning);
         res.write(`data: ${JSON.stringify({ type: 'warning', message: warning })}\n\n`);
       }
@@ -1206,24 +1387,17 @@ export function mountStreamRoute(router: Router): void {
          rides as a system turn ahead of the user's message, exactly like the
          memory and enrichment blocks above. */
       const { sessionBootstrapBlockFor } = await import('../../services/ana-session-bootstrap.js');
-      /* streamProjectId is whatever the client sent — 'proj_7', '7', 7, or a
-         program UUID — and the project-atom loader takes the numeric projects.id.
-         Normalized here rather than passed through: a UUID reaching an integer
-         column raises 22P02, which the loader's own fault tolerance would
-         swallow into "this project has no memory". Anything that is not a
-         positive integer is simply omitted, and the org-level half of the
+      /* The project-atom loader takes the numeric projects.id: the turn's
+         resolved one. A UUID reaching an integer column raises 22P02, which the
+         loader's own fault tolerance would swallow into "this project has no
+         memory". This used to normalize 'proj_7' and '7' here and drop a program
+         UUID, so a v2 project's atoms never loaded; a program now loads through
+         its linked project. With no linked project, the org-level half of the
          rehydration (client atoms, lessons, the vault files) still lands. */
-      const streamBootstrapProjectId = ((): number | undefined => {
-        const raw = typeof streamProjectId === 'string'
-          ? streamProjectId.replace(/^proj_/, '')
-          : streamProjectId;
-        const n = Number(raw);
-        return Number.isInteger(n) && n > 0 ? n : undefined;
-      })();
       const streamBootstrapBlock = await sessionBootstrapBlockFor({
         priorMessageCount: streamPriorTurns,
         organizationId: orgId ? Number(orgId) : null,
-        projectId: streamBootstrapProjectId,
+        projectId: streamProjectIdNumber ?? undefined,
         threadId: threadId ?? undefined,
         atomLimit: 6,
       });
@@ -2324,7 +2498,7 @@ export function mountStreamRoute(router: Router): void {
               }
               void logToolRun({
                 threadId: thread_id,
-                projectId: streamProjectId ? Number(streamProjectId) || null : null,
+                projectId: streamProjectIdNumber,
                 userId: userId || null,
                 organizationId: orgId,
                 toolName: toolUse.name,
@@ -3166,7 +3340,7 @@ export function mountStreamRoute(router: Router): void {
       void reflectAfterTurn({
         organizationId: orgId ? Number(orgId) : null,
         userId: typeof userId === 'number' ? userId : Number(userId) || null,
-        projectId: streamProjectId != null ? Number(streamProjectId) : null,
+        projectId: streamProjectIdNumber,
         userMessage: message,
         assistantMessage: fullContent,
       }).catch(() => {});

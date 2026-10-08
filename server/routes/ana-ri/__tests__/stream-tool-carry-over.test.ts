@@ -34,7 +34,11 @@ const h = vi.hoisted(() => {
     guardedInputs: [] as string[],
     encapsulateInput: false,
     prefetch: { unavailableSources: [] as string[], contextAvailabilityBlock: '' },
-    enrichment: { block: '', sources: [] as string[], enrichmentMeta: { unavailableSources: [] as string[] } },
+    enrichment: {
+      block: '',
+      sources: [] as string[],
+      enrichmentMeta: { unavailableSources: [] as string[] } as { unavailableSources: string[]; unavailableReasons?: Record<string, 'timeout' | 'error'> },
+    },
     prefetchWait: null as Promise<void> | null,
     onPrefetch: null as (() => void) | null,
   };
@@ -305,13 +309,15 @@ describe('a follow-up keeps the tools its conversation used (TP-RL-3)', () => {
     h.state.enrichment = {
       block: '\nEnrichment context unavailable: claims. Do not infer that missing context or unresolved findings do not exist.',
       sources: [],
-      enrichmentMeta: { unavailableSources: ['claims'] },
+      enrichmentMeta: { unavailableSources: ['claims'], unavailableReasons: { claims: 'timeout' } },
     };
     const frames = await turn('Review the claims');
-    expect(frames).toContainEqual({ type: 'warning', message: 'Some project context could not be loaded for this reply. Check the relevant records before relying on missing information.' });
+    // Names the source and why (ana-14), not "Some project context could not be loaded".
+    const warning = 'The claims and evidence records took too long to read for this reply. The answer does not draw on them.';
+    expect(frames).toContainEqual({ type: 'warning', message: warning });
     expect(h.state.gatewayCalls[0].messages.some(m => m.role === 'system' && typeof m.content === 'string' && m.content.includes('Enrichment context unavailable'))).toBe(true);
     const { body } = h.state.post.turnRecorder.seal('answered');
-    expect(body.warnings).toContain('Some project context could not be loaded for this reply. Check the relevant records before relying on missing information.');
+    expect(body.warnings).toContain(warning);
   });
 
   it('reports unavailable optional context to the person and includes it in the model input', async () => {

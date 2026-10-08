@@ -1,0 +1,118 @@
+# 2026-10-08T06:33:38Z npx vitest run --config vitest.config.ts server/services/ana-ri/__tests__/prefetch-program-project.test.ts
+# sources: HEAD (7a6edef06): all five source files of this slice
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/prefetch-program-project.test.ts
+{
+  "timestamp": "2026-10-08T06:33:43.262Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T06:33:43.263Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/prefetch-program-project.test.ts
+{
+  "timestamp": "2026-10-08T06:33:43.263Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/prefetch-program-project.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/prefetch-program-project.test.ts
+{
+  "timestamp": "2026-10-08T06:33:43.631Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/prefetch-program-project.test.ts
+Loaded 0 academic documents
+
+ × server/services/ana-ri/__tests__/prefetch-program-project.test.ts > route prefetch with a program UUID > reads the project the route resolved: profile, feedback, snapshot, overlay and briefing get 42 8ms
+   → expected NaN to be 42 // Object.is equality
+ × server/services/ana-ri/__tests__/prefetch-program-project.test.ts > route prefetch with a program UUID > with no project id resolved (null), a UUID is no project: never NaN 1ms
+   → expected NaN to be null
+ × server/services/ana-ri/__tests__/prefetch-program-project.test.ts > route prefetch with a program UUID > with no project id resolved (undefined), a UUID is no project: never NaN 1ms
+   → expected NaN to be null
+ × server/services/ana-ri/__tests__/prefetch-program-project.test.ts > route prefetch with a program UUID > an integer project id still names its project without the route resolving it 1ms
+   → expected NaN to be 33 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/prefetch-program-project.test.ts > route prefetch with a program UUID > reads the project the route resolved: profile, feedback, snapshot, overlay and briefing get 42
+AssertionError: expected NaN to be 42 // Object.is equality
+
+- Expected
++ Received
+
+- 42
++ NaN
+
+ ❯ server/services/ana-ri/__tests__/prefetch-program-project.test.ts:58:36
+     56|     const result = await prefetchRouteIntelligenceContext({ ...INPUT, …
+     57|
+     58|     expect(result.projectIdNumber).toBe(42);
+       |                                    ^
+     59|     expect(h.profile).toHaveBeenCalledWith(42, 7);
+     60|     expect(h.feedback).toHaveBeenCalledWith(42, 7);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana-ri/__tests__/prefetch-program-project.test.ts > route prefetch with a program UUID > with no project id resolved (null), a UUID is no project: never NaN
+ FAIL  server/services/ana-ri/__tests__/prefetch-program-project.test.ts > route prefetch with a program UUID > with no project id resolved (undefined), a UUID is no project: never NaN
+AssertionError: expected NaN to be null
+
+- Expected:
+null
+
++ Received:
+NaN
+
+ ❯ server/services/ana-ri/__tests__/prefetch-program-project.test.ts:73:36
+     71|     const result = await prefetchRouteIntelligenceContext({ ...INPUT, …
+     72|
+     73|     expect(result.projectIdNumber).toBeNull();
+       |                                    ^
+     74|     expect(h.profile).not.toHaveBeenCalled();
+     75|     expect(h.relational).toHaveBeenCalledWith(expect.objectContaining(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana-ri/__tests__/prefetch-program-project.test.ts > route prefetch with a program UUID > an integer project id still names its project without the route resolving it
+AssertionError: expected NaN to be 33 // Object.is equality
+
+- Expected
++ Received
+
+- 33
++ NaN
+
+ ❯ server/services/ana-ri/__tests__/prefetch-program-project.test.ts:82:36
+     80|   it('an integer project id still names its project without the route …
+     81|     const result = await prefetchRouteIntelligenceContext({ ...INPUT, …
+     82|     expect(result.projectIdNumber).toBe(33);
+       |                                    ^
+     83|     expect(h.profile).toHaveBeenCalledWith(33, 7);
+     84|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  06:33:39
+   Duration  14.10s (transform 9.97s, setup 102ms, import 13.60s, tests 17ms, environment 0ms)
+
