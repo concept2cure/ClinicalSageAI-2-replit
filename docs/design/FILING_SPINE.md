@@ -430,6 +430,7 @@ Two corrections to the readers:
 | Slice 24: project readiness and submissions | `b1d7d85ec` | Landed | Yes | One verdict per project becomes one row per market (F9). Its components are generalised, not rebuilt, and its tests are re-pointed, not deleted. The "Open readiness" link (`ProjectHome.tsx:416`) is retargeted in F10 |
 | ana-14: AnA reads its project | `427775e54` | Landed | Yes | Nothing |
 | 2D: review loop | Working tree | In flight | Yes | Nothing. F1 and F7 wait for its commit (it edits `authoring.router.ts` and the review-board tests) |
+| F0: filing-path reachability gate | The commit that adds `tests/ui/filing-path-reachability.test.ts` | Landed 2026-10-08 | Yes | Each of F3, F4, F7, F10, F12 and F15 removes its hop from `tests/ui/filing-path-reachability.baseline.json` in the same change; the test fails until it does. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f0-filing-path-reachability/` |
 
 ### 7.2 New slices
 
