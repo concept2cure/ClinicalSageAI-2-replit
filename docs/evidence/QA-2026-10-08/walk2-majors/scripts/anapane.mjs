@@ -26,6 +26,6 @@ const r = await page.evaluate(() => {
     answerVisible: !!(rr && ar && ar.bottom > rr.top && ar.top < rr.bottom), pageScrolled: document.scrollingElement.scrollTop, headerTop: Math.round(document.querySelector(".ed-doc-h").getBoundingClientRect().top),
   };
 });
-console.log(tag, JSON.stringify(r));
+console.info(tag, JSON.stringify(r));
 await page.screenshot({ path: `${process.env.OUT}/screens/anapane-${tag}.png` });
 await done();

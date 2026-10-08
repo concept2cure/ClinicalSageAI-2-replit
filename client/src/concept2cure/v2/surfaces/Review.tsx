@@ -173,6 +173,12 @@ export function openReviewDocument(
 
 /* ── Review-decision modal ── */
 
+/** What a thrown review request says: the API's own message, or that nothing was reached. */
+function unreachedMessage(e: unknown): string {
+  const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+  return known && (e as Error).message ? (e as Error).message : 'Could not reach the authoring service. Nothing changed.';
+}
+
 function DecisionModal({ onClose, item, onRecorded }: {
   onClose: () => void;
   item: ReviewItem;
@@ -228,8 +234,7 @@ function DecisionModal({ onClose, item, onRecorded }: {
       }
       onRecorded?.(decision);
     } catch (e) {
-      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      setErr(known && (e as Error).message ? (e as Error).message : 'Could not reach the authoring service. Nothing changed.');
+      setErr(unreachedMessage(e));
     } finally {
       setBusy(false);
     }

@@ -44,12 +44,12 @@ export async function open(name, user = RAJ, { fresh = false } = {}) {
     const m = r.request().method();
     if (m !== 'GET') {
       let body = '';
-      try { body = (await r.text()).slice(0, 2500).replace(/eyJ[A-Za-z0-9_.-]{20,}/g, '[redacted-jwt]').replace(/"(accessToken|refreshToken|token|setupUrl|secret|otpauthUrl|qrCode)":"[^"]*"/g, '"$1":"[redacted]"').replace(/(token=)[A-Za-z0-9_-]+/g, '$1[redacted]'); } catch {}
-      let req = (r.request().postData() || '').slice(0, 1500).replace(/"password"\s*:\s*"[^"]*"/g, '"password":"[redacted]"').replace(/"currentPassword"\s*:\s*"[^"]*"/g, '"currentPassword":"[redacted]"');
+      try { body = (await r.text()).slice(0, 2500).replace(/eyJ[A-Za-z0-9_.-]{20,}/g, '[redacted-jwt]').replace(/"(accessToken|refreshToken|token|setupUrl|secret|otpauthUrl|qrCode)":"[^"]*"/g, '"$1":"[redacted]"').replace(/(token=)[A-Za-z0-9_-]+/g, '$1[redacted]'); } catch { /* body unreadable: logged empty */ }
+      const req = (r.request().postData() || '').slice(0, 1500).replace(/"password"\s*:\s*"[^"]*"/g, '"password":"[redacted]"').replace(/"currentPassword"\s*:\s*"[^"]*"/g, '"currentPassword":"[redacted]"');
       fs.appendFileSync(`${OUT}/${name}-api.log`, `${new Date().toISOString().slice(11, 19)} ${m} ${r.status()} ${u.replace(BASE, '')}\n  REQ ${req}\n  RES ${body.replace(/\n/g, ' ')}\n`);
     }
   });
-  const done = async () => { writeLog(name, log); try { await ctx.storageState({ path: statePath }); } catch {} await browser.close(); };
+  const done = async () => { writeLog(name, log); try { await ctx.storageState({ path: statePath }); } catch { /* state not saved */ } await browser.close(); };
   return { browser, ctx, page, log, done };
 }
 export async function clickables(page, scope = 'main') {

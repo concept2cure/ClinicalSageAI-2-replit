@@ -16,7 +16,7 @@ const report = await page.evaluate(() => {
     let p = el.parentElement;
     while (p) {
       const pr = p.getBoundingClientRect();
-      const cs = getComputedStyle(p);
+      const cs = window.getComputedStyle(p);
       if (/(auto|hidden|scroll|clip)/.test(cs.overflowX) && (r.right > pr.right + 1 || r.left < pr.left - 1)) return `CLIPPED by .${String(p.className).split(' ')[0]} (x ${Math.round(r.left)}-${Math.round(r.right)}, box ends ${Math.round(pr.right)})`;
       p = p.parentElement;
     }
@@ -34,6 +34,6 @@ const report = await page.evaluate(() => {
   out.push(`HEADER height ${Math.round(hr.height)} width ${Math.round(hr.width)}; doc scrollWidth ${document.documentElement.scrollWidth} vs viewport ${vw}`);
   return out;
 });
-console.log(`${tag} ${w}x${h}\n` + report.join('\n'));
+console.info(`${tag} ${w}x${h}\n` + report.join('\n'));
 await page.screenshot({ path: `${process.env.OUT}/screens/toolbar-${tag}-${w}.png` });
 await done();

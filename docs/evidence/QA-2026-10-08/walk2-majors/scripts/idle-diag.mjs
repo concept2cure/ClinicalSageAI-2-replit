@@ -12,16 +12,15 @@ page.on('request', (r) => { if (r.url().includes('/api/')) reqs.push(`${new Date
 await goto(page, '/concept2cure/projects');
 await settle(page, 2000);
 const s = await apiGet(page, '/api/v1/auth/session');
-console.log('session policy', JSON.stringify(s.body?.session));
-const t0 = Date.now();
+console.info('session policy', JSON.stringify(s.body?.session));
 const MIN = Number(process.env.MIN || 4);
 await sleep(MIN * 60_000);
 const acts = await page.evaluate(() => window.__acts);
-console.log('activity events during idle:', acts.length);
-console.log(JSON.stringify(acts.slice(0, 40), null, 0));
+console.info('activity events during idle:', acts.length);
+console.info(JSON.stringify(acts.slice(0, 40), null, 0));
 const after = reqs.filter(Boolean);
-console.log('API requests total', after.length);
+console.info('API requests total', after.length);
 const counts = {}; for (const r of after) { const k = r.split(' ').slice(1).join(' ').replace(/\?.*/, ''); counts[k] = (counts[k]||0)+1; }
-console.log(JSON.stringify(counts, null, 1));
-console.log('url', page.url());
+console.info(JSON.stringify(counts, null, 1));
+console.info('url', page.url());
 await done();

@@ -108,7 +108,7 @@ const result = {
 };
 fs.writeFileSync(`${OUT}/dt1-accept.json`, JSON.stringify(result, null, 2));
 fs.writeFileSync(`${OUT}/dt1-frames.json`, JSON.stringify(frames, null, 2));
-console.log(JSON.stringify({
+console.info(JSON.stringify({
   runId, timelineFrameCount: result.timelineFrameCount, livePolls: polls.filter((p) => p.phase === 'live').length,
   maxLiveRows: Math.max(0, ...polls.filter((p) => p.phase === 'live').map((p) => p.events ?? 0)),
   liveRowsEqualFramesSoFar: result.liveRowsEqualFramesSoFar,

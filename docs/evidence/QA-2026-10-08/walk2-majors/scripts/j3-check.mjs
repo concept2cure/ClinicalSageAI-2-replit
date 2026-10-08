@@ -1,6 +1,5 @@
 // j3 after: who sees the in-review Vault version, and is Sign review offered to someone who cannot sign?
 import { chromium, signIn, sleep, BASE } from '../lib.mjs';
-import fs from 'node:fs';
 const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const PID = '8a11b987-ac2d-4748-9e9c-5dc40c082662';
 const DOC = 'Tolvexa-DS-Stability-Protocol-STB-0101';
@@ -11,7 +10,7 @@ const browser = await chromium.launch({ executablePath: EXE });
 const ctx = await signIn(browser, { email: `${who}@concept2cure.pro`, password: PW });
 const page = await ctx.newPage();
 await page.setViewportSize({ width: 1440, height: 900 });
-const say = (...a) => console.log(who, ...a);
+const say = (...a) => console.info(who, ...a);
 // Review & approval, scope "Awaiting my review" (the default) and "All open".
 await page.goto(`${BASE}/concept2cure/review?program=${PID}`, { waitUntil: 'domcontentloaded' });
 await sleep(5000);
