@@ -201,7 +201,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
     let extractedText = `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
     // The one Data Room processing step reads the bytes for every capture path
     // (data-room-processing.ts); the upload reads them here, once.
-    const { extractCapture, describeCapture, recordSourceProcessing } = await import(
+    const { extractCapture, describeCapture, recordSourceProcessing, buildCatalogFacts } = await import(
       '../../services/clinical-regulatory-evidence/data-room-processing.js'
     );
     const extracted = fileBuffer && fileBuffer.length > 0 ? await extractCapture(fileBuffer, mimeType, fileName) : null;
@@ -552,7 +552,8 @@ export const uploadHandler = async (req: Request, res: Response) => {
           // searched by it (20261008c). Derived data: a failure here leaves the
           // capture standing and the sweep re-reads it.
           if (extracted) {
-            await recordSourceProcessing(pool, numericOrgId, created.id, { extracted, processedBy: 'chat_upload ingest' })
+            await buildCatalogFacts(pool, numericOrgId, scope.programId ?? null, { text: extracted.text, bytes: fileBuffer, fileName, mimeType })
+              .then(facts => recordSourceProcessing(pool, numericOrgId, created.id, { extracted, facts, processedBy: 'chat_upload ingest' }))
               .catch((textErr: unknown) => logger.warn('Data Room text not stored for upload', {
                 fileId, sourceId, err: textErr instanceof Error ? textErr.message : String(textErr) }));
           }

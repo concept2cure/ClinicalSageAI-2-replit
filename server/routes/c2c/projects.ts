@@ -1790,7 +1790,7 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
 // real `total`. With none of them the answer is what it was: the newest 200,
 // superseded included. An unreadable filter is a 400, never a wider list.
 
-type ShapeableSource = EvidenceSourceRow & { snippet?: string | null; charCount?: number | null; pageCount?: number | null };
+type ShapeableSource = EvidenceSourceRow & { snippet?: string | null; charCount?: number | null; pageCount?: number | null; studyRef?: number | null };
 type EvidenceSourceRow = import('../../services/clinical-regulatory-evidence/types.js').EvidenceSource;
 type SourceUsageSummary = { sourceId: number; sections: number; documents: number; changedSections: number };
 
@@ -1818,6 +1818,34 @@ function shapeSource(s: ShapeableSource, usage: Map<number, SourceUsageSummary>)
     snippet: s.snippet ?? null,
     charCount: s.charCount ?? null,
     pageCount: s.pageCount ?? null,
+    catalog: catalogSummary(s, meta),
+  };
+}
+
+/**
+ * What the catalog found a source IS (S3), each from a rule or the project's
+ * record; null fields were not found, never guessed. The dataset profile is
+ * summarized here: tables, their CDISC standard and domain, rows and columns.
+ */
+function catalogSummary(s: ShapeableSource, meta: Record<string, any>) {
+  const profile = meta.datasetProfile as { format?: string; tableCount?: number; tables?: Array<Record<string, any>> } | undefined;
+  return {
+    studyRef: s.studyRef ?? null,
+    trialRegistryIdentifier: s.trialRegistryIdentifier ?? null,
+    protocolNumber: meta.catalogEvidence?.protocolNumber?.value ?? null,
+    documentDate: s.documentDate ?? null,
+    dataCutDate: meta.dataCutDate ?? null,
+    product: s.product ?? null,
+    dataset: profile
+      ? {
+          format: profile.format ?? null,
+          tableCount: profile.tableCount ?? 0,
+          tables: (profile.tables ?? []).slice(0, 10).map(t => ({
+            name: t.name, standard: t.cdisc?.standard ?? null, domain: t.cdisc?.domain ?? null,
+            rowCount: t.rowCount ?? 0, columnCount: t.columnCount ?? 0,
+          })),
+        }
+      : null,
   };
 }
 
