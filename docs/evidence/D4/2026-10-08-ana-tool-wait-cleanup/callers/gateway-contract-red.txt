@@ -1,0 +1,81 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts
+{
+  "timestamp": "2026-10-08T07:27:20.943Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:27:20.944Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts
+{
+  "timestamp": "2026-10-08T07:27:20.944Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts > SSE mid-tool Stop with the production gateway abort contract > closes as cancelled without entering an aborted follow-up model call or emitting an error
+[AnA RI Stream] Error: AI request cancelled by the caller (pre_call)
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts > SSE mid-tool Stop with the production gateway abort contract > closes as cancelled without entering an aborted follow-up model call or emitting an error
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ↓ server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts > SSE completed tool wait lifetime > returns to its listener baseline after twelve successful tools before the next model call
+ ↓ server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts > SSE failed tool wait lifetime > cleans a throwing handler and retains its genuine error in telemetry and the turn record
+ ↓ server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts > SSE a completed wait beside an active tool > removes only the completed listener, then stops the active wait and observes its late rejection
+ × server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts > SSE mid-tool Stop with the production gateway abort contract > closes as cancelled without entering an aborted follow-up model call or emitting an error 40ms
+   → Stop reached the generic error path: expected { type: 'error', …(2) } to be undefined
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts > SSE mid-tool Stop with the production gateway abort contract > closes as cancelled without entering an aborted follow-up model call or emitting an error
+AssertionError: Stop reached the generic error path: expected { type: 'error', …(2) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "error": "An error occurred while generating the response",
+  "turnRecord": {
+    "reason": "The record of this turn could not be written.",
+    "status": "not_recorded",
+  },
+  "type": "error",
+}
+
+ ❯ server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts:192:99
+    190|       h.state.cancel!();
+    191|       const events = await reader;
+    192|       expect(events.find(event => event.type === 'error'), 'Stop reach…
+       |                                                                                                   ^
+    193|       expect(events.find(event => event.type === 'done')?.stoppedReaso…
+    194|       expect(h.state.gatewayCalls).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  15:27:16
+   Duration  7.39s (transform 4.35s, setup 76ms, import 6.98s, tests 43ms, environment 0ms)

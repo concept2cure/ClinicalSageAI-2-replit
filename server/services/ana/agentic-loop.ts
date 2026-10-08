@@ -74,6 +74,8 @@ export class ToolRunCancelled extends Error {
   }
 }
 
+export type ToolAbortWait = Promise<never> & { dispose(): void };
+
 /**
  * A promise that rejects with {@link ToolRunCancelled} when `signal` aborts,
  * and otherwise never settles. Raced against a tool handler so the ROUND stops
@@ -87,17 +89,31 @@ export class ToolRunCancelled extends Error {
  * that we stopped waiting for the answer, not that nothing happened.
  *
  * Returns a never-settling promise when there is no signal, so an uncontrolled
- * run behaves exactly as it did before.
+ * run behaves exactly as it did before. Callers dispose the wait in `finally`
+ * when the handler wins the race, removing only this wait's abort listener.
+ * Disposal is idempotent and does not settle the promise or stop the handler.
  */
-export function abortRace(signal?: AbortSignal): Promise<never> {
-  return new Promise<never>((_resolve, reject) => {
+export function abortRace(signal?: AbortSignal): ToolAbortWait {
+  let onAbort: (() => void) | undefined;
+  const dispose = () => {
+    if (!signal || !onAbort) return;
+    const listener = onAbort;
+    onAbort = undefined;
+    signal.removeEventListener('abort', listener);
+  };
+  const waiting = new Promise<never>((_resolve, reject) => {
     if (!signal) return;
     if (signal.aborted) {
       reject(new ToolRunCancelled());
       return;
     }
-    signal.addEventListener('abort', () => reject(new ToolRunCancelled()), { once: true });
+    onAbort = () => {
+      dispose();
+      reject(new ToolRunCancelled());
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
   });
+  return Object.assign(waiting, { dispose });
 }
 
 /**
