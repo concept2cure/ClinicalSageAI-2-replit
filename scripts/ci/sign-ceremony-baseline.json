@@ -63,15 +63,15 @@
     }
   },
   "authority": {
-    "$note": "Per-file COUNT of signer re-verifications (verifyReauth / reverifySigner) whose handler does not ask the signing-authority policy (checkSigningAuthority, isSigningAuthorized, or a wrapper of it). Written 2026-10-08 after the QA j6 sweep (docs/evidence/QA-2026-10-08/submission-center-3/). Shrink only. Every entry is a re-authentication that signs nothing, or a helper whose callers ask authority first; the reason says which.",
+    "$note": "Per-file COUNT of signer re-verifications (verifyReauth / reverifySigner) whose handler does not ask the signing-authority policy (checkSigningAuthority — since P-27, 2026-10-08, nothing else counts). Written 2026-10-08 after the QA j6 sweep (docs/evidence/QA-2026-10-08/submission-center-3/). Shrink only. Every entry is a re-authentication that signs nothing, or a helper whose callers ask authority first; the reason says which.",
     "files": {
       "server/routes/authoring.router.ts": {
         "count": 1,
-        "reason": "reverifyAuthoringSigner is a helper. Each of its three callers (POST /docs/:docId/freeze, /docs/:docId/e-sign, /docs/:docId/sign) calls assertSigningAuthority (resolveSignerOrgRole + isSigningAuthorized) before it; the gate cannot see across the function boundary."
+        "reason": "reverifyAuthoringSigner is a helper. Each of its three callers (POST /docs/:docId/freeze, /docs/:docId/e-sign, /docs/:docId/sign) calls checkSigningAuthority before it; the gate cannot see across the function boundary."
       },
       "server/routes/c2c/actions.ts": {
         "count": 1,
-        "reason": "verifyReauth itself: the re-authentication primitive, a wrapper of reverifySigner. Authority is its callers' to ask; makeHandler asks signingAuthorityRefusal before calling it, and every other caller is scanned in its own file."
+        "reason": "verifyReauth itself: the re-authentication primitive, a wrapper of reverifySigner. Authority is its callers' to ask; makeHandler asks checkSigningAuthority before calling it for every signature command, and every other caller is scanned in its own file."
       },
       "server/routes/c2c/documents.ts": {
         "count": 1,

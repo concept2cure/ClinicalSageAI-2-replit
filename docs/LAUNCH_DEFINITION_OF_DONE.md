@@ -371,6 +371,17 @@ From the third Submission Center pass (`b86baf55e`):
 - **One signing-authority policy.** The remaining inline checks (`actions.ts` `signingAuthorityRefusal`,
   `cmc-signer`, and others) move onto `checkSigningAuthority` and are deleted.
 
+Follow-up decisions from the P-27 pass:
+- **Signed orchestrator snapshots made before P-27** keep the placeholder applicant inside their signed `index.xml`.
+  They are not altered, because a signed record is never rewritten. The signed-package export marks them as not
+  submittable. That is a follow-up.
+- **An orchestrator run signs only against a recorded submission** whose project's application number matches the
+  run's. Without one, a run validates as a dry run and cannot be signed.
+- **The MDR/IVDR technical-file assemble and the `submission-ops` package spine** still write placeholder identity
+  into real output. They move onto `package-identity.ts` next.
+- **The signature record carries the membership role that authorised it**, not the role on the request. A follow-up
+  in `esignature` and `document-lifecycle`.
+
 ### P-24 — AnA works like Claude, and the client sees the Summary of the work
 
 The founder asked for this on 2026-10-08, with screenshots of Claude's per-task Summary. The design is

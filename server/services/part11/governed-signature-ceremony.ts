@@ -14,8 +14,8 @@
  *   1. the declared §11.50 meaning is one this act can carry
  *   2. authority (§11.10(g)): the signer's role on the membership row
  *      (resolveSignerOrgRole) must carry signing authority under the platform's
- *      one policy (isSigningAuthorized: admin, approver, reviewer; P-18), as the
- *      canonical route checks it (signingAuthorityRefusal), before the password.
+ *      one policy (checkSigningAuthority: admin, approver, reviewer; P-18), as the
+ *      canonical route checks it, before the password.
  *      Until 2026-10-08 (QA, cf950eeb9) the route's writer gate was the only
  *      one here, so a member's password made a protocol signature. The
  *      permission gate the canonical path runs when GOVERNANCE_RBAC_ENFORCE is
@@ -49,7 +49,7 @@ import {
 } from '../governance/separation-of-duties';
 import { can } from '../governance/permissions';
 import { persistGovernedSignSignature } from './signature-persistence';
-import { checkSigningAuthority } from './signing-authority-gate';
+import { checkSigningAuthority, type SigningAuthorityRefusal } from './signing-authority-gate';
 import { AUTHENTICATOR_REQUIRED_MESSAGE } from './reverify-signer';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import { clientIpOf, type HasClientIp } from '../../utils/client-ip';
@@ -124,18 +124,9 @@ function asReauth(raw: unknown): { password?: string; totp?: string } | undefine
 const SOD_UNVERIFIED_MESSAGE =
   'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.';
 
-/**
- * Step 2 (§11.10(g)): identity is not authority. The signer's organization role
- * is read from the membership row, never the token or the body, and held to the
- * platform's one signing policy before any credential is compared, so this
- * ceremony is not a password oracle for a role that may not sign. A lookup that
- * cannot run signs nothing; its cause is logged, never shown.
- */
-async function assertSigningAuthority(userId: number, orgId: number): Promise<void> {
-  // The check itself lives in signing-authority-gate.ts (moved there 2026-10-08
-  // so the routes that sign in their own handlers ask it too, not a copy of it).
-  const refusal = await checkSigningAuthority(userId, orgId);
-  if (refusal) throw new GovernedSignatureRefusal(refusal.status, refusal.code, refusal.message);
+/** checkSigningAuthority's refusal as this ceremony's; nothing when the signer may sign. */
+function refuseWithoutAuthority(authority: SigningAuthorityRefusal | null): void {
+  if (authority) throw new GovernedSignatureRefusal(authority.status, authority.code, authority.message);
 }
 
 async function checkMeaningAgainstAuthorship(
@@ -186,7 +177,13 @@ export async function signGovernedAct(input: GovernedSignatureInput): Promise<Re
     );
   }
 
-  await assertSigningAuthority(userId, orgId);
+  // Step 2 (§11.10(g)): identity is not authority. The platform's one policy
+  // (signing-authority-gate.ts): the role from the membership row, never the
+  // token or the body, asked before any credential is compared, so this
+  // ceremony is not a password oracle for a role that may not sign. A lookup
+  // that cannot run signs nothing. This module's own wrapper of it
+  // (assertSigningAuthority) was removed on 2026-10-08 (P-27).
+  refuseWithoutAuthority(await checkSigningAuthority(userId, orgId));
 
   // The canonical sign path's permission gate, dark-launched the same way
   // (routes/c2c/actions.ts makeHandler): off until validated on real role data.

@@ -115,3 +115,54 @@ export function packageIdentityRefusal(identity: RecordedPackageIdentity, outcom
     `A package names its application and its applicant from the record, never a placeholder, and ${gaps.join('; and ')}. ${outcome}`,
   );
 }
+
+/**
+ * The project a submission is anchored to, then its recorded identity — for a
+ * caller that holds a submission id rather than a project (the package
+ * orchestrator). An unknown or foreign submission reads as anchored to none, so
+ * its refusal names the missing application number.
+ */
+export async function readSubmissionPackageIdentity(
+  q: PackageIdentityQueryable,
+  organizationId: number,
+  submissionId: number,
+): Promise<RecordedPackageIdentity> {
+  const row = (
+    await q.query(
+      `SELECT program_id FROM submissions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [submissionId, organizationId],
+    )
+  ).rows[0] as { program_id?: unknown } | undefined;
+  const programId = typeof row?.program_id === 'string' && row.program_id ? row.program_id : null;
+  return readRecordedPackageIdentity(q, organizationId, programId);
+}
+
+// ── Dry runs (P-27 follow-up, 2026-10-08) ────────────────────────────────────
+//
+// Three assemblies run only to ask a question of the package a sequence would
+// make: the packageability check before a governed freeze or dispatch
+// (submission-service assertSequencePackageable), the sequence assemble route
+// (POST /api/submissions/sequences/:id/assemble), and — when the record does
+// not name its identity — the package orchestrator's validation assembly. They
+// may carry placeholder identity only because they produce no package: the
+// staged bundle is discarded, nothing of it is stored, and nothing of it is
+// sent. The placeholder is minted here and nowhere else, and every such output
+// says it is a dry run.
+
+/** What every dry-run output says about itself. */
+export const DRY_RUN_NOTICE =
+  'Dry run: this assembly answers what the package would hold and what transmit would refuse. It is not a package: ' +
+  'it carries placeholder identity in place of the recorded application number and applicant, nothing of it is ' +
+  'stored, and it is never sent.';
+
+/** The placeholder identity a dry run carries. Each value says it is unassigned. */
+export function dryRunPackageIdentity(
+  sequenceLabel: number | string,
+  organizationId: number,
+): { applicationId: string; sponsorId: string; sponsorName: string } {
+  return {
+    applicationId: `UNASSIGNED-SEQ-${sequenceLabel}`,
+    sponsorId: `UNASSIGNED-ORG-${organizationId}`,
+    sponsorName: `UNASSIGNED (organization ${organizationId})`,
+  };
+}

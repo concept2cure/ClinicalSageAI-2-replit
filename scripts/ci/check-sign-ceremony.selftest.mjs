@@ -247,11 +247,28 @@ test('the same transmit asking checkSigningAuthority first passes', () => {
   assert.equal(authorityFails(PRE_FIX_TRANSMIT(true)).length, 0);
 });
 
-test('reverifySigner is held to the rule too, and isSigningAuthorized satisfies it', () => {
+test('reverifySigner is held to the rule too, and checkSigningAuthority satisfies it', () => {
   const bare = "router.post('/s', async (req, res) => { const v = await reverifySigner(userId, creds, deps()); });";
   assert.equal(authorityFails(bare).length, 1);
-  const asked = "router.post('/s', async (req, res) => { if (!isSigningAuthorized(await resolveSignerOrgRole(userId, orgId))) return; const v = await reverifySigner(userId, creds, deps()); });";
+  const asked = "router.post('/s', async (req, res) => { const a = await checkSigningAuthority(userId, orgId); if (a) return; const v = await reverifySigner(userId, creds, deps()); });";
   assert.equal(authorityFails(asked).length, 0);
+});
+
+// P-27 (2026-10-08): one signing-authority policy. An inline copy of it — the
+// role read and the predicate written out in the handler, or a local wrapper
+// around them — does not satisfy the rule any more; only the gate does. Each
+// copy answered a failed role lookup its own way (500, a thrown error, or not
+// at all), and two read the role from the token instead of the membership row.
+test('an inline copy of the policy (isSigningAuthorized in the handler) no longer satisfies the rule', () => {
+  const inline = "router.post('/s', async (req, res) => { if (!isSigningAuthorized(await resolveSignerOrgRole(userId, orgId))) return; const v = await reverifySigner(userId, creds, deps()); });";
+  assert.equal(authorityFails(inline).length, 1);
+});
+
+test('the retired local wrappers no longer satisfy the rule', () => {
+  for (const wrapper of ['signingAuthorityRefusal(command, userId, orgId)', 'assertSigningAuthority(req, res)', 'refusedWithoutSigningAuthority(res, { userId, orgId })']) {
+    const src = `router.post('/s', async (req, res) => { if (await ${wrapper}) return; await verifyReauth(userId, req.body.reauth); });`;
+    assert.equal(authorityFails(src).length, 1, wrapper);
+  }
 });
 
 test('an authority check in another handler does not count for this one', () => {

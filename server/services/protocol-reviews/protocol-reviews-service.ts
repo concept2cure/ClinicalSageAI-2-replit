@@ -15,7 +15,7 @@ import { pool } from '../../db';
 import { requireProtocolForWriteTx } from '../protocol-development/protocol-development-service';
 import { resolveSignerIdentity, SignerNotAttributableError } from '../part11/resolve-signer-identity';
 // The disposition's signing ceremony holds the signer to these two
-// (governed-signature-ceremony assertSigningAuthority); the assignment holds
+// (governed-signature-ceremony, checkSigningAuthority); the assignment holds
 // the reviewer to the same pair, so an assignment cannot end at its 403.
 import { resolveSignerOrgRole } from '../part11/resolve-signer-role';
 import { isSigningAuthorized } from '../part11/signing-authority';

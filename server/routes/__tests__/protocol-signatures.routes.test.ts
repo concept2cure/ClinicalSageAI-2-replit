@@ -373,7 +373,7 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
    while every other signing route refused the same role (P-18: admin, approver,
    reviewer). The ceremony now applies the one policy (isSigningAuthorized) to
    the membership row's role, before the password, as the canonical sign route
-   does (routes/c2c/actions.ts signingAuthorityRefusal). */
+   does (routes/c2c/actions.ts, checkSigningAuthority). */
 describe('the protocol signing ceremony checks signing authority before the password (§11.10(g))', () => {
   it('a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written', async () => {
     h.memberRole = 'member';

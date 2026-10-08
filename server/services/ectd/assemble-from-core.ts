@@ -28,7 +28,7 @@ import { eq, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
 import { usableIdentifier } from './regulatory-identifiers';
-import { readRecordedPackageIdentity, packageIdentityRefusal } from './package-identity';
+import { readRecordedPackageIdentity, packageIdentityRefusal, dryRunPackageIdentity } from './package-identity';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable';
 import { packageSequenceFromCore, type PackageFromCoreResult, type PriorState } from './package-from-core';
 import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
@@ -50,20 +50,32 @@ import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('assemble-from-core');
 
-export interface AssembleSequenceParams {
+interface AssembleSequenceBase {
   sequenceId: number;
   organizationId: number;
   userId: number;
-  applicationId: string;
-  sponsorId: string;
-  sponsorName: string;
   emitUnzipped?: boolean;
   /** What lifecycle acts bind against; 'filed' unless a caller asks for a
    *  rehearsal (package-from-core PriorState). Transmit never does. */
   priorState?: PriorState;
 }
 
+/**
+ * Either the identity the package names — read from the record by the caller
+ * (package-identity.ts) — or a dry run, which names none of its own and gets the
+ * one dry-run placeholder (dryRunPackageIdentity). A dry run produces no
+ * package: its result says `dryRun: true`, and it is never stored or sent
+ * (P-27 follow-up, 2026-10-08).
+ */
+export type AssembleSequenceParams = AssembleSequenceBase &
+  (
+    | { dryRun?: false; applicationId: string; sponsorId: string; sponsorName: string }
+    | { dryRun: true; applicationId?: never; sponsorId?: never; sponsorName?: never }
+  );
+
 export interface AssembleSequenceResult extends PackageFromCoreResult {
+  /** True for a dry run: placeholder identity, not a package — never stored or sent. */
+  dryRun: boolean;
   /**
    * Remove the temp staging/output directory backing `bundle.path`. Call once
    * the bundle bytes are no longer needed (e.g. after transmit, or after an
@@ -223,6 +235,10 @@ async function assertLeafPathsSafe(
 
 export async function assembleSequence(params: AssembleSequenceParams): Promise<AssembleSequenceResult> {
   const { sequenceId, organizationId, userId } = params;
+  const dryRun = params.dryRun === true;
+  const identity = params.dryRun === true
+    ? dryRunPackageIdentity(sequenceId, organizationId)
+    : { applicationId: params.applicationId, sponsorId: params.sponsorId, sponsorName: params.sponsorName };
 
   // 1. Tenant-scoped leaves for this sequence. See readSequenceLeaves.
   const leaves = await readSequenceLeaves(sequenceId, organizationId);
@@ -300,9 +316,9 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     organizationId,
     userId,
     outputDir,
-    applicationId: params.applicationId,
-    sponsorId: params.sponsorId,
-    sponsorName: params.sponsorName,
+    applicationId: identity.applicationId,
+    sponsorId: identity.sponsorId,
+    sponsorName: identity.sponsorName,
     resolveFile,
     emitUnzipped: params.emitUnzipped,
     priorState: params.priorState,
@@ -339,6 +355,8 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
       {
         sequenceId,
         organizationId,
+        // A dry run's manifest says so too: it describes no package.
+        dryRun,
         hashPolicy:
           'md5 = eCTD index (agency requirement), recorded here over the SHIPPED leaf bytes; ' +
           'sha256 = package governance, package-level only (leaves are normalized to PDF/A after staging)',
@@ -375,7 +393,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     action: 'ECTD_ASSEMBLED',
     resourceType: 'ectd_sequence',
     resourceId: sequenceId,
-    details: { materialized, skipped: result.skipped.length, unresolved: unresolvedLeaves.length, outputDir, packageSha256: result.bundle.sha256 },
+    details: { materialized, skipped: result.skipped.length, unresolved: unresolvedLeaves.length, outputDir, packageSha256: result.bundle.sha256, dryRun },
   });
   logger.info('Assembled sequence from core', {
     sequenceId,
@@ -401,6 +419,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   assembleReturned = true;
   return {
     ...result,
+    dryRun,
     auditTrail: combineAuditRowOutcomes(result.auditTrail, assembledAudit),
     cleanup,
     materialized,

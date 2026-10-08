@@ -1,0 +1,22 @@
+[ci:sign-ceremony] FAIL — a signer re-verified with no signing-authority check in the same handler (§11.10(g)):
+  ✗ server/api/cmc/batchRecordRoutes.ts:485  (handler at line 450)
+  ✗ server/api/cmc/module3OperatingSystemRoutes.ts:542  (handler at line 492)
+  ✗ server/api/cmc/routes.ts:941  (handler at line 868)
+  ✗ server/api/cmc/specificationRoutes.ts:393  (handler at line 367)
+  ✗ server/routes/ana-ri/seal-verified.ts:108  (handler at line 89)
+  ✗ server/routes/c2c/actions.ts:307  (handler at line 302)
+  ✗ server/routes/c2c/actions.ts:702  (handler at line 678)
+    server/routes/c2c/actions.ts: 2 site(s), baseline allows 1.
+  ✗ server/routes/document-lifecycle.ts:130  (handler at line 126)
+  ✗ server/routes/esignature.ts:278  (handler at line 212)
+  ✗ server/routes/governed-signed-act.ts:210  (handler at line 186)
+  ✗ server/routes/mdx-qms.ts:576  (handler at line 557)
+  ✗ server/routes/mdx-rbm.ts:1018  (handler at line 1009)
+  ✗ server/routes/mdx-rbm.ts:1148  (handler at line 1139)
+  ✗ server/routes/pccp.ts:258  (handler at line 244)
+  ✗ server/routes/submission-sign-release.ts:262  (handler at line 164)
+  ✗ server/services/part11/governed-signature-ceremony.ts:201  (handler at line 174)
+
+  Identity is not authority. Ask checkSigningAuthority(userId, orgId)
+  (server/services/part11/signing-authority-gate.ts) before the password, or
+  baseline the file under `authority` with the reason the act signs nothing.

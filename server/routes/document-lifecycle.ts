@@ -21,7 +21,7 @@ import {
   type SignerReverification,
 } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
-import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import {
   advanceDocument,
   assertCanonicalIdentity,
@@ -141,10 +141,13 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
    *    applySignature binding, citing whatever `signatureRef` the request body
    *    supplied.
    *
-   * The identity is the authenticated user or nothing (401); the role is the
-   * server's reading (resolveUserRole), never the body's; the role must carry
-   * signing authority (§11.10(g), the same policy every signing route uses);
-   * then the signer re-verifies. Writes the response and returns null on any
+   * The identity is the authenticated user or nothing (401); authority
+   * (§11.10(g)) is the platform's one policy, checkSigningAuthority, which
+   * reads the role from the membership row — until 2026-10-08 (P-27) this
+   * judged the request's role (resolveUserRole), which the membership
+   * resolver's own header calls unreliable on signing routes; then the signer
+   * re-verifies. The role recorded on the signature is still the request's
+   * reading, never the body's. Writes the response and returns null on any
    * refusal.
    */
   async function reverifiedSigner(
@@ -156,15 +159,17 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       res.status(401).json({ ok: false, error: 'AUTH_REQUIRED' });
       return null;
     }
-    const role = resolveUserRole(req);
-    if (!isSigningAuthorized(role)) {
-      res.status(403).json({
-        ok: false,
-        error: 'ESIGNATURE_NO_AUTHORITY',
-        message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-      });
+    const orgId = resolveOrgId(req);
+    if (orgId === null) {
+      res.status(401).json({ ok: false, error: 'AUTH_REQUIRED' });
       return null;
     }
+    const authority = await checkSigningAuthority(userId, orgId);
+    if (authority) {
+      res.status(authority.status).json({ ok: false, error: authority.code, message: authority.message });
+      return null;
+    }
+    const role = resolveUserRole(req);
     const verdict = await reverify(userId, { password: req.body?.password, mfaToken: req.body?.mfaToken });
     if (!verdict.ok) {
       res.status(verdict.status).json({ ok: false, error: verdict.code, message: verdict.error });

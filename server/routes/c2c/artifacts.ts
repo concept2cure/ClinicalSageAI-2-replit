@@ -59,6 +59,7 @@ import {
 import { authorizedProjectId, loadProjectArtifact } from './artifact-project-scope';
 import { verifyReauth } from './actions';
 import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
+import { isSigningAuthorized } from '../../services/part11/signing-authority';
 import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-artifacts');
@@ -2404,7 +2405,9 @@ router.get('/user/permissions', async (req: Request, res: Response) => {
     const userRole = (req.userRole || 'user').toLowerCase();
     const allowedTransitions = allowedArtifactTransitions(userRole);
     const canRollback = ROLLBACK_ROLES.includes(userRole);
-    const canSign = ['admin', 'approver', 'reviewer'].includes(userRole);
+    // What the client offers, from the signing policy itself rather than a copy
+    // of its role list (P-27): approve and lock refuse through checkSigningAuthority.
+    const canSign = isSigningAuthorized(userRole);
     const canExport = ['admin', 'approver', 'reviewer', 'author', 'user'].includes(userRole);
 
     return sendSuccess(res, {

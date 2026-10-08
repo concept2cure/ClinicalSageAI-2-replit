@@ -1669,42 +1669,57 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
   }
 });
 
-// ── Assemble (assemble step of assemble→submit→transmit) ──────────────────────
-// Drives the real eCTD publisher off the sequence's canonical leaves. Returns a
-// sanitized package descriptor (no server paths). Does NOT transmit — submit/
-// transmit stays behind the governed transmit_submission tool + Part 11 e-sign.
-const assembleSchema = z.object({
-  applicationId: z.string().min(1).max(128).optional(),
-  sponsorId: z.string().min(1).max(128).optional(),
-  sponsorName: z.string().min(1).max(256).optional(),
-});
+// ── Assemble (a dry run of the assemble step) ─────────────────────────────────
+// Drives the real eCTD publisher off the sequence's canonical leaves and reports
+// what the package would hold and what transmit would refuse. Returns a
+// sanitized descriptor (no server paths). Does NOT transmit — submit/transmit
+// stays behind the governed transmit_submission tool + Part 11 e-sign.
+//
+// 2026-10-08 (P-27 follow-up): it is a dry run, and says so. It filled the
+// backbone's identity from the body or from UNASSIGNED placeholders and answered
+// with the digest of bytes it then deleted. A package names only recorded
+// identity (package-identity.ts); this route produces none, so it takes no
+// identity — a body naming one is refused rather than silently ignored — and the
+// answer carries dryRun / packageProduced / notice.
+const DRY_RUN_IDENTITY_FIELDS = ['applicationId', 'sponsorId', 'sponsorName'] as const;
 router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
-  const parsed = assembleSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  const named = DRY_RUN_IDENTITY_FIELDS.filter((f) => (req.body ?? {})[f] !== undefined);
+  if (named.length > 0) {
+    return res.status(400).json({
+      error: {
+        code: 'DRY_RUN_TAKES_NO_IDENTITY',
+        message:
+          `This assembly is a dry run and takes no identity (${named.join(', ')}). A package's application number and ` +
+          'applicant are read from the record when it is exported, compiled or sent. Nothing was assembled.',
+      },
+    });
+  }
   const assembly = await import('../services/ectd/assemble-from-core');
   try {
     const { assembleSequence, assembledTransmitBlockers } = assembly;
+    const { DRY_RUN_NOTICE } = await import('../services/ectd/package-identity');
     const result = await assembleSequence({
       sequenceId: seqId,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      // Never fabricate an agency identifier — these reach the regional
-      // backbone and the package filename. Unassigned values say so.
-      applicationId: parsed.data.applicationId ?? `UNASSIGNED-SEQ-${seqId}`,
-      sponsorId: parsed.data.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
-      sponsorName: parsed.data.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
+      dryRun: true,
     });
-    // Assemble-only: the response carries metadata, not bytes — the staged
-    // temp package is not needed once we've read the descriptor.
+    // A dry run: the response carries metadata, not bytes, and the staged
+    // bundle is discarded before answering — nothing of it is kept.
     await result.cleanup();
     // Sanitized — never expose the server temp path.
     res.json({
       ok: true,
-      sha256: result.bundle.sha256,
+      dryRun: true,
+      packageProduced: false,
+      notice: DRY_RUN_NOTICE,
+      // No sha256: a digest of discarded placeholder-identity bytes is exactly
+      // what could be recorded as a package's (P-27). Size and format describe
+      // the dry run; the digest of a package is its export's or its compile's.
       format: result.bundle.format,
       sizeBytes: result.bundle.sizeBytes,
       materialized: result.materialized,

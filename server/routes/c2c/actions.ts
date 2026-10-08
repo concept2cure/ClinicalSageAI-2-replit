@@ -54,8 +54,7 @@ import {
   type SignerRefused,
 } from '../../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
-import { resolveSignerOrgRole } from '../../services/part11/resolve-signer-role.js';
-import { isSigningAuthorized } from '../../services/part11/signing-authority.js';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate.js';
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
 import {
   assertSignerIsNotAuthor,
@@ -640,41 +639,6 @@ function commandMeaningRefusal(command: Command, body: ActionEnvelope) {
   return command === 'sign' ? signMeaningRefusal(body.payload?.meaning) : null;
 }
 
-/**
- * §11.10(g): identity is not authority. A command that writes an
- * electronic_signatures row is refused unless the signer's organisation role
- * carries signing authority — the one policy every other signing route
- * applies (services/part11/signing-authority), read from the membership row
- * (never the token or the body). The handler runs it BEFORE the credential, so
- * this route is not a password oracle for a role that may not sign. QA walk
- * 2026-10-08 (J8): a manager's 'approval' signature was persisted here while
- * the QMS approve route refused the same role; the only gate here was the
- * GOVERNANCE_RBAC_ENFORCE one, which no environment sets. Null when admitted
- * or when the command writes no signature.
- */
-async function signingAuthorityRefusal(
-  command: Command,
-  userId: number,
-  orgId: number,
-): Promise<{ status: number; body: { error: string; detail?: string } } | null> {
-  if (!SIGNATURE_COMMANDS.has(command)) return null;
-  let signerRole: string | null;
-  try {
-    signerRole = await resolveSignerOrgRole(userId, orgId);
-  } catch (err: any) {
-    console.error(`[c2c/actions/${command}] signer role lookup failed`, err?.message);
-    return { status: 500, body: { error: 'INTERNAL_ERROR' } };
-  }
-  if (isSigningAuthorized(signerRole)) return null;
-  return {
-    status: 403,
-    body: {
-      error: 'ESIGNATURE_NO_AUTHORITY',
-      detail: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
-    },
-  };
-}
-
 function makeHandler(command: Command) {
   return async (req: Request, res: Response) => {
     const userId = resolveUserId(req);
@@ -694,8 +658,16 @@ function makeHandler(command: Command) {
     const meaningRefusal = commandMeaningRefusal(command, body);
     if (meaningRefusal) return res.status(400).json(meaningRefusal);
 
-    const authority = await signingAuthorityRefusal(command, userId, orgId);
-    if (authority) return res.status(authority.status).json(authority.body);
+    // §11.10(g): identity is not authority. A command that writes an
+    // electronic_signatures row is refused, before the credential, unless the
+    // signer's membership role carries signing authority — the platform's one
+    // policy (checkSigningAuthority). QA walk 2026-10-08 (J8) found a manager's
+    // 'approval' persisted here; P-27 (same day) deleted this file's own copy of
+    // the check (signingAuthorityRefusal), whose failed lookup answered 500.
+    if (SIGNATURE_COMMANDS.has(command)) {
+      const authority = await checkSigningAuthority(userId, orgId);
+      if (authority) return res.status(authority.status).json({ error: authority.code, detail: authority.message });
+    }
 
     // Re-auth gate for high-risk commands.
     if (HIGH_RISK_COMMANDS.has(command)) {
@@ -788,7 +760,7 @@ function makeHandler(command: Command) {
         // Refused ahead of the signer lookup; nothing was written.
         return res.status(400).json({ error: err.code, detail: err.message });
       }
-      console.error(`[c2c/actions/${command}]`, err?.message);
+      console.error('[c2c/actions/%s]', command, err?.message);
       return res.status(500).json({ error: 'INTERNAL_ERROR' });
     }
   };

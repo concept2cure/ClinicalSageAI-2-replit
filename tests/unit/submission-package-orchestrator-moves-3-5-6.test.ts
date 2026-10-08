@@ -40,6 +40,19 @@ const hoisted = vi.hoisted(() => ({
 
 // ── DB pool mock ────────────────────────────────────────────────────────────
 
+
+// P-27 (2026-10-08): a run's package names its recorded identity, or its
+// assembly is a dry run that package.sign refuses. This suite is about the
+// steps, not the record, so the record names the run's own application number
+// (tests/unit/orchestrator-dry-run-identity.test.ts drives the real reader).
+const { recordedRunIdentity } = vi.hoisted(() => ({
+  recordedRunIdentity: async (i: { applicationNumber: string }) => ({
+    recorded: true as const, applicationNumber: i.applicationNumber, applicantName: 'Test Sponsor Inc',
+  }),
+}));
+vi.mock('../../server/services/ectd/run-package-identity.js', () => ({ resolveRunPackageIdentity: recordedRunIdentity }));
+vi.mock('../../server/services/ectd/run-package-identity', () => ({ resolveRunPackageIdentity: recordedRunIdentity }));
+
 vi.mock('../../server/db.js', () => {
   const pool = {
     query: (...args: unknown[]) =>

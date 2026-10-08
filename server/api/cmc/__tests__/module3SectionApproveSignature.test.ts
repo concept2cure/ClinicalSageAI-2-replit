@@ -16,11 +16,13 @@ vi.mock('../../../services/cmc/project-membership', () => ({
   projectBelongsToTenant: async () => true,
 }));
 const mockRecordGoverned = vi.fn();
-// The §11.10(g) authority gate (cmc-signer.ts); its own role read is proven in
+// The §11.10(g) authority gate (checkSigningAuthority); its own role read is proven in
 // cmc-sign-signature-row.test.ts. Here: that the approve route asks it first.
 const mockRefusedAuthority = vi.fn();
-vi.mock('../cmc-signer', () => ({
-  refusedWithoutSigningAuthority: (...a: unknown[]) => mockRefusedAuthority(...a),
+// P-27 (2026-10-08): the route asks the platform's one policy directly
+// (cmc-signer's refusedWithoutSigningAuthority was deleted).
+vi.mock('../../../services/part11/signing-authority-gate', () => ({
+  checkSigningAuthority: (...a: unknown[]) => mockRefusedAuthority(...a),
 }));
 
 vi.mock('../../../db', () => ({
@@ -80,7 +82,7 @@ beforeEach(() => {
   // answer with no rows: no drift, nothing found.
   mockQuery.mockResolvedValue({ rows: [] });
   mockRefusedAuthority.mockReset();
-  mockRefusedAuthority.mockResolvedValue(false);
+  mockRefusedAuthority.mockResolvedValue(null);
   mockVerifyReauth.mockReset();
   mockVerifyReauth.mockResolvedValue({ ok: true });
   mockRecordGoverned.mockReset();
@@ -93,16 +95,13 @@ const executedVerbs = () =>
 
 describe('Module 3 section approval: who may sign, and with what meaning', () => {
   it('refuses a signer without signing authority before the password and before any SQL (§11.10(g))', async () => {
-    mockRefusedAuthority.mockImplementationOnce(async (res: any) => {
-      res.status(403).json({ success: false, error: 'ESIGNATURE_NO_AUTHORITY' });
-      return true;
-    });
+    mockRefusedAuthority.mockResolvedValueOnce({ status: 403, code: 'ESIGNATURE_NO_AUTHORITY', message: 'No.' });
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
       .send({ reason: 'approve', meaning: 'approval', reauth: { password: 'ok' } });
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
-    expect(mockRefusedAuthority).toHaveBeenCalledWith(expect.anything(), { userId: 1, orgId: 101 });
+    expect(mockRefusedAuthority).toHaveBeenCalledWith(1, 101);
     expect(mockVerifyReauth).not.toHaveBeenCalled();
     expect(mockQuery).not.toHaveBeenCalled();
     expect(mockRecordGoverned).not.toHaveBeenCalled();

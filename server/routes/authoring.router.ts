@@ -17,6 +17,7 @@ import { currentTenantOrgUuid, TenantKeyRequiredError } from '../db/currentTenan
 import { writeChainedAuditRow } from '../services/auditService';
 import { isSigningAuthorized, signingAuthorityRoles } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate.js';
 import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
 import { authedOrgId } from '../utils/authedOrgId';
@@ -592,46 +593,24 @@ const computeSignatureDigest = (input: {
 const computeDocHash = (docId: string | string[] | undefined, tenantId: number): Promise<string> =>
   computeDocHashOn(pool, docId, tenantId);
 
-/**
+/*
  * 21 CFR Part 11 §11.10(g) — may this signer apply a signature at all?
  *
  * "Use of ... controls to ensure that persons who ... electronically sign
  * records ... have the authority to do so." Identity is NOT authority: this
- * router verified a PIN (§11.200 second component) and a token, and then let
- * any authenticated member sign — including `meaning: 'APPROVER'`, which flips
- * the document to APPROVED and inserts a frozen_documents row. A viewer with a
- * PIN could approve and seal a regulated record.
+ * router once verified a PIN and a token and then let any authenticated member
+ * sign, including `meaning: 'APPROVER'`, which approves and freezes a document.
  *
- * The policy already existed and this router simply never asked it.
- * signing-authority.ts is the single source of truth (its own header names the
- * surfaces that consult it — /api/esignature/sign, sign-release, the AnA
- * verified-seal route — and this file was not among them), and the role comes
- * from resolveSignerOrgRole, which reads `organization_users` rather than
- * `req.user.role`: the resolver's header is explicit that the request-borne
- * role "is not reliably populated on every signing route".
- *
- * Fails closed — no membership row, or a role outside the allowlist, is not
- * authorized. Deployments tune the allowlist with ESIGNATURE_SIGNING_ROLES.
+ * Each signing route here (freeze, e-sign, sign) asks the platform's one
+ * policy, checkSigningAuthority (part11/signing-authority-gate.ts), inline in
+ * its handler and before the credentials: the role from the membership row,
+ * never `req.user.role`, 403 ESIGNATURE_NO_AUTHORITY, or 503
+ * SIGNING_AUTHORITY_UNVERIFIED when the role cannot be read. This router held
+ * its own copy of that check (assertSigningAuthority) until 2026-10-08 (P-27);
+ * a failed lookup there was an unhandled 500.
  *
  * @compliance 21 CFR Part 11 §11.10(d), §11.10(g)
  */
-async function assertSigningAuthority(
-  req: Request,
-  res: Response,
-): Promise<boolean> {
-  const actorId = Number(getActorId(req));
-  const orgId = getTenantId(req);
-  const role = await resolveSignerOrgRole(actorId, orgId);
-  if (!isSigningAuthorized(role)) {
-    res.status(403).json({
-      error:
-        'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-      code: 'ESIGNATURE_NO_AUTHORITY',
-    });
-    return false;
-  }
-  return true;
-}
 
 /**
  * Does this document exist for this tenant?
@@ -1538,8 +1517,8 @@ router.post('/docs/from-draft', async (req: Request, res: Response) => {
                    'approve' → decideAuthoringPermission (OWNER or APPROVER
                    grant, or a global admin role), then — a freeze is signed
                    (DP-35) — the same §11.10(g) check as esign.
-     esign         the same 'approve' decision, then assertSigningAuthority's
-                   §11.10(g) check: resolveSignerOrgRole + isSigningAuthorized.
+     esign         the same 'approve' decision, then the §11.10(g) check
+                   (checkSigningAuthority, as the e-sign route asks it).
      esignReview   the review signature alone (meaning REVIEWER), which the
                    middleware classes as 'review' (REVIEWER, APPROVER or OWNER
                    grant), then the same §11.10(g) check (QA 2026-10-08, j4).
@@ -4655,7 +4634,8 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
 
     // §11.10(g) authority, before the credentials (see /e-sign for the order).
-    if (!(await assertSigningAuthority(req, res))) return;
+    const authority = await checkSigningAuthority(Number(getActorId(req)), getTenantId(req));
+    if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
     if (!isFreezeMeaning(meaning)) {
       return res.status(400).json({
         error:
@@ -4928,7 +4908,8 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
     // §11.10(g) authority, checked BEFORE the credentials. Order matters: an
     // unauthorized caller must not learn whether a password is correct, and
     // must not be able to use this endpoint as a password oracle.
-    if (!(await assertSigningAuthority(req, res))) return;
+    const authority = await checkSigningAuthority(Number(getActorId(req)), getTenantId(req));
+    if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
 
     if (!meaning || !SIGNATURE_MEANINGS.includes(meaning)) {
       return res.status(400).json({ error: 'Invalid signature meaning' });
@@ -6779,7 +6760,8 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     // This path also advances a workflow step, and it already consulted the
     // caller's roles to decide THAT (below); it never consulted them to decide
     // whether the signature itself could be applied.
-    if (!(await assertSigningAuthority(req, res))) return;
+    const authority = await checkSigningAuthority(Number(getActorId(req)), getTenantId(req));
+    if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
 
     // Validate required fields
     if (!reason) {

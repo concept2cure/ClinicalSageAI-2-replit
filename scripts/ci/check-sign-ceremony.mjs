@@ -78,9 +78,10 @@
  * six more handlers doing the same. So a second rule: every handler that calls
  * verifyReauth / reverifySigner must also ask the platform's one signing policy
  * in that handler — checkSigningAuthority (services/part11/signing-authority-gate),
- * or isSigningAuthorized directly, or one of the three wrappers that delegate to
- * it (signingAuthorityRefusal in c2c/actions, assertSigningAuthority,
- * refusedWithoutSigningAuthority in api/cmc/cmc-signer). A re-authentication
+ * and since P-27 (2026-10-08) nothing else: isSigningAuthorized written out in
+ * the handler, and the three wrappers that once applied it (signingAuthorityRefusal
+ * in c2c/actions, assertSigningAuthority, refusedWithoutSigningAuthority in
+ * api/cmc/cmc-signer), no longer count and are deleted. A re-authentication
  * that is not a signature (a rollback, a lock, a gateway-account change) is
  * baselined under `authority` with the reason it signs nothing. Same limits as
  * above: textual, per top-level handler, a helper's caller is not seen.
@@ -302,8 +303,15 @@ export function scanSource(src) {
   });
 }
 
-/** The platform's one signing-authority policy, or a wrapper that applies it. */
-const AUTHORITY = /\b(?:checkSigningAuthority|isSigningAuthorized|signingAuthorityRefusal|assertSigningAuthority|refusedWithoutSigningAuthority)\s*\(/;
+/**
+ * The platform's one signing-authority policy. Since 2026-10-08 (P-27) only the
+ * gate itself counts: the predicate written out in a handler, and the local
+ * wrappers that once applied it (signingAuthorityRefusal, assertSigningAuthority,
+ * refusedWithoutSigningAuthority), were copies that drifted — a failed role
+ * lookup answered 500 in one and threw in another, two read the role from the
+ * request, three asked after the password. They are deleted.
+ */
+const AUTHORITY = /\bcheckSigningAuthority\s*\(/;
 const REAUTH_CALL = /\b(?:verifyReauth|reverifySigner)\s*\(/g;
 
 /**

@@ -1366,15 +1366,15 @@ async function assertSequencePackageable(
   const { assembleSequence, assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
   let assembled: Awaited<ReturnType<typeof assembleSequence>>;
   try {
-    // The agency identifiers only fill backbone text; the blockers do not
-    // depend on them, and nothing assembled here is sent.
+    // A dry run (package-identity.ts): the blockers do not depend on the
+    // agency identifiers, so it names none and carries the one dry-run
+    // placeholder. It produces no package — the bundle is discarded below on
+    // every path, and nothing of it is stored or sent (P-27, 2026-10-08).
     assembled = await assembleSequence({
       sequenceId: id,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      applicationId: `UNASSIGNED-SEQ-${id}`,
-      sponsorId: `UNASSIGNED-ORG-${ctx.organizationId}`,
-      sponsorName: `UNASSIGNED (organization ${ctx.organizationId})`,
+      dryRun: true,
     });
   } catch (err) {
     throw new SubmissionError(

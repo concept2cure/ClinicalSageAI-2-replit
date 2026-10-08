@@ -1980,7 +1980,7 @@ router.get('/runs/:id/seal', async (req: Request, res: Response) => {
  *     is who may finalize; the platform's signing policy
  *     (services/part11/signing-authority.ts) is who may sign, and a finalize
  *     is both. The authority check is the ceremony's floor
- *     (governed-signature-ceremony assertSigningAuthority: the membership
+ *     (governed-signature-ceremony, checkSigningAuthority: the membership
  *     row's role, before any password is compared or transaction opened). The
  *     route kept its own copy ahead of it until the "Report finalize"
  *     follow-up decision (docs/LAUNCH_DEFINITION_OF_DONE.md) removed it: one

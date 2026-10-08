@@ -1,0 +1,7 @@
+# tsc --noEmit -p tsconfig.check.json (whole tree, 2026-10-08T17:43:59Z)
+errors: 3 — none in this change's files:
+server/routes/ana-ri/__tests__/stream-disconnect.test.ts(41,22): error TS2554: Expected 1 arguments, but got 0.
+server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts(26,33): error TS2554: Expected 1 arguments, but got 0.
+server/services/review/__tests__/vault-review-queue.test.ts(42,36): error TS2493: Tuple type '[text: string]' of length '1' has no element at index '1'.
+
+# eslint on this change's 44 files: before (HEAD via --stdin) 237 warnings / 0 errors; after 236 warnings / 0 errors

@@ -19,11 +19,22 @@ import JSZip from 'jszip';
 // 2026-09-28: confirmed writes now need an editor role (registry wrapper,
 // writeRoleRefusal); CTX models a confirmed person who may edit, so the
 // membership lookup answers 'member'. The pg stub has no organization_users row.
-const { resolveSignerOrgRole } = vi.hoisted(() => ({
+const { resolveSignerOrgRole, programInOrganization, readRecordedPackageIdentity } = vi.hoisted(() => ({
   resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+  programInOrganization: vi.fn(async () => true),
+  // 2026-10-08 (P-27): the application number and applicant come from the
+  // record (package-identity.ts), not the call; this suite models a project
+  // that records both. Their refusal is pinned in -recorded-identity.test.ts.
+  readRecordedPackageIdentity: vi.fn(async () => ({
+    programId: '7d1c2f0e-5b7a-4c1e-9a43-0f2b6d1e8c55', applicationNumber: '123456', applicantName: 'S',
+  })),
 }));
 vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
 vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+vi.mock('../../c2c/program-access', async (orig) => ({ ...(await orig<object>()), programInOrganization }));
+vi.mock('../../c2c/program-access.js', async (orig) => ({ ...(await orig<object>()), programInOrganization }));
+vi.mock('../../ectd/package-identity', async (orig) => ({ ...(await orig<object>()), readRecordedPackageIdentity }));
+vi.mock('../../ectd/package-identity.js', async (orig) => ({ ...(await orig<object>()), readRecordedPackageIdentity }));
 
 import { PACKAGE_ECTD_FOR_REGION } from '../AnaToolDefinitions';
 import { getToolHandler } from '../AnaToolExecutor';
@@ -54,8 +65,8 @@ async function run(input: Record<string, unknown>) {
 }
 
 const base = (outputDir: string, leaves: unknown[]) => ({
-  region: 'fda', application_id: '123456', sequence: '0001', submission_type: 'original',
-  application_type: 'ind', sponsor_id: 'D', sponsor_name: 'S', product_name: 'P',
+  region: 'fda', program_id: '7d1c2f0e-5b7a-4c1e-9a43-0f2b6d1e8c55', sequence: '0001', submission_type: 'original',
+  application_type: 'ind', product_name: 'P',
   output_dir: outputDir, leaves,
 });
 
