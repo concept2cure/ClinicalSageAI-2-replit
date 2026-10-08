@@ -4,6 +4,8 @@ import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { AnaActionChips } from '../AnaActionChips';
 import { LiveDriveSwitch } from '../LiveDriveSwitch';
+import { EngineChoices } from '../EngineChoices';
+import { ANA_MODES } from '../registryModel';
 import { RunPolicySwitch } from '../RunPolicySwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from '../editor/anaInsertGate';
@@ -836,7 +838,8 @@ export interface AskOrigin {
 
 /* ---- Conversation thread (main export) ---- */
 
-export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurfaceViewProps) {
+export function ConversationThread({ onNav, liveDrive, shellChat, engine }: OwnedSurfaceViewProps) {
+  const [engineOpen, setEngineOpen] = useState(false);
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
   // conversation, and `{ id: 'new', seed }` by whatever asks a question here.
   // `current` means "the conversation already in progress" — what this screen
@@ -1603,7 +1606,38 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
               </div>
             )}
             <span className="sr-only" aria-live="polite">{statusMessage}</span>
-            <div className="ct-comp-foot"><LiveDriveSwitch /><RunPolicySwitch variant="foot" /></div>
+            <div className="ct-comp-foot">
+              <LiveDriveSwitch />
+              <RunPolicySwitch variant="foot" />
+              {/* The engine this conversation's turns run on. It was chosen in
+                  the right rail's menu; the rail is gone. */}
+              {engine && (
+                <span className="ct-engine">
+                  <button
+                    type="button"
+                    className="ct-engine-pill"
+                    aria-haspopup="dialog"
+                    aria-expanded={engineOpen}
+                    onClick={() => setEngineOpen((o) => !o)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setEngineOpen(false); }}
+                  >
+                    Engine: {ANA_MODES.find((m) => m.id === engine.mode)?.effortLabel ?? engine.mode}
+                  </button>
+                  {engineOpen && (
+                    <span className="ct-engine-menu" role="dialog" aria-label="Choose the engine">
+                      <EngineChoices
+                        variant="rail"
+                        mode={engine.mode}
+                        onChoose={(id) => {
+                          engine.setMode(id);
+                          setEngineOpen(false);
+                        }}
+                      />
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
             <div className="ct-comp-foot">{I.lock} Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>
         </div>

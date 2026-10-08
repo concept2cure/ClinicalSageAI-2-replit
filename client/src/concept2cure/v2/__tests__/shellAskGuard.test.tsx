@@ -126,7 +126,7 @@ async function askThroughPalette(question: string) {
 }
 
 describe('the shell rail is drawn only where it can be seen', () => {
-  it('renders the rail on a surface that keeps it', async () => {
+  it('renders no rail on a work screen (slice 9)', async () => {
     renderShellAt('crl-library');
     await waitFor(() => expect(document.querySelector('.shell')).not.toBeNull());
     expect(document.querySelector('.shell')?.getAttribute('data-editor')).toBeNull();
@@ -261,20 +261,21 @@ describe('an "Ask AnA" button on a work screen', () => {
   });
 });
 
-describe('⌘\\ toggles only a rail that exists', () => {
-  it('persists anaOpen on a surface that draws the rail', async () => {
-    renderShellAt('crl-library');
+describe('no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9)', () => {
+  it.each(['vault', 'projects', 'submission-center', 'home', 'crl-library'])('%s has no AnA column and no seam', async (id) => {
+    renderShellAt(id);
     await waitFor(() => expect(document.querySelector('.shell')).not.toBeNull());
-    fireEvent.keyDown(window, { key: '\\', metaKey: true });
-    await waitFor(() => expect(storedPrefs().anaOpen).toBe(true));
-  });
-
-  it('is inert on a surface that owns its conversation', async () => {
-    renderShellAt('document-authoring');
-    await waitFor(() => expect(document.querySelector('.shell')).not.toBeNull());
-    fireEvent.keyDown(window, { key: '\\', metaKey: true });
-    // Nothing toggled, and — the part that actually hurt — nothing persisted.
-    expect(storedPrefs().anaOpen).not.toBe(true);
+    expect(document.querySelector('.shell .ana')).toBeNull();
+    expect(document.querySelector('.ana-seam')).toBeNull();
     expect(document.querySelector('.shell')?.getAttribute('data-ana-open')).toBe('false');
   });
+
+  it('⌘\\ opens nothing and persists nothing: there is no rail to toggle', async () => {
+    renderShellAt('vault');
+    await waitFor(() => expect(document.querySelector('.shell')).not.toBeNull());
+    fireEvent.keyDown(window, { key: '\\', metaKey: true });
+    expect(storedPrefs().anaOpen).not.toBe(true);
+    expect(document.querySelector('.shell .ana')).toBeNull();
+  });
 });
+

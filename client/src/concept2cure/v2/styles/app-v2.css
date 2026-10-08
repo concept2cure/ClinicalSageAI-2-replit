@@ -28,7 +28,8 @@
   --rail: 264px;
   --rail-collapsed: 56px;
   --ana: 380px;
-  --ana-seam: 32px;
+  /* No right rail, so no seam for it (ONE_ANA_ONE_CANVAS.md, slice 9). */
+  --ana-seam: 0px;
 
   /* Fixed near-black for shadow tinting. Declared here because the shell USES it
      (admin-access.css) while the only other declaration in the app graph is

@@ -294,10 +294,11 @@ export function Rail({
         <button
           type="button"
           className="rail-logo"
-          onClick={() => onNav('document-authoring')}
-          title="Document workspace"
-          aria-label="Document workspace"
-          data-on={activeId === 'document-authoring' || undefined}
+          /* Home, where the one conversation starts (ONE_ANA_ONE_CANVAS.md §5). */
+          onClick={() => onNav('home')}
+          title="Home"
+          aria-label="Home"
+          data-on={activeId === 'home' || undefined}
         >
           <img src={brandMark} alt="" />
           <div className="rail-logo-text">
