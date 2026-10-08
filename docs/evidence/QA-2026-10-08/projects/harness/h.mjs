@@ -17,7 +17,7 @@ export async function open() {
   page.on('response', async (r) => {
     const u = r.url();
     if (!u.includes('/api/') || r.status() < 400) return;
-    let body = ''; try { body = (await r.text()).slice(0, 300); } catch {}
+    let body = ''; try { body = (await r.text()).slice(0, 300); } catch { /* evidence capture only */ }
     log.push({ kind: 'http', status: r.status(), method: r.request().method(), url: u.replace(BASE, ''), body });
   });
   return { browser, ctx, page, log, done: async () => browser.close() };

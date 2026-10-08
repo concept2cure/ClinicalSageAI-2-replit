@@ -14,5 +14,5 @@ const res = await fetch(BASE + path, {
   body: body ?? undefined,
 });
 const text = await res.text();
-console.log(res.status);
-console.log(text.slice(0, Number(process.env.MAX || 6000)));
+console.info(res.status);
+console.info(text.slice(0, Number(process.env.MAX || 6000)));

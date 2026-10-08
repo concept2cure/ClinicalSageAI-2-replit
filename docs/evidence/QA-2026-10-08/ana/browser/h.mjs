@@ -22,12 +22,12 @@ export async function open(name) {
     const m = r.request().method();
     if (m !== 'GET' || /\/api\/chat\/threads/.test(u)) {
       let body = '';
-      try { body = (await r.text()).slice(0, 1500); } catch {}
+      try { body = (await r.text()).slice(0, 1500); } catch { /* evidence capture only */ }
       fs.appendFileSync(`${OUT}/${name}-api.log`, `${new Date().toISOString().slice(11,19)} ${m} ${r.status()} ${u.replace(BASE,'')}\n  REQ ${(r.request().postData()||'').slice(0,600)}\n  RES ${body.replace(/\n/g,' ')}\n`);
     }
   });
   page.on('requestfailed', (r) => { if (r.url().includes('/api/')) fs.appendFileSync(`${OUT}/${name}-api.log`, `${new Date().toISOString().slice(11,19)} FAILED ${r.url().replace(BASE,'')} ${r.failure()?.errorText}\n`); });
-  const done = async () => { writeLog(name, log); try { await ctx.storageState({ path: statePath }); } catch {} await browser.close(); };
+  const done = async () => { writeLog(name, log); try { await ctx.storageState({ path: statePath }); } catch { /* evidence capture only */ } await browser.close(); };
   return { browser, ctx, page, log, done };
 }
 export async function goto(page, p) {

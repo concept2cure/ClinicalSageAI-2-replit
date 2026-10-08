@@ -26,7 +26,7 @@ for (let i = 0; i < 40; i++) {
   const all = otps();
   if (all.length > seen) { otp = all[all.length - 1]; break; }
 }
-console.log('otp found:', otp ? 'yes' : 'no');
+console.info('otp found:', otp ? 'yes' : 'no');
 if (otp) {
   const digits = page.locator('input[maxlength="1"]:visible');
   for (let i = 0; i < 6; i++) { await digits.nth(i).click(); await page.keyboard.type(otp[i]); }
@@ -34,6 +34,6 @@ if (otp) {
 }
 await page.waitForURL((u) => !String(u).includes('/login'), { timeout: 60000 });
 await new Promise((r) => setTimeout(r, 2000));
-console.log('signed in, url:', page.url());
+console.info('signed in, url:', page.url());
 await ctx.storageState({ path: process.env.STATE });
 await browser.close();

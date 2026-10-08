@@ -134,8 +134,7 @@ type ProjectPrefetchResults = [
    (services/c2c/project-ref.ts): an integer is itself, a program its anchored row, anything else none. */
 async function anchoredProjectForProgram(ref: unknown, orgId: number | null | undefined): Promise<number | null> {
   if (!orgId || !Number.isFinite(orgId)) return null;
-  const { integerProjectForRef } = await import('../c2c/project-ref.js');
-  return integerProjectForRef(async () => (await import('../../db.js')).db, { ref, orgId, context: 'ana-route-prefetch' });
+  return (await import('../c2c/project-ref.js')).integerProjectForRef(async () => (await import('../../db.js')).db, { ref, orgId, context: 'ana-route-prefetch' });
 }
 
 export async function prefetchRouteIntelligenceContext(params: {

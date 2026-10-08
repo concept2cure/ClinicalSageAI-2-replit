@@ -8,7 +8,7 @@ await sleep(3000);
 await page.locator('[data-testid="ct-attach-input"]').setInputFiles(path.resolve('files/upload-note.txt'));
 for (let i = 0; i < 20; i++) { await sleep(500); if (await page.locator('.ct-att-chip[data-status="ready"]').count()) break; }
 const chip = await page.locator('.ct-att-chip').first().innerText().catch(() => '(no chip)');
-console.log('CHIP:', chip.replace(/\s+/g, ' '));
+console.info('CHIP:', chip.replace(/\s+/g, ' '));
 await snap(page, 'r5-chip');
 const ta = page.locator('textarea[aria-label="Reply to AnA"]');
 await ta.fill('Summarize the attached stability note');
@@ -16,6 +16,6 @@ await ta.press('Enter');
 await sleep(9000);
 const t = await bodyText(page);
 const used = t.match(/Used in this session.{0,300}/);
-console.log('USED:', used ? used[0] : '(none)');
+console.info('USED:', used ? used[0] : '(none)');
 await snap(page, 'r5-after-send');
 await done();

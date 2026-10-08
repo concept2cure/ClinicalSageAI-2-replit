@@ -8,6 +8,6 @@ await gotoQuality(page);
 const actions = async (num) => page.locator('.qms-row', { hasText: num }).locator('.qms-rowacts button').allInnerTexts();
 const out = { 'WI-014 (draft)': await actions('WI-014'), 'POL-002 (in review)': await actions('POL-002') };
 await snap(page, 'after-register-draft-row');
-console.log(JSON.stringify(out, null, 1));
+console.info(JSON.stringify(out, null, 1));
 writeLog('check-after', { out, log });
 await browser.close();

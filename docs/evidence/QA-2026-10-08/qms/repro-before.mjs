@@ -1,5 +1,5 @@
 // Reproduce the QMS findings on the current code, before any fix.
-import { launch, openCtx, watchedPage, snap, sleep, writeLog, gotoQuality, composer, say } from './h.mjs';
+import { launch, openCtx, watchedPage, snap, sleep, writeLog, gotoQuality, composer } from './h.mjs';
 const browser = await launch();
 const out = {};
 const log = [];
@@ -67,6 +67,6 @@ const log = [];
   await snap(page, 'before-manager-approve');
   await ctx.close();
 }
-console.log(JSON.stringify(out, null, 1));
+console.info(JSON.stringify(out, null, 1));
 writeLog('repro-before', { out, log });
 await browser.close();
