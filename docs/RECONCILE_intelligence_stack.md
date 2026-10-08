@@ -41,7 +41,7 @@ reset to `origin/concept2cure-v2` after tagging the divergent tip
 | WO-4 | Consistency | **EXISTS** | `consistency_findings` (`evidence.ts` + migration `20260605`), prompt `consistency-check`, truth-engine `runConsistencyCheck`, `POST/GET /:id/consistency` |
 | WO-5 | Strategy / planner | **PARTIAL** | prompt `submission-plan` + `generateSubmissionPlan` + `POST /:id/plan` exist; **ABSENT:** `reasoning-engine` interface, `ctd_section_profiles`, `regional_forms`, `submission_plans` persistence |
 | WO-6 | Validation | **PARTIAL** | prompt `validation-explain` + `explainValidation` + several deterministic validators exist; **ABSENT:** unified `validation_results` / `validation_profiles` persistence |
-| WO-7 | Cross-region | **PARTIAL** | prompt `cross-region-gap` + `computeCrossRegionGap` + `POST /:id/cross-region` exist; **ABSENT:** `cross_region_deltas` persistence |
+| WO-7 | Cross-region | **RETIRED 2026-10-08** | prompt, `computeCrossRegionGap`, `POST /:id/cross-region` and the AnA tool removed (FILING_SPINE.md F21: a model verdict, against Rule 2). What another market needs is stated deterministically by `services/regulatory/market-support.ts` (F19). No persistence is owed. |
 | WO-8 | Shadow Review (the moat) | **EXISTS — benchmark missing** | `shadow_review_runs` / `shadow_review_findings`, prompt `shadow-review`, `services/shadow-review/` (`runShadowReview`, `aggregateRisk`), routes; **ABSENT:** mandatory Chahal benchmark doc |
 
 ### Tier 3 — Compounding
@@ -54,7 +54,7 @@ reset to `origin/concept2cure-v2` after tagging the divergent tip
 
 1. **WO-8 benchmark** — `docs/shadow_review_benchmark.md` against the Chahal et al. RTF dataset (mandatory gate; the credibility proof). *Highest priority.*
 2. **WO-6** — `validation_results` + `validation_profiles` tables; unify the existing validators behind one results writer (do not add a new validator).
-3. **WO-7** — `cross_region_deltas` table + persist `computeCrossRegionGap` output.
+3. **WO-7** — retired 2026-10-08 (above); nothing to persist.
 4. **WO-5** — `reasoning-engine` interface (rules-resolver now, hrm-resolver stub) + `ctd_section_profiles` / `regional_forms` rule data + `submission_plans` persistence.
 5. **WO-9** — `lifecycle_diffs` table fed by `lifecycle-operator.ts`.
 6. **WO-10** — `learning_signals` (append-only) + capture hooks (no prompt auto-mutation).

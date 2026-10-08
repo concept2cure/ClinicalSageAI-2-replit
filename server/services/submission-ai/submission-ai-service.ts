@@ -1,12 +1,15 @@
 /**
  * Submission AI tasks (gateway-backed)
  *
- * The four remaining pure-input AI tasks the spec §6 calls for that take
+ * The three remaining pure-input AI tasks the spec §6 calls for that take
  * structured input and return structured output (no new tables, no streaming):
  *   - submission-plan   (§6.1) NARRATIVE (gaps, dependencies) over the deterministic structure
  *                        (sections, forms and clocks come from the reasoning engine — see generateSubmissionPlan)
  *   - validation-explain (§6.6) plain-language causes + fixes for validator errors
- *   - cross-region-gap   (§6.7) deltas to file region A's submission in B/C
+ *   (cross-region-gap, §6.7, was retired 2026-10-08: a model's list of Module 1
+ *    deltas rendered as a regulatory verdict, against CLAUDE.md Rule 2.
+ *    FILING_SPINE.md F21; what another market needs is now stated
+ *    deterministically by services/regulatory/market-support.ts.)
  *   - dispatch-qc        (§6.8) NARRATIVE over the deterministic pre-transmit verdict
  *                        (the verdict itself never comes from the model — see runDispatchQc)
  *
@@ -228,16 +231,6 @@ export function explainValidation<T = unknown>(input: ValidationExplainInput, ct
   return runJsonTask<T>('validation-explain', 'document_analysis', input, ctx, { maxTokens: 4000 });
 }
 
-export interface CrossRegionGapInput {
-  sourceRegion: string;
-  targetRegions: string[];
-  applicationType: string;
-  sectionsPresent?: string[];
-}
-export function computeCrossRegionGap<T = unknown>(input: CrossRegionGapInput, ctx: AiTaskCtx): Promise<T> {
-  return runJsonTask<T>('cross-region-gap', 'regulatory_review', input, ctx, { maxTokens: 4000 });
-}
-
 export interface DispatchQcInput {
   region: string;
   validationErrors: number;
@@ -439,4 +432,4 @@ export async function runDispatchQc(
   return { ...verdict, ...narrated };
 }
 
-export default { generateSubmissionPlan, explainValidation, computeCrossRegionGap, runDispatchQc };
+export default { generateSubmissionPlan, explainValidation, runDispatchQc };

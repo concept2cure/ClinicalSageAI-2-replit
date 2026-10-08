@@ -95,13 +95,6 @@ export const SUBMISSION_WORKSPACES: WorkspaceDef[] = [
     anaTools: ['run_shadow_review'],
   },
   {
-    id: 'cross-region',
-    label: 'Cross-region',
-    routePattern: '/submissions/:id/cross-region',
-    endpoints: ['POST /api/submissions/:id/cross-region', 'GET /api/region-profiles'],
-    anaTools: ['cross_region_gap_analysis'],
-  },
-  {
     id: 'dispatch',
     label: 'Dispatch',
     routePattern: '/submissions/:id/dispatch',
