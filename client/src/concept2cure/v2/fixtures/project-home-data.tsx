@@ -264,6 +264,17 @@ export interface LifecycleStage {
   label: string;
   icon: string;
   blurb: string;
+  /** Stage names that no longer have a tab and whose work is on this one.
+   *  `project-home.set-stage` still accepts them (shared/navigation/
+   *  surface-actions.ts), so an AnA call naming one opens this tab. */
+  aliases?: readonly string[];
+  /** What this tab does not do in this release, in words, shown with no
+   *  button (FILING_SPINE.md §2 "Submit" and "Respond", §5). */
+  later?: string;
+  /** `later` for a device or diagnostic project, when it differs: the drug
+   *  line names IND annual reports and the EU variation classifier, which a
+   *  510(k), De Novo or PMA does not have. */
+  laterDevice?: string;
 }
 
 export interface StageTool {
@@ -281,32 +292,36 @@ export interface StageTool {
 
 /* ── Lifecycle ── */
 
+/* The project is the filing (docs/design/FILING_SPINE.md §1, §2): five tabs
+   in the order the work is done. Plan and Lifecycle were removed on
+   2026-10-08 (slice F2): neither held anything that could be opened in this
+   release, and both showed "Not in this release" with no button. Their names
+   are Submit's aliases, since market choice and follow-up sequences belong
+   there, and what they promised is named on Submit's coming-later line. */
 export const PJ_LIFECYCLE: LifecycleStage[] = [
-  { id: 'plan', label: 'Plan', icon: 'calendar', blurb: 'Strategy, precedent, agency meetings & timeline' },
-  { id: 'evidence', label: 'Evidence', icon: 'search', blurb: 'Vault, RAG search & claim↔evidence linking' },
+  { id: 'evidence', label: 'Evidence', icon: 'search', blurb: 'Project files and the data room the documents are written from' },
   { id: 'author', label: 'Author', icon: 'penLine', blurb: 'Draft eCTD sections with AnA, track changes' },
   { id: 'review', label: 'Review', icon: 'checkCircle', blurb: 'Review, approve & e-sign' },
-  { id: 'submit', label: 'Submit', icon: 'rocket', blurb: 'Assemble eCTD, validate & transmit' },
-  { id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Health-authority questions & responses' },
-  { id: 'lifecycle', label: 'Lifecycle', icon: 'globe', blurb: 'Registrations, variations, market access & PV' },
+  {
+    id: 'submit', label: 'Submit', icon: 'rocket', blurb: 'Assemble eCTD, validate & transmit',
+    aliases: ['plan', 'lifecycle'],
+    later:
+      'Registrations, market access and pharmacovigilance; the variation classifier; IND annual-report tracking; ' +
+      'regulatory intelligence, precedent and agency meetings.',
+    laterDevice:
+      'Registrations, market access and post-market vigilance; regulatory intelligence, precedent and agency meetings.',
+  },
+  {
+    id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Health-authority questions & responses',
+    later: 'Question-by-question tracking of agency letters, agency meetings and precedent responses.',
+  },
 ];
 
-
+/* A tool a stage offers is a door that opens. Tools outside this release are
+   not listed here as cards; they are named on the stage's coming-later line. */
 export const PJ_STAGE_TOOLS: Record<string, StageTool[]> = {
-  plan: [
-    { id: 'global-ri', label: 'Regulatory intelligence', desc: 'Pathways, precedent & global landscape', icon: 'globe' },
-    { id: 'precedent-intelligence', label: 'Precedent intelligence', desc: 'Approved analogues in this therapeutic area', icon: 'scale' },
-    { id: 'agency-meetings', label: 'Agency meetings', desc: 'Briefing books, questions & minutes', icon: 'calendar' },
-  ],
   respond: [
-    { id: 'haq-manager', label: 'HA questions', desc: 'Track & respond to deficiency letters', icon: 'messageCircle' },
-    { id: 'global-ri', label: 'Precedent responses', desc: 'How analogues answered similar questions', icon: 'globe' },
     { id: 'document-authoring', label: 'Response authoring', desc: 'Draft governed responses with AnA', icon: 'penLine' },
-  ],
-  lifecycle: [
-    { id: 'registrations', label: 'Registrations', desc: 'Market registrations & variations', icon: 'globe' },
-    { id: 'market-access', label: 'Market access', desc: 'Pricing, reimbursement & HTA', icon: 'barChart' },
-    { id: 'safety-narrative', label: 'Pharmacovigilance', desc: 'Safety narratives & signal detection', icon: 'shieldCheck' },
   ],
 };
 

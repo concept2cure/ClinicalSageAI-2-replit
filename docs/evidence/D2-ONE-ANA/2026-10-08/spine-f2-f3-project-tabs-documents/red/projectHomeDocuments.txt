@@ -1,0 +1,4937 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > lists the project's documents from the program-scoped read, with status in words 5216ms
+   → Unable to find an element with the text: Clinical overview (2.5). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a row opens THAT document, by id, in this program 5343ms
+   → Unable to find role="button" and name "Open Clinical overview (2.5)"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a failed read is an error with a retry, never an empty list, and the retry reads again 5158ms
+   → Unable to find an element with the text: Couldn’t list this project’s documents. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an empty project says so in words 5196ms
+   → Unable to find an element with the text: /No documents in this project yet/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > "Recent drafts" and the Workspace grid are gone, and nothing reads the drafts 171ms
+   → expected <span class="sec-sub"></span> to be null
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the project's newest document in that module, not the editor's list 237ms
+   → the row named no document: expected undefined to match object { docId: 'doc-25', …(1) }
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the editor and the organisation's protocols as doors 5318ms
+   → Unable to find role="button" and name `/Open in Authoring/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > Evidence has the data room and Author does not 250ms
+   → the data room under Author: expected <h2></h2> to be null
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > "Write from these sources" hands the readable sources to AnA and never opens the editor 992ms
+   → expected "vi.fn()" to not be called with arguments: [ 'document-authoring' ]
+
+Received:
+
+  1st vi.fn() call:
+
+Compared values have no visual difference.
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the Evidence blurb says what the tab holds 152ms
+   → expected 'Vault, RAG search & claim↔evidence li…' to be 'Project files and the data room the d…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Submit — the grid's filing doors > "Compile and download" opens eCTD compile, and "Open readiness" opens the readiness screen 5159ms
+   → Unable to find role="button" and name `/Compile and download/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > lists the project's documents from the program-scoped read, with status in words
+TestingLibraryElementError: Unable to find an element with the text: Clinical overview (2.5). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:105:25
+    103|     serve();
+    104|     render(<ProjectHome {...props()} />);
+    105|     expect(await screen.findByText('Clinical overview (2.5)')).toBeTru…
+       |                         ^
+    106|     expect(screen.getByText('Drug substance (3.2.S)')).toBeTruthy();
+    107|     expect(apiRequest.mock.calls.some((c) => c[1] === DOCS_URL), 'read…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a row opens THAT document, by id, in this program
+TestingLibraryElementError: Unable to find role="button" and name "Open Clinical overview (2.5)"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:115:34
+    113|     const p = props();
+    114|     render(<ProjectHome {...p} />);
+    115|     fireEvent.click(await screen.findByRole('button', { name: 'Open Cl…
+       |                                  ^
+    116|     expect(target()).toMatchObject({ docId: 'doc-25', programId: PID }…
+    117|     expect(p.onNav).toHaveBeenCalledWith('document-authoring');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a failed read is an error with a retry, never an empty list, and the retry reads again
+TestingLibraryElementError: Unable to find an element with the text: Couldn’t list this project’s documents. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:124:25
+    122|     serve({ docs: () => (failures-- > 0 ? down() : ok({ documents: DOC…
+    123|     render(<ProjectHome {...props()} />);
+    124|     expect(await screen.findByText('Couldn’t list this project’s docum…
+       |                         ^
+    125|     expect(screen.getByText(/The authoring store is unavailable\. This…
+    126|     expect(screen.queryByText(/No documents in this project yet/)).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an empty project says so in words
+TestingLibraryElementError: Unable to find an element with the text: /No documents in this project yet/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:134:25
+    132|     serve({ docs: () => ok({ documents: [] }) });
+    133|     render(<ProjectHome {...props()} />);
+    134|     expect(await screen.findByText(/No documents in this project yet/)…
+       |                         ^
+    135|   });
+    136|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > "Recent drafts" and the Workspace grid are gone, and nothing reads the drafts
+AssertionError: expected <span class="sec-sub"></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="sec-sub"
+>
+  Every capability, scoped to this project
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:141:76
+    139|     render(<ProjectHome {...props()} />);
+    140|     await waitFor(() => expect(moduleRow('M2')).toBeTruthy());
+    141|     expect(screen.queryByText(/Every capability, scoped to this projec…
+       |                                                                            ^
+    142|     expect(document.querySelector('.pj-toolgrp'), 'a workspace tool gr…
+    143|     expect(screen.queryByText('Recent drafts')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the project's newest document in that module, not the editor's list
+AssertionError: the row named no document: expected undefined to match object { docId: 'doc-25', …(1) }
+
+- Expected:
+{
+  "docId": "doc-25",
+  "programId": "7c4e2a90-3333-4444-8555-666677778888",
+}
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:154:51
+    152|     await waitFor(() => expect(moduleRow('M2 · 1 section')?.tagName).t…
+    153|     fireEvent.click(moduleRow('M2 · 1 section')!);
+    154|     expect(target(), 'the row named no document').toMatchObject({ docI…
+       |                                                   ^
+    155|     expect(p.onNav).toHaveBeenCalledWith('document-authoring');
+    156|     expect(moduleRow('M2 · 1 section')!.getAttribute('aria-label')).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the editor and the organisation's protocols as doors
+TestingLibraryElementError: Unable to find role="button" and name `/Open in Authoring/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:171:34
+    169|     (window as unknown as { C2C_EDITOR_TARGET?: unknown }).C2C_EDITOR_…
+    170|     render(<ProjectHome {...p} />);
+    171|     fireEvent.click(await screen.findByRole('button', { name: /Open in…
+       |                                  ^
+    172|     expect(p.onNav).toHaveBeenCalledWith('document-authoring');
+    173|     expect(target(), 'an older target does not ride along').toBeUndefi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > Evidence has the data room and Author does not
+AssertionError: the data room under Author: expected <h2></h2> to be null
+
+- Expected:
+null
+
++ Received:
+<h2>
+  Data room
+</h2>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:184:96
+    182|     render(<ProjectHome {...props()} />);
+    183|     await waitFor(() => expect(moduleRow('M2')).toBeTruthy());
+    184|     expect(screen.queryByRole('heading', { name: 'Data room' }), 'the …
+       |                                                                                                ^
+    185|     await open('Evidence');
+    186|     expect(await screen.findByRole('heading', { name: 'Data room' })).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > "Write from these sources" hands the readable sources to AnA and never opens the editor
+AssertionError: expected "vi.fn()" to not be called with arguments: [ 'document-authoring' ]
+
+Received:
+
+  1st vi.fn() call:
+
+Compared values have no visual difference.
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:199:25
+    197|     await screen.findByText('csr-study-101.pdf');
+    198|     fireEvent.click(screen.getByRole('button', { name: /Write from the…
+    199|     expect(p.onNav).not.toHaveBeenCalledWith('document-authoring');
+       |                         ^
+    200|     expect((window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SO…
+    201|     expect(p.onAsk).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the Evidence blurb says what the tab holds
+AssertionError: expected 'Vault, RAG search & claim↔evidence li…' to be 'Project files and the data room the d…' // Object.is equality
+
+Expected: "Project files and the data room the documents are written from"
+Received: "Vault, RAG search & claim↔evidence linking"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:209:72
+    207|     render(<ProjectHome {...props()} />);
+    208|     await open('Evidence');
+    209|     expect(document.querySelector('.pj-stageband-blurb')?.textContent)…
+       |                                                                        ^
+    210|   });
+    211| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Submit — the grid's filing doors > "Compile and download" opens eCTD compile, and "Open readiness" opens the readiness screen
+TestingLibraryElementError: Unable to find role="button" and name `/Compile and download/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-410[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-410[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mIND[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mTorvanib[0m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIND number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-convo"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-start-h"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"pj-start-h"[39m
+            [36m>[39m
+              [0mStart a conversation in [0m
+              [0mTorvanib[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0mAnA works with this project's sources, documents and submissions.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-composer"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-labelledby[39m=[32m"pj-start-h"[39m
+              [33mplaceholder[39m=[32m"Ask AnA to draft, reconcile or review…"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-composer-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Start the conversation"[39m
+                [33mclass[39m=[32m"pj-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx:219:34
+    217|     render(<ProjectHome {...p} />);
+    218|     await open('Submit');
+    219|     fireEvent.click(await screen.findByRole('button', { name: /Compile…
+       |                                  ^
+    220|     expect(p.onNav).toHaveBeenCalledWith('ectd-compile');
+    221|     fireEvent.click(screen.getByRole('button', { name: /Open readiness…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed (11)
+   Start at  07:37:35
+   Duration  35.30s (transform 826ms, setup 160ms, import 1.06s, tests 33.20s, environment 664ms)
+
+exit 1

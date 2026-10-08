@@ -9,6 +9,10 @@
  * and the Plan, Respond and Lifecycle stages listed tools that are all outside
  * the release. A button that opens "not in this release" is not something
  * this project can do, the rule the Workspace grid already follows.
+ *
+ * FILING_SPINE.md F2 (2026-10-08) removed Plan and Lifecycle. What they and
+ * Respond's locked tools promised is one coming-later line of words, with no
+ * button; no stage says "Not in this release" (projectHomeStages.test.tsx).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -66,37 +70,52 @@ const toolIds = (onNav: ReturnType<typeof vi.fn>) => {
 };
 
 describe('Project home and the launch scope', () => {
-  it.each(['Respond', 'Lifecycle', 'Plan'])('the %s stage offers no locked tool, and says when it has none', async (label) => {
+  it.each(['Respond', 'Submit'])('the %s stage offers no locked tool, and names what comes later in words', async (label) => {
     const onNav = vi.fn();
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project home' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" />);
-    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(7));
+    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(5));
     fireEvent.click(stage(label));
     await waitFor(() => expect(stage(label).getAttribute('data-status')).toBe('active'));
     const ids = toolIds(onNav);
     expect(ids.filter((id) => !isLaunchSurface(id)), `${label} offers tools that open "not in this release"`).toEqual([]);
-    // A stage left with nothing says so rather than showing an empty grid.
-    if (ids.length === 0) expect(screen.getByText('Not in this release')).toBeTruthy();
-    else expect(screen.queryByText('Not in this release')).toBeNull();
-    // The Plan stage no longer points at meetings, eTMF and grants "above".
+    // What is not in this release is a line of words, never a panel or a button.
+    expect(screen.queryByText('Not in this release')).toBeNull();
+    expect(screen.getByTestId('pj-coming-later').textContent).toMatch(/^Coming later:/);
+    // The removed Plan stage pointed at meetings, eTMF and grants "above".
     expect(screen.queryByText('Meetings, eTMF and grants open in their own surfaces')).toBeNull();
   });
 
   it('never offers the source tracer, which this release does not carry', async () => {
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project home' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biotech" />);
-    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(7));
+    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(5));
+    // The data room, which carried the link, is on Evidence (FILING_SPINE.md F3).
+    fireEvent.click(stage('Evidence'));
+    expect(await screen.findByRole('heading', { name: 'Data room' })).toBeTruthy();
     expect(screen.queryByText(/Trace a claim to its source/)).toBeNull();
   });
 
-  it('a CTD module chip opens the program\'s documents, not the locked dossier map', async () => {
+  it('a CTD module chip opens the program\'s document in that module, not the locked dossier map', async () => {
+    // Since FILING_SPINE.md F3 the chip opens the project's newest document in
+    // its module, by id (projectHomeDocuments.test.tsx), so it needs one.
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-204', status: 'active' });
+      if (url.includes('/workstreams')) return ok({ workstreams: [{ module: 'm2', total: 4, completion_pct: 25 }] });
+      if (url === `/api/authoring/docs?programId=${PID}`) {
+        return ok({ documents: [{ id: 'doc-2', title: 'Summaries', module: 'M2', status: 'draft', program_id: PID }] });
+      }
+      return ok({});
+    });
     const onNav = vi.fn();
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project home' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" />);
     const chip = await waitFor(() => {
-      const c = document.querySelector('.pj-lmod');
+      const c = document.querySelector('button.pj-lmod');
       expect(c).toBeTruthy();
       return c as HTMLElement;
     });
     fireEvent.click(chip);
     expect(onNav).toHaveBeenCalledWith('document-authoring');
     expect(onNav).not.toHaveBeenCalledWith('dossier-map');
+    expect((window as unknown as { C2C_EDITOR_TARGET?: { docId?: string } }).C2C_EDITOR_TARGET?.docId).toBe('doc-2');
+    delete (window as unknown as { C2C_EDITOR_TARGET?: unknown }).C2C_EDITOR_TARGET;
   });
 });

@@ -95,6 +95,8 @@ describe('ConversationFilesAdopt', () => {
     });
     const props = { surface: { id: 'project-home', label: 'Project' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' };
     render(<ProjectHome {...(props as unknown as React.ComponentProps<typeof ProjectHome>)} />);
+    // The Data Room is on the Evidence tab (FILING_SPINE.md F3).
+    fireEvent.click(Array.from(document.querySelectorAll<HTMLButtonElement>('.pj-lc-stage')).find((b) => b.textContent?.trim() === 'Evidence')!);
     expect(await screen.findByRole('button', { name: 'Add to this project' })).toBeTruthy();
   });
 });

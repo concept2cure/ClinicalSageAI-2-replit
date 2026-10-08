@@ -1,19 +1,20 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { I } from '../icons';
-import { EmptyState, useLiveData, useLiveRows, hasKeys, liveMutateOrNull, type DataState, type ListState } from '../dataConnect';
+import { EmptyState, ErrorState, useLiveData, useLiveRows, hasKeys, type DataState, type ListState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
-import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
-import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
+import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
+import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
+import { clearEditorTarget, setEditorTarget } from '../editorTarget';
 import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
@@ -71,9 +72,7 @@ declare global {
    memory/instructions/intelligence, agency meetings, eTMF, grants) are
    rendered as an honest EmptyState rather than a fabricated fixture. The
    project's files, conversations, dispatch readiness and submissions are read
-   by the project's UUID (slices 23 and 24 of ONE_ANA_ONE_CANVAS.md). The schedule-of-events panel
-   (plan stage) is live for numeric-keyed projects and renders the same honest
-   id-space empty for UUID programs — see SchedulePanel.
+   by the project's UUID (slices 23 and 24 of ONE_ANA_ONE_CANVAS.md).
    ════════════════════════════════════════════════════════════════════════ */
 
 /** GET /api/c2c/projects/:id — regulatory_programs metadata (bare object). */
@@ -148,18 +147,6 @@ interface WorkstreamRow {
   todo: number | string;
   completion_pct: number | null;
   last_updated: string | null;
-}
-
-/** GET /api/c2c/projects/:id/drafts → { drafts: [...] } (recent c2c_document_sections). */
-interface DraftRow {
-  id: string;
-  section_key: string | null;
-  label: string | null;
-  status: string | null;
-  version: string | number | null;
-  updated_at: string | null;
-  doc_type: string | null;
-  document_title: string | null;
 }
 
 /** Format a real ISO timestamp for display (never fabricated — null passes through). */
@@ -455,21 +442,38 @@ function legacyGated(d: Discovery): string | null {
 
 /** The project's submissions: GET /api/submissions?programId=…, loading, a
  *  failure with a retry, an honest empty and the rows, each its own state. */
-function ProjectSubmissions({ subs, onRetry, discovery, onNav, available }: {
+function ProjectSubmissions({ subs, onRetry, discovery, onNav, available, ectdFiling }: {
   subs: ListState<SubRow>; onRetry: () => void; discovery: Discovery;
   onNav: (id: string) => void; available: (id: string) => boolean;
+  /** The project is read and is not a device or diagnostic filing. */
+  ectdFiling: boolean;
 }) {
   const legacy = legacyGated(discovery);
   return (
     <section className="pj-sec" aria-labelledby="pj-subs-h">
       <div className="pj-sec-h">
         <h2 id="pj-subs-h">Submissions</h2>
-        {/* The Submission Center reads the open project, so it opens on this one. */}
-        {available('submission-center') && (
-          <button type="button" className="btn primary" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('submission-center')}>
-            {I.right} Open Submission Center
-          </button>
-        )}
+        <span className="pj-sec-acts">
+          {/* eCTD compile reads the open project's submission. The project
+              page's Workspace grid was its door until FILING_SPINE.md F3;
+              F14 moves it onto the sequence's Dispatch tab. It builds an
+              FDA/EMA eCTD backbone only, which is not how a 510(k), De Novo
+              or PMA is filed, and the grid offered it to biopharma projects
+              only (registryModel.ts SEGMENT_MODULES). So a device or
+              diagnostic project, or one not yet read, is not offered it;
+              no eSTAR path is in the launch scope to offer instead. */}
+          {ectdFiling && available('ectd-compile') && (
+            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('ectd-compile')}>
+              Compile and download {I.right}
+            </button>
+          )}
+          {/* The Submission Center reads the open project, so it opens on this one. */}
+          {available('submission-center') && (
+            <button type="button" className="btn primary" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('submission-center')}>
+              {I.right} Open Submission Center
+            </button>
+          )}
+        </span>
       </div>
       {subs.loading ? (
         <div role="status" aria-busy="true" className="scaf-note" style={{ padding: '16px 10px' }}>Loading this project&apos;s submissions…</div>
@@ -502,8 +506,9 @@ function ProjectSubmissions({ subs, onRetry, discovery, onNav, available }: {
 
 /** The Submit stage: one discovery and one scoped list read, shared by the
  *  two panels so that what one says the other cannot deny. */
-function ProjectSubmitStage({ pid, onNav, available }: {
+function ProjectSubmitStage({ pid, onNav, available, ectdFiling }: {
   pid: string; onNav: (id: string) => void; available: (id: string) => boolean;
+  ectdFiling: boolean;
 }) {
   const [reload, setReload] = useState(0);
   const discovery = useProgramSequence(reload);
@@ -514,36 +519,47 @@ function ProjectSubmitStage({ pid, onNav, available }: {
   return (
     <>
       <ProjectReadiness discovery={discovery} r={readiness} onRetry={() => setReload((k) => k + 1)} onNav={onNav} available={available} />
-      <ProjectSubmissions subs={subs} onRetry={() => setBump((b) => b + 1)} discovery={discovery} onNav={onNav} available={available} />
+      <ProjectSubmissions subs={subs} onRetry={() => setBump((b) => b + 1)} discovery={discovery} onNav={onNav} available={available} ectdFiling={ectdFiling} />
     </>
+  );
+}
+
+/** What this stage does not do in this release: one line of words and no
+ *  button (FILING_SPINE.md §2). It replaced a "Not in this release" panel that
+ *  stood where a stage's tools would be. */
+function ComingLater({ stage, device = false }: { stage: string; device?: boolean }) {
+  const meta = PJ_LIFECYCLE.find((s) => s.id === stage);
+  /* A device project's line does not promise IND or variation tracking. */
+  const words = (device && meta?.laterDevice) || meta?.later;
+  if (!words) return null;
+  return (
+    <p className="pj-desc pj-later" data-testid="pj-coming-later">
+      <b>Coming later:</b> {words}
+    </p>
   );
 }
 
 function StagePanel({ stage, onNav, available }: { stage: string; onNav: (id: string) => void; available: (id: string) => boolean }) {
   const meta = PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '', blurb: '' };
   /* A tool outside the launch scope is not offered: a card that opens a "not
-     in this release" panel is not a thing this project can do (the same rule
-     as the Workspace grid below). */
+     in this release" panel is not a thing this project can do. A stage left
+     with no tool says what comes later instead. */
   const tools = (PJ_STAGE_TOOLS[stage] || []).filter(t => available(t.id));
   return (
     <section className="pj-sec">
       <div className="pj-sec-h"><h2>{meta.label}</h2><span className="sec-sub">{meta.blurb}</span></div>
-      {tools.length === 0 && (
-        <EmptyState
-          icon={I.clock}
-          title="Not in this release"
-          hint="The tools for this stage come in a later release. AnA can still help with it in the conversation."
-        />
+      {tools.length > 0 && (
+        <div className="pj-tools">
+          {tools.map(t => (
+            <button key={t.id} className="pj-tool" onClick={() => onNav(t.id)}>
+              <span className="pj-tool-ico">{I[t.icon] || I.grid}</span>
+              <span className="pj-tool-b"><span className="pj-tool-t">{t.label}</span><span className="pj-tool-d">{t.desc}</span></span>
+              <span className="pj-tool-go">{I.right}</span>
+            </button>
+          ))}
+        </div>
       )}
-      <div className="pj-tools">
-        {tools.map(t => (
-          <button key={t.id} className="pj-tool" onClick={() => onNav(t.id)}>
-            <span className="pj-tool-ico">{I[t.icon] || I.grid}</span>
-            <span className="pj-tool-b"><span className="pj-tool-t">{t.label}</span><span className="pj-tool-d">{t.desc}</span></span>
-            <span className="pj-tool-go">{I.right}</span>
-          </button>
-        ))}
-      </div>
+      <ComingLater stage={stage} />
     </section>
   );
 }
@@ -556,6 +572,9 @@ function StagePanel({ stage, onNav, available }: { stage: string; onNav: (id: st
    Uploads go through the shared `useChatUpload` hook, the same path AnA's
    composer uses, so a file dropped here and a file attached in chat produce ONE
    identity rather than two records of the same document. */
+
+/** The most sources "Write from these sources" hands to one turn. */
+const HANDOFF_LIMIT = 10;
 
 interface SourceRow {
   id: number;
@@ -733,6 +752,22 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const total = current.length;
   const readable = current.filter(s => s.extractionStatus === 'extracted').length;
   const truncated = state.data?.window?.truncated === true;
+  /* Sources whose text can ground a draft, newest first as the route lists
+     them. "Write from these sources" hands over at most HANDOFF_LIMIT: the
+     stream inlines every pinned file into one turn and limits only each
+     file's size, so a whole data room would make a turn the model request
+     cannot carry. When the list is cut, here or by the server's window, the
+     words say "newest" rather than claiming the data room's readable set. */
+  const groundable = sources.filter(sourceCanGround).map(s => s.id);
+  const handed = groundable.slice(0, HANDOFF_LIMIT);
+  const handedWords = `the ${handed.length}${truncated || groundable.length > handed.length ? ' newest' : ''} readable source${handed.length === 1 ? '' : 's'}`;
+  /* Hand a set of sources to AnA. It resolves each source back to the upload
+     its bytes live in and grounds the turn on exactly those documents, not on
+     whatever its own retrieval would have picked. */
+  const handOff = (ids: number[], words: string) => {
+    window.C2C_SOURCE_PINS = ids.map(String);
+    onAsk(words);
+  };
 
   return (
     <section className="pj-sec">
@@ -944,22 +979,34 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             Trace a claim to its source {I.right}
           </button>
         )}
-        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('document-authoring')} disabled={uploading}>
-          Write from these sources {I.right}
-        </button>
+        {/* "Write from these sources" opened the editor with no document and
+            no sources (FILING_SPINE.md §6 row 4). It is now the same handoff
+            as "Draft with N pinned": the readable sources go to AnA as the
+            context of the next turn, in the one conversation. With sources
+            pinned, the pinned set is the one handed over. A data room with
+            nothing readable offers neither. */}
+        {pinned.length === 0 && groundable.length > 0 && (
+          <button
+            className="btn ghost"
+            style={{ fontSize: 12, padding: '4px 12px' }}
+            disabled={uploading}
+            title={`Ask AnA to draft from ${handedWords} in this data room`}
+            onClick={() => handOff(
+              handed,
+              `Use ${handedWords} in this project's data room as the context for drafting.`,
+            )}
+          >
+            {I.sparkles} Write from these sources
+          </button>
+        )}
         {pinned.length > 0 && (
           <button
             className="btn"
             style={{ fontSize: 12, padding: '4px 12px' }}
-            onClick={() => {
-              // Hand the chosen set to AnA. It resolves each source back to the
-              // upload its bytes live in and grounds the turn on exactly those
-              // documents — not on whatever its own retrieval would have picked.
-              window.C2C_SOURCE_PINS = pinned.map(String);
-              onAsk(
-                `Use the ${pinned.length} source${pinned.length === 1 ? '' : 's'} I pinned in the data room as the context for this project.`,
-              );
-            }}
+            onClick={() => handOff(
+              pinned,
+              `Use the ${pinned.length} source${pinned.length === 1 ? '' : 's'} I pinned in the data room as the context for this project.`,
+            )}
           >
             {I.sparkles} Draft with {pinned.length} pinned source{pinned.length === 1 ? '' : 's'}
           </button>
@@ -968,66 +1015,6 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
     </section>
   );
 }
-
-/* ════ Schedule of events — the 'plan' step's screen ════════════════════════
-   AnA's regulatory-aware milestone schedule, read from the REAL store
-   (GET /api/concept2cure/projects/:id/schedule-of-events — plan header in
-   project_schedule_of_events, milestones reusing project_workflow_stages).
-
-   IDENTITY: that store is keyed by the NUMERIC projects.id, while this
-   surface's window.C2C_PROJECT.id is normally a regulatory_programs UUID (see
-   the header comment). The panel therefore fetches ONLY when the open ident is
-   numeric-keyed ('12' / 'proj_12' — the SubmissionTwin idiom), and renders the
-   honest id-space empty for UUID programs instead of sending a doomed request
-   or borrowing another project's schedule. Milestone STATUS is displayed as
-   stored; nothing here invents progress, dates, or health. */
-
-/** GET …/schedule-of-events → milestones[] (ScheduleMilestoneView subset). */
-interface ScheduleMilestoneRow {
-  id: number;
-  key: string;
-  title: string;
-  status: string; // not_started | in_progress | at_risk | slipped | blocked | completed
-  targetDate: string | null;
-  isCritical: boolean;
-  regulatoryBasis: string | null;
-  ownerRole: string | null;
-  slipDays: number | null;
-}
-
-/** GET …/schedule-of-events → plan (SchedulePlanView subset); null = none generated. */
-interface SchedulePlanRow {
-  regulatoryFramework: string | null;
-  version: number;
-  targetDate: string | null;
-  confidence: string | null;
-}
-
-interface ScheduleViewRow {
-  plan: SchedulePlanRow | null;
-  milestones: ScheduleMilestoneRow[];
-  health?: { overallStatus?: string; summary?: string } | null;
-}
-
-/** The numeric-keyed ident space the schedule store resolves ('12' / 'proj_12'). */
-const SCHED_IDENT_RE = /^(?:proj_)?\d+$/;
-const SCHED_SHOWN = 8;
-
-/** Real ISO date → display with year (schedules span years); null stays null. */
-function fmtDue(v: string | null): string | null {
-  if (!v) return null;
-  const d = new Date(v);
-  return Number.isNaN(d.getTime())
-    ? null
-    : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-const SCHED_STATUS_TONE: Record<string, string> = {
-  completed: 'tone-ok',
-  at_risk: 'tone-warn',
-  slipped: 'tone-warn',
-  blocked: 'tone-warn',
-};
 
 /**
  * The program-header status chip was hardcoded `tone-ok`, so a program whose
@@ -1056,156 +1043,6 @@ const PRIORITY_TONE: Record<string, string> = {
   critical: 'tone-warn',
   high: 'tone-warn',
 };
-
-function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) => void }) {
-  const ident = pid && SCHED_IDENT_RE.test(pid) ? pid : null;
-  const [reloadKey, setReloadKey] = useState(0);
-  const [genBusy, setGenBusy] = useState(false);
-  const [genError, setGenError] = useState<string | null>(null);
-
-  const state = useLiveData<ScheduleViewRow>(
-    ident ? `/api/concept2cure/projects/${ident}/schedule-of-events` : null,
-    [ident, reloadKey],
-    hasKeys<ScheduleViewRow>('plan', 'milestones'),
-  );
-
-  const askGenerate = () =>
-    onAsk(
-      'Generate a schedule of events for this project — the regulatory milestone plan for its pathway, with dates toward our target submission.',
-    );
-
-  // Real POST /projects/:id/schedule-of-events/generate (routes/
-  // project-schedule-of-events.ts) — offered only in the numeric id-space where
-  // that endpoint actually resolves this project.
-  const generate = async () => {
-    if (!ident || genBusy) return;
-    setGenBusy(true);
-    setGenError(null);
-    const res = await liveMutateOrNull<ScheduleViewRow>(
-      'POST',
-      `/api/concept2cure/projects/${ident}/schedule-of-events/generate`,
-      {},
-    );
-    setGenBusy(false);
-    if (res.error) {
-      setGenError(res.error);
-    } else {
-      setReloadKey((k) => k + 1);
-    }
-  };
-
-  return (
-    <section className="pj-sec">
-      <div className="pj-sec-h">
-        <h2>Schedule</h2>
-        <span className="sec-sub">
-          {state.data?.plan
-            ? [
-                state.data.plan.regulatoryFramework,
-                `v${state.data.plan.version}`,
-                fmtDue(state.data.plan.targetDate) ? `target ${fmtDue(state.data.plan.targetDate)}` : null,
-              ]
-                .filter(Boolean)
-                .join(' · ')
-            : "AnA's regulatory milestone plan for this project"}
-        </span>
-      </div>
-
-      {!ident ? (
-        /* UUID program — the schedule store is keyed by the numeric project
-           record, which this workspace doesn't resolve (same identity gap as
-           tasks & readiness). Stated honestly; no phantom generate action. */
-        <EmptyState
-          icon={I.calendar}
-          title="Schedule isn't wired to this workspace yet"
-          hint="AnA's schedule of events is keyed to the numeric project record, which this workspace doesn't resolve yet — so no milestones can be shown or generated from here."
-        />
-      ) : (
-        <Anchored
-          state={state}
-          loadingText="Loading the schedule of events…"
-          errorTitle="Couldn't load the schedule"
-          errorHint="The schedule-of-events read didn't respond. Sign in and retry, or check the service is reachable."
-          emptyTitle="No schedule generated"
-          emptyHint="Ask AnA to generate one — a regulatory milestone plan grounded in this project's pathway — or generate it from the pathway template below."
-          isEmpty={(d) => !d.plan && (d.milestones ?? []).length === 0}
-          render={(d) => {
-            const milestones = d.milestones ?? [];
-            const open = milestones.filter((m) => m.status !== 'completed');
-            const completed = milestones.length - open.length;
-            const shown = open.slice(0, SCHED_SHOWN);
-            return (
-              <>
-                {d.health?.summary && (
-                  <div className="scaf-note" style={{ padding: '4px 0 10px', fontSize: 12.5 }}>{d.health.summary}</div>
-                )}
-                <div className="pj-sched" style={{ display: 'grid', gap: 0 }}>
-                  {shown.map((m) => {
-                    const due = fmtDue(m.targetDate);
-                    return (
-                      <div
-                        key={m.key || m.id}
-                        style={{
-                          display: 'flex', alignItems: 'baseline', gap: 10, padding: '7px 2px',
-                          borderBottom: '1px solid var(--border-subtle)',
-                        }}
-                      >
-                        <span className={`rd-chip ${SCHED_STATUS_TONE[m.status] ?? 'tone-idle'}`} style={{ whiteSpace: 'nowrap' }}>
-                          {String(m.status || 'not_started').replace(/_/g, ' ')}
-                        </span>
-                        <span style={{ flex: 1, minWidth: 0 }}>
-                          <span style={{ display: 'block', fontSize: 13, fontWeight: 600 }}>
-                            {m.title}
-                            {m.isCritical && <span className="sp-tone-warn" style={{ fontSize: 11, marginLeft: 6 }}>critical path</span>}
-                          </span>
-                          <span className="sec-sub" style={{ fontSize: 11.5 }}>
-                            {[m.regulatoryBasis, m.ownerRole].filter(Boolean).join(' · ')}
-                          </span>
-                        </span>
-                        <span className="sec-sub" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
-                          {due ?? 'no due date'}
-                          {m.slipDays != null && m.slipDays > 0 && (
-                            <span className="sp-tone-warn"> · {m.slipDays}d late</span>
-                          )}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="sec-sub" style={{ fontSize: 11.5, marginTop: 8 }}>
-                  {open.length > SCHED_SHOWN ? `+${open.length - SCHED_SHOWN} more upcoming · ` : ''}
-                  {completed > 0 ? `${completed} completed · ` : ''}
-                  {milestones.length} milestone{milestones.length === 1 ? '' : 's'} total
-                </div>
-              </>
-            );
-          }}
-        />
-      )}
-
-      {/* Empty-state affordances — both real: the composer prompt reaches the
-          generate_schedule_of_events AnA tool, and the button calls the real
-          POST generate endpoint. Rendered only in the numeric id-space where
-          they can actually act on THIS project. */}
-      {ident && !state.loading && !state.error && state.data && !state.data.plan
-        && (state.data.milestones ?? []).length === 0 && (
-        <div className="cm-pushbar" style={{ marginTop: 10 }}>
-          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={askGenerate}>
-            {I.sparkles} Ask AnA to generate one
-          </button>
-          <button className="btn" style={{ fontSize: 12, padding: '4px 12px' }} disabled={genBusy} onClick={generate}>
-            {genBusy ? 'Generating…' : 'Generate schedule'}
-          </button>
-        </div>
-      )}
-      {genError && (
-        <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>
-          Couldn&rsquo;t generate the schedule: {genError}
-        </div>
-      )}
-    </section>
-  );
-}
 
 /* ════ Inline conversation composer ════
    An ENTRY POINT to the one conversation, not a conversation of its own.
@@ -1272,6 +1109,49 @@ function StartConversation({ productName, onNav }: { productName: string; onNav:
 /** One persisted AnA thread of this program (GET /api/chat/threads?program_id=). */
 interface ThreadRow { id: string; title: string | null; created_at: string | null; updated_at: string | null; program_id?: string | null }
 
+/* ════ Conversations held on this project ═══════════════════════════════════
+   The program's own AnA threads. Threads carry the program they were started
+   in (chat_threads.program_id, bound when the stream mints the thread, only to
+   a program of its organization), so this lists exactly the conversations
+   held on this project, newest first, and opens one back into the thread
+   surface. It sits above the tabs with the start box (FILING_SPINE.md §2,
+   "Before the tabs"): a conversation belongs to the project, not to one stage
+   of it. */
+function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string) => void }) {
+  const threadsState = useLiveData<{ threads: ThreadRow[] }>(
+    `/api/chat/threads?program_id=${encodeURIComponent(pid)}&limit=8`,
+    [pid],
+  );
+  const resumeThread = (id: string) => {
+    window.C2C_CONVO = { id };
+    onNav('conversation-thread');
+  };
+  return (
+    <section className="pj-sec" aria-labelledby="pj-threads-h">
+      <div className="pj-sec-h"><h2 id="pj-threads-h">Conversations</h2><span className="sec-sub">resume a thread held on this project</span></div>
+      <Anchored
+        state={threadsState}
+        loadingText="Loading conversations…"
+        errorTitle="Couldn't load conversations"
+        errorHint="The conversation store didn't respond. Sign in and retry, or check that the service is reachable."
+        emptyTitle="No project conversations yet"
+        emptyHint="Start one in the box above. Threads started here are kept on this project and listed for resuming."
+        isEmpty={(d) => (d.threads ?? []).length === 0}
+        render={(d) => (
+          <div className="pj-files" data-testid="pj-threads">
+            {(d.threads ?? []).map((t) => (
+              <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
+                <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
+                <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
+              </button>
+            ))}
+          </div>
+        )}
+      />
+    </section>
+  );
+}
+
 /* ════ My work on this project ═════════════════════════════════════════════
    ONE_ANA_ONE_CANVAS.md slice 24. The task store keys a project by the numeric
    projects.id, which this page does not resolve (the integer-project-id
@@ -1304,100 +1184,198 @@ function MyWorkLine({ onNav, available }: { onNav: (id: string) => void; availab
   );
 }
 
+/* ════ Author: the project's documents ═══════════════════════════════════════
+   FILING_SPINE.md F3. Every document of this project in the authoring store,
+   GET /api/authoring/docs?programId=<uuid>, read and shown with the canvas
+   list's own pieces (editor/CanvasDocumentList.tsx: useDocumentList, rowsOf,
+   StatusPill, updatedWords). It replaces two things:
+     · "Recent drafts", which listed governed sections filtered on a status
+       that editor work never moves (projects.ts /drafts, status != 'todo')
+       and opened the editor without the draft;
+     · the "Every capability, scoped to this project" Workspace grid, which
+       launched organisation-level apps from inside the project.
+   A row opens THAT document: the editor target names it by id and program,
+   and the editor opens it or says why it could not. A failed read is an error
+   with a retry, never an empty list. */
+
+/** Every document of the project in the authoring store, whoever built it. */
+function projectDocumentsUrl(pid: string | null): string | null {
+  return pid ? `/api/authoring/docs?programId=${encodeURIComponent(pid)}` : null;
+}
+
+/** `M2`, `m2` or `2` → 2: the CTD module a document or a section rollup names.
+ *  Anything else (a 510(k) letter, a CSR section number) names no module. */
+function ctdModule(v: string | null | undefined): number | null {
+  const m = /^m?([1-5])$/i.exec(String(v ?? '').trim());
+  return m ? Number(m[1]) : null;
+}
+
+/* ProjectDocumentRow and ProjectDocumentsBody restate CanvasDocumentList's
+   private DocumentRow and ListBody (editor/CanvasDocumentList.tsx), without
+   its per-row "Download working copy" and its return-focus to Open. That is
+   a second copy of one list. The fix is in that file, which this slice does
+   not own: export a scope-agnostic row and body (empty sentence, download and
+   focus as options) and render them here; then these two are deleted. */
+function ProjectDocumentRow({ doc, onOpen }: { doc: BuiltDocument; onOpen: (doc: BuiltDocument) => void }) {
+  const n = ctdModule(doc.module);
+  const module = n ? `Module ${n}` : doc.module;
+  return (
+    <li className="cdl-row" data-doc-id={doc.id} data-testid="pj-doc-row">
+      <div className="cdl-row-main">
+        <span className="cdl-row-t">{doc.title}</span>
+        <span className="cdl-row-meta">
+          <StatusPill status={doc.status} />
+          {module && <span>{module}</span>}
+          <span>Updated <time dateTime={doc.updatedAt ?? undefined}>{updatedWords(doc.updatedAt)}</time></span>
+          {doc.source === 'ana' && <span>Built by AnA</span>}
+        </span>
+      </div>
+      <div className="cdl-row-actions">
+        <button type="button" className="btn primary" onClick={() => onOpen(doc)} aria-label={`Open ${doc.title}`}>
+          {I.penLine} Open
+        </button>
+      </div>
+    </li>
+  );
+}
+
+function ProjectDocumentsBody({ read, onRetry, onOpen }: {
+  read: ListRead; onRetry: () => void; onOpen: (doc: BuiltDocument) => void;
+}) {
+  const rows = rowsOf(read);
+  if (read.state === 'error' && !rows) {
+    return (
+      <ErrorState
+        title="Couldn’t list this project’s documents"
+        message={`${read.message} This is a failed read, not an empty list.`}
+        retry={onRetry}
+        testId="pj-docs-error"
+      />
+    );
+  }
+  if (!rows) return <div role="status" aria-busy="true" className="cdl-note">Reading this project’s documents…</div>;
+  if (rows.length === 0) {
+    return <p className="cdl-empty" data-testid="pj-docs-empty">No documents in this project yet. Ask AnA in the box above to draft one.</p>;
+  }
+  return (
+    <>
+      {read.state === 'error' && (
+        <div className="cdl-note" role="status" data-tone="err">
+          Couldn’t refresh the list. This is the list read earlier.{' '}
+          <button type="button" className="btn ghost" onClick={onRetry}>Retry</button>
+        </div>
+      )}
+      <ul className="cdl-list" aria-label="This project’s documents" data-testid="pj-documents">
+        {rows.map((doc) => <ProjectDocumentRow key={doc.id} doc={doc} onOpen={onOpen} />)}
+      </ul>
+    </>
+  );
+}
+
+function ProjectDocuments({ read, onRetry, onOpen, onNav, available }: {
+  read: ListRead; onRetry: () => void; onOpen: (doc: BuiltDocument) => void;
+  onNav: (id: string) => void; available: (id: string) => boolean;
+}) {
+  /* The editor's own view, with no document named: any pending target is
+     dropped so an older one cannot ride along (editorTarget.ts). */
+  const openAuthoring = () => {
+    clearEditorTarget();
+    onNav('document-authoring');
+  };
+  return (
+    <section className="pj-sec" aria-labelledby="pj-docs-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-docs-h">Documents</h2>
+        <span className="pj-sec-acts">
+          {/* Protocols have no program key (protocol_documents, PF-14), so
+              the door says they are the organisation's, not this project's. */}
+          {available('protocol-dev') && (
+            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('protocol-dev')}>
+              Protocols (organisation-wide) {I.right}
+            </button>
+          )}
+          {available('document-authoring') && (
+            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={openAuthoring}>
+              Open in Authoring {I.right}
+            </button>
+          )}
+        </span>
+      </div>
+      <ProjectDocumentsBody read={read} onRetry={onRetry} onOpen={onOpen} />
+    </section>
+  );
+}
+
+/** One CTD module's section rollup, and the project's newest document in
+ *  that module, which the row opens by id. The rollup counts governed
+ *  sections (c2c_document_sections) and the document is an authoring
+ *  document: two stores, so the figure is named as the module's sections and
+ *  the document is named in words under it, never as the figure's owner.
+ *  When the module holds several documents the row says how many and which
+ *  one it opens. A module with no document of this project, or a list that
+ *  could not be read, is a row with nothing to click: it opened the editor's
+ *  list, which is not the module (FILING_SPINE.md §6 row 4). */
+function ModuleRow({ w, match, onOpen }: {
+  w: WorkstreamRow; match: { doc: BuiltDocument; count: number; n: number } | null; onOpen: (doc: BuiltDocument) => void;
+}) {
+  const done = Number(w.completion_pct ?? 0);
+  const total = Number(w.total);
+  const name = String(w.module ?? '—').toUpperCase();
+  const sections = total ? `${total} section${total === 1 ? '' : 's'}` : '';
+  const label = `${name}${sections ? ` · ${sections}` : ''}`;
+  const body = (
+    <>
+      <span className="pj-lmod-t">{label}</span>
+      <span className="pj-lmod-track"><span className="pj-lmod-fill" data-risk={done < 50 || undefined} style={{ width: done + '%' }} /></span>
+      <span className="pj-lmod-pct">{done}%</span>
+    </>
+  );
+  if (!match) return <div className="pj-lmod" data-none data-risk={done < 50 || undefined}>{body}</div>;
+  const { doc, count, n } = match;
+  const which = count > 1 ? `, the newest of ${count} Module ${n} documents` : '';
+  return (
+    <div className="pj-lmodrow">
+      <button type="button" className="pj-lmod" data-risk={done < 50 || undefined} onClick={() => onOpen(doc)}
+        aria-label={`${name} sections${sections ? ` (${sections})` : ''}: ${done}% complete. Open ${doc.title}${which}`}>
+        {body}
+      </button>
+      <span className="pj-lmod-doc" data-testid="pj-lmod-doc">Opens {doc.title}{which}</span>
+    </div>
+  );
+}
+
 function AuthorWorkspace({
-  seg, pid, completion, onNav, onAsk, teamState, activityState, wsState, draftsState,
+  pid, completion, onNav, teamState, activityState, wsState, docs, onRetryDocs, onOpenDoc,
 }: {
-  seg: string;
-  /** regulatory_programs UUID — scopes the data room to this project. */
+  /** regulatory_programs UUID — scopes the records to this project. */
   pid: string | null;
   /** Dossier readiness percent from the program row, or null when unknown. */
   completion: number | null;
   onNav: (id: string) => void;
-  onAsk: (q: string) => void;
   teamState: DataState<{ team: TeamRow[] }>;
   activityState: DataState<{ activity: ActivityRow[] }>;
   wsState: DataState<{ workstreams: WorkstreamRow[] }>;
-  draftsState: DataState<{ drafts: DraftRow[] }>;
+  /** GET /api/authoring/docs?programId= — the project's documents. */
+  docs: ListRead;
+  onRetryDocs: () => void;
+  onOpenDoc: (doc: BuiltDocument) => void;
 }) {
-  /* Launch-scope verdicts, for the workspace tool grid below. */
-  const { verdictFor } = useNavEntitlements();
   const available = useSurfaceAvailable();
-  /* The program's own AnA threads — REAL. Threads carry the program they were
-     started in (chat_threads.program_id, bound when the stream mints the
-     thread, only to a program of its organization), so this lists exactly the conversations held on this
-     project, newest first, and opens one back into the thread surface. Until
-     that key existed this section was an honest empty with nothing behind it:
-     there was no way to resume a project chat from the project. */
-  const threadsState = useLiveData<{ threads: ThreadRow[] }>(
-    pid ? `/api/chat/threads?program_id=${encodeURIComponent(pid)}&limit=8` : null,
-    [pid],
-  );
-  const resumeThread = (id: string) => {
-    window.C2C_CONVO = { id };
-    onNav('conversation-thread');
+  const docRows = rowsOf(docs) ?? [];
+  /* The newest document of this project in a CTD module (the list is newest
+     first), and how many the module holds. */
+  const docForModule = (module: string | null): { doc: BuiltDocument; count: number; n: number } | null => {
+    const n = ctdModule(module);
+    if (n == null) return null;
+    const inModule = docRows.filter((d) => ctdModule(d.module) === n);
+    return inModule.length ? { doc: inModule[0], count: inModule.length, n } : null;
   };
   return (
     <div className="pj-grid">
       <div className="pj-main">
-        {/* Workspace tools — canonical registry navigation (not data) */}
-        <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Workspace</h2><span className="sec-sub">Every capability, scoped to this project</span></div>
-          {getSegmentModules(seg)
-            /* Tools outside the launch scope are not offered here: this grid
-               is "what you can do in this project", and a card that opens a
-               "not in this release" panel is not a thing you can do. The
-               Apps catalog remains the honest full list. A group left empty
-               by the filter is dropped rather than rendered as a heading
-               over nothing. */
-            .map((grp: { label: string; items: string[] }) => ({
-              label: grp.label,
-              items: grp.items.filter((id: string) => !isLaunchScopeLocked(verdictFor(id))),
-            }))
-            .filter((grp) => grp.items.length > 0)
-            .map((grp: { label: string; items: string[] }) => (
-            <div key={grp.label} className="pj-toolgrp">
-              <div className="pj-toolgrp-l">{grp.label}</div>
-              <div className="pj-tools">
-                {grp.items.map(id => {
-                  const m = getSurfaceMeta(id);
-                  return (
-                    <button key={id} className="pj-tool" title={(m as { notes?: string }).notes || m.label} onClick={() => onNav(id)}>
-                      <span className="pj-tool-ico">{I[(m as { icon?: string }).icon || ''] || I.grid}</span>
-                      <span className="pj-tool-b"><span className="pj-tool-t">{m.label}</span><span className="pj-tool-d">{String((m as { notes?: string }).notes || '').split('. ')[0]}</span></span>
-                      <span className="pj-tool-go">{I.right}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </section>
+        <ProjectDocuments read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} />
 
-        {/* Conversations — the program's persisted AnA threads, resumable */}
-        <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Conversations</h2><span className="sec-sub">resume a thread held on this project</span></div>
-          <Anchored
-            state={threadsState}
-            loadingText="Loading conversations…"
-            errorTitle="Couldn't load conversations"
-            errorHint="The conversation store didn't respond. Sign in and retry, or check that the service is reachable."
-            emptyTitle="No project conversations yet"
-            emptyHint="Start one in the composer above — threads started here are kept on this project and listed for resuming."
-            isEmpty={(d) => (d.threads ?? []).length === 0}
-            render={(d) => (
-              <div className="pj-files" data-testid="pj-threads">
-                {(d.threads ?? []).map((t) => (
-                  <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
-                    <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
-                    <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
-                  </button>
-                ))}
-              </div>
-            )}
-          />
-        </section>
-
-        {/* Linked modules — REAL: per-CTD-module section rollup */}
+        {/* Module completion — REAL: per-CTD-module section rollup */}
         <section className="pj-sec">
           <div className="pj-sec-h"><h2>Module completion</h2><span className="sec-sub">section status by CTD module</span></div>
           <Anchored
@@ -1410,29 +1388,11 @@ function AuthorWorkspace({
             isEmpty={(d) => (d.workstreams ?? []).length === 0}
             render={(d) => (
               <div className="pj-mods">
-                {(d.workstreams ?? []).map((w, i) => {
-                  const done = Number(w.completion_pct ?? 0);
-                  const label = String(w.module ?? '—').toUpperCase();
-                  return (
-                    /* Opens the program's documents, where these sections are
-                       written. It opened the dossier map, which reads a store
-                       programs created here never write (decision record
-                       2026-10-08). */
-                    <button key={i} className="pj-lmod" data-risk={done < 50 || undefined} onClick={() => onNav('document-authoring')}>
-                      <span className="pj-lmod-t">{label}{Number(w.total) ? ` · ${Number(w.total)} section${Number(w.total) === 1 ? '' : 's'}` : ''}</span>
-                      <span className="pj-lmod-track"><span className="pj-lmod-fill" data-risk={done < 50 || undefined} style={{ width: done + '%' }} /></span>
-                      <span className="pj-lmod-pct">{done}%</span>
-                    </button>
-                  );
-                })}
+                {(d.workstreams ?? []).map((w, i) => <ModuleRow key={`${w.module ?? ''}-${i}`} w={w} match={docForModule(w.module)} onOpen={onOpenDoc} />)}
               </div>
             )}
           />
         </section>
-
-        {/* Data room — REAL: the project's canonical client-document sources.
-            Sits directly above the documentation sections it feeds. */}
-        <DataRoom pid={pid} onNav={onNav} onAsk={onAsk} />
 
         <MyWorkLine onNav={onNav} available={available} />
 
@@ -1525,44 +1485,6 @@ function AuthorWorkspace({
           />
         </section>
 
-        {/* Recent drafts — REAL: most-recently-updated governed document sections.
-            (The prior 'Files' card fabricated an uploaded-document list; this shows
-            the project's real drafted sections instead.) */}
-        <section className="pj-card">
-          <div className="pj-card-h"><h3>Recent drafts</h3>
-            {/* Upload is a flagged mock ACTION — no upload endpoint is wired on
-                this surface, so the picker below intentionally does not fabricate
-                a persisted/processing row. Uploading lives in the document
-                workspace. */}
-            <button className="pj-edit" title="Add document (opens the document workspace)" aria-label="Add document (opens the document workspace)" onClick={() => onNav('document-authoring')}>{I.plus}</button>
-          </div>
-          <Anchored
-            state={draftsState}
-            loadingText="Loading recent drafts…"
-            errorTitle="Couldn't load recent drafts"
-            errorHint="The project sections read didn't respond. Sign in and retry, or check the service is reachable."
-            emptyTitle="No drafted sections yet"
-            emptyHint="Governed document sections drafted on this project will appear here, newest first."
-            isEmpty={(d) => (d.drafts ?? []).length === 0}
-            render={(d) => (
-              <div className="pj-files">
-                {(d.drafts ?? []).map((f) => {
-                  const nm = f.label || f.document_title || f.section_key || 'Section';
-                  return (
-                    <button key={f.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => onNav('document-authoring')}>
-                      <div className="pj-file-top">
-                        <span className="pj-file-badge">{String(f.doc_type || 'doc').toUpperCase()}</span>
-                        <span className="pj-file-status" data-s={fileTone(f.status || '')}>{f.status || 'draft'}</span>
-                      </div>
-                      <div className="pj-file-n">{nm}</div>
-                      <div className="pj-file-m">{[f.section_key, f.version != null ? 'v' + f.version : null, fmtWhen(f.updated_at)].filter(Boolean).join(' · ')}</div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          />
-        </section>
       </aside>
     </div>
   );
@@ -1570,7 +1492,7 @@ function AuthorWorkspace({
 
 /* ════ ProjectHome — the full workspace surface ════ */
 
-export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
+export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   // Other v2 surfaces treat onAsk as optional; keep that contract so ProjectHome
   // renders standalone (and in tests) without a host wired up.
   const ask = onAsk || (() => {});
@@ -1602,7 +1524,9 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   const teamState = useLiveData<{ team: TeamRow[] }>(pid ? `/api/c2c/projects/${pid}/team` : null);
   const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null);
   const wsState = useLiveData<{ workstreams: WorkstreamRow[] }>(pid ? `/api/c2c/projects/${pid}/workstreams` : null);
-  const draftsState = useLiveData<{ drafts: DraftRow[] }>(pid ? `/api/c2c/projects/${pid}/drafts` : null);
+  /* The project's documents (FILING_SPINE.md F3), read once for the Author
+     list, its module rows and what AnA is told. */
+  const { read: docsRead, reload: reloadDocs } = useDocumentList(projectDocumentsUrl(pid));
 
   const [stage, setStage] = useState('author');
 
@@ -1615,6 +1539,12 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   // header then rendered as the project's name — "PROJECT Project" above an
   // H1 "Project" — with no project selected at all.
   const title = sel?.title || prog?.name || null;
+  /* A document row opens THAT document: the editor target carries its id and
+     this program, so the editor opens it or states why it could not. */
+  const openDocument = (doc: BuiltDocument) => {
+    setEditorTarget({ docType: null, docId: doc.id, programId: pid, programTitle: title });
+    onNav('document-authoring');
+  };
   const productName = sel?.product || prog?.product_name || (title ? title.split(' ')[0] : 'this project');
   const desc = prog?.description ?? null;
   const clientType = sel?.ws ?? null;
@@ -1639,6 +1569,11 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
      each field stated as absent when the row lacks it; a drug program shows
      the drug facts and no device block. */
   const deviceProgram = isDeviceProgram(prog?.product_type);
+  /* A device or diagnostic filing: the program's product type, or a
+     selection made from the MDX workspace (the old Workspace grid's medtech
+     segment). Only a project that is read and is neither is an eCTD filing. */
+  const deviceFiling = deviceProgram || clientType === 'MDX';
+  const ectdFiling = !!prog && !deviceFiling;
   const predicateKs = (prog?.predicate_devices ?? [])
     .map((p) => String(p?.kNumber ?? '').trim())
     .filter(Boolean);
@@ -1652,9 +1587,6 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
     if (pid && productType) updateShellProject({ productType });
   }, [pid, prog?.product_type]);
 
-  const seg = sel
-    ? ({ MDX: 'medtech', Biotech: 'biotech', Pharma: 'pharma', CRO: 'cro' }[sel.ws ?? ''] ?? 'biotech')
-    : (segment || 'biotech');
 
   const noProject = !pid;
 
@@ -1691,7 +1623,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
     const team = teamState.data?.team;
     const activity = activityState.data?.activity;
     const workstreams = wsState.data?.workstreams;
-    const drafts = draftsState.data?.drafts;
+    const documents = rowsOf(docsRead);
     return {
       summary:
         `Project home for ${title ? `"${title}"` : 'an untitled project'}${submissionType ? ` (${submissionType})` : ''}: ` +
@@ -1719,14 +1651,12 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
               completionPercent: w.completion_pct, lastUpdated: w.last_updated,
             })),
         workstreamsUnavailable: wsState.error ? 'the workstream rollup read failed' : null,
-        recentDrafts: draftsState.loading || draftsState.error || !Array.isArray(drafts)
-          ? null
-          : drafts.slice(0, 10).map((d) => ({
-              id: d.id, section: d.section_key, label: d.label, status: d.status,
-              version: d.version, documentTitle: d.document_title,
-              docType: d.doc_type, updated: d.updated_at,
-            })),
-        draftsUnavailable: draftsState.error ? 'the drafts read failed' : null,
+        documents: documents
+          ? documents.slice(0, 10).map((d) => ({
+              id: d.id, title: d.title, status: d.status, module: d.module, updated: d.updatedAt,
+            }))
+          : null,
+        documentsUnavailable: docsRead.state === 'error' && !documents ? 'the documents read failed' : null,
         recentActivity: activityState.loading || activityState.error || !Array.isArray(activity)
           ? null
           : activity.slice(0, 10).map((a) => ({
@@ -1736,7 +1666,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
       },
       availableActions: [
         'Move through the programme lifecycle stages',
-        'Open a recent draft section in the document editor',
+        'Open one of this project’s documents in the editor',
         'Open this project’s documents in the Vault surface, or its filings in the Submission Center',
         'Read the per-module completion rollup and the recent audited activity',
       ],
@@ -1746,7 +1676,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
       teamState.loading, teamState.error, teamState.data,
       activityState.loading, activityState.error, activityState.data,
       wsState.loading, wsState.error, wsState.data,
-      draftsState.loading, draftsState.error, draftsState.data]);
+      docsRead]);
   usePublishSurfaceContext('project-home', anaContext);
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
@@ -1756,20 +1686,25 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
      same reasoning as vault.search — applying it mid-load is correct, not
      early, and there is no loading refusal and no retry.
 
-     Known gap, not expressible today: leaving the 'author' stage unmounts its
-     composer, whose in-progress draft is child-local state this handler cannot
-     see — a mid-message guard would need that state lifted out of the child.
-     The registry entry's description already warns AnA not to switch away from
-     author uninvited. */
+     The start box sits above the tabs, outside the stage switch (FILING_SPINE.md
+     F2), so switching stage no longer unmounts a half-typed message. 'plan' and
+     'lifecycle' name tabs that were removed; they still resolve, to the tab
+     that holds their work (its `aliases` in PJ_LIFECYCLE), and the answer
+     says so. */
   useSurfaceActionHandlers('project-home', {
     'project-home.set-stage': (params) => {
       if (noProject)
         return { ok: false, reason: 'No project is selected — open one from All projects.' };
-      const target = (params.stage ?? '').trim();
-      const meta = PJ_LIFECYCLE.find((s) => s.id === target);
+      const asked = (params.stage ?? '').trim();
+      const meta = PJ_LIFECYCLE.find((s) => s.id === asked || s.aliases?.includes(asked));
       if (!meta) return { ok: false, reason: `No lifecycle stage named "${params.stage}".` };
       setStage(meta.id);
-      return { ok: true, detail: `Opened the ${meta.id} stage` };
+      return {
+        ok: true,
+        detail: meta.id === asked
+          ? `Opened the ${meta.id} stage`
+          : `Opened the ${meta.id} stage: "${asked}" has no tab of its own; its work is on ${meta.label}`,
+      };
     },
   });
   /* Ready signal — harmless even though set-stage never answers retry: a
@@ -1850,6 +1785,18 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             this is where the control belongs. */}
       </div>
 
+      {/* Before the tabs (FILING_SPINE.md §2): the start box and the
+          conversations held on this project. They are outside the stage
+          switch, so a half-typed message survives a change of tab; they sat
+          inside Author, and leaving Author unmounted the message. Shown, as
+          before, once the project record has not failed. */}
+      {pid && !progState.error && (
+        <div className="pj-start">
+          <StartConversation productName={productName} onNav={onNav} />
+          <ProjectConversations pid={pid} onNav={onNav} />
+        </div>
+      )}
+
       {/* A lifecycle belongs to a project. With none selected the tabs
           switched nothing — the body below is "No project selected" whichever
           is open — and AnA's set-stage already refuses in this state, so the
@@ -1870,7 +1817,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
         <EmptyState
           icon={I.folder}
           title="No project selected"
-          hint="Open a project from All projects to load its governed workspace — team, module completion, drafts and activity."
+          hint="Open a project from All projects to load its governed workspace — documents, module completion, team and activity."
         />
       ) : progState.error ? (
         <EmptyState
@@ -1881,10 +1828,25 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
         />
       ) : (
         <>
-          {stage === 'evidence' && pid && <ProjectEvidence pid={pid} name={title} onNav={onNav} available={available} />}
+          {/* Evidence — the project's files, then its data room: every way a
+              source comes into the project (FILING_SPINE.md F3). The data
+              room sat under Author. */}
+          {stage === 'evidence' && pid && (
+            <div className="pj-stagebody">
+              <ProjectEvidence pid={pid} name={title} onNav={onNav} available={available} />
+              <DataRoom pid={pid} onNav={onNav} onAsk={ask} />
+            </div>
+          )}
 
-          {/* Submit — the project's dispatch readiness, then its submissions (slice 24). */}
-          {stage === 'submit' && pid && <ProjectSubmitStage pid={pid} onNav={onNav} available={available} />}
+          {/* Submit — the project's dispatch readiness, then its submissions
+              (slice 24), then what Plan and Lifecycle promised, named as
+              coming later (F2). */}
+          {stage === 'submit' && pid && (
+            <div className="pj-stagebody">
+              <ProjectSubmitStage pid={pid} onNav={onNav} available={available} ectdFiling={ectdFiling} />
+              <ComingLater stage="submit" device={deviceFiling} />
+            </div>
+          )}
 
           {/* Review — tasks are keyed by the numeric project record, not reachable here. */}
           {stage === 'review' && (
@@ -1901,45 +1863,23 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             </section>
           )}
 
-          {/* Plan — the live schedule-of-events panel, the canonical tool
-              catalog, and honest empties for the panels whose backends are
-              org-shaped/absent here (meetings, eTMF, grants). */}
-          {stage === 'plan' && (<>
-            <SchedulePanel pid={pid} onAsk={ask} />
-            <StagePanel stage="plan" onNav={onNav} available={available} />
-            {/* Said only while one of those surfaces can be opened: in this
-                release none can, and the sentence would point at tools that
-                are not there. */}
-            {['agency-meetings', 'etmf'].some(available) && (
-            <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Agency meetings &amp; planning data</h2></div>
-              <EmptyState
-                icon={I.calendar}
-                title="Meetings, eTMF and grants open in their own surfaces"
-                hint="Agency meetings, the Trial Master File and grant milestones are managed in their dedicated surfaces, each wired to its real store. Use the tools above to open them."
-              />
-            </section>
-            )}
-          </>)}
-
           {stage === 'respond' && <StagePanel stage="respond" onNav={onNav} available={available} />}
-          {stage === 'lifecycle' && <StagePanel stage="lifecycle" onNav={onNav} available={available} />}
 
-          {stage === 'author' && (<>
-            <StartConversation productName={productName} onNav={onNav} />
-
+          {/* Author — the project's documents, each opened by id, then module
+              completion, the person's work, records and the team. */}
+          {stage === 'author' && (
             <AuthorWorkspace
-              seg={seg}
               pid={pid}
               completion={completion}
               onNav={onNav}
-              onAsk={ask}
               teamState={teamState}
               activityState={activityState}
               wsState={wsState}
-              draftsState={draftsState}
+              docs={docsRead}
+              onRetryDocs={reloadDocs}
+              onOpenDoc={openDocument}
             />
-          </>)}
+          )}
         </>
       )}
     </div>

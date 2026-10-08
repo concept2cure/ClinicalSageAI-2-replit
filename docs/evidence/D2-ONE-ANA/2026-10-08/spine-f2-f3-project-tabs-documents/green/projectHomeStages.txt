@@ -1,0 +1,17 @@
+# Final state. 2026-10-08T07:58:45Z
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > the tabs are exactly Evidence, Author, Review, Submit and Respond, in that order 123ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > no tab says "Not in this release" 227ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > what Plan and Lifecycle promised is named on Submit as coming later, with no button 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA can still name the removed tabs > set-stage "plan" opens Submit, and says so 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA can still name the removed tabs > set-stage "lifecycle" opens Submit too 51ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits above the tabs > a message typed in the start box survives switching tabs 468ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits above the tabs > the start box and the conversations come before the tabs and stay on every tab 117ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  07:58:46
+   Duration  4.51s (transform 1.49s, setup 321ms, import 1.81s, tests 1.13s, environment 1.03s)
+

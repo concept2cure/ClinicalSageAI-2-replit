@@ -484,13 +484,15 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'project-home',
     label: 'Open a lifecycle stage',
     description:
-      'On the project home, open a programme lifecycle stage tab. Note: leaving the author stage unmounts its composer — do not switch away from author uninvited if the user may be mid-message there.',
+      'On the project home, open one of the filing\'s five tabs: evidence, author, review, submit or respond. The start box sits above the tabs, so switching does not lose a half-typed message. "plan" and "lifecycle" are kept as aliases for tabs that were removed; both open submit, which holds market choice and follow-up sequences.',
     params: [
       {
         name: 'stage',
         required: true,
-        description: 'The lifecycle stage tab to open.',
-        enum: ['plan', 'evidence', 'author', 'review', 'submit', 'respond', 'lifecycle'],
+        description: 'The tab to open. "plan" and "lifecycle" open submit.',
+        // 'plan' and 'lifecycle' stay as aliases (FILING_SPINE.md F2), so an
+        // AnA call that names them resolves instead of failing validation.
+        enum: ['evidence', 'author', 'review', 'submit', 'respond', 'plan', 'lifecycle'],
       },
     ],
   },

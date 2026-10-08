@@ -11,6 +11,9 @@
  *     identical to one that can be drafted from;
  *   - an empty project says it is empty;
  *   - a failed read says so instead of rendering as "no sources".
+ *
+ * The data room is on the Evidence tab since FILING_SPINE.md F3 (2026-10-08);
+ * it sat under Author (projectHomeDocuments.test.tsx).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -55,6 +58,15 @@ const props = () => ({
   segment: 'biopharma',
 });
 
+/** The data room is on the Evidence tab (FILING_SPINE.md F3): render, then open it. */
+function renderOnEvidence(ui: React.ReactElement) {
+  const r = render(ui);
+  const tab = Array.from(document.querySelectorAll<HTMLButtonElement>('.pj-lc-stage')).find((b) => b.textContent?.trim() === 'Evidence');
+  if (!tab) throw new Error('Project home has no Evidence tab');
+  fireEvent.click(tab);
+  return r;
+}
+
 /** Route every ProjectHome read; only /sources carries a payload we assert on. */
 function mockApi(sourcesResponse: () => Response) {
   apiRequest.mockReset();
@@ -76,7 +88,7 @@ beforeEach(() => {
 describe('ProjectHome — data room', () => {
   it('offers only the shared chat candidates from its project-source picker', async () => {
     mockApi(() => ok({ projectId: PID, sources: [], unscoped: [] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText(/No sources in this project yet/);
     const picker = screen.getByLabelText('Attach files to this project') as HTMLInputElement;
     expect(picker.accept).toBe(CHAT_UPLOAD_ACCEPT);
@@ -85,7 +97,7 @@ describe('ProjectHome — data room', () => {
 
   it('lists the project\'s real sources', async () => {
     mockApi(() => ok({ projectId: PID, sources: [source()], unscoped: [] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
 
     expect(await screen.findByText('protocol-v2.pdf')).toBeTruthy();
     // Kind, size and date come from the source's own metadata.
@@ -105,7 +117,7 @@ describe('ProjectHome — data room', () => {
         unscoped: [],
       }),
     );
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
 
     await screen.findByText('good.pdf');
     // A document whose text could not be read must not look like one that can
@@ -127,19 +139,19 @@ describe('ProjectHome — data room', () => {
         unscoped: [],
       }),
     );
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText(/2 sources · 1 readable/);
   });
 
   it('renders an honest empty state for a project with no sources', async () => {
     mockApi(() => ok({ projectId: PID, sources: [], unscoped: [] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     expect(await screen.findByText(/No sources in this project yet/)).toBeTruthy();
   });
 
   it('distinguishes a failed read from an empty data room', async () => {
     mockApi(() => ({ ok: false, status: 500, json: async () => ({}) }) as Response);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     expect(await screen.findByText(/Couldn't load this project's sources/)).toBeTruthy();
     expect(screen.queryByText(/No sources in this project yet/)).toBeNull();
   });
@@ -152,7 +164,7 @@ describe('ProjectHome — data room', () => {
         unscoped: [],
       }),
     );
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('protocol.pdf');
 
     fireEvent.change(screen.getByLabelText('Search sources'), { target: { value: 'csr' } });
@@ -163,7 +175,7 @@ describe('ProjectHome — data room', () => {
 
   it('offers a way to add sources', async () => {
     mockApi(() => ok({ projectId: PID, sources: [], unscoped: [] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     expect(await screen.findByLabelText('Add sources to this project')).toBeTruthy();
   });
 });
@@ -184,7 +196,7 @@ describe('ProjectHome — pinning sources as context', () => {
         unscoped: [],
       }),
     );
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('good.pdf');
 
     expect((screen.getByLabelText('Use good.pdf as context') as HTMLInputElement).disabled).toBe(false);
@@ -203,7 +215,7 @@ describe('ProjectHome — pinning sources as context', () => {
       }),
     );
     const p = props();
-    render(<ProjectHome {...p} />);
+    renderOnEvidence(<ProjectHome {...p} />);
     await screen.findByText('a.pdf');
 
     fireEvent.click(screen.getByLabelText('Use a.pdf as context'));
@@ -218,7 +230,7 @@ describe('ProjectHome — pinning sources as context', () => {
 
   it('offers no pin action until something is pinned', async () => {
     mockApi(() => ok({ projectId: PID, sources: [source()], unscoped: [] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('protocol-v2.pdf');
     expect(screen.queryByText(/Draft with .* pinned source/)).toBeNull();
   });
@@ -242,7 +254,7 @@ describe('ProjectHome — where a source is used', () => {
     mockUsageApi([
       source({ id: 1, title: 'protocol.pdf', usage: { sections: 3, documents: 2, changedSections: 0 } }),
     ]);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('protocol.pdf');
     expect(screen.getByText(/Used in 3 sections · 2 documents/)).toBeTruthy();
   });
@@ -251,7 +263,7 @@ describe('ProjectHome — where a source is used', () => {
     // An uploaded document nothing cites is the state a reviewer most wants to
     // notice, so it must not read the same as a cited one.
     mockUsageApi([source({ id: 1, title: 'orphan.pdf', usage: { sections: 0, documents: 0, changedSections: 0 } })]);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('orphan.pdf');
     expect(screen.getByText('Not cited yet')).toBeTruthy();
   });
@@ -260,7 +272,7 @@ describe('ProjectHome — where a source is used', () => {
     mockUsageApi([
       source({ id: 1, title: 'moved.pdf', usage: { sections: 4, documents: 1, changedSections: 2 } }),
     ]);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('moved.pdf');
     expect(screen.getByText(/2 written against older content/)).toBeTruthy();
   });
@@ -269,7 +281,7 @@ describe('ProjectHome — where a source is used', () => {
     // An older server is not the same fact as "cited nowhere". Guessing either
     // way would be the fabrication this surface exists to avoid.
     mockUsageApi([source({ id: 1, title: 'unknown.pdf' })]);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('unknown.pdf');
     expect(screen.queryByText('Not cited yet')).toBeNull();
     expect(screen.queryByText(/Used in/)).toBeNull();
@@ -291,7 +303,7 @@ describe('ProjectHome — where a source is used', () => {
         },
       ],
     );
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText(/1 section in this project was drafted from a source that has since changed/);
     expect(screen.getByText(/CTD 3\.2\.P · P\.1/)).toBeTruthy();
     // The platform reports; it does not silently regenerate regulated text.
@@ -300,7 +312,7 @@ describe('ProjectHome — where a source is used', () => {
 
   it('shows no change banner when nothing is stale', async () => {
     mockUsageApi([source({ id: 1, usage: { sections: 1, documents: 1, changedSections: 0 } })]);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('protocol-v2.pdf');
     expect(screen.queryByText(/drafted from a source that has since changed/)).toBeNull();
   });
@@ -318,7 +330,7 @@ describe('ProjectHome — data room counts', () => {
       source({ id: 1, title: 'protocol-v1.pdf', isCurrent: false }),
       source({ id: 2, title: 'protocol-v2.pdf', isCurrent: true }),
     ] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('protocol-v2.pdf');
     expect(document.body.textContent).toMatch(/(^|\D)1 source · 1 readable/);
     expect(document.body.textContent).not.toMatch(/(^|\D)2 sources/);
@@ -328,7 +340,7 @@ describe('ProjectHome — data room counts', () => {
     mockApi(() => ok({ projectId: PID, unscoped: [], window: { shown: 2, truncated: true }, sources: [
       source({ id: 1, title: 'a.pdf' }), source({ id: 2, title: 'b.pdf' }),
     ] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('a.pdf');
     expect(document.body.textContent).toMatch(/2\+ sources/);
     expect(document.body.textContent).toMatch(/newest 2 shown/);

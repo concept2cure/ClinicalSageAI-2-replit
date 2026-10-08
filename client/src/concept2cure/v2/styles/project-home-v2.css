@@ -419,3 +419,25 @@
   .c2c-v2 .pd-main{overflow:visible;}
   .c2c-v2 .pd-aside{border-left:none;border-top:1px solid var(--border);overflow:visible;}
 }
+
+/* ── Project home: the filing's five tabs (docs/design/FILING_SPINE.md F2) ──
+   The start box and the project's conversations sit above the tabs, outside
+   the stage switch, so a half-typed message survives a change of tab. */
+.c2c-v2 .pj-start{display:flex;flex-direction:column;gap:14px;margin:0 0 20px;}
+/* What a tab does not do in this release: one line of words, no button. */
+.c2c-v2 .pj-later{margin:12px 0 0;max-width:none;}
+/* A tab whose body is more than one section (Evidence: files and data room;
+   Submit: readiness, submissions and the coming-later line). Not `.pj-stage`:
+   journey-v2.css owns that class for the Program journey's stage cells, and
+   two global rules on one class merge (flex, padding and min-width leaked
+   both ways). */
+.c2c-v2 .pj-stagebody{display:flex;flex-direction:column;gap:20px;min-width:0;}
+/* Two or more doors in one section header. */
+.c2c-v2 .pj-sec-acts{display:inline-flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;}
+/* A module with no document of this project to open: a row, not a link, so
+   it does not take the link colour on hover. */
+.c2c-v2 .pj-lmod[data-none]:hover .pj-lmod-t{color:var(--text-200);}
+/* The document a module row opens, named in words under the rollup, so the
+   section figure is not read as that document's progress. */
+.c2c-v2 .pj-lmodrow{display:flex;flex-direction:column;gap:0;}
+.c2c-v2 .pj-lmod-doc{font-size:11px;color:var(--text-400);padding:0 2px 6px;}
