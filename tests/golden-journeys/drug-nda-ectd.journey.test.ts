@@ -112,6 +112,11 @@ vi.mock('../../server/db.js', () => ({
     (h.pool as { query: (t: string, p?: unknown[]) => Promise<unknown> }).query(text, params),
 }));
 
+/** A response refused with this status and error code. */
+function refusedWith(r: { status: number; body?: { error?: { code?: string } } }, status: number, code: string): boolean {
+  return r.status === status && r.body?.error?.code === code;
+}
+
 const ORG = 1;
 const OTHER_ORG = 2;
 /**
@@ -1130,10 +1135,8 @@ describe('golden journey — drug NDA / eCTD', () => {
       return {
         blocked:
           a.status === 200 &&
-          v.status === 422 &&
-          v.body?.error?.code === 'VALIDATION_FAILED' &&
-          res.status === 422 &&
-          res.body?.error?.code === 'DISPATCH_BLOCKED' &&
+          refusedWith(v, 422, 'VALIDATION_FAILED') &&
+          refusedWith(res, 422, 'DISPATCH_BLOCKED') &&
           (seq.rows[0] as { status: string } | undefined)?.status === 'validated',
         status: res.status,
         code: res.body?.error?.code,

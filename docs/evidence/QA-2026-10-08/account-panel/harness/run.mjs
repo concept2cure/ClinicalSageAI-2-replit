@@ -151,7 +151,9 @@ try {
   /* B. Sign in (emailed code), open Account from the account menu. */
   let ctx = await signIn(browser, p1, 'email');
   let page = await watchedPage(ctx, httpLog);
-  let { dialog, items } = await openAccount(page);
+  const opened = await openAccount(page);
+  let dialog = opened.dialog;
+  const items = opened.items;
   step('the account menu offers Account first', items[0]?.trim() === 'Account', items.join(' | '));
   const [dbName, dbEmail, dbOrg, dbRole] = account();
   const shown = {
