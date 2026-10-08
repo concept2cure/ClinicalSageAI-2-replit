@@ -282,14 +282,12 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
 
         if (readiness) {
           const dims = readiness.dimensions;
+          // A dimension no assessment measured is null: say so, never print a number (ana-15).
+          const pct = (v: number | null) => (v === null ? 'not measured' : `${Math.round(v)}%`);
           rimParts.push(
             `Submission readiness: ${Math.round(readiness.overallScore)}% overall ` +
-              `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(
-                dims.quality
-              )}%, ` +
-              `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(
-                dims.compliance
-              )}%).`
+              `(completeness ${pct(dims.completeness)}, quality ${pct(dims.quality)}, ` +
+              `consistency ${pct(dims.consistency)}, compliance ${pct(dims.compliance)}).`
           );
           if (readiness.gaps && readiness.gaps.length > 0) {
             const topGaps = readiness.gaps
@@ -1146,14 +1144,12 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
         const rimParts: string[] = [];
         if (readiness) {
           const dims = readiness.dimensions;
+          // A dimension no assessment measured is null: say so, never print a number (ana-15).
+          const pct = (v: number | null) => (v === null ? 'not measured' : `${Math.round(v)}%`);
           rimParts.push(
             `Submission readiness: ${Math.round(readiness.overallScore)}% ` +
-              `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(
-                dims.quality
-              )}%, ` +
-              `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(
-                dims.compliance
-              )}%).`
+              `(completeness ${pct(dims.completeness)}, quality ${pct(dims.quality)}, ` +
+              `consistency ${pct(dims.consistency)}, compliance ${pct(dims.compliance)}).`
           );
           if (readiness.gaps?.length > 0) {
             const topGaps = readiness.gaps

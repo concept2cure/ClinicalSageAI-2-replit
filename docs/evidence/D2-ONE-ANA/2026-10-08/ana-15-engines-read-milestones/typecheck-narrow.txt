@@ -1,0 +1,8 @@
+# tsc --noEmit --strict (bundler resolution) over the two engines, their in-server callers, the new test and a scratch copy of the proposed ai-editing.ts change; errors in those files only.
+# Expected and REQUIRED to clear: the 6 ai-editing.ts errors are Math.round(dims.quality|consistency|compliance), now number | null. The outside-file change in README 'Not done' removes them; the scratch snippet carrying that change reports none.
+server/routes/c2c/ai-editing.ts(288,17): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number'.
+server/routes/c2c/ai-editing.ts(290,41): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number'.
+server/routes/c2c/ai-editing.ts(291,17): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number'.
+server/routes/c2c/ai-editing.ts(1152,17): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number'.
+server/routes/c2c/ai-editing.ts(1154,41): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number'.
+server/routes/c2c/ai-editing.ts(1155,17): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number'.
