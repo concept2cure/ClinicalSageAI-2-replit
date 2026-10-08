@@ -153,6 +153,7 @@ export class RegulatoryIntelligenceService {
         applicable_phases: ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4'],
         compliance_level: 'mandatory',
         document_reference: 'ICH E6(R3) Annex 1 §2.8',
+        // The ICH Step 4 date; FDA's own adoption date is not recorded here.
         last_updated: '2025-01-06',
       },
       {

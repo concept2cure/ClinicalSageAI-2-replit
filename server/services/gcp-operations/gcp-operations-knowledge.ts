@@ -1224,7 +1224,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
       domain: 'data_governance',
       severity: 'moderate',
       description: 'Record retention does not meet regulatory minimums.',
-      remediation: 'Retain essential records per 21 CFR 312.62(c) (at least 2 years after marketing application approval or program discontinuation) and ICH E6(R3) Annex 1 §2.12 and Appendix C.',
+      remediation: 'Retain essential records per 21 CFR 312.62(c) (2 years after a marketing application is approved for the indication or, if none is filed or approved, 2 years after the investigation is discontinued and FDA is notified) and ICH E6(R3) Annex 1 §2.12 and Appendix C.',
       citation: '21 CFR 312.62(c); ICH E6(R3) Annex 1 §2.12 (investigator records) and §3.16 (sponsor data and records), retention',
     });
   }
@@ -1902,7 +1902,7 @@ export function planEssentialDocuments(
   }
 
   const retentionGuidance: string[] = [
-    'Retain essential documents for at least 2 years after the last marketing-application approval in an ICH region, or 2 years after formal discontinuation of clinical development (21 CFR 312.62(c)).',
+    'Retain essential records for the period applicable regulation sets (ICH E6(R3) Annex 1 §2.12 and Appendix C). Under 21 CFR 312.62(c): 2 years after a marketing application is approved for the indication or, if none is filed or approved, 2 years after the investigation is discontinued and FDA is notified.',
     'Do not destroy records without sponsor notification; honor any longer retention required by the agreement or local law.',
     'Ensure records remain retrievable, legible and (if electronic) readable for the full retention period.',
   ];

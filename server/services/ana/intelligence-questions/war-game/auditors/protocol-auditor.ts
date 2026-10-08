@@ -586,7 +586,7 @@ const rules: AuditRule[] = [
           this.question,
           'No stopping rules or early termination criteria are defined.',
           'Pre-specified stopping criteria are expected per ICH E9 Section 4.5 and are a fundamental component of patient protection in clinical trials.',
-          'ICH E9 Section 4.5; ICH E6(R3) Annex 1 §2.7; FDA Guidance: Data Monitoring Committees (2006)',
+          'ICH E9 Section 4.5; ICH E6(R3) Appendix B; FDA Guidance: Data Monitoring Committees (2006)',
           'Define explicit stopping rules for futility, safety (e.g., maximum tolerated toxicity rate), and optionally efficacy, with associated statistical boundaries (e.g., O\'Brien-Fleming, Lan-DeMets alpha-spending).',
           ['stopping_rules', 'interim_analysis_planned', 'dmc_planned'],
         );

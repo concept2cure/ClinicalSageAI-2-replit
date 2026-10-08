@@ -434,7 +434,7 @@ const rules: AuditRule[] = [
           'The safety population must include every subject who received at least one dose ' +
           'of study treatment. Its size should be reconciled with enrollment and ' +
           'randomization figures.',
-          'ICH E3, Section 12.1; ICH E6(R3) Annex 1 §2.7',
+          'ICH E3, Section 12.1',
           'State the number of subjects in the safety population and reconcile with the ' +
           'total enrolled population. Note any subjects excluded from the safety population ' +
           'with reasons.',

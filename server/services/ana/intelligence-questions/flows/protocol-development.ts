@@ -1216,7 +1216,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'What is the planned approach for safety monitoring, adverse event collection, and dose-limiting toxicity assessment?',
         guidance:
-          'ICH E6(R3) Appendix B and Annex 1 §3.13 (Safety Assessment and Reporting) require protocols to specify how adverse events and serious adverse events are collected, classified, and reported. 21 CFR 312.32 requires initial SAE reports within 15 calendar days (7 days for fatal/life-threatening unexpected events). ICH E2A defines the classification of adverse events. For first-in-human studies, consider MABEL-based dosing per EMA Guideline EMEA/CHMP/SWP/28367/07.',
+          'ICH E6(R3) Appendix B and Annex 1 §3.13 (Safety Assessment and Reporting) require protocols to specify how adverse events and serious adverse events are collected, classified, and reported. 21 CFR 312.32 requires IND safety reports of serious and unexpected suspected adverse reactions within 15 calendar days (7 calendar days for unexpected fatal or life-threatening suspected adverse reactions). ICH E2A defines the classification of adverse events. For first-in-human studies, consider MABEL-based dosing per EMA Guideline EMEA/CHMP/SWP/28367/07.',
         fields: [
           {
             id: 'ae_grading_scale',

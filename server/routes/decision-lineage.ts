@@ -372,9 +372,8 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
           status: chainDependent(),
         },
         {
-          /* Legacy join key: must equal the label DecisionLineageService and the
-             client catalogue use. It still says E6(R2), superseded by E6(R3) on
-             2025-01-06; rename all three together. The sections cited are R3's. */
+          /* Join key: must equal the label DecisionLineageService and the
+             client catalogue use; change all three together. */
           framework: 'ICH E6(R3) GCP',
           sections: [
             'ICH E6(R3) Annex 1 §4.3 Computerised systems (data integrity)',
