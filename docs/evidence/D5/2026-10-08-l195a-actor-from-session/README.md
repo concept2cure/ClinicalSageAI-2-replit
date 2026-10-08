@@ -110,6 +110,13 @@ are fixed in the follow-up:
 | The follow-up (`review-followup/green/four-files-after.txt`) | 33 of 33. The blocker test and the Sentinel SQL test run on PGlite, against the table as its migration (blocker) or drizzle-kit (Sentinel) creates it. |
 | Related suites (`review-followup/green/related-suites.txt`) | 44 files and 588 tests pass; 2 files are skipped by design. |
 
-Confirmed and recorded, not fixed here: `PATCH /api/innovation/delta-radar/findings/:id`
-resolves with no actor (`server/routes/innovation-routes.ts`). That route is
-outside the launch catalog.
+Recorded, not fixed here, and not reachable today: `PATCH /api/innovation/delta-radar/findings/:id`
+would resolve with no actor (`server/routes/innovation-routes.ts`). Its skeptic
+showed it cannot run. The innovation router is deliberately not mounted
+(`register-advanced-platform-routes.ts`), its initializer has no production
+caller, and no migration creates `innovation.delta_findings`. Whoever mounts
+Innovation inherits it. Innovation is outside the launch catalog.
+
+The review's sweep also confirmed three routes outside these three handlers.
+They are recorded in ledger L223. The fourth, the post-market create route,
+is fixed in L222.
