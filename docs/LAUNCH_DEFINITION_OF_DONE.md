@@ -338,6 +338,21 @@ From the reporting fix (`4ac15bdd1`):
 - An older run with no blockers that was never signed now renders below final and can be finalized. This is
   accepted: it was never final.
 
+Follow-up decisions from the second Submission Center and IND/reporting passes (`d5176f241`, `aac603a1b`):
+- **Registers.** The 16 research-compliance registers stay on the canvas, labelled organisation-wide, until each
+  becomes a compliance-report definition, sealed and chained like the eight Part 11 reports. They are never left
+  unreachable.
+- **Trace finalisation.** A trace finalises at 70% measured provenance completeness. Machine-drafted text counts as
+  having a recorded origin, as on Authoring's bar. Review state is a separate fact.
+- **Pack copy.** A pack's description names only the reports it computes.
+- **Form 356h.** Every submission to an NDA, BLA or ANDA carries a Form 356h, so a continuing sequence of those
+  types is held to 1.1, as an IND sequence is to its 1571.
+- **Protocol reviewers.** A protocol reviewer is assigned only if they hold signing authority, so an assignment
+  cannot end at a 403.
+- **EU application numbers** are recorded in dash form, as the export and package spine already require.
+- **Malformed requests.** A request refused before anything is read voids no signature. Only a refused act does.
+- **Report finalize** keeps one authority check: the ceremony's floor. The route's own copy is removed.
+
 ### P-24 — AnA works like Claude, and the client sees the Summary of the work
 
 The founder asked for this on 2026-10-08, with screenshots of Claude's per-task Summary. The design is
