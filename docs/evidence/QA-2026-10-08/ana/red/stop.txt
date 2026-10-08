@@ -1,0 +1,484 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stdout | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+{
+  "timestamp": "2026-10-08T02:54:31.080Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:54:31.081Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+{
+  "timestamp": "2026-10-08T02:54:31.081Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+{
+  "timestamp": "2026-10-08T02:54:31.380Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a run-policy turn stores its policy, the steps it did not run and her own holds (S4)
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a stopped turn whose loop reported no reason is still saved as stopped
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message 6600ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a run-policy turn stores its policy, the steps it did not run and her own holds (S4) 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason 1ms
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn the person stopped before any text is saved as a stopped, empty answer 9ms
+   → expected [] to deeply equal [ { role: 'assistant', content: '' } ]
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a stopped turn whose loop reported no reason is still saved as stopped 4ms
+   → expected { toolTrace: [ { …(4) } ], …(1) } to match object { stoppedReason: 'cancelled' }
+(4 matching properties omitted from actual)
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn with no text that was not stopped still saves nothing 0ms
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a stop that ended the turn in the error path saves what was streamed, as stopped 1ms
+   → persistStoppedAnswer is not a function
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and the run policy 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing 0ms
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > a Stop that aborts the model call saves the stopped answer before the record is filed 3ms
+   → expected 'const stoppedByPerson = Boolean(runHa…' to match /if \(stoppedByPerson && stoppedTurnTh…/
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > decides a cut-off answer from the last call, before anything reads the reason 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names each tool AnA actually ran, under its real label 76ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > announces status through exactly one polite region 16ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > keeps the live region mounted when there is nothing to say 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > speaks the outcomes, not just the phase 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > points the disclosure at the region it controls 21ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > separates the rounds so going back for more reads as exactly that 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names no rounds when she declared a plan — the plan is the structure 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > says a draft once when the step that wrote it already names it 23ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > states how the question was read 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > reports the deliverable it produced, without needing to be expanded 123ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names the deliverable as a step too once the record is open 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > shows the newest stretch of her reasoning while she is still thinking 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > shows her reasoning verbatim, never a summary of it 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > lets a keyboard reach the reasoning it has to scroll to read 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > does not add an empty tab stop for the live thought, which does not scroll 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > cuts a long live thought at a word boundary and marks the cut 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > is open while streaming and collapsed once the answer has landed 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > renders nothing at all for a settled turn that did no reportable work 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > renders nothing while streaming when there is no phase and nothing to report 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > shows a failed step as failed instead of dropping it 13ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > reports a failed step in the words the server wrote, not the raw payload 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > counts only settled steps as run, never the one still in flight 29ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the clock > runs a clock beside the live phase and freezes the recorded duration once settled 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the clock > claims no duration for a settled turn with no recorded end 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — each row opens in place, like the work it records > puts a step's duration and the inputs she passed behind that step's own chevron 49ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — each row opens in place, like the work it records > records her plan once as "Planned N steps", with the steps behind the chevron 26ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > does not say the plan twice: the folded line counts the work, the first row is the plan 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > says "Plan", not "Planned", for a reopened thread that kept only the final list 19ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > keeps a FAILED plan call as a failed row — a failure is never folded away 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > claims no duration for a settled step whose end was never recorded 17ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > says on the folded line when a fallback provider answered 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > is fed by one mapping from the turn, which carries the plan and the fallback 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > splits a label at the argument the server quoted, and leaves the rest whole 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > a recorded turn carries one quiet row with the start of its hash, and the whole of it behind the row 29ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > a turn that was not recorded says so under the turn, unfolded, with the reason 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > says it even for a turn with nothing else to report 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > claims nothing while the turn is in flight, or when the server said nothing 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > activityPropsFor carries the status from the turn 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a round-limit stop is a note outside the folded body, with Continue, and Continue sends once 18ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says the limit without a number when the round count is unknown 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a cut-off answer says so, outside the folded body, and offers Continue 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a repeated-step stop says so, and offers no Continue — continuing would repeat it 6ms
+ × client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a stop the person made says so under the turn, and offers no Continue 11ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a turn stopped here before the server said why reads as stopped too 3ms
+   → expected undefined to be 'cancelled' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a turn she ended herself carries no note 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > offers Continue only where the host offers it — the latest settled turn 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says nothing about a stop while the turn is still in flight 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says it even for a turn with nothing else to report 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > keeps the open-while-streaming, folded-after pin 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > keeps a round-limit stop and the round count on the turn, through post_done 81ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > keeps a repeated-step stop 63ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > keeps a cut-off answer — a turn that must not read "Finished" 58ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > ignores a reason it does not know, and a round count that is not a count 163ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > accepts the run-policy reasons now that the server produces them and every surface has words for them 218ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > a turn with no stop reason on done is left without one 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > a reopened thread > restores why each turn stopped, and its rounds, from the persisted metadata 3ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > a reopened thread > keeps an empty answer the server saved as stopped, and drops other empty rows 8ms
+   → expected [ [ 'user', …(2) ], …(1) ] to deeply equal [ [ 'user', …(2) ], …(2) ]
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > budget_exhausted → Stopped at the time limit · 1m 30s 38ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > approval_timeout → Stopped: an approval was not answered · 1m 30s 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > hold_expired → Stopped waiting for you · 1m 30s 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > hold_unavailable → Stopped: Manual was unavailable · 1m 30s 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > a reopened stopped turn says so without a clock 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > while Manual holds, she is waiting for the person — not paused 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > the panel reads the hold it is given 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > the time limit names both ceilings, from the shared constants 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > an unanswered approval: the change was not made 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > a Manual hold nobody answered names the step it did not run 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > Manual that could not hold says why and what to do — switch to Auto, then Continue; never "try again" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > budget_exhausted: an always-visible note, Continue on the latest turn, and never dropped 153ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > approval_timeout: an always-visible note, Continue on the latest turn, and never dropped 25ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > hold_expired: an always-visible note, Continue on the latest turn, and never dropped 17ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > hold_unavailable: an always-visible note, Continue on the latest turn, and never dropped 18ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > a turn carries its policy and the steps it did not run to its record > activityPropsFor 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > between hold_expired and done the state line says she stopped waiting, not "Still working" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > the progress chip — what shows with the panel closed — says she is waiting, or paused 0ms
+ × client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > a Stop at a hold names the step it left unrun (a reload must not read as a plain Stop) 6ms
+   → expected null to be 'The run was stopped before AnA finish…' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > a step replaced by a steer is shown as not run, beside the turn 9ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > keeps a clarification and later correction, including their metadata, without mutating the transcript 3ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > counts answers dropped at the edge of an unanswered-turn window as omitted 1ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > non-conversation and malformed rows cannot become system instructions or count as missing conversation 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > shortens a long draft while retaining its qualification and metadata 1ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > a non-positive or invalid window size 0 does not accidentally include the whole transcript 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > a non-positive or invalid window size -1 does not accidentally include the whole transcript 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > a non-positive or invalid window size NaN does not accidentally include the whole transcript 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > a non-positive or invalid window size Infinity does not accidentally include the whole transcript 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > an assistant-only transcript contributes no invalid opening but explicitly counts what was omitted 1ms
+ × server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > an empty answer — a turn stopped before it was written — is not handed to the model 8ms
+   → expected [ { role: 'user', …(1) }, …(2) ] to deeply equal [ { role: 'user', …(1) }, …(1) ]
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > a complete transcript produces no blanket follow-up requirement 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > does not append the whole input when the tail budget is zero 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > keeps exact-boundary turns unchanged 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > rejects invalid excerpt limits 0 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > rejects invalid excerpt limits -1 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > rejects invalid excerpt limits 1.5 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > rejects invalid excerpt limits NaN 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > rejects invalid excerpt limits Infinity 0ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > stopped here before AnA wrote anything: the note, not an empty mark 105ms
+   → expected '✻' to contain 'The run was stopped before AnA finish…'
+ × client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > reopened from the saved conversation: the same note 32ms
+   → expected '✻' to contain 'The run was stopped before AnA finish…'
+ × client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > what she had written before the stop stays, above the note 53ms
+   → expected '✻Three risks stand out. First,' to contain 'The run was stopped before AnA finish…'
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > an empty answer — a turn stopped before it was written — is not handed to the model
+AssertionError: expected [ { role: 'user', …(1) }, …(2) ] to deeply equal [ { role: 'user', …(1) }, …(1) ]
+
+- Expected
++ Received
+
+@@ -2,9 +2,16 @@
+    {
+      "content": "Summarize the open risks.",
+      "role": "user",
+    },
+    {
++     "content": "",
++     "metadata": {
++       "stoppedReason": "cancelled",
++     },
++     "role": "assistant",
++   },
++   {
+      "content": "Try again, shorter.",
+      "role": "user",
+    },
+  ]
+
+ ❯ server/services/ana/__tests__/history-window.test.ts:60:26
+     58|     ];
+     59|     const window = recentTurnWindow(history, 20);
+     60|     expect(window.turns).toEqual([history[0], history[2]]);
+       |                          ^
+     61|     expect(window).toMatchObject({ totalTurns: 2, omittedTurns: 0 });
+     62|     expect(conversationWindowNotice(window)).toBe('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn the person stopped before any text is saved as a stopped, empty answer
+AssertionError: expected [] to deeply equal [ { role: 'assistant', content: '' } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "content": "",
+-     "role": "assistant",
+-   },
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts:125:24
+    123|   it('a turn the person stopped before any text is saved as a stopped,…
+    124|     await runStreamPostProcessing(ctx({ fullContent: '', toolTrace: []…
+    125|     expect(saved.rows).toEqual([{ role: 'assistant', content: '' }]);
+       |                        ^
+    126|     expect(saved.metadata[0]).toMatchObject({ stoppedReason: 'cancelle…
+    127|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a stopped turn whose loop reported no reason is still saved as stopped
+AssertionError: expected { toolTrace: [ { …(4) } ], …(1) } to match object { stoppedReason: 'cancelled' }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "stoppedReason": "cancelled",
++   "toolTrace": [
++     {
++       "label": "Searching your documents",
++       "resultSummary": "4 results",
++       "status": "success",
++       "tool": "search_documents",
++     },
++   ],
++   "verification": {
++     "check": {
++       "basis": "no_sources",
++       "checked": 0,
++       "claims": 0,
++       "engine": "answer-check/2",
++       "found": 0,
++       "fromInput": [],
++       "fromPerson": [],
++       "notFound": [],
++       "sources": [],
++       "unchecked": [],
++       "unreadable": [],
++       "verdicts": [],
++     },
++     "labels": {
++       "attempted": false,
++       "grounded_claim_count": 0,
++       "missing_support_count": 0,
++       "provider": "ana-ri",
++       "source_count": 0,
++       "source_types": [],
++       "validated": false,
++       "weak_or_ungrounded_claim_count": 0,
++     },
++   },
+  }
+
+ ❯ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts:132:31
+    130|     await runStreamPostProcessing(ctx({ fullContent: 'Three risks stan…
+    131|     expect(saved.rows).toEqual([{ role: 'assistant', content: 'Three r…
+    132|     expect(saved.metadata[0]).toMatchObject({ stoppedReason: 'cancelle…
+       |                               ^
+    133|   });
+    134|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a stop that ended the turn in the error path saves what was streamed, as stopped
+TypeError: persistStoppedAnswer is not a function
+ ❯ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts:141:18
+    139|
+    140|   it('a stop that ended the turn in the error path saves what was stre…
+    141|     await expect(persistStoppedAnswer('th_1', 'Three risks stand out. …
+       |                  ^
+    142|     expect(saved.rows).toEqual([{ role: 'assistant', content: 'Three r…
+    143|     expect(saved.metadata[0]).toEqual({ stoppedReason: 'cancelled' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > a Stop that aborts the model call saves the stopped answer before the record is filed
+AssertionError: expected 'const stoppedByPerson = Boolean(runHa…' to match /if \(stoppedByPerson && stoppedTurnTh…/
+
+- Expected:
+/if \(stoppedByPerson && stoppedTurnThreadId\) \{/
+
++ Received:
+"const stoppedByPerson = Boolean(runHandle?.cancelSignal.aborted);
+      if (turnRecorder) {
+        turnRecorder.setAnswer({ streamed: turnRecorder.streamedText });
+        turnRecorder.setControls(await readControlEvents());
+        if (!stoppedByPerson) {
+          turnRecorder.warn(`The turn ended with an error: ${String(error?.message ?? error).slice(0, 500)}`);
+        }
+      }
+      const turnRecord = "
+
+ ❯ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts:178:18
+    176|     expect(at, 'the error path no longer tells a stop from a failure')…
+    177|     const path = src.slice(at, src.indexOf("await fileTurnRecord(stopp…
+    178|     expect(path).toMatch(/if \(stoppedByPerson && stoppedTurnThreadId\…
+       |                  ^
+    179|     expect(path).toMatch(/await persistStoppedAnswer\(stoppedTurnThrea…
+    180|     // The thread it saves into is the one the turn resolved and saved…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a stop the person made says so under the turn, and offers no Continue
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx:633:49
+    631|   it('a stop the person made says so under the turn, and offers no Con…
+    632|     const { container } = render(<AnaActivity {...settled} stoppedReas…
+    633|     expect(stoppedNote(container)?.textContent).toContain('The run was…
+       |                                                 ^
+    634|     expect(container.querySelector('.ana-activity-continue')).toBeNull…
+    635|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a turn stopped here before the server said why reads as stopped too
+AssertionError: expected undefined to be 'cancelled' // Object.is equality
+
+- Expected:
+"cancelled"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx:640:33
+    638|     // The client aborts and marks `stopped`; the server's reason neve…
+    639|     const props = activityPropsFor({ id: 'a', role: 'assistant', text:…
+    640|     expect(props.stoppedReason).toBe('cancelled');
+       |                                 ^
+    641|     const { container } = render(<AnaActivity {...props} />);
+    642|     expect(stoppedNote(container)?.textContent).toContain('The run was…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > a Stop at a hold names the step it left unrun (a reload must not read as a plain Stop)
+AssertionError: expected null to be 'The run was stopped before AnA finish…' // Object.is equality
+
+- Expected:
+"The run was stopped before AnA finished."
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx:153:45
+    151|     // A Stop with nothing held still says the turn was stopped: witho…
+    152|     // transcript showed AnA's mark and nothing else (QA 2026-10-08, j…
+    153|     expect(stoppedNoteText('cancelled', 1)).toBe('The run was stopped …
+       |                                             ^
+    154|   });
+    155|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > stopped here before AnA wrote anything: the note, not an empty mark
+AssertionError: expected '✻' to contain 'The run was stopped before AnA finish…'
+
+Expected: "The run was stopped before AnA finished."
+Received: "✻"
+
+ ❯ client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx:100:18
+     98|     ]);
+     99|     const [turn] = anaTurnText();
+    100|     expect(turn).toContain('The run was stopped before AnA finished.');
+       |                  ^
+    101|   });
+    102|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > reopened from the saved conversation: the same note
+AssertionError: expected '✻' to contain 'The run was stopped before AnA finish…'
+
+Expected: "The run was stopped before AnA finished."
+Received: "✻"
+
+ ❯ client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx:108:30
+    106|       { id: 't-1', role: 'assistant', text: '', stoppedReason: 'cancel…
+    107|     ]);
+    108|     expect(anaTurnText()[0]).toContain('The run was stopped before AnA…
+       |                              ^
+    109|   });
+    110|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > what she had written before the stop stays, above the note
+AssertionError: expected '✻Three risks stand out. First,' to contain 'The run was stopped before AnA finish…'
+
+Expected: "The run was stopped before AnA finished."
+Received: "✻Three risks stand out. First,"
+
+ ❯ client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx:118:18
+    116|     const [turn] = anaTurnText();
+    117|     expect(turn).toContain('Three risks stand out. First,');
+    118|     expect(turn).toContain('The run was stopped before AnA finished.');
+       |                  ^
+    119|   });
+    120| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > a reopened thread > keeps an empty answer the server saved as stopped, and drops other empty rows
+AssertionError: expected [ [ 'user', …(2) ], …(1) ] to deeply equal [ [ 'user', …(2) ], …(2) ]
+
+- Expected
++ Received
+
+@@ -3,15 +3,10 @@
+      "user",
+      "Summarize the open risks for this program",
+      undefined,
+    ],
+    [
+-     "assistant",
+-     "",
+-     "cancelled",
+-   ],
+-   [
+      "user",
+      "Try again",
+      undefined,
+    ],
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts:204:63
+    202|     });
+    203|     const shown = result.current.messages as any[];
+    204|     expect(shown.map(m => [m.role, m.text, m.stoppedReason])).toEqual([
+       |                                                               ^
+    205|       ['user', 'Summarize the open risks for this program', undefined],
+    206|       ['assistant', '', 'cancelled'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  6 failed (6)
+      Tests  12 failed | 101 passed (113)
+   Start at  02:54:27
+   Duration  17.65s (transform 7.43s, setup 438ms, import 5.01s, tests 8.52s, environment 2.26s)
+

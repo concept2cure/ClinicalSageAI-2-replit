@@ -60,6 +60,13 @@ export async function listThreads(req: Request, res: Response) {
         return res.status(400).json({ error: 'program_id must be a UUID', code: 'THREAD_PROGRAM_INVALID' });
       }
       if (me === null) return res.json({ threads: [] });
+      /* Where in the list this read starts. The project page shows a
+         screenful and reads older ones on request; without a position the
+         ninth conversation and every one after it could not be opened from
+         the project (QA 2026-10-08, j5). A whole number only, else 0. The id
+         breaks ties, so a screenful never repeats or skips one. */
+      const rawOffset = String(req.query.offset ?? '');
+      const offset = /^\d{1,6}$/.test(rawOffset) ? Number(rawOffset) : 0;
       const result = await pool.query(
         `SELECT t.id, t.created_at, t.updated_at, t.program_id,
           (SELECT content FROM chat_messages
@@ -67,9 +74,9 @@ export async function listThreads(req: Request, res: Response) {
             ORDER BY created_at ASC LIMIT 1) AS title
         FROM chat_threads t
         WHERE t.organization_id = $1 AND t.program_id = $2 AND t.user_id = $4
-        ORDER BY COALESCE(t.updated_at, t.created_at) DESC
-        LIMIT $3`,
-        [orgId, program, limit, me]
+        ORDER BY COALESCE(t.updated_at, t.created_at) DESC, t.id DESC
+        LIMIT $3 OFFSET $5`,
+        [orgId, program, limit, me, offset]
       );
       return res.json({ threads: result.rows });
     }

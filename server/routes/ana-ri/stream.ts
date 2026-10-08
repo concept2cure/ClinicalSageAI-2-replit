@@ -125,7 +125,7 @@ import {
 import { toolEvidence, type EvidenceEntry } from '../../services/ana/answer-grounding.js';
 import { checkProposal } from '../../services/ana/proposal-check.js';
 import { buildShortfallNote } from '../../services/ana/tool-outcome.js';
-import { runStreamPostProcessing } from './post-processing.js';
+import { persistStoppedAnswer, runStreamPostProcessing } from './post-processing.js';
 import {
   callSent,
   canonicalJson,
@@ -527,6 +527,10 @@ export function mountStreamRoute(router: Router): void {
         );
       }
     };
+    /* The conversation this turn saved its question in, for the error path:
+       a Stop that aborts the model call ends there, and its answer is saved
+       as stopped (post-processing persistStoppedAnswer). */
+    let stoppedTurnThreadId: string | null = null;
     try {
       const {
         message,
@@ -922,6 +926,7 @@ export function mountStreamRoute(router: Router): void {
           conversationFailureCode = 'CONVERSATION_UNAVAILABLE';
           const userMessageId = await saveMessage(threadId, 'user', message);
           turnRecorder?.setMessageIds({ user: userMessageId });
+          stoppedTurnThreadId = threadId;
         } catch (e: any) {
           if (e instanceof ThreadAccessError) {
             console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
@@ -3231,6 +3236,16 @@ export function mountStreamRoute(router: Router): void {
         turnRecorder.setControls(await readControlEvents());
         if (!stoppedByPerson) {
           turnRecorder.warn(`The turn ended with an error: ${String(error?.message ?? error).slice(0, 500)}`);
+        }
+      }
+      // The stop is saved in the conversation as well as the record, with what
+      // had streamed: otherwise the question stood alone (QA 2026-10-08, j5).
+      if (stoppedByPerson && stoppedTurnThreadId) {
+        try {
+          const answerId = await persistStoppedAnswer(stoppedTurnThreadId, turnRecorder?.streamedText ?? '');
+          turnRecorder?.setMessageIds({ assistant: answerId });
+        } catch (saveErr: any) {
+          console.error('[AnA RI Stream] Stopped answer persist failed:', saveErr?.message);
         }
       }
       const turnRecord = await fileTurnRecord(stoppedByPerson ? 'stopped' : 'failed');

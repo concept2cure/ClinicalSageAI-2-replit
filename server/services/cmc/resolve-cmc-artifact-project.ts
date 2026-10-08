@@ -124,13 +124,19 @@ export async function resolveCmcArtifactProject(
     if (anchored != null) {
       return { state: 'linked', artifactProjectId: anchored, via: 'program-anchor' };
     }
+    /* Shown to the person verbatim (the Vault's Module 3 banner among other
+       places), so it is written for them. It named the schema — "no PM-spine
+       anchor (projects.regulatory_program_id)" — and offered nothing to do
+       (QA 2026-10-08, j5). The link is made when a program is created in an
+       organization with one workspace; there is no in-product control to make
+       it later, so the next step is the administrator. */
     return {
       state: 'unanchored',
       artifactProjectId: null,
       detail:
-        'This program has no PM-spine anchor (projects.regulatory_program_id), so the governed ' +
-        'artifact registry cannot be addressed for it. CMC capture, compile, provenance and placement ' +
-        'into a submission still work; the registry’s artifacts are not listed until the program is anchored.',
+        'This project is not linked to your organization’s artifact registry yet, so its governed ' +
+        'Module 3 artifacts are not listed here. CMC capture, compile, provenance and placement into a ' +
+        'submission still work. To have them listed, ask your organization administrator to link the project.',
     };
   }
 

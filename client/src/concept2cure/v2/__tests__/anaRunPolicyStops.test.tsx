@@ -148,8 +148,9 @@ describe('review follow-through: every surface says what the hold is doing', () 
     expect(stoppedNoteText('cancelled', 1, ['Searching PubMed'])).toBe(
       'The run was stopped while AnA waited for you before her next step, so it did not run: Searching PubMed.',
     );
-    // A Stop with nothing held has nothing to add: the person pressed it.
-    expect(stoppedNoteText('cancelled', 1)).toBeNull();
+    // A Stop with nothing held still says the turn was stopped: without it the
+    // transcript showed AnA's mark and nothing else (QA 2026-10-08, j5).
+    expect(stoppedNoteText('cancelled', 1)).toBe('The run was stopped before AnA finished.');
   });
 
   it('a step replaced by a steer is shown as not run, beside the turn', () => {

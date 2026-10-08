@@ -128,7 +128,10 @@ export function activityPropsFor(m: AnaChatMessage): AnaActivityProps {
     startedAt: m.sentAt,
     completedAt: m.completedAt,
     turnRecord: m.turnRecord,
-    stoppedReason: m.stoppedReason,
+    /* The person's Stop, as this view saw it: when the client aborts before
+       the server's `done` arrives, `stopped` is set and no reason ever comes.
+       It is the same stop the server records as `cancelled`. */
+    stoppedReason: m.stoppedReason ?? (m.stopped ? 'cancelled' : undefined),
     interruptedWithPartialResponse: m.interruptedWithPartialResponse,
     rounds: m.rounds,
     runPolicy: m.runPolicy,

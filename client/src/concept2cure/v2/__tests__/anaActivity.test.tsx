@@ -624,9 +624,13 @@ describe('AnaActivity — a turn the loop cut short says so, unfolded', () => {
     expect(container.querySelector('.ana-activity-continue')).toBeNull();
   });
 
-  it('a stop the person made carries no note — they pressed Stop, they know', () => {
+  /* This used to carry no note — "they pressed Stop, they know". They knew at
+     that moment; the transcript did not. QA 2026-10-08 (j5): after Stop the
+     turn was AnA's mark and nothing else, the same as a turn still thinking,
+     and a reload showed a question with nothing after it. */
+  it('a stop the person made says so under the turn, and offers no Continue', () => {
     const { container } = render(<AnaActivity {...settled} stoppedReason="cancelled" rounds={2} onContinue={vi.fn()} />);
-    expect(stoppedNote(container)).toBeNull();
+    expect(stoppedNote(container)?.textContent).toContain('The run was stopped before AnA finished.');
     expect(container.querySelector('.ana-activity-continue')).toBeNull();
   });
 

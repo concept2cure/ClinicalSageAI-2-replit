@@ -1,0 +1,101 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > the conversation URL > names a conversation by id under the conversation screen, and nothing else 14ms
+   → locationForConversation is not a function
+ × client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > a fresh page load on the conversation URL loads that conversation 106ms
+   → expected "vi.fn()" to be called with arguments: [ 'ana-ri_1791424392094_9yswyv3gq' ]
+
+Number of calls: 0
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > the URL names the conversation the screen shows, once it has an id 61ms
+   → expected '/concept2cure/conversation-thread' to be '/concept2cure/conversation-thread/ana…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > a thread id that arrives mid-turn is written to the URL as it arrives 59ms
+   → expected '/concept2cure/conversation-thread' to be '/concept2cure/conversation-thread/ana…' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > never rewrites the URL of a screen AnA has already moved the person to 42ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > starting a new conversation drops the id from the URL 200ms
+   → expected '/concept2cure/conversation-thread/ana…' to be '/concept2cure/conversation-thread' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > the conversation URL > names a conversation by id under the conversation screen, and nothing else
+TypeError: locationForConversation is not a function
+ ❯ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx:107:12
+    105| describe('the conversation URL', () => {
+    106|   it('names a conversation by id under the conversation screen, and no…
+    107|     expect(locationForConversation('ana-ri_1791424008792_fikqams6o')).…
+       |            ^
+    108|       '/concept2cure/conversation-thread/ana-ri_1791424008792_fikqams6…
+    109|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > a fresh page load on the conversation URL loads that conversation
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'ana-ri_1791424392094_9yswyv3gq' ]
+
+Number of calls: 0
+
+ ❯ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx:128:29
+    126|     const chat = shellChat();
+    127|     await mount(chat);
+    128|     expect(chat.loadThread).toHaveBeenCalledWith('ana-ri_1791424392094…
+       |                             ^
+    129|     expect(chat.reset).not.toHaveBeenCalled();
+    130|     expect(screen.queryByText('Talk to AnA')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > the URL names the conversation the screen shows, once it has an id
+AssertionError: expected '/concept2cure/conversation-thread' to be '/concept2cure/conversation-thread/ana…' // Object.is equality
+
+Expected: "/concept2cure/conversation-thread/ana-ri_1791424392094_9yswyv3gq"
+Received: "/concept2cure/conversation-thread"
+
+ ❯ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx:137:38
+    135|     setConvo({ id: 'current', seed: null });
+    136|     await mount(shellChat({ messages: ANSWERED, threadId: 'ana-ri_1791…
+    137|     expect(window.location.pathname).toBe('/concept2cure/conversation-…
+       |                                      ^
+    138|   });
+    139|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > a thread id that arrives mid-turn is written to the URL as it arrives
+AssertionError: expected '/concept2cure/conversation-thread' to be '/concept2cure/conversation-thread/ana…' // Object.is equality
+
+Expected: "/concept2cure/conversation-thread/ana-ri_42"
+Received: "/concept2cure/conversation-thread"
+
+ ❯ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx:154:38
+    152|       await new Promise((r) => setTimeout(r, 0));
+    153|     });
+    154|     expect(window.location.pathname).toBe('/concept2cure/conversation-…
+       |                                      ^
+    155|   });
+    156|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > starting a new conversation drops the id from the URL
+AssertionError: expected '/concept2cure/conversation-thread/ana…' to be '/concept2cure/conversation-thread' // Object.is equality
+
+Expected: "/concept2cure/conversation-thread"
+Received: "/concept2cure/conversation-thread/ana-ri_44"
+
+ ❯ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx:182:38
+    180|     fireEvent.click(screen.getByRole('button', { name: /New conversati…
+    181|     expect(chat.reset).toHaveBeenCalledTimes(1);
+    182|     expect(window.location.pathname).toBe('/concept2cure/conversation-…
+       |                                      ^
+    183|   });
+    184| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  02:47:05
+   Duration  4.46s (transform 2.39s, setup 204ms, import 3.01s, tests 488ms, environment 551ms)
+

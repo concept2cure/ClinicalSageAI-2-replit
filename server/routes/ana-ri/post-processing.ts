@@ -302,6 +302,27 @@ export async function persistCollectedDrafts(args: {
 }
 
 /**
+ * Why a turn ended, as its saved answer says it: the person's Stop is
+ * `cancelled` whatever the loop reported, unless the loop named a stop of its
+ * own (a hold that ran out, the round limit) — that one says more.
+ */
+function stoppedReasonOf(stopped: boolean | undefined, reason: TurnStoppedReason | undefined): TurnStoppedReason | undefined {
+  return stopped && (!reason || reason === 'no_more_tools') ? 'cancelled' : reason;
+}
+
+/**
+ * Save the answer of a turn the person stopped, when the stop ended it before
+ * post-processing could: a Stop that aborts the model call reaches the
+ * stream's error path. It is saved with what had streamed, possibly nothing,
+ * and says it was stopped. Without it the conversation kept the question and
+ * nothing after it, and a reload showed exactly that (QA 2026-10-08, j5).
+ */
+export async function persistStoppedAnswer(threadId: string, streamed: string): Promise<number | null> {
+  const metadata = withTurnEnding(undefined, { stoppedReason: 'cancelled' }) as Record<string, unknown> | undefined;
+  return saveMessage(threadId, 'assistant', streamed, undefined, undefined, metadata);
+}
+
+/**
  * Run the deferred post-processing flow and close the stream. Never rejects:
  * on any internal failure it falls back to a `post_done` carrying the raw
  * content so the client turn still closes cleanly.
@@ -451,7 +472,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       verification && verification.check.basis === 'sources' ? groundingResultOf(verification.check) : null;
     const assistantMetadata = withTurnEnding(
       buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls, plan),
-      { stoppedReason, rounds, runPolicy, pendingSteps, policyHolds },
+      { stoppedReason: stoppedReasonOf(stopped, stoppedReason), rounds, runPolicy, pendingSteps, policyHolds },
     ) as Record<string, unknown> | undefined;
 
     // Run persistence concurrent with the synchronous evidence / structure
@@ -461,8 +482,10 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // message carries a hidden metadata record (tool-trace + grounding verdict)
     // so the turn's investigation and self-check survive across turns.
     let assistantMessageId: number | null = null;
+    // A stopped turn is saved even with no text: the empty answer says it was
+    // stopped, so the conversation does not show the question alone.
     const persistPromise: Promise<void> =
-      orgId && threadId && fullContent
+      orgId && threadId && (fullContent || stopped)
         ? saveMessage(
             threadId, 'assistant', finalAssistantContent, undefined, undefined,
             verification ? { ...(assistantMetadata ?? {}), verification } : assistantMetadata,

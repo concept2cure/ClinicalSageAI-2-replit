@@ -816,7 +816,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           m =>
             (m.role === 'user' || m.role === 'assistant') &&
             typeof m.content === 'string' &&
-            m.content.length > 0
+            // An empty answer is kept only when it says why it is empty: a
+            // turn stopped before AnA wrote a word (QA 2026-10-08, j5).
+            (m.content.length > 0 || (m.role === 'assistant' && readTurnEnding(m.metadata).stoppedReason !== undefined))
         )
         .map((m, idx) => {
           // Rehydrate AnA's persisted reasoning (thought process) so the

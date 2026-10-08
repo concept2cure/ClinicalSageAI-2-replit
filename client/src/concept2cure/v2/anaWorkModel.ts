@@ -176,10 +176,15 @@ export function stoppedNoteText(
       // (a run with no owner), so the way on is Auto, then Continue.
       return `${MANUAL_UNAVAILABLE_TEXT} ${steps ? `Next step: ${steps}. ` : ''}To let her go on, switch to Auto, then Continue.`;
     case 'cancelled':
-      // A Stop with nothing held needs no note (the person pressed it). One
-      // that ended a Manual hold — or a page closed during it — names what
-      // did not run, so a reopened turn does not read as a plain Stop.
-      return steps ? `The run was stopped while AnA waited for you before her next step, so it did not run: ${steps}.` : null;
+      // One that ended a Manual hold — or a page closed during it — names
+      // what did not run, so a reopened turn does not read as a plain Stop.
+      // A plain Stop says so too. It used to carry no note ("the person
+      // pressed it"), so a turn stopped before AnA wrote anything was her
+      // mark and nothing else, the same as one still thinking, and a reload
+      // showed the question alone (QA 2026-10-08, j5).
+      return steps
+        ? `The run was stopped while AnA waited for you before her next step, so it did not run: ${steps}.`
+        : 'The run was stopped before AnA finished.';
     default:
       return partialResponseNote(interruptedWithPartialResponse);
   }
