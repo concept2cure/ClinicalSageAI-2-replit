@@ -1,0 +1,190 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > keeps one pending SELECT across slow ticks, then polls again and delivers cancellation 10ms
+   → expected [ { promise: Promise{…}, …(2) }, …(4) ] to have a length of 1 but got 5
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a genuine failed read and releases admission for the next tick 12ms
+   → expected [ { promise: Promise{…}, …(2) }, …(2) ] to have a length of 1 but got 3
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a synchronous query failure without stranding poll admission 1ms
+   → synchronous poll failure
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > does not query with no local runs or after the last local run is released 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > executes each admitted poll under actual system scope across tenant requests 1ms
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores an old pending poll result after stop/restart while the new poll remains pending 2ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > returns a late old connection without replacing or leaking the restarted client 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores late old connection failure without releasing the restarted client or arming old polling 3ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      [Error: obsolete connect failure],
+    ]
+
+
+Number of calls: 1
+
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not let a released client error rearm the obsolete pool after restart 2ms
+   → expected [ { promise: Promise{…}, …(2) }, …(2) ] to have a length of +0 but got 3
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not dispatch notifications from an obsolete released client into a restarted lifecycle 2ms
+   → expected [ { promise: Promise{…}, …(2) } ] to have a length of +0 but got 1
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > keeps one pending SELECT across slow ticks, then polls again and delivers cancellation
+AssertionError: expected [ { promise: Promise{…}, …(2) }, …(4) ] to have a length of 1 but got 5
+
+- Expected
++ Received
+
+- 1
++ 5
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:71:24
+     69|     const run = await open(fake.pool);
+     70|     await tick(5);
+     71|     expect(fake.reads).toHaveLength(1);
+       |                        ^
+     72|     fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'paused' }…
+     73|     await flush();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a genuine failed read and releases admission for the next tick
+AssertionError: expected [ { promise: Promise{…}, …(2) }, …(2) ] to have a length of 1 but got 3
+
+- Expected
++ Received
+
+- 1
++ 3
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:85:24
+     83|     await open(fake.pool);
+     84|     await tick(3);
+     85|     expect(fake.reads).toHaveLength(1);
+       |                        ^
+     86|     fake.reads[0].reject(new Error('poll database unavailable'));
+     87|     await flush();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a synchronous query failure without stranding poll admission
+Error: synchronous poll failure
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:98:25
+     96|     const fake = fakePool();
+     97|     await open(fake.pool);
+     98|     fake.failNextSelect(new Error('synchronous poll failure'));
+       |                         ^
+     99|     await tick();
+    100|     expect(logs.error).toHaveBeenCalledWith(expect.stringContaining('p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores an old pending poll result after stop/restart while the new poll remains pending
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:146:45
+    144|     old.reads[0].resolve({ rows: [{ id: run.runId, status: 'cancelled'…
+    145|     await flush();
+    146|     expect(run.handle.cancelSignal.aborted).toBe(false);
+       |                                             ^
+    147|     await tick(2);
+    148|     expect(current.reads).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > returns a late old connection without replacing or leaking the restarted client
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:165:35
+    163|     pending.resolve(oldClient.client);
+    164|     await oldStart;
+    165|     expect(oldClient.raw.release).toHaveBeenCalledTimes(1);
+       |                                   ^
+    166|     expect(oldClient.raw.query).not.toHaveBeenCalled();
+    167|     expect(currentClient.raw.release).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores late old connection failure without releasing the restarted client or arming old polling
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      [Error: obsolete connect failure],
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:184:36
+    182|     await oldStart;
+    183|     await tick(3);
+    184|     expect(active.raw.release).not.toHaveBeenCalled();
+       |                                    ^
+    185|     expect(old.reads).toHaveLength(0);
+    186|     expect(current.reads).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not let a released client error rearm the obsolete pool after restart
+AssertionError: expected [ { promise: Promise{…}, …(2) }, …(2) ] to have a length of +0 but got 3
+
+- Expected
++ Received
+
+- 0
++ 3
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:200:23
+    198|     oldClient.callbacks.get('error')!(new Error('late old socket error…
+    199|     await tick(3);
+    200|     expect(old.reads).toHaveLength(0);
+       |                       ^
+    201|     expect(active.raw.release).not.toHaveBeenCalled();
+    202|     expect(oldClient.raw.release).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not dispatch notifications from an obsolete released client into a restarted lifecycle
+AssertionError: expected [ { promise: Promise{…}, …(2) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:216:23
+    214|     oldClient.callbacks.get('notification')!({ channel: RUN_CONTROL_CH…
+    215|     await flush();
+    216|     expect(old.reads).toHaveLength(0);
+       |                       ^
+    217|     expect(run.handle.cancelSignal.aborted).toBe(false);
+    218|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 2 passed (10)
+   Start at  20:21:44
+   Duration  320ms (transform 116ms, setup 61ms, import 86ms, tests 38ms, environment 0ms)

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T11:41:26.584Z",
+  "generatedAt": "2026-10-08T12:52:10.230Z",
   "git": {
-    "sha": "e79cca4d9a0f6266f54f20bde1dc59a14e3f67fd",
+    "sha": "77d95ef2a1655742f8f327a7c033010cbcb025be",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 217,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 55,
+    "largeFilesByBytes": 54,
     "largeFilesByLines": 113
   },
   "findings": {
@@ -2263,12 +2263,8 @@
         "bytes": 100852
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 100323
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 100100
+        "bytes": 100434
       }
     ],
     "largeFilesByLines": [
@@ -2466,7 +2462,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2142
+        "lines": 2149
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2475,6 +2471,10 @@
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
         "lines": 2093
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "lines": 2088
       },
       {
         "file": "client/src/concept2cure/v2/editor/suggestions.ts",
@@ -2505,10 +2505,6 @@
         "lines": 2050
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2050
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "lines": 2042
       },
@@ -2530,7 +2526,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2014
+        "lines": 2003
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2577,6 +2573,10 @@
         "lines": 1869
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1868
+      },
+      {
         "file": "server/routes/submissions.ts",
         "lines": 1866
       },
@@ -2587,10 +2587,6 @@
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
         "lines": 1864
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 1861
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
@@ -2749,7 +2745,7 @@
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
-      "largeByBytes": 9,
+      "largeByBytes": 8,
       "largeByLines": 17
     },
     {
