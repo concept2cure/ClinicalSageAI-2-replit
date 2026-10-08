@@ -923,6 +923,24 @@ export function mountStreamRoute(router: Router): void {
           const userMessageId = await saveMessage(threadId, 'user', message);
           turnRecorder?.setMessageIds({ user: userMessageId });
         } catch (e: any) {
+          /* Matched by code: a conversation bound to another project than the
+             one this turn names (chat-thread-helpers getOrCreateThread). */
+          if (e?.code === 'THREAD_PROJECT_MISMATCH') {
+            turnRecorder?.warn('Refused: this conversation belongs to another project than the one the turn named.');
+            streamFailed = true;
+            const turnRecord = await fileTurnRecord('failed');
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'error',
+                code: 'THREAD_PROJECT_MISMATCH',
+                error: 'This conversation belongs to another project. Start a new conversation in the project you have open.',
+                threadProgramId: typeof e.threadProgramId === 'string' ? e.threadProgramId : null,
+                turnRecord,
+              })}\n\n`
+            );
+            res.end();
+            return;
+          }
           if (e instanceof ThreadAccessError) {
             console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
             // Refused before any model ran — still a turn someone attempted,

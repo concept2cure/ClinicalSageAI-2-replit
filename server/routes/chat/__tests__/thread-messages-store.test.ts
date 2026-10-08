@@ -111,7 +111,7 @@ describe('PATCH /thread/:id — a conversation stays in the project it was held 
 
   it("a colleague's conversation is refused 403, and nothing is written", async () => {
     storeIs('chat', (sql) =>
-      /SELECT id, user_id, organization_id FROM chat_threads/.test(sql)
+      /SELECT id, user_id, organization_id(, program_id)? FROM chat_threads/.test(sql)
         ? { rows: [{ id: 'ana-ri_1', user_id: 102, organization_id: 7 }] }
         : { rows: [] });
     const r = res();
@@ -123,7 +123,7 @@ describe('PATCH /thread/:id — a conversation stays in the project it was held 
 
   it('the owner renames their own conversation', async () => {
     storeIs('chat', (sql) =>
-      /SELECT id, user_id, organization_id FROM chat_threads/.test(sql)
+      /SELECT id, user_id, organization_id(, program_id)? FROM chat_threads/.test(sql)
         ? { rows: [{ id: 'ana-ri_1', user_id: 101, organization_id: 7 }] }
         : { rows: [] });
     const r = res();
