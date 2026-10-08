@@ -1298,9 +1298,16 @@ router.get('/docs', async (req: Request, res: Response) => {
        a caller that deliberately sent no status filter got one anyway and had no
        way to tell. Combined with the case-sensitive comparison below, that made
        draft the only state the API would answer about by default. No default. */
-    const { module, product_code, status, programId } = req.query;
+    const { module, product_code, status, programId, conversationId, source } = req.query;
     const tenantId = getTenantId(req);
 
+    /* The documents a conversation built (docs/design/ONE_ANA_ONE_CANVAS.md
+       §4.3, slice 11): read from each document's own provenance, which AnA
+       records as { source: 'ana', conversationId, turnId, model } when it
+       drafts (authoring-from-draft.ts). A reopened conversation lists its
+       documents from here, not from a capped copy of a tool result. Read
+       through to_jsonb, as the export route reads provenance, so a database
+       without the column answers rather than fails. */
     let query = `
       SELECT
         d.id,
@@ -1312,6 +1319,9 @@ router.get('/docs', async (req: Request, res: Response) => {
         d.created_at,
         d.updated_at,
         d.created_by,
+        to_jsonb(d)->'provenance'->>'source' AS provenance_source,
+        to_jsonb(d)->'provenance'->>'conversationId' AS conversation_id,
+        to_jsonb(d)->>'client_program_id' AS program_id,
         COUNT(s.id) as section_count,
         COALESCE(SUM(LENGTH(s.content)), 0) as total_content_length
       FROM authoring_documents d
@@ -1384,6 +1394,16 @@ router.get('/docs', async (req: Request, res: Response) => {
       params.push(programId);
     }
 
+    if (typeof conversationId === 'string' && conversationId.trim()) {
+      paramCount++;
+      query += ` AND to_jsonb(d)->'provenance'->>'conversationId' = $${paramCount}`;
+      params.push(conversationId.trim());
+    }
+
+    if (source === 'ana') {
+      query += ` AND to_jsonb(d)->'provenance'->>'source' = 'ana'`;
+    }
+
     query += ` GROUP BY d.id ORDER BY d.updated_at DESC`;
 
     const result = await pool.query(query, params);
@@ -1392,7 +1412,7 @@ router.get('/docs', async (req: Request, res: Response) => {
       success: true,
       documents: result.rows,
       count: result.rowCount,
-      filters: { module, product_code, status, programId },
+      filters: { module, product_code, status, programId, conversationId, source },
     });
   } catch (error) {
     console.error('Error listing documents:', error);
