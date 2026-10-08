@@ -205,6 +205,42 @@ and the app applies its own limits.
 P-2 admits only Claude's origins as connector clients. A public-only scope for third-party agents (plan WS9,
 `c2c:public`) is built with the first such client, not before.
 
+## Product decisions, 2026-10-08 (product owner, under the founder's delegation)
+
+The founder delegated these on 2026-10-08 ("you can make these decisions without me"), while the client-journey
+fixes from the browser QA walk of that day were landing (`docs/evidence/QA-2026-10-08/`).
+
+### P-13 — Members may create a program
+
+`canCreateProgram` (`server/services/c2c/program-access.ts`) refuses only read-only roles. A member creating a
+regulated program is how a regulatory user starts work, and the organisation's role vocabulary is open, so an
+allow-list would lock out every role nobody listed. Kept as it is. The program's lead is its creator, and mutating
+another person's program still needs `canMutateProgram`.
+
+### P-14 — A document is placed only into a submission anchored to its program
+
+The filing picker already offers only the program's own submissions (`24e8cb5f4`). A direct API write of a
+program's document into a submission that belongs to no program is now refused as well, with a named error. A
+placement the server cannot judge is a placement into an unknown dossier; failing closed is the rule. A legacy
+submission with no program is anchored first, through the Submission Center, and then accepts placements.
+
+### P-15 — Documents already split across two codes are not merged
+
+Before `38179495f`, the data room and the Vault derived different codes for one file, so some documents exist as two
+version families (for example Vorelinib STB-0042). Merging them would rewrite recorded rows. They stay as recorded;
+the shared code rule stops new splits, and a person retires the duplicate through the existing disposition flow.
+
+### P-16 — The recorded type labels a document; the classifier's kind is the fallback
+
+An edited type shows in the tree, list, uploads lane and header (`cc96676e3`). The classifier's evidence kind is
+used only when the recorded type is empty or OTHER (the ingest's "not told" value), and it stays visible in the
+filing block's "Looks like" line.
+
+### P-17 — A project's record counts are its current records
+
+Superseded versions, retired sources and withdrawn sources are not counted as records (`cc96676e3`), so the project
+home agrees with the Vault tree and the Data room.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one
