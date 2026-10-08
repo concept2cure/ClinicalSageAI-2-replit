@@ -1,0 +1,24 @@
+# unit: chunking, passage tools and search, RAG pipeline and filters, vault ingest, catalog gating, startup line, backfill
+ × server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > an EMPTY index is reported as empty, not as a provider failure or a miss
+   → expected 'No passage matched "assay at six mont…' to contain 'ana.vault_chunking'
+ × server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > lists the org's threads bound to the program, newest first, with the first user message as title
+   → expected [ 7, …(4) ] to deeply equal [ 7, …(3) ]
+ × server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the dry run > writes nothing and spends no embeddings
+   → [vitest] No "isVaultChunkingEnabled" export is defined on the "../document-chunking.service.js" mock. Did you forget to return it from "vi.mock"?
+ × server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the dry run > still reports what cannot be indexed, so the report is actionable
+   → [vitest] No "isVaultChunkingEnabled" export is defined on the "../document-chunking.service.js" mock. Did you forget to return it from "vi.mock"?
+ × server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > indexes documents that have text and counts the chunks written
+   → [vitest] No "isVaultChunkingEnabled" export is defined on the "../document-chunking.service.js" mock. Did you forget to return it from "vi.mock"?
+ × server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > a document with no text is skipped with its reason, never counted as indexed
+   → [vitest] No "isVaultChunkingEnabled" export is defined on the "../document-chunking.service.js" mock. Did you forget to return it from "vi.mock"?
+ × server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > a failure is named and ledgered, not folded into the total
+   → [vitest] No "isVaultChunkingEnabled" export is defined on the "../document-chunking.service.js" mock. Did you forget to return it from "vi.mock"?
+ × server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > is bound to the organization and skips already-indexed documents
+   → [vitest] No "isVaultChunkingEnabled" export is defined on the "../document-chunking.service.js" mock. Did you forget to return it from "vi.mock"?
+ × server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > takes previously failed documents only when a retry is asked for
+   → [vitest] No "isVaultChunkingEnabled" export is defined on the "../document-chunking.service.js" mock. Did you forget to return it from "vi.mock"?
+ × server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > clamps the limit so one run cannot sweep an unbounded corpus
+   → [vitest] No "isVaultChunkingEnabled" export is defined on the "../document-chunking.service.js" mock. Did you forget to return it from "vi.mock"?
+ Test Files  3 failed | 81 passed (84)
+      Tests  10 failed | 1019 passed (1029)
+# tsc --noEmit: exit 0. Lint ratchet --since HEAD: net -1 (advancedRAGPipeline.ts 10 -> 9).

@@ -40,7 +40,8 @@ export type GovernedTransmitRefusalCode =
   | 'ACTIVE_TRANSMITTAL'
   | 'SIGNER_IS_AUTHOR'
   | 'AUTHORSHIP_NOT_A_RELEASE'
-  | 'SIGNER_INDEPENDENCE_UNRESOLVED';
+  | 'SIGNER_INDEPENDENCE_UNRESOLVED'
+  | 'ESIGNATURE_NO_AUTHORITY';
 
 /** A refusal the caller should surface verbatim to the operator. */
 export class GovernedTransmitRefusal extends Error {
@@ -194,6 +195,38 @@ export async function assertNoActiveTransmittal(input: GovernedTransmitInput, bu
       `Roll it back via POST /api/mdx/gateways/transmittals/${active.id}/rollback before re-transmitting.`,
     409,
     { transmittalId: active.id, status: active.status },
+  );
+}
+
+/**
+ * Signing authority (21 CFR 11.10(g)): a transmission to an agency is signed,
+ * so only a role the signing policy authorizes may make it. Before 2026-10-08
+ * (weekly review, SEC-1008-1) the gateway route admitted any role that may
+ * write (member and manager included) and the AnA transmit path the same, so
+ * an irreversible send to FDA or EMA went out under a signature the policy says
+ * that person may not give, and an electronic_signatures row then recorded it.
+ *
+ * The question is the platform's one signing-authority check
+ * (checkSigningAuthority, part11/signing-authority-gate.ts; P-27): the role is
+ * the server's reading of this organization's membership, never the request's,
+ * judged by the one policy every signing route uses. Asked first, before
+ * credentials and before any byte is read, so an unauthorized caller spends no
+ * password attempt and learns nothing about the package. A role that could not
+ * be read is not authority: it surfaces as an internal error and nothing is
+ * transmitted.
+ */
+export async function assertTransmitterHasSigningAuthority(organizationId: number, userId: number): Promise<void> {
+  const { checkSigningAuthority } = await import('../part11/signing-authority-gate');
+  const refusal = await checkSigningAuthority(userId, organizationId);
+  if (!refusal) return;
+  if (refusal.status === 503) {
+    throw new GovernedTransmitInternalError('transmit-signing-authority', new Error(refusal.message));
+  }
+  throw new GovernedTransmitRefusal(
+    'ESIGNATURE_NO_AUTHORITY',
+    'Your role does not permit signing a transmission to the agency (21 CFR Part 11 §11.10(g)). ' +
+      'A colleague with signing rights must transmit it. Nothing was transmitted.',
+    403,
   );
 }
 

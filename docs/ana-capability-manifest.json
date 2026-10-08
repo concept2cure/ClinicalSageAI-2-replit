@@ -20,18 +20,18 @@
     "none": "No dedicated rendering (discovery/utility)."
   },
   "totals": {
-    "tools": 789,
+    "tools": 791,
     "byCategory": {
       "Authoring & rendering": 28,
       "Biostatistics": 12,
       "Clinical (M5 / M2)": 30,
       "Clinical pharmacology": 8,
-      "CMC / Quality (M3)": 27,
+      "CMC / Quality (M3)": 30,
       "Device / IVD": 24,
       "Evidence & intelligence": 52,
       "Governance & data": 13,
       "Nonclinical (M4)": 13,
-      "Other": 526,
+      "Other": 525,
       "Platform control": 2,
       "Quality management": 17,
       "Submission / eCTD": 37
@@ -144,9 +144,9 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Draft MANY document sections in ONE parallel batch instead of one section per turn. Use this when the author asks to draft/regenerate several sections at once (e.g. 'draft all the TODO sections in Module 2', 'give me first drafts of 2.4, 2.5 and 2.7'). Each request is a section to draft with its own instructions; they run concurrently (bounded) through the same framework-grade drafting engine used for single sections, so a five-section batch returns in roughly the time of the slowest one rather than five sequential turns. Returns per-section drafted content the author promotes through the governed authoring flow — nothing is auto-saved. Do NOT use it to fabricate quantitative results; where a value is unknown the draft must say so.",
+      "description": "Draft MANY document sections in ONE parallel batch instead of one section per turn. Use this when the author asks to draft/regenerate several sections at once (e.g. 'draft all the TODO sections in Module 2', 'give me first drafts of 2.4, 2.5 and 2.7'). Each request is a section to draft with its own instructions; they run concurrently (bounded) through the same framework-grade drafting engine used for single sections, so a five-section batch returns in roughly the time of the slowest one rather than five sequential turns. Returns every requested slot with its original requestIndex, per-section drafted content or failure, saved:false, savedCount:0, and retryIndices for failed slots. Nothing is auto-saved. For a requested document deliverable, promote successful content through draft_authoring_document and its existing gates; claim saved only after a durable authoringDocId is returned. Retry only failed slots and retain existing saved IDs. Do NOT use it to fabricate quantitative results; where a value is unknown the draft must say so.",
       "scope": "global",
-      "governed": true,
+      "governed": false,
       "renderer": "document-canvas",
       "example": "",
       "inputs": [
@@ -400,7 +400,7 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content } with the content stored as sanitized HTML, provenance recorded as drafted by AnA, a genesis revision and a Part 11 CREATE audit row per section. The person then sees it as a canvas in the conversation, can open it in the full editor, and can file it into the project vault. Use this — not save_document_to_vault — whenever the deliverable is a document with sections (a Module 2.5 excerpt, an IB section set, a 510(k) summary). Requires an open project; refuses otherwise. Tenant-scoped. Returns { status: 'generated', authoringDocId, programId, title, sectionCount, content }.",
+      "description": "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content } with the content stored as sanitized HTML, provenance recorded as drafted by AnA, a genesis revision and a Part 11 CREATE audit row per section. The person then sees it as a canvas in the conversation, can open it in the full editor, and can file it into the project vault. Use this — not save_document_to_vault — whenever the deliverable is a document with sections (a Module 2.5 excerpt, an IB section set, a 510(k) summary). Requires an open project; refuses otherwise. Tenant-scoped. Returns { status: 'generated', saved: true, documentStatus: 'draft', authoringDocId, programId, title, sectionCount, content }; the durable authoringDocId proves it was saved, while approval and filing remain separate.",
       "scope": "project",
       "governed": false,
       "renderer": "document-canvas",
@@ -758,7 +758,7 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Look up the canonical SECTION STRUCTURE (heading skeleton) of a key submission document — the ordered sections (number + heading + purpose + required) with the regulatory basis. Covers the CTD Module 2 summaries (Quality Overall Summary 2.3, Nonclinical Overview 2.4, Clinical Overview 2.5, Clinical Summary 2.7), the cover letter, the FDA 510(k) Summary (21 CFR 807.92), the EU SmPC, the MDR/IVDR GSPR checklist, the IVDR Performance Evaluation Report, and the CTA IMPD. These are factual document spines from published guidance, not drafted prose — use them to scaffold authoring or to check a document's completeness. Static reference data, read-only. Pass `template_id` for one (e.g. 'clinical_overview', 'k510_summary', 'smpc'), or `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) to list a family's templates.",
+      "description": "Paged authoring outlines; not drafted prose, verified evidence or readiness. Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list components/biotech gaps. `offset`/`limit` page results. `market`+`prepare` adds a regional route and at most 3 focused questions. `discussed_topics` only prevents re-asking. Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. Record-derived: smpc (QRD SmPC); clinical_study_report (ICH E3); dsur (corrected ICH E2F). Blueprint scaffolds: statistical_analysis_plan; informed_consent; drug_substance; drug_product. Kept by hand: quality_overall_summary; nonclinical_overview; clinical_overview; clinical_summary; cover_letter (platform headings); k510_summary; gspr_checklist; ivdr_gspr_checklist; performance_evaluation_report; impd; investigators_brochure; risk_management_plan; pbrer (interim E2C(R2)); protocol.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -769,6 +769,48 @@
           "type": "string",
           "required": false,
           "description": "A specific template id, e.g. 'clinical_overview', 'k510_summary', 'smpc', 'gspr_checklist'."
+        },
+        {
+          "name": "registry_id",
+          "type": "string",
+          "required": false,
+          "description": "Exact active global registry ID, such as US_IND, EU_MAA, CA_NDS or JP_MKT_APPROVAL. With template_id: sets filing context for preparation. Alone: reads the existing filing scaffold, with explicit unavailability when it is absent or needs re"
+        },
+        {
+          "name": "market",
+          "type": "string",
+          "required": false,
+          "description": "Confirmed target jurisdiction for preparation; do not infer from the conversation language."
+        },
+        {
+          "name": "prepare",
+          "type": "boolean",
+          "required": false,
+          "description": "Include a regional route and up to 3 prioritized client questions. This creates an inquiry brief, not a readiness or evidence-sufficiency verdict."
+        },
+        {
+          "name": "discussed_topics",
+          "type": "array",
+          "required": false,
+          "description": "Topics already discussed in this conversation, to avoid asking them again. These are conversational markers only; they never establish that source data are supplied, verified or sufficient."
+        },
+        {
+          "name": "coverage",
+          "type": "boolean",
+          "required": false,
+          "description": "Without template_id or registry_id: list existing biotech registry outline coverage, including missing or withheld outlines. Scaffold availability is not qualified builder or filing capability."
+        },
+        {
+          "name": "offset",
+          "type": "integer",
+          "required": false,
+          "description": "Zero-based catalog/section offset. Continue with nextOffset when one is returned."
+        },
+        {
+          "name": "limit",
+          "type": "integer",
+          "required": false,
+          "description": "Maximum catalog entries or template sections to return in this page."
         },
         {
           "name": "family",
@@ -6003,6 +6045,124 @@
       "derived": true
     },
     {
+      "name": "explain_cmc_topic",
+      "category": {
+        "id": "cmc_quality",
+        "label": "CMC / Quality (M3)"
+      },
+      "description": "The science and regulatory reasoning behind a CMC question, from the platform’s record of knowledge notes: what is expected and why, the key points, the deficiencies agencies and the literature report, and the citations — official guidelines and peer-reviewed articles or industry white papers by PMID, PMCID or DOI. Use it for \"how are impurity limits justified for a phase 1 drug substance\", \"what stability supports a 12-month clinical shelf life\", \"how is potency assay validation phased for a gene therapy\", \"what does Q14 change for method validation\". Pass `query`, and optionally `ctd_section` and `modality`. Cite what it returns.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "query",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "ctd_section",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "modality",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "requiredInputs": [
+        "query"
+      ],
+      "derived": true
+    },
+    {
+      "name": "find_cmc_guidance",
+      "category": {
+        "id": "cmc_quality",
+        "label": "CMC / Quality (M3)"
+      },
+      "description": "Which official documents govern a CMC / quality question, from the platform’s cited regulatory record: ICH Q1–Q14, Q3A–E, Q5A–E, Q6A/B, M4Q and M7, FDA regulations and CMC guidances for INDs and NDAs/BLAs, the EU CTR and EMA IMP quality guidelines, MHRA, Swissmedic, PMDA/MHLW, MFDS, NMPA/CDE, Health Canada, TGA, ANVISA, CDSCO, HSA, WHO and PIC/S. Each result carries the official code, title, status (final, draft, superseded, withdrawn) and date as of the record, what replaced it, and its URL. Use it for \"what is the current version of Q2\", \"which guidance covers nitrosamines\", \"is the consolidated ICH Q1 final\", and before citing any guideline. Pass `query` (a code or topic) and optionally `authority`.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "query",
+          "type": "string",
+          "required": true,
+          "description": "A guideline code (\"Q5A\", \"M7\", \"312.23\") or a topic (\"extractables and leachables\")."
+        },
+        {
+          "name": "authority",
+          "type": "string",
+          "required": false,
+          "description": "Optional authority: FDA, EMA, PMDA, NMPA, Health Canada, ..."
+        }
+      ],
+      "requiredInputs": [
+        "query"
+      ],
+      "derived": true
+    },
+    {
+      "name": "get_cmc_requirements",
+      "category": {
+        "id": "cmc_quality",
+        "label": "CMC / Quality (M3)"
+      },
+      "description": "What a regulatory authority requires of the CMC / quality part of an application, from the platform’s cited record, filtered by any of: `authority` (FDA, EMA, PMDA, NMPA, Health Canada, TGA, MHRA, ...), `application_type` (clinical_trial or marketing), `phase` (\"1\", \"2-3\", \"marketing\"), `ctd_section` (\"3.2.S.4\", \"3.2.P.8.3\"), `modality` (small_molecule, biologic, atmp, vaccine) and `topic` (free text: \"stability for a phase 1 IND\", \"viral safety\"). Each requirement is tied to the documents that state it, with their status and date, and a confidence. With an authority, it also returns how that authority receives the quality dossier (IND, IMPD under the EU CTR, Japan CTN, China IND, Canada CTA with QOS-CE, ...): legal basis, format, how expectations scale with phase, GMP for the investigational product, and regional specifics. ICH requirements are included as the harmonised baseline. Call it before advising what a Module 3, IMPD or quality section must contain for a market, and state what it returns rather than recalling requirements.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "authority",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "application_type",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "phase",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "ctd_section",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "modality",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "topic",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "requiredInputs": [],
+      "derived": true
+    },
+    {
       "name": "global_ri_cmc_specifications",
       "category": {
         "id": "cmc_quality",
@@ -7330,7 +7490,7 @@
         "id": "device_ivd",
         "label": "Device / IVD"
       },
-      "description": "Register a laboratory-developed test in the LDT inventory. Tracks lab name, CLIA certificate, intended use, first-offered date (used for grandfathering eligibility per FDA 2024 LDT final rule), and FDA pathway. current_phase starts at 1 per the rule's phased transition schedule; use set_ldt_phase_milestone to log specific milestone progress.",
+      "description": "Register a laboratory-developed test in the LDT inventory. Tracks lab name, CLIA certificate, analyte, intended use and FDA pathway. LDTs are CLIA-regulated and need no FDA premarket submission: the FDA 2024 LDT final rule is void (vacated 2025-03-31, reverted by FDA rule 2025-09-19; currency fact us-ldt-final-rule-void). The grandfathering, first-offered-date and current_phase fields are HISTORICAL records of that rule's phase-out schedule, as the /api/mdx/ldt surface labels them; they impose no current obligation. Never tell the user a phase or milestone is due.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -7370,25 +7530,25 @@
           "name": "first_offered_date",
           "type": "string",
           "required": false,
-          "description": "ISO date — pre-rule date supports grandfathering."
+          "description": "ISO date the lab first offered the test. Historical: grandfathering under the void 2024 LDT rule no longer applies."
         },
         {
           "name": "grandfathered",
           "type": "boolean",
           "required": false,
-          "description": ""
+          "description": "Historical: grandfathering under the void 2024 LDT rule. Imposes no current obligation."
         },
         {
           "name": "enforcement_discretion_eligible",
           "type": "boolean",
           "required": false,
-          "description": ""
+          "description": "Historical: an enforcement-discretion category of the void 2024 LDT rule."
         },
         {
           "name": "enforcement_discretion_basis",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "Historical: the void 2024 LDT rule's enforcement-discretion category."
         },
         {
           "name": "fda_pathway",
@@ -7400,7 +7560,7 @@
           "name": "current_phase",
           "type": "number",
           "required": false,
-          "description": ""
+          "description": "Historical: stage in the void 2024 LDT rule's phase-out schedule. Not a current compliance obligation."
         }
       ],
       "requiredInputs": [
@@ -14832,7 +14992,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess a device/IVD evidence document against its regulated structure. For `document: 'cer'` it checks the CER against MEDDEV 2.7/1 Rev 4 / MDR Annex XIV (set `equivalence_claimed` if equivalence is used); for `document: 'per'` it checks the IVDR Annex XIII Performance Evaluation Report and reports which of the three pillars (scientific validity, analytical, clinical) are covered; for `document: 'rmf'` it checks the ISO 14971 risk management file. Pass `present_section_ids` (the sections you have). Without `present_section_ids` it returns the full structure (stages/pillars/sections + reviewer questions). Deterministic, read-only. Use it to gap-check a CER/PER/RMF before Notified-Body review.",
+      "description": "Assess a device/IVD evidence document against its regulated structure. For `document: 'cer'` it checks the CER against MEDDEV 2.7/1 Rev 4 / MDR Annex XIV (set `equivalence_claimed` if equivalence is used); for `document: 'per'` it checks the IVDR Annex XIII Performance Evaluation Report and reports which of the three pillars (scientific validity, analytical, clinical) are covered; for `document: 'rmf'` it checks the ISO 14971 risk management file, and with `jurisdiction` (EU_MDR, EU_IVDR, FDA, OTHER) it also returns that jurisdiction's risk-acceptability policy (`acceptabilityPolicy`: principle, statement, whether cost may justify stopping risk reduction, and its basis with confidence), e.g. AFAP with no economic justification for an EU MDR/IVDR file. Without `jurisdiction` no policy is returned; ask which market the file is for. Pass `present_section_ids` (the sections you have). Without `present_section_ids` it returns the full structure (stages/pillars/sections + reviewer questions). Deterministic, read-only. Use it to gap-check a CER/PER/RMF before Notified-Body review.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -14855,6 +15015,12 @@
           "type": "boolean",
           "required": false,
           "description": "CER only — set true if equivalence to another device is claimed."
+        },
+        {
+          "name": "jurisdiction",
+          "type": "string",
+          "required": false,
+          "description": "RMF only — the market the risk management file is for: 'EU_MDR', 'EU_IVDR', 'FDA', or 'OTHER' (not modelled). Returns the risk-acceptability policy beside the structure or assessment."
         }
       ],
       "requiredInputs": [
@@ -17521,7 +17687,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Draft a device/IVD post-market regulatory report — eMDR (US FDA), MIR (EU manufacturer incident report), FSN (field safety notice), or PSUR (periodic safety update). Returns the structured report payload, or valid:false with the missing[] required fields when incomplete. Set reportType and provide that report's fields. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
+      "description": "Draft a device/IVD post-market regulatory report — eMDR (US FDA), MIR (EU manufacturer incident report) or FSN (field safety notice). Returns the structured report payload, or valid:false with the missing[] required fields when incomplete. Set reportType and provide that report's fields. A PSUR is not built here: it is a program's post-market document, authored with the post_market.document.create command (documentType \"psur\"). DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -18368,10 +18534,10 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Determine a device/IVD risk classification or FDA pathway from structured facts. `framework: 'mdr'` applies the EU MDR Annex VIII principal rules (facts like invasive, surgicallyInvasive, implantable, active, softwareDecisionSupport, contactsCnsOrCentralCirculation, incorporatesMedicinalSubstance, duration) → Class I/IIa/IIb/III with the rule that drove it. `framework: 'ivdr'` applies IVDR Annex VIII (facts like bloodDonationScreening, companionDiagnostic, infectiousOrCancerOrGenetic, selfTesting) → Class A/B/C/D. `framework: 'fda'` recommends a pathway (facts: fdaClass, predicateAvailable, exempt, novelLowModerateRisk) → exempt/510k/de_novo/pma. Each result carries a caveat to confirm against the full Annex / FDA classification database. Deterministic.",
+      "description": "Determine an EU MDR or IVDR risk class, or an FDA pathway, from structured facts. `framework: 'mdr'` applies Regulation (EU) 2017/745 Annex VIII Rules 1–22 → Class I/IIa/IIb/III with the rule(s) that gave it. `framework: 'ivdr'` applies Regulation (EU) 2017/746 Annex VIII Rules 1–7 → Class A/B/C/D. `framework: 'fda'` recommends a pathway (exempt/510k/de_novo/pma). Unknown fact keys, unreadable values and facts that contradict each other are refused with an error naming them. When a fact that decides the class was not supplied, class is null and missingFacts names it: say the class is not determined, ask the user for those facts, and never state a class. The rule wording is a recall paraphrase; each result carries a caveat to confirm against the Annex text or the FDA classification database. Deterministic.",
       "scope": "global",
       "governed": false,
-      "renderer": "navigation",
+      "renderer": "result-card",
       "example": "",
       "inputs": [
         {
@@ -18384,7 +18550,7 @@
           "name": "facts",
           "type": "object",
           "required": true,
-          "description": "Structured device facts (see description for the keys per framework)."
+          "description": "Structured device facts; a bare key is true/false, otherwise its values are shown. MDR: invasive, bodyOrificeInvasive, surgicallyInvasive, implantable, active, activeTherapeutic, activeDiagnostic, activeImplantable, breastImplantOrMesh, joi"
         }
       ],
       "requiredInputs": [
@@ -21257,7 +21423,13 @@
           "name": "documentType",
           "type": "string",
           "required": false,
-          "description": "Optional document type for required-section coverage."
+          "description": "Optional whole-document type for required-section coverage, judged once on the sections joined in order. It names a WHOLE document and is checked as one: the text must be the complete document, so omit it for a single section. Indexed types"
+        },
+        {
+          "name": "register",
+          "type": "string",
+          "required": false,
+          "description": "Claims register (default 'submission')."
         }
       ],
       "requiredInputs": [
@@ -21271,7 +21443,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Critique a draft for scientific-writing precision and return an actionable revision brief — the deterministic quality gate behind long-form medical writing. Runs, in one pass: quantitative-claim GROUNDING (every number needs a nearby citation), in-document CONSISTENCY (the same value or abbreviation must not be stated two ways), READABILITY against the audience register, abbreviation-definition-at-first-use, over-claim / promotional CLAIMS language, and STRUCTURE coverage against the document type's governing standard. Returns a 0–100 precision score, a pass/revise verdict, per-finding detail, and an ordered revision brief. Use it after drafting any section/document, then REVISE against the brief and re-run until it passes. DETERMINISTIC — the findings are machine-computed; fix each one rather than arguing with it.",
+      "description": "Critique a draft for scientific-writing precision and return an actionable revision brief — the deterministic quality gate behind long-form medical writing. Runs, in one pass: quantitative-claim GROUNDING (every number needs a nearby citation), in-document CONSISTENCY (the same value or abbreviation must not be stated two ways), READABILITY against the audience register, abbreviation-definition-at-first-use, over-claim / promotional CLAIMS language, and, when documentType names a whole document, STRUCTURE coverage against its governing standard (an unindexed type is reported 'structure not checked', never passed). Returns a 0–100 precision score, a pass/revise verdict, per-finding detail, and an ordered revision brief. Use it after drafting any section/document, then REVISE against the brief and re-run until it passes. DETERMINISTIC — the findings are machine-computed; fix each one rather than arguing with it. The default 'submission' register already exempts named regulatory terms of art (e.g. the ICH E3 §5.3 consent statement, Breakthrough Therapy designation, clinical cure at the test-of-cure visit), each listed with its basis in claimExemptions, and also flags predicted approvals or 'the study was successful' as regulatory_outcome.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -21293,61 +21465,17 @@
           "name": "documentType",
           "type": "string",
           "required": false,
-          "description": "Optional document type (e.g. 'clinical_overview', 'csr', 'cer') to also check required-section coverage against its standard."
+          "description": "Optional whole-document type for required-section coverage against its standard. It names a WHOLE document and is checked as one: the text must be the complete document, so omit it for a single section. Indexed types: protocol, csr, ib, cli"
+        },
+        {
+          "name": "register",
+          "type": "string",
+          "required": false,
+          "description": "Claims register (default 'submission'): 'submission' exempts named regulatory terms of art and flags regulatory-outcome predictions; 'promotional' applies the full advertising lexicon."
         }
       ],
       "requiredInputs": [
         "text"
-      ],
-      "derived": true
-    },
-    {
-      "name": "cross_region_gap_analysis",
-      "category": {
-        "id": "other",
-        "label": "Other"
-      },
-      "description": "Given a submission prepared for a source region, compute what is additionally needed to file the same product in target regions: Module 1 deltas, bridging-study needs (ICH E5), translation scope, and format conversion. Tenant comes from the active context; the call is audited.",
-      "scope": "project",
-      "governed": false,
-      "renderer": "result-card",
-      "example": "",
-      "inputs": [
-        {
-          "name": "source_region",
-          "type": "string",
-          "required": true,
-          "description": ""
-        },
-        {
-          "name": "target_regions",
-          "type": "array",
-          "required": true,
-          "description": ""
-        },
-        {
-          "name": "application_type",
-          "type": "string",
-          "required": true,
-          "description": "e.g. nda, maa, jnda."
-        },
-        {
-          "name": "sections_present",
-          "type": "array",
-          "required": false,
-          "description": "Optional CTD section codes already prepared."
-        },
-        {
-          "name": "submission_id",
-          "type": "number",
-          "required": false,
-          "description": "Optional submission id for the audit entry."
-        }
-      ],
-      "requiredInputs": [
-        "source_region",
-        "target_regions",
-        "application_type"
       ],
       "derived": true
     },
@@ -23952,7 +24080,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Deterministically flag contradictions across gathered evidence (no LLM): same-subject numeric mismatches and opposing positive/negative assertions. Pass structured claims (subject required; optional metric/value/polarity/date). Use before stating a synthesized conclusion to catch self-contradicting sources.",
+      "description": "Check supplied structured evidence for potential disagreements (no LLM). Use observed source fields, never invented metadata. Numeric comparisons require matching endpoints and compatible units; unspecified units remain preliminary. Different dates alone do not establish authority or supersession. Read assessed, comparedPairs, inputIssues and notes: an unassessed or skipped comparison does not prove consistency. Correct invalid tool fields from available source context and retry before asking the client to repeat known facts. Verify scope, population, methods and source authority before synthesizing; retrieve available context and ask targeted questions only for consequential remaining gaps.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -23982,7 +24110,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Deterministically detect what the gathered evidence is MISSING relative to the question (no LLM): geographic, population, outcome, and temporal/recency gaps. Returns gaps with suggested follow-up queries. Use to decide whether to answer now or first offer to broaden the search.",
+      "description": "Check requested geographic, population, outcome and recency coverage against supplied structured metadata (no LLM). Use observed source fields, never invented metadata. Population labels match exactly after normalization. Read assessed, complete, inputIssues and notes: complete covers only assessed metadata dimensions, not scientific sufficiency or joint applicability. Correct invalid tool fields from available source context and retry before asking the client to repeat known facts. A metadata gap does not prove evidence is absent. Retrieve available context or ask targeted questions about consequential remaining uncertainty before synthesizing.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -24121,7 +24249,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Edit an uploaded Excel workbook (or CSV, promoted to .xlsx on save) and persist the result as a NEW uploaded file — the original is never mutated, so provenance is preserved. Supply cell edits as A1 addresses with either a literal `value` (string/number/boolean; null clears the cell) or an Excel `formula` (without the leading \"=\"). Optionally create missing sheets. Returns the new file_id of the edited copy plus a summary of every applied edit — report that new file_id to the user. ALWAYS read_spreadsheet first to confirm the target cells before editing.",
+      "description": "Edit an uploaded Excel workbook (or CSV, promoted to .xlsx on save) and persist the result as a NEW uploaded file — the original is never mutated. A durable audit records the parent file/hash and edits. With a valid project open, the new file is captured in that project’s Data Room; otherwise it remains a conversation upload. Extraction, Vault filing and scientific qualification are still required; Excel formula results are NOT recalculated. Untouched CSV fields retain their literal strings in the edited XLSX; only explicit typed edits change their types. Supply cell edits as A1 addresses with either a literal `value` (string/number/boolean; null clears the cell) or an Excel `formula` (without the leading \"=\"). Optionally create missing sheets. Returns the new file_id of the edited copy plus a summary of every applied edit — report that new file_id to the user. ALWAYS read_spreadsheet first to confirm the target cells before editing.",
       "scope": "global",
       "governed": false,
       "renderer": "table-csv",
@@ -25371,7 +25499,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Generate a GxP-structured client Standard Operating Procedure (SOP), region-aware across FDA (US), EMA (EU), and PMDA (Japan). Use when the user asks AnA to write/draft an SOP for a process (e.g. change control, CAPA, deviation, document control, eCTD publishing, regulatory submission, pharmacovigilance case processing, training, supplier qualification, internal audit). Returns the SOP as structured sections plus rendered markdown, with the canonical SOP skeleton (Purpose, Scope, Responsibilities, Definitions, Procedure, Records, References, Revision history, Approval) and region-appropriate regulatory references. The draft opens in AnA's editor; the client tailors and approves it.",
+      "description": "Generate a GxP-structured client Standard Operating Procedure (SOP), region-aware across FDA (US), EMA (EU), and PMDA (Japan). Use when the user asks AnA to write/draft an SOP for a process (e.g. change control, CAPA, deviation, complaint handling, management review, document control, eCTD publishing, regulatory submission, pharmacovigilance case processing, training, supplier qualification, internal audit). Pass productType: a device SOP answers to the QMSR / ISO 13485:2016, a drug or biologic SOP to 21 CFR 211 and ICH Q10 (a biologic also 21 CFR 600/601). Ask the user if you do not know it; the SOP says when it was assumed. Returns the SOP as structured sections plus rendered markdown, with the canonical SOP skeleton, a 'Requirements this procedure addresses' section listing each clause with its basis (checked regulator text, recall, or platform convention — say which when you cite one), and region-appropriate references. The draft opens in AnA's editor; the client tailors and approves it.",
       "scope": "project",
       "governed": false,
       "renderer": "document-canvas",
@@ -25400,6 +25528,12 @@
           "type": "string",
           "required": false,
           "description": "Optional filing context (NDA/BLA/MAA/JNDA/IND)."
+        },
+        {
+          "name": "productType",
+          "type": "string",
+          "required": false,
+          "description": "The product the procedure governs. Device (including IVD): QMSR / ISO 13485:2016. Drug or biologic: 21 CFR 211 and ICH Q10. Omitted, drug is assumed and the SOP says so."
         },
         {
           "name": "organization",
@@ -25546,7 +25680,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Generate FDA Study Tagging File (stf.xml) content for each study from its tagged study-report leaves. You pass the leaves with their study id, file tag, CTD section, href, title, and operation; you get one stf.xml per study, grouped by file tag, plus a summary. Pure computation — nothing is written to the package. Use it when assembling Module 4 or 5 so each study folder carries a correct STF.",
+      "description": "Generate the ICH Study Tagging File (stf-<study-id>.xml) for each study from its tagged leaves. You pass each leaf with its study id, file tag, CTD section, package path, title, operation, its leaf ID in index.xml and the STF folder's relative path to index.xml; you get one STF per study (a doc-content per leaf pointing at index.xml#ID, holding the file-tag), a summary and warnings. A .xpt or define.xml tagged outside FDA validation 1735's list is refused. Pure computation — nothing is written to the package; the packager generates the STFs it ships itself.",
       "scope": "global",
       "governed": false,
       "renderer": "artifact-xml",
@@ -26845,84 +26979,6 @@
       "derived": true
     },
     {
-      "name": "ind_generate_section",
-      "category": {
-        "id": "other",
-        "label": "Other"
-      },
-      "description": "Generate a specific CTD section for an IND submission. Creates a governed draft artifact with regulatory-quality content. Use when the user asks to draft, generate, or create a specific IND/CTD section (e.g., \"draft section 2.5\", \"generate the clinical overview\", \"create Module 3 drug substance section\").",
-      "scope": "project",
-      "governed": true,
-      "renderer": "document-canvas",
-      "example": "",
-      "inputs": [
-        {
-          "name": "section_code",
-          "type": "string",
-          "required": true,
-          "description": "CTD section code (e.g., \"2.5\" for Clinical Overview, \"3.2.S\" for Drug Substance, \"4.2.3\" for Toxicology)"
-        },
-        {
-          "name": "project_id",
-          "type": "string",
-          "required": false,
-          "description": "Project ID to save the generated section to"
-        },
-        {
-          "name": "product_name",
-          "type": "string",
-          "required": false,
-          "description": "Name of the drug/product"
-        },
-        {
-          "name": "indication",
-          "type": "string",
-          "required": false,
-          "description": "Therapeutic indication"
-        },
-        {
-          "name": "sponsor",
-          "type": "string",
-          "required": false,
-          "description": "Sponsor company name"
-        },
-        {
-          "name": "phase",
-          "type": "string",
-          "required": false,
-          "description": "Clinical phase (Phase 1, Phase 2, etc.)"
-        }
-      ],
-      "requiredInputs": [
-        "section_code"
-      ],
-      "derived": true
-    },
-    {
-      "name": "ind_get_status",
-      "category": {
-        "id": "other",
-        "label": "Other"
-      },
-      "description": "Get the complete IND submission structure and section-by-section completion status. Use when the user asks about IND progress, what sections are done, what's missing, or the overall readiness of their IND submission.",
-      "scope": "project",
-      "governed": false,
-      "renderer": "result-card",
-      "example": "",
-      "inputs": [
-        {
-          "name": "project_id",
-          "type": "string",
-          "required": true,
-          "description": "Project ID to check status for"
-        }
-      ],
-      "requiredInputs": [
-        "project_id"
-      ],
-      "derived": true
-    },
-    {
       "name": "insert_document_content",
       "category": {
         "id": "other",
@@ -27491,7 +27547,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Self-review a draft (or pre-draft) against a document type's governing standard — checks section coverage vs the required structure (ICH E3/M4E, EU MDR/IVDR, ICMJE, …) and returns a conformance checklist (structure, key requirements, pitfalls) plus a readiness verdict. Use before handing off or finalizing any regulatory/scientific document to QC it like an expert medical writer.",
+      "description": "Review a draft (or pre-draft) against an indexed document type's heading outline (ICH E3/M4E, EU MDR/IVDR, ICMJE, …). Returns detected-heading evidence, a human/evidence review checklist and up to three focused client clarification prompts. Read project sources and prior answers first; ask only unresolved material questions outside the formal document. Heading coverage never establishes scientific completeness, compliance, approval or filing readiness; this deterministic tool does not read or verify source evidence.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -27507,7 +27563,7 @@
           "name": "draft_text",
           "type": "string",
           "required": false,
-          "description": "Optional draft text — when provided, section coverage is assessed against it."
+          "description": "Optional draft text — checks actual headings against the indexed outline, not narrative keyword mentions or substantive evidence completeness."
         }
       ],
       "requiredInputs": [
@@ -28615,7 +28671,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Plan the cGMP operating model for a combination product under 21 CFR Part 4, using the streamlined approach (21 CFR 4.4): choose a single base quality system — drug cGMP (21 CFR 210/211) or device QS (21 CFR 820) — and additionally satisfy the specific \"called-out\" provisions of the other system. Returns whether Part 4 applies, the recommended base, the exact called-out provisions (for a drug base: 820.20, 820.30, 820.50, 820.100, 820.170, 820.200; for a device base: 211.84, 211.103, 211.132, 211.137, 211.165, 211.166, 211.167, 211.170), postmarketing safety-reporting requirements (Part 4 Subpart B), the QMSR (ISO 13485, effective 2026-02-02) mapping note, rationale, and citations. Use when the user needs to design the quality-system / cGMP compliance strategy for a combination product. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Plan the cGMP operating model for a combination product under 21 CFR Part 4, using the streamlined approach (21 CFR 4.4): choose a single base quality system — drug cGMP (21 CFR 210/211) or the device quality system (21 CFR 820) — and additionally satisfy the specific \"called-out\" provisions of the other system. Returns whether Part 4 applies, the recommended base, the exact called-out provisions resolved for asOf, each with its basis (for a drug base, 21 CFR 4.4(b)(1) as amended by the QMSR, in force 2026-02-02: 21 CFR 820.10 and the ISO 13485:2016 clauses it names, each removed QSR section shown only as \"formerly\"; before 2026-02-02 the QSR sections; for a device base: 211.84, 211.103, 211.132, 211.137, 211.165, 211.166, 211.167, 211.170), postmarketing safety-reporting requirements (Part 4 Subpart B), the QMSR transition note, rationale, and citations. Report the called-out provisions as returned. Use when the user needs to design the quality-system / cGMP compliance strategy for a combination product. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -28656,6 +28712,12 @@
           "type": "boolean",
           "required": false,
           "description": "Whether any drug constituent is an OTC product (drives the 211.132 tamper-evident provision)."
+        },
+        {
+          "name": "asOf",
+          "type": "string",
+          "required": false,
+          "description": "Date the plan is for (YYYY-MM-DD); defaults to today. Selects the 21 CFR 4.4(b)(1) text in force: the QMSR call-outs on and after 2026-02-02, the QSR call-outs before."
         }
       ],
       "requiredInputs": [
@@ -29553,7 +29615,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Structured, cell-level read of an uploaded Excel (.xlsx) or CSV file: returns the sheet inventory plus the requested sheet's rows as a table — display values with row numbers, and formulas preserved alongside their cached results. Page through big sheets with start_row/max_rows, and keep paging while `truncated` is true: `lastRow` is where the sheet ends, while `totalRows` only counts rows that hold values, so a sheet with blank rows ends after totalRows. Use this (not read_uploaded_document) whenever you need to study specific cells, formulas, or a particular sheet; use edit_spreadsheet to change cells afterwards.",
+      "description": "Structured, cell-level read of an uploaded Excel (.xlsx) or CSV file: returns the sheet inventory plus the requested sheet's rows as a table — display values with row numbers, and formulas preserved alongside their cached results. CSV fields remain literal strings so subject/lot identifiers, leading zeros, long IDs and date-like labels are not silently converted; scientific type, unit and date mapping must be deliberate. XLSX retains its stored cell types. Page through big sheets with start_row/max_rows, and keep paging while `truncated` is true: `lastRow` is where the sheet ends, while `totalRows` only counts rows that hold values, so a sheet with blank rows ends after totalRows. Use this (not read_uploaded_document) whenever you need to study specific cells, formulas, or a particular sheet; use edit_spreadsheet to change cells afterwards.",
       "scope": "global",
       "governed": false,
       "renderer": "table-csv",
@@ -29607,10 +29669,10 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Read and extract the content of an uploaded file by file_id — AnA's front door to learn from and study any client document. Handles PDF (born-digital text with automatic OCR fallback for scanned pages), DOCX, Markdown, plain text/CSV/JSON, Excel (.xlsx, all sheets rendered as text), and images (OCR). Returns the extracted text (paged via max_chars/offset), the extraction method and OCR confidence, plus a structural outline (sections, tables, figures). For PDFs you can scope to a page range (page_start/page_end) — preferred for large documents; run inspect_uploaded_document first to plan. For cell-level Excel access (values, formulas, specific sheets) use read_spreadsheet instead. Set force_ocr to re-read a PDF/image with OCR even when a text layer exists (e.g. a bad or partial text layer).",
+      "description": "Read and extract the content of an uploaded file by file_id — AnA's front door to learn from and study any client document. Handles PDF (born-digital text with automatic OCR fallback for scanned pages), DOCX, Markdown, plain text/CSV/TSV/JSON/XML (raw UTF-8 text, not dataset/schema validation), Excel (.xlsx, all sheets rendered as text), and images (OCR). Returns the extracted text (paged via max_chars/offset), the extraction method and OCR confidence, plus a structural outline (sections, tables, figures). For PDFs you can scope to a page range (page_start/page_end) — preferred for large documents; run inspect_uploaded_document first to plan. For cell-level Excel access (values, formulas, specific sheets) use read_spreadsheet instead. Set force_ocr to re-read a PDF/image with OCR even when a text layer exists (e.g. a bad or partial text layer).",
       "scope": "global",
       "governed": false,
-      "renderer": "table-csv",
+      "renderer": "artifact-xml",
       "example": "",
       "inputs": [
         {
@@ -31626,6 +31688,44 @@
       "derived": true
     },
     {
+      "name": "review_sop_requirements",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Review a client's SOP text against what its topic requires, by the product it governs: for each requirement (e.g. for a device CAPA SOP, ISO 13485:2016 §8.5.2 (a)-(f) under the QMSR; for a drug CAPA SOP, 21 CFR 211.192 and ICH Q10 §3.2.2) it reports 'addressed' with the sentence that addresses it, or 'not_found'. Deterministic wording check, no model: 'not_found' means no wording for it was found, not that the procedure is deficient — tell the user to read for it. Each requirement carries its basis (checked regulator text, recall, or platform convention); say which when you cite it. Use when the user asks whether an SOP is complete, inspection-ready or compliant, or before revising one. Topics: capa, deviation, complaint_handling, document_control, training, supplier_qualification, internal_audit, management_review, change_control.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "sop_text",
+          "type": "string",
+          "required": true,
+          "description": "The full text of the SOP to review."
+        },
+        {
+          "name": "topic",
+          "type": "string",
+          "required": true,
+          "description": "The quality-system process the SOP governs."
+        },
+        {
+          "name": "product_type",
+          "type": "string",
+          "required": true,
+          "description": "The product the procedure governs. Device includes IVD. Ask the user if you do not know it."
+        }
+      ],
+      "requiredInputs": [
+        "sop_text",
+        "topic",
+        "product_type"
+      ],
+      "derived": true
+    },
+    {
       "name": "review_spirit_conformance",
       "category": {
         "id": "other",
@@ -31718,6 +31818,50 @@
       ],
       "requiredInputs": [
         "document_id"
+      ],
+      "derived": true
+    },
+    {
+      "name": "run_agent",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Start a sub-agent for ONE bounded, independent sub-task and wait for its report before you continue. Put run_agent calls in a step of their own: up to 4 in one step run together, at most 6 per turn, and all report back before your next step. A sub-agent cannot see this conversation, cannot change, file, approve or sign anything, cannot ask the person, cannot start agents and cannot search the web. It stops at its budget: 6 rounds, 3 minutes of work. Its tools are the project, Vault and governed-document reads, the ICH and regulatory-currency registries, and the public literature, trial and FDA adverse-event searches. None of them can call a generative model; searches embed the query, and the public searches send it to PubMed, ClinicalTrials.gov and openFDA. role research: investigate and report, citing the tool result behind every figure. role verify: pass the exact text in text_to_check. Checks then run on that text as given, before the agent starts: whether each figure carries a citation marker (the marker is not checked against any source), whether any labelled figure stated more than once is stated with two different values, and, when a numbered project is open, whether any figure differs from the same labelled figure in the project records. No checker verifies that a citation exists or supports the text, or that a quotation matches its source. For those, the agent can only find and quote source passages, and its report is advisory. The verdict comes only from the checks.",
+      "scope": "global",
+      "governed": true,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "string",
+          "required": true,
+          "description": "'research' to investigate and report; 'verify' to check text_to_check."
+        },
+        {
+          "name": "objective",
+          "type": "string",
+          "required": true,
+          "description": "One line naming the sub-task, shown to the person (at most 200 characters)."
+        },
+        {
+          "name": "instructions",
+          "type": "string",
+          "required": true,
+          "description": "Everything the agent needs, self-contained: it cannot see this conversation (at most 8000 characters)."
+        },
+        {
+          "name": "text_to_check",
+          "type": "string",
+          "required": false,
+          "description": "verify only: the exact text to check, as written (at most 40000 characters)."
+        }
+      ],
+      "requiredInputs": [
+        "role",
+        "objective",
+        "instructions"
       ],
       "derived": true
     },
@@ -32855,7 +32999,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select the US premarket pathway (510(k) premarket notification, De Novo classification, PMA, Humanitarian Device Exemption (HDE), 510(k)-exempt, IDE-then-PMA, or BLA) and the EU conformity assessment route (self-certification vs notified-body involvement), with rationale, alternatives, and an approximate FDA review clock. Implements the decision logic of 21 CFR 807.81 (when a 510(k) is required), 21 CFR 860.93 (De Novo), 21 CFR 814 (PMA/HDE), and MDR/IVDR conformity routing by class. Handles HUD/HDE eligibility (<8,000 US patients/year), predicate availability, novel low/moderate-risk devices, biologics, and EU Class I sterile/measuring/reusable-instrument special routes. Use when the user needs to choose a regulatory filing pathway for a device or IVD. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Select the US premarket pathway (510(k) premarket notification, De Novo classification, PMA, Humanitarian Device Exemption (HDE), 510(k)-exempt, IDE-then-PMA, or BLA) and the EU conformity assessment route (self-certification vs notified-body involvement), with rationale, alternatives, and an approximate FDA review clock. Implements the decision logic of 21 CFR 807.81 (when a 510(k) is required), FD&C Act §513(f)(2) and 21 CFR 860 Subpart D (De Novo), 21 CFR 814 (PMA/HDE), and MDR/IVDR conformity routing by class. Handles HUD/HDE eligibility (not more than 8,000 US patients/year, with an OOPD HUD designation), predicate availability, 510(k) exemption by product code, novel low/moderate-risk devices, biologics, and EU Class I sterile/measuring/reusable-instrument special routes. When the inputs cannot decide the US pathway it returns \"undetermined\" with a NEEDS-INPUT finding naming what is missing. Use when the user needs to choose a regulatory filing pathway for a device or IVD. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -32889,13 +33033,13 @@
           "name": "estimatedAnnualUSPopulation",
           "type": "number",
           "required": false,
-          "description": "Estimated US patient population per year. <8,000 supports HUD/HDE eligibility."
+          "description": "Estimated US patient population per year. Not more than 8,000 supports HUD/HDE eligibility; without it HDE is undetermined."
         },
         {
           "name": "exempt",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device/product code is 510(k)-exempt."
+          "description": "Whether the product code's classification regulation exempts it from 510(k) with no .9 limitation applying. Without it a class I device is undetermined."
         },
         {
           "name": "isBiologic",
@@ -34149,7 +34293,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Generate the required section structure for an EU Summary of Product Characteristics (SmPC) per the EMA Quality Review of Documents (QRD) template (current revision). Returns all 12 numbered SmPC sections (1. Name of the medicinal product through 12. Instructions for use) with required subsections, mandatory language blocks (e.g., black triangle statement for additional monitoring products, reporting statement for suspected adverse reactions), and procedure-specific requirements for centralized (CP), mutual recognition (MRP), decentralized (DCP), and national procedures. Identifies product-type-specific content (herbal traditional use registration, homeopathic registration), special population requirements (paediatric, elderly, renal/hepatic impairment), and cross-references to the Package Leaflet and labelling text. Cites Directive 2001/83/EC Article 11, Regulation (EC) No 726/2004, and the current EMA QRD template annotated guidance. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Generate the required section structure for an EU Summary of Product Characteristics (SmPC) per the EMA Quality Review of Documents (QRD) template (v10.4; heading wording from recall, not checked against the EMA text). Returns SmPC sections 1-10 (1. Name of the medicinal product through 10. Date of revision of the text) with their subsections; sections 11 (Dosimetry) and 12 (Instructions for preparation of radiopharmaceuticals) apply to radiopharmaceuticals only and are not returned. Also returns mandatory language blocks (e.g., black triangle statement for additional monitoring products, reporting statement for suspected adverse reactions), and procedure-specific requirements for centralized (CP), mutual recognition (MRP), decentralized (DCP), and national procedures. Identifies product-type-specific content (herbal traditional use registration, homeopathic registration), special population requirements (paediatric, elderly, renal/hepatic impairment), and cross-references to the Package Leaflet and labelling text. Cites Directive 2001/83/EC Article 11, Regulation (EC) No 726/2004, and the current EMA QRD template annotated guidance. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -35278,7 +35422,13 @@
           "name": "documentType",
           "type": "string",
           "required": false,
-          "description": "Optional document type for section-coverage checks (applied to both)."
+          "description": "Optional whole-document type for section coverage, applied to both texts. It names a WHOLE document and is checked as one: the text must be the complete document, so omit it for a single section. Indexed types: protocol, csr, ib, clinical_o"
+        },
+        {
+          "name": "register",
+          "type": "string",
+          "required": false,
+          "description": "Claims register (default 'submission'; applied to both)."
         }
       ],
       "requiredInputs": [
@@ -36171,7 +36321,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Compute the HONEST assembly state of a 510(k), De Novo or PMA eSTAR submission using the DETERMINISTIC device-assembly engine. Given the canonical content leaves (section code + title) and which official FDA eSTAR templates are present, it returns the producible artifactKind ('official-estar' = sections complete AND official template available; 'content-package-draft' = content exists but no official template, NOT submittable; 'none' = required content missing), whether an official eSTAR can be produced, the section readiness summary (eSTAR slots for 510(k)/De Novo; the 21 CFR 814 PMA modules for a PMA), the template-availability gate, an optional target-market readiness overlay, and a de-duplicated list of every blocker. It does NOT render or transmit anything — it tells you exactly what can be assembled and what blocks a submittable artifact. Report the returned values verbatim. Do NOT recompute or soften them. If the engine reports a validation error or a blocker, relay it exactly and ask the user for any missing input rather than guessing.",
+      "description": "Compute the HONEST assembly state of the OPEN PROJECT's 510(k), De Novo or PMA eSTAR submission using the DETERMINISTIC device-assembly engine — the same computation as the Submission Center's assembly check. With a project open it reads the project's own governed device sections (finished vs draft is decided by their review status, never by you), the device questions answered at intake, and the checksum-verified official FDA eSTAR templates; you supply only the pathway, variant and optional market. It returns the producible artifactKind ('official-estar' = sections complete AND official template available; 'content-package-draft' = content exists but not submittable; 'none' = required content missing), whether an official eSTAR can be produced, the section readiness summary (eSTAR slots for 510(k)/De Novo; the 21 CFR 814 PMA modules for a PMA), the template gate, an optional market overlay, every blocker, and deviceContentSource (which store answered — 'legacy_org_wide' is not specific to this project; say so). status 'read_failed' means the project could not be read: say so and do not report sections as missing. status 'needs_project' means no project is open. mode 'hypothetical' maps an outline you supply (leaves) onto the section tree; it is NOT this project's content, scores every leaf as unfinished and can never report a producible eSTAR. It does NOT render or transmit anything. Report the returned values verbatim. Do NOT recompute or soften them. If the engine reports a validation error or a blocker, relay it exactly and ask the user for any missing input rather than guessing.",
       "scope": "project",
       "governed": false,
       "renderer": "readiness-panel",
@@ -36197,16 +36347,22 @@
           "description": "Selects the official eSTAR template variant (device vs IVD)."
         },
         {
-          "name": "leaves",
-          "type": "array",
-          "required": true,
-          "description": "Canonical content leaves to project onto the eSTAR section tree."
+          "name": "mode",
+          "type": "string",
+          "required": false,
+          "description": "'project' (default): assess the open project's own content. 'hypothetical': map the leaves you supply — labelled not this project's content; every leaf is scored as unfinished and no template counts as present."
         },
         {
-          "name": "presentTemplates",
+          "name": "leaves",
           "type": "array",
           "required": false,
-          "description": "Official eSTAR template filenames present in the drop-point (omit if none)."
+          "description": "mode 'hypothetical' only (ignored for a project): outline leaves to map onto the eSTAR section tree."
+        },
+        {
+          "name": "deviceFlags",
+          "type": "object",
+          "required": false,
+          "description": "mode 'hypothetical' only (a project's intake answers are always used for a project): the device questions as booleans."
         },
         {
           "name": "market",
@@ -36218,19 +36374,18 @@
           "name": "availableArtifacts",
           "type": "array",
           "required": false,
-          "description": "Artifact ids available, for the market-readiness overlay."
+          "description": "mode 'hypothetical' only: artifact ids for the market-readiness overlay."
         },
         {
           "name": "environment",
           "type": "string",
           "required": false,
-          "description": "Build environment. \"production\" gates the official-template requirement."
+          "description": "mode 'hypothetical' only: build environment; \"production\" gates the official-template requirement."
         }
       ],
       "requiredInputs": [
         "pathway",
-        "variant",
-        "leaves"
+        "variant"
       ],
       "derived": false
     },
@@ -36315,7 +36470,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Assess a submission package's completeness for a given submission type: compare the project's current sections and artifacts against the required blueprint for that type (e.g. 510k, IND, NDA, BLA, CER) and return which required sections/artifacts are present, approved, locked, or MISSING, plus package-level metadata (completed vs required counts, packageComplete). DETERMINISTIC. Use to answer 'what is still missing before this submission is ready?'. Returns null-handling: if the submission type is unrecognized, the tool reports needs_parameters with the accepted types.",
+      "description": "Assess saved package progress for the active client project and a confirmed registry filing type. Reads the organization-scoped canonical lifecycle projection and explicit filing placements; model-supplied project IDs, sections and approval statuses are ignored in project mode. Reports missing projection rows and required content awaiting review. The projection is not a full inventory: unlinked working documents may exist. No scientific, source-store, signature, dataset, technical-package or transmission readiness is certified. With no accessible active project, asks for one. Use mode hypothetical only for an explicitly requested scenario; hypothetical input can never certify a completed client package.",
       "scope": "project",
       "governed": false,
       "renderer": "result-card",
@@ -36328,29 +36483,32 @@
           "description": "Submission/application type or registry id (e.g. '510k', 'ind', 'nda', 'bla', 'cer')."
         },
         {
+          "name": "mode",
+          "type": "string",
+          "required": false,
+          "description": "Default project: read saved active-project evidence. Hypothetical: explicitly requested modeled scenario only."
+        },
+        {
           "name": "projectId",
           "type": "string",
-          "required": true,
-          "description": "Project identifier (for the manifest metadata)."
+          "required": false,
+          "description": "Legacy field ignored in project mode; the active project comes from authenticated context."
         },
         {
           "name": "sections",
           "type": "array",
-          "required": true,
-          "description": "The project's current sections."
+          "required": false,
+          "description": "Hypothetical section states only; ignored in project mode."
         },
         {
           "name": "artifacts",
           "type": "array",
-          "required": true,
-          "description": "The project's current artifacts."
+          "required": false,
+          "description": "Hypothetical artifact states only; ignored in project mode."
         }
       ],
       "requiredInputs": [
-        "submissionType",
-        "projectId",
-        "sections",
-        "artifacts"
+        "submissionType"
       ],
       "derived": true
     },
@@ -37059,7 +37217,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Produce a submission plan for a medical device or IVD: the required content for the chosen US pathway (eSTAR/510(k) sections per 21 CFR 807.87, De Novo content per 21 CFR 860.93, PMA modules per 21 CFR 814.20, HDE per 21 CFR 814.104, or general-controls file when exempt), the EU technical documentation set (MDR/IVDR Annex II/III: device description, labeling, design & manufacturing, GSPR checklist, benefit-risk, verification & validation, post-market surveillance), an indicative end-to-end timeline (Q-Sub, testing, compilation, FDA review clock, EU notified-body assessment), and a Pre-Submission (Q-Sub) strategy. Use when the user needs to scope the contents, sequence, and timeline of a device marketing submission. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Produce a submission plan for a medical device or IVD: the required content for the chosen US pathway (eSTAR/510(k) sections per 21 CFR 807.87, De Novo content per 21 CFR 860 Subpart D (860.220), PMA modules per 21 CFR 814.20, HDE per 21 CFR 814.104, or general-controls file when exempt), the EU technical documentation set (MDR/IVDR Annex II/III: device description, labeling, design & manufacturing, GSPR checklist, benefit-risk, verification & validation, post-market surveillance), an indicative end-to-end timeline (Q-Sub, testing, compilation, FDA review clock, EU notified-body assessment), and a Pre-Submission (Q-Sub) strategy. Use when the user needs to scope the contents, sequence, and timeline of a device marketing submission. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -37124,12 +37282,6 @@
           "type": "boolean",
           "required": false,
           "description": "Whether a Pre-Submission (Q-Sub) has already occurred (changes the timeline and Q-Sub strategy)."
-        },
-        {
-          "name": "useEStar",
-          "type": "boolean",
-          "required": false,
-          "description": "Whether the submission will use the FDA eSTAR template (mandatory for 510(k)/De Novo)."
         }
       ],
       "requiredInputs": [
@@ -37193,7 +37345,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "The sequence from study close-out and database lock to a filed NDA or BLA, and where the open project stands on it: SAP final → database lock → SDTM (TS, DM, define.xml, reviewer’s guide) → ADaM (ADSL) → tables, listings and figures → clinical study reports → integrated datasets → ISS and ISE (5.3.5.3) → 2.7.x summaries → 2.5 Clinical Overview → labeling → eCTD assembly → technical validation → transmission. Each step names what it produces, what it is written from, where it is filed, the check it must pass, and what FDA checks on receipt. With a project open, each step’s state is read from the project’s Vault (filed, proposed, not found, or not visible to the platform), with what is next, what is blocked and on what, and anything filed ahead of its sources. Pass `step` (for example \"csr\", \"ise\", \"m2_7_3\") for one step in full. Use it for \"what happens after database lock\", \"what is next for the submission\", \"what is blocking 2.7.3\", or organising the data room.",
+      "description": "The sequence from study close-out and database lock to a filed NDA or BLA, and where the open project stands on it: SAP final → database lock → SDTM (TS, DM, define.xml, reviewer’s guide) → ADaM (ADSL) → tables, listings and figures → clinical study reports → integrated datasets → ISS and ISE (5.3.5.3) → 2.7.x summaries → 2.5 Clinical Overview → labeling → eCTD assembly → technical validation → transmission. Each step names what it produces, what it is written from, where it is filed, the check it must pass, and what FDA checks on receipt. With a project open, each step’s state is read from the project’s Vault (filed, proposed, not found, or not visible to the platform), with what is next, what is blocked and on what, and anything filed ahead of its sources. Documents are matched by the kind the Vault recorded and their title, so a SAP or protocol is never counted as a CSR; a CSR held at 5.3.5 or in Module 5 without a section is listed under unspecific_placement (seen, not filed), and a Module 2 summary or ISS/ISE filed where its kind does not go is listed as misfiled with the section expected. Pass `step` (for example \"csr\", \"ise\", \"m2_7_3\") for one step in full. Use it for \"what happens after database lock\", \"what is next for the submission\", \"what is blocking 2.7.3\", or organising the data room.",
       "scope": "global",
       "governed": false,
       "renderer": "artifact-xml",

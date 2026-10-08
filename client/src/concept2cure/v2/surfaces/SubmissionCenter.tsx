@@ -2,7 +2,7 @@
  * Submission Center — kit app/submission-center.jsx ported (registry id
  * `submission-center`, contract-ready).
  *
- * Real-data standard (no mock in product): the 8 workspaces are scaffolded from
+ * Real-data standard (no mock in product): the 7 workspaces are scaffolded from
  * the REAL contract SUBMISSION_WORKSPACES (@shared/types/submission-ui). The
  * portfolio list binds live to GET /api/submissions and the per-submission
  * sequences to GET /api/submissions/:id/sequences (both DB-backed via
@@ -24,8 +24,8 @@
  *
  * Per-sequence workspaces (SubmissionSeqWorkspaces.tsx) are REAL: a sequence
  * selector feeds Builder (GET/PUT leaves), Validation (dispatch-readiness
- * findings + AI explain), Shadow Review (runs + persisted findings),
- * Cross-region (gap computation off the real leaves) and Dispatch (the
+ * findings + AI explain), Shadow Review (runs + persisted findings) and
+ * Dispatch (the
  * server-computed gate + AI QC advisory). Sequence lifecycle transitions POST
  * the real /sequences/:seqId/transition endpoint and surface the server's
  * verdict verbatim. The irreversible transitions — freeze and dispatch — run
@@ -65,7 +65,6 @@ import {
 import {
   BuilderWorkspace,
   Chip,
-  CrossRegionWorkspace,
   DispatchWorkspace,
   SeqPicker,
   ShadowReviewWorkspace,
@@ -80,9 +79,10 @@ import {
   type TransmitRequest,
 } from './SubmissionSeqWorkspaces';
 import '../styles/submission-v2.css';
-import { C2CForm } from '../C2CForm';
+import { NewSubmissionForm } from './NewSubmissionForm';
 import { gatewayLabel } from '../gatewayLabels';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
+import { useSurfaceAvailable } from '../surfaceAvailable';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -423,7 +423,7 @@ function scopedMissReason(wanted: string, projectName: string | null, notOffered
 }
 
 /** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
-const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'cross-region', 'dispatch']);
+const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'dispatch']);
 
 export function SubmissionCenter({
   onAsk,
@@ -437,6 +437,7 @@ export function SubmissionCenter({
 }) {
   const [ws, setWs] = React.useState('portfolio');
   const [selSub, setSelSub] = React.useState<number | null>(null);
+  const available = useSurfaceAvailable();
   // The signer sees their own identity in the e-signature dialog (§11.50): the
   // name the platform will print on the signature, not a generic "You".
   const authUser = useAuthUser();
@@ -587,7 +588,7 @@ export function SubmissionCenter({
   });
 
   // The selected working sequence — the selector feeding Builder / Validation /
-  // Shadow Review / Cross-region / Dispatch. Defaults to the first real row.
+  // Shadow Review / Dispatch. Defaults to the first real row.
   const [selSeq, setSelSeq] = React.useState<number | null>(null);
   const seq = seqs.rows.find((r) => r.id === selSeq) ?? seqs.rows[0] ?? null;
 
@@ -972,7 +973,7 @@ export function SubmissionCenter({
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
 
   /* What AnA can see of this screen.
-     The Submission Center is eight workspaces over one selected submission and
+     The Submission Center is seven workspaces over one selected submission and
      one selected sequence, and every question a user asks here is about THAT
      pair — "is this ready to dispatch?", "what is blocking 0002?". Until now she
      was told only that the surface was called "submission-center", so she could
@@ -1083,7 +1084,7 @@ export function SubmissionCenter({
                 },
       },
       availableActions: [
-        'Switch workspace — planner, sequences, builder, validation, shadow review, cross-region, dispatch',
+        'Switch workspace — planner, sequences, builder, validation, shadow review, dispatch',
         'Select a different submission from the portfolio picker',
         ...(openProjectName ? ["List all of the organization's submissions, or only the open project's"] : []),
         'Select the working sequence the build and validation workspaces act on',
@@ -1108,7 +1109,7 @@ export function SubmissionCenter({
           <h1 className="sp-title">Submission center</h1>
           <p className="sp-state">
             Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2
-            / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+            / v4.0, eSTAR, MDR/IVDR. Seven workspaces scaffolded from the submission contract.
           </p>
         </div>
         {list.length > 0 && (
@@ -1219,54 +1220,15 @@ export function SubmissionCenter({
       <VerdictNote notice={notice} />
 
       {newOpen && (
-        <C2CForm
-          config={{
-            eyebrow: 'Submission',
-            title: 'Create a submission',
-            sub: 'The canonical submission record. Its sequences, validation profile and regional Module 1 are derived from the type and agency chosen here.',
-            submitLabel: creating ? 'Creating…' : 'Create submission',
-            fields: [
-              {
-                key: 'title', label: 'Title', type: 'text',
-                placeholder: 'e.g. BX-701 — Initial IND', required: true,
-              },
-              {
-                key: 'applicationType', label: 'Application type', type: 'select',
-                // The canonical vocabulary the rest of this surface renders —
-                // including the non-US applications (MAA, CTA) a global team
-                // opens as its second market.
-                options: SC_APPTYPES.map((a) => ({ value: a.v, label: a.l })),
-                default: 'ind', required: true, half: true,
-              },
-              {
-                key: 'primaryRegion', label: 'Primary region', type: 'select',
-                options: SC_REGIONS.map((r0) => ({ value: r0.v, label: r0.l })),
-                default: 'fda', required: true, half: true,
-              },
-              {
-                key: 'clientType', label: 'Client type', type: 'select',
-                options: [
-                  { value: 'pharma', label: 'Pharma' },
-                  { value: 'biotech', label: 'Biotech' },
-                  { value: 'mdx', label: 'Medical device' },
-                  { value: 'ivd', label: 'IVD' },
-                ],
-                default: 'biotech', required: true, half: true,
-              },
-              /* With a project open the submission is that project's: it is
-                 named here, read-only, and there is no picker. */
-              openProjectName
-                ? { key: 'project', label: 'Project', type: 'text', half: true, derive: () => openProjectName }
-                : {
-                    key: 'projectId', label: 'Programme', type: 'select',
-                    options: programmes.rows.map((p) => ({
-                      value: p.id,
-                      label: [p.code, p.title].filter(Boolean).join(' · ') || p.id,
-                    })),
-                    required: true, half: true,
-                  },
-            ],
-          }}
+        <NewSubmissionForm
+          openProgramId={openProgramId}
+          openProjectName={openProjectName}
+          workspace={shell?.ws}
+          projectSubmissions={openProgramId ? list.filter((x) => x.programId === openProgramId) : []}
+          submissionsSettled={!subs.loading}
+          submissionsUnread={!!subs.error}
+          programmes={programmes.rows}
+          creating={creating}
           onCancel={() => setNewOpen(false)}
           onSubmit={createSubmission}
         />
@@ -1431,14 +1393,19 @@ export function SubmissionCenter({
                       <td>{f.fdaTrackingNumber ?? '—'}</td>
                       <td>{reviewClock(f)}</td>
                       <td>
-                        <button
-                          type="button"
-                          className="sc-trans-b"
-                          title="Open the 510(k) surface — the device filing workspace"
-                          onClick={() => onNav && onNav('device-510k')}
-                        >
-                          {I.right} Open 510(k) surface
-                        </button>
+                        {/* Offered only where the 510(k) surface can be opened:
+                            outside this release it led to the locked panel
+                            (FILING_SPINE.md F16). */}
+                        {available('device-510k') && (
+                          <button
+                            type="button"
+                            className="sc-trans-b"
+                            title="Open the 510(k) surface — the device filing workspace"
+                            onClick={() => onNav && onNav('device-510k')}
+                          >
+                            {I.right} Open 510(k) surface
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -1635,7 +1602,7 @@ export function SubmissionCenter({
         </div>
       )}
 
-      {/* Builder / Validation / Shadow review / Cross-region / Dispatch — the
+      {/* Builder / Validation / Shadow review / Dispatch — the
           per-sequence workspaces. One selector (SeqPicker) chooses the working
           sequence; each workspace then reads/writes the REAL endpoints for it. */}
       {/* ── "No submission selected" is a claim about the reader's portfolio ──
@@ -1674,11 +1641,10 @@ export function SubmissionCenter({
           {!seqs.loading && !seqs.error && seq && (
             <>
               {ws === 'builder' && (
-                <BuilderWorkspace key={seq.id} seq={seq} onSequenceChanged={() => setSeqBump((b) => b + 1)} />
+                <BuilderWorkspace key={seq.id} seq={seq} onSequenceChanged={() => setSeqBump((b) => b + 1)} onNav={onNav} />
               )}
               {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'shadow-review' && <ShadowReviewWorkspace key={seq.id} seq={seq} />}
-              {ws === 'cross-region' && <CrossRegionWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'dispatch' && (
                 <DispatchWorkspace
                   key={`${seq.id}:${seq.status}`}
@@ -1734,8 +1700,8 @@ export function SubmissionCenter({
                   Transitions POST the real lifecycle endpoint and the server&#39;s verdict is shown
                   verbatim. Freeze and Dispatch are irreversible — the generic endpoint refuses
                   them, so those two open the Part 11 e-signature chain instead. Selecting a row
-                  sets the working sequence for the Builder, Validation, Shadow review,
-                  Cross-region and Dispatch workspaces.
+                  sets the working sequence for the Builder, Validation, Shadow review
+                  and Dispatch workspaces.
                 </div>
                 <div className="sp-list">
                   {seqs.rows.map((s) => (

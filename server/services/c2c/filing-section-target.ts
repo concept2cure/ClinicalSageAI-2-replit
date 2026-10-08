@@ -21,9 +21,12 @@
  * receives that section's text unchanged — the behaviour every existing
  * binding relies on.
  */
-import type { PoolClient } from 'pg';
 import { assembleAuthoredSections } from '../ana/authoring-canonical-bridge.js';
+import { filingSectionKey } from '../../../shared/regulatory/filing-section-key.js';
 import type { CommitSectionResult } from './commit-section-to-filing.js';
+
+/** A pg-shaped executor: the caller's transaction (a PoolClient, or a router's Queryable). */
+type FilingQuery = { query: (text: string, params?: any[]) => Promise<{ rows: any[] }> };
 
 export interface FilingSectionText {
   /** What the outline node receives. */
@@ -40,11 +43,11 @@ export interface FilingSectionText {
  * whether or not its row has been written yet.
  */
 export async function filingSectionText(
-  client: Pick<PoolClient, 'query'>,
+  client: FilingQuery,
   args: { sectionId: string; tenantId: number; key: string; code: string; content: string },
 ): Promise<FilingSectionText> {
   const { sectionId, tenantId, key, code, content } = args;
-  const rows = await client.query<{ id: string; code: string; title: string | null; content: string | null }>(
+  const rows: { rows: Array<{ id: string; code: string; title: string | null; content: string | null }> } = await client.query(
     `SELECT s.id::text AS id, s.code, s.title, s.content
        FROM authoring_sections s
       WHERE s.tenant_id = $2
@@ -64,4 +67,47 @@ export function filingResponse(r: CommitSectionResult) {
   return r.committed
     ? { committed: true as const, documentId: r.documentId, sectionKey: r.sectionKey, ...(r.partOf ? { partOf: r.partOf } : {}) }
     : { committed: false as const, reason: r.reason };
+}
+
+/**
+ * What each outline node of the bound filing holds when every one of this
+ * document's sections is saved as it stands: node key → text, by the same rule
+ * a save writes (filingSectionKey, then filingSectionText). The approval
+ * signature (approveBoundFilingSections, authoring.router.ts; spine F1) approves
+ * a node only when its filing text is exactly this — so a node assembled from
+ * several sections (the 2.5 Clinical Overview's 2.5.1 … 2.5.7, filed at 2.5) is
+ * approved on the assembled text the signer signed, as an exact-code node is on
+ * its one section's text. A section with no node contributes nothing.
+ */
+export async function signedFilingSectionTexts(
+  client: FilingQuery,
+  args: { authoringDocId: string; tenantId: number; documentId: string },
+): Promise<Array<{ key: string; text: string }>> {
+  const { authoringDocId, tenantId, documentId } = args;
+  const outline: { rows: Array<{ section_key: string }> } = await client.query(
+    `SELECT ds.section_key FROM c2c_document_sections ds
+      WHERE ds.document_id = $1
+        AND EXISTS (SELECT 1 FROM c2c_documents d WHERE d.id = ds.document_id AND d.org_id = $2)`,
+    [documentId, tenantId],
+  );
+  const keys = outline.rows.map((r) => String(r.section_key));
+  const sections: { rows: Array<{ id: string; code: string | null; content: string | null }> } = await client.query(
+    `SELECT s.id::text AS id, s.code, s.content
+       FROM authoring_sections s
+      WHERE s.doc_id = $1 AND s.tenant_id = $2
+      ORDER BY s.order_index, s.created_at, s.id`,
+    [authoringDocId, tenantId],
+  );
+  const firstOf = new Map<string, { id: string; code: string; content: string }>();
+  for (const s of sections.rows) {
+    const key = filingSectionKey(keys, s.code);
+    if (!key || firstOf.has(key)) continue;
+    firstOf.set(key, { id: s.id, code: String(s.code), content: String(s.content ?? '') });
+  }
+  const out: Array<{ key: string; text: string }> = [];
+  for (const [key, s] of firstOf) {
+    const filed = await filingSectionText(client, { sectionId: s.id, tenantId, key, code: s.code, content: s.content });
+    out.push({ key, text: filed.text });
+  }
+  return out;
 }

@@ -102,20 +102,13 @@ import {
   type CoauthorAuditActor,
 } from './coauthor-audit.js';
 import { filingCopyPins, pinnedCopyAccepts, pinnedCopyRefusal, retakeChanges } from './filing-copy-pins.js';
+import { snapshotStatusFor } from '../../../shared/regulatory/filing-copy-status.js';
 
 type CoauthorRow = typeof coauthorDocuments.$inferSelect;
 
-/**
- * The copy's status, from the source's governed state. Claims nothing the
- * source has not earned:
- *   APPROVED  -> 'approved'   an APPROVER e-signature was applied
- *   FROZEN    -> 'finalized'  content snapshotted, hash-sealed and locked
- *   anything else -> 'draft'  which correctly fails completeness
- */
-export function snapshotStatusFor(sourceStatus: string | null | undefined): 'approved' | 'finalized' | 'draft' {
-  const state = String(sourceStatus ?? '').toUpperCase();
-  return state === 'APPROVED' ? 'approved' : state === 'FROZEN' ? 'finalized' : 'draft';
-}
+/* The copy's status, from the source's governed state: one rule, shared with
+   the placement dialog that states it before placing (FILING_SPINE.md F17). */
+export { snapshotStatusFor } from '../../../shared/regulatory/filing-copy-status.js';
 
 type SnapshotRefusal = { ok: false; httpStatus: 404 | 409 | 422; body: Record<string, unknown> };
 

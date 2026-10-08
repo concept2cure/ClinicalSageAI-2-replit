@@ -1,10 +1,14 @@
 /**
  * Backfill the vault passage index for documents ingested before chunking.
  *
- * Chunking runs at ingest, so every document uploaded before the
- * `ana.vault_chunking` flag was flipped for a tenant sits outside passage
- * retrieval: its catalog row carries no `chunk_status`, which is the honest
- * "never attempted" state and exactly the set this sweep closes.
+ * Chunking runs at every ingest since 2026-10-08 (keyless: passages are found
+ * by text with no embedding). Every document uploaded before that sits outside
+ * passage retrieval: its catalog row carries no `chunk_status` (or there is no
+ * catalog row at all, for one ingested with the catalog off), which is the
+ * honest "never attempted" state and exactly the set this sweep closes. When
+ * the tenant turns passage embedding on (`ana.vault_chunking`), the sweep also
+ * re-indexes documents whose passages were written without vectors, so they
+ * gain the meaning-based arm.
  *
  * One tenant per run, dry-run unless applied, and resumable: the candidate
  * query excludes anything already chunked, so a rerun picks up where the last
@@ -24,7 +28,8 @@
 
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import { chunkAndEmbedDocument, recordChunkOutcome } from './document-chunking.service.js';
+import { chunkAndEmbedDocument, isVaultChunkingEnabled, recordChunkOutcome } from './document-chunking.service.js';
+import { buildExtractionOutcome, recordExtractionOutcome } from './document-catalog.service.js';
 
 const logger = createScopedLogger('document-chunking-backfill');
 
@@ -40,6 +45,11 @@ export interface ChunkBackfillOptions {
   limit?: number;
   /** Also retry documents whose previous chunking attempt failed. */
   retryFailed?: boolean;
+  /**
+   * Embed the passages. Defaults to the tenant's 'ana.vault_chunking'. When
+   * true, documents chunked without vectors are candidates again.
+   */
+  embed?: boolean;
   exec?: Queryable;
 }
 
@@ -70,6 +80,55 @@ interface CandidateRow {
   extracted_text: string | null;
   catalog_status: string | null;
   chunk_status: string | null;
+  content_hash: string | null;
+  page_count: number | null;
+  /** No catalog row: ingested with the catalog off, before 2026-10-08. */
+  uncatalogued: boolean;
+}
+
+/**
+ * Which documents a run picks up. `chunk_status IS NULL` is "never attempted";
+ * 'chunk_failed' joins only when a retry is asked for, so an ordinary rerun
+ * does not re-burn spend on documents that already failed for a stated reason.
+ * Passages written for text search alone gain vectors once embedding is on;
+ * one whose provider already failed (its reason is on chunk_error) is retried
+ * only when asked, as a failed chunking is.
+ */
+function candidateFilter(embed: boolean, retryFailed: boolean): string {
+  return [
+    'c.chunk_status IS NULL',
+    ...(retryFailed ? [`c.chunk_status = 'chunk_failed'`] : []),
+    ...(embed
+      ? [`(c.chunk_status = 'chunked'${retryFailed ? '' : ' AND c.chunk_error IS NULL'}
+            AND EXISTS (SELECT 1 FROM vault.document_chunks ch
+              WHERE ch.document_id = d.id AND ch.embedding IS NULL))`]
+      : []),
+  ].join(' OR ');
+}
+
+/**
+ * Index one candidate. The ledger lives on the catalog row; a document
+ * ingested with the catalog off has none, so its extraction tier is recorded
+ * first, from the text stored at ingest.
+ */
+async function indexCandidate(
+  exec: Queryable,
+  doc: CandidateRow,
+  text: string,
+  organizationId: number,
+  embed: boolean,
+) {
+  if (doc.uncatalogued && doc.content_hash) {
+    await recordExtractionOutcome(exec, {
+      documentId: doc.id,
+      contentHash: doc.content_hash,
+      outcome: buildExtractionOutcome({ text, method: 'stored_at_ingest' }),
+      pageCount: doc.page_count,
+    });
+  }
+  const result = await chunkAndEmbedDocument({ documentId: doc.id, organizationId, text, embed });
+  await recordChunkOutcome({ documentId: doc.id, organizationId, result });
+  return result;
 }
 
 /**
@@ -93,18 +152,18 @@ export async function backfillVaultChunks(
      re-burn embedding spend on documents that already failed for a stated
      reason. The predicate is what makes the sweep resumable — anything
      indexed drops out of the candidate set on the next run. */
-  const statusFilter = opts.retryFailed
-    ? `(c.chunk_status IS NULL OR c.chunk_status = 'chunk_failed')`
-    : `c.chunk_status IS NULL`;
+  const embed = opts.embed ?? (await isVaultChunkingEnabled(organizationId));
+  const statusFilter = candidateFilter(embed, opts.retryFailed === true);
 
   const { rows: candidates } = await exec.query<CandidateRow>(
-    `SELECT d.id, d.file_name, d.extracted_text, c.catalog_status, c.chunk_status
+    `SELECT d.id, d.file_name, d.extracted_text, c.catalog_status, c.chunk_status,
+            d.content_hash, d.page_count, (c.document_id IS NULL) AS uncatalogued
        FROM vault.documents d
        JOIN regulatory_programs p ON p.id = d.program_id
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
       WHERE p.organization_id = $1
         AND d.deleted_at IS NULL
-        AND ${statusFilter}
+        AND (${statusFilter})
       ORDER BY d.created_at ASC
       LIMIT $2`,
     [organizationId, limit],
@@ -145,8 +204,7 @@ export async function backfillVaultChunks(
       continue;
     }
 
-    const result = await chunkAndEmbedDocument({ documentId: doc.id, organizationId, text });
-    await recordChunkOutcome({ documentId: doc.id, organizationId, result });
+    const result = await indexCandidate(exec, doc, text, organizationId, embed);
     if (result.ok) {
       report.indexed += 1;
       report.chunksWritten += result.chunkCount;

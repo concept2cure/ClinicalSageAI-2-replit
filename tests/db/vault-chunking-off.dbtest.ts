@@ -1,5 +1,10 @@
 /**
- * The half-on state: catalog enabled, passage index NOT.
+ * The half-on state: catalog enabled, passage EMBEDDING not.
+ *
+ * AMENDED 2026-10-08 (keyless passage search, D2): points 2 and 3 below
+ * describe the state before. Every ingest now writes the passages; with
+ * 'ana.vault_chunking' off they carry no vector and search_document_passages
+ * finds them by text. The suite now proves that.
  *
  * ── Why this suite exists ────────────────────────────────────────────────────
  * The two flags behind AnA's client-files surface are independent, and the
@@ -201,39 +206,35 @@ describe('the catalog half works on its own', () => {
   });
 });
 
-describe('the passage index is absent, and says so', () => {
-  it('wrote no chunks and left the ledger unclaimed rather than claiming success', async () => {
+/* Since 2026-10-08 (keyless passage search) passage embedding off no longer
+   means "no passage index": every ingest writes the passages, and with
+   embedding off they carry no vectors and are found by text. Embedding off
+   now means only that no passage text is sent to an embedding provider. */
+describe('with passage embedding off, the passages are indexed for text and nothing is embedded', () => {
+  it('wrote the chunks with no vector, and the ledger says chunked', async () => {
     const { rows } = await owner.query(
       `SELECT (SELECT COUNT(*)::int FROM vault.document_chunks c WHERE c.document_id = d.id) AS chunks,
+              (SELECT COUNT(c.embedding)::int FROM vault.document_chunks c WHERE c.document_id = d.id) AS embedded,
               cat.chunk_status, cat.chunk_count
          FROM vault.documents d
          LEFT JOIN vault.document_catalog cat ON cat.document_id = d.id
         WHERE d.id = $1`,
       [documentId],
     );
-    expect(Number(rows[0].chunks)).toBe(0);
-    // Not 'chunked' with a zero count — that would read as "indexed, nothing in it".
-    expect(rows[0].chunk_status).not.toBe('chunked');
+    expect(Number(rows[0].chunks)).toBeGreaterThan(0);
+    expect(Number(rows[0].embedded)).toBe(0);
+    expect(rows[0].chunk_status).toBe('chunked');
+    expect(Number(rows[0].chunk_count)).toBe(Number(rows[0].chunks));
   });
 
-  it('search_document_passages reports an empty index, not an absent answer', async () => {
+  it('search_document_passages finds the passage by text, and says it ranked by text', async () => {
     const out = await callTool('search_document_passages', {
       query: 'assay result at the six month timepoint',
     });
-    expect(out.ok, `expected an honest empty-index answer, got: ${JSON.stringify(out)}`).toBe(true);
-    expect(out.passages).toEqual([]);
-    // The load-bearing assertion: the response must distinguish "nothing is
-    // indexed" from "the documents do not say that". The text IS in the
-    // document — a bare empty result here would be a false statement about it.
-    expect(out.coverage.total).toBeGreaterThan(0);
-    expect(out.coverage.indexed).toBe(0);
-    expect(out.message).toContain('are in the passage index');
-    expect(out.message).toContain('nothing was searched');
-    expect(out.message).toContain('ana.vault_chunking');
-    expect(out.message).toContain('read_project_document');
-    // And specifically NOT the provider-blame message it used to give: with the
-    // index empty there is nothing to embed, so no provider is consulted.
+    expect(out.ok, JSON.stringify(out)).toBe(true);
+    expect(out.passages.length).toBeGreaterThan(0);
+    expect(out.passages[0].text).toContain('98.4');
+    expect(out.coverage.indexed).toBeGreaterThan(0);
     expect(out.unavailable).toBeUndefined();
-    expect(JSON.stringify(out)).not.toContain('embedding provider');
   });
 });

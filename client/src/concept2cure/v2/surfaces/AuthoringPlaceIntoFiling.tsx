@@ -73,6 +73,7 @@ import type { FireToast } from '../toast';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
+import { snapshotStatusFor } from '@shared/regulatory/filing-copy-status';
 
 /* ── Server row shapes (only the columns this dialog reads) ── */
 
@@ -164,6 +165,32 @@ export function ownSectionRefusal(canonical: string | null, sectionCodes: Readon
   );
 }
 
+/**
+ * What the filing copy will be, said before placing (FILING_SPINE.md F17).
+ * The copy takes the source's state at placement and keeps it: a draft placed
+ * today is still a draft copy after the document is approved, and freeze,
+ * dispatch and transmit release only approved copies. An unknown state claims
+ * nothing and states the rule.
+ */
+export function copyStatusLine(docStatus: string | null | undefined): string {
+  if (docStatus == null || String(docStatus).trim() === '') {
+    return 'The filing copy takes this document’s state when it is placed, and keeps it. ' +
+      'Freeze, dispatch and transmit release only an approved copy.';
+  }
+  const copy = snapshotStatusFor(docStatus);
+  if (copy === 'approved') return 'Filed as approved: this document carries its approval signature.';
+  if (copy === 'finalized') return 'Filed as finalized, not approved. Freeze will refuse it until you re-place it after approval.';
+  return 'Filed as draft. Freeze will refuse it until you re-place it after approval.';
+}
+
+/** The server's copy status after placing, as a sentence; empty when it is
+ *  approved or the server did not say. */
+export function placedCopyNote(copyStatus: string | null): string {
+  if (copyStatus === 'draft') return ' The filing copy is a draft. Freeze will refuse it until you re-place it after approval.';
+  if (copyStatus === 'finalized') return ' The filing copy is finalized, not approved. Freeze will refuse it until you re-place it after approval.';
+  return '';
+}
+
 export interface AuthoringPlaceIntoFilingProps {
   docId: string;
   docTitle: string;
@@ -178,6 +205,9 @@ export interface AuthoringPlaceIntoFilingProps {
    *  only, so a dirty editor refuses with the reason rather than filing a
    *  document that silently omits what is on screen. */
   dirty: boolean;
+  /** The open document's governed state (DRAFT, IN_REVIEW, APPROVED, FROZEN…),
+   *  from which the filing copy's status is derived. Null when not known. */
+  docStatus?: string | null;
   onNav: (id: string) => void;
   fireToast: FireToast;
 }
@@ -197,6 +227,7 @@ function AuthoringPlaceIntoFilingForDocument({
   activeSectionCode,
   sectionCodes,
   dirty,
+  docStatus,
   onNav,
   fireToast,
 }: AuthoringPlaceIntoFilingProps) {
@@ -314,7 +345,13 @@ function AuthoringPlaceIntoFilingForDocument({
          snapshot step had just rewritten. It is said now only when the server
          reports that the copy was not written (alreadyPlacedText). */
       if (put.data.unchanged) {
-        const text = alreadyPlacedText({ leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId, written, copyStatus });
+        /* F17: a copy that is not approved says so, with freeze's refusal. An
+           approved copy needs nothing more: a re-take holds a filed copy's text
+           and only promotes its status (filing-copy-pins.ts), so the leaf
+           already files that text. */
+        const text =
+          alreadyPlacedText({ leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId, written, copyStatus }) +
+          placedCopyNote(copyStatus);
         setVerdict({ tone: 'ok', text });
         fireToast(
           `Already placed — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber} holds this document.` +
@@ -327,7 +364,8 @@ function AuthoringPlaceIntoFilingForDocument({
         tone: auditWarning ? 'err' : 'ok',
         text:
           `Placed as leaf ${put.data.sectionCode} in sequence ${sequenceLabel} — ` +
-          `server-confirmed (leaf #${put.data.id}, from ${documentSourceLabel('coauthor_documents', snapshotId)}).` + auditWarning,
+          `server-confirmed (leaf #${put.data.id}, from ${documentSourceLabel('coauthor_documents', snapshotId)}).` +
+          placedCopyNote(copyStatus) + auditWarning,
       });
       if (auditWarning) fireToast(`Placement confirmed.${auditWarning}`, 'error');
       else fireToast(`Placed into filing — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber}.`);
@@ -430,6 +468,8 @@ function AuthoringPlaceIntoFilingForDocument({
               <PlacementReasonField value={reason} onChange={setReason} idPrefix="apf" disabled={placing} />
               </fieldset>
 
+              <div className="de-desc" data-testid="apf-copy-status">{copyStatusLine(docStatus)}</div>
+
               {dirty && (
                 <div className="de-err" role="status">
                   This section has unsaved changes. Placement snapshots the SAVED document, so
@@ -506,7 +546,7 @@ export function AuthoringPlaceIntoFiling(props: AuthoringPlaceIntoFilingProps) {
   return <AuthoringPlaceIntoFilingForDocument key={JSON.stringify([props.docId, project])} {...props} />;
 }
 
-interface SnapshotRow { id?: number; status?: string; metadata?: { source?: string; docId?: string } | null }
+interface SnapshotRow { id?: number; status?: string | null; metadata?: { source?: string; docId?: string } | null }
 
 type CopyResult =
   /** `written`: the server's word on whether this placement wrote the copy; undefined when it gave none. */

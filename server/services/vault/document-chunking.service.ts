@@ -6,8 +6,9 @@
  * code: it read a column the canonical shape never had (content_text), drained
  * a queue nothing enqueues, and embedded through a direct OpenAI client
  * instead of the governed provider seam. This service is invoked inline from
- * vault ingest (flag-gated), embeds through getEmbeddingService, and writes
- * chunks all-or-nothing:
+ * every vault ingest, embeds through getEmbeddingService when the tenant has
+ * passage embedding on and a provider answers (otherwise the chunks are found
+ * by text alone, 2026-10-08), and writes chunks all-or-nothing:
  *
  *   • chunkExtractedText — pure, deterministic paragraph-aware splitting with
  *     exact [charStart, charEnd) spans and bounded overlap, so a chunk can
@@ -31,7 +32,12 @@ import { pageForOffset, type PageSpan } from '../ocr/page-offsets.js';
 
 const logger = createScopedLogger('document-chunking');
 
-/** Tenant-scoped toggle key (off by default, fails closed). */
+/**
+ * Tenant-scoped toggle key (off by default, fails closed). Since 2026-10-08 it
+ * decides only whether passages are EMBEDDED (their text sent to the embedding
+ * provider). The passages themselves are written at every ingest and found by
+ * text search, with no key.
+ */
 export const VAULT_CHUNKING_FEATURE_KEY = 'ana.vault_chunking';
 
 export async function isVaultChunkingEnabled(organizationId?: number | null): Promise<boolean> {
@@ -106,7 +112,24 @@ export interface ChunkWriteResult {
   ok: boolean;
   chunkCount: number;
   error?: string;
+  /**
+   * Whether the chunks carry embeddings. False when no embedder would embed
+   * them (no key, or the tenant's placement policy refuses egress): the
+   * chunks are still written, and the full-text index on chunk_text finds
+   * them. Undefined on failure.
+   */
+  embedded?: boolean;
+  /**
+   * Why the chunks carry no embedding, when a provider was asked and failed.
+   * Absent when embedding is off for the organization: nothing was asked.
+   * Recorded on the ledger's chunk_error so the backfill does not re-spend on
+   * it unless a retry is asked for.
+   */
+  embeddingError?: string;
 }
+
+/** The document's file access was withdrawn mid-index: a refusal, never a reason to index without vectors. */
+class IndexingWithdrawn extends Error {}
 
 const EMBED_BATCH = 64;
 const CHUNK_EMBEDDING_MODEL = 'text-embedding-3-small';
@@ -149,10 +172,55 @@ function embeddingScope(organizationId: number): TenantScope {
 }
 
 /**
+ * Every chunk's vector, through the governed provider seam, or none: a partial
+ * set is never returned. A provider that will not embed (no key, egress
+ * refused, down) yields `vectors: null` with the reason; the chunks are then
+ * written for text search alone. Withdrawn file access is a refusal.
+ */
+async function embedChunks(
+  chunks: DocumentTextChunk[],
+  documentId: string,
+  organizationId: number,
+): Promise<{ vectors: string[] | null; error?: string } | { withdrawn: string }> {
+  try {
+    const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
+    const svc = getEmbeddingService(pool as any);
+    const vectors = await runWithTenantScope(embeddingScope(organizationId), async () => {
+      const out: string[] = [];
+      for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
+        if (!(await documentIsInOrganization(pool, documentId, organizationId))) {
+          throw new IndexingWithdrawn('Document file access was withdrawn before embedding; indexing refused.');
+        }
+        const batch = chunks.slice(i, i + EMBED_BATCH);
+        const results = await svc.embedBatch(batch.map(c => c.text), CHUNK_EMBEDDING_MODEL);
+        for (let j = 0; j < batch.length; j++) {
+          const e = results[j]?.embedding;
+          if (!e) throw new Error(`embedding missing for chunk ${i + j}`);
+          out.push(`[${e.join(',')}]`);
+        }
+      }
+      return out;
+    });
+    return { vectors };
+  } catch (err) {
+    if (err instanceof IndexingWithdrawn) return { withdrawn: err.message };
+    return { vectors: null, error: `Not embedded: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
+
+/**
  * Chunk the document's extracted text, embed every chunk through the governed
- * provider seam, and replace the document's chunk set in one transaction.
- * Returns a failure (with reason) instead of throwing; the caller records it
- * in the catalog ledger either way.
+ * provider seam when one will embed it, and replace the document's chunk set
+ * in one transaction. Returns a failure (with reason) instead of throwing; the
+ * caller records it in the catalog ledger either way.
+ *
+ * KEYLESS (2026-10-08): an embedder that cannot embed (no key, egress refused,
+ * provider down) used to leave ZERO chunks, so a deployment without an AI key
+ * had no passage index at all, though vault.document_chunks carries a
+ * full-text index on chunk_text. Now the chunks are written without
+ * embeddings, all or none: a partial set of vectors is never kept, so the
+ * meaning-based arm never ranks half a document. The passages are found by
+ * text search (advancedRAGPipeline vaultLexicalArm).
  */
 export async function chunkAndEmbedDocument(args: {
   documentId: string;
@@ -169,6 +237,8 @@ export async function chunkAndEmbedDocument(args: {
    * as "unknown", which is true. A guessed page would read as checked.
    */
   pageSpans?: PageSpan[];
+  /** Embed the chunks (default true). False writes them for text search only, sending nothing out. */
+  embed?: boolean;
 }): Promise<ChunkWriteResult> {
   const chunks = chunkExtractedText(args.text);
   if (chunks.length === 0) {
@@ -196,33 +266,12 @@ export async function chunkAndEmbedDocument(args: {
     };
   }
 
-  let vectors: string[];
-  try {
-    const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
-    const svc = getEmbeddingService(pool as any);
-    vectors = await runWithTenantScope(embeddingScope(args.organizationId), async () => {
-      const out: string[] = [];
-      for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
-        if (!(await documentIsInOrganization(pool, args.documentId, args.organizationId))) {
-          throw new Error('Document file access was withdrawn before embedding; indexing refused.');
-        }
-        const batch = chunks.slice(i, i + EMBED_BATCH);
-        const results = await svc.embedBatch(batch.map(c => c.text), CHUNK_EMBEDDING_MODEL);
-        for (let j = 0; j < batch.length; j++) {
-          const e = results[j]?.embedding;
-          if (!e) throw new Error(`embedding missing for chunk ${i + j}`);
-          out.push(`[${e.join(',')}]`);
-        }
-      }
-      return out;
-    });
-  } catch (err) {
-    return {
-      ok: false,
-      chunkCount: 0,
-      error: `Embedding failed: ${err instanceof Error ? err.message : String(err)}`,
-    };
-  }
+  const embedding = args.embed === false
+    ? { vectors: null }
+    : await embedChunks(chunks, args.documentId, args.organizationId);
+  if ('withdrawn' in embedding) return { ok: false, chunkCount: 0, error: embedding.withdrawn };
+  const { vectors } = embedding;
+  const embeddingError = embedding.error;
 
   // vault.documents carries no organization_id; a document belongs to a tenant
   // through its program (regulatory_programs.organization_id), which is also
@@ -251,14 +300,17 @@ export async function chunkAndEmbedDocument(args: {
     );
     for (let i = 0; i < chunks.length; i++) {
       const c = chunks[i];
+      // Without a vector, the embedding columns are left out: the chunk is
+      // found by text, and a database without pgvector accepts the row.
+      const vec = vectors?.[i] ?? null;
       const inserted = await client.query(
         `INSERT INTO vault.document_chunks
            (document_id, chunk_index, chunk_text, char_start, char_end,
-            page_number, embedding, embedding_model, token_count, vectorized_at)
-         SELECT d.id, $2, $3, $4, $5, $6, $7::vector, $8, $9, NOW()
+            page_number, ${vec ? 'embedding, ' : ''}embedding_model, token_count, vectorized_at)
+         SELECT d.id, $2, $3, $4, $5, $6, ${vec ? '$10::vector, ' : ''}$7, $8, ${vec ? 'NOW()' : 'NULL'}
            FROM vault.documents d
            JOIN regulatory_programs p ON p.id = d.program_id
-          WHERE d.id = $1 AND p.organization_id = $10`,
+          WHERE d.id = $1 AND p.organization_id = $9`,
         [
           args.documentId,
           c.index,
@@ -266,10 +318,10 @@ export async function chunkAndEmbedDocument(args: {
           c.charStart,
           c.charEnd,
           pageForOffset(args.pageSpans, c.charStart),
-          vectors[i],
-          CHUNK_EMBEDDING_MODEL,
+          vec ? CHUNK_EMBEDDING_MODEL : null,
           Math.ceil(c.text.length / 4),
           args.organizationId,
+          ...(vec ? [vec] : []),
         ],
       );
       if ((inserted.rowCount ?? 0) !== 1) {
@@ -277,7 +329,7 @@ export async function chunkAndEmbedDocument(args: {
       }
     }
     await client.query('COMMIT');
-    return { ok: true, chunkCount: chunks.length };
+    return { ok: true, chunkCount: chunks.length, embedded: vectors !== null, ...(embeddingError ? { embeddingError } : {}) };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     return {
@@ -316,7 +368,8 @@ export async function recordChunkOutcome(args: {
       args.documentId,
       args.result.ok ? 'chunked' : 'chunk_failed',
       args.result.ok ? args.result.chunkCount : null,
-      args.result.error ?? null,
+      // On success, a provider's refusal to embed: indexed for text, not for meaning.
+      args.result.error ?? args.result.embeddingError ?? null,
       args.organizationId,
     ],
   );
@@ -332,9 +385,10 @@ export async function chunkDocumentForIngest(
   organizationId: number,
   text: string,
   pageSpans?: PageSpan[],
+  opts: { embed?: boolean } = {},
 ): Promise<void> {
   try {
-    const result = await chunkAndEmbedDocument({ documentId, organizationId, text, pageSpans });
+    const result = await chunkAndEmbedDocument({ documentId, organizationId, text, pageSpans, embed: opts.embed });
     await recordChunkOutcome({ documentId, organizationId, result });
     if (!result.ok) {
       logger.warn('Vault chunking failed — recorded on the catalog ledger', {

@@ -106,10 +106,48 @@ export interface CommitSectionInput {
 
 export type CommitSectionResult =
   /** Written through to the filing. `partOf`: the outline node holds several of
-   *  the document's sections, assembled, and this one is part of it. */
-  | { committed: true; documentId: string; sectionKey: string; partOf?: string }
+   *  the document's sections, assembled, and this one is part of it.
+   *  `approvalWithdrawn` is present when the section was 'approved' and this
+   *  text is not the text that was signed, so it no longer reads approved
+   *  (spine F1). */
+  | { committed: true; documentId: string; sectionKey: string; partOf?: string; approvalWithdrawn?: true }
   /** Not written, and why — never a silent no-op. */
   | { committed: false; reason: string };
+
+/**
+ * The one statement that writes an authored section's text into the filing.
+ * Parameters: $1 governed document id, $2 section key, $3 text, $4 tenant,
+ * $5 draft_source. Status rules are described at the call site.
+ */
+const WRITE_SECTION_SQL = `WITH prev AS (
+       SELECT ds.id, ds.section_key, ds.status
+         FROM c2c_document_sections ds
+        WHERE ds.document_id = $1
+          AND ds.section_key = $2
+          AND EXISTS (SELECT 1 FROM c2c_documents d
+                       WHERE d.id = ds.document_id AND d.org_id = $4)
+        FOR UPDATE
+     ), upd AS (
+       UPDATE c2c_document_sections ds
+          SET content      = jsonb_build_object('text', $3::text),
+              draft_source = $5::text,
+              status       = CASE
+                               WHEN ds.status = 'todo' AND $3::text !~ '^\\s*$'
+                                 THEN 'drafted'
+                               WHEN ds.status = 'approved'
+                                    AND (ds.content ->> 'text') IS DISTINCT FROM $3::text
+                                 THEN CASE WHEN $3::text !~ '^\\s*$' THEN 'drafted' ELSE 'todo' END
+                               ELSE ds.status
+                             END,
+              drafted_at   = now(),
+              updated_at   = now()
+         FROM prev
+        WHERE ds.id = prev.id
+          AND prev.status <> 'locked'
+        RETURNING ds.id, ds.section_key, ds.status
+     )
+     SELECT upd.section_key, prev.status AS previous_status, upd.status
+       FROM prev LEFT JOIN upd ON upd.id = prev.id`;
 
 /**
  * Write `content` through to the governed section, if there is one.
@@ -239,7 +277,11 @@ export async function commitSectionToFiling(
 
   // Org-scoped through the document: c2c_document_sections has no org column of
   // its own, so the EXISTS is what keeps this write inside the caller's tenant.
-  const updated = await client.query<{ section_key: string }>(
+  const updated = await client.query<{
+    section_key: string | null;
+    previous_status?: string | null;
+    status?: string | null;
+  }>(
     // draft_source defaults to NULL — "origin not stated" — and is never
     // GUESSED as 'human'. authoring_sections has no provenance column of its
     // own (db/migrations/20260725_authoring_document_loop_tables.sql), so this
@@ -264,30 +306,101 @@ export async function commitSectionToFiling(
     //
     // 2026-10-08: a node assembled from several sections has no single origin
     // — this save's is one section's — so it records NULL, never a claim about
-    // text this save did not produce.
-    `UPDATE c2c_document_sections ds
-        SET content      = jsonb_build_object('text', $3::text),
-            draft_source = $5::text,
-            drafted_at   = now(),
-            updated_at   = now()
-      WHERE ds.document_id = $1
-        AND ds.section_key = $2
-        AND EXISTS (SELECT 1 FROM c2c_documents d
-                     WHERE d.id = ds.document_id AND d.org_id = $4)
-      RETURNING ds.section_key`,
+    // text this save did not produce. $2 is the node the section files into
+    // (filingSectionKey) and $3 that node's text (filingSectionText).
+    //
+    // STATUS FOLLOWS THE WORK (spine F1, 2026-10-08). The scaffold writes every
+    // section 'todo' and nothing on this path ever moved it, so Module
+    // completion, Recent drafts and c2c_documents.readiness read zero for work
+    // done in the editor. In this same statement:
+    //   - 'todo' with written text becomes 'drafted'. "Written" is the
+    //     governed outline's own test (sectionHasContentSql: text that is not
+    //     only whitespace), so status and has_content agree.
+    //   - 'drafted' and 'review' are kept: a save never moves work backwards.
+    //   - 'approved' means the approver's signature covers THIS text
+    //     (approveBoundFilingSections in server/routes/authoring.router.ts).
+    //     Text that is not the signed text is not approved, so the section
+    //     becomes 'drafted' ('todo' if the new text is empty) and the
+    //     withdrawal is recorded below. Keeping 'approved' would let readiness
+    //     and the dispatch gate count text nobody signed.
+    //   - 'locked' is not written at all; the result says so.
+    // The CTE reads the row's status before the write (FOR UPDATE), so the
+    // result can tell a locked section from a missing one and say when an
+    // approval was withdrawn. Parameter order is unchanged.
+    WRITE_SECTION_SQL,
     [documentId, key, filed.text, tenantId, filed.partOf ? null : draftSource ?? null],
   );
 
+  return settleWrite(updated.rows, {
+    client, code, documentId, sectionId, actorId, tenantId, stated, partOf: filed.partOf,
+  });
+}
+
+/**
+ * What the write did, and the record of a withdrawn approval when there was one.
+ *
+ * The statement returns no row when the filing has no such section, a row with
+ * a null section_key when the section is locked (prev found it, upd did not
+ * write it), and otherwise the written row with its status before and after.
+ */
+async function settleWrite(
+  rows: Array<{ section_key: string | null; previous_status?: string | null; status?: string | null }>,
+  ctx: {
+    client: PoolClient;
+    code: string;
+    documentId: string;
+    sectionId: string;
+    actorId: string;
+    tenantId: number;
+    stated: string | null;
+    /** The assembled node this section is part of, when it is one. */
+    partOf?: string;
+  },
+): Promise<CommitSectionResult> {
+  const { client, code, documentId, sectionId, actorId, tenantId, stated, partOf } = ctx;
   // rows.length, never rowCount: PGlite does not populate rowCount, and this
   // path is exercised against it.
-  if (updated.rows.length === 0) return noSuchSection(code);
-
-  return {
-    committed: true,
-    documentId,
-    sectionKey: updated.rows[0].section_key,
-    ...(filed.partOf ? { partOf: filed.partOf } : {}),
-  };
+  if (rows.length === 0) return noSuchSection(code);
+  const row = rows[0];
+  if (!row.section_key) {
+    return {
+      committed: false,
+      reason: `Section "${partOf ?? code}" of the filing is locked, so its text was not changed. ` +
+              'A locked section is not edited in place.',
+    };
+  }
+  const part = partOf ? { partOf } : {};
+  if (row.previous_status !== 'approved' || row.status === 'approved') {
+    return { committed: true, documentId, sectionKey: row.section_key, ...part };
+  }
+  // The approval was a signed act, so withdrawing it is recorded too: one
+  // governed-action row on this transaction, beside the version-ledger row the
+  // snapshot trigger writes for the text. Imported here, not at module load,
+  // as the other services that record governed actions do.
+  const userId = Number(actorId);
+  if (!Number.isInteger(userId)) {
+    // The snapshot trigger casts the actor to integer too; fail the save
+    // rather than withdraw an approval with no record of who did it.
+    throw new Error('commitSectionToFiling: the actor id is not a user id');
+  }
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  await recordGovernedAction(client, {
+    orgId: tenantId,
+    userId,
+    command: 'transition',
+    target: `section:${documentId}:${row.section_key}`,
+    reason: stated,
+    payload: {
+      from: 'approved',
+      to: row.status,
+      approvalWithdrawn: true,
+      why: 'The text changed after the approval signature; the signature does not cover the new text.',
+      authoringSectionId: sectionId,
+    },
+    domain: 'documents',
+    surface: 'authoring-save',
+  });
+  return { committed: true, documentId, sectionKey: row.section_key, ...part, approvalWithdrawn: true };
 }
 
 /** The refusal for a section with no place in the filing — unchanged in its words. */

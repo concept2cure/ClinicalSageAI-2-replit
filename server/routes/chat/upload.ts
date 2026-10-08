@@ -26,10 +26,6 @@ import { recordArtifactProvenance } from '../../services/provenance/artifact-pro
 import { sha256, sha256Bytes } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { sha256Hex } from '../../services/ana/uploaded-file-access';
-// Pure, dependency-free (no db import), so it is safe to load statically —
-// unlike the evidence spine below, which is imported lazily so a database
-// without the cre_* tables cannot break the route's module graph.
-import { determineSourceVersion } from '../../services/clinical-regulatory-evidence/source-version.js';
 import { programInOrganization } from '../../services/c2c/program-access.js';
 import { projectBelongsToTenant } from '../../services/cmc/project-membership.js';
 
@@ -203,19 +199,19 @@ export const uploadHandler = async (req: Request, res: Response) => {
     let extractionMethod: string | null = null;
     let extractionWords = 0;
     let extractedText = `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
-    if (fileBuffer && fileBuffer.length > 0) {
-      try {
-        const { extractDocumentText } = await import('../../services/ocr/index.js');
-        const extracted = await extractDocumentText(fileBuffer, mimeType, fileName);
-        if (extracted.text && extracted.text.trim().length > 0) {
-          extractedText = extracted.text;
-          extractionMethod = extracted.method;
-          extractionWords = extracted.text.trim().split(/\s+/).length;
-          logger.info('Upload text extracted', { fileId, method: extracted.method, chars: extracted.text.length });
-        }
-      } catch (extractErr: any) {
-        logger.warn('Upload text extraction failed (non-fatal)', { err: extractErr?.message, fileId });
-      }
+    // The one Data Room processing step reads the bytes for every capture path
+    // (data-room-processing.ts); the upload reads them here, once.
+    const { extractCapture, describeCapture, recordSourceProcessing, buildCatalogFacts } = await import(
+      '../../services/clinical-regulatory-evidence/data-room-processing.js'
+    );
+    const extracted = fileBuffer && fileBuffer.length > 0 ? await extractCapture(fileBuffer, mimeType, fileName) : null;
+    if (extracted?.text) {
+      extractedText = extracted.text;
+      extractionMethod = extracted.method;
+      extractionWords = extracted.words;
+      logger.info('Upload text extracted', { fileId, method: extracted.method, chars: extracted.text.length });
+    } else if (extracted?.error) {
+      logger.warn('Upload text extraction failed (non-fatal)', { err: extracted.error, fileId });
     }
 
     // ── Data Room convergence: create artifact + embed for retrieval ──
@@ -442,43 +438,21 @@ export const uploadHandler = async (req: Request, res: Response) => {
           // whichever we actually got rather than assuming one.
           const scope = projectScope;
 
-          // ── Dossier classification (capture → classify) ────────────────────
+          // ── Dossier classification (capture → classify) and declared version ──
           // The same deterministic classifier the Vault ingest runs, stamped
           // into the source's metadata so the Data Room can show WHAT this is
-          // and WHERE it likely belongs the moment it lands — the 'classified'
-          // stage of the capture→classify→file pipeline. A proposal, never a
-          // commitment: filing into the vault stays a governed act. Failure to
-          // classify must never fail the capture.
-          let dossier: Record<string, unknown> | null = null;
-          try {
-            const { classifyForFiling, resolveVaultView, resolveOrgVaultView } = await import(
-              '../../services/vault/vault-filing.service.js'
-            );
-            const view = scope.programId
-              ? await resolveVaultView(scope.programId, numericOrgId)
-              : await resolveOrgVaultView(numericOrgId);
-            const c = classifyForFiling({
-              fileName,
-              title: fileName,
-              mimeType,
-              extractedText: extractionMethod ? extractedText : null,
-              view,
-            });
-            dossier = {
-              view,
-              evidenceKind: c.evidenceKind,
-              suggestedFolder: c.folderId,
-              ctdSection: c.ctdSection,
-              confidence: c.confidence,
-              needsReview: c.needsReview,
-              rationale: c.rationale,
-            };
-          } catch (classifyErr: any) {
-            logger.warn('Upload dossier classification failed (non-fatal)', {
-              err: classifyErr?.message,
-              fileId,
-            });
-          }
+          // and WHERE it likely belongs the moment it lands. A proposal, never a
+          // commitment: filing into the vault stays a governed act. The version
+          // is only ever one the document DECLARES (ledger L21), never a count
+          // of uploads. Both live in data-room-processing.ts, shared with adopt
+          // and the spreadsheet edit.
+          const { dossier, versionDetermination } = await describeCapture(numericOrgId, scope.programId ?? null, {
+            fileName,
+            mimeType,
+            // The filename placeholder built when extraction fails is metadata,
+            // not document text.
+            text: extractionMethod ? extractedText : null,
+          });
           // Is this a REVISION of a document this project already holds?
           //
           // A new checksum means new bytes, and until now that was the end of
@@ -506,30 +480,6 @@ export const uploadHandler = async (req: Request, res: Response) => {
               err: verErr?.message,
             });
           }
-
-          // What version of this document is it? (ledger L21)
-          //
-          // `cre_evidence_sources.version` has existed since the spine
-          // migration and NOTHING has ever passed it, so every row reads NULL
-          // and no fact can be told which revision of a protocol it rests on.
-          //
-          // The value written is only ever one the document DECLARES — read off
-          // its title page, or off its filename — never this system's count of
-          // how many times a file with that name has been uploaded. A sponsor's
-          // first upload into a new project is routinely revision 4 of a
-          // protocol that lived in email for a year; stamping `1` on it would
-          // put a number in a provenance column indistinguishable from a real
-          // one. When nothing declares a version, `version` stays NULL and the
-          // determination itself is recorded, so a reviewer can tell "this
-          // document is unversioned" from "nobody looked".
-          const versionDetermination = determineSourceVersion({
-            // The filename placeholder built when extraction fails is metadata,
-            // not document text — the same distinction the classifier draws
-            // above. Reading a version out of it would be reading it out of the
-            // filename twice.
-            documentText: extractionMethod ? extractedText : null,
-            fileName,
-          });
 
           // Typed against createSource's parameter so pulling the literal out of
           // the call keeps its string-union fields (sourceType, visibilityClass,
@@ -598,6 +548,15 @@ export const uploadHandler = async (req: Request, res: Response) => {
               )).source
             : await createSource(numericOrgId, sourceParams);
           sourceId = created.id;
+          // The text it read, stored on the source so the Data Room can be
+          // searched by it (20261008c). Derived data: a failure here leaves the
+          // capture standing and the sweep re-reads it.
+          if (extracted) {
+            await buildCatalogFacts(pool, numericOrgId, scope.programId ?? null, { text: extracted.text, bytes: fileBuffer, fileName, mimeType })
+              .then(facts => recordSourceProcessing(pool, numericOrgId, created.id, { extracted, facts, processedBy: 'chat_upload ingest' }))
+              .catch((textErr: unknown) => logger.warn('Data Room text not stored for upload', {
+                fileId, sourceId, err: textErr instanceof Error ? textErr.message : String(textErr) }));
+          }
           logger.info(
             supersedes
               ? 'Upload superseded an existing source identity'

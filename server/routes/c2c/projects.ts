@@ -81,6 +81,23 @@ import { lockDocumentDispositionProgram } from '../../services/document-data-dis
 import { readRecordedUploadLineage } from '../../services/document-data-disposition/recorded-lineage.js';
 import { loadUploadedFile, sha256Hex, UploadedFileError, type UploadedFile } from '../../services/ana/uploaded-file-access.js';
 import { supersededSql } from '../../services/vault/vault-version-family.js';
+import { documentAgencyFor, marketOfferGivenOutline, type FilingOffer, type MarketInput } from '../../services/regulatory/market-support.js';
+
+/** A filing the market verdict does not offer, found once the scaffold has
+ *  resolved its outline. Thrown inside the creation transaction so it rolls
+ *  back, and answered 422 FILING_NOT_OFFERED. */
+class FilingNotOfferedError extends Error {
+  readonly offer: FilingOffer;
+  constructor(offer: FilingOffer) {
+    super(offer.reason);
+    this.name = 'FilingNotOfferedError';
+    this.offer = offer;
+  }
+}
+
+function sendFilingNotOffered(res: Response, offer: FilingOffer) {
+  return res.status(422).json({ error: 'FILING_NOT_OFFERED', message: offer.reason, marketSupport: offer });
+}
 
 // People are named through public.actor_name, not a join on users: since users
 // took row-level security (D3, 2026-09-28) a tenant scope reads only current
@@ -674,7 +691,10 @@ router.get('/', async (req: Request, res: Response) => {
 // teamMembers?, code? }. Org-scoped; the creating user becomes the lead.
 // 400 on a missing/invalid required field; 503 PENDING_STORE on 42P01 or an
 // absent anchor column; 409 PROJECT_RECORD_UNAVAILABLE when no workspace can be
-// chosen for the program's record. Nothing is written on any refusal.
+// chosen for the program's record; 422 FILING_NOT_OFFERED, with the reason, for
+// a filing the product does not offer in that market (the one verdict,
+// services/regulatory/market-support.ts `offer`). Nothing is written on any
+// refusal: a refusal found after the scaffold rolls the transaction back.
 
 router.post('/', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -714,6 +734,26 @@ router.post('/', async (req: Request, res: Response) => {
   if (!VALID_PROGRAM_TYPES.has(programType)) {
     return send400(res, `programType must be one of: ${[...VALID_PROGRAM_TYPES].join(', ')}`);
   }
+  // A filing the product does not offer in this market is refused, with the
+  // verdict's own reason (WORKFLOW_DECISION_2026-10-08 §4 Q2; FILING_SPINE F19,
+  // services/regulatory/market-support.ts `offer`). Health Canada, an MHRA
+  // "IND", a new Japanese application, an agency with no outline or none
+  // mapped: each used to create a program with an empty outline, or a spine for
+  // a sequence the agency would reject. The verdict is the one the market rows
+  // and the New project picker read (GET /api/submissions/market-support), so
+  // the picker never offers what this refuses. An agency-assigned number marks
+  // a continuing application.
+  //
+  // Two points, one verdict. Here, before anything is written: whatever no
+  // outline could lift. After the scaffold, which reads the pack for this class
+  // in the verdict's own order: a filing with no outline, rolled back (below).
+  const marketInput: MarketInput = {
+    applicationType: programType,
+    market: primaryAgency,
+    continuingLifecycle: applicationNumber != null,
+  };
+  const offer = marketOfferGivenOutline(marketInput, true);
+  if (offer.tier === 'not_offered') return sendFilingNotOffered(res, offer);
   // The product class: the filing type's when it fixes one (a 510(k) is a
   // device, a BLA a biologic), the person's when it does not (an IND, CTA, MAA,
   // J-NDA or DMF covers drugs and biologics alike — P-21). A device filing may
@@ -871,10 +911,24 @@ router.post('/', async (req: Request, res: Response) => {
       // (unmapped program type, no pack) is returned rather than thrown — the
       // project is still legitimately created — and surfaced in the 201 body so
       // it is never silent.
+      // The class is resolved from the agency the verdict judged (2026-10-08,
+      // F19b review): 'us' and 'EU' read as FDA and EMA, and an 'EU / Notified
+      // Body' device filing as the 'ema' key its packs carry. Without this the
+      // verdict offered those filings and the scaffold, which knows only agency
+      // names, found no class and the creation was refused with a false "no
+      // outline" reason. The program keeps the agency as it was sent.
       scaffold = await scaffoldProjectDocuments({
         client, orgId, userId, projectId: newId,
-        programType, primaryAgency, productName,
+        programType, primaryAgency: documentAgencyFor(marketInput) ?? primaryAgency, productName,
       });
+      // No outline for this class (no pack, or no document class for the
+      // program type): nothing to author, so the filing is not offered. Until
+      // 2026-10-08 the project was created anyway with an empty Vault and the
+      // skip reported in the 201. Rolled back, never half-created.
+      if (scaffold.skipped === 'NO_RULE_PACK' || scaffold.skipped === 'UNMAPPED_PROGRAM_TYPE') {
+        const noOutline = marketOfferGivenOutline(marketInput, false);
+        if (noOutline.tier === 'not_offered') throw new FilingNotOfferedError(noOutline);
+      }
 
       // Canonical submission spine, SAME transaction. Intake wrote
       // regulatory_programs + the document scaffold but never a `submissions`
@@ -997,6 +1051,9 @@ router.post('/', async (req: Request, res: Response) => {
         documentId: scaffold.documentId,
         scaffoldedSections: scaffold.sectionCount,
         ...(scaffold.skipped ? { scaffoldSkipped: scaffold.skipped, scaffoldDetail: scaffold.detail } : {}),
+        // What the product offers for this market (build and sequence, or
+        // author documents only), with its reason: the verdict creation used.
+        marketSupport: offer,
         // Surfaced so the spine linkage is never silent: present for drug
         // programs (submissionCreated=false means a spine already anchored to
         // this program was reused), absent for device/CER/MDR program types.
@@ -1009,6 +1066,7 @@ router.post('/', async (req: Request, res: Response) => {
       },
     });
   } catch (err: unknown) {
+    if (err instanceof FilingNotOfferedError) return sendFilingNotOffered(res, err.offer);
     if (err instanceof ProgramAnchorUnavailableError) {
       return sendProjectRecordRefusal(err, req, res, orgId);
     }
@@ -1491,6 +1549,20 @@ function adoptionRefusalResponse(res: Response, err: unknown): Response | null {
   return res.status(failure.status).json({ error: failure.error, code: err.code });
 }
 
+/**
+ * Read, classify and version an adopted file, as an upload is
+ * (data-room-processing.ts). After the commit: the adopt is the record and
+ * stands without its derived text; a failure is left 'pending' for the sweep.
+ */
+async function processAdopted(orgId: number, programId: string, sourceId: number, f: AdoptionFileRow, upload: UploadedFile): Promise<boolean> {
+  const { processCapturedSource } = await import('../../services/clinical-regulatory-evidence/data-room-processing.js');
+  const done = await processCapturedSource(orgId, sourceId, {
+    bytes: upload.buffer, fileName: f.original_name ?? upload.fileName, mimeType: f.mime_type ?? upload.mimeType,
+    programId, processedBy: 'adopt',
+  });
+  return done.ok;
+}
+
 router.post('/:id/adopt', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   const userId = resolveUserId(req);
@@ -1548,7 +1620,8 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
       details: { file_upload_id: upload.fileId, source_id: source.id, checksum: sha256, from: 'conversation' },
     });
     await client.query('COMMIT');
-    return res.status(201).json({ adopted: true, sourceId: source.id });
+    const processed = await processAdopted(orgId, programId, source.id, f, upload);
+    return res.status(201).json({ adopted: true, sourceId: source.id, processed });
   } catch (err: unknown) {
     await client.query('ROLLBACK').catch(() => {});
     const refusal = adoptionRefusalResponse(res, err);
@@ -1748,8 +1821,83 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
 // project does not own must never appear as though it does.
 // ════════════════════════════════════════════════════════════════════════════
 
-/** How many of a project's sources /:id/sources returns, newest first. */
-const SOURCES_WINDOW = 200;
+// Search, filters and paging (Data Room catalog S2, 2026-10-08): `q` (full
+// text over title and the text read from the file), `status`, `kind`, `from`,
+// `to`, `current=true`, `limit` (1-200, default 200) and `offset`, with the
+// real `total`. With none of them the answer is what it was: the newest 200,
+// superseded included. An unreadable filter is a 400, never a wider list.
+
+type ShapeableSource = EvidenceSourceRow & { snippet?: string | null; charCount?: number | null; pageCount?: number | null; studyRef?: number | null };
+type EvidenceSourceRow = import('../../services/clinical-regulatory-evidence/types.js').EvidenceSource;
+type SourceUsageSummary = { sourceId: number; sections: number; documents: number; changedSections: number };
+
+/** One Data Room source as GET /:id/sources answers it. */
+function shapeSource(s: ShapeableSource, usage: Map<number, SourceUsageSummary>) {
+  const meta = (s.metadata ?? {}) as Record<string, any>;
+  const prov = (s.provenance ?? {}) as Record<string, unknown>;
+  return {
+    id: s.id,
+    title: s.title,
+    checksum: s.checksum,
+    isCurrent: s.isCurrent !== false,
+    dataEligible: s.dataEligible !== false,
+    originalFileAvailable: s.originalFileAvailable !== false,
+    disposition: s.disposition ?? null,
+    ingestionStatus: s.ingestionStatus,
+    extractionStatus: s.extractionStatus,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+    // Reported from recorded citations only. Nothing here is inferred from
+    // titles or text similarity: a usage exists because someone recorded it.
+    usage: usage.get(s.id) ?? { sourceId: s.id, sections: 0, documents: 0, changedSections: 0 },
+    ...sourceFileFacts(meta, prov),
+    // Where a search matched, and how much was read (S2). Null outside a search.
+    snippet: s.snippet ?? null,
+    charCount: s.charCount ?? null,
+    pageCount: s.pageCount ?? null,
+    catalog: catalogSummary(s, meta),
+  };
+}
+
+/**
+ * What the catalog found a source IS (S3), each from a rule or the project's
+ * record; null fields were not found, never guessed. The dataset profile is
+ * summarized here: tables, their CDISC standard and domain, rows and columns.
+ */
+function catalogSummary(s: ShapeableSource, meta: Record<string, any>) {
+  const profile = meta.datasetProfile as { format?: string; tableCount?: number; tables?: Array<Record<string, any>> } | undefined;
+  return {
+    studyRef: s.studyRef ?? null,
+    trialRegistryIdentifier: s.trialRegistryIdentifier ?? null,
+    protocolNumber: meta.catalogEvidence?.protocolNumber?.value ?? null,
+    documentDate: s.documentDate ?? null,
+    dataCutDate: meta.dataCutDate ?? null,
+    product: s.product ?? null,
+    dataset: profile
+      ? {
+          format: profile.format ?? null,
+          tableCount: profile.tableCount ?? 0,
+          tables: (profile.tables ?? []).slice(0, 10).map(t => ({
+            name: t.name, standard: t.cdisc?.standard ?? null, domain: t.cdisc?.domain ?? null,
+            rowCount: t.rowCount ?? 0, columnCount: t.columnCount ?? 0,
+          })),
+        }
+      : null,
+  };
+}
+
+/** What kind of file a source is and how it arrived, without a second round trip. */
+function sourceFileFacts(meta: Record<string, any>, prov: Record<string, unknown>) {
+  return {
+    mimeType: meta.mimeType ?? null,
+    fileSize: meta.fileSize ?? null,
+    artifactId: meta.artifactId ?? null,
+    origin: prov.origin ?? null,
+    fileUploadId: prov.fileUploadId ?? null,
+    extractionMethod: prov.extractionMethod ?? null,
+    evidenceKind: (meta.dossier?.evidenceKind as string | undefined) ?? null,
+  };
+}
 
 router.get('/:id/sources', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
@@ -1761,15 +1909,23 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     const { listClientDocuments } = await import(
       '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
     );
+    const { searchDataRoom, parseDataRoomQuery, DataRoomQueryError } = await import(
+      '../../services/clinical-regulatory-evidence/data-room-search.js'
+    );
 
     const programId = String(req.params.id);
-    /* One past the window, so a full one can say so: the reader's default cap
-       was 200 and nothing said when it was reached. Superseded sources stay in
-       the list — the authoring canvas and sources rail read this route too —
-       and each carries isCurrent, so a reader that counts can count once. */
-    const read = await listClientDocuments(orgId, { programId, limit: SOURCES_WINDOW + 1 });
-    const truncated = read.length > SOURCES_WINDOW;
-    const sources = truncated ? read.slice(0, SOURCES_WINDOW) : read;
+    let query;
+    try {
+      query = parseDataRoomQuery(programId, req.query as Record<string, unknown>);
+    } catch (e) {
+      if (e instanceof DataRoomQueryError) return send400(res, e.message);
+      throw e;
+    }
+    /* Superseded sources stay in the list unless current=true: the authoring
+       canvas and sources rail read this route too, and each carries isCurrent,
+       so a reader that counts can count once. */
+    const { total, currentTotal, sources } = await searchDataRoom(orgId, query);
+    const truncated = (query.offset ?? 0) + sources.length < total;
     const unscoped =
       req.query.includeUnscoped === 'true'
         ? await listClientDocuments(orgId, { includeUnscoped: true, limit: 50 })
@@ -1791,35 +1947,15 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       [...sources, ...unscoped].map((s) => s.id),
     );
 
-    const shape = (s: (typeof sources)[number]) => ({
-      id: s.id,
-      title: s.title,
-      checksum: s.checksum,
-      isCurrent: s.isCurrent !== false,
-      dataEligible: s.dataEligible !== false,
-      originalFileAvailable: s.originalFileAvailable !== false,
-      disposition: s.disposition ?? null,
-      ingestionStatus: s.ingestionStatus,
-      extractionStatus: s.extractionStatus,
-      createdAt: s.createdAt,
-      updatedAt: s.updatedAt,
-      // Reported from recorded citations only. Nothing here is inferred from
-      // titles or text similarity: a usage exists because someone recorded it.
-      usage: usage.get(s.id) ?? { sourceId: s.id, sections: 0, documents: 0, changedSections: 0 },
-      // Surfaced so the Data Room can show what kind of file this is and how it
-      // arrived, without a second round trip.
-      mimeType: (s.metadata as Record<string, unknown> | null)?.mimeType ?? null,
-      fileSize: (s.metadata as Record<string, unknown> | null)?.fileSize ?? null,
-      artifactId: (s.metadata as Record<string, unknown> | null)?.artifactId ?? null,
-      origin: (s.provenance as Record<string, unknown> | null)?.origin ?? null,
-      fileUploadId: (s.provenance as Record<string, unknown> | null)?.fileUploadId ?? null,
-      extractionMethod: (s.provenance as Record<string, unknown> | null)?.extractionMethod ?? null,
-    });
+    const shape = (s: ShapeableSource) => shapeSource(s, usage);
 
     return res.json({
       projectId: programId,
       sources: sources.map(shape),
       unscoped: unscoped.map(shape),
+      total,
+      currentTotal,
+      page: { limit: query.limit, offset: query.offset },
       window: { shown: sources.length, truncated },
     });
   } catch (err: unknown) {

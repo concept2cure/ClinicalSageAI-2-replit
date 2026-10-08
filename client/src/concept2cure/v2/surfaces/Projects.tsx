@@ -28,6 +28,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 // Importing RegistryBridge also runs its side effects, which populate the
 // window.GLOBAL_REGISTRY / REG_SEGMENTS that RegistryPicker reads.
 import { RegistryPicker } from './AnaVerbs';
+import { MarketSupportLine } from '../MarketSupportLine';
 import { getSubmissionTypeContext } from './RegistryBridge';
 import {
   DEVICE_CLASSES, DEVICE_FLAGS, REVIEW_PANELS,
@@ -235,7 +236,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
    * created a second copy of a program that was already there.
    */
   const [outcome, setOutcome] = useState<
-    { kind: 'error' | 'notice'; message: string; correlationId?: string } | null
+    { kind: 'error' | 'notice'; message: string; correlationId?: string; notOffered?: boolean } | null
   >(null);
   const fail = (message: string, correlationId?: string) =>
     setOutcome({ kind: 'error', message, correlationId });
@@ -381,6 +382,14 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
       // check straight onto the screen. That is engineer text in a regulated
       // UI, arriving by a path the server-envelope filter cannot see.
       const known = e instanceof ApiRequestError;
+      // 422 FILING_NOT_OFFERED: the market verdict refuses this filing, with its
+      // reason (POST /api/c2c/projects, F19b). Sending it again gets the same
+      // answer, so the way out is another filing, not "Try again".
+      if (known && e.code === 'FILING_NOT_OFFERED' && e.message) {
+        setOutcome({ kind: 'error', message: e.message, correlationId: e.correlationId, notOffered: true });
+        setCreating(false);
+        return;
+      }
       fail(
         known && e.message
           ? e.message
@@ -490,6 +499,9 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
               <RegistryPicker
                 value={tpl ?? ''}
                 onChange={(id) => setTpl(id)}
+                /* The type creation will send for each filing, so the picker
+                   asks the market verdict about exactly what it would create. */
+                applicationTypeOf={(e) => programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, uiSeg)}
                 initialSegment={regSeg || undefined}
                 onSegmentChange={(next) => setTabSeg(REG2SEG[next] ?? arrivedSeg)}
               />
@@ -500,6 +512,11 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
           {step === 1 && selTpl && (
             <div className="npw-form">
               <h2 className="npw-h2">Configure your {selTpl.label} project</h2>
+              {/* What the platform can carry for the market this filing type
+                  opens, in the server's words (FILING_SPINE.md F19). */}
+              <p className="npw-seg-s" data-testid="npw-market-support">
+                <MarketSupportLine applicationType={programTypeFor(selTpl, uiSeg)} market={selTpl.agency || 'FDA'} />
+              </p>
 
               <div className="npw-fields">
                 <label className="npw-field">
@@ -835,10 +852,11 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
             <div className="npw-outcome">
               <ErrorState
                 variant="inline"
-                title="The project was not created"
+                title={outcome.notOffered ? 'This filing is not offered here' : 'The project was not created'}
                 message={outcome.message}
                 correlationId={outcome.correlationId}
-                retry={doCreate}
+                retry={outcome.notOffered ? () => { setOutcome(null); setStep(0); } : doCreate}
+                retryLabel={outcome.notOffered ? 'Choose another filing' : undefined}
                 busy={creating}
                 onDismiss={() => setOutcome(null)}
                 testId="new-project-outcome"

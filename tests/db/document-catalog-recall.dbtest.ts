@@ -455,7 +455,9 @@ describe('vault passage retrieval — the reader finally has a writer', () => {
     expect(ctx.documents[0].content).toContain('dissolution profile');
   });
 
-  it('an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index', async () => {
+  /* Keyless (2026-10-08): every chunk is written for text search; no vector is
+     kept, so the meaning-based arm never ranks a half-embedded document. */
+  it('an embedding failure still indexes every chunk for text search, with no partial set of vectors', async () => {
     const BODY =
       'Opening section that embeds fine. '.repeat(50) +
       '\n\nFAIL_EMBEDDING poison paragraph that the stub refuses. ' +
@@ -474,15 +476,18 @@ describe('vault passage retrieval — the reader finally has a writer', () => {
       `SELECT COUNT(*)::int AS n FROM vault.document_chunks WHERE document_id = $1`,
       [docId],
     );
-    expect(chunks.rows[0].n).toBe(0); // …but nothing half-indexed exists…
+    expect(chunks.rows[0].n).toBeGreaterThan(1); // …every chunk is indexed for text…
+    const vectors = await owner.query('SELECT COUNT(embedding)::int AS n FROM vault.document_chunks WHERE document_id = $1', [docId]);
+    expect(vectors.rows[0].n).toBe(0); // …and none keeps a vector: never a partial set.
 
     const ledger = await owner.query(
-      `SELECT chunk_status, chunk_error FROM vault.document_catalog WHERE document_id = $1`,
+      `SELECT chunk_status, chunk_count, chunk_error FROM vault.document_catalog WHERE document_id = $1`,
       [docId],
     );
-    // …and the ledger states the failure with its reason.
-    expect(ledger.rows[0].chunk_status).toBe('chunk_failed');
-    expect(ledger.rows[0].chunk_error).toMatch(/Embedding failed/);
+    expect(ledger.rows[0].chunk_status).toBe('chunked');
+    expect(ledger.rows[0].chunk_count).toBe(chunks.rows[0].n);
+    // The provider's failure is stated with its reason, not hidden.
+    expect(ledger.rows[0].chunk_error).toMatch(/Not embedded/);
   });
 });
 
@@ -503,15 +508,17 @@ describe('backfilling documents ingested before chunking existed', () => {
     expect(legacyRes.status).toBe(201);
     const legacyId = legacyRes.body.document.id;
 
-    // It is outside retrieval, and its ledger says "never attempted" (NULL) —
-    // not "chunked", and not a failure.
+    // Since 2026-10-08 it is indexed for text search at ingest, with no
+    // vectors: passage embedding was off.
     const before = await owner.query(
       `SELECT (SELECT COUNT(*)::int FROM vault.document_chunks WHERE document_id = $1) AS chunks,
+              (SELECT COUNT(embedding)::int FROM vault.document_chunks WHERE document_id = $1) AS embedded,
               (SELECT chunk_status FROM vault.document_catalog WHERE document_id = $1) AS status`,
       [legacyId],
     );
-    expect(before.rows[0].chunks).toBe(0);
-    expect(before.rows[0].status).toBeNull();
+    expect(before.rows[0].chunks).toBeGreaterThan(0);
+    expect(before.rows[0].embedded).toBe(0);
+    expect(before.rows[0].status).toBe('chunked');
 
     const { backfillVaultChunks } = await import(
       '../../server/services/vault/document-chunking-backfill.service'
@@ -521,13 +528,10 @@ describe('backfilling documents ingested before chunking existed', () => {
     const dry = await inTenantScope(() => backfillVaultChunks(orgId, { limit: 100 }));
     expect(dry.dryRun).toBe(true);
     expect(dry.examined).toBeGreaterThan(0);
-    const stillEmpty = await owner.query(
-      `SELECT COUNT(*)::int AS n FROM vault.document_chunks WHERE document_id = $1`,
-      [legacyId],
-    );
+    const stillEmpty = await owner.query('SELECT COUNT(embedding)::int AS n FROM vault.document_chunks WHERE document_id = $1', [legacyId]);
     expect(stillEmpty.rows[0].n).toBe(0);
 
-    // Applying indexes it for real.
+    // With passage embedding now on, applying gives its passages vectors.
     const applied = await inTenantScope(() => backfillVaultChunks(orgId, { apply: true, limit: 100 }));
     expect(applied.indexed).toBeGreaterThan(0);
     expect(applied.chunksWritten).toBeGreaterThan(0);

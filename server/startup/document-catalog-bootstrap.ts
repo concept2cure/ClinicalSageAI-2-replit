@@ -101,9 +101,10 @@ export function describeCatalogToggles(state: CatalogToggleState): string {
     `${VAULT_CHUNKING_FEATURE_KEY}: ${how(state.chunking.source)}`;
   if (state.catalog.enabled) {
     return state.chunking.enabled
-      ? `${head} — AnA can list, read, catalog, file and passage-search the client's project files.`
-      : `${head} — AnA can list, read, catalog and file project files; passage search has no index ` +
-          'until vault chunking is on, and says so rather than returning nothing.';
+      ? `${head} — AnA can list, read, catalog, file and passage-search the client's project files; ` +
+          'passages are embedded for meaning-based search.'
+      : `${head} — AnA can list, read, catalog, file and passage-search project files; passages are ` +
+          'searched by text and none is sent for embedding (vault chunking off).';
   }
   if (state.catalog.source === 'unreadable' || state.chunking.source === 'unreadable') {
     return (
@@ -113,8 +114,9 @@ export function describeCatalogToggles(state: CatalogToggleState): string {
     );
   }
   return (
-    `${head} — the client-files surface is inactive platform-wide: no document tools, no session-start ` +
-    'recall of project files, no passage index. Individual organizations on the toggle\'s per-org list are ' +
+    `${head} — cataloging and filing are inactive platform-wide, and there is no session-start ` +
+    'recall of project files. AnA still lists, reads and searches project files and their passages by ' +
+    'text, with no key. Individual organizations on the toggle\'s per-org list are ' +
     'unaffected. Turn it on globally by enabling the feature toggle rows above, or per environment with ' +
     'ANA_DOCUMENT_CATALOG_FORCE_ON=true (and ANA_VAULT_CHUNKING_FORCE_ON=true for the passage index).'
   );

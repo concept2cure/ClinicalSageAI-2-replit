@@ -940,6 +940,9 @@ async function notifyRuns(pool: RunControlQuery, runIds: string[]): Promise<void
   ).catch(err => log.warn(`[ana-run-control] pg_notify of reaped runs failed: ${err?.message}`));
 }
 
+/** Only pending sweeps are shared, independently by pool and effective SQL cutoff. */
+const orphanSweeps = new WeakMap<Pool, Map<number, Promise<number>>>();
+
 /**
  * Fail every live run this process no longer heartbeats.
  *
@@ -957,29 +960,48 @@ async function notifyRuns(pool: RunControlQuery, runIds: string[]): Promise<void
  * Returns how many runs it failed.
  */
 export async function reapOrphanedRuns(pool: Pool, staleAfterMs = STALE_AFTER_MS): Promise<number> {
+  const seconds = Math.round(staleAfterMs / 1000);
+  const pending = orphanSweeps.get(pool) ?? new Map<number, Promise<number>>();
+  orphanSweeps.set(pool, pending);
+  const existing = pending.get(seconds);
+  if (existing) return existing;
   // System scope, explicitly. This sweep is estate-wide by design — the runs
   // that most need reaping belong to an instance that is gone — and it is
   // called opportunistically from inside a request, whose tenant scope would
   // silently reduce it to that one org and return a reassuring small number.
-  const { rows } = await runWithSystemTenantScope('ana-run-control:reap', () =>
-    pool.query(
-    `UPDATE ana_runs
-     SET status = 'failed', stopped_reason = 'orphaned', finished_at = now(), updated_at = now()
-     WHERE status IN ('running','paused','awaiting_approval')
-       AND heartbeat_at < now() - make_interval(secs => $1)
-     RETURNING id`,
-      [Math.round(staleAfterMs / 1000)],
-    ),
-  );
-  const reaped = rows.map((r: { id: string }) => r.id);
-  await notifyRuns(pool, reaped);
-  if (Date.now() - lastEventSweepAt >= REAP_SWEEP_MS) {
-    lastEventSweepAt = Date.now();
-    await sweepRunEvents(pool).catch(err =>
-      log.error(`[ana-run-control] run-event sweep failed: ${err?.message}`),
-    );
-  }
-  return reaped.length;
+  // Register admission before invoking the pool, including a reentrant or
+  // synchronous failure. Settlement always admits the next fresh sweep. The
+  // whole pass is shared: the reap, the wake-up of each reaped run's owner, and
+  // (AnA detach DT1) the throttled mirror sweep.
+  const sweep = Promise.resolve()
+    .then(() => runWithSystemTenantScope('ana-run-control:reap', () =>
+      pool.query(
+      `UPDATE ana_runs
+       SET status = 'failed', stopped_reason = 'orphaned', finished_at = now(), updated_at = now()
+       WHERE status IN ('running','paused','awaiting_approval')
+         AND heartbeat_at < now() - make_interval(secs => $1)
+       RETURNING id`,
+        [seconds],
+      ),
+    ))
+    .then(async ({ rows, rowCount }) => {
+      const reaped = (rows ?? []).map((r: { id: string }) => r.id);
+      await notifyRuns(pool, reaped);
+      if (Date.now() - lastEventSweepAt >= REAP_SWEEP_MS) {
+        lastEventSweepAt = Date.now();
+        await sweepRunEvents(pool).catch(err =>
+          log.error(`[ana-run-control] run-event sweep failed: ${err?.message}`),
+        );
+      }
+      // rowCount where the driver reports it; PGlite does not, and the rows are the count.
+      return rowCount ?? reaped.length;
+    })
+    .finally(() => {
+      pending.delete(seconds);
+      if (pending.size === 0) orphanSweeps.delete(pool);
+    });
+  pending.set(seconds, sweep);
+  return sweep;
 }
 
 /** How often, per process, the reaper also sweeps the mirror, and the read routes may reap. */
@@ -1104,6 +1126,7 @@ export function runOwnerInstance(): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 let listenerStarted = false;
+let listenerGeneration = 0;
 let pollTimer: NodeJS.Timeout | null = null;
 /**
  * The dedicated LISTEN connection, held for the life of the process. Kept so it
@@ -1112,6 +1135,10 @@ let pollTimer: NodeJS.Timeout | null = null;
  * never reached `process.exit` and the deploy's SIGTERM ended in a SIGKILL.
  */
 let listenerClient: PoolClient | null = null;
+
+function isCurrentListener(generation: number): boolean {
+  return listenerStarted && listenerGeneration === generation;
+}
 
 /**
  * Start listening for control from other instances. Idempotent.
@@ -1123,6 +1150,9 @@ let listenerClient: PoolClient | null = null;
 export async function startRunControlListener(pool: Pool): Promise<void> {
   if (listenerStarted) return;
   listenerStarted = true;
+  const generation = ++listenerGeneration;
+  // Admission belongs to this listener lifetime, independently for each run.
+  const pendingRefreshes = new Map<string, { dirty: boolean }>();
 
   try {
     // Every query below is estate-wide — a notification names a run, not a
@@ -1134,17 +1164,19 @@ export async function startRunControlListener(pool: Pool): Promise<void> {
     // return zero rows for every other one — silently, because zero rows is not
     // an error.
     const client = await runWithSystemTenantScope('ana-run-control:listen', () => pool.connect());
-    if (!listenerStarted) {
+    if (!isCurrentListener(generation)) {
       // Stopped while the connection was opening — shutdown got here first.
       client.release(true);
       return;
     }
     listenerClient = client;
     client.on('notification', msg => {
+      if (!isCurrentListener(generation) || listenerClient !== client) return;
       if (msg.channel !== RUN_CONTROL_CHANNEL || !msg.payload) return;
-      void refreshFromRow(pool, msg.payload);
+      void refreshFromRow(pool, msg.payload, generation, pendingRefreshes);
     });
     client.on('error', err => {
+      if (!isCurrentListener(generation) || listenerClient !== client) return;
       log.error(
         `[ana-run-control] LISTEN client errored (${err?.message}); falling back to polling. ` +
           'Control still lands, with poll-interval latency instead of immediate.',
@@ -1155,11 +1187,16 @@ export async function startRunControlListener(pool: Pool): Promise<void> {
         listenerClient = null;
         client.release(err instanceof Error ? err : true);
       }
-      startPollFallback(pool);
+      startPollFallback(pool, generation);
     });
     await client.query(`LISTEN ${RUN_CONTROL_CHANNEL}`);
-    log.info('[ana-run-control] listening for cross-instance control');
+    if (isCurrentListener(generation) && listenerClient === client) {
+      log.info('[ana-run-control] listening for cross-instance control');
+    }
   } catch (err: any) {
+    // A stopped listener's failure must not release the restarted client's
+    // connection or rearm its old pool's fallback.
+    if (!isCurrentListener(generation)) return;
     // Connected but LISTEN failed: the connection is not listening and must not
     // stay checked out, or it blocks pool.end() exactly as a healthy one would.
     if (listenerClient) {
@@ -1170,49 +1207,78 @@ export async function startRunControlListener(pool: Pool): Promise<void> {
       `[ana-run-control] could not open a LISTEN client (${err?.message}); polling instead. ` +
         'Control still lands, with poll-interval latency instead of immediate.',
     );
-    startPollFallback(pool);
+    startPollFallback(pool, generation);
   }
 }
 
-function startPollFallback(pool: Pool): void {
-  if (pollTimer) return;
-  pollTimer = setInterval(() => {
-    if (localRuns.size === 0) return;
+function startPollFallback(pool: Pool, generation: number): void {
+  if (pollTimer || !isCurrentListener(generation)) return;
+  // A slow database must not accumulate a new control read every two seconds.
+  // This admission belongs to one listener lifetime; an old read settling
+  // after restart cannot admit work into the new lifetime.
+  let inFlight = false;
+  const poll = async () => {
+    if (!isCurrentListener(generation) || inFlight || localRuns.size === 0) return;
+    inFlight = true;
     // Scoped per firing, not per arming. A setInterval callback inherits the
     // context the timer was CREATED in, which here is whichever request first
     // failed to open a listener — so without this the poller would ask about
     // every run this process owns while pinned to one tenant, and quietly see
     // none of the others.
-    void runWithSystemTenantScope('ana-run-control:poll', () =>
-      pool.query(`SELECT id, status FROM ana_runs WHERE id = ANY($1::text[])`, [
-        [...localRuns.keys()],
-      ]),
-    )
-      .then(({ rows }) => {
+    try {
+      const { rows } = await runWithSystemTenantScope('ana-run-control:poll', () =>
+        pool.query(`SELECT id, status FROM ana_runs WHERE id = ANY($1::text[])`, [
+          [...localRuns.keys()],
+        ]),
+      );
+      if (isCurrentListener(generation)) {
         for (const r of rows) driveLocalRun(r.id, r.status as RunStatus);
-      })
+      }
       // Not swallowed. This is the path that is ALLOWED to be the only one that
       // works, so a failure here is control silently not arriving — the exact
       // thing the durable record was built to stop being possible.
-      .catch(err =>
-        log.error(`[ana-run-control] poll fallback query failed: ${err?.message}`),
-      );
-  }, POLL_FALLBACK_MS);
+    } catch (err: any) {
+      log.error(`[ana-run-control] poll fallback query failed: ${err?.message}`);
+    } finally {
+      inFlight = false;
+    }
+  };
+  pollTimer = setInterval(() => { void poll(); }, POLL_FALLBACK_MS);
   pollTimer.unref?.();
 }
 
-async function refreshFromRow(pool: Pool, runId: string): Promise<void> {
-  if (!localRuns.has(runId)) return; // not ours
+async function refreshFromRow(
+  pool: Pool,
+  runId: string,
+  generation: number,
+  pendingRefreshes: Map<string, { dirty: boolean }>,
+): Promise<void> {
+  if (!isCurrentListener(generation) || !localRuns.has(runId)) return;
+  const pending = pendingRefreshes.get(runId);
+  if (pending) {
+    // Do not drop a newer Stop behind a read that already observed running.
+    pending.dirty = true;
+    return;
+  }
+  const refresh = { dirty: false };
+  pendingRefreshes.set(runId, refresh);
   // The notification carries a run id and no tenant, and this callback runs in
   // the LISTEN socket's creation context rather than the notifying request's —
   // so it opens its own system scope rather than inheriting a stale one.
-  const status = await runWithSystemTenantScope('ana-run-control:notify', () =>
-    readStatus(pool, runId),
-  ).catch(err => {
-    log.error(`[ana-run-control] notify refresh failed for ${runId}: ${err?.message}`);
-    return null;
-  });
-  if (status) driveLocalRun(runId, status);
+  try {
+    do {
+      refresh.dirty = false;
+      const status = await runWithSystemTenantScope('ana-run-control:notify', () =>
+        readStatus(pool, runId),
+      ).catch(err => {
+        log.error(`[ana-run-control] notify refresh failed for ${runId}: ${err?.message}`);
+        return null;
+      });
+      if (status && isCurrentListener(generation)) driveLocalRun(runId, status);
+    } while (refresh.dirty && isCurrentListener(generation) && localRuns.has(runId));
+  } finally {
+    pendingRefreshes.delete(runId);
+  }
 }
 
 /**
@@ -1226,11 +1292,12 @@ async function refreshFromRow(pool: Pool, runId: string): Promise<void> {
  */
 export function stopRunControlListener(): void {
   stopRunHeartbeat();
+  listenerStarted = false;
+  listenerGeneration += 1;
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = null;
   const client = listenerClient;
   listenerClient = null;
-  listenerStarted = false;
   client?.release(true);
 }
 

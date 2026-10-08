@@ -263,7 +263,9 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
   const p = parsed.data;
 
   if (userId === null) return orgRequired(res);
-  // Signing authority before the password (see signingAuthorityRefused).
+  // Signing authority before the password (see signingAuthorityRefused;
+  // SEC-1008-1): a role that may not sign spends no password attempt.
+  // executeGovernedTransmit asks again, for its other callers.
   const authority = await checkSigningAuthority(userId, orgId);
   if (authority) return signingAuthorityRefused(res, authority);
   // Then the re-auth gate (high-risk sign).

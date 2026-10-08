@@ -3803,6 +3803,8 @@ export function DocumentWorkbench({
                 /* The whole document is filed (QA 2026-10-08, j4), so the dialog
                    files it at its own code; only a read it can trust. */
                 sectionCodes={sectionsState === 'ready' ? sections.map(s => s.code) : undefined}
+                /* The filing copy takes this state when placed (F17). */
+                docStatus={activeDoc.status ?? null}
                 dirty={dirty}
                 onNav={onNav}
                 fireToast={fireToast}

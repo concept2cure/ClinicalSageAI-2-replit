@@ -19,10 +19,15 @@ import { isLaunchScopeLocked, lockNotice, useNavEntitlements } from './navEntitl
 export function LaunchScopeGate({
   surfaceId,
   surface,
+  onNav,
   children,
 }: {
   surfaceId: string;
   surface: UiSurface;
+  /** Shell navigation. The panel's one way back is to Projects, where the
+   *  filing path starts (FILING_SPINE.md F16); without it the panel was a
+   *  sentence and nothing to do. */
+  onNav?: (id: string) => void;
   children: React.ReactNode;
 }) {
   const { verdictFor } = useNavEntitlements();
@@ -38,6 +43,11 @@ export function LaunchScopeGate({
         {surface.label}: {notice.status.toLowerCase()}
       </h2>
       <p>{notice.body}</p>
+      {onNav && (
+        <button type="button" className="btn" onClick={() => onNav('projects')}>
+          Back to Projects
+        </button>
+      )}
     </div>
   );
 }

@@ -21,6 +21,9 @@ import { createHash } from 'crypto';
 
 /* ─── Mock the eCTD zip builder: return a deterministic buffer. ──────── */
 const buildECTDZipFn = vi.fn();
+// The transmitter holds a signing role (approver); only such a role may
+// transmit to an agency (SEC-1008-1, governed-transmit-checks.ts).
+vi.mock('../server/services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'approver' }));
 vi.mock('../server/src/services/ectd', () => ({
   buildECTDZip: (...args: unknown[]) => buildECTDZipFn(...args),
 }));

@@ -1,0 +1,376 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+{
+  "timestamp": "2026-10-08T16:04:02.996Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+{
+  "timestamp": "2026-10-08T16:04:03.423Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T16:04:03.424Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+{
+  "timestamp": "2026-10-08T16:04:03.424Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+✅ Template tables initialized
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:06.941Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:06.951Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "beadc778-646b-49ba-858c-d314429f2d45",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:06.954Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "beadc778-646b-49ba-858c-d314429f2d45",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:06.975Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:06.987Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc beadc778-646b-49ba-858c-d314429f2d45 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T16:04:06.988Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "0e41096b-a739-4766-92dd-70203eb3ef00"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.004Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save with text leaves the bound section drafted, not todo
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a save of only whitespace is not work: the section stays todo
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.011Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.019Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc beadc778-646b-49ba-858c-d314429f2d45 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T16:04:07.019Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "f4b24be4-cdd3-42af-adde-9a11551ca038"
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.026Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.031Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.073Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc beadc778-646b-49ba-858c-d314429f2d45 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.088Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.113Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc beadc778-646b-49ba-858c-d314429f2d45 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.127Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.149Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc beadc778-646b-49ba-858c-d314429f2d45 by a***@filing.example",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.159Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+{
+  "timestamp": "2026-10-08T16:04:07.182Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc beadc778-646b-49ba-858c-d314429f2d45 by a***@filing.example",
+  "context": {}
+}
+
+ × server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards 305ms
+   → expected { '2.5': 'drafted', '2.6': 'drafted' } to deeply equal { '2.5': 'review', '2.6': 'drafted' }
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > new text on an approved section is not the signed text: the section is withdrawn to drafted, and that is recorded
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a locked section is not written by a save; the filing result says why
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > e-sign as APPROVER: written sections are approved, readiness rises above 0, one governed-action row
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a signature that does not mean approval approves nothing (e-sign as REVIEWER, AUTHOR)
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a section whose filing text is not the text signed is not approved
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > an approval on a document with no filing says so, not "nothing left to approve"
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers > a second authoring document bound to the same filing cannot leave unsigned text approved
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > /sign that clears the last workflow step approves the sections; /sign with no workflow does not
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a /sign after the workflow is complete decides no step and approves nothing, whatever its meaning
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 2. the approval signature approves the sections it covers: /sign, and rollback > a signature that rolls back leaves the sections exactly as they were
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status approved returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > PATCH status locked returns 409 APPROVAL_REQUIRES_SIGNATURE and changes nothing
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a content PATCH on an approved section withdraws it to drafted and records that
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing
+ ↓ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 3. the old-store PATCH cannot approve or lock without a signature > the same PATCH still moves a section between the unsigned states
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts > 1. a save in the editor moves the section to drafted > a later save keeps review; it never moves work backwards
+AssertionError: expected { '2.5': 'drafted', '2.6': 'drafted' } to deeply equal { '2.5': 'review', '2.6': 'drafted' }
+
+- Expected
++ Received
+
+  {
+-   "2.5": "review",
++   "2.5": "drafted",
+    "2.6": "drafted",
+  }
+
+ ❯ server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts:253:35
+    251|       expect(res.body.filing).toMatchObject({ committed: true, section…
+    252|     }
+    253|     expect(await statuses(f.doc)).toEqual({ '2.5': 'review', '2.6': 'd…
+       |                                   ^
+    254|   }, T);
+    255|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 skipped (18)
+   Start at  16:03:57
+   Duration  10.08s (transform 3.85s, setup 102ms, import 826ms, tests 8.81s, environment 0ms)
+

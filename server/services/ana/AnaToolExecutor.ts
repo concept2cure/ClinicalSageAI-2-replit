@@ -6064,6 +6064,29 @@ registerToolHandler('generate_sop', async (input: Record<string, unknown>) => {
   }
 });
 
+// Review SOP requirements — a client's SOP against what its topic requires, by product
+// (2026-10-08, D2; shared/regulatory/sop-requirements.ts). Deterministic; no model.
+registerToolHandler('review_sop_requirements', async (input: Record<string, unknown>) => {
+  const { isSopTopic } = await import('../../../shared/regulatory/sop-requirements.js');
+  const { reviewSopText } = await import('../../../shared/regulatory/sop-review.js');
+  const text = typeof input.sop_text === 'string' ? input.sop_text : '';
+  const product = input.product_type;
+  if (!isSopTopic(input.topic)) {
+    return JSON.stringify({ error: 'topic must be one of capa, deviation, complaint_handling, document_control, training, supplier_qualification, internal_audit, management_review, change_control.' });
+  }
+  if (product !== 'drug' && product !== 'biologic' && product !== 'device') {
+    return JSON.stringify({ error: 'product_type must be drug, biologic or device. Ask the user which product the SOP governs.' });
+  }
+  const review = reviewSopText(text, input.topic, product, new Date().toISOString().slice(0, 10));
+  return JSON.stringify({
+    ...review,
+    instruction:
+      review.status === 'no_text'
+        ? 'No SOP text was given, so nothing was reviewed. Ask for the SOP text; do not describe the SOP as complete or deficient.'
+        : 'Report each requirement as the check found it: quote the evidence for addressed ones, and for not_found say the check found no wording for it and the user should read for it. Cite each requirement with its basis label as given. Do not call the SOP compliant or non-compliant.',
+  });
+});
+
 // Resolve Submission Plan — multi-region build+submit resolver (FDA/EMA/PMDA)
 registerToolHandler('resolve_submission_plan', async (input: Record<string, unknown>) => {
   try {
@@ -6076,7 +6099,7 @@ registerToolHandler('resolve_submission_plan', async (input: Record<string, unkn
       plan,
       coverageSummary: coverage.summary,
       instruction:
-        'Report the per-region filing, dossier standard, Module 1 path, validation profile, and gateway, plus the coverage/gaps verbatim. The build and submit stacks for FDA/EMA/PMDA already exist; this is the routing plan over them.',
+        'Report the per-region filing, dossier standard, Module 1 path, validation profile, and gateway, plus the coverage/gaps and each region\'s notes verbatim. buildSupported and submitSupported are the platform\'s own statement of what it can carry for that market: only FDA\'s Module 1 is built to the agency\'s headings, EMA\'s and PMDA\'s are filed flat, and PMDA\'s adapter refuses every transmit. Do not describe a region as buildable or submittable where the plan says it is not.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Submission plan resolution failed: ${err?.message || 'unknown error'}` });
@@ -9875,28 +9898,6 @@ registerToolHandler('explain_validation_findings', async (input, ctx) => {
     return JSON.stringify({ ok: true, ...((result as object) ?? {}) });
   } catch (err) {
     return JSON.stringify({ error: `explain_validation_findings failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
-  }
-});
-
-registerToolHandler('cross_region_gap_analysis', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) {
-    return JSON.stringify({ error: 'cross_region_gap_analysis requires tenant context (organizationId and userId).' });
-  }
-  const sourceRegion = typeof input.source_region === 'string' ? input.source_region : '';
-  const targetRegions = Array.isArray(input.target_regions) ? (input.target_regions as string[]) : [];
-  const applicationType = typeof input.application_type === 'string' ? input.application_type : '';
-  if (!sourceRegion) return JSON.stringify({ error: 'source_region is required.' });
-  if (targetRegions.length === 0) return JSON.stringify({ error: 'target_regions (non-empty array) is required.' });
-  if (!applicationType) return JSON.stringify({ error: 'application_type is required.' });
-  try {
-    const { computeCrossRegionGap } = await import('../submission-ai/submission-ai-service.js');
-    const result = await computeCrossRegionGap(
-      { sourceRegion, targetRegions, applicationType, sectionsPresent: Array.isArray(input.sections_present) ? (input.sections_present as string[]) : undefined },
-      { organizationId: ctx.organizationId, userId: ctx.userId, submissionId: typeof input.submission_id === 'number' ? input.submission_id : undefined }
-    );
-    return JSON.stringify({ ok: true, ...((result as object) ?? {}) });
-  } catch (err) {
-    return JSON.stringify({ error: `cross_region_gap_analysis failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
   }
 });
 

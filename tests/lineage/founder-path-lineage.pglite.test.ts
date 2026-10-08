@@ -190,6 +190,11 @@ const MIGRATIONS = [
   // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
   'migrations/20261001_users_sessions_ended_at.sql',
   'migrations/20260527_mutation_primitives.sql',
+  // The governed-action ledger's open command vocabulary, as the deploy set
+  // applies it after 20260527: the approval signature records command
+  // 'approve' (spine F1, approveBoundFilingSections), which 20260527's
+  // closed list refuses.
+  'db/migrations/20260730_c2c_ana_actions_command_vocab.sql',
   'migrations/20260609_audit_hmac_seal.sql',
   'migrations/20260921_audit_logs_chain_seq.sql',
   // public.actor_name (D3, 2026-09-29): project reads name people through it.
@@ -212,6 +217,10 @@ const MIGRATIONS = [
   'migrations/20260829_cre_source_versioning.sql',
   // Who captured it, and the capture record's write-once guard (VR-16, VR-16b).
   'migrations/20261001_cre_evidence_sources_capture_immutability.sql',
+  // The text a capture was read to, and its measure (Data Room catalog S2).
+  'migrations/20261008c_data_room_source_text.sql',
+  // The study a capture names, keyed to its organization (Data Room catalog S3).
+  'migrations/20261008d_cre_source_study_ref.sql',
   'migrations/20260726_file_uploads_tenancy.sql',
   'db/migrations/20260828_file_uploads_checksum.sql',
   'migrations/20261006_document_data_dispositions.sql',

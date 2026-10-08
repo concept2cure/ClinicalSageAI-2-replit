@@ -1,6 +1,6 @@
 /**
  * Submission Center — per-sequence workspaces (Builder / Validation / Shadow
- * Review / Cross-region / Dispatch), extracted from SubmissionCenter.tsx when
+ * Review / Dispatch), extracted from SubmissionCenter.tsx when
  * the stub workspaces were wired to the real submission core.
  *
  * Doctrine (identical to the parent surface): FAIL CLOSED, NEVER FABRICATE.
@@ -23,7 +23,6 @@
  *                POST /api/submissions/:id/validation/explain
  *   Shadow       POST/GET /api/submissions/sequences/:seqId/shadow-review
  *                GET /api/submissions/shadow-review/:runId/findings
- *   Cross-region POST /api/submissions/:id/cross-region
  *   Dispatch     GET /api/submissions/sequences/:seqId/dispatch-readiness
  *                POST /api/submissions/:id/dispatch-qc  (deterministic verdict; model narrates)
  *                GET /api/mdx/gateways/transmittals?program_id=&region=  (the market's transmissions, F13)
@@ -38,12 +37,12 @@ import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { PlacementReasonField, placementReasonOk } from './filingTarget';
 import { downloadBlob } from '../download';
 import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
+import { useSurfaceAvailable } from '../surfaceAvailable';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
   SC_FIND_SEV,
   SC_FIND_STATUS,
-  SC_REGIONS,
   SC_SEQ_STATUS,
   type ToneMap,
 } from '../fixtures/submission';
@@ -91,7 +90,6 @@ export function Chip({ map, k }: { map: Record<string, ToneMap>; k: string }) {
   return <span className={`rd-chip tone-${m.t}`}>{m.l}</span>;
 }
 
-const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
 const lensL = (v: string) => SC_LENSES.find((l) => l.v === v)?.l ?? v;
 
 /** A server sentence used as a clause: its closing period dropped, so the
@@ -623,8 +621,8 @@ function AddLeafForm({ seq, onDone }: { seq: SeqRow; onDone: (n: Notice, effect:
         </div>
       ) : list.noneAtAll ? (
         <div className="scaf-note">
-          No Co-Author documents in this organization yet — author one in the eCTD Co-Author
-          first, then place it here as a leaf.
+          No Co-Author documents in this organization. Place a document from the
+          editor or the Vault instead (below).
         </div>
       ) : (
         <div className="sc-leafform">
@@ -749,7 +747,41 @@ function RemoveLeafControl({
   );
 }
 
-export function BuilderWorkspace({ seq, onSequenceChanged }: { seq: SeqRow; onSequenceChanged?: () => void }) {
+/** Where a leaf's document comes from (FILING_SPINE.md F16). The Builder
+ *  pointed at the eCTD Co-Author, which is locked and scrapped; documents
+ *  reach a sequence from where they are written or stored. Each door is offered
+ *  only where its surface can be opened. */
+function BuilderSources({ onNav }: { onNav?: (id: string) => void }) {
+  const available = useSurfaceAvailable();
+  return (
+    <div className="scaf-note sc-mt" data-testid="sc-builder-sources">
+      Documents reach this sequence from where they are kept: an authored
+      document&apos;s Place into filing, in the editor, or a file&apos;s Place into
+      submission, in the Vault. Copying a leaf from another market&apos;s sequence
+      comes later.
+      {onNav && (available('document-authoring') || available('vault')) && (
+        <div className="cm-pushbar sc-mt">
+          {available('document-authoring') && (
+            <button type="button" className="sc-trans-b" onClick={() => onNav('document-authoring')}>
+              Open documents
+            </button>
+          )}
+          {available('vault') && (
+            <button type="button" className="sc-trans-b" onClick={() => onNav('vault')}>
+              Open the Vault
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function BuilderWorkspace({ seq, onSequenceChanged, onNav }: {
+  seq: SeqRow; onSequenceChanged?: () => void;
+  /** Shell navigation, for the doors to where documents are placed from. */
+  onNav?: (id: string) => void;
+}) {
   const [bump, setBump] = React.useState(0);
   const leavesPath = `/api/submissions/sequences/${seq.id}/leaves`;
   /* The module header promises a wrong-shaped 200 reaches the error branch;
@@ -831,7 +863,10 @@ export function BuilderWorkspace({ seq, onSequenceChanged }: { seq: SeqRow; onSe
             its leaves are immutable and cannot be added to or changed.
           </div>
         ) : !leaves.loading && !leaves.error ? (
-          <AddLeafForm seq={seq} onDone={afterWrite} />
+          <>
+            <AddLeafForm seq={seq} onDone={afterWrite} />
+            <BuilderSources onNav={onNav} />
+          </>
         ) : null}
       </div>
     </div>
@@ -1392,133 +1427,6 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
   );
 }
 
-/* ═══ Cross-region — real gap computation off the sequence's leaves ═════════ */
-
-// POST /:id/cross-region → computeCrossRegionGap (submission-ai-service).
-interface CrossRegionPerRegion {
-  region: string;
-  module1Deltas: string[];
-  bridgingNeeded: boolean;
-  bridgingRationale: string | null;
-  translationScope: string;
-  formatConversion: string;
-}
-
-export function CrossRegionWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow }) {
-  const [state, setState] = React.useState<{
-    phase: 'idle' | 'running' | 'done' | 'error';
-    data?: CrossRegionPerRegion[];
-    error?: string;
-    basis?: string;
-  }>({ phase: 'idle' });
-  React.useEffect(() => setState({ phase: 'idle' }), [sub.id, seq.id]);
-
-  const targets = ['fda', 'eu', 'jp'].filter((r) => r !== sub.primaryRegion);
-
-  const runGap = async () => {
-    if (state.phase === 'running') return;
-    setState({ phase: 'running' });
-    // The analysis floors on the sequence's REAL section inventory — read the
-    // canonical leaves first; if that read fails, report it rather than run
-    // the analysis on inputs we do not have.
-    const leaves = await liveGetOrNull<LeafRow[]>(`/api/submissions/sequences/${seq.id}/leaves`);
-    if (leaves.error) {
-      setState({
-        phase: 'error',
-        error: `couldn't read sequence ${seq.sequenceNumber}'s leaves for the analysis — ${redactInternals(leaves.error, 'the read did not settle')}`,
-      });
-      return;
-    }
-    const sectionsPresent = (Array.isArray(leaves.data) ? leaves.data : []).map((l) => l.sectionCode);
-    const r = await mutateVerbatim<{ perRegion: CrossRegionPerRegion[] }>(
-      'POST',
-      `/api/submissions/${sub.id}/cross-region`,
-      {
-        sourceRegion: sub.primaryRegion,
-        targetRegions: targets,
-        applicationType: sub.applicationType,
-        sectionsPresent,
-      },
-    );
-    if (r.data && Array.isArray(r.data.perRegion)) {
-      setState({
-        phase: 'done',
-        data: r.data.perRegion,
-        basis: `computed from sequence ${seq.sequenceNumber}'s ${sectionsPresent.length} ${
-          sectionsPresent.length === 1 ? 'leaf' : 'leaves'
-        }`,
-      });
-    } else {
-      setState({ phase: 'error', error: r.error ?? 'unexpected response shape' });
-    }
-  };
-
-  return (
-    <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">Cross-region gap analysis · sequence {seq.sequenceNumber}</span>
-        <span className="s">cross-region</span>
-      </div>
-      <div className="pj-card-b">
-        <div className="scaf-note sc-mb">
-          What the {regL(sub.primaryRegion)} sequence is missing to file the same program in{' '}
-          {targets.map(regL).join(' and ')}.
-        </div>
-        {state.phase === 'idle' && (
-          <EmptyState
-            icon={I.gitBranch}
-            title="No cross-region gap analysis yet"
-            hint="Run one to compare this sequence's real section inventory against the other regions' requirements — reusable content vs. the gaps you'd need to close to file there."
-          />
-        )}
-        {state.phase === 'running' && (
-          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
-            Computing the cross-region gaps from the sequence&#39;s leaves…
-          </div>
-        )}
-        {state.phase === 'error' && (
-          <div className="sc-verdict tone-err" role="status">
-            The gap analysis did not complete — {redactInternals(state.error, 'the analysis did not settle')}. No gaps were invented in its place.
-          </div>
-        )}
-        {state.phase === 'done' && state.data && (
-          <>
-            {state.basis ? <div className="scaf-note sc-mb">{state.basis}</div> : null}
-            <div className="sp-list">
-              {state.data.map((p, i) => (
-                <div key={i} className="sp-row">
-                  <span className="sp-tag2">{regL(p.region)}</span>
-                  <span className="sp-row-b">
-                    <span className="sp-row-t">
-                      {p.bridgingNeeded ? 'Bridging needed' : 'No bridging flagged'} {I.dot}{' '}
-                      translation: {p.translationScope} {I.dot} format: {p.formatConversion}
-                    </span>
-                    {p.module1Deltas.length > 0 ? (
-                      <span className="sp-row-s">Module 1 deltas: {p.module1Deltas.join('; ')}</span>
-                    ) : (
-                      <span className="sp-row-s">No Module 1 deltas reported.</span>
-                    )}
-                    {p.bridgingRationale ? (
-                      <span className="sp-row-s">{p.bridgingRationale}</span>
-                    ) : null}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-        {state.phase !== 'running' && (
-          <div className="cm-pushbar sc-mt">
-            <button type="button" className="sp-primary sc-btn" onClick={runGap}>
-              {I.sparkles} {state.phase === 'done' ? 'Re-run gap analysis' : 'Run gap analysis'}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 /* ═══ Dispatch — the deterministic gate + governed freeze/dispatch ══════════ */
 
 // POST /:id/dispatch-qc → runDispatchQc. Since 2026-09-21 (VSR-001 F-9) the
@@ -1881,8 +1789,8 @@ export function DispatchWorkspace({
        `leaves` straight through — and the QC prompt decides "required modules
        present, forms present, lifecycle operations coherent" from `leaves`.
        Sent empty, every checklist row was a verdict over a section inventory
-       the sequence does not have. Read the real leaves first, as the
-       cross-region analysis already does; refuse the run if they cannot be read. */
+       the sequence does not have. Read the real leaves first; refuse the run
+       if they cannot be read. */
     const leafRead = await liveGetOrNull<LeafRow[]>(`/api/submissions/sequences/${seq.id}/leaves`);
     if (leafRead.error || !Array.isArray(leafRead.data)) {
       setQc({

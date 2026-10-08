@@ -197,7 +197,7 @@ export const ASSESS_BLA_FILING_RISK: AnaTool = {
 export const GENERATE_SOP: AnaTool = {
   name: 'generate_sop',
   description:
-    "Generate a GxP-structured client Standard Operating Procedure (SOP), region-aware across FDA (US), EMA (EU), and PMDA (Japan). Use when the user asks AnA to write/draft an SOP for a process (e.g. change control, CAPA, deviation, document control, eCTD publishing, regulatory submission, pharmacovigilance case processing, training, supplier qualification, internal audit). Returns the SOP as structured sections plus rendered markdown, with the canonical SOP skeleton (Purpose, Scope, Responsibilities, Definitions, Procedure, Records, References, Revision history, Approval) and region-appropriate regulatory references. The draft opens in AnA's editor; the client tailors and approves it.",
+    "Generate a GxP-structured client Standard Operating Procedure (SOP), region-aware across FDA (US), EMA (EU), and PMDA (Japan). Use when the user asks AnA to write/draft an SOP for a process (e.g. change control, CAPA, deviation, complaint handling, management review, document control, eCTD publishing, regulatory submission, pharmacovigilance case processing, training, supplier qualification, internal audit). Pass productType: a device SOP answers to the QMSR / ISO 13485:2016, a drug or biologic SOP to 21 CFR 211 and ICH Q10 (a biologic also 21 CFR 600/601). Ask the user if you do not know it; the SOP says when it was assumed. Returns the SOP as structured sections plus rendered markdown, with the canonical SOP skeleton, a 'Requirements this procedure addresses' section listing each clause with its basis (checked regulator text, recall, or platform convention — say which when you cite one), and region-appropriate references. The draft opens in AnA's editor; the client tailors and approves it.",
   input_schema: {
     type: 'object',
     properties: {
@@ -207,7 +207,8 @@ export const GENERATE_SOP: AnaTool = {
         enum: [
           'change_control', 'document_control', 'capa', 'deviation_management',
           'ectd_publishing', 'regulatory_submission', 'pharmacovigilance_case',
-          'training', 'supplier_qualification', 'internal_audit', 'generic',
+          'training', 'supplier_qualification', 'internal_audit',
+          'complaint_handling', 'management_review', 'generic',
         ],
         description: 'Known regulated process (drives the starter procedure). Use generic for an unlisted topic.',
       },
@@ -217,6 +218,11 @@ export const GENERATE_SOP: AnaTool = {
         description: 'Regions the SOP must satisfy (default FDA).',
       },
       filingType: { type: 'string', description: 'Optional filing context (NDA/BLA/MAA/JNDA/IND).' },
+      productType: {
+        type: 'string',
+        enum: ['drug', 'biologic', 'device'],
+        description: 'The product the procedure governs. Device (including IVD): QMSR / ISO 13485:2016. Drug or biologic: 21 CFR 211 and ICH Q10. Omitted, drug is assumed and the SOP says so.',
+      },
       organization: { type: 'string' },
       documentId: { type: 'string', description: 'SOP identifier, e.g. SOP-QA-CC-001 (generated if omitted).' },
       effectiveDate: { type: 'string', description: 'ISO date; defaults to today.' },
@@ -224,6 +230,30 @@ export const GENERATE_SOP: AnaTool = {
       scopeNote: { type: 'string', description: 'Extra scope sentence from the client.' },
     },
     required: ['title'],
+  },
+};
+
+/** 2026-10-08 (D2): AnA reviews a client's SOP against what its topic requires (shared/regulatory/sop-requirements.ts). */
+export const REVIEW_SOP_REQUIREMENTS: AnaTool = {
+  name: 'review_sop_requirements',
+  description:
+    "Review a client's SOP text against what its topic requires, by the product it governs: for each requirement (e.g. for a device CAPA SOP, ISO 13485:2016 §8.5.2 (a)-(f) under the QMSR; for a drug CAPA SOP, 21 CFR 211.192 and ICH Q10 §3.2.2) it reports 'addressed' with the sentence that addresses it, or 'not_found'. Deterministic wording check, no model: 'not_found' means no wording for it was found, not that the procedure is deficient — tell the user to read for it. Each requirement carries its basis (checked regulator text, recall, or platform convention); say which when you cite it. Use when the user asks whether an SOP is complete, inspection-ready or compliant, or before revising one. Topics: capa, deviation, complaint_handling, document_control, training, supplier_qualification, internal_audit, management_review, change_control.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      sop_text: { type: 'string', description: 'The full text of the SOP to review.' },
+      topic: {
+        type: 'string',
+        enum: ['capa', 'deviation', 'complaint_handling', 'document_control', 'training', 'supplier_qualification', 'internal_audit', 'management_review', 'change_control'],
+        description: 'The quality-system process the SOP governs.',
+      },
+      product_type: {
+        type: 'string',
+        enum: ['drug', 'biologic', 'device'],
+        description: 'The product the procedure governs. Device includes IVD. Ask the user if you do not know it.',
+      },
+    },
+    required: ['sop_text', 'topic', 'product_type'],
   },
 };
 

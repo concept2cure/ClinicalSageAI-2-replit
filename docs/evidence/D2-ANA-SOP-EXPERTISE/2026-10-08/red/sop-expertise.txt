@@ -1,0 +1,29 @@
+ × tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > a device CAPA SOP cites the QMSR and ISO 13485:2016 §8.5.2, and no part of 21 CFR 210/211
+   → expected '21 CFR Part 11 — Electronic Records; …' to match /21 CFR 820\.10/
+ × tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > a drug CAPA SOP cites 21 CFR 211.192 and ICH Q10 §3.2.2
+   → expected '21 CFR Part 11 — Electronic Records; …' to match /21 CFR 211\.192/
+ × tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > a biologic deviation SOP names the biological product deviation report (21 CFR 600.14)
+   → expected '21 CFR Part 11 — Electronic Records; …' to match /21 CFR 600\.14/
+ × tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > every clause the SOP relies on is listed with its basis, and an unread one says so
+   → no requirements section: expected undefined to be defined
+ × tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > complaint handling and management review are topics
+   → Cannot read properties of undefined (reading 'map')
+ × tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > with no product type it does not guess one: it says which it assumed
+   → expected undefined to be 'drug' // Object.is equality
+ ✓ tests/services/sop-expertise.test.ts > the record itself > every element of every topic and product carries a well-formed basis
+ × tests/services/sop-expertise.test.ts > the record itself > before the QMSR took effect, a device SOP is cited to the QSR section then in force
+   → not implemented
+ × tests/services/sop-expertise.test.ts > AnA reviews a client’s SOP against what its topic requires > names each requirement as addressed, with the sentence that addresses it, or as not found
+   → not implemented
+ × tests/services/sop-expertise.test.ts > AnA reviews a client’s SOP against what its topic requires > says what "not found" means: the check found no wording for it, not that the SOP is deficient
+   → not implemented
+ × tests/services/sop-expertise.test.ts > AnA reviews a client’s SOP against what its topic requires > an empty SOP addresses nothing and is not reported as reviewed clean
+   → not implemented
+ × tests/services/sop-expertise.test.ts > what the SOP question flow tells clients is the regulation in force > names no removed QSR section as a requirement for devices
+   → 21 CFR 820.25 cited as in force: expected '\n            reference: \'21 CFR 211…' to match /formerly|before 2026-02-02|until 2026…/
+ × tests/services/sop-expertise.test.ts > what the SOP question flow tells clients is the regulation in force > cites only ICH Q10 sections that exist, and change management as §3.2.3
+   → ICH Q10 3.2.5 does not exist: expected {} to have property "3.2.5"
+ × tests/services/sop-expertise.test.ts > what the SOP question flow tells clients is the regulation in force > does not cite EU GMP Annex 15 for training
+   → expected '/**\n * SOP Development flow definiti…' not to match /Annex 15[^.]{0,80}(competenc|trainin…/i
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  13 failed | 1 passed (14)

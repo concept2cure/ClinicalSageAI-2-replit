@@ -1,7 +1,7 @@
 /**
  * Region profile aggregator (spec §8.3 — GET /api/region-profiles)
  *
- * The UI's Planner, Builder, Validation, and Cross-Region workspaces all need
+ * The UI's Planner, Builder and Validation workspaces all need
  * region metadata (Module 1 structure, regional forms, pathways, rule-pack size).
  * That metadata already exists but is split across three sources:
  *   - regional-ctd-templates.ts   (Module 1 sections + forms per agency)

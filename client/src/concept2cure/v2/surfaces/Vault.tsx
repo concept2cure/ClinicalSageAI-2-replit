@@ -9,6 +9,7 @@ import { VaultVersions } from './VaultVersions';
 import { APPROVED_STAGES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
 import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
+import { useSurfaceAvailable } from '../surfaceAvailable';
 import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
 import {
   VAULT_INGEST_DOCUMENT_TYPES,
@@ -89,8 +90,9 @@ interface DataRoomBlock {
 }
 
 /** A count over a truncated window is a floor, and reads as one. */
-function roomCount(n: number, block: DataRoomBlock): string {
-  return block.window?.truncated ? `${n}+` : String(n);
+/** The server counts every current source of the project (2026-10-08): exact, never a floor. */
+function roomCount(n: number, _block: DataRoomBlock): string {
+  return String(n);
 }
 
 const ROOM_STAGE: Record<DataRoomRow['stage'], { label: string; tone: string }> = {
@@ -121,7 +123,7 @@ function RoomNotes({ block }: { block: DataRoomBlock }) {
   return (
     <span className="vd-dr-meta">
       {review > 0 ? `${review} need review — the classifier would not propose a folder. ` : ''}
-      {truncated ? `Counts cover the newest ${block.window?.shown ?? block.captured} sources; this project has more.` : ''}
+      {truncated ? `The list shows the newest ${block.window?.shown ?? block.sources.length} of ${block.captured}; search the project's Data Room for the rest.` : ''}
     </span>
   );
 }
@@ -770,6 +772,7 @@ export function Vault(props: SurfaceViewProps) {
 }
 
 function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
+  const available = useSurfaceAvailable();
   const projectId = currentProjectId();
   const vaultPath = projectId
     ? '/api/c2c/project-vault/' + encodeURIComponent(projectId)
@@ -1219,8 +1222,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               classified: vault.dataRoom.classified,
               filed: vault.dataRoom.filed,
               needsReview: vault.dataRoom.needsReview ?? null,
-              // When true, the three counts above cover the newest sources only.
-              truncated: vault.dataRoom.window?.truncated === true,
+              // The counts are exact; when true, only the list is the newest sources.
+              listTruncated: vault.dataRoom.window?.truncated === true,
             }
           : vault?.unavailable?.some((u) => u.branch === 'Data room')
             ? 'unavailable — counts unknown, not zero'
@@ -1340,13 +1343,17 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         >
           {I.folder} Open project
         </button>
-        <button
-          className="sp-ask"
-          onClick={() => onNav && onNav('etmf')}
-          title="TMF inspection-readiness — completeness, timeliness & QC"
-        >
-          {I.shieldCheck} Inspection readiness
-        </button>
+        {/* Offered only where the eTMF can be opened: outside this release it
+            led to the locked panel (FILING_SPINE.md F16). */}
+        {available('etmf') && (
+          <button
+            className="sp-ask"
+            onClick={() => onNav && onNav('etmf')}
+            title="TMF inspection-readiness — completeness, timeliness & QC"
+          >
+            {I.shieldCheck} Inspection readiness
+          </button>
+        )}
         {/* What the file IS — the ingest schema's own vocabulary, so the
             picker can never offer a type the server refuses. MODULE_3 is how
             an uploaded CMC document declares itself and gets handled as one
@@ -1506,7 +1513,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           <EmptyState
             icon={I.folder}
             title="Open a project to see its vault"
-            hint="The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine."
+            hint="The Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine."
+            action={onNav ? { label: 'Open Projects', onAct: () => onNav('projects') } : undefined}
           />
         </div>
       ) : vaultState.loading && !vault ? (

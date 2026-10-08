@@ -71,7 +71,7 @@ import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
 import { readVaultLifecycles, vaultVersionNotTransmittable } from '../../services/vault/vault-lifecycle.js';
-import { fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
+import { countDataRoomStages, fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../../services/document-data-disposition/eligibility.js';
 import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
@@ -179,8 +179,9 @@ interface DataRoomBlock {
   /** Sources the classifier refused to place: a person has to decide. */
   needsReview: number;
   sources: DataRoomRow[];
-  /** The lane reads the newest DATA_ROOM_WINDOW current sources. When there
-   *  are more, every count above covers the window only and is a floor. */
+  /** The lane LISTS the newest DATA_ROOM_WINDOW current sources. The counts
+   *  above cover every current source of the project (countDataRoomStages,
+   *  2026-10-08), whatever the window shows. */
   window: { shown: number; truncated: boolean };
 }
 
@@ -1446,11 +1447,10 @@ export default function createProjectVaultRoutes(): Router {
               filedAs,
             };
           });
+          // Exact, over the whole project: the rows are a window, the counts are not.
+          const counts = await countDataRoomStages(pool, id, orgId);
           dataRoom = {
-            captured: rows.length,
-            classified: rows.filter(r => r.stage === 'classified' || r.stage === 'filed').length,
-            filed: rows.filter(r => r.stage === 'filed').length,
-            needsReview: rows.filter(r => r.stage === 'needs_review').length,
+            ...counts,
             sources: rows,
             window: { shown: rows.length, truncated },
           };

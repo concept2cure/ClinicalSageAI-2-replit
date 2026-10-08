@@ -3068,6 +3068,22 @@ export const C2C_MIGRATION_FILES = [
   // must reach. Evidence docs/evidence/QA-2026-10-08/ind-reporting-3/.
   'migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql',
 
+  // ── The Data Room keeps the text it read, and is searchable (2026-10-08) ──
+  // Data Room catalog S2 (D2): extracted_text, char_count, page_count and
+  // text_extracted_at on cre_evidence_sources, plus a GIN full-text index over
+  // vault.document_search_vector for client documents. ADD COLUMN / CREATE
+  // INDEX IF NOT EXISTS, each guarded; no DROP. The table is public with
+  // organization_id INTEGER and already policied. Evidence
+  // docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-08-s2-processed-searchable/.
+  'migrations/20261008c_data_room_source_text.sql',
+
+  // ── A capture names its study, of its own organization (2026-10-08) ──
+  // Data Room catalog S3 (D2): study_ref on cre_evidence_sources, a unique
+  // (id, tenant_id) index on cdisc_prm_studies, and a NOT VALID same-org key
+  // ON DELETE SET NULL (study_ref). Each guarded; no DROP; nothing new for the
+  // sweeps to reach. After 20260926b, which keys the study to its program.
+  'migrations/20261008d_cre_source_study_ref.sql',
+
   // ── The readiness digest's registry context, on the project record ───────
   // (2026-10-08, QA second walk j8). Adds registryId / submissionType keys to
   // projects.metadata where the program's own organisation's record holds

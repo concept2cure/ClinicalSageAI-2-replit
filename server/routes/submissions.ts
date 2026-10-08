@@ -48,7 +48,6 @@ import { assessPathwayReadiness, PATHWAYS, type Pathway } from '../services/path
 import {
   generateSubmissionPlan,
   explainValidation,
-  computeCrossRegionGap,
   runDispatchQc,
 } from '../services/submission-ai/submission-ai-service';
 import {
@@ -281,7 +280,6 @@ router.get('/capabilities', limiter, requireRole(AUTHOR), async (req, res) => {
         sequences: true,
         validation: true,
         'shadow-review': true,
-        'cross-region': true,
         dispatch: true,
       },
       // Capability flags (not workspaces). The assemble/publish BYTES are now
@@ -316,6 +314,38 @@ router.get('/validation-rules', limiter, requireRole(AUTHOR), async (req, res) =
     const { RULE_CORPUS, rulesForRegion, corpusSummary } = await import('../services/ectd/validation-rule-corpus.js');
     const rules = region ? rulesForRegion(region as (typeof REGIONS)[number]) : RULE_CORPUS;
     res.json({ region: region || 'all', summary: corpusSummary(), rules });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── What the platform can carry for a market (FILING_SPINE.md F19) ──────────
+// One statement per (application type, market), composed by
+// services/regulatory/market-support.ts from the rule pack, the regional
+// backbone, the region profile and the channel with its adapter's refusal. No
+// model writes any of it. `?applicationType=` is required; `?market=` (an
+// agency, a region code or a submission region) narrows to one market, and
+// without it every region the platform names is returned.
+// Registered before '/:id' so the literal path is not shadowed.
+router.get('/market-support', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const first = (v: unknown) => String(Array.isArray(v) ? v[0] : v ?? '').trim();
+  const applicationType = first(req.query.applicationType);
+  const market = first(req.query.market);
+  if (!applicationType || applicationType.length > 64 || market.length > 64) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'applicationType is required (at most 64 characters); market, when given, is at most 64.' } });
+  }
+  try {
+    const [{ readMarketSupport }, { REGION_IDENTITY }, { pool }] = await Promise.all([
+      import('../services/regulatory/market-support.js'),
+      import('../../shared/regulatory/region-identity.js'),
+      import('../db.js'),
+    ]);
+    const markets = market ? [market] : Object.keys(REGION_IDENTITY);
+    const asOf = new Date().toISOString().slice(0, 10);
+    const out = await readMarketSupport(pool, markets.map((m) => ({ applicationType, market: m })), asOf);
+    res.json({ applicationType, asOf, markets: out });
   } catch (err) {
     fail(res, err);
   }
@@ -1101,28 +1131,6 @@ router.post('/:id/validation/explain', limiter, requireRole(AUTHOR), async (req,
   try {
     await getSubmission(id, ctx);
     res.json(await explainValidation(parsed.data, { ...ctx, submissionId: id }));
-  } catch (err) {
-    fail(res, err);
-  }
-});
-
-// ── Cross-region gap (AI) ────────────────────────────────────────────────────
-const crossRegionSchema = z.object({
-  sourceRegion: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
-  targetRegions: z.array(z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'])).min(1),
-  applicationType: z.string().min(1).max(64),
-  sectionsPresent: z.array(z.string()).optional(),
-});
-router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) => {
-  const ctx = ctxOf(req);
-  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const id = idParam(req.params.id);
-  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
-  const parsed = crossRegionSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  try {
-    await getSubmission(id, ctx);
-    res.json(await computeCrossRegionGap(parsed.data, { ...ctx, submissionId: id }));
   } catch (err) {
     fail(res, err);
   }

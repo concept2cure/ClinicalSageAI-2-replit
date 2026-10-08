@@ -15,6 +15,18 @@
  * (Rule 2; DECISIONS.md row 10), so a centralised MAA is BUILD-only: the
  * resolver must say so, name the channel, and not report it submit-supported.
  *
+ * ── And again (2026-10-08, FILING_SPINE.md F19) ──────────────────────────────
+ * This file then pinned EU and JP as region-correct builds and JP as
+ * submit-supported. Both were wrong answers, pinned:
+ *   - "buildSupported" meant "a Module 1 backbone file NAME exists". EMA's and
+ *     PMDA's Module 1 leaves are filed flat under their root element, not
+ *     under the agency's headings (regional-backbone-readiness.ts
+ *     FLAT_MODULE1_GAP). Only FDA's builder writes its own headings.
+ *   - The PMDA adapter refuses every transmit (pmda-gateway.ts,
+ *     PMDA_PROTOCOL_UNVERIFIED): a registered gateway is not a way to submit.
+ * The resolver now reads server/services/regulatory/market-support.ts for both,
+ * the same statement every market row shows. Only US is fully covered.
+ *
  * The resolver no longer decides channels itself. It reads
  * `submissionChannelFor` in server/services/regulatory/registry/
  * submittabilityCoverage.ts — the one channel function — so the planner,
@@ -29,7 +41,7 @@ import {
 } from '../../../server/services/regulatory/submission-resolver';
 
 describe('submission resolver — per-region plan (FDA/EMA/PMDA)', () => {
-  it('resolves a biologic marketing filing: US and JP by gateway, EU build-only', () => {
+  it('resolves a biologic marketing filing: US by gateway; EU and JP neither region-correct nor sent', () => {
     const plan = resolveSubmissionPlan({ filingType: 'BLA' });
     expect(plan.perRegion).toHaveLength(3);
 
@@ -47,18 +59,20 @@ describe('submission resolver — per-region plan (FDA/EMA/PMDA)', () => {
     expect(eu.agency).toBe('EMA');
     expect(eu.filing?.id).toBe('EU_MAA');
     expect(eu.gateway, 'a centralised MAA must not be routed to CESP').toBeNull();
-    expect(eu.buildSupported).toBe(true);
+    expect(eu.buildSupported, 'EU Module 1 is filed flat (F19)').toBe(false);
     expect(eu.submitSupported).toBe(false);
     expect(eu.channel?.kind).toBe('unconnected');
     expect(eu.notes.join(' ')).toMatch(/eSubmission Gateway/);
+    expect(eu.notes.join(' ')).toMatch(/Build not region-correct for EMA: Module 1 leaves are filed flat/);
 
     expect(jp.agency).toBe('PMDA');
     expect(jp.gateway).toEqual({ region: 'pmda', name: 'pmda_gateway' });
-    expect(jp.buildSupported && jp.submitSupported).toBe(true);
+    expect(jp.buildSupported, 'JP Module 1 is filed flat (F19)').toBe(false);
+    expect(jp.submitSupported, 'the PMDA adapter refuses every transmit').toBe(false);
+    expect(jp.notes.join(' ')).toMatch(/Not sent: PMDA's electronic submission channel/);
 
     expect(plan.coverage).toBe('partial');
-    expect(plan.gaps).toHaveLength(1);
-    expect(plan.gaps[0]).toMatch(/^EU: .*eSubmission Gateway/);
+    expect(plan.gaps).toEqual(['EU: build not region-correct', 'JP: build not region-correct']);
   });
 
   it('routes by product class — BLA and NDA pick different US filings', () => {
@@ -124,23 +138,25 @@ describe('submission resolver — per-region plan (FDA/EMA/PMDA)', () => {
 });
 
 describe('submission resolver — coverage matrix', () => {
-  it('US and JP cells support build + submit; EU cells are build-supported, not submit-supported', () => {
+  it('US cells support build + submit; EU and JP cells support neither (F19)', () => {
     const matrix = submissionCoverageMatrix();
     expect(matrix.regions).toEqual(CORE_REGIONS);
     for (const row of matrix.rows) {
       for (const cell of row.cells) {
-        expect(cell.buildSupported, `${row.family}/${row.productClass}/${cell.region}`).toBe(true);
-        if (cell.region === 'EU') {
-          // Marketing: centralised MAA, eSubmission Gateway not connected.
-          // Clinical: CTA through the CTIS portal.
-          expect(cell.submitSupported, `${row.family}/${row.productClass}/EU`).toBe(false);
+        const at = `${row.family}/${row.productClass}/${cell.region}`;
+        if (cell.region === 'US') {
+          expect(cell.buildSupported, at).toBe(true);
+          expect(cell.submitSupported, at).toBe(true);
         } else {
-          expect(cell.submitSupported, `${row.family}/${row.productClass}/${cell.region}`).toBe(true);
+          // EU and JP Module 1 is filed flat. EU: centralised MAA (eSubmission
+          // Gateway not connected) or CTA (CTIS portal). JP: the adapter refuses.
+          expect(cell.buildSupported, at).toBe(false);
+          expect(cell.submitSupported, at).toBe(false);
         }
       }
       expect(row.fullyCovered).toBe(false);
     }
-    expect(matrix.summary).toMatch(/^8\/12 .*support both region-correct build and gateway submission/);
+    expect(matrix.summary).toMatch(/^4\/12 .*support both region-correct build and gateway submission/);
   });
 });
 
