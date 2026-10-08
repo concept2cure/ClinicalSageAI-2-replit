@@ -5,6 +5,27 @@
 
 ---
 
+## 0. What this isolation defends against, and what it does not (2026-10-08)
+
+Row-level security here is decided by session variables that the runtime role (`app_service`) sets: the tenant
+(`app.current_tenant_id`, `app.current_org_id`), and the switches that grant every row (`app.rls_enforce` not
+`'on'`, `app.bypass_rls`, `app.is_admin`, `app.current_user_role = 'app_super_admin'`).
+
+- **It defends against application code** that forgets a tenant predicate. The policy, not the query, decides
+  which rows a scoped request sees.
+- **It does not defend against SQL an attacker controls.** Such a statement can set the tenant variable to any
+  value, or a switch. Measured on PostgreSQL 16 as `app_service` with enforcement on: `SET app.current_tenant_id`
+  to another tenant shows that tenant's rows (`docs/evidence/D3/2026-10-08-isolation-not-session-switchable/`).
+  SQL injection is therefore prevented by parameterised queries and the handler's own predicate, and is treated as
+  critical wherever found (pen-test scope §4.4).
+- **A switch cannot outlive the request that set it.** `server/db/sessionScope.ts` pins the switches whenever a
+  scope is applied and clears them on release. This is proven on PostgreSQL by
+  `tests/db/isolation-switch-does-not-outlive-request.dbtest.ts`. Every server write of a switch is gated by
+  `ci:session-scoped-rls-bypass`.
+
+A SQL-level boundary (per-tenant database roles, or a tenant context the database verifies) would close the
+second point. It is post-launch design work, recorded on the board.
+
 ## 1. Boot-time enforcement
 
 `server/config/environment.ts:276-284`:
