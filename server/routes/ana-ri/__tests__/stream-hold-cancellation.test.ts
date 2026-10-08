@@ -22,8 +22,8 @@ vi.mock('../../../services/ana/run-control.js', async original => {
   const control = harness.mocks.runControl(await original<typeof import('../../../services/ana/run-control.js')>());
   return {
     ...control,
-    beginRun: async () => {
-      const run = await control.beginRun();
+    beginRun: async (input: Record<string, unknown>) => {
+      const run = await control.beginRun(input);
       return {
         ...run,
         handle: {

@@ -24,7 +24,7 @@ const record = (over: Record<string, unknown> = {}) => ({
 
 function sqlWith(records: unknown[]) {
   return {
-    query: vi.fn(async (text: string) =>
+    query: vi.fn(async (text: string, _params?: unknown[]) =>
       text.includes('FROM canonical_documents') ? { rows: records } : { rows: ORG_MEMBERS }),
   };
 }
