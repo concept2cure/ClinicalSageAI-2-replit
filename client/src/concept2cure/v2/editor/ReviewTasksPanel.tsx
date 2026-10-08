@@ -13,7 +13,9 @@
  * ESIGN_REQUIRED). The regulatory router restricts `moduleType` to six values
  * that do not include authoring, and the board is a read. So:
  *
- *   create      POST  /api/tasks/tasks           (AssignReviewDialog)
+ *   create      POST  /api/tasks/tasks           (SendForReviewDialog, after the
+ *                                                review request; AssignReviewDialog
+ *                                                holds the create)
  *   transition  PATCH /api/tasks/tasks/:taskId   (this panel — Start, Complete)
  *   list        GET   /api/tasks/tasks/by-module/Authoring, filtered here to
  *               sourceEntityType 'authoring_document' + this document's id
@@ -26,14 +28,31 @@
  * ── Completion ───────────────────────────────────────────────────────────────
  * Completing is the tasking path's OWN transition, nothing invented here: a
  * PATCH to `completed`. When the server answers 428 ESIGN_REQUIRED (an
- * approval-gated task) the ceremony lives on the Task board, and the panel
- * says so and offers to go there rather than re-implementing a signing dialog.
+ * approval-gated task), the signature is taken here, on the document, in the
+ * product's one signing dialog (TaskSignOffDialog.tsx over the shared
+ * EsignModal), and the same transition is sent again carrying it. Until
+ * 2026-10-08 the panel sent the signer to the Task board instead
+ * (docs/design/ONE_ANA_ONE_CANVAS.md §4.7, slice 19: a reviewer signs on the
+ * document, not on a task board).
+ *
+ * ── A review task and its review request ─────────────────────────────────────
+ * Send for review writes two records: the review request the Review board
+ * reads (authoring_reviews) and each reviewer's task. Nothing on the server
+ * joins them: the verdict route does not close the task, and completing the
+ * task records no verdict. So this panel reads the document's review requests
+ * too (GET /api/authoring/documents/:id/reviews) and states which is which.
+ * While a review task's assignee has a pending request, the task is not
+ * offered for completion: the verdict comes first, on the Review board, and a
+ * completed task whose review is still pending says so. A review task whose
+ * requests could not be read is not offered for completion either.
  */
 import React, { useCallback, useEffect, useId, useState } from 'react';
 import { apiRequest, redactInternals, serverMessage, type ApiRequestError } from '@/lib/queryClient';
+import type { EsignSigner } from '../../_shared/components/EsignModal';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import type { FireToast } from '../toast';
+import { TaskSignOffDialog, type TaskSignOffRequest } from './TaskSignOffDialog';
 
 /** The columns this panel reads from a unified_tasks row. */
 export interface AuthoringTaskRow {
@@ -50,6 +69,8 @@ export interface AuthoringTaskRow {
   approvalRequired: boolean | null;
   approvalStatus: string | null;
   createdAt: string | null;
+  /** 'review' for a review task (buildReviewTaskBody); null when not recorded. */
+  taskType: string | null;
 }
 
 export const AUTHORING_TASK_MODULE = 'Authoring';
@@ -102,6 +123,7 @@ function toAuthoringTaskRow(row: Record<string, unknown>): AuthoringTaskRow {
     approvalRequired: typeof row.approvalRequired === 'boolean' ? row.approvalRequired : null,
     approvalStatus: optionalText(row.approvalStatus),
     createdAt: optionalText(row.createdAt),
+    taskType: optionalText(row.taskType),
   };
 }
 
@@ -263,23 +285,171 @@ function useDocumentTasks(docId: string | null, refreshKey: number): DocumentTas
   return { state, rows, error, reload };
 }
 
+/** One review request on the document (an authoring_reviews row), as it is shown. */
+export interface StandingReview {
+  id: string;
+  reviewerId: string;
+  reviewer: string;
+  status: string;
+  requestedAt: string | null;
+  reviewedAt: string | null;
+}
+
+/** How a review state reads. Text, never colour alone. */
+const REVIEW_STATUS_LABEL: Record<string, string> = {
+  pending: 'Pending',
+  approved: 'Approved',
+  changes_requested: 'Changes requested',
+  rejected: 'Declined',
+};
+
+export function reviewStatusLabel(status: string): string {
+  return REVIEW_STATUS_LABEL[status] ?? (status ? status.replace(/_/g, ' ') : 'status not reported');
+}
+
+/** The first non-blank string among the values, trimmed. */
+function firstText(...values: unknown[]): string | null {
+  for (const v of values) if (typeof v === 'string' && v.trim()) return v.trim();
+  return null;
+}
+
+/**
+ * The review requests GET /api/authoring/documents/:id/reviews answered for
+ * THIS document, or null when the answer is not a reading of them: no success
+ * envelope, no rows array, or a row of another document. Null is never read as
+ * "nobody has been asked".
+ */
+export function standingReviewsOf(json: unknown, docId: string): StandingReview[] | null {
+  const body = json as { success?: unknown; reviews?: unknown } | null;
+  if (!body || body.success !== true || !Array.isArray(body.reviews)) return null;
+  const rows = body.reviews as Array<Record<string, unknown> | null>;
+  if (rows.some(r => !r || String(r.doc_id ?? '') !== docId || !String(r.reviewer_id ?? '').trim())) return null;
+  return (rows as Array<Record<string, unknown>>).map(r => {
+    const reviewerId = String(r.reviewer_id).trim();
+    return {
+      id: String(r.id ?? ''),
+      reviewerId,
+      reviewer: firstText(r.reviewer_name, r.reviewer_email) ?? reviewerId,
+      status: String(r.review_status ?? ''),
+      requestedAt: optionalText(r.requested_at),
+      reviewedAt: optionalText(r.reviewed_at),
+    };
+  });
+}
+
+export interface DocumentReviewsRead {
+  state: 'idle' | 'loading' | 'ready' | 'error';
+  rows: StandingReview[];
+  reload: () => void;
+}
+
+/**
+ * The document's review requests, read when the document changes, when
+ * `refreshKey` moves, and on reload. Shared by this panel and Send for review,
+ * so both say the same thing about who has been asked and what they decided.
+ */
+/** One read of the document's review requests; null when it is not a reading of them. */
+async function readStandingReviews(docId: string): Promise<StandingReview[] | null> {
+  try {
+    const res = await apiRequest('GET', `/api/authoring/documents/${encodeURIComponent(docId)}/reviews`);
+    const json = await res.json().catch(() => null);
+    return res.ok ? standingReviewsOf(json, docId) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function useDocumentReviews(docId: string | null, refreshKey = 0): DocumentReviewsRead {
+  const [state, setState] = useState<DocumentReviewsRead['state']>('idle');
+  const [rows, setRows] = useState<StandingReview[]>([]);
+  const [epoch, setEpoch] = useState(0);
+
+  useEffect(() => {
+    setRows([]);
+    if (!docId) {
+      setState('idle');
+      return undefined;
+    }
+    let alive = true;
+    setState('loading');
+    void readStandingReviews(docId).then(read => {
+      if (!alive) return;
+      setRows(read ?? []);
+      setState(read ? 'ready' : 'error');
+    });
+    return () => {
+      alive = false;
+    };
+  }, [docId, refreshKey, epoch]);
+
+  const reload = useCallback(() => setEpoch(e => e + 1), []);
+  return { state, rows, reload };
+}
+
+/** What the review request says about one task, for the row to state. */
+export type TaskReviewState =
+  | { kind: 'none' }
+  | { kind: 'reading' }
+  | { kind: 'unread' }
+  | { kind: 'pending'; reviewer: string }
+  | { kind: 'recorded'; verdict: string };
+
+/**
+ * The review request behind a review task: the request naming its assignee on
+ * this document. 'none' for a task that is not a review task, or a review task
+ * no request names (a task-only assignment); completion then works as before.
+ */
+export function taskReviewState(task: AuthoringTaskRow, reviews: Pick<DocumentReviewsRead, 'state' | 'rows'>): TaskReviewState {
+  if (task.taskType !== 'review' || task.assigneeId == null) return { kind: 'none' };
+  if (reviews.state === 'error') return { kind: 'unread' };
+  if (reviews.state !== 'ready') return { kind: 'reading' };
+  const row = reviews.rows.find(r => r.reviewerId === String(task.assigneeId));
+  if (!row) return { kind: 'none' };
+  return row.status === 'pending' ? { kind: 'pending', reviewer: row.reviewer } : { kind: 'recorded', verdict: reviewStatusLabel(row.status) };
+}
+
+const CLOSED_TASK = new Set(['completed', 'cancelled']);
+
+/** The sentence a review task carries about its verdict, or null when there is nothing to say. */
+function reviewStateNote(task: AuthoringTaskRow, review: TaskReviewState): string | null {
+  const closed = CLOSED_TASK.has(task.status);
+  switch (review.kind) {
+    case 'pending':
+      return closed
+        ? `This task is ${task.status}, but no verdict is recorded: ${review.reviewer}’s review is still pending on the Review board.`
+        : `Completing this task does not record a verdict. ${review.reviewer}’s review is pending on the Review board; the task can be completed once the verdict is recorded there.`;
+    case 'recorded':
+      return `Verdict recorded on the Review board: ${review.verdict}.`;
+    case 'unread':
+      return closed
+        ? 'Whether a verdict is recorded on the Review board could not be read.'
+        : 'Whether a verdict is recorded on the Review board could not be read, so this review task is not offered for completion. Refresh to read it again.';
+    default:
+      return null;
+  }
+}
+
 interface ReviewTaskRowProps {
   task: AuthoringTaskRow;
   busy: boolean;
-  needsSignature: boolean;
+  review: TaskReviewState;
   onTransition: (t: AuthoringTaskRow, status: 'in-progress' | 'completed') => void;
-  onNav?: (id: string) => void;
+  onOpenBoard?: () => void;
 }
 
 /**
  * One task as a row: its state chip, meta line, the transitions its current
- * state allows, and the §11.50 note when the server gated completion. Exists
- * so the panel body is the list and this is the row.
+ * state allows, and what its review request says. Exists so the panel body is
+ * the list and this is the row. A review task whose verdict is not recorded is
+ * not offered for completion: completing it would show a finished review the
+ * Review board does not have.
  */
-function ReviewTaskRow({ task, busy, needsSignature, onTransition, onNav }: ReviewTaskRowProps) {
+function ReviewTaskRow({ task, busy, review, onTransition, onOpenBoard }: ReviewTaskRowProps) {
   const st = TASK_STATE_LABEL[task.status] ?? { label: task.status.replace(/-/g, ' '), tone: 'idle' as const };
   const canStart = task.status === 'pending' || task.status === 'blocked';
-  const canComplete = task.status === 'in-progress' || task.status === 'review';
+  const verdictAllows = review.kind === 'none' || review.kind === 'recorded';
+  const canComplete = verdictAllows && (task.status === 'in-progress' || task.status === 'review');
+  const note = reviewStateNote(task, review);
   return (
     <div className="rt-row" role="listitem" data-status={task.status} data-testid="rt-row">
       <div className="rt-row-h">
@@ -301,12 +471,12 @@ function ReviewTaskRow({ task, busy, needsSignature, onTransition, onNav }: Revi
         )}
         <span className="rt-row-id" title={task.taskId}>{task.taskId}</span>
       </div>
-      {needsSignature && (
-        <div className="scaf-note" role="status" style={{ marginTop: 6, fontSize: 12 }}>
-          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — your password, the meaning, a reason — runs on the Task board.
-          {onNav && (
-            <button type="button" className="nda-open" style={{ marginLeft: 8 }} onClick={() => onNav('task-board')}>
-              Open Task board
+      {note && (
+        <div className="rt-row-d" data-testid="rt-review-state" data-review={review.kind}>
+          {review.kind === 'recorded' ? I.checkCircle : I.info} {note}
+          {review.kind === 'pending' && onOpenBoard && (
+            <button type="button" className="nda-open" style={{ marginLeft: 8 }} onClick={onOpenBoard}>
+              Open the Review board
             </button>
           )}
         </div>
@@ -319,12 +489,17 @@ export interface ReviewTasksPanelProps {
   docId: string | null;
   docTitle: string | null;
   refreshKey: number;
-  onAssign: () => void;
-  /* GE-P-3 (2026-09-28): the server's refusal of Assign review for this
-     caller, as the sentence to show; the control is disabled and described by
-     it. Null or absent = allowed or unknown: enabled, the server decides. */
-  assignRefusal?: string | null;
-  onNav?: (id: string) => void;
+  /** Open Send for review: the review request and each reviewer's task. */
+  onSendForReview: () => void;
+  /* GE-P-3 (2026-09-28): the server's refusal of the review assignment for
+     this caller, as the sentence to show; the control is disabled and
+     described by it. Null or absent = allowed or unknown: enabled, the server
+     decides. */
+  sendRefusal?: string | null;
+  /** Who the signing dialog shows as signing (the signed-in user). */
+  signer?: EsignSigner;
+  /** Open the Review board, where a reviewer records the verdict a review task waits on. */
+  onOpenBoard?: () => void;
   onClose: () => void;
   fireToast: FireToast;
 }
@@ -332,32 +507,70 @@ export interface ReviewTasksPanelProps {
 const TASK_LEDGER_HINT =
   'Each task is a row on the organization’s task ledger, linked to this document by its id, and every transition is audited.';
 
-/** No task yet. GE-P-3: when the server refuses Assign review, the refused act
- *  stays visible, disabled, in the bar above with its reason; this empty state
- *  does not repeat it as a live button. */
-function NoTasksYet({ onAssign, assignRefusal }: { onAssign: () => void; assignRefusal?: string | null }) {
+/** No task yet. GE-P-3: when the server refuses the review assignment, the
+ *  refused act stays visible, disabled, in the bar above with its reason; this
+ *  empty state does not repeat it as a live button. */
+function NoTasksYet({ onSendForReview, sendRefusal }: { onSendForReview: () => void; sendRefusal?: string | null }) {
   return (
     <EmptyState
       icon={I.checkSquare}
       title="No tasks linked to this document"
-      hint={assignRefusal ? TASK_LEDGER_HINT : 'Assign a review to create one. ' + TASK_LEDGER_HINT}
-      action={assignRefusal ? undefined : { label: 'Assign review', onAct: onAssign }}
+      hint={sendRefusal
+        ? TASK_LEDGER_HINT
+        : 'Send the document for review to create them: the request is listed on the Review board, and each reviewer gets a task here. ' + TASK_LEDGER_HINT}
+      action={sendRefusal ? undefined : { label: 'Send for review', onAct: onSendForReview }}
       testId="rt-empty"
     />
   );
 }
 
-export function ReviewTasksPanel({ docId, docTitle, refreshKey, onAssign, assignRefusal, onNav, onClose, fireToast }: ReviewTasksPanelProps) {
-  const assignNoteId = useId();
-  const { state, rows, error, reload } = useDocumentTasks(docId, refreshKey);
+/** The bar above the list: the counts, Send for review, and Refresh. */
+function TasksBar({ state, openCount, total, onSendForReview, sendRefusal, refusalId, onRefresh }: {
+  state: DocumentTasksRead['state'];
+  openCount: number;
+  total: number;
+  onSendForReview: () => void;
+  sendRefusal?: string | null;
+  refusalId: string;
+  onRefresh: () => void;
+}) {
+  return (
+    <>
+      <div className="rt-bar">
+        <span className="rt-bar-n">
+          {state === 'ready' ? `${openCount} open · ${total} total` : state === 'error' ? 'not read' : 'reading…'}
+        </span>
+        <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={onSendForReview} data-testid="rt-send-review"
+          disabled={!!sendRefusal} aria-describedby={sendRefusal ? refusalId : undefined}>
+          {I.send} Send for review
+        </button>
+        <button type="button" className="nda-open" onClick={onRefresh} disabled={state === 'loading'}>
+          {state === 'loading' ? 'Loading…' : 'Refresh'}
+        </button>
+      </div>
+      {sendRefusal && (
+        <p id={refusalId} className="scaf-note" style={{ padding: '4px 12px', margin: 0, fontSize: 11.5 }} data-testid="rt-send-refusal">
+          {sendRefusal}
+        </p>
+      )}
+    </>
+  );
+}
+
+/**
+ * The transitions this panel sends, and the signature a gated completion asks
+ * for. Its own hook so the panel body is the view. A 428 ESIGN_REQUIRED opens
+ * the signing dialog on the document; nothing is reported as completed until
+ * the server says so.
+ */
+function useTaskTransitions(docId: string | null, reload: (id: string) => void, fireToast: FireToast) {
   const [busy, setBusy] = useState<string | null>(null);
-  /** A completion the server gated on a signature: named on the row, with the way there. */
-  const [needsSignature, setNeedsSignature] = useState<string | null>(null);
+  /** A completion the server gated on a signature, awaiting the signer here. */
+  const [signing, setSigning] = useState<TaskSignOffRequest | null>(null);
 
   const transition = async (t: AuthoringTaskRow, status: 'in-progress' | 'completed') => {
     if (busy || !docId) return;
     setBusy(t.taskId);
-    setNeedsSignature(null);
     try {
       const res = await apiRequest('PATCH', `/api/tasks/tasks/${encodeURIComponent(t.taskId)}`, {
         status,
@@ -374,7 +587,7 @@ export function ReviewTasksPanel({ docId, docTitle, refreshKey, onAssign, assign
     } catch (e) {
       const failure = classifyTransitionError(e);
       if (failure.kind === 'esign') {
-        setNeedsSignature(t.taskId);
+        setSigning({ taskId: t.taskId, title: t.title, status, progress: 100 });
         return;
       }
       fireToast(failure.message, 'error');
@@ -384,7 +597,54 @@ export function ReviewTasksPanel({ docId, docTitle, refreshKey, onAssign, assign
     }
   };
 
-  const openCount = rows.filter(r => !['completed', 'cancelled'].includes(r.status)).length;
+  const closeSigning = () => setSigning(null);
+  const signed = (outcome: 'signed' | 'unknown') => {
+    setSigning(null);
+    if (outcome === 'signed') fireToast('Review task completed with your electronic signature, recorded on the task ledger.');
+    else fireToast('Whether the signature was recorded is unknown. Re-reading the task list.', 'error');
+    if (docId) reload(docId);
+  };
+  return { busy, transition, signing, closeSigning, signed };
+}
+
+/** The list itself: each task with what its review request says. */
+function TaskList({ rows, reviews, busy, onTransition, onOpenBoard }: {
+  rows: AuthoringTaskRow[];
+  reviews: DocumentReviewsRead;
+  busy: string | null;
+  onTransition: (t: AuthoringTaskRow, status: 'in-progress' | 'completed') => void;
+  onOpenBoard?: () => void;
+}) {
+  return (
+    <div className="rt-list" role="list" aria-label="Tasks linked to this document">
+      {rows.map(t => (
+        <ReviewTaskRow
+          key={t.taskId}
+          task={t}
+          busy={busy === t.taskId}
+          review={taskReviewState(t, reviews)}
+          onTransition={onTransition}
+          onOpenBoard={onOpenBoard}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function ReviewTasksPanel({ docId, docTitle, refreshKey, onSendForReview, sendRefusal, signer, onOpenBoard, onClose, fireToast }: ReviewTasksPanelProps) {
+  const refusalId = useId();
+  const { state, rows, error, reload: reloadTasks } = useDocumentTasks(docId, refreshKey);
+  const reviews = useDocumentReviews(docId, refreshKey);
+  const reloadReviews = reviews.reload;
+  /* The tasks and the review requests are re-read together, so a row never
+     pairs a fresh task state with a stale verdict. */
+  const reload = useCallback((id: string) => {
+    reloadTasks(id);
+    reloadReviews();
+  }, [reloadTasks, reloadReviews]);
+  const { busy, transition, signing, closeSigning, signed } = useTaskTransitions(docId, reload, fireToast);
+
+  const openCount = rows.filter(r => !CLOSED_TASK.has(r.status)).length;
 
   return (
     <>
@@ -395,23 +655,15 @@ export function ReviewTasksPanel({ docId, docTitle, refreshKey, onAssign, assign
         </button>
       </div>
       {docId && (
-        <div className="rt-bar">
-          <span className="rt-bar-n">
-            {state === 'ready' ? `${openCount} open · ${rows.length} total` : state === 'error' ? 'not read' : 'reading…'}
-          </span>
-          <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={onAssign} data-testid="rt-assign"
-            disabled={!!assignRefusal} aria-describedby={assignRefusal ? assignNoteId : undefined}>
-            {I.user} Assign review
-          </button>
-          <button type="button" className="nda-open" onClick={() => reload(docId)} disabled={state === 'loading'}>
-            {state === 'loading' ? 'Loading…' : 'Refresh'}
-          </button>
-        </div>
-      )}
-      {docId && assignRefusal && (
-        <p id={assignNoteId} className="scaf-note" style={{ padding: '4px 12px', margin: 0, fontSize: 11.5 }} data-testid="rt-assign-refusal">
-          {assignRefusal}
-        </p>
+        <TasksBar
+          state={state}
+          openCount={openCount}
+          total={rows.length}
+          onSendForReview={onSendForReview}
+          sendRefusal={sendRefusal}
+          refusalId={refusalId}
+          onRefresh={() => reload(docId)}
+        />
       )}
       {!docId ? (
         <EmptyState icon={I.checkSquare} title="No document selected" hint="Select a document to see the tasks linked to it." />
@@ -427,21 +679,11 @@ export function ReviewTasksPanel({ docId, docTitle, refreshKey, onAssign, assign
       ) : state === 'loading' && rows.length === 0 ? (
         <div role="status" className="scaf-note" style={{ padding: 12 }}>Reading the task ledger…</div>
       ) : rows.length === 0 ? (
-        <NoTasksYet onAssign={onAssign} assignRefusal={assignRefusal} />
+        <NoTasksYet onSendForReview={onSendForReview} sendRefusal={sendRefusal} />
       ) : (
-        <div className="rt-list" role="list" aria-label="Tasks linked to this document">
-          {rows.map(t => (
-            <ReviewTaskRow
-              key={t.taskId}
-              task={t}
-              busy={busy === t.taskId}
-              needsSignature={needsSignature === t.taskId}
-              onTransition={transition}
-              onNav={onNav}
-            />
-          ))}
-        </div>
+        <TaskList rows={rows} reviews={reviews} busy={busy} onTransition={transition} onOpenBoard={onOpenBoard} />
       )}
+      {signing && <TaskSignOffDialog req={signing} signer={signer} onClose={closeSigning} onSigned={signed} />}
     </>
   );
 }

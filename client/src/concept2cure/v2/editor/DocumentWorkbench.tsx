@@ -72,7 +72,7 @@ import { downloadBlob, safeFileName } from '../download';
 import { ProjectFilesPanel } from './ProjectFilesPanel';
 import { ReviewTasksPanel } from './ReviewTasksPanel';
 import { FileToVaultDialog } from './FileToVaultDialog';
-import { AssignReviewDialog } from './AssignReviewDialog';
+import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramSummary, programHeadline, programName } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt } from './askAnaToDraft';
 import { describeProvenance, type DocumentProvenance } from './provenance';
@@ -1031,10 +1031,12 @@ export function DocumentWorkbench({
     | null
   >(embedded ? null : 'ana');
   /* The two governed dialogs this workbench opens itself: filing the document
-     into the project vault (POST /docs/:id/file-to-vault) and assigning a
-     review task (POST /api/tasks/tasks). Both are closed until asked for. */
+     into the project vault (POST /docs/:id/file-to-vault) and sending it for
+     review (POST /documents/:id/request-review, then each reviewer's task,
+     POST /api/tasks/tasks: SendForReviewDialog.tsx). Both are closed until
+     asked for. */
   const [fileToVaultOpen, setFileToVaultOpen] = useState(false);
-  const [assignReviewOpen, setAssignReviewOpen] = useState(false);
+  const [sendForReviewOpen, setSendForReviewOpen] = useState(false);
   /* Bumped after a task is created so the Tasks rail re-reads. */
   const [tasksEpoch, setTasksEpoch] = useState(0);
   /* What the document header says about where its content came from — the
@@ -3810,17 +3812,21 @@ export function DocumentWorkbench({
               {I.checkSquare} Tasks
             </button>
             {/* GE-P-3 (2026-09-28): disabled, not hidden, when the server
-                will refuse this caller — the reason is the text beside it. */}
+                will refuse this caller — the reason is the text beside it.
+                2026-10-08: "Assign review" created a task the Review board
+                never reads. Send for review records the review request the
+                board lists, and each reviewer's task with it, as one act. The
+                gate stays the task create's, which is part of that act. */}
             {activeDoc && (
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={() => setAssignReviewOpen(true)}
+                onClick={() => setSendForReviewOpen(true)}
                 disabled={!!actRefusal(docAccess.assignReview)}
                 aria-describedby={actRefusal(docAccess.assignReview) ? assignRefusalId : undefined}
-                data-testid="assign-review-open"
+                data-testid="send-for-review-open"
               >
-                {I.user} Assign review
+                {I.send} Send for review
               </button>
             )}
             {activeDoc && actRefusal(docAccess.assignReview) && (
@@ -5369,9 +5375,10 @@ export function DocumentWorkbench({
             docId={activeDocId}
             docTitle={activeDoc?.title ?? null}
             refreshKey={tasksEpoch}
-            onAssign={() => setAssignReviewOpen(true)}
-            assignRefusal={actRefusal(docAccess.assignReview)}
-            onNav={onNav}
+            onSendForReview={() => setSendForReviewOpen(true)}
+            sendRefusal={actRefusal(docAccess.assignReview)}
+            signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+            onOpenBoard={() => onNav('review')}
             onClose={closeRail}
             fireToast={fireToast}
           />
@@ -5701,21 +5708,26 @@ export function DocumentWorkbench({
           fireToast={fireToast}
         />
       )}
-      {assignReviewOpen && activeDoc && (
-        <AssignReviewDialog
+      {sendForReviewOpen && activeDoc && (
+        <SendForReviewDialog
           docId={activeDoc.id}
           docTitle={activeDoc.title}
           programId={programId}
           sectionCode={activeSection?.code ?? null}
-          onClose={() => setAssignReviewOpen(false)}
-          onCreated={() => {
+          onClose={() => setSendForReviewOpen(false)}
+          onSent={() => {
+            /* The tasks the act created are listed beside the document. */
             setTasksEpoch(e => e + 1);
             setRail('tasks');
           }}
           onCheckTasks={() => {
-            setAssignReviewOpen(false);
+            setSendForReviewOpen(false);
             setTasksEpoch(e => e + 1);
             setRail('tasks');
+          }}
+          onOpenBoard={() => {
+            setSendForReviewOpen(false);
+            onNav('review');
           }}
           fireToast={fireToast}
         />

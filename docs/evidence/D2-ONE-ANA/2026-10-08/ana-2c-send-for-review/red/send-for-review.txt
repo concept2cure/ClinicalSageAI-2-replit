@@ -1,0 +1,6581 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer 5428ms
+   → Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > sends every chosen reviewer in one request, and gives each a task 5209ms
+   → Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > requires a reviewer and a reason at the server’s floor before anything is sent 5234ms
+   → Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > shows a refusal in the server’s words, creates no task, and lets the person send again 5241ms
+   → Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check 5176ms
+   → Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a success that names another document is not a receipt for this one 5147ms
+   → Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task that failed after the request is reported as not created; the request still stands 5175ms
+   → Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task whose creation could not be confirmed offers the task list, not a retry 5174ms
+   → Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the Tasks rail > the Tasks rail offers Send for review, not a task-only assignment 400ms
+   → Found multiple elements with the text: /Assign review/
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  data-testid="rt-assign"
+  style="height: 28px; font-size: 12px;"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-user"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+    />
+    <circle
+      cx="12"
+      cy="7"
+      r="4"
+    />
+  </svg>
+   Assign review
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="c2c-empty-action"
+  type="button"
+>
+  Assign review
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<aside
+  aria-label="Review tasks"
+  class="ed-comments"
+>
+  <div
+    class="ed-comments-h ed-comments-h-row"
+  >
+    <span>
+      Tasks
+       · Module 2.5 Clinical Overview
+    </span>
+    <button
+      aria-label="Close tasks"
+      class="ed-comments-close"
+      title="Close tasks"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="rt-bar"
+  >
+    <span
+      class="rt-bar-n"
+    >
+      0 open · 0 total
+    </span>
+    <button
+      class="btn ghost"
+      data-testid="rt-assign"
+      style="height: 28px; font-size: 12px;"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-user"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+        />
+        <circle
+          cx="12"
+          cy="7"
+          r="4"
+        />
+      </svg>
+       Assign review
+    </button>
+    <button
+      class="nda-open"
+      type="button"
+    >
+      Refresh
+    </button>
+  </div>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    data-testid="rt-empty"
+    role="status"
+  >
+    <span
+      aria-hidden="true"
+      class="c2c-empty-ic"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-square-check-big"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"
+        />
+        <path
+          d="m9 11 3 3L22 4"
+        />
+      </svg>
+    </span>
+    <div
+      class="c2c-empty-t"
+    >
+      No tasks linked to this document
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      Assign a review to create one. Each task is a row on the organization’s task ledger, linked to this document by its id, and every transition is audited.
+    </div>
+    <button
+      class="c2c-empty-action"
+      type="button"
+    >
+      Assign review
+    </button>
+  </div>
+</aside>
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer
+TestingLibraryElementError: Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openDialog client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:116:32
+    114|   render(<DocumentAuthoring {...p} />);
+    115|   await screen.findAllByText('Rationale');
+    116|   fireEvent.click(await screen.findByTestId('send-for-review-open'));
+       |                                ^
+    117|   const dlg = await screen.findByTestId('send-for-review-dialog');
+    118|   await within(dlg).findByTestId('sfr-reviewer-42');
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:129:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > sends every chosen reviewer in one request, and gives each a task
+TestingLibraryElementError: Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openDialog client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:116:32
+    114|   render(<DocumentAuthoring {...p} />);
+    115|   await screen.findAllByText('Rationale');
+    116|   fireEvent.click(await screen.findByTestId('send-for-review-open'));
+       |                                ^
+    117|   const dlg = await screen.findByTestId('send-for-review-dialog');
+    118|   await within(dlg).findByTestId('sfr-reviewer-42');
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:162:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > requires a reviewer and a reason at the server’s floor before anything is sent
+TestingLibraryElementError: Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openDialog client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:116:32
+    114|   render(<DocumentAuthoring {...p} />);
+    115|   await screen.findAllByText('Rationale');
+    116|   fireEvent.click(await screen.findByTestId('send-for-review-open'));
+       |                                ^
+    117|   const dlg = await screen.findByTestId('send-for-review-dialog');
+    118|   await within(dlg).findByTestId('sfr-reviewer-42');
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:176:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > shows a refusal in the server’s words, creates no task, and lets the person send again
+TestingLibraryElementError: Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openDialog client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:116:32
+    114|   render(<DocumentAuthoring {...p} />);
+    115|   await screen.findAllByText('Rationale');
+    116|   fireEvent.click(await screen.findByTestId('send-for-review-open'));
+       |                                ^
+    117|   const dlg = await screen.findByTestId('send-for-review-dialog');
+    118|   await within(dlg).findByTestId('sfr-reviewer-42');
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:199:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check
+TestingLibraryElementError: Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openDialog client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:116:32
+    114|   render(<DocumentAuthoring {...p} />);
+    115|   await screen.findAllByText('Rationale');
+    116|   fireEvent.click(await screen.findByTestId('send-for-review-open'));
+       |                                ^
+    117|   const dlg = await screen.findByTestId('send-for-review-dialog');
+    118|   await within(dlg).findByTestId('sfr-reviewer-42');
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:212:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a success that names another document is not a receipt for this one
+TestingLibraryElementError: Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openDialog client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:116:32
+    114|   render(<DocumentAuthoring {...p} />);
+    115|   await screen.findAllByText('Rationale');
+    116|   fireEvent.click(await screen.findByTestId('send-for-review-open'));
+       |                                ^
+    117|   const dlg = await screen.findByTestId('send-for-review-dialog');
+    118|   await within(dlg).findByTestId('sfr-reviewer-42');
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:227:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task that failed after the request is reported as not created; the request still stands
+TestingLibraryElementError: Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openDialog client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:116:32
+    114|   render(<DocumentAuthoring {...p} />);
+    115|   await screen.findAllByText('Rationale');
+    116|   fireEvent.click(await screen.findByTestId('send-for-review-open'));
+       |                                ^
+    117|   const dlg = await screen.findByTestId('send-for-review-dialog');
+    118|   await within(dlg).findByTestId('sfr-reviewer-42');
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:237:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task whose creation could not be confirmed offers the task list, not a retry
+TestingLibraryElementError: Unable to find an element by: [data-testid="send-for-review-open"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Module 2.5 Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="C2C-101"
+            >
+              C2C-101 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Module 2.5 Clinical Overview"
+            >
+              Module 2.5 Clinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.5.1
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openDialog client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:116:32
+    114|   render(<DocumentAuthoring {...p} />);
+    115|   await screen.findAllByText('Rationale');
+    116|   fireEvent.click(await screen.findByTestId('send-for-review-open'));
+       |                                ^
+    117|   const dlg = await screen.findByTestId('send-for-review-dialog');
+    118|   await within(dlg).findByTestId('sfr-reviewer-42');
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:251:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the Tasks rail > the Tasks rail offers Send for review, not a task-only assignment
+TestingLibraryElementError: Found multiple elements with the text: /Assign review/
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost"
+  data-testid="rt-assign"
+  style="height: 28px; font-size: 12px;"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-user"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+    />
+    <circle
+      cx="12"
+      cy="7"
+      r="4"
+    />
+  </svg>
+   Assign review
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="c2c-empty-action"
+  type="button"
+>
+  Assign review
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<aside
+  aria-label="Review tasks"
+  class="ed-comments"
+>
+  <div
+    class="ed-comments-h ed-comments-h-row"
+  >
+    <span>
+      Tasks
+       · Module 2.5 Clinical Overview
+    </span>
+    <button
+      aria-label="Close tasks"
+      class="ed-comments-close"
+      title="Close tasks"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="rt-bar"
+  >
+    <span
+      class="rt-bar-n"
+    >
+      0 open · 0 total
+    </span>
+    <button
+      class="btn ghost"
+      data-testid="rt-assign"
+      style="height: 28px; font-size: 12px;"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-user"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+        />
+        <circle
+          cx="12"
+          cy="7"
+          r="4"
+        />
+      </svg>
+       Assign review
+    </button>
+    <button
+      class="nda-open"
+      type="button"
+    >
+      Refresh
+    </button>
+  </div>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    data-testid="rt-empty"
+    role="status"
+  >
+    <span
+      aria-hidden="true"
+      class="c2c-empty-ic"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-square-check-big"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"
+        />
+        <path
+          d="m9 11 3 3L22 4"
+        />
+      </svg>
+    </span>
+    <div
+      class="c2c-empty-t"
+    >
+      No tasks linked to this document
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      Assign a review to create one. Each task is a row on the organization’s task ledger, linked to this document by its id, and every transition is audited.
+    </div>
+    <button
+      class="c2c-empty-action"
+      type="button"
+    >
+      Assign review
+    </button>
+  </div>
+</aside>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:270:25
+    268|     const rail = await screen.findByRole('complementary', { name: 'Rev…
+    269|     await within(rail).findByTestId('rt-empty');
+    270|     expect(within(rail).queryByText(/Assign review/)).toBeNull();
+       |                         ^
+    271|     fireEvent.click(within(rail).getByTestId('rt-send-review'));
+    272|     expect(await screen.findByTestId('send-for-review-dialog')).toBeTr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  03:14:15
+   Duration  45.64s (transform 1.90s, setup 186ms, import 2.46s, tests 42.19s, environment 595ms)
+

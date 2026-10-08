@@ -1,0 +1,16 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > does not offer Complete while the assignee’s review is pending, says why, and offers the Review board 288ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > offers Complete once the verdict is recorded, and names it 17ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > a completed review task whose review is still pending says no verdict is recorded 20ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after a refused read, a review task is not offered for completion, and a task that is not a review task is 15ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after an answer with no rows, a review task is not offered for completion, and a task that is not a review task is 18ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after rows of another document, a review task is not offered for completion, and a task that is not a review task is 19ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > Refresh reads the review requests again with the tasks 89ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  05:53:06
+   Duration  2.72s (transform 672ms, setup 282ms, import 810ms, tests 477ms, environment 829ms)
+

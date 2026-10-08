@@ -23,6 +23,15 @@
  * electronic signature — see DecisionModal below. Binding signatures are applied
  * from the authoring workspace (server/routes/authoring.router.ts), re-verified
  * and sealed against a frozen document version.
+ *
+ * ── Opening the document (2026-10-08) ────────────────────────────────────────
+ * "Open in editor", "Open the document to sign" and, on an AI comment, "Open
+ * the document" open THE reviewed document, by id, through the editor
+ * deep-link channel (../editorTarget.ts), the way Vault's "Open in editor"
+ * does. They used to navigate to the editor with no document, so the reviewer
+ * landed on its list (docs/design/ONE_ANA_ONE_CANVAS.md §4.7, slice 19). The
+ * AI comment's button said "Apply in editor"; nothing applies the suggestion,
+ * so it is named for what it does.
  */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
@@ -35,7 +44,8 @@ import { useDialog } from '../useDialog';
 import type { ReviewItem, ReviewComment, ReviewWorkflow } from '../fixtures/review-data';
 import { STATUS_TONE } from '../fixtures/review-data';
 import { assessmentStateFor, hasAnswer } from '../assessmentState';
-import { readShellProject } from '../shellProject';
+import { publishShellProject, readShellProject } from '../shellProject';
+import { setEditorTarget } from '../editorTarget';
 import { ReviewThreadsPane } from './ReviewThreads';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -134,6 +144,28 @@ function ScopeBar({ scope, onScope, program, onlyProgram, onOnlyProgram }: {
       )}
     </div>
   );
+}
+
+/**
+ * Open the reviewed document itself in the editor, not the editor's list.
+ *
+ * The target names the document by id, the strongest claim the channel takes:
+ * the editor opens it or states the miss. The editor's document list is scoped
+ * to the open program, so when the document belongs to another program, that
+ * program is opened first: REPLACE, never merge, as MdxSurfaceHost's
+ * openEditor does. A document with no program opens only if the editor can
+ * see it, and otherwise the editor says it could not.
+ */
+export function openReviewDocument(
+  item: Pick<ReviewItem, 'id' | 'programId' | 'prog'>,
+  onNav: (id: string) => void,
+): void {
+  const shell = readShellProject();
+  if (item.programId && String(shell?.id ?? '') !== item.programId) {
+    publishShellProject({ id: item.programId, ...(item.prog ? { title: item.prog } : {}) });
+  }
+  setEditorTarget({ docType: null, docId: item.id, programId: item.programId, programTitle: item.prog });
+  onNav('document-authoring');
 }
 
 /* ── Review-decision modal ── */
@@ -584,9 +616,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const item = queue.find((r) => r.id === sel) || queue[0];
   const wf: ReviewWorkflow | null = workflows[item.id] || null;
 
-  const openEditor = () => {
-    onNav('document-authoring');
-  };
+  const openEditor = () => openReviewDocument(item, onNav);
 
   /**
    * Request changes — the authoring verdict `changes_requested`, through
@@ -815,7 +845,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                 : item.myReviewStatus && item.myReviewStatus !== 'pending'
                   ? <RecordDecision item={item} />
                   : item.atMySignOff
-                    ? <button className="btn primary" onClick={openEditor}>{I.lock} Sign in the authoring workspace</button>
+                    ? <button className="btn primary" onClick={openEditor} data-testid="rv-open-to-sign">{I.lock} Open the document to sign</button>
                     : item.state === 'approved'
                       ? <span className="rd-chip tone-ok" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.shieldCheck} Approved</span>
                       : item.state === 'changes-requested'
@@ -948,7 +978,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                     {Math.round(item.conf * 100)}% confidence
                   </span>
                 )}
-                <button className="btn ghost" style={{ height: 28 }} onClick={openEditor}>{I.externalLink} Open in editor</button>
+                <button className="btn ghost" style={{ height: 28 }} onClick={openEditor} data-testid="rv-open-in-editor">{I.externalLink} Open in editor</button>
               </div>
             </div>
             <div className="rv-doc-page">
@@ -991,7 +1021,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                 {c.state === 'open' && (
                   <div className="cmt-actions">
                     <button className="btn ghost" style={{ height: 26 }} onClick={() => resolveCmt(c.id)}>Resolve</button>
-                    {c.ai && <button className="btn ghost" style={{ height: 26 }} onClick={openEditor}>Apply in editor</button>}
+                    {c.ai && <button className="btn ghost" style={{ height: 26 }} onClick={openEditor} data-testid="rv-comment-open-doc">Open the document</button>}
                   </div>
                 )}
               </div>
