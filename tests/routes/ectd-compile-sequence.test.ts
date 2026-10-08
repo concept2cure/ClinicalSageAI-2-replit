@@ -27,7 +27,15 @@ vi.mock('../../server/services/ectd/assemble-from-core', async (importOriginal) 
 import ectdCompileRoutes from '../../server/routes/ectd-compile';
 import { ORG, UUID, LEAVES, REAL_BACKBONE, handlerOf, makeBundleZip, assembledResult, makeReq } from './ectd-compile-spine.harness';
 
-const NDA_PROGRAM = { id: UUID, code: 'ONC-221', name: 'ONC-221 Program', product_name: 'Vorelinib', program_type: 'nda' };
+/**
+ * 2026-10-08, merged with trunk: a compile now assembles only when the record
+ * names the application and the applicant (services/ectd/package-identity.ts),
+ * so the project records an agency number and the organisation a name. Every
+ * package path reads them from the submission's project; a sequence compiles
+ * here only when its submission is anchored to this project, so the MAA's
+ * compile names what its export and transmit would.
+ */
+const NDA_PROGRAM = { id: UUID, code: 'ONC-221', name: 'ONC-221 Program', product_name: 'Vorelinib', program_type: 'nda', application_number: '214321' };
 /** The project's own NDA submission (55) has sequence 9 (FDA); its MAA (56) has sequence 21 (EU). */
 const OWN_SEQUENCES: Record<number, { submission_id: number; application_type: string; primary_region: string; sequence_number: string; region: string }> = {
   21: { submission_id: 56, application_type: 'maa', primary_region: 'eu', sequence_number: '0000', region: 'eu' },
@@ -41,6 +49,7 @@ beforeEach(() => {
   poolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
     if (/FROM ectd_compilations/i.test(sql)) return { rows: [] };
     if (/FROM c2c_rule_packs/i.test(sql)) return { rows: [] };
+    if (/FROM organizations/i.test(sql)) return { rows: [{ name: 'Vorelinib Therapeutics Inc.' }] };
     if (/FROM regulatory_programs/i.test(sql)) return { rows: [NDA_PROGRAM] };
     // A named sequence, joined to its submission and held to this program.
     if (/FROM ectd_sequences/i.test(sql) && /JOIN submissions/i.test(sql)) {

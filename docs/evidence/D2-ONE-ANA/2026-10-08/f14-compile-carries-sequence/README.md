@@ -34,3 +34,15 @@ Launch row **D2**. This is slice F14 of `docs/design/FILING_SPINE.md` §7.2, and
 `tests/routes/ectd-compile-spine.test.ts` pinned the status `sequence` object exactly. It is amended to include `id`, with a dated note.
 
 The green runs are in `green/`: the two new suites (**9 passed**: 6 server, 3 client); the affected suites (**1505 passed, 0 failed**, 101 files); `npm run typecheck`, **0 errors**. The first typecheck found one error, TS2345 at the eValidator import, and narrowing the helper's anchor to `SpineAnchor` fixed it.
+
+## Merged with trunk (26 commits, the same day)
+
+Trunk's `b86baf55` made a compile assemble only when the record names the application and the applicant (`server/services/ectd/package-identity.ts`).
+- The two F14 cases that compile failed after the merge, because the suite's program recorded no agency number and its organization no name. The suite now records both, with a dated note. All 6 pass.
+- Every package path (export, transmit, compile) reads that identity from the submission's project. F14 compiles a sequence only when its submission is anchored to the open project, so the compiled MAA names what its export and transmit would. **Open, for the package-identity rule's owner:** a project records one application number, so a second market's package (the MAA here) carries the project's number on all three paths. This merge does not change that rule.
+
+One trunk test was red before this change: `submissionCenterLifecycleQa`, "never a placeholder". It fails on trunk's own surfaces too (`red/merge-lifecycle-red.txt`).
+- The cause is F10's Test package note, which printed the dry-run token: "the server writes the application number and sponsor as UNASSIGNED".
+- The note now says what that means without printing the token: "its application number and applicant are placeholders, not the ones on record". F10's own suite pins "carries no agency identifiers", and that phrase stays.
+
+After the merge, in `green/merged-vitest.txt`: the compile routes, the compile screen, the Submission Center and the test-package suites pass. `npm run typecheck`: 0 errors. `ci:eslint-ratchet:since origin/concept2cure-v2`: no file changed its count.
