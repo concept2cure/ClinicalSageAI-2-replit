@@ -335,7 +335,6 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const [requesting, setRequesting] = useState(false);
   const [requestErr, setRequestErr] = useState('');
   const [scope, setScope] = useState<Scope>('all');
-  const [onlyProgram, setOnlyProgram] = useState(false);
   const [toast, fireToast] = useToast();
   /** The queue column — "Open the queue" scrolls to it and focuses the row it selected. */
   const queueRef = useRef<HTMLDivElement>(null);
@@ -348,6 +347,11 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     if (!p || !UUID_RE.test(String(p.id))) return null;
     return { id: String(p.id), title: p.title || p.code || p.product || String(p.id) };
   }, []);
+  /* With a program open, the board starts on THAT program. It started
+     org-wide, so the screen reached from BX-256's project home listed BX-204's
+     device items under it (QA 2026-10-08, j1). Every program stays one click
+     away: the toggle widens the board on purpose. */
+  const [onlyProgram, setOnlyProgram] = useState(() => program !== null);
 
   // Live, org-scoped review board — GET /api/review/board → { success, data }.
   // useLiveData unwraps the success envelope, so `board` is the render contract
@@ -575,7 +579,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           />
         )}
         {/* Threads can exist even when no document is on the approval board. */}
-        <ReviewThreadsPane onNotice={fireToast} board={boardContext} />
+        <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
         <C2CToast msg={toast} />
       </div>
     );
@@ -908,7 +912,10 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
               unread chain. */}
           {!wf && (
             <div className="esign-banner">
-              <span className="ico">{I.gitBranch}</span> Not yet submitted for sign-off. The approval chain appears here once the author submits the document from the authoring workspace.
+              {/* QA 2026-10-08 (j4): this said the author submits the document
+                  from the authoring workspace; no control there submits to a
+                  chain. What is true is said instead. */}
+              <span className="ico">{I.gitBranch}</span> No approval chain: this document has not been submitted to one. In the authoring workspace it is approved by an Approval e-signature, which an approver applies after the review.
             </div>
           )}
           {wf && (
@@ -1014,7 +1021,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
       {/* Real, persisted review threads (Phase-13 backend) — assigned to the
           signed-in reviewer, with reply / request-changes / resolve in place. */}
-      <ReviewThreadsPane onNotice={fireToast} board={boardContext} />
+      <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
 
       <C2CToast msg={toast} />
     </div>

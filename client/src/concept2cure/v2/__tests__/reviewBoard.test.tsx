@@ -164,6 +164,51 @@ describe('Review board — real data', () => {
   });
 });
 
+/* QA 2026-10-08 (j1, "Project screens show other programs' documents"): with
+   BX-256 open, Review & approval listed BX-204's device items. The board was
+   read org-wide by default and the program filter started OFF, so the screen
+   reached from a program showed every program's queue under it. With a
+   program open the board now reads that program by default; the toggle
+   widens it to every program on purpose. */
+describe('Review board — the open program', () => {
+  const PROGRAM = '099991d1-dac8-43c5-b88a-8baab26194ee';
+  beforeEach(() => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM, title: 'BX-256' };
+  });
+  afterEach(() => {
+    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  });
+
+  it('reads only the open program by default', async () => {
+    apiRequest.mockImplementation(async () => ok(BOARD));
+    render(<Review {...props()} />);
+    await waitFor(() => expect(apiRequest).toHaveBeenCalled());
+    expect(String(apiRequest.mock.calls[0][1])).toBe(`/api/review/board?scope=all&programId=${PROGRAM}`);
+    expect(apiRequest.mock.calls.some((c) => String(c[1]) === '/api/review/board?scope=all')).toBe(false);
+  });
+
+  it('widens to every program only when asked', async () => {
+    apiRequest.mockImplementation(async () => ok(BOARD));
+    render(<Review {...props()} />);
+    const toggle = await screen.findByRole('button', { pressed: true, name: /BX-256/ });
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(apiRequest.mock.calls.some((c) => String(c[1]) === '/api/review/board?scope=all')).toBe(true));
+  });
+
+  /* What QA actually saw: the board was empty, and the "Threads & change
+     requests — assigned to you" inbox under it listed BX-204's items. */
+  it('the review-thread inbox follows the same program filter', async () => {
+    apiRequest.mockImplementation(async () => ok(BOARD));
+    render(<Review {...props()} />);
+    const inbox = (u: string) => apiRequest.mock.calls.some((c) => String(c[1]) === u);
+    await waitFor(() => expect(inbox(`/api/concept2cure/reviews/my-queue?programId=${PROGRAM}`)).toBe(true));
+    expect(inbox('/api/concept2cure/reviews/my-queue')).toBe(false);
+    fireEvent.click(await screen.findByRole('button', { pressed: true, name: /BX-256/ }));
+    await waitFor(() => expect(inbox('/api/concept2cure/reviews/my-queue')).toBe(true));
+  });
+});
+
 describe('Review board — honest empty', () => {
   it('shows the empty state, not a fabricated queue, when the org has nothing in review', async () => {
     apiRequest.mockImplementation(async () => ok(EMPTY_BOARD));

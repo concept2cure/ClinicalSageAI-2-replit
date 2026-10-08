@@ -47,6 +47,8 @@ import {
   sendSuccess,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
+import { looksLikeProgramUuid } from '../../lib/project-id';
+import { resolveProgramProjectAnchor } from '../../services/c2c/program-project-anchor';
 import { createNotification, upsertProjectWorkItem } from './notifications';
 import { clientIpKey } from '../../utils/client-ip';
 import { postRecordedComment, retractRecordedComment } from './review-comment-record';
@@ -1720,16 +1722,41 @@ router.post('/review-tasks/:taskId/reopen', async (req: Request, res: Response) 
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * `?programId=` on the inbox: undefined when none is named (the whole inbox),
+ * false when the value is not a program UUID, otherwise the program's anchored
+ * projects row or null when it has none. QA 2026-10-08 (j1): with BX-256 open,
+ * Review & approval listed BX-204's threads, because the inbox had no program
+ * filter. Review threads and tasks carry the integer project id; the program's
+ * UUID is resolved to it on the server, strict — a lookup that could not
+ * complete throws to the handler's 500, never an empty inbox.
+ */
+async function inboxProjectFilter(raw: unknown, orgId: number): Promise<number | null | false | undefined> {
+  if (raw == null || raw === '') return undefined;
+  if (!looksLikeProgramUuid(raw)) return false;
+  return resolveProgramProjectAnchor(db, {
+    programId: String(raw).trim().toLowerCase(),
+    orgId,
+    context: 'reviews-my-queue',
+    strict: true,
+  });
+}
+
+/**
  * GET /api/concept2cure/reviews/my-queue
- * Returns all open threads, tasks assigned to the current user across all artifacts.
+ * Returns all open threads, tasks assigned to the current user across all artifacts —
+ * or, with `?programId=<regulatory_programs UUID>`, those on that program only.
  */
 router.get('/reviews/my-queue', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
+    const onProject = await inboxProjectFilter(req.query.programId, organizationId);
+    if (onProject === false) return sendError(res, 400, 'programId must be a program id');
+    // A program with no project record has no review threads or tasks to read.
+    const unanchored = onProject === null;
 
     // Threads assigned to me that are open
-    const myThreads = await db
+    const myThreads = unanchored ? [] : await db
       .select({
         threadId: concept2cureReviewThreads.threadId,
         title: concept2cureReviewThreads.title,
@@ -1752,13 +1779,14 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
         and(
           eq(concept2cureReviewThreads.assigneeId, userId),
           eq(concept2cureReviewThreads.orgId, organizationId),
-          eq(concept2cureReviewThreads.status, 'open')
+          eq(concept2cureReviewThreads.status, 'open'),
+          onProject == null ? undefined : eq(concept2cureReviewThreads.projectId, onProject)
         )
       )
       .orderBy(desc(concept2cureReviewThreads.updatedAt));
 
     // Tasks assigned to me that are open/in_progress
-    const myTasks = await db
+    const myTasks = unanchored ? [] : await db
       .select({
         taskId: concept2cureReviewTasks.taskId,
         title: concept2cureReviewTasks.title,
@@ -1782,7 +1810,8 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
         and(
           eq(concept2cureReviewTasks.assignedToId, userId),
           eq(concept2cureReviewTasks.orgId, organizationId),
-          inArray(concept2cureReviewTasks.status, ['open', 'in_progress'])
+          inArray(concept2cureReviewTasks.status, ['open', 'in_progress']),
+          onProject == null ? undefined : eq(concept2cureReviewTasks.projectId, onProject)
         )
       )
       .orderBy(concept2cureReviewTasks.dueAt, desc(concept2cureReviewTasks.updatedAt));
