@@ -1,0 +1,11 @@
+import { open, snap, sleep, BASE } from './h.mjs';
+const { page, log, done } = await open();
+await page.goto(`${BASE}/concept2cure/projects`, { waitUntil: 'domcontentloaded' });
+await page.waitForSelector('.pj-card', { timeout: 90000 });
+await sleep(1500);
+await snap(page, (process.env.TAG || 'before') + '-projects-list');
+const cards = await page.$$eval('.pj-card', (els) => els.map((e) => e.innerText.replace(/\s+/g, ' ').trim()));
+for (const c of cards) if (/NM-512|BX-256|BX-301|BX-204|HLV/.test(c)) console.log('CARD:', c);
+console.log('SUMMARY:', await page.$eval('.pj-summary', (e) => e.innerText.replace(/\s+/g, ' ')).catch(() => 'none'));
+console.log('LOG', JSON.stringify(log));
+await done();

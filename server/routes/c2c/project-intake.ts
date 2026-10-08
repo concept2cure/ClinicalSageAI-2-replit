@@ -159,14 +159,32 @@ export async function ensureSubmissionSpine(params: {
   return { id: Number(row.id), created: true };
 }
 
-/** A tester-friendly, org-unique program code derived from the product/name. */
+/** A word that is itself a program code: "BX-204", "BX204", "HLV-333", "QA-SS-101". */
+const CODE_WORD = /^(?:[A-Za-z0-9]{1,4}-){0,2}[A-Za-z]{1,4}-?\d{2,4}$/;
+
+/**
+ * The program code, before the route's org-uniqueness suffix.
+ *
+ * In order: a product name that IS a code ("BX-204", "bx 204"); a word of the
+ * product name that is a code ("BX-204 CGM"), then one of the project name
+ * ("HLV-333 — IND"); the initials of a several-word name; the first four
+ * characters of a one-word name. It used to read the product name only and
+ * take the initials of its words, so a one-word product gave a one-letter code
+ * ("Helvanta-QA3" → "H", "QA-SS-101" → "Q") and the code written in the
+ * project name was never looked at (QA 2026-10-08, j1).
+ */
 export function baseCodeFrom(productName: string, name: string): string {
-  const src = (productName || name || 'PRJ').trim();
-  // Keep an existing "BX-204"-style code intact; else initials of the words.
-  const cleaned = src.replace(/[^A-Za-z0-9\- ]/g, '').trim();
-  if (/^[A-Za-z]{1,4}[- ]?\d{2,4}$/.test(cleaned)) {
-    return cleaned.replace(/\s+/g, '-').toUpperCase();
+  const clean = (s: string) => (s || '').replace(/[^A-Za-z0-9\- ]/g, ' ').replace(/\s+/g, ' ').trim();
+  const product = clean(productName);
+  const project = clean(name);
+  if (/^[A-Za-z]{1,4}[- ]?\d{2,4}$/.test(product)) {
+    return product.replace(/\s+/g, '-').toUpperCase();
   }
-  const initials = cleaned.split(/\s+/).map((w) => w[0] ?? '').join('').slice(0, 4).toUpperCase();
-  return initials || 'PRJ';
+  for (const src of [product, project]) {
+    const word = src.split(' ').find((w) => CODE_WORD.test(w));
+    if (word) return word.toUpperCase();
+  }
+  const words = (product || project).split(' ').map((w) => w.replace(/[^A-Za-z0-9]/g, '')).filter(Boolean);
+  const letters = words.length > 1 ? words.map((w) => w[0]).join('') : (words[0] ?? '');
+  return letters.slice(0, 4).toUpperCase() || 'PRJ';
 }

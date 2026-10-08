@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > takes the code written in the project name when the product has none (the QA case) 2ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > never derives a one-letter code from a single-word product name 4ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > prefers a code inside the product name over the project name 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > keeps a product name that is itself a code, exactly as before 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > keeps a multi-part code whole (QA DB, 2026-10-08: product "QA-SS-101" was saved as code "Q") 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > keeps initials for a several-word name with no code in it 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > does not read a target or a word as a code 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > falls back to PRJ only when there is nothing to derive from 0ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  03:19:20
+   Duration  974ms (transform 235ms, setup 205ms, import 67ms, tests 12ms, environment 0ms)
+

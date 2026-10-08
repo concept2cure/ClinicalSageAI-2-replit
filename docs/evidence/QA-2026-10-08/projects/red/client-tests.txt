@@ -1,0 +1,3382 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 419ms
+   → Continue was enabled with no project name: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 153ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 120ms
+   → expected <dd></dd> to be null
+ × client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 201ms
+   → expected '  HLV-334 — IND (QA)  ' to be 'HLV-334 — IND (QA)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 177ms
+   → expected '—' to contain 'HLV-334 — IND (QA)'
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 164ms
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program recorded blocked with no blocker says no cause is recorded (the NM-512 case) 97ms
+   → expected 'Program nm512NM512 · Manufacturing · …' to match /no cause recorded/i
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program with a recorded blocker shows that blocker, not the no-cause line 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > an active program makes no blocker claim either way 30ms
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program 365ms
+   → expected 'Program nm512NM512MDXManufacturing—Ra…' to match /no cause recorded/i
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses 25ms
+   → expected 'Program hlvHLV · Manufacturing · Lead…' to contain 'Dossier readiness 0%'
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkspaceGating.test.tsx > Project home Workspace grid — a tile is offered only when it can open > positive control: with the graph flag on and no launch scope, the CRL tile is found 269ms
+ × client/src/concept2cure/v2/__tests__/projectHomeWorkspaceGating.test.tsx > Project home Workspace grid — a tile is offered only when it can open > does not offer the FDA CRL library while its graph flag is off (its API is not mounted) 152ms
+   → the CRL tile opens a 404 when the graph is off: expected [ 'program-journey', …(56) ] to not include 'crl-library'
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkspaceGating.test.tsx > Project home Workspace grid — a tile is offered only when it can open > offers nothing outside the launch catalog when launch scope is enforced 52ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the governed readiness, and ignores a stale progress_percent 5333ms
+   → expected 'Project home for "BX-512" (BX-512): s…' to contain 'dossier readiness 62%'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-crumb"
+        >
+          <span
+            class="pj-crumb-i"
+            data-cur="true"
+          >
+            <span
+              class="pj-crumb-k"
+            >
+              Project
+            </span>
+            BX-512
+          </span>
+        </div>
+        <div
+          class="pj-top"
+        >
+          <div
+            class="pj-top-l"
+          >
+            <h1
+              class="pj-title"
+            >
+              BX-512
+            </h1>
+            <div
+              class="pj-tags"
+            >
+              <span
+                class="rd-chip tone-idle"
+              >
+                BX-512
+              </span>
+              <span
+                class="rd-chip tone-idle"
+              >
+                FDA
+              </span>
+              <span
+                class="rd-chip tone-idle"
+              >
+                KIT-mutant gastrointestinal stromal tumor
+              </span>
+              <span
+                class="rd-chip tone-ok"
+              >
+                active
+              </span>
+              <span
+                class="rd-chip tone-warn"
+              >
+                priority: 
+                high
+              </span>
+              <span
+                class="rd-chip tone-idle"
+              >
+                clinical
+              </span>
+            </div>
+            <section
+              aria-label="Program identity"
+              class="pj-facts"
+            >
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Sponsor
+                </dt>
+                <dd>
+                  Concept2Cure Therapeutics
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Product
+                </dt>
+                <dd>
+                  Vorelinib
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Indication
+                </dt>
+                <dd>
+                  KIT-mutant gastrointestinal stromal tumor
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  IND number
+                </dt>
+                <dd>
+                  000512
+                </dd>
+              </dl>
+            </section>
+          </div>
+        </div>
+        <div
+          aria-label="Project lifecycle"
+          class="pj-lc"
+          role="tablist"
+        >
+          <button
+            class="pj-lc-stage"
+            title="Strategy, precedent, agency meetings & timeline"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-calendar"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 2v4"
+                  />
+                  <path
+                    d="M16 2v4"
+                  />
+                  <rect
+                    height="18"
+                    rx="2"
+                    width="18"
+                    x="3"
+                    y="4"
+                  />
+                  <path
+                    d="M3 10h18"
+                  />
+         ...
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads 0%, the same as its card 163ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > readiness that could not be measured is stated as "not measured", never left out or drawn as 0 5220ms
+   → Unable to find an element with the text: Dossier readiness, which matches selector 'h3'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-512
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-512
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-idle"
+            >
+              BX-512
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              FDA
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              KIT-mutant gastrointestinal stromal tumor
+            </span>
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+            <span
+              class="rd-chip tone-warn"
+            >
+              priority: 
+              high
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              clinical
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                Concept2Cure Therapeutics
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                Vorelinib
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                KIT-mutant gastrointestinal stromal tumor
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                IND number
+              </dt>
+              <dd>
+                000512
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linkin...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-512
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-512
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-idle"
+            >
+              BX-512
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              FDA
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              KIT-mutant gastrointestinal stromal tumor
+            </span>
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+            <span
+              class="rd-chip tone-warn"
+            >
+              priority: 
+              high
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              clinical
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                Concept2Cure Therapeutics
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                Vorelinib
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                KIT-mutant gastrointestinal stromal tumor
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                IND number
+              </dt>
+              <dd>
+                000512
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linkin...
+ × client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > names the linked program from the program record 5069ms
+   → expected 'BX-256 · systemic lupus erythematosus…' to match /Program BX-256/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="sp sc-page"
+      >
+        <div
+          class="sp-head"
+        >
+          <div>
+            <div
+              class="sp-eyebrow"
+            >
+              Submission
+            </div>
+            <h1
+              class="sp-title"
+            >
+              Submission center
+            </h1>
+            <p
+              class="sp-state"
+            >
+              Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+            </p>
+          </div>
+          <select
+            aria-label="Submission to work on"
+            class="sc-subpick"
+          >
+            <option
+              value="5"
+            >
+              BX-256 · systemic lupus erythematosus (IND)
+               · 
+              IND
+               · 
+              FDA (US)
+            </option>
+            <option
+              value="3"
+            >
+              BX-204 (NDA 212345 · 505(b)(1))
+               · 
+              NDA
+               · 
+              FDA (US)
+            </option>
+          </select>
+        </div>
+        <div
+          class="al-lead al-calm"
+        >
+          <div
+            class="al-k"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Where BX-256 · systemic lupus erythematosus (IND) stands
+          </div>
+          <div
+            class="al-h"
+          >
+            BX-256 · systemic lupus erythematosus (IND)
+             (BX-256)
+             — a 
+            FDA (US)
+             
+            IND
+             at the 
+            <b>
+              original
+            </b>
+             stage.
+          </div>
+          <div
+            class="al-b"
+          >
+            <b>
+              0
+            </b>
+             eCTD 
+            sequences
+             
+            tracked
+             yet
+            . Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+          </div>
+          <div
+            class="al-re"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+          </div>
+          <div
+            class="al-act"
+          >
+            <button
+              class="al-btn"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               
+              Plan the submission
+            </button>
+            <span
+              class="al-note"
+            >
+              Or move through the workspaces below — plan, build, validate, dispatch.
+            </span>
+          </div>
+        </div>
+        <div
+          class="sc-wsbar"
+          role="tablist"
+        >
+          <button
+            aria-selected="true"
+            class="sc-ws on"
+            role="tab"
+            type="button"
+          >
+            Submissions
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Planner
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Builder
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Sequences
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Validation
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Shadow review
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Cross-region
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Dispatch
+          </button>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Submissions
+            </span>
+            <button
+              class="pj-card-h-go"
+              type="button"
+            >
+              + New submission
+            </button>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <table
+              class="ub-inv"
+            >
+              <thead>
+                <tr>
+                  <th>
+                    Program
+                  </th>
+                  <th>
+                    Region
+                  </th>
+                  <th>
+                    Type
+                  </th>
+                  <th>
+                    Client
+                  </th>
+                  <th>
+                    Stage
+                  </th>
+                  <th>
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  class="sc-subrow"
+                  data-cur="true"
+                >
+                  <td>
+                    <button
+                      aria-label="Open BX-256 · systemic lupus erythematosus (IND)"
+                      class="sc-subrow-open"
+                      type="button"
+                    >
+                      <b>
+                        BX-256 · systemic lupus erythematosus (IND)
+                      </b>
+                    </button>
+                    <span
+                      class="sp-row-s"
+                    >
+                       · 
+                      BX-256
+                    </span>
+                  </td>
+                  <td>
+                    FDA (US)
+                  </td>
+                  <td>
+                    IND
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    biotech
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    original
+                  </td>
+                  <td>
+                    <span
+                      class="rd-chip tone-ai"
+                    >
+                      Active
+                    </span>
+                  </td>
+                </tr>
+                <tr
+                  class="sc-subrow"
+                >
+                  <td>
+                    <button
+                      aria-label="Open BX-204 (NDA 212345 · 505(b)(1))"
+                      class="sc-subrow-open"
+                      type="button"
+                    >
+                      <b>
+                        BX-204 (NDA 212345 · 505(b)(1))
+                      </b>
+                    </button>
+                    <span
+                      class="sp-row-s"
+                    >
+                       · 
+                      BX-204
+                    </span>
+                  </td>
+                  <td>
+                    FDA (US)
+                  </td>
+                  <td>
+                    NDA
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    pharma
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    original
+                  </td>
+                  <td>
+                    <span
+                      class="rd-chip tone-ai"
+                    >
+                      Active
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Device filings · eSTAR
+            </span>
+            <span
+              class="s"
+            >
+              510(k) device assembly readiness unavailable right now
+            </span>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <div
+              aria-live="assertive"
+              class="c2c-error-state variant-panel"
+              role="alert"
+            >
+              <span
+                aria-hidden="true"
+                class="c2c-error-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-triangle-alert"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+                  />
+                  <path
+                    d="M12 9v4"
+                  />
+                  <path
+                    d="M12 17h.01"
+                  />
+                </svg>
+              </span>
+              <div
+                class="c2c-error-body"
+              >
+                <div
+                  class="c2c-error-t"
+                >
+                  Couldn't load the device filings
+                </div>
+                <div
+                  class="c2c-error-h"
+                >
+                  The eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+ × client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > says a submission with no program has none, and does not borrow a program code from its product name 5032ms
+   → expected 'BX-204 (NDA 212345 · 505(b)(1)) · BX-…' to match /No program recorded/i
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="sp sc-page"
+      >
+        <div
+          class="sp-head"
+        >
+          <div>
+            <div
+              class="sp-eyebrow"
+            >
+              Submission
+            </div>
+            <h1
+              class="sp-title"
+            >
+              Submission center
+            </h1>
+            <p
+              class="sp-state"
+            >
+              Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+            </p>
+          </div>
+          <select
+            aria-label="Submission to work on"
+            class="sc-subpick"
+          >
+            <option
+              value="5"
+            >
+              BX-256 · systemic lupus erythematosus (IND)
+               · 
+              IND
+               · 
+              FDA (US)
+            </option>
+            <option
+              value="3"
+            >
+              BX-204 (NDA 212345 · 505(b)(1))
+               · 
+              NDA
+               · 
+              FDA (US)
+            </option>
+          </select>
+        </div>
+        <div
+          class="al-lead al-calm"
+        >
+          <div
+            class="al-k"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Where BX-256 · systemic lupus erythematosus (IND) stands
+          </div>
+          <div
+            class="al-h"
+          >
+            BX-256 · systemic lupus erythematosus (IND)
+             (BX-256)
+             — a 
+            FDA (US)
+             
+            IND
+             at the 
+            <b>
+              original
+            </b>
+             stage.
+          </div>
+          <div
+            class="al-b"
+          >
+            <b>
+              0
+            </b>
+             eCTD 
+            sequences
+             
+            tracked
+             yet
+            . Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+          </div>
+          <div
+            class="al-re"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+          </div>
+          <div
+            class="al-act"
+          >
+            <button
+              class="al-btn"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               
+              Plan the submission
+            </button>
+            <span
+              class="al-note"
+            >
+              Or move through the workspaces below — plan, build, validate, dispatch.
+            </span>
+          </div>
+        </div>
+        <div
+          class="sc-wsbar"
+          role="tablist"
+        >
+          <button
+            aria-selected="true"
+            class="sc-ws on"
+            role="tab"
+            type="button"
+          >
+            Submissions
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Planner
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Builder
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Sequences
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Validation
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Shadow review
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Cross-region
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Dispatch
+          </button>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Submissions
+            </span>
+            <button
+              class="pj-card-h-go"
+              type="button"
+            >
+              + New submission
+            </button>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <table
+              class="ub-inv"
+            >
+              <thead>
+                <tr>
+                  <th>
+                    Program
+                  </th>
+                  <th>
+                    Region
+                  </th>
+                  <th>
+                    Type
+                  </th>
+                  <th>
+                    Client
+                  </th>
+                  <th>
+                    Stage
+                  </th>
+                  <th>
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  class="sc-subrow"
+                  data-cur="true"
+                >
+                  <td>
+                    <button
+                      aria-label="Open BX-256 · systemic lupus erythematosus (IND)"
+                      class="sc-subrow-open"
+                      type="button"
+                    >
+                      <b>
+                        BX-256 · systemic lupus erythematosus (IND)
+                      </b>
+                    </button>
+                    <span
+                      class="sp-row-s"
+                    >
+                       · 
+                      BX-256
+                    </span>
+                  </td>
+                  <td>
+                    FDA (US)
+                  </td>
+                  <td>
+                    IND
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    biotech
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    original
+                  </td>
+                  <td>
+                    <span
+                      class="rd-chip tone-ai"
+                    >
+                      Active
+                    </span>
+                  </td>
+                </tr>
+                <tr
+                  class="sc-subrow"
+                >
+                  <td>
+                    <button
+                      aria-label="Open BX-204 (NDA 212345 · 505(b)(1))"
+                      class="sc-subrow-open"
+                      type="button"
+                    >
+                      <b>
+                        BX-204 (NDA 212345 · 505(b)(1))
+                      </b>
+                    </button>
+                    <span
+                      class="sp-row-s"
+                    >
+                       · 
+                      BX-204
+                    </span>
+                  </td>
+                  <td>
+                    FDA (US)
+                  </td>
+                  <td>
+                    NDA
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    pharma
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    original
+                  </td>
+                  <td>
+                    <span
+                      class="rd-chip tone-ai"
+                    >
+                      Active
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Device filings · eSTAR
+            </span>
+            <span
+              class="s"
+            >
+              510(k) device assembly readiness unavailable right now
+            </span>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <div
+              aria-live="assertive"
+              class="c2c-error-state variant-panel"
+              role="alert"
+            >
+              <span
+                aria-hidden="true"
+                class="c2c-error-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-triangle-alert"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+                  />
+                  <path
+                    d="M12 9v4"
+                  />
+                  <path
+                    d="M12 17h.01"
+                  />
+                </svg>
+              </span>
+              <div
+                class="c2c-error-body"
+              >
+                <div
+                  class="c2c-error-t"
+                >
+                  Couldn't load the device filings
+                </div>
+                <div
+                  class="c2c-error-h"
+                >
+                  The eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+ × client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > labels the product name as the product, not as a program 27ms
+   → expected 'BX-204 (NDA 212345 · 505(b)(1)) · BX-…' to match /Product BX-204/
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required
+AssertionError: Continue was enabled with no project name: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx:80:81
+     78|     toConfigure();
+     79|     expect(nameInput().value).toBe('');
+     80|     expect(continueBtn().disabled, 'Continue was enabled with no proje…
+       |                                                                                 ^
+     81|     expect(nameInput().required || nameInput().getAttribute('aria-requ…
+     82|     expect(document.querySelector('.npw-form')?.textContent).toMatch(/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx:88:36
+     86|     toConfigure();
+     87|     fireEvent.change(nameInput(), { target: { value: '   ' } });
+     88|     expect(continueBtn().disabled).toBe(true);
+       |                                    ^
+     89|   });
+     90|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)"
+AssertionError: expected <dd></dd> to be null
+
+- Expected:
+null
+
++ Received:
+<dd>
+  (unnamed)
+</dd>
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx:94:45
+     92|     toConfigure();
+     93|     fireEvent.click(continueBtn()); // disabled: nothing happens
+     94|     expect(screen.queryByText('(unnamed)')).toBeNull();
+       |                                             ^
+     95|     expect(screen.queryByRole('button', { name: /create project/i })).…
+     96|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them
+AssertionError: expected '  HLV-334 — IND (QA)  ' to be 'HLV-334 — IND (QA)' // Object.is equality
+
+Expected: "HLV-334 — IND (QA)"
+Received: "  HLV-334 — IND (QA)  "
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx:119:24
+    117|   it('sends the typed name and product, trimmed, exactly as the review…
+    118|     const { shown, body } = await createWith('  HLV-334 — IND (QA)  ',…
+    119|     expect(shown.name).toBe('HLV-334 — IND (QA)');
+       |                        ^
+    120|     expect(body.name).toBe('HLV-334 — IND (QA)');
+    121|     expect(shown.product).toBe('Helvanta');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product
+AssertionError: expected '—' to contain 'HLV-334 — IND (QA)'
+
+Expected: "HLV-334 — IND (QA)"
+Received: "—"
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx:130:27
+    128|     // says so instead of showing a dash over a value that will be wri…
+    129|     expect(body.productName).toBe('HLV-334 — IND (QA)');
+    130|     expect(shown.product).toContain('HLV-334 — IND (QA)');
+       |                           ^
+    131|     expect(shown.product).toMatch(/same as the project name/i);
+    132|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the governed readiness, and ignores a stale progress_percent
+AssertionError: expected 'Project home for "BX-512" (BX-512): s…' to contain 'dossier readiness 62%'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-crumb"
+        >
+          <span
+            class="pj-crumb-i"
+            data-cur="true"
+          >
+            <span
+              class="pj-crumb-k"
+            >
+              Project
+            </span>
+            BX-512
+          </span>
+        </div>
+        <div
+          class="pj-top"
+        >
+          <div
+            class="pj-top-l"
+          >
+            <h1
+              class="pj-title"
+            >
+              BX-512
+            </h1>
+            <div
+              class="pj-tags"
+            >
+              <span
+                class="rd-chip tone-idle"
+              >
+                BX-512
+              </span>
+              <span
+                class="rd-chip tone-idle"
+              >
+                FDA
+              </span>
+              <span
+                class="rd-chip tone-idle"
+              >
+                KIT-mutant gastrointestinal stromal tumor
+              </span>
+              <span
+                class="rd-chip tone-ok"
+              >
+                active
+              </span>
+              <span
+                class="rd-chip tone-warn"
+              >
+                priority: 
+                high
+              </span>
+              <span
+                class="rd-chip tone-idle"
+              >
+                clinical
+              </span>
+            </div>
+            <section
+              aria-label="Program identity"
+              class="pj-facts"
+            >
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Sponsor
+                </dt>
+                <dd>
+                  Concept2Cure Therapeutics
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Product
+                </dt>
+                <dd>
+                  Vorelinib
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Indication
+                </dt>
+                <dd>
+                  KIT-mutant gastrointestinal stromal tumor
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  IND number
+                </dt>
+                <dd>
+                  000512
+                </dd>
+              </dl>
+            </section>
+          </div>
+        </div>
+        <div
+          aria-label="Project lifecycle"
+          class="pj-lc"
+          role="tablist"
+        >
+          <button
+            class="pj-lc-stage"
+            title="Strategy, precedent, agency meetings & timeline"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-calendar"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 2v4"
+                  />
+                  <path
+                    d="M16 2v4"
+                  />
+                  <rect
+                    height="18"
+                    rx="2"
+                    width="18"
+                    x="3"
+                    y="4"
+                  />
+                  <path
+                    d="M3 10h18"
+                  />
+         ...
+
+Expected: "dossier readiness 62%"
+Received: "Project home for "BX-512" (BX-512): status active, phase clinical, priority high, primary agency FDA, indication KIT-mutant gastrointestinal stromal tumor, 62% complete. The "author" stage is open."
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx:79:51
+     77|     expect(card.textContent).toContain('62%');
+     78|     expect(card.textContent).not.toContain('0%');
+     79|     await waitFor(() => expect(seen.ctx?.summary).toContain('dossier r…
+       |                                                   ^
+     80|     expect((seen.ctx?.facts as { program?: { progressPercent?: unknown…
+     81|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > readiness that could not be measured is stated as "not measured", never left out or drawn as 0
+TestingLibraryElementError: Unable to find an element with the text: Dossier readiness, which matches selector 'h3'. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-512
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-512
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-idle"
+            >
+              BX-512
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              FDA
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              KIT-mutant gastrointestinal stromal tumor
+            </span>
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+            <span
+              class="rd-chip tone-warn"
+            >
+              priority: 
+              high
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              clinical
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                Concept2Cure Therapeutics
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                Vorelinib
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                KIT-mutant gastrointestinal stromal tumor
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                IND number
+              </dt>
+              <dd>
+                000512
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linkin...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-512
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-512
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-idle"
+            >
+              BX-512
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              FDA
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              KIT-mutant gastrointestinal stromal tumor
+            </span>
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+            <span
+              class="rd-chip tone-warn"
+            >
+              priority: 
+              high
+            </span>
+            <span
+              class="rd-chip tone-idle"
+            >
+              clinical
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                Concept2Cure Therapeutics
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                Vorelinib
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                KIT-mutant gastrointestinal stromal tumor
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                IND number
+              </dt>
+              <dd>
+                000512
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linkin...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ readinessCard client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx:105:26
+    103| /** The aside card headed "Dossier readiness" — the one readiness the …
+    104| async function readinessCard(): Promise<HTMLElement> {
+    105|   const h = await screen.findByText('Dossier readiness', { selector: '…
+       |                          ^
+    106|   return h.closest('.pj-card') as HTMLElement;
+    107| }
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx:95:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeWorkspaceGating.test.tsx > Project home Workspace grid — a tile is offered only when it can open > does not offer the FDA CRL library while its graph flag is off (its API is not mounted)
+AssertionError: the CRL tile opens a 404 when the graph is off: expected [ 'program-journey', …(56) ] to not include 'crl-library'
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeWorkspaceGating.test.tsx:96:71
+     94|     localStorage.setItem('c2c-crl-graph', '0');
+     95|     const ids = await workspaceToolIds();
+     96|     expect(ids, 'the CRL tile opens a 404 when the graph is off').not.…
+       |                                                                       ^
+     97|   });
+     98|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program recorded blocked with no blocker says no cause is recorded (the NM-512 case)
+AssertionError: expected 'Program nm512NM512 · Manufacturing · …' to match /no cause recorded/i
+
+- Expected:
+/no cause recorded/i
+
++ Received:
+"Program nm512NM512 · Manufacturing · Lead Rae OkaforReadiness not measured—MDXblocked"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx:76:27
+     74|     const c = card('Program nm512');
+     75|     expect(c.textContent).toMatch(/blocked/i);
+     76|     expect(c.textContent).toMatch(/no cause recorded/i);
+       |                           ^
+     77|     expect(c.textContent).not.toMatch(/No open blockers/);
+     78|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program
+AssertionError: expected 'Program nm512NM512MDXManufacturing—Ra…' to match /no cause recorded/i
+
+- Expected:
+/no cause recorded/i
+
++ Received:
+"Program nm512NM512MDXManufacturing—Rae Okafor—"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx:99:50
+     97|     fireEvent.click(screen.getByRole('button', { name: 'List' }));
+     98|     await waitFor(() => expect(listRow('Program nm512')).toBeTruthy());
+     99|     expect(listRow('Program nm512').textContent).toMatch(/no cause rec…
+       |                                                  ^
+    100|     expect(listRow('Program bx256').textContent).not.toMatch(/cause re…
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses
+AssertionError: expected 'Program hlvHLV · Manufacturing · Lead…' to contain 'Dossier readiness 0%'
+
+Expected: "Dossier readiness 0%"
+Received: "Program hlvHLV · Manufacturing · Lead Rae Okafor0% ready—MDXactive"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx:108:45
+    106|     render(<Projects {...props()} />);
+    107|     await waitFor(() => expect(screen.getByText('Program hlv')).toBeTr…
+    108|     expect(card('Program hlv').textContent).toContain('Dossier readine…
+       |                                             ^
+    109|     expect(card('Program bx256').textContent).toContain('Dossier readi…
+    110|     // Never a bare, unlabelled "N% ready".
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > names the linked program from the program record
+AssertionError: expected 'BX-256 · systemic lupus erythematosus…' to match /Program BX-256/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="sp sc-page"
+      >
+        <div
+          class="sp-head"
+        >
+          <div>
+            <div
+              class="sp-eyebrow"
+            >
+              Submission
+            </div>
+            <h1
+              class="sp-title"
+            >
+              Submission center
+            </h1>
+            <p
+              class="sp-state"
+            >
+              Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+            </p>
+          </div>
+          <select
+            aria-label="Submission to work on"
+            class="sc-subpick"
+          >
+            <option
+              value="5"
+            >
+              BX-256 · systemic lupus erythematosus (IND)
+               · 
+              IND
+               · 
+              FDA (US)
+            </option>
+            <option
+              value="3"
+            >
+              BX-204 (NDA 212345 · 505(b)(1))
+               · 
+              NDA
+               · 
+              FDA (US)
+            </option>
+          </select>
+        </div>
+        <div
+          class="al-lead al-calm"
+        >
+          <div
+            class="al-k"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Where BX-256 · systemic lupus erythematosus (IND) stands
+          </div>
+          <div
+            class="al-h"
+          >
+            BX-256 · systemic lupus erythematosus (IND)
+             (BX-256)
+             — a 
+            FDA (US)
+             
+            IND
+             at the 
+            <b>
+              original
+            </b>
+             stage.
+          </div>
+          <div
+            class="al-b"
+          >
+            <b>
+              0
+            </b>
+             eCTD 
+            sequences
+             
+            tracked
+             yet
+            . Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+          </div>
+          <div
+            class="al-re"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+          </div>
+          <div
+            class="al-act"
+          >
+            <button
+              class="al-btn"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               
+              Plan the submission
+            </button>
+            <span
+              class="al-note"
+            >
+              Or move through the workspaces below — plan, build, validate, dispatch.
+            </span>
+          </div>
+        </div>
+        <div
+          class="sc-wsbar"
+          role="tablist"
+        >
+          <button
+            aria-selected="true"
+            class="sc-ws on"
+            role="tab"
+            type="button"
+          >
+            Submissions
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Planner
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Builder
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Sequences
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Validation
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Shadow review
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Cross-region
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Dispatch
+          </button>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Submissions
+            </span>
+            <button
+              class="pj-card-h-go"
+              type="button"
+            >
+              + New submission
+            </button>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <table
+              class="ub-inv"
+            >
+              <thead>
+                <tr>
+                  <th>
+                    Program
+                  </th>
+                  <th>
+                    Region
+                  </th>
+                  <th>
+                    Type
+                  </th>
+                  <th>
+                    Client
+                  </th>
+                  <th>
+                    Stage
+                  </th>
+                  <th>
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  class="sc-subrow"
+                  data-cur="true"
+                >
+                  <td>
+                    <button
+                      aria-label="Open BX-256 · systemic lupus erythematosus (IND)"
+                      class="sc-subrow-open"
+                      type="button"
+                    >
+                      <b>
+                        BX-256 · systemic lupus erythematosus (IND)
+                      </b>
+                    </button>
+                    <span
+                      class="sp-row-s"
+                    >
+                       · 
+                      BX-256
+                    </span>
+                  </td>
+                  <td>
+                    FDA (US)
+                  </td>
+                  <td>
+                    IND
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    biotech
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    original
+                  </td>
+                  <td>
+                    <span
+                      class="rd-chip tone-ai"
+                    >
+                      Active
+                    </span>
+                  </td>
+                </tr>
+                <tr
+                  class="sc-subrow"
+                >
+                  <td>
+                    <button
+                      aria-label="Open BX-204 (NDA 212345 · 505(b)(1))"
+                      class="sc-subrow-open"
+                      type="button"
+                    >
+                      <b>
+                        BX-204 (NDA 212345 · 505(b)(1))
+                      </b>
+                    </button>
+                    <span
+                      class="sp-row-s"
+                    >
+                       · 
+                      BX-204
+                    </span>
+                  </td>
+                  <td>
+                    FDA (US)
+                  </td>
+                  <td>
+                    NDA
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    pharma
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    original
+                  </td>
+                  <td>
+                    <span
+                      class="rd-chip tone-ai"
+                    >
+                      Active
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Device filings · eSTAR
+            </span>
+            <span
+              class="s"
+            >
+              510(k) device assembly readiness unavailable right now
+            </span>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <div
+              aria-live="assertive"
+              class="c2c-error-state variant-panel"
+              role="alert"
+            >
+              <span
+                aria-hidden="true"
+                class="c2c-error-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-triangle-alert"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+                  />
+                  <path
+                    d="M12 9v4"
+                  />
+                  <path
+                    d="M12 17h.01"
+                  />
+                </svg>
+              </span>
+              <div
+                class="c2c-error-body"
+              >
+                <div
+                  class="c2c-error-t"
+                >
+                  Couldn't load the device filings
+                </div>
+                <div
+                  class="c2c-error-h"
+                >
+                  The eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+- Expected:
+/Program BX-256/
+
++ Received:
+"BX-256 · systemic lupus erythematosus (IND) · BX-256"
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx:67:84
+     65|   it('names the linked program from the program record', async () => {
+     66|     render(<SubmissionCenter onAsk={vi.fn()} />);
+     67|     await waitFor(() => expect(programCell('BX-256 · systemic lupus').…
+       |                                                                                    ^
+     68|   });
+     69|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > says a submission with no program has none, and does not borrow a program code from its product name
+AssertionError: expected 'BX-204 (NDA 212345 · 505(b)(1)) · BX-…' to match /No program recorded/i
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="sp sc-page"
+      >
+        <div
+          class="sp-head"
+        >
+          <div>
+            <div
+              class="sp-eyebrow"
+            >
+              Submission
+            </div>
+            <h1
+              class="sp-title"
+            >
+              Submission center
+            </h1>
+            <p
+              class="sp-state"
+            >
+              Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+            </p>
+          </div>
+          <select
+            aria-label="Submission to work on"
+            class="sc-subpick"
+          >
+            <option
+              value="5"
+            >
+              BX-256 · systemic lupus erythematosus (IND)
+               · 
+              IND
+               · 
+              FDA (US)
+            </option>
+            <option
+              value="3"
+            >
+              BX-204 (NDA 212345 · 505(b)(1))
+               · 
+              NDA
+               · 
+              FDA (US)
+            </option>
+          </select>
+        </div>
+        <div
+          class="al-lead al-calm"
+        >
+          <div
+            class="al-k"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+              <path
+                d="M20 3v4"
+              />
+              <path
+                d="M22 5h-4"
+              />
+              <path
+                d="M4 17v2"
+              />
+              <path
+                d="M5 18H3"
+              />
+            </svg>
+             
+            Where BX-256 · systemic lupus erythematosus (IND) stands
+          </div>
+          <div
+            class="al-h"
+          >
+            BX-256 · systemic lupus erythematosus (IND)
+             (BX-256)
+             — a 
+            FDA (US)
+             
+            IND
+             at the 
+            <b>
+              original
+            </b>
+             stage.
+          </div>
+          <div
+            class="al-b"
+          >
+            <b>
+              0
+            </b>
+             eCTD 
+            sequences
+             
+            tracked
+             yet
+            . Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+          </div>
+          <div
+            class="al-re"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+          </div>
+          <div
+            class="al-act"
+          >
+            <button
+              class="al-btn"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               
+              Plan the submission
+            </button>
+            <span
+              class="al-note"
+            >
+              Or move through the workspaces below — plan, build, validate, dispatch.
+            </span>
+          </div>
+        </div>
+        <div
+          class="sc-wsbar"
+          role="tablist"
+        >
+          <button
+            aria-selected="true"
+            class="sc-ws on"
+            role="tab"
+            type="button"
+          >
+            Submissions
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Planner
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Builder
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Sequences
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Validation
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Shadow review
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Cross-region
+          </button>
+          <button
+            aria-selected="false"
+            class="sc-ws"
+            role="tab"
+            type="button"
+          >
+            Dispatch
+          </button>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Submissions
+            </span>
+            <button
+              class="pj-card-h-go"
+              type="button"
+            >
+              + New submission
+            </button>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <table
+              class="ub-inv"
+            >
+              <thead>
+                <tr>
+                  <th>
+                    Program
+                  </th>
+                  <th>
+                    Region
+                  </th>
+                  <th>
+                    Type
+                  </th>
+                  <th>
+                    Client
+                  </th>
+                  <th>
+                    Stage
+                  </th>
+                  <th>
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  class="sc-subrow"
+                  data-cur="true"
+                >
+                  <td>
+                    <button
+                      aria-label="Open BX-256 · systemic lupus erythematosus (IND)"
+                      class="sc-subrow-open"
+                      type="button"
+                    >
+                      <b>
+                        BX-256 · systemic lupus erythematosus (IND)
+                      </b>
+                    </button>
+                    <span
+                      class="sp-row-s"
+                    >
+                       · 
+                      BX-256
+                    </span>
+                  </td>
+                  <td>
+                    FDA (US)
+                  </td>
+                  <td>
+                    IND
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    biotech
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    original
+                  </td>
+                  <td>
+                    <span
+                      class="rd-chip tone-ai"
+                    >
+                      Active
+                    </span>
+                  </td>
+                </tr>
+                <tr
+                  class="sc-subrow"
+                >
+                  <td>
+                    <button
+                      aria-label="Open BX-204 (NDA 212345 · 505(b)(1))"
+                      class="sc-subrow-open"
+                      type="button"
+                    >
+                      <b>
+                        BX-204 (NDA 212345 · 505(b)(1))
+                      </b>
+                    </button>
+                    <span
+                      class="sp-row-s"
+                    >
+                       · 
+                      BX-204
+                    </span>
+                  </td>
+                  <td>
+                    FDA (US)
+                  </td>
+                  <td>
+                    NDA
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    pharma
+                  </td>
+                  <td
+                    class="sc-cap"
+                  >
+                    original
+                  </td>
+                  <td>
+                    <span
+                      class="rd-chip tone-ai"
+                    >
+                      Active
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div
+          class="pj-card"
+        >
+          <div
+            class="pj-card-h"
+          >
+            <span
+              class="t"
+            >
+              Device filings · eSTAR
+            </span>
+            <span
+              class="s"
+            >
+              510(k) device assembly readiness unavailable right now
+            </span>
+          </div>
+          <div
+            class="pj-card-b pj-card-b-flush"
+          >
+            <div
+              aria-live="assertive"
+              class="c2c-error-state variant-panel"
+              role="alert"
+            >
+              <span
+                aria-hidden="true"
+                class="c2c-error-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-triangle-alert"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+                  />
+                  <path
+                    d="M12 9v4"
+                  />
+                  <path
+                    d="M12 17h.01"
+                  />
+                </svg>
+              </span>
+              <div
+                class="c2c-error-body"
+              >
+                <div
+                  class="c2c-error-t"
+                >
+                  Couldn't load the device filings
+                </div>
+                <div
+                  class="c2c-error-h"
+                >
+                  The eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+- Expected:
+/No program recorded/i
+
++ Received:
+"BX-204 (NDA 212345 · 505(b)(1)) · BX-204"
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx:73:79
+     71|     render(<SubmissionCenter onAsk={vi.fn()} />);
+     72|     await waitFor(() => expect(subRow('BX-204 (NDA 212345')).toBeTruth…
+     73|     await waitFor(() => expect(programCell('BX-204 (NDA 212345').textC…
+       |                                                                               ^
+     74|     expect(programCell('BX-204 (NDA 212345').textContent).not.toMatch(…
+     75|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > labels the product name as the product, not as a program
+AssertionError: expected 'BX-204 (NDA 212345 · 505(b)(1)) · BX-…' to match /Product BX-204/
+
+- Expected:
+/Product BX-204/
+
++ Received:
+"BX-204 (NDA 212345 · 505(b)(1)) · BX-204"
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx:80:59
+     78|     render(<SubmissionCenter onAsk={vi.fn()} />);
+     79|     await waitFor(() => expect(subRow('BX-204 (NDA 212345')).toBeTruth…
+     80|     expect(programCell('BX-204 (NDA 212345').textContent).toMatch(/Pro…
+       |                                                           ^
+     81|   });
+     82| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  14 failed | 6 passed (20)
+   Start at  02:56:10
+   Duration  30.30s (transform 1.69s, setup 493ms, import 2.88s, tests 23.13s, environment 2.90s)
+

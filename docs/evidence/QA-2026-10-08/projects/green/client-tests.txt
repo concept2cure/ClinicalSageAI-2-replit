@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 480ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 166ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 149ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 218ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 191ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 179ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program recorded blocked with no blocker says no cause is recorded (the NM-512 case) 89ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program with a recorded blocker shows that blocker, not the no-cause line 26ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > an active program makes no blocker claim either way 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program 336ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkspaceGating.test.tsx > Project home Workspace grid — a tile is offered only when it can open > positive control: with the graph flag on and no launch scope, the CRL tile is found 365ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkspaceGating.test.tsx > Project home Workspace grid — a tile is offered only when it can open > does not offer the FDA CRL library while its graph flag is off (its API is not mounted) 321ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkspaceGating.test.tsx > Project home Workspace grid — a tile is offered only when it can open > offers nothing outside the launch catalog when launch scope is enforced 177ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the governed readiness, and ignores a stale progress_percent 449ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads 0%, the same as its card 275ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > readiness that could not be measured is stated as "not measured", never left out or drawn as 0 231ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > names the linked program from the program record 76ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > says a submission with no program has none, and does not borrow a program code from its product name 34ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > labels the product name as the product, not as a program 28ms
+
+ Test Files  5 passed (5)
+      Tests  20 passed (20)
+   Start at  03:01:12
+   Duration  12.93s (transform 2.14s, setup 831ms, import 3.99s, tests 3.88s, environment 3.21s)
+

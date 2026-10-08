@@ -90,7 +90,8 @@ describe('Projects — a program with nothing measurable has no readiness figure
     );
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program u1')).toBeTruthy());
-    expect(screen.getByText('Readiness not measured')).toBeTruthy();
+    // Named as the dossier readiness since QA 2026-10-08 (projectsCardStatusReadiness.test.tsx).
+    expect(screen.getByText('Dossier readiness not measured')).toBeTruthy();
     expect(screen.queryByText('0% ready')).toBeNull();
     expect(figure(/average readiness/i)).toBe('—');
   });

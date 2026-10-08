@@ -1,0 +1,6 @@
+/api/lifecycle/renewals -> unmapped
+/api/clinical-regulatory-evidence/findings -> out-of-scope
+/api/c2c/projects -> launch
+/api/submissions -> launch
+unattributed (unmapped) mode, NODE_ENV=production, unset: enforce
+unattributed (unmapped) mode, NODE_ENV=development, unset: report

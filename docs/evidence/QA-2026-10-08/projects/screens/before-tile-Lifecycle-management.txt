@@ -1,0 +1,74 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+RP
+Concept2Cure.RI
+›
+Biotech & Pharma
+›
+Lifecycle management
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+POST-APPROVAL · SUPPLEMENTS · VARIATIONS
+Lifecycle management
+
+Supplements, variations, CMC change control and renewal cycles across the approved portfolio.
+
+New supplement
+WHAT NEEDS YOUR ATTENTION ACROSS THE APPROVED PORTFOLIO
+The post-approval records could not be read.
+This is a failed read, not an empty one — no claim is made here about what is or is not on file. The detail is reported below.
+Compare CMC change-control across the approved portfolio
+Draft a Type II variation against the current EMA guidance
+Open every supplement filed in the last 90 days
+Which changes are PACMP-eligible under ICH Q12?
+Supplements and variations
+FDA · EMA · PMDA
+New supplement
+EMA
+BX-099 · Type II variation -- Specification change (host cell protein)
+EU-VAR-006012-1 · filed 2026-02-11 · CHMP day 60
+REVIEW
+EMA
+BX-099 · Type IB variation -- Container closure update
+EU-VAR-006012-2 · filed -- · Target 2026-06
+DRAFTING
+PMDA
+BX-099 · Partial change (Japan) -- Manufacturer change
+JP-VAR-2024-3 · filed 2026-01-15 · PMDA day 60
+REVIEW
+FDA
+BX-099 · sNDA · Prior Approval -- Pediatric indication extension
+sNDA-211990-001 · filed 2026-03-04 · PDUFA 2026-09-04
+FILED
+FDA
+BX-099 · sNDA · CBE-30 -- Manufacturing site addition (DS)
+sNDA-211990-002 · filed 2026-04-22 · Effective 2026-05-22
+FILED
+CMC change control
+3 tracked
+MEDIUM
+Stopper supplier switch
+Drug product · BX-099 · CBE-30
+PLANNED
+LOW
+Bioreactor scale-up 2,000L → 5,000L
+Drug substance · BX-099, BX-204 · Annual Report
+EVALUATING
+LOW
+Tighten aggregate specification
+Specifications · BX-099 · CBE-0
+IMPLEMENTED
+Classify against ICH Q12
+Renewal cycles
+PADER · 5-yr · re-exam
+Couldn't load renewal cycles
+The read failed — sign in and retry, or check that the service is reachable.
