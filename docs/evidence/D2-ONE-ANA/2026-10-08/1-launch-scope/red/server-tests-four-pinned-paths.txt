@@ -1,0 +1,1001 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+··············stderr | server/services/entitlements/__tests__/enforcement-mode.test.ts > precedence > a stored value this build does not understand is not coerced into one
+{
+  "timestamp": "2026-08-24T12:00:00.000Z",
+  "level": "warn",
+  "message": "[enforcement-mode] stored enforcement mode is not a value this build understands",
+  "context": {
+    "key": "module_enforcement_mode"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/enforcement-mode.test.ts > a read failure never refuses more than it already was > caps a cold-start failure at observing, even when the deployment says refuse
+{
+  "timestamp": "2026-08-24T12:00:00.000Z",
+  "level": "error",
+  "message": "[enforcement-mode] could not read the stored enforcement mode — serving a fail-safe value",
+  "context": {
+    "servingMode": "report",
+    "deploymentMode": "enforce",
+    "usedPreviousResolution": false,
+    "err": "connection terminated"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/enforcement-mode.test.ts > a read failure never refuses more than it already was > does not invent enforcement when the deployment says off
+{
+  "timestamp": "2026-08-24T12:00:00.000Z",
+  "level": "error",
+  "message": "[enforcement-mode] could not read the stored enforcement mode — serving a fail-safe value",
+  "context": {
+    "servingMode": "off",
+    "deploymentMode": "off",
+    "usedPreviousResolution": false,
+    "err": "connection terminated"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/enforcement-mode.test.ts > a read failure never refuses more than it already was > keeps serving the last known good answer when a later read fails
+{
+  "timestamp": "2026-08-24T12:00:31.050Z",
+  "level": "error",
+  "message": "[enforcement-mode] could not read the stored enforcement mode — serving a fail-safe value",
+  "context": {
+    "servingMode": "enforce",
+    "deploymentMode": "off",
+    "usedPreviousResolution": true,
+    "err": "connection terminated"
+  }
+}
+
+···················stdout | server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+{
+  "timestamp": "2026-10-08T00:29:24.741Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T00:29:24.742Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+{
+  "timestamp": "2026-10-08T00:29:24.743Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-08T00:29:24.890Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating security settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-08T00:29:24.894Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-08T00:29:24.897Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error resetting settings for tenant 900",
+  "context": {}
+}
+
+···············stderr | tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Analytics: every button click is handler-safe
+An update to AnalyticsSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Analytics: every button click is handler-safe
+An update to AnalyticsSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AnalyticsSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AnalyticsSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AnalyticsSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AnalyticsSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AnalyticsSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Postmarket: every button click is handler-safe
+An update to PostmarketSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PostmarketSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Postmarket: every button click is handler-safe
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Engineering: every risk-matrix cell click is handler-safe
+An update to EngineeringSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Engineering: every risk-matrix cell click is handler-safe
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > UDI: every label-preview / format-picker click is handler-safe
+An update to UdiSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+···stderr | tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > UDI: every label-preview / format-picker click is handler-safe
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DataGate inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+·stderr | tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX Files tab — root structure > renders all five filesystem roots on PathwayPanes(k510)
+An update to PathwayPanes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to FilesTreePane inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+·stderr | tests/mdx-notifications-clinical-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-notifications-clinical-routes.test.ts
+{
+  "timestamp": "2026-10-08T00:29:30.023Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list says the store is missing rather than answering an empty list
+{
+  "timestamp": "2026-10-08T00:29:30.132Z",
+  "level": "error",
+  "message": "[mdx-ana-memory] list-threads: conversation store not provisioned",
+  "context": {
+    "code": "42703"
+  }
+}
+
+stdout | tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > thread pin toggles metadata.pinned
+{
+  "timestamp": "2026-10-08T00:29:30.135Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] mdx.conversation.pin chat_thread",
+  "context": {
+    "userId": 777,
+    "tenantId": 99,
+    "resourceId": "t-1"
+  }
+}
+
+stderr | tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > thread pin toggles metadata.pinned
+{
+  "timestamp": "2026-10-08T00:29:30.136Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > thread pin toggles metadata.pinned
+{
+  "timestamp": "2026-10-08T00:29:30.136Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > thread pin toggles metadata.pinned
+{
+  "timestamp": "2026-10-08T00:29:30.137Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "mdx.conversation.pin",
+    "resourceType": "chat_thread",
+    "resourceId": "t-1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+··························stderr | tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > EngineeringSurface renders with program context
+An update to EngineeringSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > UdiSurface renders
+An update to UdiSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > PostmarketSurface renders
+An update to PostmarketSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PostmarketSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+····stderr | tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > AnalyticsSurface renders
+An update to AnalyticsSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+··stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > warn mode > allows an unentitled org but stamps the warning header
+{
+  "timestamp": "2026-10-08T00:29:31.372Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' not satisfied but allowed (mode=warn). This request would be refused with 403 NOT_ENTITLED in 'on' mode.",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": 7,
+    "tier": "free",
+    "reason": null
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > warn mode > allows an UNKNOWN tier (org not found) with the warning header
+{
+  "timestamp": "2026-10-08T00:29:31.377Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' not satisfied but allowed (mode=warn). This request would be refused with 403 NOT_ENTITLED in 'on' mode.",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": 7,
+    "tier": null,
+    "reason": "organization not found"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > warn mode > allows a missing org context with the warning header (auth owns that failure)
+{
+  "timestamp": "2026-10-08T00:29:31.381Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' not satisfied but allowed (mode=warn). This request would be refused with 403 NOT_ENTITLED in 'on' mode.",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": null,
+    "tier": null,
+    "reason": "organization context missing"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > blocks an UNKNOWN tier with the reason (fail closed, never a fabricated tier)
+{
+  "timestamp": "2026-10-08T00:29:31.401Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' could not be verified; refused (mode=on).",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": 7,
+    "reason": "unrecognized tier \"platinum\""
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > blocks when the tier lookup itself fails — the body carries NO driver text
+{
+  "timestamp": "2026-10-08T00:29:31.404Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' could not be verified; refused (mode=on).",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": 7,
+    "reason": "tier lookup failed: relation \"organizations\" does not exist"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > forwards only the evaluator's fixed sentences (org not found) into the 403 message
+{
+  "timestamp": "2026-10-08T00:29:31.407Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' could not be verified; refused (mode=on).",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": 7,
+    "reason": "organization not found"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > blocks a missing org context (cannot verify an entitlement for nobody)
+{
+  "timestamp": "2026-10-08T00:29:31.410Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' could not be verified; refused (mode=on).",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": null,
+    "reason": "organization context missing"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > a key outside the matrix is unverifiable — blocked, never guessed
+{
+  "timestamp": "2026-10-08T00:29:31.417Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'not_a_real_feature' could not be verified; refused (mode=on).",
+  "context": {
+    "feature": "not_a_real_feature",
+    "requiredTier": null,
+    "organizationId": 7,
+    "reason": "unknown capability key 'not_a_real_feature'"
+  }
+}
+
+····································stderr | server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot
+{
+  "timestamp": "2026-10-08T00:29:32.376Z",
+  "level": "warn",
+  "message": "[launch-scope] [launch-scope] LAUNCH_SCOPE_API_UNATTRIBUTED=report in production: API paths no surface claims are served and recorded, not refused",
+  "context": {}
+}
+
+··········xxx··············stdout | server/services/ana/__tests__/navigation-tools.test.ts
+{
+  "timestamp": "2026-10-08T00:29:33.700Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T00:29:33.701Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/navigation-tools.test.ts
+{
+  "timestamp": "2026-10-08T00:29:33.701Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/navigation-tools.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/navigation-tools.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/navigation-tools.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+····················stdout | server/services/entitlements/__tests__/navigation-entitlements.test.ts
+{
+  "timestamp": "2026-10-08T00:29:39.105Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T00:29:39.106Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/navigation-entitlements.test.ts
+{
+  "timestamp": "2026-10-08T00:29:39.106Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/entitlements/__tests__/navigation-entitlements.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/entitlements/__tests__/navigation-entitlements.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/entitlements/__tests__/navigation-entitlements.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/entitlements/__tests__/navigation-entitlements.test.ts > resolveNavEntitlements — honesty under failure > an EMPTY catalog reports no verdict at all (resolved: false, surfaces: [])
+{
+  "timestamp": "2026-10-08T00:29:39.152Z",
+  "level": "warn",
+  "message": "[navigation-entitlements] module catalog empty — reporting no verdict",
+  "context": {
+    "organizationId": 42
+  }
+}
+
+stderr | server/services/entitlements/__tests__/navigation-entitlements.test.ts > resolveNavEntitlements — honesty under failure > a THROWING catalog read degrades — it must not reject
+{
+  "timestamp": "2026-10-08T00:29:39.153Z",
+  "level": "error",
+  "message": "[navigation-entitlements] catalog read failed — reporting no verdict",
+  "context": {
+    "organizationId": 42,
+    "err": "relation \"available_modules\" does not exist"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/navigation-entitlements.test.ts > resolveNavEntitlements — honesty under failure > a throwing license read degrades the same way
+{
+  "timestamp": "2026-10-08T00:29:39.154Z",
+  "level": "error",
+  "message": "[navigation-entitlements] catalog read failed — reporting no verdict",
+  "context": {
+    "organizationId": 42,
+    "err": "connection terminated"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/navigation-entitlements.test.ts > resolveNavEntitlements — honesty under failure > a failed read stays honest even for a master admin
+{
+  "timestamp": "2026-10-08T00:29:39.155Z",
+  "level": "warn",
+  "message": "[navigation-entitlements] module catalog empty — reporting no verdict",
+  "context": {
+    "organizationId": 42
+  }
+}
+
+························stderr | server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > fails CLOSED when the owner lookup throws — a database error is not a grant
+{
+  "timestamp": "2026-10-08T00:29:39.347Z",
+  "level": "error",
+  "message": "[master-admin] master-admin designation lookup failed — treating as not the owner",
+  "context": {
+    "userId": 77,
+    "err": "connection refused"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > fails CLOSED when the platform lookup throws, and never asks the owner lookup
+{
+  "timestamp": "2026-10-08T00:29:39.348Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {}
+}
+
+stderr | server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > does not cache a failure — one blip must not grey the owner for the whole window
+{
+  "timestamp": "2026-10-08T00:29:39.349Z",
+  "level": "error",
+  "message": "[master-admin] master-admin designation lookup failed — treating as not the owner",
+  "context": {
+    "userId": 77,
+    "err": "connection refused"
+  }
+}
+
+·······················································stdout | server/services/entitlements/__tests__/master-admin.test.ts
+{
+  "timestamp": "2026-10-08T00:29:40.412Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T00:29:40.413Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/master-admin.test.ts
+{
+  "timestamp": "2026-10-08T00:29:40.413Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/entitlements/__tests__/master-admin.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/entitlements/__tests__/master-admin.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/entitlements/__tests__/master-admin.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+··········································································stdout | server/routes/c2c/__tests__/templates-list.test.ts
+{
+  "timestamp": "2026-10-08T00:29:44.626Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T00:29:44.627Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/templates-list.test.ts
+{
+  "timestamp": "2026-10-08T00:29:44.627Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/templates-list.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/c2c/__tests__/templates-list.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/c2c/__tests__/templates-list.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/c2c/__tests__/templates-list.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/templates-list.test.ts
+{
+  "timestamp": "2026-10-08T00:29:44.687Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+··stderr | server/routes/__tests__/mdx-qms-readiness.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-qms-readiness.test.ts
+{
+  "timestamp": "2026-10-08T00:29:45.787Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/mdx-qms-readiness.test.ts
+{
+  "timestamp": "2026-10-08T00:29:46.180Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T00:29:46.180Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-readiness.test.ts
+{
+  "timestamp": "2026-10-08T00:29:46.181Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+·········································stderr | server/services/entitlements/__tests__/grant-expiry.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/entitlements/__tests__/grant-expiry.test.ts
+{
+  "timestamp": "2026-10-08T00:29:47.324Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+·············································································································x·······················
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: execute, templates, the package model, tasks, dispatch readiness
+AssertionError: /api/orchestration/execute: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/middleware/__tests__/launch-scope-api-gate.test.ts:138:35
+    136|       '/api/study-design/1/2',
+    137|     ]) {
+    138|       expect(await refused(p), p).toBe(false);
+       |                                   ^
+    139|     }
+    140|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there
+AssertionError: /api/mdx/ana/memory: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/middleware/__tests__/launch-scope-api-gate.test.ts:161:35
+    159|       '/api/mdx/ana/memory',
+    160|     ]) {
+    161|       expect(await refused(p), p).toBe(false);
+       |                                   ^
+    162|     }
+    163|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call
+AssertionError: /api/dossier-map: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/middleware/__tests__/launch-scope-api-gate.test.ts:176:35
+    174|     }
+    175|     for (const p of ['/api/dossier-map', '/api/510k/estar/submissions'…
+    176|       expect(await refused(p), p).toBe(false);
+       |                                   ^
+    177|     }
+    178|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/entitlements/__tests__/reporting-launch-claim.test.ts > the Reporting & analytics launch claim > /api/report-os/portfolio/org, called by a launch screen, is in launch scope
+AssertionError: expected 'out-of-scope' to be 'launch' // Object.is equality
+
+Expected: "launch"
+Received: "out-of-scope"
+
+ ❯ server/services/entitlements/__tests__/reporting-launch-claim.test.ts:48:27
+     46| describe('the Reporting & analytics launch claim', () => {
+     47|   it.each(CALLED)('%s, called by a launch screen, is in launch scope',…
+     48|     expect(verdict(path)).toBe('launch');
+       |                           ^
+     49|   });
+     50|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 35 passed (37)
+      Tests  4 failed | 493 passed (497)
+   Start at  00:29:19
+   Duration  29.45s (transform 6.49s, setup 623ms, import 13.65s, tests 9.42s, environment 816ms)
+

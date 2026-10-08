@@ -99,6 +99,39 @@ describe('the scope list itself', () => {
     expect(LAUNCH_SURFACE_IDS.has('audit-trail')).toBe(true);
     expect(LAUNCH_SURFACE_IDS.has('part11-console')).toBe(true);
   });
+  // docs/SURFACE_DECISIONS_2026-10-08.md: each was assessed and checked by a
+  // skeptic, and none does what its place promises for a real organisation.
+  // The seven apps stay; these screens leave them, and their code stays
+  // behind the flag.
+  it.each([
+    ['program-journey', 'projects', 'fixture-demo: empty for every program a client creates'],
+    ['filings-catalog', 'projects', 'explainer: its Start drops the choice; the New project wizard keeps it'],
+    ['regulatory-workspace', 'authoring', 'a fixed paragraph where the editor should be'],
+    ['template-library', 'authoring', 'a saved template formats no document'],
+    ['ectd-coauthor', 'submission-center', 'a second editor whose checks report a fixed failure'],
+    ['dossier-map', 'submission-center', 'reads a store no program writes: always empty'],
+    ['ectd-publishing', 'submission-center', 'a reference page that publishes nothing'],
+    ['qmp', 'qms', 'a plan cannot be given its gates, and nothing reads them'],
+  ])('%s is out of the %s app — %s', (surface, app) => {
+    const a = LAUNCH_APPS.find((x) => x.id === app)!;
+    expect(a.surfaces).not.toContain(surface);
+    expect(a.modules).not.toContain(surface);
+    expect(isLaunchSurface(surface)).toBe(false);
+    // A bought row is still not in this release.
+    const [out] = applyLaunchScope([v(surface, { source: 'subscribed' })]);
+    expect(out.entitled).toBe(false);
+    expect(out.source).toBe('launch-scope');
+  });
+  it.each([
+    ['ana-command', 'enterprise-only, and says runs are recorded that are not'],
+    ['ana-memory', 'shows a store nothing writes, not the memory AnA loads'],
+    ['training', 'no path, lesson or certification exists'],
+  ])('the shell no longer carries %s — %s', (surface) => {
+    expect(isLaunchSurface(surface)).toBe(false);
+  });
+  it('every app keeps a screen a client can work in', () => {
+    for (const a of LAUNCH_APPS) expect(a.surfaces.length).toBeGreaterThan(0);
+  });
 });
 
 describe('applyLaunchScope', () => {
