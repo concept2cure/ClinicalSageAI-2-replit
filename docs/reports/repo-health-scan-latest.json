@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T16:49:19.272Z",
+  "generatedAt": "2026-10-08T17:03:28.257Z",
   "git": {
-    "sha": "4ad5c2a0c60300214292cc9908e0a8230144c465",
+    "sha": "1400e745c90b271f73cd28fcfb30191e882b6593",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2247,12 +2247,12 @@
         "bytes": 108007
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "bytes": 102946
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "bytes": 104528
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 102540
+        "file": "server/routes/c2c/projects.ts",
+        "bytes": 104157
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2470,7 +2470,11 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2119
+        "lines": 2147
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2116
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2495,10 +2499,6 @@
       {
         "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
         "lines": 2068
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2067
       },
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
