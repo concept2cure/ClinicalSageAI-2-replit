@@ -1,0 +1,42 @@
+{
+  "commit": "65db8ef0c04e45d32d8f69266d9770ab6ea3612b",
+  "workflows": [
+    {
+      "name": "CI",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37791637274"
+    },
+    {
+      "name": "Semgrep",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37791637221"
+    },
+    {
+      "name": "Repo Health Baseline Refresh",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37791637144"
+    },
+    {
+      "name": "C2C Agent — Validate & Audit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37791637014"
+    },
+    {
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37791637057"
+    },
+    {
+      "name": "Tier 5 Browser Smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37791637008"
+    }
+  ],
+  "note": "Exact previous-delivery observation. CI and Semgrep still running; not reported successful. No unrelated CI attribution or repair claimed."
+}

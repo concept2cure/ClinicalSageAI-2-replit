@@ -1,0 +1,42 @@
+(node:9) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:9) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > keeps one pending SELECT across slow ticks, then polls again and delivers cancellation 6ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a genuine failed read and releases admission for the next tick 3ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a synchronous query failure without stranding poll admission 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > does not query with no local runs or after the last local run is released 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > executes each admitted poll under actual system scope across tenant requests 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores an old pending poll result after stop/restart while the new poll remains pending 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > returns a late old connection without replacing or leaking the restarted client 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores late old connection failure without releasing the restarted client or arming old polling 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not let a released client error rearm the obsolete pool after restart 4ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not dispatch notifications from an obsolete released client into a restarted lifecycle 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > coalesces notification bursts while each admitted read is pending 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > does not lose Stop notified while an older running snapshot is pending 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > lets another run deliver cancellation while the first run read stays pending 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > logs rejection and drains the pending successor without stranding admission 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > discards a queued successor after its local run has been released 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > isolates pending results and queued work across listener stop and restart 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > runs admitted and successor reads in actual system scope across tenant requests 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > ignores unrelated channels, missing payloads and runs owned elsewhere 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > logs synchronous query failure and admits the next notification 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > overlapping estate-wide sweeps share pending work > bounds twenty overlapping calls to one query, shares its count, then sweeps afresh 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > overlapping estate-wide sweeps share pending work > shares across tenant callers while the actual query carries system scope 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > overlapping estate-wide sweeps share pending work > propagates a shared asynchronous rejection and admits a retry 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > overlapping estate-wide sweeps share pending work > shares a synchronous query throw and clears admission for retry 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > sweep admission preserves the existing query contract > keeps separate database pools independent 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > sweep admission preserves the existing query contract > keeps distinct effective stale thresholds independent 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > sweep admission preserves the existing query contract > shares thresholds that round to the same existing SQL parameter 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > sweep admission preserves the existing query contract > shares a null row count as zero without retaining a settled result 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > sweep admission preserves the existing query contract > registers admission before a query callback can reenter the sweep 1ms
+
+ Test Files  1 passed (1)
+      Tests  28 passed (28)
+   Start at  22:40:50
+   Duration  585ms (transform 185ms, setup 91ms, import 128ms, tests 50ms, environment 0ms)

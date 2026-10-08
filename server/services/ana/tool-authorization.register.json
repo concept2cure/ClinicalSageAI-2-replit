@@ -5978,6 +5978,11 @@
     "source": "authoring"
    }
   },
+  "review_sop_requirements": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6069"
+  },
   "review_spirit_conformance": {
    "class": "read",
    "writes": "none",

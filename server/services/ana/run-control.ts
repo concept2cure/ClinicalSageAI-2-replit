@@ -735,6 +735,9 @@ async function notifyAndDrive(pool: RunControlQuery, runId: string, status: RunS
     .catch(err => log.warn(`[ana-run-control] pg_notify failed for ${runId}: ${err?.message}`));
 }
 
+/** Only pending sweeps are shared, independently by pool and effective SQL cutoff. */
+const orphanSweeps = new WeakMap<Pool, Map<number, Promise<number>>>();
+
 /**
  * Fail every live run this process no longer heartbeats.
  *
@@ -743,20 +746,34 @@ async function notifyAndDrive(pool: RunControlQuery, runId: string, status: RunS
  * this is the same refusal for chat runs.
  */
 export async function reapOrphanedRuns(pool: Pool, staleAfterMs = STALE_AFTER_MS): Promise<number> {
+  const seconds = Math.round(staleAfterMs / 1000);
+  const pending = orphanSweeps.get(pool) ?? new Map<number, Promise<number>>();
+  orphanSweeps.set(pool, pending);
+  const existing = pending.get(seconds);
+  if (existing) return existing;
   // System scope, explicitly. This sweep is estate-wide by design — the runs
   // that most need reaping belong to an instance that is gone — and it is
   // called opportunistically from inside a request, whose tenant scope would
   // silently reduce it to that one org and return a reassuring small number.
-  const { rowCount } = await runWithSystemTenantScope('ana-run-control:reap', () =>
-    pool.query(
-    `UPDATE ana_runs
-     SET status = 'failed', stopped_reason = 'orphaned', finished_at = now(), updated_at = now()
-     WHERE status IN ('running','paused','awaiting_approval')
-       AND heartbeat_at < now() - make_interval(secs => $1)`,
-      [Math.round(staleAfterMs / 1000)],
-    ),
-  );
-  return rowCount ?? 0;
+  // Register admission before invoking the pool, including a reentrant or
+  // synchronous failure. Settlement always admits the next fresh sweep.
+  const sweep = Promise.resolve()
+    .then(() => runWithSystemTenantScope('ana-run-control:reap', () =>
+      pool.query(
+      `UPDATE ana_runs
+       SET status = 'failed', stopped_reason = 'orphaned', finished_at = now(), updated_at = now()
+       WHERE status IN ('running','paused','awaiting_approval')
+         AND heartbeat_at < now() - make_interval(secs => $1)`,
+        [seconds],
+      ),
+    ))
+    .then(({ rowCount }) => rowCount ?? 0)
+    .finally(() => {
+      pending.delete(seconds);
+      if (pending.size === 0) orphanSweeps.delete(pool);
+    });
+  pending.set(seconds, sweep);
+  return sweep;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -789,6 +806,8 @@ export async function startRunControlListener(pool: Pool): Promise<void> {
   if (listenerStarted) return;
   listenerStarted = true;
   const generation = ++listenerGeneration;
+  // Admission belongs to this listener lifetime, independently for each run.
+  const pendingRefreshes = new Map<string, { dirty: boolean }>();
 
   try {
     // Every query below is estate-wide — a notification names a run, not a
@@ -809,7 +828,7 @@ export async function startRunControlListener(pool: Pool): Promise<void> {
     client.on('notification', msg => {
       if (!isCurrentListener(generation) || listenerClient !== client) return;
       if (msg.channel !== RUN_CONTROL_CHANNEL || !msg.payload) return;
-      void refreshFromRow(pool, msg.payload, generation);
+      void refreshFromRow(pool, msg.payload, generation, pendingRefreshes);
     });
     client.on('error', err => {
       if (!isCurrentListener(generation) || listenerClient !== client) return;
@@ -883,18 +902,38 @@ function startPollFallback(pool: Pool, generation: number): void {
   pollTimer.unref?.();
 }
 
-async function refreshFromRow(pool: Pool, runId: string, generation: number): Promise<void> {
-  if (!localRuns.has(runId)) return; // not ours
+async function refreshFromRow(
+  pool: Pool,
+  runId: string,
+  generation: number,
+  pendingRefreshes: Map<string, { dirty: boolean }>,
+): Promise<void> {
+  if (!isCurrentListener(generation) || !localRuns.has(runId)) return;
+  const pending = pendingRefreshes.get(runId);
+  if (pending) {
+    // Do not drop a newer Stop behind a read that already observed running.
+    pending.dirty = true;
+    return;
+  }
+  const refresh = { dirty: false };
+  pendingRefreshes.set(runId, refresh);
   // The notification carries a run id and no tenant, and this callback runs in
   // the LISTEN socket's creation context rather than the notifying request's —
   // so it opens its own system scope rather than inheriting a stale one.
-  const status = await runWithSystemTenantScope('ana-run-control:notify', () =>
-    readStatus(pool, runId),
-  ).catch(err => {
-    log.error(`[ana-run-control] notify refresh failed for ${runId}: ${err?.message}`);
-    return null;
-  });
-  if (status && isCurrentListener(generation)) driveLocalRun(runId, status);
+  try {
+    do {
+      refresh.dirty = false;
+      const status = await runWithSystemTenantScope('ana-run-control:notify', () =>
+        readStatus(pool, runId),
+      ).catch(err => {
+        log.error(`[ana-run-control] notify refresh failed for ${runId}: ${err?.message}`);
+        return null;
+      });
+      if (status && isCurrentListener(generation)) driveLocalRun(runId, status);
+    } while (refresh.dirty && isCurrentListener(generation) && localRuns.has(runId));
+  } finally {
+    pendingRefreshes.delete(runId);
+  }
 }
 
 /**

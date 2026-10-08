@@ -1,6 +1,15 @@
 /**
  * SOP Development flow definition for the AnA Intelligence Questioning system.
  *
+ * 2026-10-08 (D2, AnA's SOP expertise): the citations now name the regulation in
+ * force. The flow told clients 21 CFR 820.25 / 820.40 / 820.90 for devices (the
+ * QMSR removed them on 2026-02-02, and 820.90 was nonconforming product, never
+ * CAPA), ICH Q10 §3.2.4 for change management (it is §3.2.3), a §3.2.5 that does
+ * not exist, EU GMP Annex 15 (qualification and validation) for training, and
+ * 21 CFR 211.186 (master production records) for document control. The clause
+ * record is shared/regulatory/sop-requirements.ts; tests/services/sop-expertise.test.ts
+ * keeps this flow's citations to it.
+ *
  * Guides the user through gathering the information needed to create or
  * revise a Standard Operating Procedure, covering identification, scope,
  * process definition, roles, compliance requirements, document control,
@@ -406,7 +415,7 @@ export function createSopDevelopmentFlow(): FlowDefinition {
             title: 'Training Required for GxP SOPs',
             message:
               'FDA expects all personnel performing GxP activities to be trained and competent. Lack of training documentation is one of the most common FDA 483 observations. Ensure training requirements are defined even for non-GxP SOPs as a best practice.',
-            reference: '21 CFR 211.25, 21 CFR 820.25',
+            reference: '21 CFR 211.25 (drugs); 21 CFR 820.10 → ISO 13485:2016 §6.2 (devices; formerly 21 CFR 820.25)',
           },
         ],
         defaultNext: 'compliance_reqs',
@@ -595,8 +604,8 @@ export function createSopDevelopmentFlow(): FlowDefinition {
             severity: 'warning',
             title: 'No Periodic Review Defined',
             message:
-              'SOPs should have a defined periodic review cycle. "As needed" review may result in outdated procedures remaining in circulation. Most quality systems require review at least every 2-3 years.',
-            reference: 'ICH Q10 Section 3.2.5',
+              'SOPs should have a defined periodic review cycle. "As needed" review may result in outdated procedures remaining in circulation. A 2–3 year cycle is common industry practice; ISO 13485:2016 §4.2.4(b) requires review and update but sets no interval.',
+            reference: 'ISO 13485:2016 §4.2.4(b) (devices). For drugs no CFR or ICH Q10 section sets a review cycle; a defined cycle is industry practice.',
           },
           {
             id: 'no_sunset_clause',
@@ -620,7 +629,7 @@ export function createSopDevelopmentFlow(): FlowDefinition {
         question:
           'How will this SOP be managed within your document management system?',
         guidance:
-          'Effective document control is fundamental to GxP compliance. 21 CFR 211.186 and ICH Q10 require controlled document systems. Your DMS should ensure only current versions are in use and obsolete versions are promptly removed from circulation. The document numbering convention and distribution method should be defined before the SOP becomes effective.',
+          'Effective document control is fundamental to GxP compliance. 21 CFR 211.100(a) and 211.180 (drugs), ISO 13485:2016 §4.2.4 under the QMSR (devices) require controlled document systems, and ICH Q10 expects them. Your DMS should ensure only current versions are in use and obsolete versions are promptly removed from circulation. The document numbering convention and distribution method should be defined before the SOP becomes effective.',
         fields: [
           {
             id: 'dms_system',
@@ -697,7 +706,7 @@ export function createSopDevelopmentFlow(): FlowDefinition {
             title: 'Paper-Based Document Management',
             message:
               'Paper-based document management systems increase risk of uncontrolled copies and version confusion. Consider transitioning to an electronic DMS for improved compliance, searchability, and audit trail capabilities.',
-            reference: 'ICH Q10, 21 CFR 211.186',
+            reference: 'ICH Q10; 21 CFR 211.100(a), 211.180 (drugs); ISO 13485:2016 §4.2.4 (devices)',
           },
         ],
         defaultNext: 'change_management',
@@ -709,7 +718,7 @@ export function createSopDevelopmentFlow(): FlowDefinition {
         question:
           'How are changes to this SOP initiated, assessed, and approved?',
         guidance:
-          'Change control ensures SOP modifications are systematic and traceable. ICH Q10 Section 3.2.4 and 21 CFR 820.40 (for devices) require documented change control procedures. All changes should be assessed for impact on related processes, training needs, and regulatory filings. Emergency changes need special handling to maintain compliance while allowing timely response.',
+          'Change control ensures SOP modifications are systematic and traceable. ICH Q10 §3.2.3 (change management) and, for devices, ISO 13485:2016 §4.2.4 (document changes), §4.1.4 (QMS process changes) and §7.3.9 (design changes) under the QMSR (formerly 21 CFR 820.40 and 820.30(i)) require documented change control procedures. All changes should be assessed for impact on related processes, training needs, and regulatory filings. Emergency changes need special handling to maintain compliance while allowing timely response.',
         fields: [
           {
             id: 'change_request_process',
@@ -782,7 +791,7 @@ export function createSopDevelopmentFlow(): FlowDefinition {
             title: 'Impact Assessment Recommended',
             message:
               'Changes to SOPs should include an impact assessment to evaluate effects on related procedures, training requirements, and regulatory filings. Without impact assessment, changes may have unintended consequences on validated systems or regulatory submissions.',
-            reference: 'ICH Q10 Section 3.2.4',
+            reference: 'ICH Q10 §3.2.3',
           },
         ],
         defaultNext: 'training_program',
@@ -798,7 +807,7 @@ export function createSopDevelopmentFlow(): FlowDefinition {
         question:
           'What training methodology will support this SOP?',
         guidance:
-          '21 CFR 211.25 (pharma), 21 CFR 820.25 (devices), and ICH Q10 require that personnel performing GxP activities are trained and qualified. Training records must demonstrate competency before personnel perform regulated activities independently. The training methodology should be proportionate to the complexity and risk of the procedure.',
+          '21 CFR 211.25 (pharma), ISO 13485:2016 §6.2 under the QMSR (devices; formerly 21 CFR 820.25), and ICH Q10 require that personnel performing GxP activities are trained and qualified. Training records must demonstrate competency before personnel perform regulated activities independently. The training methodology should be proportionate to the complexity and risk of the procedure.',
         fields: [
           {
             id: 'training_methods',
@@ -898,7 +907,7 @@ export function createSopDevelopmentFlow(): FlowDefinition {
             title: 'GxP Training Required',
             message:
               'FDA and EMA require documented training for all GxP activities. Failure to train personnel on GxP SOPs is a common FDA 483 observation. Consider whether GxP fundamentals training should be a prerequisite for this SOP.',
-            reference: '21 CFR 211.25, 21 CFR 820.25',
+            reference: '21 CFR 211.25 (drugs); 21 CFR 820.10 → ISO 13485:2016 §6.2 (devices; formerly 21 CFR 820.25)',
           },
         ],
         defaultNext: 'knowledge_assessment',
@@ -910,7 +919,7 @@ export function createSopDevelopmentFlow(): FlowDefinition {
         question:
           'How will you assess and maintain competency for personnel following this SOP?',
         guidance:
-          'Competency assessment goes beyond training completion. FDA expects documented evidence that personnel can perform procedures correctly. EU GMP Annex 15 and ICH Q10 emphasize the need for ongoing competency verification, not just initial training sign-off. Define clear passing criteria and remediation plans for personnel who do not meet standards.',
+          'Competency assessment goes beyond training completion. FDA expects documented evidence that personnel can perform procedures correctly. EU GMP Chapter 2 (Personnel) and ICH Q10 emphasize the need for ongoing competency verification, not just initial training sign-off. Define clear passing criteria and remediation plans for personnel who do not meet standards.',
         fields: [
           {
             id: 'assessment_types',
@@ -1093,7 +1102,7 @@ export function createSopDevelopmentFlow(): FlowDefinition {
         question:
           'How does this SOP integrate with your CAPA system?',
         guidance:
-          '21 CFR 820.90 (devices) and ICH Q10 (pharma) require documented CAPA systems. CAPAs must be proportionate to the risk and documented to demonstrate closure. FDA expects that CAPA effectiveness is verified and that similar issues do not recur. Root cause analysis methodology should be appropriate for the complexity of the issue.',
+          'ISO 13485:2016 §8.5.2 and §8.5.3 under the QMSR (devices; formerly 21 CFR 820.100) and ICH Q10 §3.2.2 (pharma) require documented CAPA systems. CAPAs must be proportionate to the risk and documented to demonstrate closure. FDA expects that CAPA effectiveness is verified and that similar issues do not recur. Root cause analysis methodology should be appropriate for the complexity of the issue.',
         fields: [
           {
             id: 'corrective_action_triggers',
