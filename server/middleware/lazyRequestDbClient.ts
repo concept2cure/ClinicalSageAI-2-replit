@@ -18,6 +18,7 @@
 
 import type { Pool, PoolClient } from 'pg';
 import { createScopedLogger } from '../utils/logger';
+import { clearSessionScope } from '../db/sessionScope';
 
 const logger = createScopedLogger('lazy-request-db-client');
 
@@ -98,9 +99,8 @@ export class LazyRequestDbClient implements RequestDbClient {
 
     let cleanupError: Error | null = null;
     try {
-      await client.query("SELECT set_config('app.current_tenant_id', '', false)");
-      await client.query("SELECT set_config('app.current_user_role', '', false)");
-      await client.query("SELECT set_config('app.current_org_id', '', false)");
+      // The tenant variables and the isolation switches (sessionScope.ts).
+      await clearSessionScope(client);
     } catch (err) {
       cleanupError = asError(err, 'Failed to clear tenant session variables');
       logger.warn('Failed to clear tenant session vars on release', {
