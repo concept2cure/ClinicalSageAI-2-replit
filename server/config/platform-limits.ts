@@ -44,9 +44,12 @@
  * surfaces load (VSR-001 F-5 evidence), so ONE identity gets 600/min — six
  * times that, room for a busy user, still a hard cap — and one address gets
  * 3,000/min of credentialed traffic, fifty such users. The resource-priced
- * buckets (ai, documents, validation, upload) keep their ceilings: they exist
- * for cost, not for source attribution, and per-identity keying alone already
- * stops one user's quota from being consumed by a colleague.
+ * buckets (ai, documents, validation) keep their ceilings: they exist for cost,
+ * not for source attribution, and per-identity keying alone already stops one
+ * user's quota from being consumed by a colleague. The upload bucket is the one
+ * exception, raised per identity on 2026-10-08 (see RATE_LIMITS.upload), and the
+ * Vault's document metadata reads moved out of `documents` into `vault_metadata`
+ * the same day (still fail-closed).
  *
  * ── Sign-in (D6, 2026-09-29) ─────────────────────────────────────────────────
  * Sign-in was limited per client address at every layer, successes counted:
@@ -136,11 +139,26 @@ export const RATE_LIMITS = {
     skipRoles: ['admin', 'super_admin'] as string[],
   },
 
-  /** Document generation/export endpoints. */
+  /** Document generation, export and download endpoints, and the Vault's document
+   *  writes. The Vault's document METADATA reads are in `vault_metadata` instead. */
   documents: {
     windowMs: ONE_MINUTE_MS,
     maxRequests: 20,
     message: 'Too many document requests. Please wait.',
+  },
+
+  /** The Vault's document-scoped METADATA reads: versions, history, annotations
+   *  and relationships. One document open makes four of them, so they cannot
+   *  share the 20-a-minute `documents` bucket (QA 2026-10-08: five opens in a
+   *  minute were refused). Per identity 600, the same ceiling as `api`. They stay
+   *  FAIL-CLOSED on a limiter error, unlike `api`: annotations carry the quoted
+   *  text of a document, which is content, not a navigation read. */
+  vault_metadata: {
+    windowMs: ONE_MINUTE_MS,
+    maxRequests: 100,
+    maxRequestsAuthenticated: 600,
+    maxRequestsPerIpAuthenticated: 3000,
+    message: 'Too many requests for this document. Please wait.',
   },
 
   /** Concept2Cure-specific API. Same shape as `api`: the launch surfaces
@@ -160,10 +178,16 @@ export const RATE_LIMITS = {
     message: 'Too many validation requests.',
   },
 
-  /** File-upload endpoints. */
+  /** File-upload endpoints. /api/chat/upload is one POST per file, and the Data
+   *  room's drop starts them all at once. Per identity: 60 a minute, so a drop
+   *  of up to sixty files is filed in one go. Dated 2026-10-08 (QA): at the old
+   *  per-identity 10, a fifteen-file drop filed ten and refused five. Still a
+   *  cost ceiling: each upload is OCR and a virus scan, and sixty a minute is the
+   *  most one identity can make. Anonymous traffic keeps 10 a minute per address. */
   upload: {
     windowMs: ONE_MINUTE_MS,
     maxRequests: 10,
+    maxRequestsAuthenticated: 60,
     message: 'Too many file uploads. Please wait.',
   },
 } as const;
@@ -196,9 +220,9 @@ export const SIGN_IN_LIMITS = {
 /**
  * Categories that must FAIL CLOSED when the limiter itself errors. Preserved
  * from redisRateLimiter.ts; see that file's comment for the rationale (auth =
- * brute-force surface, documents = data-exfiltration surface).
+ * brute-force surface, documents and vault_metadata = data-exfiltration surfaces).
  */
-export const RATE_LIMIT_FAIL_CLOSED_CATEGORIES = ['auth', 'documents'] as const;
+export const RATE_LIMIT_FAIL_CLOSED_CATEGORIES = ['auth', 'documents', 'vault_metadata'] as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RATE LIMITS — legacy in-memory limiter (server/middleware/rateLimiter.ts)
@@ -289,6 +313,7 @@ Object.freeze(RATE_LIMITS.auth);
 Object.freeze(RATE_LIMITS.api);
 Object.freeze(RATE_LIMITS.ai);
 Object.freeze(RATE_LIMITS.documents);
+Object.freeze(RATE_LIMITS.vault_metadata);
 Object.freeze(RATE_LIMITS.concept2cure);
 Object.freeze(RATE_LIMITS.validation);
 Object.freeze(RATE_LIMITS.upload);

@@ -129,8 +129,8 @@ export async function resolveCmcArtifactProject(
       artifactProjectId: null,
       detail:
         'This program has no PM-spine anchor (projects.regulatory_program_id), so the governed ' +
-        'artifact registry cannot be addressed for it. CMC capture, compile and provenance still ' +
-        'work; artifacts stay unplaced until the program is anchored.',
+        'artifact registry cannot be addressed for it. CMC capture, compile, provenance and placement ' +
+        'into a submission still work; the registry’s artifacts are not listed until the program is anchored.',
     };
   }
 

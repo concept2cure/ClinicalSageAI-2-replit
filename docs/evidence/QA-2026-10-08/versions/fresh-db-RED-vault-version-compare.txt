@@ -1,0 +1,157 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-08T01:40:11.330Z","pid":14025,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T01:40:11.331Z","pid":14025,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T01:40:11.331Z","pid":14025,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-version-compare.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-08T01:40:11.407Z', poolSize: 1 }
+
+stdout | tests/db/vault-version-compare.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-version-compare.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-08T01:40:12.465Z","pid":14025,"hostname":"vm","context":{"filename":"stability-protocol.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:14025) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:40:12.628Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 1741,
+    "wordCount": 280,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:40:12.725Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "601aa24f-4a6b-4dc3-a221-315565b57181",
+    "code": "DBTEST-VCMP-DOC",
+    "type": "OTHER",
+    "size": 1741,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-08T01:40:12.740Z","pid":14025,"hostname":"vm","context":{"filename":"stability-protocol.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:40:12.747Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 1783,
+    "wordCount": 291,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:40:12.760Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f3eeef3a-09e5-4db1-a606-3ad034a2ff2e",
+    "code": "DBTEST-VCMP-DOC",
+    "type": "OTHER",
+    "size": 1784,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-08T01:40:12.766Z","pid":14025,"hostname":"vm","context":{"filename":"memo.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:40:12.767Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 18,
+    "wordCount": 3,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:40:12.777Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e75208a9-872b-4532-b46c-42a74c01a75e",
+    "code": "DBTEST-VCMP-OTHER",
+    "type": "OTHER",
+    "size": 19,
+    "hasText": true
+  }
+}
+
+ × tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > names both sides and returns the changed lines and details, unchanged runs collapsed 49ms
+   → expected [] to deeply equal [ { field: 'title', …(2) } ]
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > the earlier version is always the one compared from 19ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > refuses a version of another document, and another organisation's document reads as not found 18ms
+ × tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > a version with no extracted text gets no text comparison, and the answer says which 29ms
+   → expected [] to have a length of 1 but got +0
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > names both sides and returns the changed lines and details, unchanged runs collapsed
+AssertionError: expected [] to deeply equal [ { field: 'title', …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "field": "title",
+-     "from": "Stability protocol",
+-     "to": "Stability protocol, revised",
+-   },
+- ]
++ []
+
+ ❯ tests/db/vault-version-compare.dbtest.ts:135:23
+    133|     expect(d.to.current).toBe(true);
+    134|     expect(d.sameBytes).toBe(false);
+    135|     expect(d.details).toEqual([{ field: 'title', from: 'Stability prot…
+       |                       ^
+    136|     expect(d.text).toMatchObject({ available: true, identical: false, …
+    137|     const removed = d.text.hunks.filter((h: { kind: string }) => h.kin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > a version with no extracted text gets no text comparison, and the answer says which
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/vault-version-compare.dbtest.ts:164:37
+    162|       expect(res.body.data.text.available).toBe(false);
+    163|       expect(res.body.data.text.reason).toMatch(/No text was read from…
+    164|       expect(res.body.data.details).toHaveLength(1);
+       |                                     ^
+    165|     } finally {
+    166|       await owner.query(`UPDATE vault.documents SET extracted_text = $…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  01:40:08
+   Duration  4.61s (transform 2.12s, setup 129ms, import 276ms, tests 3.48s, environment 0ms)
+

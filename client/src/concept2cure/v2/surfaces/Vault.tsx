@@ -344,6 +344,8 @@ interface HistoryEntry {
   when: string;
   hash: string;
   seq: number | null;
+  /** The reason recorded with the change, when the writer recorded one (21 CFR 11.10(e)). */
+  reason?: string | null;
 }
 interface HistoryShape {
   entries: HistoryEntry[];
@@ -428,6 +430,7 @@ function DocumentHistory({ projectId, documentUuid }: { projectId: string; docum
               </span>
               <span className="vd-ver-m">
                 {e.when || e.at} · {e.actor} · <span className="mono" title={e.hash}>{e.hash.slice(0, 12)}</span>
+                {e.reason ? <span className="vd-ver-lc" data-testid="vault-history-reason">Reason: {e.reason}</span> : null}
               </span>
             </div>
           ))}
@@ -722,7 +725,15 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
  *  to operate, and "no documents" or "no such folder" would misstate why. */
 const NO_PROGRAM_OPEN = 'No program is open, so there is no vault here yet — open a program first.';
 
-export function Vault({ onAsk, onNav }: SurfaceViewProps) {
+/* The Vault for the project open now. The body is keyed by the project, so a
+   switch remounts it with no data: the read hook keeps the last payload while a
+   new path loads, and the previous project's documents must not stand in for the
+   new project's while it loads. */
+export function Vault(props: SurfaceViewProps) {
+  return <VaultForProject key={currentProjectId() ?? ''} {...props} />;
+}
+
+function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const projectId = currentProjectId();
   const vaultPath = projectId
     ? '/api/c2c/project-vault/' + encodeURIComponent(projectId)
@@ -731,6 +742,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
      patched locally: what the Vault shows is what the Vault stored. */
   const [vaultEpoch, setVaultEpoch] = useState(0);
   const vaultState = useLiveData<VaultDisplayShape>(vaultPath, [vaultPath, vaultEpoch]);
+  // The placeholder shows only before there is data to show. A re-read after a change keeps the
+  // body mounted, so a confirmation held in it (a save, a post, a decision) stays on screen.
   const vault = vaultState.data;
   /* The data room's "File into Vault" (VR-11): held here so its answer
      survives the re-read that follows a filing. */
@@ -1401,6 +1414,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           projectId={projectId ?? null}
           filing={filingIntoSubmission.filing ?? null}
           onNav={onNav}
+          /* A placement changes the version's "placed in" line, which reads the
+             versions list: re-read it, or the line stays "not placed" until reload. */
+          onPlaced={() => setVaultEpoch((n) => n + 1)}
           onClose={() => setFilingIntoSubmission(null)}
         />
       )}
@@ -1457,7 +1473,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
             hint="The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine."
           />
         </div>
-      ) : vaultState.loading ? (
+      ) : vaultState.loading && !vault ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 24px' }}>
           Loading the project vault…
         </div>
@@ -1727,7 +1743,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 )}
 
                 {sel.src === 'upload' && sel.docId && projectId && (!sel.disposition || sel.disposition === 'keep_data') && <DocumentDisposition
-                  key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} targetType="vault_document" targetId={sel.docId}
+                  key={`disposition-${sel.docId}`} projectId={projectId} targetType="vault_document" targetId={sel.docId}
                   title={sel.title} existingChoice={sel.disposition} onChanged={() => setVaultEpoch(n => n + 1)}
                 />}
                 {sel.originalFileAvailable === false && <p className="sec-sub" role="status">Original file unavailable. Retained extracted data and its lineage remain accessible.</p>}
@@ -1878,8 +1894,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                     </div>
 
                     {projectId && sel.docId && sel.details ? (
+                      /* Keyed by the document alone. A sibling DocumentHistory below
+                         is keyed `${docId}-${vaultEpoch}`: the same string twice in one
+                         fragment is a duplicate key, and React then leaves the Details
+                         block it mounted for the previous document in the DOM. Keyed
+                         by the epoch too, the block also remounts on every re-read, and
+                         the confirmation of a save is lost in the same render. */
                       <VaultEditDetails
-                        key={`${sel.docId}-${vaultEpoch}`}
+                        key={`details-${sel.docId}`}
                         projectId={projectId}
                         documentId={sel.docId}
                         details={sel.details}
@@ -1919,9 +1941,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                     ) : null}
                     {projectId && sel.docId ? (
                       <VaultAnnotations
-                        key={`annotations-${sel.docId}-${vaultEpoch}`}
+                        key={`annotations-${sel.docId}`}
                         projectId={projectId}
                         documentId={sel.docId}
+                        refreshKey={vaultEpoch}
                         onChanged={() => setVaultEpoch((n) => n + 1)}
                       />
                     ) : null}
@@ -1959,9 +1982,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
                     />
                     <VaultAnnotations
-                      key={`annotations-${sel.docId}-${vaultEpoch}`}
+                      key={`annotations-${sel.docId}`}
                       projectId={projectId}
                       documentId={sel.docId}
+                      refreshKey={vaultEpoch}
                       onChanged={() => setVaultEpoch((n) => n + 1)}
                     />
                     <VaultRelationships

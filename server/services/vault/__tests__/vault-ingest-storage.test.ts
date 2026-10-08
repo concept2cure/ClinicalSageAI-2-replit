@@ -355,3 +355,73 @@ describe('the retention clock starts at admission (P1-22)', () => {
     expect(insert!.sql).toMatch(/GREATEST\(\s*\(CURRENT_DATE \+ make_interval\(years =>/);
   });
 });
+
+describe('a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08)', () => {
+  const HEAD = '55555555-5555-4555-8555-555555555555';
+  /* The conflict's answer is the current version at that code: the end of the
+     chain, which is what a new version is added to. The INSERT conflicts (no row). */
+  function conflictClient(head: Record<string, unknown> | null) {
+    return {
+      query: vi.fn(async (sql: string) => {
+        if (/INSERT INTO vault\.documents/.test(String(sql))) return { rows: [], rowCount: 0 };
+        if (/NOT EXISTS/.test(String(sql))) return { rows: head ? [head] : [], rowCount: head ? 1 : 0 };
+        return { rows: [], rowCount: 0 };
+      }),
+      release: vi.fn(),
+    };
+  }
+
+  it('names the current version at that code, so the screen can offer a new version of it', async () => {
+    connect.mockResolvedValue(conflictClient({ id: HEAD, version: '2.0' }));
+    const res = await ingestVaultDocument(args());
+    expect(res).toMatchObject({
+      ok: false, status: 409, code: 'VERSION_CONTENT_CONFLICT', headDocumentId: HEAD, headVersion: '2.0',
+    });
+    expect(del).toHaveBeenCalledWith('ver-abc', ORG);
+  });
+
+  it('names no document when none holds the code, and the refusal is otherwise unchanged', async () => {
+    connect.mockResolvedValue(conflictClient(null));
+    const res = await ingestVaultDocument(args());
+    expect(res).toMatchObject({ ok: false, status: 409, code: 'VERSION_CONTENT_CONFLICT' });
+    expect(res).not.toHaveProperty('headDocumentId');
+  });
+});
+
+describe('a check-in keeps the document it adds to: its code and filing, and records the title it is given (QA-2026-10-08)', () => {
+  const HEAD = '66666666-6666-4666-8666-666666666666';
+  const headRow = {
+    id: HEAD, document_code: 'Protocol-Stability.pdf', document_title: 'Stability protocol STB-0042',
+    document_type: 'OTHER', version: '1.0', folder_id: 'module-3', evidence_kind: 'protocol', ctd_section: '3.2.P.8',
+    placement_status: 'confirmed', placement_confidence: null, placement_rationale: null, placed_by: 3,
+    classification: 'INTERNAL', retention_policy: null,
+  };
+  // planCheckIn reads the head on the pool, then again locked on the transaction client.
+  const isHead = (sql: string) => /d\.id::text AS id, d\.document_code/.test(sql);
+
+  it('the new version takes the head\'s code, and records the title it is given, so a retitled version shows the change', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (isHead(String(sql))) return { rows: [headRow], rowCount: 1 };
+      if (/FROM vault\.documents/.test(String(sql))) return { rows: [], rowCount: 0 };
+      return { rows: [{ '?column?': 1 }], rowCount: 1 };
+    });
+    const calls: Array<{ sql: string; params: unknown[] }> = [];
+    connect.mockResolvedValue({
+      query: vi.fn(async (sql: string, params?: unknown[]) => {
+        calls.push({ sql: String(sql), params: (params ?? []) as unknown[] });
+        if (isHead(String(sql))) return { rows: [headRow], rowCount: 1 };
+        if (/INSERT INTO vault\.documents/.test(String(sql))) return { rows: [{ id: 'doc-2', processing_status: 'PENDING' }], rowCount: 1 };
+        return { rows: [], rowCount: 0 };
+      }),
+      release: vi.fn(),
+    });
+
+    await ingestVaultDocument(args({ supersedesDocumentId: HEAD, documentCode: undefined, version: undefined, documentTitle: 'Stability protocol, revised' }));
+
+    const insert = calls.find(c => /INSERT INTO vault\.documents/.test(c.sql));
+    expect(insert, 'no INSERT reached the database').toBeDefined();
+    expect(insert!.params[1]).toBe('Protocol-Stability.pdf'); // document_code, the head's
+    expect(insert!.params[2]).toBe('Stability protocol, revised'); // document_title, as given
+    expect(insert!.params[4]).toBe('2.0'); // version, assigned by the server
+  });
+});

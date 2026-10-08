@@ -1,0 +1,56 @@
+AUTO-FILED · CONFIRM
+v1.0
+NOT SENT FOR REVIEW
+5.3 - Vorelinib-Investigator-Brochure-Ed3
+Clinical docs - Emily Watson - updated 2h ago
+Vorelinib-Investigator-Brochure-Ed3.docx · 1.2 kB · SHA-256 a6d0d06607ff…
+Review file removal
+SUBMISSION
+Filing
+File into an eCTD sequence. The leaf points at the vault copy, so what is assembled is what is stored here.
+Place into submission…
+DOSSIER FILING
+Folder
+Module 5 · Clinical
+Looks like
+Clinical document
+CTD section
+5.3
+Classifier (medium confidence): Document text contains "investigator's brochure" — filename alone was not classifiable.
+Confirm filing
+Move to…
+Module 1 · Administrative
+Module 2 · Summaries
+Module 3 · Quality
+Module 4 · Nonclinical
+Module 5 · Clinical
+eCTD sequences
+Agency correspondence
+Shared · Templates
+Move
+DETAILS
+Title
+Vorelinib-Investigator-Brochure-Ed3
+Type
+Other
+Classification
+Internal
+Edit details
+FILE
+Size
+1.2 kB
+SHA-256
+a6d0d06607fff380…
+VERSIONS
+The versions of this document could not be read. No list is shown because it would be incomplete. Reload the page to try again.
+Upload new version
+REVIEW ANNOTATIONS
+The review annotations could not be read; none are shown rather than an incomplete list. Too many document requests. Please wait.
+Add annotation
+RELATED DOCUMENTS
+Related documents could not be read; none are shown rather than an incomplete list. Too many document requests. Please wait.
+Relate a document
+HISTORY
+This document's history could not be read. Nothing is shown rather than an incomplete history.
+Ask AnA
+Download

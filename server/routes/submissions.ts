@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { requireRole } from '../middleware/auth';
 import { isUuid } from '../middleware/uuidParam';
+import { ok } from '../lib/api-response';
 import { requestDb } from '../db/requestDb';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
@@ -216,8 +217,23 @@ const AUTHOR = 'regulatory-author';
 router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  /* ?programId=<uuid> scopes the list to one program's submissions: the filing
+     picker's list, where an unanchored submission is not offered for a document
+     of a program (QA j3 finding (b)). The count of submissions the scope leaves
+     out rides in `meta.notOffered`, so the picker can say what it did not offer.
+     Without it the whole organization is listed, as the Submission Center reads it. */
+  const programParam = req.query.programId;
   try {
-    res.json(await listSubmissions(ctx));
+    if (programParam === undefined) {
+      res.json(await listSubmissions(ctx));
+      return;
+    }
+    if (typeof programParam !== 'string' || !isUuid(programParam)) {
+      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'programId must be a program uuid.' } });
+    }
+    const programId = programParam.toLowerCase();
+    const [rows, all] = await Promise.all([listSubmissions(ctx, { programId }), listSubmissions(ctx)]);
+    ok(res, rows, { notOffered: all.length - rows.length });
   } catch (err) {
     fail(res, err);
   }

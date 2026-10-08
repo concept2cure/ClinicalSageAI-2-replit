@@ -65,7 +65,8 @@ export type SubmissionErrorCode =
   | 'GOVERNED_REQUIRED'
   | 'DISPATCH_BLOCKED'
   | 'FORBIDDEN'
-  | 'CROSS_PROJECT';
+  | 'CROSS_PROJECT'
+  | 'ALREADY_PLACED';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -94,6 +95,7 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   DISPATCH_BLOCKED: 422,
   FORBIDDEN: 403,
   CROSS_PROJECT: 409,
+  ALREADY_PLACED: 409,
 };
 
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
@@ -264,11 +266,27 @@ export async function createSubmissionTx(
   return insertSubmissionRow(drizzle(client), input, ctx);
 }
 
-export async function listSubmissions(ctx: { organizationId: number }): Promise<Submission[]> {
+/**
+ * The organization's live submissions, newest first. With `scope.programId`, only
+ * the submissions anchored to that program (submissions.program_id): an
+ * unanchored submission (NULL) belongs to no program and is not in that list. The
+ * filing picker reads the scoped list; the Submission Center and Dispatch
+ * Readiness read the whole organization.
+ */
+export async function listSubmissions(
+  ctx: { organizationId: number },
+  scope?: { programId?: string },
+): Promise<Submission[]> {
   const rows = await db
     .select()
     .from(submissions)
-    .where(and(eq(submissions.organizationId, ctx.organizationId), isNull(submissions.deletedAt)))
+    .where(
+      and(
+        eq(submissions.organizationId, ctx.organizationId),
+        isNull(submissions.deletedAt),
+        scope?.programId ? eq(submissions.programId, scope.programId) : undefined,
+      ),
+    )
     .orderBy(desc(submissions.updatedAt));
   return rows as Submission[];
 }
@@ -1871,7 +1889,15 @@ async function verifyLeafSource(
  * outcome and is never another row's under a borrowed name; which action it was
  * is the same distinction as which branch ran.
  */
-export type UpsertedLeaf = SubmissionLeaf & { auditTrail: AuditRowOutcome };
+/**
+ * What a leaf write returns. `auditTrail` is the §11.10(e) outcome of the write
+ * made. A write that changed nothing (`unchanged`, see upsertLeaf) made no audit
+ * row, so it carries none (null) and must not be read as an unpersisted audit.
+ */
+export type UpsertedLeaf = SubmissionLeaf & {
+  auditTrail: AuditRowOutcome | null;
+  unchanged?: true;
+};
 
 /** Create or update a leaf placement. Refuses if the parent sequence is locked. */
 /**
@@ -1964,6 +1990,43 @@ async function leafSourceProgram(documentTable: string, ref: LeafRef, organizati
 
 /** A transaction handle from `db.transaction` — what a locked leaf write runs on. */
 type LeafWriteTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * The live leaf of this sequence that already names this document in this
+ * section, or null. Compared by document identity (table plus uuid or id) and by
+ * section, case- and space-insensitively, the way the lifecycle keys compare
+ * sections (sharedLifecycleKeys). Reads only live leaves: a removed leaf does not
+ * count as a placement.
+ */
+async function sameDocumentLeafInSection(
+  executor: Pick<LeafWriteTx, 'select'>,
+  input: UpsertLeafInput,
+  organizationId: number,
+): Promise<SubmissionLeaf | null> {
+  if (!input.documentTable) return null;
+  const document =
+    input.documentUuid != null
+      ? eq(submissionLeaves.documentUuid, input.documentUuid)
+      : input.documentId != null
+        ? eq(submissionLeaves.documentId, input.documentId)
+        : null;
+  if (!document) return null;
+  const [row] = await executor
+    .select()
+    .from(submissionLeaves)
+    .where(
+      and(
+        eq(submissionLeaves.sequenceId, input.sequenceId),
+        eq(submissionLeaves.organizationId, organizationId),
+        isNull(submissionLeaves.deletedAt),
+        eq(submissionLeaves.documentTable, input.documentTable),
+        document,
+        sql`lower(btrim(${submissionLeaves.sectionCode})) = lower(btrim(${input.sectionCode}))`,
+      ),
+    )
+    .limit(1);
+  return (row as SubmissionLeaf | undefined) ?? null;
+}
 
 /**
  * Run a leaf write in one transaction holding the sequence row lock
@@ -2268,27 +2331,42 @@ export async function upsertLeaf(
     return { ...(row as SubmissionLeaf), auditTrail };
   }
 
-  // Under the sequence row lock (2026-09-23, W5/D7, round-2 skeptic).
-  const [row] = await lockSequenceForLeafWrite(input.sequenceId, ctx, (tx) => tx
-    .insert(submissionLeaves)
-    .values({
-      sequenceId: input.sequenceId,
-      sectionCode: input.sectionCode,
-      title: input.title,
-      granularity: input.granularity ?? null,
-      lifecycleOp: input.lifecycleOp ?? 'new',
-      documentTable: input.documentTable ?? null,
-      documentId: input.documentId ?? null,
-      documentUuid: input.documentUuid ?? null,
-      documentType: input.documentType ?? null,
-      parentLeafId: input.parentLeafId ?? null,
-      checksum: input.checksum ?? null,
-      documentContentSha256,
-      documentPinnedAt: documentContentSha256 ? new Date() : null,
-      organizationId: ctx.organizationId,
-      createdBy: ctx.userId,
-    })
-    .returning());
+  /* One live leaf per document per section, in one sequence (QA j3 finding (a),
+     2026-10-08). The same file placed twice under one section became two leaves
+     the packager names one output file for, and the placement dialog gave no
+     notice. Judged INSIDE the sequence lock, so two identical placements racing
+     cannot both insert.
+
+     A DIFFERENT document may still share a section: several New leaves in one
+     section is a readiness INFO (dispatch-readiness DUPLICATE_NEW_SECTION, "without
+     erroring"), not a refusal, so it is not judged here. */
+  const placed = await lockSequenceForLeafWrite(input.sequenceId, ctx, async (tx) => {
+    const live = await sameDocumentLeafInSection(tx, input, ctx.organizationId);
+    if (live) return { kind: 'live' as const, live };
+    const [inserted] = await tx
+      .insert(submissionLeaves)
+      .values({
+        sequenceId: input.sequenceId,
+        sectionCode: input.sectionCode,
+        title: input.title,
+        granularity: input.granularity ?? null,
+        lifecycleOp: input.lifecycleOp ?? 'new',
+        documentTable: input.documentTable ?? null,
+        documentId: input.documentId ?? null,
+        documentUuid: input.documentUuid ?? null,
+        documentType: input.documentType ?? null,
+        parentLeafId: input.parentLeafId ?? null,
+        checksum: input.checksum ?? null,
+        documentContentSha256,
+        documentPinnedAt: documentContentSha256 ? new Date() : null,
+        organizationId: ctx.organizationId,
+        createdBy: ctx.userId,
+      })
+      .returning();
+    return { kind: 'inserted' as const, inserted };
+  });
+  if (placed.kind === 'live') return alreadyPlaced(placed.live, input);
+  const row = placed.inserted;
   // Part 11 §11.10(e), on the same terms as the update branch: the INSERT above
   // is committed, the placement stands, and the outcome rides out on the row.
   const auditTrail = await recordAuditRow({
@@ -2305,6 +2383,25 @@ export async function upsertLeaf(
     },
   });
   return { ...(row as SubmissionLeaf), auditTrail };
+}
+
+/**
+ * The answer to a new placement of a document that is already live in the
+ * section. The same operation is a no-op: the existing leaf comes back, nothing
+ * is written and nothing is audited. A different operation is refused by name,
+ * because handing back a leaf the caller did not ask for would read as a
+ * placement that did not happen.
+ */
+function alreadyPlaced(live: SubmissionLeaf, input: UpsertLeafInput): UpsertedLeaf {
+  const requested = input.lifecycleOp ?? 'new';
+  if ((live.lifecycleOp ?? 'new') !== requested) {
+    throw new SubmissionError(
+      'ALREADY_PLACED',
+      `This document is already placed at ${live.sectionCode} in this sequence as ${live.lifecycleOp} (leaf ${live.id}). ` +
+        'Nothing was written. To change its operation, remove that leaf first.',
+    );
+  }
+  return { ...live, auditTrail: null, unchanged: true };
 }
 
 /**

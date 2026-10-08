@@ -179,12 +179,17 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
   }
 
   // The runtime db is resolved lazily so importing this module never forces a
-  // pool. Tests always pass opts.db.
-  const getDb = (): CanonicalStoreDb => {
+  // pool. Tests always pass opts.db. This is an ES module ("type": "module"):
+  // `require` is not defined here, so the runtime db is a dynamic import. The
+  // bare require threw on every write after the role gate and answered 500, so
+  // Send for review (POST /api/regulatory/documents) could never start a record.
+  const getDb = async (): Promise<CanonicalStoreDb> => {
     if (opts.db) return opts.db;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { db } = require('../db') as { db: CanonicalStoreDb };
-    return db;
+    const { db } = await import('../db');
+    // The runtime handle carries the shared schema's generic, which
+    // CanonicalStoreDb does not; the store reads the same node-postgres surface
+    // either way. This is the assertion the removed `require` cast made too.
+    return db as unknown as CanonicalStoreDb;
   };
 
   // Async handlers must not throw into Express unguarded (Express 4 does not
@@ -384,14 +389,14 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     const { title, documentType, projectId, hasContent, sources } = req.body ?? {};
     const vaultId = vaultSourceId(sources);
     if (vaultId !== null) {
-      const started = await startVaultLifecycleRecord(getDb(), { organizationId, createdBy, vaultId });
+      const started = await startVaultLifecycleRecord(await getDb(), { organizationId, createdBy, vaultId });
       return res.status(started.status).json(started.body);
     }
     if (typeof title !== 'string' || !title.trim() || typeof documentType !== 'string' || !documentType.trim()) {
       return res.status(400).json({ ok: false, error: 'title_and_document_type_required' });
     }
 
-    const canonicalId = await createCanonicalDocument(getDb(), {
+    const canonicalId = await createCanonicalDocument(await getDb(), {
       organizationId,
       createdBy,
       title: title.trim(),
@@ -402,7 +407,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       sources,
     });
     // Report how many blueprint sections were instantiated as the outline.
-    const outline = await readOutline(getDb(), canonicalId, organizationId);
+    const outline = await readOutline(await getDb(), canonicalId, organizationId);
     return res.status(201).json({ ok: true, canonicalId, sectionCount: outline.length });
   }));
 
@@ -445,7 +450,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
 
     let outcome: Outcome;
     try {
-      outcome = await getDb().transaction(async (tx): Promise<Outcome> => {
+      outcome = await (await getDb()).transaction(async (tx): Promise<Outcome> => {
         const existing = await loadProjectionInput(tx, id, organizationId, { forUpdate: true });
         if (!existing) return { status: 404, body: { ok: false, error: 'not_found' } };
         if (meaning === 'approved') {
@@ -517,7 +522,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
 
     let outcome: Outcome;
     try {
-      outcome = await getDb().transaction(async (tx): Promise<Outcome> => {
+      outcome = await (await getDb()).transaction(async (tx): Promise<Outcome> => {
         const input = await loadProjectionInput(tx, id, organizationId, { forUpdate: true });
         if (!input) return { status: 404, body: { ok: false, error: 'not_found' } };
 
@@ -657,7 +662,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     const organizationId = resolveOrgId(req);
     if (organizationId === null) return res.status(403).json({ ok: false, error: 'organization_context_required' });
 
-    const db = getDb();
+    const db = await getDb();
     const input = await loadProjectionInput(db, String(req.params.id), organizationId);
     if (!input) return res.status(404).json({ ok: false, error: 'not_found' });
 

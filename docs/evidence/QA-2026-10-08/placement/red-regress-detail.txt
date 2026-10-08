@@ -1,0 +1,103 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins the SHA-256 of the document content it filed 24ms
+   → (intermediate value) is not iterable
+ × server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > the pin is re-derivable by an inspector from the document row 1ms
+   → (intermediate value) is not iterable
+ × server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > REGRESSION: a document edited after filing no longer matches its pin 9ms
+   → (intermediate value) is not iterable
+ × server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins NULL, not sha256 of empty, when the document has no content 1ms
+   → (intermediate value) is not iterable
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins nothing when the leaf carries no document pointer 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > re-pins on update, so a re-pointed leaf cannot keep an old attestation 4ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > still refuses a document that belongs to another organization 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (create) 7ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (update) 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > names the allowed tables in the refusal so the caller can correct it 2ms
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts coauthor_documents — a table the resolver branches on 21ms
+   → (intermediate value) is not iterable
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts unified_documents — a table the resolver branches on 2ms
+   → (intermediate value) is not iterable
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents — a table the resolver branches on 10ms
+   → (intermediate value) is not iterable
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts rendered_leaf_files — a table the resolver branches on 1ms
+   → (intermediate value) is not iterable
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts c2c_document_sections — a table the resolver branches on 3ms
+   → (intermediate value) is not iterable
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts vault_documents — a table the resolver branches on 2ms
+   → (intermediate value) is not iterable
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf addressed by an integer — a uuid-keyed store has no integer to name 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf with no uuid at all — it would name no document 3ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a uuid on an integer-keyed table — that store has no uuids 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault document belonging to another organization, and pins nothing 1ms
+ × server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > pins the vault document content hash onto the leaf it writes 2ms
+   → (intermediate value) is not iterable
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > still accepts a leaf with no document pointer at all 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > records the reason given on a new placement 7ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > writes no reason key when the caller gave none, rather than inventing one 1ms
+stderr | server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > without strict, the same failure is still reported as unaddressable (degraded readers are unchanged)
+{
+  "timestamp": "2026-10-08T01:32:01.084Z",
+  "level": "warn",
+  "message": "[cmc-artifact-spine] Numeric project-id ownership check failed; treating id as unaddressable",
+  "context": {
+    "orgId": 7,
+    "projectId": 42,
+    "err": "connection reset"
+  }
+}
+
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > resolves a numeric projects.id only when it belongs to the caller org 3ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > refuses a numeric projects.id that belongs to another org (cross-tenant IDOR) 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > resolves a program uuid through the canonical anchor reader 2ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > reports an unanchored program as a state, not an error or an empty answer 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > an unanchored detail does not say its artifacts stay unplaced: Module 3 placement into a submission still works without the anchor 0ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > refuses ids that address neither spine 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > a numeric lookup that could not complete throws in strict mode — "could not tell" is not "not yours" 4ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > without strict, the same failure is still reported as unaddressable (degraded readers are unchanged) 8ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > strict reaches the anchor reader for a program uuid 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts coauthor_documents — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts unified_documents — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins the SHA-256 of the document content it filed
+ FAIL  server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > the pin is re-derivable by an inspector from the document row
+ FAIL  server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > REGRESSION: a document edited after filing no longer matches its pin
+ FAIL  server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins NULL, not sha256 of empty, when the document has no content
+TypeError: (intermediate value) is not iterable
+ ❯ sameDocumentLeafInSection server/services/submission-service/submission-service.ts:2014:17
+    2012|         : null;
+    2013|   if (!document) return null;
+    2014|   const [row] = await executor
+       |                 ^
+    2015|     .select()
+    2016|     .from(submissionLeaves)
+ ❯ server/services/submission-service/submission-service.ts:2344:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts rendered_leaf_files — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts c2c_document_sections — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts vault_documents — a table the resolver branches on
+ FAIL  server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > pins the vault document content hash onto the leaf it writes
+TypeError: (intermediate value) is not iterable
+ ❯ sameDocumentLeafInSection server/services/submission-service/submission-service.ts:2014:17
+    2012|         : null;
+    2013|   if (!document) return null;
+    2014|   const [row] = await executor
+       |                 ^
+    2015|     .select()
+    2016|     .from(submissionLeaves)
+ ❯ server/services/submission-service/submission-service.ts:2344:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  11 failed | 22 passed (33)
+   Start at  01:31:51
+   Duration  9.57s (transform 4.27s, setup 211ms, import 7.99s, tests 151ms, environment 0ms)
+

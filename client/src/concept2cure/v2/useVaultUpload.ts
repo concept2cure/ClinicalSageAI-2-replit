@@ -33,6 +33,7 @@ import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import type { VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
+import { vaultDocumentCodeForFile } from '@shared/constants/domain/vault-document-code';
 export { VAULT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 
 export interface VaultUploadOutcome {
@@ -123,7 +124,8 @@ async function uploadOne(
     /* The ingest schema requires a code, a title and a type. The filename is the
        only thing the user has actually told us, so it supplies the first two
        verbatim; the type is the caller's stated choice, defaulting to OTHER. */
-    form.append('documentCode', file.name);
+    // The file name as uploaded: the same code the data room files this file under (QA-2026-10-08).
+    form.append('documentCode', vaultDocumentCodeForFile(file.name, 'document'));
     form.append('documentTitle', file.name.replace(/\.[^.]+$/, ''));
   }
   form.append('documentType', documentType);

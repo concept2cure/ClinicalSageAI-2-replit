@@ -36,7 +36,7 @@ import {
   unregisterSession,
 } from '../services/session-inactivity';
 import { requireAccessTokenReason } from '../middleware/tokenType';
-import { sessionPermissions } from '../middleware/orgMembership';
+import { sessionPermissions, sessionRolesOf } from '../middleware/orgMembership';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
 import { PASSWORD_HASH_COST, padUnknownEmailTiming } from '../services/login-timing-pad';
@@ -322,8 +322,7 @@ router.get('/session', async (req: Request, res: Response) => {
       }
       sessionRole = sessionMembership.role;
     }
-    const sessionRoles =
-      sessionRole === 'admin' ? ['admin', 'user'] : [sessionRole === 'editor' ? 'editor' : 'user'];
+    const sessionRoles = sessionRolesOf(sessionRole);
 
     // Get organization
     let orgName = 'Concept2Cure';
@@ -586,10 +585,7 @@ router.post('/login', signInLimits.login, async (req: Request, res: Response) =>
 
     // Reuse the role already fetched above for JWT
     const userRole = jwtRole;
-    const roles =
-      userRole === 'admin'
-        ? ['admin', 'user']
-        : [userRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
+    const roles = sessionRolesOf(userRole);
 
     // ── Two-Factor Authentication ──────────────────────────────────────
     // Email OTP is the default 2FA method for all users (zero setup).
@@ -795,10 +791,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
     const displayName = (userData.name || '').trim() || userData.email;
-    const roles =
-      jwtRole === 'admin'
-        ? ['admin', 'user']
-        : [jwtRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
+    const roles = sessionRolesOf(jwtRole);
 
     // The session's id, start and idle window, into both tokens; registered
     // against the account's concurrent-session limit (P1-1).
@@ -1672,8 +1665,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
     const meRole = meMembership?.role || 'user';
-    const meRoles =
-      meRole === 'admin' ? ['admin', 'user'] : [meRole === 'editor' ? 'editor' : 'user'];
+    const meRoles = sessionRolesOf(meRole);
     const meOrgId = decoded.organizationId || meMembership?.organizationId?.toString();
 
     // Look up the actual organization name
@@ -1880,10 +1872,7 @@ router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: 
     const mfaLastName = mfaNameParts.slice(1).join(' ') || '';
     const mfaDisplayName = (userData.name || '').trim() || userData.email;
     const mfaRole = challenge.role;
-    const mfaRoles =
-      mfaRole === 'admin'
-        ? ['admin', 'user']
-        : [mfaRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
+    const mfaRoles = sessionRolesOf(mfaRole);
 
     // Fetch org name
     let mfaOrgName = 'Organization';

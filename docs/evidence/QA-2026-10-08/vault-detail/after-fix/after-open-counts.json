@@ -1,0 +1,50 @@
+{
+  "counts": [
+    {
+      "label": "initial",
+      "title": "3.2.P.8 - Protocol-Stability",
+      "detailsBlocks": 1,
+      "detailsTitles": [
+        "Protocol-Stability"
+      ],
+      "historyBlocks": 1
+    },
+    {
+      "label": "open-row-2",
+      "title": "3.2.P.8 - Vorelinib DS Stability Protocol STB-0042",
+      "detailsBlocks": 1,
+      "detailsTitles": [
+        "Vorelinib DS Stability Protocol STB-0042"
+      ],
+      "historyBlocks": 1
+    },
+    {
+      "label": "open-row-4",
+      "title": "Vorelinib-Batch-Analysis-DS",
+      "detailsBlocks": 1,
+      "detailsTitles": [
+        "Vorelinib-Batch-Analysis-DS"
+      ],
+      "historyBlocks": 1
+    },
+    {
+      "label": "open-row-5",
+      "title": "Vorelinib-DS-Specification-J3",
+      "detailsBlocks": 1,
+      "detailsTitles": [
+        "Vorelinib-DS-Specification-J3"
+      ],
+      "historyBlocks": 1
+    },
+    {
+      "label": "open-row-7",
+      "title": "5.3 - Vorelinib-Investigator-Brochure-Ed3",
+      "detailsBlocks": 1,
+      "detailsTitles": [
+        "Vorelinib-Investigator-Brochure-Ed3"
+      ],
+      "historyBlocks": 1
+    }
+  ],
+  "sameKeyWarnings": []
+}

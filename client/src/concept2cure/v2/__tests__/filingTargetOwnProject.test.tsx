@@ -27,8 +27,18 @@ const sub = (id: number, title: string, programId: string | null) => ({
   id, title, applicationType: 'ind', primaryRegion: 'us', status: 'draft', programId,
 });
 
-function serve(rows: unknown[]) {
-  apiRequest.mockImplementation(async (_m: string, url: string) => (url === '/api/submissions' ? ok(rows) : ok([])));
+/* The server's contract for the list: with ?programId it returns only that
+   program's submissions (an unanchored one is not among them) and says how many
+   it did not return; without it, the bare organization list, as before. */
+function serve(rows: Array<{ programId: string | null }>) {
+  apiRequest.mockImplementation(async (_m: string, url: string) => {
+    const u = new URL(url, 'http://localhost');
+    if (u.pathname !== '/api/submissions') return ok([]);
+    const program = u.searchParams.get('programId');
+    if (!program) return ok(rows);
+    const own = rows.filter((row) => row.programId?.toLowerCase() === program.toLowerCase());
+    return ok({ data: own, meta: { notOffered: rows.length - own.length } });
+  });
 }
 const open = (projectId?: string) =>
   render(<VaultPlaceIntoSubmission projectId={projectId} documentUuid="22222222-2222-4222-8222-222222222222" documentTitle="CSR" onClose={vi.fn()} />);
@@ -52,19 +62,35 @@ describe('the filing picker and the project', () => {
     expect(offered().some((t) => t.startsWith('Shell IND'))).toBe(false);
   });
 
-  it("offers the open project's submissions and unanchored ones, and says how many it does not offer", async () => {
+  it("offers only the open project's submissions, and says how many it does not offer, unanchored ones included", async () => {
     serve([sub(1, 'Our IND', OPEN.toUpperCase()), sub(2, 'Their IND', OTHER), sub(3, 'Legacy IND', null)]);
     open();
     await waitFor(() => expect(offered().some((t) => t.startsWith('Our IND'))).toBe(true));
-    expect(offered().some((t) => t.startsWith('Legacy IND'))).toBe(true);
+    expect(offered().some((t) => t.startsWith('Legacy IND'))).toBe(false);
     expect(offered().some((t) => t.startsWith('Their IND'))).toBe(false);
-    expect(screen.getByTestId('vpf-hidden-other-projects').textContent).toBe('1 submission belongs to another project and is not offered: a document is placed only into its own project’s submissions.');
+    expect(screen.getByTestId('vpf-hidden-other-projects').textContent).toBe('2 submissions belong to other projects or to no project and are not offered: a document is placed only into its own project’s submissions.');
+  });
+
+  it("asks the server for the open project's submissions, so the list is scoped where it is read", async () => {
+    serve([sub(1, 'Our IND', OPEN)]);
+    open();
+    await waitFor(() => expect(offered().some((t) => t.startsWith('Our IND'))).toBe(true));
+    const urls = apiRequest.mock.calls.map((call) => call[1] as string);
+    expect(urls).toContain(`/api/submissions?programId=${OPEN}`);
+  });
+
+  it('does not offer an unanchored submission even when the server returns one, because the picker checks the same rule', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url.startsWith('/api/submissions?') ? ok([sub(3, 'Legacy IND', null), sub(1, 'Our IND', OPEN)]) : ok([]));
+    open();
+    await waitFor(() => expect(offered().some((t) => t.startsWith('Our IND'))).toBe(true));
+    expect(offered().some((t) => t.startsWith('Legacy IND'))).toBe(false);
   });
 
   it("when every submission is another project's, the empty state says so — not 'none in this organization'", async () => {
     serve([sub(2, 'Their IND', OTHER)]);
     open();
-    expect(await screen.findByText(/^No submissions of this project yet\. 1 submission belongs to another project and is not offered — create one/)).toBeTruthy();
+    expect(await screen.findByText(/^No submissions of this project yet\. 1 submission belongs to another project or to no project and is not offered — create one/)).toBeTruthy();
   });
 
   it('with no project open, every submission is offered, as before', async () => {

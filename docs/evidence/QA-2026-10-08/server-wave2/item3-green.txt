@@ -1,0 +1,96 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-records-current.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-records-current.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:42:59.050Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-records-current.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:42:59.207Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:42:59.208Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-records-current.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:42:59.208Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > the Vault tree and the Data room agree with the records count > one document and one source: the tree, the Data room and the records each count 1 and 1
+{
+  "timestamp": "2026-10-08T01:43:03.911Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\"....",
+    "enforcement": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > the Vault tree and the Data room agree with the records count > one document and one source: the tree, the Data room and the records each count 1 and 1
+{
+  "timestamp": "2026-10-08T01:43:03.912Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "cmc-artifact-spine",
+    "err": "Failed query: select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\".\"id\" asc limit $3\nparams: 11111111-1111-4111-8111-111111111111,7,2"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a superseded vault version is not a document of the project: one document, its current version 40ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a source a re-upload retired is not a source of the project: one source, the current one 12ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a project with one document, one superseded version, one current and one retired source reports 1 and 1 11ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a version whose only successor was deleted is still the current version 13ms
+ × server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > the Vault tree and the Data room agree with the records count > one document and one source: the tree, the Data room and the records each count 1 and 1 36ms
+   → the tree counts the current version only: expected null to be 1 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > the Vault tree and the Data room agree with the records count > one document and one source: the tree, the Data room and the records each count 1 and 1
+AssertionError: the tree counts the current version only: expected null to be 1 // Object.is equality
+
+- Expected:
+1
+
++ Received:
+null
+
+ ❯ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts:189:85
+    187|
+    188|     expect(records.body.records.vaultDocuments.rows).toHaveLength(1);
+    189|     expect(data.documentCounts.uploads, 'the tree counts the current v…
+       |                                                                                     ^
+    190|     expect(countUploadLeaves(data.tree), 'the tree lists the current v…
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  01:42:56
+   Duration  7.03s (transform 2.61s, setup 93ms, import 3.97s, tests 2.68s, environment 0ms)
+

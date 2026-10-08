@@ -1,0 +1,243 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-records-current.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-records-current.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:43:17.426Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-records-current.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:43:17.618Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:43:17.619Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-records-current.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:43:17.619Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a superseded vault version is not a document of the project: one document, its current version 46ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a source a re-upload retired is not a source of the project: one source, the current one 13ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a project with one document, one superseded version, one current and one retired source reports 1 and 1 12ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a version whose only successor was deleted is still the current version 10ms
+stderr | server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:43:23.658Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > a re-type records the reason on the entry and names the old and new type 31ms
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > a title and a type changed together are both named, in the order the form lists them 12ms
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > the reason stays in the recorded details too, where the existing record reads it 9ms
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > the chain still verifies with the reason on the row 10ms
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+{
+  "timestamp": "2026-10-08T01:43:27.279Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+{
+  "timestamp": "2026-10-08T01:43:27.508Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:43:27.509Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+{
+  "timestamp": "2026-10-08T01:43:27.509Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > the filed leaf shows the type Edit details recorded, not the classifier kind
+{
+  "timestamp": "2026-10-08T01:43:27.567Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\"....",
+    "enforcement": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > the filed leaf shows the type Edit details recorded, not the classifier kind
+{
+  "timestamp": "2026-10-08T01:43:27.567Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "cmc-artifact-spine",
+    "err": "Failed query: select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\".\"id\" asc limit $3\nparams: 11111111-2222-3333-4444-555555555555,7,2"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > an unfiled document in the Unfiled queue shows the same label
+{
+  "timestamp": "2026-10-08T01:43:27.581Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "cmc-artifact-spine",
+    "err": "Failed query: select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\".\"id\" asc limit $3\nparams: 11111111-2222-3333-4444-555555555555,7,2"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > a document never re-typed keeps the classifier kind as its label
+{
+  "timestamp": "2026-10-08T01:43:27.587Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "cmc-artifact-spine",
+    "err": "Failed query: select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\".\"id\" asc limit $3\nparams: 11111111-2222-3333-4444-555555555555,7,2"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > the filed leaf shows the type Edit details recorded, not the classifier kind 33ms
+ ✓ server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > an unfiled document in the Unfiled queue shows the same label 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > a document never re-typed keeps the classifier kind as its label 5ms
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-10-08T01:43:28.681Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-10-08T01:43:28.759Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:43:28.759Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-10-08T01:43:28.760Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > asks for one past the window and reports a full window as truncated 24ms
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > says which sources a re-upload retired; a row older than the column is current 5ms
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-08T01:43:30.253Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:43:30.255Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-08T01:43:30.256Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-08T01:43:30.366Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a suggested upload renders inside its taxonomy folder 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > an unfiled upload renders in the Unfiled queue — visible, never dropped 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > every preset folder of the view renders even when empty 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a confirmed upload counts as placed, and its leaf carries real provenance only 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a row with a folder but unfiled status stays in the queue (placement wins over stale folder) 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf carries the file type the filing action decides on > projects mime_type as mimeType 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > an upload has no authoring completion, and says so > projects pct as null, not 0 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > an edited type wins over the classifier kind the upload arrived with 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > a recorded type shows when the classifier recorded no kind 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > the classifier kind is the label while the type is the OTHER "not told" value 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > the classifier kind is the label when no type was recorded at all 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > a file with neither a type nor a kind reads as File 0ms
+
+ Test Files  5 passed (5)
+      Tests  25 passed (25)
+   Start at  01:43:14
+   Duration  15.86s (transform 3.42s, setup 151ms, import 9.51s, tests 5.13s, environment 1ms)
+

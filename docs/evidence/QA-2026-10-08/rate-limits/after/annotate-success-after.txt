@@ -1,0 +1,5 @@
+POST statuses: [201]
+role=status texts: []
+role=alert texts: []
+success sentence present in panel: false
+panel still in add form: false

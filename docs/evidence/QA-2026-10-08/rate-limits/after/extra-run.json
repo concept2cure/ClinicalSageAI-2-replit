@@ -1,0 +1,663 @@
+{
+  "app": "http://localhost:5078",
+  "startedAt": "2026-10-08T01:26:18.111Z",
+  "postButtonEnabled": true,
+  "annotate": {
+    "requests": [
+      {
+        "ms": 83614,
+        "method": "POST",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+        "status": 201
+      },
+      {
+        "ms": 84371,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+        "status": 200
+      },
+      {
+        "ms": 84506,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+        "status": 200
+      },
+      {
+        "ms": 84586,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+        "status": 200
+      },
+      {
+        "ms": 84592,
+        "method": "GET",
+        "path": "/…/project-vault/…",
+        "status": 200
+      },
+      {
+        "ms": 85132,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+        "status": 200
+      },
+      {
+        "ms": 85193,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+        "status": 200
+      },
+      {
+        "ms": 85220,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/relationships",
+        "status": 200
+      },
+      {
+        "ms": 85409,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+        "status": 200
+      },
+      {
+        "ms": 85513,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/relationships",
+        "status": 200
+      },
+      {
+        "ms": 85607,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+        "status": 200
+      },
+      {
+        "ms": 85647,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+        "status": 200
+      },
+      {
+        "ms": 85679,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+        "status": 200
+      },
+      {
+        "ms": 86045,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+        "status": 200
+      },
+      {
+        "ms": 86081,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+        "status": 200
+      },
+      {
+        "ms": 86382,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+        "status": 200
+      },
+      {
+        "ms": 86891,
+        "method": "GET",
+        "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+        "status": 200
+      }
+    ],
+    "panelText": "REVIEW ANNOTATIONS\nOpen: v2.0 — 2 (2 change requests)\nOpen (2)\nResolved (0)\nRetracted (0)\nCHANGE REQUEST\nJM Smith · 2026-10-08 01:23 UTC\nWhole document\nQA rate-limit probe: change request posted after two document opens.\nReply\nResolve\nRetract\nCHANGE REQUEST\nJM Smith · 2026-10-08 01:27 UTC\nWhole document\nQA rate-limit probe: change request posted after two document opens.\nReply\nResolve\nRetract\nAdd annotation"
+  },
+  "sendWhileBudgetSpent": {
+    "status": 404,
+    "remaining": "18",
+    "limit": "20",
+    "body": "{\"ok\":false,\"error\":\"not_found\"}"
+  },
+  "sendAfterWindowReset": {
+    "status": 401,
+    "remaining": "19",
+    "limit": "20",
+    "body": "{\"error\":\"This session has ended. Sign in again.\",\"code\":\"SESSION_ENDED\"}"
+  },
+  "finishedAt": "2026-10-08T01:28:51.023Z",
+  "events": [
+    {
+      "ms": 77176,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 77291,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 77633,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 77795,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 77836,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 77965,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 78021,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 78124,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 78298,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 78347,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/68687c91-6bfb-4c48-808c-36b12def5cf5/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 79386,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 79444,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 79488,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 79551,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 79668,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 79950,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 79972,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 80237,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 83614,
+      "phase": "annotate",
+      "method": "POST",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+      "status": 201,
+      "message": null
+    },
+    {
+      "ms": 84371,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 84506,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 84586,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 84592,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 85132,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 85193,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 85220,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 85409,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 85513,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 85607,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 85647,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 85679,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 86045,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 86081,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 86382,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 86891,
+      "phase": "annotate",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3551f13c-f929-4979-a832-7cc014536570/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 87869,
+      "phase": "send",
+      "method": "POST",
+      "path": "/api/regulatory/documents/diag-missing-id/advance",
+      "status": 404,
+      "message": null
+    },
+    {
+      "ms": 123136,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 123350,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 123805,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 123879,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 123977,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 124074,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 124122,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 124261,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 124342,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 124386,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 133239,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 133488,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 133872,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 133942,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 134039,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 134100,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 134132,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 134339,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 135787,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 135965,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 137214,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 137296,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 137530,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 137580,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/relationships",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 137659,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 137680,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 137721,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 137835,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/versions",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 137850,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/annotations",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 137879,
+      "phase": "send",
+      "method": "GET",
+      "path": "/…/project-vault/…/documents/3b5c9a1d-aceb-4992-a3cb-99b2d987ee5e/history",
+      "status": 200,
+      "message": null
+    },
+    {
+      "ms": 152907,
+      "phase": "send",
+      "method": "POST",
+      "path": "/api/regulatory/documents/diag-missing-id/advance",
+      "status": 401,
+      "message": null
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "label": "before",
+  "docId": "68687c91-6bfb-4c48-808c-36b12def5cf5",
+  "before": {
+    "treeType": "Test reports",
+    "evidenceKind": "report",
+    "details": {
+      "documentTitle": "Protocol-Stability",
+      "documentType": "OTHER",
+      "classification": "INTERNAL"
+    }
+  },
+  "blocksTotal": 1,
+  "targetBlockIndex": 0,
+  "save": {
+    "status": 200,
+    "body": "{\"success\":true,\"unchanged\":false,\"changes\":[{\"field\":\"document_type\",\"from\":\"OTHER\",\"to\":\"PROTOCOL\"}]}"
+  },
+  "noteSeenEver": [],
+  "paneAfter": {
+    "header": "Test reports - Emily Watson - updated just now",
+    "detailsBlocks": [
+      {
+        "title": "Protocol-Stability",
+        "type": "Protocol"
+      }
+    ],
+    "lane": [
+      "Test reports",
+      "Test reports"
+    ],
+    "listRow": [
+      "Test reports · Not sent for review",
+      "Test reports · Not sent for review"
+    ]
+  },
+  "treeAfterApi": {
+    "status": 200,
+    "type": "Test reports",
+    "details": {
+      "documentTitle": "Protocol-Stability",
+      "documentType": "PROTOCOL",
+      "classification": "INTERNAL"
+    },
+    "evidenceKind": "report"
+  },
+  "searchRows": [
+    "Other | 3.2.P.8Protocol-Stability",
+    "Protocol | 3.2.P.8Protocol-Stability"
+  ],
+  "historyApi": {
+    "status": 200,
+    "entries": [
+      {
+        "id": "AUD-87bec8cf-1910-47b8-b7eb-ce12c42e2fbd",
+        "when": "2026-10-08 01:20",
+        "at": "2026-10-08T01:20:58.982Z",
+        "actor": "Emily Watson",
+        "actorRef": "user:4",
+        "event": "Vault Document Metadata Edit",
+        "target": "vault_document:68687c91-6bfb-4c48-808c-36b12def5cf5",
+        "kind": "vault",
+        "sig": false,
+        "hash": "ea2bbba93137ea311e3ec540192b37455a1ce52ae0d5257bed5292b12ba8f711",
+        "prevHash": "8162d3edc67b1636f58cc426344870e623a118c99b1b599bff1abcca0e22ec7d",
+        "ip": "127.0.0.1",
+        "reason": null,
+        "meaning": null,
+        "source": "audit_logs",
+        "seq": 199,
+        "signatureRef": null,
+        "targetRef": null,
+        "version": "1.0"
+      },
+      {
+        "id": "AUD-6787094d-193b-4665-9507-570eafccaf0f",
+        "when": "2026-10-08 01:12",
+        "at": "2026-10-08T01:12:19.273Z",
+        "actor": "Emily Watson",
+        "actorRef": "user:4",
+        "event": "Vault Document Ingest",
+        "target": "vault_document:68687c91-6bfb-4c48-808c-36b12def5cf5",
+        "kind": "vault",
+        "sig": false,
+        "hash": "81301d8c6b372ba070dd3c83cb344b75b7d348f4c4085097092aacaf48af44c6",
+        "prevHash": "ec75e83f846841acc7e48d274f586e1e66529ae1a0442cca3fc435e3155d087e",
+        "ip": "127.0.0.1",
+        "reason": null,
+        "meaning": null,
+        "source": "audit_logs",
+        "seq": 133,
+        "signatureRef": null,
+        "targetRef": null,
+        "version": "1.0"
+      }
+    ],
+    "chainOk": true
+  },
+  "historyPane": "HISTORY\nThis document's history could not be read. Nothing is shown rather than an incomplete history."
+}

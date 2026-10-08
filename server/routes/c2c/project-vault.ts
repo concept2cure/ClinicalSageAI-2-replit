@@ -472,33 +472,27 @@ export interface UploadRow {
 }
 
 /**
- * What the leaf calls this upload: its taxonomy kind when the classifier
- * recorded one, else the declared document type, else just 'File'.
+ * What a reader is told an uploaded document IS: the one label every surface
+ * shows (tree leaf, list, uploads lane, header).
  *
- * 'OTHER' is deliberately not shown — it is the ingest schema's "I was not
- * told", and rendering it as a type would dress an absent answer as a given
- * one. Its own function because it is three fallbacks deep and reading it
- * inline is what carried uploadLeaf over the complexity limit.
- */
-/**
- * What a reader is told an uploaded document IS.
+ * The recorded document type comes first, because Edit details is what changes
+ * it and a re-typed document must read as its new type. The classifier's
+ * evidence kind is only the guess made at upload; it stays on the filing block
+ * for the "Looks like" line. It is the label when no type is recorded.
  *
- * Preference order is most-specific-first: the classifier's evidence kind is a
- * decision about this document, the ingest type is what the uploader declared,
- * and 'File' is the honest floor when neither exists.
+ * 'OTHER' counts as no type. It is the ingest schema's "I was not told", and
+ * rendering it as a type would dress an absent answer as a given one. An
+ * unrecognised type token still comes back as itself: ugly but true, where
+ * 'Other' would be a classification nobody made. 'File' is the honest floor.
  *
- * The middle branch used to return `row.document_type` RAW, so a reviewer saw
- * the wire token — `MODULE_3`, `CORRESPONDENCE` — in the document list. Correct
- * data, nobody's vocabulary. It goes through the shared label map now, which
- * lives beside the enum precisely so the two cannot drift; an unrecognised
- * value still comes back as itself, because the token is ugly but true and
- * 'Other' would be a classification nobody made.
+ * Its own function because it is three fallbacks deep and reading it inline is
+ * what carried uploadLeaf over the complexity limit.
  */
 function uploadTypeLabel(row: UploadRow): string {
-  if (row.evidence_kind) return KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind;
   if (row.document_type && row.document_type !== 'OTHER') {
     return vaultIngestTypeLabel(row.document_type);
   }
+  if (row.evidence_kind) return KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind;
   return 'File';
 }
 
@@ -1995,6 +1989,8 @@ export default function createProjectVaultRoutes(): Router {
         userId: (req as any).user?.id ?? null,
         programId: String(req.params.id),
         sourceIds: (req.body ?? {}).sourceIds,
+        // Sources the person adds as the next version of a named document (QA-2026-10-08).
+        newVersionOf: (req.body ?? {}).newVersionOf,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
       });

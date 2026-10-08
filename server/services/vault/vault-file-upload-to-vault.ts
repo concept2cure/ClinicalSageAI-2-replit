@@ -27,6 +27,7 @@
 import { createHash } from 'node:crypto';
 import { loadUploadedFile, UploadedFileError, type UploadedFile } from '../ana/uploaded-file-access.js';
 import { ingestVaultDocument, type VaultIngestResult } from './vault-ingest.service.js';
+import { vaultDocumentCodeForFile } from '../../../shared/constants/domain/vault-document-code';
 
 export interface FileUploadIntoVaultArgs {
   organizationId: number;
@@ -36,8 +37,15 @@ export interface FileUploadIntoVaultArgs {
   fileId: string;
   documentTitle: string;
   documentType: string;
-  /** Defaults to a code derived from the file name (derivedDocumentCode). */
+  /** Defaults to the file name as uploaded, the rule the Vault upload uses too (vaultDocumentCodeForFile). */
   documentCode?: string;
+  /**
+   * Add the file as the next version of this document (a check-in, VR-08), named
+   * by one of its versions. The ingest then takes the code, title and filing from
+   * the document, so the code above is not used. The person chose this document:
+   * it is never inferred from the file name.
+   */
+  supersedesDocumentId?: string;
   /** A folder the person named. Without one the classifier proposes a folder. */
   folderId?: string;
   /** The checksum recorded at capture. When given, the loaded bytes must still hash to it. */
@@ -55,20 +63,6 @@ const UPLOAD_REFUSAL_STATUS: Record<UploadedFileError['code'], number> = {
   UPLOAD_BYTES_MISSING: 410,
   UPLOAD_INTEGRITY_FAILED: 409,
 };
-
-/**
- * A stable per-program code derived from the file name when none is given.
- * The ingest upserts on (program, code, version), so filing the same file
- * twice updates one row instead of growing duplicates.
- */
-export function derivedDocumentCode(fileName: string, fallback: string): string {
-  return (
-    fileName
-      .replace(/\.[^.]+$/, '')
-      .replace(/[^A-Za-z0-9._-]+/g, '-')
-      .slice(0, 64) || fallback
-  );
-}
 
 /** Load the upload's bytes, turning the reader's coded errors into refusals. */
 async function loadForFiling(args: FileUploadIntoVaultArgs): Promise<UploadedFile | Refusal> {
@@ -105,10 +99,12 @@ export async function fileUploadIntoVault(args: FileUploadIntoVaultArgs): Promis
     organizationId: args.organizationId,
     userId: args.userId,
     programId: args.programId,
-    documentCode: args.documentCode ?? derivedDocumentCode(file.fileName, args.fileId),
+    // The file name as uploaded, one rule with the Vault upload (QA-2026-10-08).
+    documentCode: args.documentCode ?? vaultDocumentCodeForFile(file.fileName, args.fileId),
     documentTitle: args.documentTitle,
     documentType: args.documentType,
     folderId: args.folderId,
+    supersedesDocumentId: args.supersedesDocumentId,
     fileBuffer: file.buffer,
     fileName: file.fileName,
     mimeType: file.mimeType,

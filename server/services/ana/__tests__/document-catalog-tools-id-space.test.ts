@@ -168,9 +168,10 @@ describe('file_chat_upload_to_vault — the affordance the refusal names', () =>
       documentType: 'REPORT',
       fileName: 'tox study TOX-77-A.pdf',
     });
-    // A code is derived so a second filing of the same file upserts one row
-    // rather than growing duplicates.
-    expect(passed.documentCode).toBe('tox-study-TOX-77-A');
+    // The code is the file name as uploaded, the same code the Vault upload and
+    // the data room give this file, so a second filing upserts one row
+    // (QA-2026-10-08: the chat route used to derive a different, extension-less one).
+    expect(passed.documentCode).toBe('tox study TOX-77-A.pdf');
     // The user is told where it landed, not merely that it worked.
     expect(r.message).toMatch(/Module 4/);
   });

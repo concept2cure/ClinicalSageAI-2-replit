@@ -122,22 +122,30 @@ export function useFilingTarget(onChange?: () => void, programId?: string | null
     setSeqId(null);
     setSeqs({ state: 'idle', rows: [] });
     setSubs({ state: 'loading', rows: [] });
-    void liveGetOrNull<SubmissionRow[]>('/api/submissions').then((r) => {
+    /* The list is scoped on the server to this project (?programId): the
+       server returns only the project's own submissions and says how many it
+       left out (meta.notOffered). Only the project's own submissions are offered
+       (PF-11; founder decision 2026-09-26): an unanchored submission belongs to
+       no project and is not offered for one, because a document is placed only
+       into its own project's submissions. The same rule is applied to the rows
+       here, so a list that was not scoped is still never offered wrongly. */
+    const path = project ? `/api/submissions?programId=${encodeURIComponent(project)}` : '/api/submissions';
+    void liveGetOrNull<SubmissionRow[]>(path).then((r) => {
       if (request !== reads.current.submissions) return;
       if (r.error || !Array.isArray(r.data)) {
         setSubs({ state: 'error', rows: [], error: r.error ?? 'unexpected response shape' });
         return;
       }
-      /* Only the project's own submissions are offered (PF-11; founder
-         decision 2026-09-26): the server refuses a placement into another
-         project's submission, so offering one only staged a refusal. The
-         project is the one stated, else the open project's. An unanchored
-         submission names no project and stays offered; the server cannot
-         judge it either. */
       const own = project
-        ? r.data.filter((row) => !row.programId || row.programId.toLowerCase() === project)
+        ? r.data.filter((row) => row.programId?.toLowerCase() === project)
         : r.data;
-      setSubs({ state: 'ready', rows: own, hiddenOtherProjects: r.data.length - own.length });
+      const leftOut = r.meta?.notOffered;
+      const leftOutByServer = typeof leftOut === 'number' ? leftOut : 0;
+      setSubs({
+        state: 'ready',
+        rows: own,
+        hiddenOtherProjects: leftOutByServer + (r.data.length - own.length),
+      });
     });
   }, [project]);
 
@@ -187,11 +195,11 @@ export function useFilingTarget(onChange?: () => void, programId?: string | null
   return { subs, subId, seqs, seqId, seq, lockedSeqs, load, reset, pickSubmission, setSeqId };
 }
 
-/** "1 submission belongs to another project and is not offered", plural-aware. */
+/** "1 submission is not offered", plural-aware. Covers another project's submission and an unanchored one alike. */
 function otherProjectsPhrase(n: number): string {
   return n === 1
-    ? '1 submission belongs to another project and is not offered'
-    : `${n} submissions belong to other projects and are not offered`;
+    ? '1 submission belongs to another project or to no project and is not offered'
+    : `${n} submissions belong to other projects or to no project and are not offered`;
 }
 
 export interface FilingTargetFieldsProps {
@@ -458,7 +466,10 @@ export interface FilingLeafReceipt {
   documentTable: string;
   documentId?: number | null;
   documentUuid?: string | null;
+  /** null when nothing was written (see `unchanged`): there is no audit row to report. */
   auditTrail?: { persisted?: boolean; chained?: boolean } | null;
+  /** The document was already placed at this section; the existing leaf came back and nothing was written. */
+  unchanged?: true;
 }
 
 export function validReceiptId(value: unknown): value is number {

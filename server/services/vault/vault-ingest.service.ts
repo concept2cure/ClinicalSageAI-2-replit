@@ -55,7 +55,7 @@ import {
 } from './vault-ingest-discard.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
 import { readRecordedVersion, reuploadChanges, reuploadDiffers, type ReuploadChange, type ReuploadDiffer } from './vault-reupload.js';
-import { checkInArgumentRefusal, inheritedPlacement, planCheckIn, recheckUnderLock } from './vault-version-checkin.js';
+import { checkInArgumentRefusal, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock } from './vault-version-checkin.js';
 import {
   classifyForFiling,
   filingVocabularyRefusal,
@@ -151,7 +151,8 @@ export type VaultIngestResult =
       /** Present when these bytes were already recorded here (vault-reupload.ts). */
       reupload?: { unchanged: boolean; changes: ReuploadChange[]; differs: ReuploadDiffer[] };
     }
-  | { ok: false; status: number; code: string; message: string };
+  /** VERSION_CONTENT_CONFLICT: the current version at that code, which a check-in adds to. */
+  | { ok: false; status: number; code: string; message: string; headDocumentId?: string; headVersion?: string };
 
 /**
  * Admit a document into the governed vault. Must be called inside the acting
@@ -618,6 +619,8 @@ async function admitVaultDocument(
        trail says was admitted. Refuse, and say what to do: a new version is a
        new record, not an edit of the old one. */
     if (!doc) {
+      /* The head a new version is offered against (vault-version-checkin.ts). */
+      const head = await currentVersionOfCode(client, { organizationId: orgId, programId: args.programId, documentCode });
       await client.query('ROLLBACK');
       return {
         ok: false, status: 409, code: 'VERSION_CONTENT_CONFLICT',
@@ -625,6 +628,7 @@ async function admitVaultDocument(
           `A different document is already recorded at code "${documentCode}" ` +
           `version "${version}" for this program. Nothing was changed. ` +
           'Add it as a new version of that document instead of replacing the recorded one.',
+        ...(head ? { headDocumentId: head.id, headVersion: head.version } : {}),
       };
     }
 

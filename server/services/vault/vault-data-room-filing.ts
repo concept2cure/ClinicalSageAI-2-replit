@@ -90,7 +90,15 @@ export type DataRoomFileItem =
       needsReview: boolean;
     }
   | { sourceId: number; outcome: 'already_filed'; documentId: string; version: string | null; supersededBy: string | null }
-  | { sourceId: number; outcome: 'refused'; code: string; message: string };
+  | {
+      sourceId: number;
+      outcome: 'refused';
+      code: string;
+      message: string;
+      /** VERSION_CONTENT_CONFLICT: the current version this file can be added to as its next version (QA-2026-10-08). */
+      headDocumentId?: string;
+      headVersion?: string;
+    };
 
 export type DataRoomFileResult =
   | { ok: true; complete: boolean; items: DataRoomFileItem[] }
@@ -101,6 +109,11 @@ export interface DataRoomFileInput {
   userId: number | null;
   programId: string;
   sourceIds: unknown;
+  /**
+   * Sources the person chose to add as the next version of a named document,
+   * as `{ "<sourceId>": "<documentId>" }` (QA-2026-10-08). Parsed by checkInTargets.
+   */
+  newVersionOf?: unknown;
   ipAddress?: string;
   userAgent?: string;
 }
@@ -108,6 +121,31 @@ export interface DataRoomFileInput {
 const refused = (sourceId: number, code: string, message: string): DataRoomFileItem => ({
   sourceId, outcome: 'refused', code, message,
 });
+
+/** A refusal from the ingest, keeping the document a conflicting file can be added to, when there is one. */
+const refusedBy = (sourceId: number, r: { code: string; message: string; headDocumentId?: string; headVersion?: string }): DataRoomFileItem => ({
+  sourceId, outcome: 'refused', code: r.code, message: r.message,
+  ...(r.headDocumentId ? { headDocumentId: r.headDocumentId, headVersion: r.headVersion } : {}),
+});
+
+/**
+ * The document each named source is added to as its next version. A key that
+ * names no requested source is ignored. Anything else that is not a document
+ * id is null: the whole request is refused, so a check-in never falls back to
+ * a new document the person did not choose. Nothing is read or filed for it.
+ */
+export function checkInTargets(raw: unknown, ids: number[]): Map<number, string> | null {
+  const out = new Map<number, string>();
+  if (raw === undefined || raw === null) return out;
+  if (typeof raw !== 'object' || Array.isArray(raw)) return null;
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    const id = Number(key);
+    if (!ids.includes(id)) continue;
+    if (typeof value !== 'string' || value.length === 0) return null;
+    out.set(id, value);
+  }
+  return out;
+}
 
 /** Why this source cannot be filed from this project, before any byte is read; null when it can. */
 function sourceRefusal(input: DataRoomFileInput, id: number, src: SourceUpload | undefined): DataRoomFileItem | null {
@@ -126,10 +164,31 @@ function sourceRefusal(input: DataRoomFileInput, id: number, src: SourceUpload |
   return null;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The title of the document a captured file is added to as a new version. The
+ * file's own title is derived from its name, so a check-in keeps the document's
+ * title instead (QA-2026-10-08). Null when that document is not in this program
+ * and organization; the ingest then refuses the check-in, naming no document.
+ */
+async function headTitle(programId: string, organizationId: number, documentId: string): Promise<string | null> {
+  if (!UUID_RE.test(documentId)) return null;
+  const { rows } = await pool.query(
+    `SELECT document_title FROM vault.documents
+      WHERE id = $1::uuid AND program_id = $2::uuid AND organization_id = $3 AND deleted_at IS NULL`,
+    [documentId, programId, organizationId],
+  );
+  return (rows[0]?.document_title as string | null | undefined) ?? null;
+}
+
 /** File one source that is not yet in the Vault. Never throws. */
-async function fileOne(input: DataRoomFileInput, src: SourceUpload): Promise<DataRoomFileItem> {
+async function fileOne(input: DataRoomFileInput, src: SourceUpload, supersedesDocumentId?: string): Promise<DataRoomFileItem> {
   try {
-    const title = (src.title ?? '').replace(/\.[^.]+$/, '').trim() || `Source ${src.id}`;
+    const derivedTitle = (src.title ?? '').replace(/\.[^.]+$/, '').trim() || `Source ${src.id}`;
+    const title = supersedesDocumentId
+      ? (await headTitle(input.programId, input.organizationId, supersedesDocumentId)) ?? derivedTitle
+      : derivedTitle;
     const result = await fileUploadIntoVault({
       organizationId: input.organizationId,
       userId: input.userId,
@@ -141,10 +200,11 @@ async function fileOne(input: DataRoomFileInput, src: SourceUpload): Promise<Dat
       documentType: 'OTHER',
       capturedChecksum: src.checksum,
       dataRoomSourceId: src.id,
+      supersedesDocumentId,
       ipAddress: input.ipAddress,
       userAgent: input.userAgent,
     });
-    if (!result.ok) return refused(src.id, result.code, result.message);
+    if (!result.ok) return refusedBy(src.id, result);
     if (result.reupload) {
       return { sourceId: src.id, outcome: 'already_filed', documentId: result.document.id, version: result.document.version, supersededBy: null };
     }
@@ -172,12 +232,13 @@ async function decideOne(
   id: number,
   src: SourceUpload | undefined,
   filedAs: Map<string, FiledAs>,
+  supersedesDocumentId?: string,
 ): Promise<DataRoomFileItem> {
   const refusal = sourceRefusal(input, id, src);
   if (refusal || !src) return refusal as DataRoomFileItem;
   const already = src.checksum ? filedAs.get(src.checksum.trim()) : undefined;
   if (already) return { sourceId: id, outcome: 'already_filed', ...already };
-  const item = await fileOne(input, src);
+  const item = await fileOne(input, src, supersedesDocumentId);
   // Two captures of the same bytes in one batch: the second is the first's document.
   if (item.outcome === 'filed' && src.checksum) {
     filedAs.set(src.checksum.trim(), { documentId: item.documentId, version: item.version, supersededBy: null });
@@ -194,6 +255,14 @@ export async function fileDataRoomSources(input: DataRoomFileInput): Promise<Dat
       message: `Choose between 1 and ${DATA_ROOM_FILE_LIMIT} captured files to file.`,
     };
   }
+  // Refused before any source is read: a malformed target must not fall back to a new document.
+  const targets = checkInTargets(input.newVersionOf, ids);
+  if (!targets) {
+    return {
+      ok: false, status: 400, code: 'INVALID_VERSION_TARGET',
+      message: 'A file can only be added as a new version of a document named by its id. Nothing was filed.',
+    };
+  }
   if (!(await programInOrganization(pool, input.programId, input.organizationId))) {
     return { ok: false, status: 404, code: 'NOT_FOUND', message: 'Project not found.' };
   }
@@ -207,6 +276,6 @@ export async function fileDataRoomSources(input: DataRoomFileInput): Promise<Dat
   // One at a time, each its own transaction inside the ingest: a refusal or a
   // failure on one source leaves every other source's outcome as it is.
   const items: DataRoomFileItem[] = [];
-  for (const id of ids) items.push(await decideOne(input, id, sources.get(id), filedAs));
+  for (const id of ids) items.push(await decideOne(input, id, sources.get(id), filedAs, targets.get(id)));
   return { ok: true, complete: items.every((i) => i.outcome !== 'refused'), items };
 }
