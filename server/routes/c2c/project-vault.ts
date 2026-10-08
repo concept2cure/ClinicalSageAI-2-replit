@@ -82,6 +82,7 @@ import { getStorageProvider, getStorageProviderFor } from '../../services/storag
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
 import { programInOrganization } from '../../services/c2c/program-access';
+import { resolveUserId } from '../../types/auth-request';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -1691,7 +1692,13 @@ export default function createProjectVaultRoutes(): Router {
         cmcEvidence: cmcEvidence.get(v.id) ?? [],
         transmitRefusal: refusals[i],
       }));
-      return res.json({ success: true, data: { versions } });
+      // Who may sign a review or an approval here (QA 2026-10-08, walk 2, j3):
+      // the reader's own authority from the check the sign route applies, and
+      // the members who hold it, so the page names them instead of offering a
+      // signature the server refuses after the password.
+      const { readSigningPosture } = await import('../../services/vault/vault-signing-posture.js');
+      const signing = await readSigningPosture(pool, orgId, resolveUserId(req));
+      return res.json({ success: true, data: { versions, signing } });
     } catch (err) {
       if (isMissingStore(err)) {
         return res.status(503).json({ success: false, error: 'STORE_UNAVAILABLE',

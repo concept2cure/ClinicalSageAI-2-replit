@@ -1,0 +1,45 @@
+0.50m poll url /concept2cure/projects dialog 0
+1.00m poll url /concept2cure/projects dialog 0
+1.50m poll url /concept2cure/projects dialog 0
+2.00m poll url /concept2cure/projects dialog 0
+2.50m poll url /concept2cure/projects dialog 0
+3.00m poll url /concept2cure/projects dialog 0
+3.50m poll url /concept2cure/projects dialog 0
+4.00m poll url /concept2cure/projects dialog 0
+4.50m poll url /concept2cure/projects dialog 0
+4.94m REQ GET /api/v1/auth/session
+4.94m REQ GET /api/v1/auth/session
+4.95m REQ GET /api/v1/auth/session
+4.95m REQ GET /api/v1/auth/session
+4.95m REQ GET /api/v1/auth/session
+4.95m REQ GET /api/v1/auth/session
+5.00m poll url /concept2cure/projects dialog 0
+5.50m poll url /concept2cure/projects dialog 0
+6.00m poll url /concept2cure/projects dialog 0
+6.50m poll url /concept2cure/projects dialog 0
+7.00m poll url /concept2cure/projects dialog 0
+7.50m poll url /concept2cure/projects dialog 0
+8.00m poll url /concept2cure/projects dialog 0
+8.50m poll url /concept2cure/projects dialog 0
+9.00m page.reload() — nobody touches the page
+9.01m REQ GET /api/v1/auth/session
+9.01m REQ GET /api/v1/auth/session
+9.01m poll url /concept2cure/projects dialog 0
+9.02m REQ GET /api/v1/auth/session
+9.02m REQ GET /api/v1/auth/session
+9.02m REQ GET /api/v1/auth/session
+9.02m REQ GET /api/v1/auth/session
+9.51m poll url /concept2cure/projects dialog 0
+10.01m poll url /concept2cure/projects dialog 0
+10.51m poll url /concept2cure/projects dialog 0
+11.01m poll url /concept2cure/projects dialog 0
+11.51m poll url /concept2cure/projects dialog 0
+12.01m poll url /concept2cure/projects dialog 0
+12.51m poll url /concept2cure/projects dialog 0
+13.01m poll url /concept2cure/projects dialog 0
+13.51m poll url /concept2cure/projects dialog 0
+14.01m poll url /concept2cure/projects dialog 1
+14.52m poll url /concept2cure/projects dialog 1
+14.93m REQ POST /api/v1/auth/logout
+15.02m poll url /concept2cure/login?returnTo=%2Fconcept2cure%2Fprojects dialog 0
+15.04m sign-in page says: You were signed out after a period of inactivity. Sign in to continue.

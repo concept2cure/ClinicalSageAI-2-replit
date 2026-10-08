@@ -71,7 +71,8 @@ function canvasEditor(): Editor {
 }
 /** The header's governed Save control (its label tracks state: Save/Saved/Saving…). */
 function headerSave(): HTMLButtonElement {
-  const btn = document.querySelector<HTMLButtonElement>('.ed-doc-actions .btn.primary');
+  // In the header's commit group (QA 2026-10-08, walk 2, j5), found by its id.
+  const btn = document.querySelector<HTMLButtonElement>('[data-testid="save-section"]');
   if (!btn) throw new Error('header Save button not mounted');
   return btn;
 }

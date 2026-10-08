@@ -56,7 +56,7 @@ describe('authService.adoptSession', () => {
     expect(authService.isAuthenticated()).toBe(true);
     expect(localStorage.getItem('trialsage_access_token')).toBe('sso-1');
     expect(localStorage.getItem('trialsage_refresh_token')).toBe('');
-    expect(authService.getSessionPolicy()).toEqual({ idleMinutes: 30, lifetimeHours: 12, expiresAt: '2026-09-26T21:00:00.000Z' });
+    expect(authService.getSessionPolicy()).toEqual({ idleMinutes: 30, lifetimeHours: 12, expiresAt: '2026-09-26T21:00:00.000Z', sessionId: null });
     expect(logins).toHaveLength(1);
     expect(calls.some(c => c.url.endsWith('/refresh'))).toBe(false);
   });

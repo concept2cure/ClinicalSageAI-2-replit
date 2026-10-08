@@ -47,11 +47,12 @@ import { assessmentStateFor, hasAnswer } from '../assessmentState';
 import { publishShellProject, readShellProject } from '../shellProject';
 import { setEditorTarget } from '../editorTarget';
 import { ReviewThreadsPane } from './ReviewThreads';
+import { ReviewVaultQueue, type VaultReviewItem } from './ReviewVaultQueue';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
 /** Sub-headline shared by the surface header and its honest empty/error states. */
-const REVIEW_SUB = 'Reviews requested in Authoring: approve, request changes with a reason, or decline.';
+const REVIEW_SUB = 'Reviews requested in Authoring: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.';
 
 /**
  * The render contract of GET /api/review/board (server/routes/review-board-routes.ts),
@@ -62,6 +63,8 @@ interface ReviewBoardData {
   queue: ReviewItem[];
   workflows: Record<string, ReviewWorkflow>;
   thread: ReviewComment[];
+  /** Vault versions in review (QA 2026-10-08, walk 2, j3): null when that read failed. */
+  vaultReviews?: VaultReviewItem[] | null;
 }
 
 type Scope = 'all' | 'mine' | 'requested';
@@ -571,8 +574,14 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   }, [sel, queue]);
 
   const scopeBar = (
-    <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={setOnlyProgram} />
+    <>
+      <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={setOnlyProgram} />
+      {/* Send for review on a Vault version assigns nobody, so it was in no
+          queue (QA 2026-10-08, walk 2, j3). Listed here with who has it. */}
+      <ReviewVaultQueue items={board?.vaultReviews} onOpenVault={() => onNav('vault')} />
+    </>
   );
+  const vaultInReview = (board?.vaultReviews ?? []).length;
 
   // ── The three honest states, before any row is dereferenced. No fixture ──
   if (boardState.loading && queue.length === 0) {
@@ -604,8 +613,11 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
        it comes back as `queue: []`. No array means nothing was read, and the
        honest copy says that instead of reassuring. */
     const boardRead = Array.isArray(board?.queue);
-    const emptyTitle =
-      scope === 'mine' ? 'Nothing awaits your review'
+    /* With Vault versions listed above, "nothing" would be untrue: the claim
+       narrows to the Authoring queue. */
+    const emptyTitle = vaultInReview > 0
+      ? 'No Authoring document is in this queue'
+      : scope === 'mine' ? 'Nothing awaits your review'
       : scope === 'requested' ? 'You have not requested a review'
       : 'Nothing is in review';
     const emptyHint =

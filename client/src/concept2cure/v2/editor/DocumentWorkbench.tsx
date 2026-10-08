@@ -1543,10 +1543,30 @@ export function DocumentWorkbench({
     openConversationWithPrompt(prompt, onNav);
   }, [onAsk, onNav, program]);
 
+  /* While AnA works the pane follows the bottom, where her work grows. When
+     the turn ends it shows the START of her answer: pinned to the bottom, a
+     long turn left only its suggestion chips on screen under the work card,
+     and the answer above them out of sight (QA 2026-10-08, walk 2, j5). */
+  const anaWasStreaming = useRef(false);
   useEffect(() => {
     if (rail !== 'ana') return;
     const el = anaScrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    const finished = anaWasStreaming.current && !ana.isStreaming;
+    anaWasStreaming.current = ana.isStreaming;
+    if (!el) return;
+    if (finished) {
+      const answers = el.querySelectorAll<HTMLElement>('[data-ana-answer]');
+      const newest = answers[answers.length - 1];
+      if (newest) {
+        /* This pane's scroller only: scrollIntoView also moved the page under
+           the app bar. */
+        const top = el.scrollTop + newest.getBoundingClientRect().top - el.getBoundingClientRect().top - 8;
+        if (typeof el.scrollTo === 'function') el.scrollTo({ top: Math.max(0, top) });
+        else el.scrollTop = Math.max(0, top);
+        return;
+      }
+    }
+    el.scrollTop = el.scrollHeight;
   }, [rail, ana.messages.length, ana.isStreaming]);
 
   useEffect(() => {
@@ -3688,6 +3708,107 @@ export function DocumentWorkbench({
               </>
             )}
           </div>
+          {/* The governed acts — the reason for change, Save, lock / freeze /
+              e-sign, Place into filing — are a group of their own that wraps
+              and is never clipped. They sat at the far end of the panel
+              scroller below, past its edge at 1440px and at 390px, so an
+              author could not see Save or E-sign without scrolling a strip
+              that did not look scrollable (QA 2026-10-08, walk 2, j5). */}
+          <div className="ed-doc-commit" role="group" aria-label="Save and sign">
+            {/* Reason for change, stated once per section and carried on every
+                save of it. Inline beside Save rather than a dialog: there is no
+                autosave here, but Save and ⌘S each fire many times while
+                working through a section, and a modal on each would be the
+                friction the regulation does not ask for. */}
+            {/* 2026-09-28, coverage-gap sweep GA-1: the rule lived in the
+                placeholder, gone after one keystroke, and why Save stayed
+                inert was a `title` on a disabled button, which a keyboard
+                never reaches. The field is now aria-required, and the rule is
+                a persistent note both the field and Save are described by —
+                the ProtocolDevSection `pde-sec-state` pattern. */}
+            {dirty && !docSealed && (
+              <>
+                <input
+                  className="de-input"
+                  style={{ height: 30, width: 260 }}
+                  value={changeReason}
+                  onChange={e => setChangeReason(e.target.value)}
+                  placeholder="Why this changed (at least 8 characters)"
+                  aria-label="Reason for change"
+                  aria-required="true"
+                  aria-describedby={reasonNoteId}
+                  data-testid="change-reason"
+                />
+                <span
+                  id={reasonNoteId}
+                  aria-live="polite"
+                  style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 220 }}
+                  data-testid="change-reason-note"
+                >
+                  {changeReason.trim().length < 8
+                    ? 'Required to save: at least 8 characters, recorded with the revision.'
+                    : 'Recorded with the revision.'}
+                </span>
+              </>
+            )}
+            <button
+              className="btn primary"
+              style={{ height: 30 }}
+              onClick={() => void editorRef.current?.save()}
+              aria-describedby={dirty && !docSealed ? reasonNoteId : undefined}
+              disabled={!dirty || saving || docSealed || changeReason.trim().length < 8}
+              title={
+                docSealed
+                  ? 'This document is frozen — its content cannot be edited.'
+                  : !activeSection
+                    ? 'Open a section to edit and save it.'
+                    : dirty && changeReason.trim().length < 8
+                      ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
+                      : undefined
+              }
+              data-testid="save-section"
+            >
+              {/* "Saved" is a claim about a section's save state. It fell through
+                  to that word whenever nothing was dirty — including with no
+                  document or section open ("eCTD › No document" … "Saved"). */}
+              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
+            </button>
+            {activeDoc && (
+              <AuthoringFilingBar
+                docId={activeDoc.id}
+                docTitle={activeDoc.title}
+                docStatus={activeDoc.status}
+                onChanged={() => {
+                  void loadDocs();
+                  if (activeDocId) void loadSections(activeDocId);
+                }}
+                fireToast={fireToast}
+                signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+                freezeRefusal={actRefusal(docAccess.freeze)}
+                /* A Reviewer grant may sign the review and nothing else: the
+                   control stays open for that one meaning (QA 2026-10-08, j4). */
+                esignRefusal={esignReviewOnly(docAccess) ? null : actRefusal(docAccess.esign)}
+                reviewOnly={esignReviewOnly(docAccess)}
+              />
+            )}
+            {/* The authoring → filing seam: place the OPEN document into an
+                eCTD sequence of the canonical submission core. Beside the
+                freeze/e-sign bar because it is the same family of act — the
+                document leaving the editor for the governed record. */}
+            {activeDoc && (
+              <AuthoringPlaceIntoFiling
+                docId={activeDoc.id}
+                docTitle={activeDoc.title}
+                activeSectionCode={activeSection?.code ?? null}
+                /* The whole document is filed (QA 2026-10-08, j4), so the dialog
+                   files it at its own code; only a read it can trust. */
+                sectionCodes={sectionsState === 'ready' ? sections.map(s => s.code) : undefined}
+                dirty={dirty}
+                onNav={onNav}
+                fireToast={fireToast}
+              />
+            )}
+          </div>
           <div className="ed-doc-actions">
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
@@ -3901,64 +4022,6 @@ export function DocumentWorkbench({
                 {actRefusal(docAccess.fileToVault)}
               </span>
             )}
-            {/* Reason for change, stated once per section and carried on every
-                save of it. Inline beside Save rather than a dialog: there is no
-                autosave here, but Save and ⌘S each fire many times while
-                working through a section, and a modal on each would be the
-                friction the regulation does not ask for. */}
-            {/* 2026-09-28, coverage-gap sweep GA-1: the rule lived in the
-                placeholder, gone after one keystroke, and why Save stayed
-                inert was a `title` on a disabled button, which a keyboard
-                never reaches. The field is now aria-required, and the rule is
-                a persistent note both the field and Save are described by —
-                the ProtocolDevSection `pde-sec-state` pattern. */}
-            {dirty && !docSealed && (
-              <>
-                <input
-                  className="de-input"
-                  style={{ height: 30, width: 260 }}
-                  value={changeReason}
-                  onChange={e => setChangeReason(e.target.value)}
-                  placeholder="Why this changed (at least 8 characters)"
-                  aria-label="Reason for change"
-                  aria-required="true"
-                  aria-describedby={reasonNoteId}
-                  data-testid="change-reason"
-                />
-                <span
-                  id={reasonNoteId}
-                  aria-live="polite"
-                  style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 220 }}
-                  data-testid="change-reason-note"
-                >
-                  {changeReason.trim().length < 8
-                    ? 'Required to save: at least 8 characters, recorded with the revision.'
-                    : 'Recorded with the revision.'}
-                </span>
-              </>
-            )}
-            <button
-              className="btn primary"
-              style={{ height: 30 }}
-              onClick={() => void editorRef.current?.save()}
-              aria-describedby={dirty && !docSealed ? reasonNoteId : undefined}
-              disabled={!dirty || saving || docSealed || changeReason.trim().length < 8}
-              title={
-                docSealed
-                  ? 'This document is frozen — its content cannot be edited.'
-                  : !activeSection
-                    ? 'Open a section to edit and save it.'
-                    : dirty && changeReason.trim().length < 8
-                      ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
-                      : undefined
-              }
-              data-testid="save-section"
-            >
-              {/* "Saved" is a claim about a section's save state. It fell through
-                  to that word whenever nothing was dirty — including with no
-                  document or section open ("eCTD › No document" … "Saved"). */}
-              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
-            </button>
             <button
               className="btn ghost"
               style={{ height: 30 }}
@@ -4007,41 +4070,6 @@ export function DocumentWorkbench({
               <AuthoringCollab
                 documentId={activeDoc.id}
                 sectionId={activeSectionId}
-                fireToast={fireToast}
-              />
-            )}
-            {activeDoc && (
-              <AuthoringFilingBar
-                docId={activeDoc.id}
-                docTitle={activeDoc.title}
-                docStatus={activeDoc.status}
-                onChanged={() => {
-                  void loadDocs();
-                  if (activeDocId) void loadSections(activeDocId);
-                }}
-                fireToast={fireToast}
-                signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
-                freezeRefusal={actRefusal(docAccess.freeze)}
-                /* A Reviewer grant may sign the review and nothing else: the
-                   control stays open for that one meaning (QA 2026-10-08, j4). */
-                esignRefusal={esignReviewOnly(docAccess) ? null : actRefusal(docAccess.esign)}
-                reviewOnly={esignReviewOnly(docAccess)}
-              />
-            )}
-            {/* The authoring → filing seam: place the OPEN document into an
-                eCTD sequence of the canonical submission core. Beside the
-                freeze/e-sign bar because it is the same family of act — the
-                document leaving the editor for the governed record. */}
-            {activeDoc && (
-              <AuthoringPlaceIntoFiling
-                docId={activeDoc.id}
-                docTitle={activeDoc.title}
-                activeSectionCode={activeSection?.code ?? null}
-                /* The whole document is filed (QA 2026-10-08, j4), so the dialog
-                   files it at its own code; only a read it can trust. */
-                sectionCodes={sectionsState === 'ready' ? sections.map(s => s.code) : undefined}
-                dirty={dirty}
-                onNav={onNav}
                 fireToast={fireToast}
               />
             )}
@@ -4617,9 +4645,12 @@ export function DocumentWorkbench({
             </span>
           </div>
           {/* AnA's progress — the same panel the shell rail mounts — above the
-              conversation, so the work is seen before the words. */}
+              conversation, so the work is seen before the words. Held to a
+              share of the pane and scrolled on its own (`ed-ana-work`): at
+              full height it left the conversation a strip that showed the
+              suggestion chips and not the answer (QA 2026-10-08, walk 2, j5). */}
           {dock.open && (
-            <div className="ana-work-host">
+            <div className="ana-work-host ed-ana-work">
               <AnaWorkPanel
                 id={dock.panelId}
                 turn={summary.panelTurn}
@@ -4682,7 +4713,7 @@ export function DocumentWorkbench({
                     <div className="cmt-body">{m.text}</div>
                   </div>
                 ) : (
-                  <div key={i} className="cmt">
+                  <div key={i} className="cmt" data-ana-answer="">
                     <div className="cmt-meta">
                       <b>AnA</b>
                     </div>

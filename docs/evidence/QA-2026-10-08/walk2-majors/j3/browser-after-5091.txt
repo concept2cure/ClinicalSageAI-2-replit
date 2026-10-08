@@ -1,0 +1,10 @@
+david.kim review (awaiting my review): vault section false | row: (none)
+david.kim review (all open): row: Tolvexa-DS-Stability-Protocol-STB-0101 v3.0 | AWAITING REVIEW SIGNATURE | Not assigned to one person. Can sign the review: JM Smith (jm.smith@concept2cure.pro), JM Smith ([second admin address]), QA Onboard 3, QA Second Admin or Raj Patel. | QA-W2 Tolvexa · idiopathic pulmonary fibrosis (IND)
+david.kim Sign review/Approve button count 1 enabled false
+david.kim who may sign: Not assigned to one person. Can sign the review: JM Smith (jm.smith@concept2cure.pro), JM Smith ([second admin address]), QA Onboard 3, QA Second Admin or Raj Patel.
+david.kim blocked line: Your role does not carry signing authority (21 CFR Part 11 §11.10(g)), so you cannot sign the review of this version.
+raj.patel review (awaiting my review): vault section true | row: Tolvexa-DS-Stability-Protocol-STB-0101 v3.0 | AWAITING REVIEW SIGNATURE | You can sign the review. Not assigned to one person. Can sign the review: JM Smith (jm.smith@concept2cure.pro), JM Smith ([second admin address]), QA Onboard 3, QA Second Admin or Raj Patel.
+raj.patel review (all open): row: Tolvexa-DS-Stability-Protocol-STB-0101 v3.0 | AWAITING REVIEW SIGNATURE | You can sign the review. Not assigned to one person. Can sign the review: JM Smith (jm.smith@concept2cure.pro), JM Smith ([second admin address]), QA Onboard 3, QA Second Admin or Raj Patel. | QA-W2 Tolvexa · idiopathic pulmonary fibrosis (IND)
+raj.patel Sign review/Approve button count 1 enabled true
+raj.patel who may sign: Not assigned to one person. Can sign the review: JM Smith (jm.smith@concept2cure.pro), JM Smith ([second admin address]), QA Onboard 3, QA Second Admin or Raj Patel.
+raj.patel blocked line: (none)

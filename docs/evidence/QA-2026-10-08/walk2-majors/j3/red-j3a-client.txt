@@ -1,0 +1,6 @@
+$ RLS_ENFORCE=off npx vitest run client/src/concept2cure/v2/__tests__/vaultSigningPosture.test.tsx   (VaultLifecycle.tsx / VaultVersions.tsx at HEAD)
+ × disables Sign review, says why, and names who can sign, when the server says this reader cannot
+ × says plainly when nobody in the organization can sign it
+ ✓ leaves Sign review open for a signer, and to the server when the answer is unknown
+AssertionError: expected false to be true // Object.is equality   (Sign review enabled for a manager the server says cannot sign)
+      Tests  2 failed | 1 passed (3)
