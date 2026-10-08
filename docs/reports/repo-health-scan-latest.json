@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T17:24:24.354Z",
+  "generatedAt": "2026-10-08T00:48:14.705Z",
   "git": {
-    "sha": "d46df5e1c406b0e8347385bcc0963dc02fd3e513",
+    "sha": "2fd174c14d3fa03bc9e7566b3ef08901cb4af1d9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2652,6 +2652,10 @@
         "lines": 1650
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1638
+      },
+      {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
       },
@@ -2666,10 +2670,6 @@
       {
         "file": "server/routes/mdx-rbm.ts",
         "lines": 1612
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1607
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
