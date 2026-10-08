@@ -139,24 +139,26 @@ describe('rail: where you are vs what you chose (findings 130, 135)', () => {
       </NavEntitlementsProvider>,
     );
 
-  it('marks the open surface as the current page, and the chosen category as pressed — not current', async () => {
+  it('marks the open surface as the current page, and lists no client category beside it', async () => {
     mount();
     await waitFor(() => expect(apiRequest).toHaveBeenCalled());
     const rail = screen.getByRole('navigation', { name: 'Primary' });
     const current = Array.from(rail.querySelectorAll('[aria-current]'));
-    expect(current.map((el) => [el.getAttribute('aria-current'), el.textContent?.trim()])).toEqual([['page', 'Project management']]);
-
-    const category = within(rail).getByRole('button', { name: 'Biotech & Pharma', pressed: true });
-    expect(category.hasAttribute('aria-current')).toBe(false);
+    expect(current.map((el) => [el.getAttribute('aria-current'), el.textContent?.trim()])).toEqual([['page', 'Projects']]);
+    // The client type is chosen in the account menu now, as a checked menu
+    // item (shellNav.test.tsx); the rail lists no category to confuse with
+    // where the person is.
+    expect(within(rail).queryByRole('button', { name: 'Biotech & Pharma' })).toBeNull();
   });
 
-  it('draws the current page, and draws a chosen category differently', () => {
+  it('draws the current page, and no rule draws a client category on the rail', () => {
     const css = readFileSync(path.resolve(__dirname, '../styles/app-v2.css'), 'utf8');
     expect(css).toMatch(/\.nav-item\[aria-current="page"\]\{background:var\(--accent-000\)/);
     expect(css).toMatch(/\.nav-item\[aria-current="page"\]::before\{/);
-    expect(css).toMatch(/\.nav-item\[aria-pressed="true"\]\{[^}]*box-shadow:inset/);
-    // The rule that drew a category as the current page is gone.
+    // The rule that drew a category as the current page is gone, and so is
+    // the one that drew it as pressed: the rail lists no category.
     expect(css).not.toMatch(/\.nav-item\[aria-current="true"\]/);
+    expect(css).not.toMatch(/\.nav-item\[aria-pressed/);
   });
 
   it('collapsed, the brand mark keeps the top and the toggle moves to the foot', () => {

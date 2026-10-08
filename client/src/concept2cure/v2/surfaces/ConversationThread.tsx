@@ -11,6 +11,7 @@ import { RunPolicySwitch } from '../RunPolicySwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from '../editor/anaInsertGate';
 import { useChatUpload, readyAttachmentLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
+import { CHAT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import { SignoffList } from '../SignoffList';
 import { apiCall, apiErrorText } from '../apiCall';
@@ -28,6 +29,7 @@ import '../styles/project-home-v2.css';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { AnaMarkdown } from '../AnaMarkdown';
 import { AnaMessageWarnings } from '../AnaMessageWarnings';
+import { CrlPremortemPanel } from '../../components/ana/CrlPremortemPanel';
 import { AnaGrounding } from '../AnaGrounding';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
 import {
@@ -102,6 +104,10 @@ function toTurn(m: AnaChatMessage): CtTurn {
      * other place the prompt is drawn, is by definition not on screen.
      */
     warnings: nonEmpty(m.warnings),
+    /* Drawn by the right rail until it was deleted, and dropped here: a steer
+       AnA accepted, and the pre-mortem the turn assembled. */
+    interjections: nonEmpty(m.interjections),
+    crlPremortem: m.crlPremortem,
     executedActions: nonEmpty(m.executedActions),
     pendingSignoffs: nonEmpty(m.pendingSignoffs),
     /* The authoring document this turn drafted, when it drafted one — the
@@ -338,6 +344,27 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, inser
         {/* What went wrong around the answer (a failed save, a timeout), as
             the rail shows it: this screen showed none (row 74, ADR-0015 §9). */}
         <AnaMessageWarnings warnings={turn.warnings} />
+        {/* Steers AnA accepted for this turn: a steer the person cannot see
+            afterwards is one they cannot tell was taken, and the server has
+            already written it into the decision lineage. */}
+        {turn.interjections && (
+          <div className="ana-steers">
+            {turn.interjections.map((t, si) => (
+              <div key={si} className="ana-steer">
+                <span className="ana-steer-ic" aria-hidden="true">{I.chevRight}</span>
+                <span><span className="ana-steer-k">You steered AnA:</span> {t}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* The pre-mortem, when this turn assembled one. No `onExport`: this
+            screen has no DOCX route for it, and the panel then disables the
+            action and says where export lives. */}
+        {turn.crlPremortem && (
+          <div className="ana-premortem">
+            <CrlPremortemPanel artifact={turn.crlPremortem} />
+          </div>
+        )}
         {/* What was checked about the answer, directly under it: the engine's
             check of its specific claims against this turn's sources, then
             AnA's labels, the same strip as the rail and the editor. Never under
@@ -900,6 +927,7 @@ export interface AskOrigin {
 
 export function ConversationThread({ onNav, liveDrive, shellChat, engine }: OwnedSurfaceViewProps) {
   const [engineOpen, setEngineOpen] = useState(false);
+  const engineMenuId = useId();
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
   // conversation, and `{ id: 'new', seed }` by whatever asks a question here.
   // `current` means "the conversation already in progress" — what this screen
@@ -1748,6 +1776,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                 className="ana-hidden-input"
                 aria-label="Attach a document for AnA to read"
                 onChange={(e) => { addFiles(e.target.files); if (fileRef.current) fileRef.current.value = ''; }}
+                accept={CHAT_UPLOAD_ACCEPT}
                 data-testid="ct-attach-input"
               />
               <button
@@ -1841,13 +1870,14 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                     className="ct-engine-pill"
                     aria-haspopup="dialog"
                     aria-expanded={engineOpen}
+                    aria-controls={engineOpen ? engineMenuId : undefined}
                     onClick={() => setEngineOpen((o) => !o)}
                     onKeyDown={(e) => { if (e.key === 'Escape') setEngineOpen(false); }}
                   >
                     Engine: {ANA_MODES.find((m) => m.id === engine.mode)?.effortLabel ?? engine.mode}
                   </button>
                   {engineOpen && (
-                    <span className="ct-engine-menu" role="dialog" aria-label="Choose the engine">
+                    <span className="ct-engine-menu" id={engineMenuId} role="dialog" aria-label="Choose the engine">
                       <EngineChoices
                         variant="rail"
                         mode={engine.mode}

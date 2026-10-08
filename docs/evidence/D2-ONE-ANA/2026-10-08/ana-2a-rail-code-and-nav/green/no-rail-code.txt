@@ -1,0 +1,18 @@
+GREEN: the working tree as it stands.
+npx vitest run --config vitest.config.ts <the file(s) below>
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > no AnA rail at any width > the shell mounts no AnA rail and no scrim at any width 2ms
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > no AnA rail at any width > Shell.tsx defines no AnaRail, and no file under client/src imports one 162ms
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > no AnA rail at any width > the shell grid is nav | page: no column, seam, scrim or open state for a rail 2ms
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > the conversation at phone width (760px and narrower) > its column and its side dock stack, and the dock spans the screen 1ms
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > the conversation at phone width (760px and narrower) > the thread scrolls above a composer that never shrinks out of view 1ms
+ ✓ tests/ui/ana-rail-phone-drawer.test.ts > the conversation at phone width (760px and narrower) > the thread’s side gutters are narrowed, and nothing in it is wider than the screen 1ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  06:07:07
+   Duration  891ms (transform 154ms, setup 144ms, import 32ms, tests 176ms, environment 0ms)
+

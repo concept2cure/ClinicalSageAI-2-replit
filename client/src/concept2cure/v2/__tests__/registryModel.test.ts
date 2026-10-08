@@ -7,7 +7,10 @@
  * invariant, plus the icon vocabulary the rail/⌘K render from.
  */
 import { describe, expect, it } from 'vitest';
-import { getSurface } from '@shared/constants/ui-surface-registry';
+import { getSurface, UI_SURFACES } from '@shared/constants/ui-surface-registry';
+import { isLaunchSurface } from '@shared/constants/launch-scope';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
+import { resolveSurfaceIdForTarget } from '../navParams';
 import {
   ANA_MODES,
   CLIENT_CATEGORIES,
@@ -16,9 +19,6 @@ import {
   NAV_GROUP_OF,
   NAV_HIDDEN,
   RAIL_CORE,
-  RAIL_EXPLORE,
-  RAIL_QUICK,
-  RAIL_SPECIALIST,
   SEGMENTS,
   SEGMENT_MODULES,
   SURFACE_ACTIONS,
@@ -29,15 +29,30 @@ import {
 } from '../registryModel';
 
 describe('ui-v2 registry model ↔ shared registry parity', () => {
-  it('every rail entry resolves to a registered surface', () => {
-    const railIds = [
-      ...RAIL_CORE.map((s) => s.id),
-      ...RAIL_SPECIALIST.map((s) => s.id),
-      ...RAIL_EXPLORE.map((s) => s.id),
-      ...RAIL_QUICK.map((s) => s.target),
-    ];
-    for (const id of railIds) {
-      expect(getSurface(id), `rail id ${id}`).toBeDefined();
+  it('a rail entry that applies a screen action names a registered, ungoverned action on its own screen', () => {
+    // My work asks the task board for the person's own tasks as it opens it
+    // (Shell.tsx Rail). An action that no longer resolves, or that lands on
+    // another screen, would open the board unfiltered under a label that
+    // says otherwise.
+    const applying = RAIL_CORE.filter((s) => 'applies' in s && s.applies);
+    expect(applying.map((s) => s.id)).toEqual(['tasks']);
+    for (const s of applying) {
+      const a = (s as { applies: { actionId: string; params: Record<string, string> } }).applies;
+      const res = resolveSurfaceAction(a.actionId, a.params);
+      expect(res.ok, `${s.id}: ${a.actionId}`).toBe(true);
+      if (!res.ok) continue;
+      expect(res.directive.params).toEqual(a.params);
+      expect(resolveSurfaceIdForTarget(res.directive.surfaceId)).toBe(resolveSurfaceIdForTarget(s.id));
+    }
+  });
+
+  it('every rail entry opens Home or a registered surface', () => {
+    // Home is the shell's landing screen, synthesised by V2App with no
+    // registry row; "New conversation" opens it.
+    for (const s of RAIL_CORE) {
+      const to = s.target ?? s.id;
+      if (to === 'home') continue;
+      expect(getSurface(to), `rail entry ${s.id} → ${to}`).toBeDefined();
     }
   });
 
@@ -97,18 +112,25 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
     }
   });
 
-  // ── CMC on the rail (2026-08-23 unification) ─────────────────────────────
+  // ── CMC: on the rail from 2026-08-23, off it from 2026-10-08 ─────────────
 
-  it('CMC / Module 3 is a rail destination, not a hidden surface', () => {
-    // The module was NAV_HIDDEN with no rail entry — reachable only by ⌘K,
-    // deep link, or ProjectHome tiles. The unification promotes it to the
-    // Science & intelligence rail section, where it inherits entitlement
-    // gating from navItem's verdictFor. Both halves matter: a rail entry for
-    // an id still in NAV_HIDDEN would leave registry-derived listings
-    // (surfacesByTier) disagreeing with the rail about whether CMC exists.
-    expect(RAIL_SPECIALIST.map((s) => s.id)).toContain('cmc');
+  it('CMC / Module 3 is not a place in this release, and not a hidden surface either', () => {
+    // 2026-08-23 promoted CMC from NAV_HIDDEN to a "Science & intelligence"
+    // rail entry. 2026-10-08 (docs/SURFACE_DECISIONS_2026-10-08.md) put it
+    // outside the launch scope, returning as a feature of Project home, and the
+    // rail now lists only the places (ONE_ANA_ONE_CANVAS.md §5). It stays a
+    // registered surface out of NAV_HIDDEN, so a deep link renders the honest
+    // "not in this release" panel rather than nothing.
+    expect(RAIL_CORE.map((s) => s.id)).not.toContain('cmc');
+    expect(isLaunchSurface('cmc')).toBe(false);
     expect(NAV_HIDDEN.has('cmc')).toBe(false);
     expect(getSurface('cmc')).toBeDefined();
+  });
+
+  it('Quality is a place, not a hidden surface', () => {
+    // A launch app with no rail entry: it sat in NAV_HIDDEN.
+    expect(RAIL_CORE.map((s) => s.id)).toContain('quality');
+    expect(NAV_HIDDEN.has('quality')).toBe(false);
   });
 
   it('AnA modes display engine labels, never vendor/model names', () => {
@@ -150,7 +172,7 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
     expect(ESIGN_MEANINGS).toContain('TECHNICAL_APPROVAL');
   });
 
-  it('client categories carry icons for the rail', () => {
+  it('client categories carry icons for the account menu', () => {
     for (const c of CLIENT_CATEGORIES) {
       expect(c.icon, `icon for ${c.id}`).toBeTruthy();
     }
@@ -180,7 +202,7 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
     expect(getSegmentModules('pharma')).toBe(SEGMENT_MODULES.biopharma);
   });
 
-  it('the rail offers the merged lane once, not the two company labels', () => {
+  it('the client type list offers the merged lane once, not the two company labels', () => {
     const ids = CLIENT_CATEGORIES.map((c) => c.id);
     expect(ids).toContain('biopharma');
     expect(ids).not.toContain('biotech');
@@ -199,5 +221,84 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
       expect(seg, `category ${c.id} must be a segment`).toBeDefined();
       expect(getSurface(seg!.defaultSurface), `${c.id}.defaultSurface`).toBeDefined();
     }
+  });
+});
+
+/* Moved from anaRailContextHonesty.test.tsx when the right rail was deleted
+   (ONE_ANA_ONE_CANVAS.md, slice 9). The rail's "Working in" block was the one
+   reader of getAnaContext; the block is gone, and these keep the model honest
+   for the next reader (the design's "Working in <project>" chip). */
+describe('getAnaContext says only what is true about where the person is', () => {
+  const AUTHORING = ['protocol-dev', 'document-authoring', 'regulatory-workspace', 'labeling-pi', 'doc-journey', 'ectd-coauthor', 'ectd-compile', 'review'];
+  /** Premises no empty organisation has: a section, a blocker, an approved
+   *  version, a label, a predicate number, a sponsor count. */
+  const INVENTED = [
+    /Current section/i,
+    /2\.5 Clinical Overview/,
+    /Substantial Equivalence/,
+    /Annex II/,
+    /Explain blocker/,
+    /Compare to approved version/,
+    /Draft USPI label/,
+    /K203117/,
+    /ORR contradiction/,
+  ];
+  /** Engineering vocabulary that has no place in copy a person reads. */
+  const INTERNAL = [
+    /\bC2C-\d/,
+    /\/api\//,
+    /\/file route/,
+    /@shared/,
+    /\bunifiedTasks\b/,
+    /\b[a-z]+_[a-z_]+\b/, // snake_case identifiers: table / tool names
+    /\.tsx?\b/,
+  ];
+
+  it('no authoring surface reports a section or sends a prompt that presumes one', () => {
+    for (const id of AUTHORING) {
+      for (const segment of ['biopharma', 'medtech', 'diagnostics', 'cro', 'health']) {
+        const ac = getAnaContext(id, segment);
+        expect(ac.section, `${id}/${segment} section`).toBeNull();
+        const prompts = ac.actions.map((a) => `${a.label} ${a.prompt ?? ''}`).join(' | ');
+        for (const re of INVENTED) expect(prompts, `${id}/${segment}`).not.toMatch(re);
+        expect(ac.actions.length, `${id}/${segment} actions`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('the focus on an authoring surface does not change with the client type', () => {
+    const bio = getAnaContext('protocol-dev', 'biopharma');
+    const mdx = getAnaContext('protocol-dev', 'medtech');
+    expect(bio.focus).toBe('Protocol development');
+    expect(mdx.focus).toBe(bio.focus);
+  });
+
+  it('no registered surface puts an internal identifier in module, here or focus', () => {
+    for (const s of UI_SURFACES) {
+      const ac = getAnaContext(s.id, 'biopharma');
+      for (const field of [ac.module, ac.here, ac.focus] as const) {
+        for (const re of INTERNAL) expect(field, `${s.id}: ${field}`).not.toMatch(re);
+      }
+      expect(ac.here.endsWith('.'), `${s.id} here ends with a period`).toBe(false);
+    }
+  });
+
+  it('Home is named Home, not by its raw id', () => {
+    const ac = getAnaContext('home', 'biopharma');
+    expect(ac.module).toBe('Home');
+    expect(ac.focus).toBe('Home');
+  });
+});
+
+/* Moved from anaRailContextHonesty.test.tsx with the rest. "Quick access" is
+   gone (ONE_ANA_ONE_CANVAS.md §5); the rule it pinned holds for the whole list. */
+describe('no nav entry promises a feature that does not exist', () => {
+  it('there is no "Starred Items" entry (nothing in the product can be starred)', () => {
+    expect(RAIL_CORE.map((q) => q.label)).not.toContain('Starred Items');
+    expect(RAIL_CORE.map((q) => q.id)).not.toContain('starred');
+  });
+
+  it('Projects, the destination that entry opened, is on the rail', () => {
+    expect(RAIL_CORE.map((r) => r.id)).toContain('projects');
   });
 });

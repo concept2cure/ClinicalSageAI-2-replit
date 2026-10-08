@@ -8,12 +8,12 @@
      Document authoring editor + CMC/IND/Dossier surface styles
      ═════════════════════════════════════════════════════════════════ */
 
-  /* Editor mode: suppress the global AnA assist column so the editor's own 3 columns get full width. */
+  /* Editor mode: the shell is nav | page (the AnA column went with the rail, ana-2a). */
   .shell[data-editor='true'] {
-    grid-template-columns: var(--rail) 1fr 0 !important;
+    grid-template-columns: var(--rail) 1fr !important;
   }
   .shell[data-editor='true'][data-collapsed='true'] {
-    grid-template-columns: var(--rail-collapsed) 1fr 0 !important;
+    grid-template-columns: var(--rail-collapsed) 1fr !important;
   }
   .shell[data-editor='true'] .page {
     padding: 0;

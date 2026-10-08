@@ -11,7 +11,7 @@
  *   navigate       → opens the screen (and the program it names, first)
  *   surface_action → performs it through the ONE surface-action bus, after
  *                    re-validating it against the shared registry
- *   start_demo     → starts the demonstration the way the rail's menu does
+ *   start_demo     → starts the demonstration through the Live Drive bridge (V2App liveDriveBridge)
  *   anything else  → an inert record of what already happened
  *
  * The chip's payload never executes as-is: navigation and actions are

@@ -1,70 +1,37 @@
 /**
- * ui-v2 shell chrome — faithful port of kit app/Shell.jsx:
- * Rail (client categories · workspace · specialist · explore · quick access)
+ * ui-v2 shell chrome, first ported from kit app/Shell.jsx:
+ * Rail (the places · account menu with Apps and the client type)
  * · TopBar (breadcrumb · segment switcher · org · ⌘K · task/collab/bell/help)
- * · AnaRail (persistent co-author rail) · CmdK palette.
+ * · CmdK palette. The rail's list is decided in docs/design/ONE_ANA_ONE_CANVAS.md
+ * §5, not ported from the kit (registryModel.ts, RAIL_CORE).
+ *
+ * There is no AnA rail. AnA is talked to in one place, the conversation
+ * (surfaces/ConversationThread.tsx), which renders the shell's one chat with
+ * every turn's work, answer, caveats, actions and Part 11 sign-off
+ * (docs/design/ONE_ANA_ONE_CANVAS.md, slice 9).
  *
  * Deltas from the kit prototype, all repo-seams (INSTALL_TARGET_AUDIT):
  *  - window.I → lucide map (./icons); window.* registry globals → ./registryModel.
  *  - Org identity reads TenantContext + the authenticated user (never a
  *    hard-coded "Acme Bio"); logout calls the real authService.
- *  - AnA is LIVE: the rail streams real replies from /api/ana-ri/stream, renders
- *    the REAL actions ANA executed, and — for a governed command — the REAL
- *    Part 11 sign-off prompt (GovernedActionSignoff → /api/ana-ri/governed-action).
- *    The prototype's fabricated action-result card and demonstration e-sign gate
- *    have been removed; every action executes through ANA, never a sample.
  */
 import React from 'react';
 import { useAuth } from '@/services/portal/authService';
 import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
-import {
-  useChatUpload,
-  readyAttachmentLabel,
-  composeTurn,
-  CHAT_UPLOAD_ACCEPT,
-  SR_ONLY_STYLE,
-  type SentAttachment,
-} from '../hooks/useChatUpload';
 import { I } from './icons';
-import { AppMentionMenu, useAppMentions } from './appMentions';
 import { TaskTray } from './TaskTray';
-import type { OnboardingWelcome } from './onboardingWelcome';
-import { AnaActivity, type AnaActivityProps } from './AnaActivity';
-import { AnaMessageWarnings } from './AnaMessageWarnings';
-import { EngineChoices } from './EngineChoices';
-import { CONTINUE_PROMPT, continueTurnIndex } from './anaWorkModel';
-import { AnaProgressChip, AnaWorkPanel } from './AnaWorkPanel';
-import { RunControlStrip } from './AnaWorkSections';
-import { RunPolicySwitch, useRunPolicyLabel } from './RunPolicySwitch';
-import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
-import { AnaOutputCards, type AnaOutput } from './AnaOutputs';
-import { useAgentActivity } from './useAgentActivity';
-import { useProgressDock } from './workDock';
-import { segmentForShellProject, shellProgramName, useShellProject } from './shellProject';
-import { availableDemoScripts } from '../components/ana/anaLockedScreens';
-import { AnaActionChips } from './AnaActionChips';
-import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
-import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
-import { SignoffList } from './SignoffList';
-import type { PendingSignoff } from '../components/ana/useGovernedAction';
-import type { AnaChatAction, AnaChatMessage, AnaRunHold } from '../components/ana/useAnaChat';
+import { segmentForShellProject, useShellProject } from './shellProject';
 import {
   AI_ACTIONS,
-  ANA_MODES,
   CLIENT_CATEGORIES,
   PRIMARY_SEGMENTS,
   RAIL_CORE,
-  RAIL_EXPLORE,
-  RAIL_QUICK,
-  RAIL_SPECIALIST,
   SEGMENTS,
   breadcrumbTierOf,
-  getAnaContext,
   getSegment,
-  type AnaContext,
+  resolveSegmentId,
 } from './registryModel';
-import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
 import {
   isLaunchScopeLocked,
   isLocked,
@@ -73,59 +40,15 @@ import {
   type NavSurfaceEntitlement,
 } from './navEntitlements';
 import { NavUnlockPanel } from './NavUnlockPanel';
+import { applySurfaceAction } from './surfaceActions';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
-import { renderSafeMarkdown } from '../components/ana/renderSafeMarkdown';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 
 export interface ShellSurfaceRef {
   id: string;
   label: string;
   navTier?: string;
   readiness?: string;
-}
-
-export interface AnaMessage {
-  role: 'user' | 'ana';
-  body?: string;
-  model?: string;
-  sample?: boolean;
-  actions?: string[];
-  /** The real actions ANA executed this turn (streamed from /api/ana-ri/stream). */
-  executedActions?: AnaChatAction[];
-  /** Governed commands ANA proposed that are blocked on a Part 11 e-signature. */
-  pendingSignoffs?: PendingSignoff[];
-  /**
-   * What ANA is doing / did this turn — the live work record rendered by
-   * {@link AnaActivity}. Every field is something the turn genuinely reported;
-   * see that module for why the rail used to show none of it.
-   */
-  activity?: AnaActivityProps;
-  /**
-   * Caveats about THIS answer — a degraded-mode signal from the server, or a
-   * timeout that cut the turn short. Deliberately not part of `activity`: the
-   * work record is about how the answer was reached and lives behind a
-   * disclosure, whereas a caveat qualifies the answer itself and has to be read
-   * without going looking for it.
-   */
-  warnings?: string[];
-  /**
-   * Steers the human sent mid-run that AnA accepted, in order. `useAnaChat`
-   * has recorded these since run control shipped and nothing rendered them:
-   * a steer you cannot see afterwards is one you cannot tell was taken.
-   */
-  interjections?: string[];
-  /**
-   * The server's evidence verdict for this answer. Emitted as `grounding_strip`
-   * and stored by `useAnaChat` since that pipeline shipped; nothing rendered it.
-   */
-  evidence?: AnaGroundingEvidence;
-  /**
-   * The CRL/RTF pre-mortem decision artifact, when the turn assembled one.
-   * `CrlPremortemPanel` has existed, and been tested, since E14 with ZERO mount
-   * sites — a board-ready artifact the product could not show anyone.
-   */
-  crlPremortem?: CrlPremortemArtifact;
-  /** The draft this turn produced, for its output card (AnaOutputs). */
-  output?: AnaOutput;
 }
 
 /**
@@ -155,6 +78,15 @@ const HELP_SURFACE = 'conversation-thread';
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
 
+/** One of the places (registryModel.ts RAIL_CORE). */
+type RailEntry = {
+  id: string;
+  label: string;
+  icon: string;
+  target?: string;
+  applies?: { actionId: string; params: Record<string, string> };
+};
+
 export function Rail({
   activeId,
   onNav,
@@ -172,6 +104,14 @@ export function Rail({
 }) {
   const { user, logout } = useAuth();
   const [acct, setAcct] = React.useState(false);
+  const acctBtnRef = React.useRef<HTMLButtonElement>(null);
+  const acctMenuId = React.useId();
+  /* Closing the menu without choosing (Escape, Tab, the scrim, the chosen
+     client type again) hands focus back to the button that opened it. */
+  const dismissAcct = () => {
+    setAcct(false);
+    acctBtnRef.current?.focus();
+  };
   /* Live licence verdicts for this organization. Until the server answers —
      and permanently if it cannot — `verdictFor` returns null for everything and
      the rail renders exactly as it did before: a lock badge is a claim about a
@@ -185,57 +125,29 @@ export function Rail({
     (user?.firstName?.[0] ?? '') + (user?.lastName?.[0] ?? '') || name.slice(0, 2).toUpperCase();
   const role = user?.roles?.[0] ?? '';
   const isOrgAdmin = isOrgAdminRole(user?.roles);
-  const acctGo = (id?: string) => {
-    setAcct(false);
-    if (id) onNav(id);
+  /* Launch scope is a release boundary, not a licence: a greyed rail entry
+     for an app nobody can enable is a dead affordance. Every place is in the
+     launch scope today (shellNav.test.tsx); this keeps an entry out if a
+     deployment's verdicts say otherwise. The Apps catalog still lists the app
+     with the reason. */
+  const railVisible = (s: { id: string; target?: string }) => !isLaunchScopeLocked(verdictFor(s.target ?? s.id));
+  /* An entry that `applies` a screen action asks it of the screen as it opens
+     it, through the validated bus AnA's moves use: My work opens the task
+     board on the signed-in person's tasks (registryModel.ts RAIL_CORE). The
+     bus stashes the action, opens the screen, and the screen performs it once
+     its read has landed. */
+  const open = (s: RailEntry, target: string) => {
+    const res = s.applies ? resolveSurfaceAction(s.applies.actionId, s.applies.params) : null;
+    /* It opens the entry's own screen, so the address is the same as any
+       other way there (/tasks, not the action's nav-target alias). */
+    if (res?.ok) applySurfaceAction(res.directive, () => onNav(target));
+    else onNav(target);
   };
-  const ACCT_ITEMS: ({ label: string; ic: string; to?: string; action?: 'logout' } | { sep: true })[] = [
-    // Admin is reached from the bottom-left account menu — the same place and
-    // gesture as Claude's admin/settings. Gated to org admins; admin-console
-    // itself renders a non-leaky denied state, but we hide the entry entirely
-    // for non-admins to mirror Claude exactly.
-    ...(isOrgAdmin ? [{ label: 'Admin', ic: 'shieldCheck', to: 'admin-console' }] : []),
-    // Licensing is the PLATFORM operator's console, not the customer's plan
-    // page (that is "View all plans" below). It is offered only when the server
-    // says its guard admits this viewer — `platformAdmin` is that guard's own
-    // function (resolvePlatformAdmin). It used to be offered on `isOrgAdmin`, so
-    // every customer org admin opened seven tabs that each refused them. The
-    // guard still re-checks every read and write; this only decides the offer.
-    ...(platformAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
-    /* Where a member's request for a locked module lands. Without this entry the
-       lock panel's one instruction — "ask an administrator" — points at nobody:
-       the request is recorded, and the person who can approve it has no way to
-       find it. The queue is org-scoped server-side; this only decides whether
-       the entry is offered. */
-    ...(isOrgAdmin ? [{ label: 'Access requests', ic: 'clipboardList', to: 'access-requests' }] : []),
-    { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
-    { label: 'Billing', ic: 'creditCard', to: 'billing' },
-    { sep: true },
-    { label: 'View all plans', ic: 'checkSquare', to: 'licensing' },
-    { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
-    { label: 'Codebase coverage', ic: 'grid', to: 'coverage' },
-    { label: 'Get help', ic: 'help', to: HELP_SURFACE },
-    { sep: true },
-    { label: 'Log out', ic: 'logOut', action: 'logout' },
-  ];
-  /**
-   * Rail entries that a feature flag gates. Flag off ⇒ the entry is not
-   * rendered at all — not greyed out, not present-but-empty. A visible entry for
-   * a capability the deployment does not have is worse than no entry.
-   */
-  const railVisible = (s: { id: string; target?: string }) => {
-    if (s.id === 'crl-library' && !isClinicalRegulatoryGraphEnabled()) return false;
-    /* Launch scope is a release boundary, not a licence: a greyed rail entry
-       for an app nobody can enable is a dead affordance. The entry is not
-       rendered; the Apps catalog still lists the app with the reason. */
-    return !isLaunchScopeLocked(verdictFor(s.target ?? s.id));
-  };
-  const navItem = (s: { id: string; label: string; icon: string; badge?: string; count?: number; target?: string }) => {
+  const navItem = (s: RailEntry) => {
     const target = s.target ?? s.id;
-    /* Entitlement is keyed on the DESTINATION, not the rail entry: "Recent
-       Documents" is a shortcut onto document-authoring, so it inherits that
-       module's verdict rather than looking up an id the catalog has never
-       heard of. */
+    /* Entitlement is keyed on the DESTINATION, not the rail entry: "New
+       conversation" opens Home, so it inherits Home's verdict rather than
+       looking up an id the catalog has never heard of. */
     const verdict = verdictFor(target);
     const locked = isLocked(verdict);
     return (
@@ -250,7 +162,7 @@ export function Rail({
            affordance that opens an honest panel. */
         data-locked={locked || undefined}
         aria-current={activeId === target ? 'page' : undefined}
-        onClick={() => (locked && verdict ? setLockedFor(verdict) : onNav(target))}
+        onClick={() => (locked && verdict ? setLockedFor(verdict) : open(s, target))}
         /* The lock reaches assistive tech through the accessible name, not the
            icon: the icon is decorative and the colour shift is never the only
            channel. The reason is the SERVER'S reason, per verdict — this used
@@ -269,8 +181,6 @@ export function Rail({
             {I.lock}
           </span>
         )}
-        {s.badge && <span className="nav-badge">{s.badge}</span>}
-        {s.count != null && <span className="nav-count">{s.count}</span>}
       </button>
     );
   };
@@ -307,46 +217,22 @@ export function Rail({
         </button>
         {!collapsed && collapseToggle}
       </div>
+      {/* The places (docs/design/ONE_ANA_ONE_CANVAS.md §5). One list, the same
+          for every client type; Apps and the client type are in the account
+          menu below. */}
       <div className="rail-scroll">
-        <div className="rail-section">Client categories</div>
-        <div className="rail-nav">
-          {CLIENT_CATEGORIES.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className="nav-item"
-              data-on={segment === c.id || undefined}
-              /* A chosen client category is a setting, not where the user is.
-                 It said aria-current="true", which the stylesheet drew as the
-                 current page — while the surface actually open carried
-                 aria-current="page", which nothing drew. So the category was
-                 the only thing ever highlighted (launch sweep finding 130). */
-              aria-pressed={segment === c.id}
-              onClick={() => setSegment(c.id)}
-              title={c.label}
-            >
-              <span className="ico">{I[c.icon] ?? I.grid}</span>
-              <span className="lbl">{c.label}</span>
-            </button>
-          ))}
-        </div>
-        <div className="rail-section">Workspace</div>
         <div className="rail-nav">{RAIL_CORE.filter(railVisible).map(navItem)}</div>
-        <div className="rail-section">Science &amp; intelligence</div>
-        {/* `crl-library` is gated by ENABLE_CLINICAL_REGULATORY_GRAPH — flag off
-            and the rail entry is absent entirely, not disabled or empty. */}
-        <div className="rail-nav">{RAIL_SPECIALIST.filter(railVisible).map(navItem)}</div>
-        <div className="rail-section">Explore</div>
-        <div className="rail-nav">{RAIL_EXPLORE.filter(railVisible).map(navItem)}</div>
-        <div className="rail-section">Quick access</div>
-        <div className="rail-nav">{RAIL_QUICK.filter(railVisible).map(navItem)}</div>
       </div>
       <div className="rail-foot">
         {collapsed && collapseToggle}
         <button
+          ref={acctBtnRef}
           type="button"
           className="rail-account"
           title={name}
+          aria-haspopup="menu"
+          aria-expanded={acct}
+          aria-controls={acct ? acctMenuId : undefined}
           onClick={() => setAcct((v) => !v)}
           data-open={acct || undefined}
         >
@@ -358,41 +244,28 @@ export function Rail({
           <span className="chev">{I.down}</span>
         </button>
         {acct && (
-          <>
-            <div className="acct-scrim" onClick={() => setAcct(false)} />
-            <div className="acct-menu" role="menu">
-              <div className="acct-head">
-                <div className="avatar">{initials}</div>
-                <div className="who">
-                  <div className="nm">{name}</div>
-                  <div className="rl">{role}</div>
-                </div>
-              </div>
-              {ACCT_ITEMS.map((it, i) =>
-                'sep' in it ? (
-                  <div key={i} className="acct-sep" />
-                ) : (
-                  <button
-                    key={i}
-                    type="button"
-                    className="acct-item"
-                    role="menuitem"
-                    onClick={() => {
-                      if (it.action === 'logout') {
-                        setAcct(false);
-                        void logout();
-                      } else {
-                        acctGo(it.to);
-                      }
-                    }}
-                  >
-                    <span className="ico">{I[it.ic] ?? I.grid}</span>
-                    <span className="lbl">{it.label}</span>
-                  </button>
-                )
-              )}
-            </div>
-          </>
+          <AccountMenu
+            id={acctMenuId}
+            name={name}
+            initials={initials}
+            role={role}
+            isOrgAdmin={isOrgAdmin}
+            platformAdmin={platformAdmin}
+            segment={segment}
+            onClose={dismissAcct}
+            onGo={(id) => {
+              setAcct(false);
+              onNav(id);
+            }}
+            onSegment={(id) => {
+              setAcct(false);
+              setSegment(id);
+            }}
+            onLogout={() => {
+              setAcct(false);
+              void logout();
+            }}
+          />
         )}
       </div>
       {lockedFor && (
@@ -404,6 +277,168 @@ export function Rail({
         />
       )}
     </nav>
+  );
+}
+
+type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' } | { sep: true } | { clientType: true };
+
+/**
+ * The account menu: settings, the client type, help and sign-out
+ * (docs/design/ONE_ANA_ONE_CANVAS.md §5, "Account menu"). The Apps catalog and
+ * the client type moved here from the rail's list on 2026-10-08.
+ *
+ * It is a menu by the WAI-ARIA menu pattern, since the button says it opens
+ * one: focus moves to the first item when it opens; ArrowUp and ArrowDown (and
+ * Home and End) move between items, which are not separate Tab stops; Escape
+ * closes it and returns focus to the button; Tab closes it and moves on. The
+ * client types were plain Tab stops in the rail's list before they moved here,
+ * so without this a keyboard user could open the menu and not reach them.
+ */
+function AccountMenu({
+  id,
+  name,
+  initials,
+  role,
+  isOrgAdmin,
+  platformAdmin,
+  segment,
+  onClose,
+  onGo,
+  onSegment,
+  onLogout,
+}: {
+  id: string;
+  name: string;
+  initials: string;
+  role: string;
+  isOrgAdmin: boolean;
+  platformAdmin: boolean;
+  segment: string;
+  onClose: () => void;
+  onGo: (id: string) => void;
+  onSegment: (id: string) => void;
+  onLogout: () => void;
+}) {
+  const items: AccountItem[] = [
+    // Admin is reached from the bottom-left account menu — the same place and
+    // gesture as Claude's admin/settings. Gated to org admins; admin-console
+    // itself renders a non-leaky denied state, but we hide the entry entirely
+    // for non-admins to mirror Claude exactly.
+    ...(isOrgAdmin ? [{ label: 'Admin', ic: 'shieldCheck', to: 'admin-console' }] : []),
+    // Licensing is the PLATFORM operator's console, not the customer's plan
+    // page (that is "View all plans" below). It is offered only when the server
+    // says its guard admits this viewer — `platformAdmin` is that guard's own
+    // function (resolvePlatformAdmin). It used to be offered on `isOrgAdmin`, so
+    // every customer org admin opened seven tabs that each refused them. The
+    // guard still re-checks every read and write; this only decides the offer.
+    ...(platformAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
+    /* Where a member's request for a locked module lands. Without this entry the
+       lock panel's one instruction — "ask an administrator" — points at nobody:
+       the request is recorded, and the person who can approve it has no way to
+       find it. The queue is org-scoped server-side; this only decides whether
+       the entry is offered. */
+    ...(isOrgAdmin ? [{ label: 'Access requests', ic: 'clipboardList', to: 'access-requests' }] : []),
+    { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
+    { label: 'Billing', ic: 'creditCard', to: 'billing' },
+    /* Every app, with the reason a locked one is locked. It was an entry in
+       the rail's "Explore" section. */
+    { label: 'Apps catalog', ic: 'grid', to: 'apps' },
+    { sep: true },
+    { clientType: true },
+    { sep: true },
+    { label: 'View all plans', ic: 'checkSquare', to: 'licensing' },
+    { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
+    { label: 'Codebase coverage', ic: 'grid', to: 'coverage' },
+    { label: 'Get help', ic: 'help', to: HELP_SURFACE },
+    { sep: true },
+    { label: 'Log out', ic: 'logOut', action: 'logout' },
+  ];
+  const chosen = resolveSegmentId(segment);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const menuItems = () =>
+    Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemradio"]') ?? []);
+  React.useEffect(() => {
+    menuItems()[0]?.focus();
+  }, []);
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const list = menuItems();
+    const at = list.indexOf(document.activeElement as HTMLElement);
+    const go = (i: number) => {
+      e.preventDefault();
+      list[(i + list.length) % list.length]?.focus();
+    };
+    if (e.key === 'ArrowDown') go(at + 1);
+    else if (e.key === 'ArrowUp') go(at < 0 ? list.length - 1 : at - 1);
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(list.length - 1);
+    else if (e.key === 'Escape') {
+      e.preventDefault();
+      /* Not the shell's own Escape (the phone-width drawer) as well. */
+      e.stopPropagation();
+      onClose();
+    } else if (e.key === 'Tab') {
+      /* Focus goes back to the button first, so Tab moves on from there. */
+      onClose();
+    }
+  };
+  return (
+    <>
+      <div className="acct-scrim" onClick={onClose} />
+      <div id={id} ref={menuRef} className="acct-menu" role="menu" aria-label="Account" onKeyDown={onKeyDown}>
+        <div className="acct-head">
+          <div className="avatar">{initials}</div>
+          <div className="who">
+            <div className="nm">{name}</div>
+            <div className="rl">{role}</div>
+          </div>
+        </div>
+        {items.map((it, i) => {
+          if ('sep' in it) return <div key={i} className="acct-sep" />;
+          if ('clientType' in it) {
+            /* The client type is a setting, chosen in this one place. It was the
+               rail's "Client categories" list. It scopes modules, the default
+               screen and AnA's context; the places stay the same. A chosen type
+               carries a check mark as well as its state, so colour is never the
+               only channel. */
+            return (
+              <div key={i} role="group" aria-label="Client type" className="acct-group">
+                <div className="acct-sec" aria-hidden="true">Client type</div>
+                {CLIENT_CATEGORIES.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="acct-item"
+                    role="menuitemradio"
+                    tabIndex={-1}
+                    aria-checked={chosen === c.id}
+                    /* Choosing the type already chosen changes nothing, so it
+                       does not move the person off their screen either. */
+                    onClick={() => (chosen === c.id ? onClose() : onSegment(c.id))}
+                  >
+                    <span className="ico">{I[c.icon] ?? I.grid}</span>
+                    <span className="lbl">{c.label}</span>
+                    {chosen === c.id && <span className="acct-check" aria-hidden="true">{I.check}</span>}
+                  </button>
+                ))}
+              </div>
+            );
+          }
+          return (
+            <button
+              key={i}
+              type="button"
+              className="acct-item"
+              role="menuitem"
+              tabIndex={-1}
+              onClick={() => (it.action === 'logout' ? onLogout() : it.to && onGo(it.to))}
+            >
+              <span className="ico">{I[it.ic] ?? I.grid}</span>
+              <span className="lbl">{it.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
@@ -449,7 +484,9 @@ export function TopBar({
       className="tb-dom-opt"
       data-on={s.id === seg.id}
       onClick={() => {
-        onSegment(s.id);
+        /* The type already shown changes nothing; it does not move the
+           person off their screen either. */
+        if (s.id !== seg.id) onSegment(s.id);
         setSegOpen(false);
       }}
     >
@@ -555,996 +592,6 @@ export function TopBar({
         {I.help}
       </button>
     </header>
-  );
-}
-
-/** Renders the REAL Part 11 sign-off prompts ANA returned for governed actions,
-    mirroring the chat's Message signoff handling: each resolves through the real
-    GovernedActionSignoff (POST /api/ana-ri/governed-action) to the server's
-    confirmation, or is dismissed. No fabricated audit/hash — the outcome is the
-    server's, never invented. */
-function RailSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
-  return (
-    <SignoffList
-      signoffs={signoffs}
-      className="ana-msg-signoffs"
-      doneClassName="ana-signoff-done"
-    />
-  );
-}
-
-/* ── Persistent AnA rail ──────────────────────────────────────────────── */
-/** The open programme as the dock names it — the shell's one reader, or null. */
-function projectLabel(): string | null {
-  try {
-    return shellProgramName();
-  } catch {
-    return null;
-  }
-}
-/**
- * AnA Live Drive bridge as the rail receives it (V2App owns the state
- * machine). `locked` carries the server's honest entitlement deny from the last
- * attempted turn — the control stays enabled with the real required tier
- * named, never a disabled, reasonless button (the Locked-never-dead rule).
- */
-export interface AnaRailLiveDrive {
-  on: boolean;
-  locked: { reason: string; requiredTier?: string | null } | null;
-  setOn: (v: boolean) => void;
-  /** One-click guided tour: enables Live Drive and (once the toggle has
-   *  actually committed) sends the tour ask. Owned by the shell — see the
-   *  race note at the menu button. */
-  onStartTour?: () => void;
-  /** One-click demonstration (training/sales, from the shared script
-   *  registry): enables Live Drive in demo mode and sends the demo ask —
-   *  same commit-then-send sequencing as the tour. */
-  onStartDemo?: (demoId: string, title: string) => void;
-}
-
-/**
- * Open the full-page conversation on the rail's own thread. The rail and that
- * page run on the shell's one chat instance, so `{ id: 'current' }` — the
- * hand-off ConversationThread itself writes when it navigates away — shows
- * the same turns there, each draft as its document canvas.
- */
-function openThisConversation(onNav: (id: string) => void): void {
-  try {
-    (window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } }).C2C_CONVO = {
-      id: 'current',
-      seed: null,
-    };
-  } catch {
-    /* non-fatal: the page opens on the conversation it already holds */
-  }
-  onNav('conversation-thread');
-}
-
-export function AnaRail({
-  open,
-  setOpen,
-  surface,
-  segment,
-  mode,
-  setMode,
-  messages,
-  onSend,
-  onAct,
-  welcome,
-  onDismissWelcome,
-  onNav,
-  projectId = null,
-  runStatus = null,
-  runHold = null,
-  turnRunPolicy = null,
-  streaming = false,
-  onPause,
-  onResume,
-  onStop,
-  onSteer,
-  liveDrive,
-  work,
-  onNewThread,
-  isLoadingThread = false,
-  threadLoadError = null,
-  onRetryThread,
-}: {
-  open: boolean;
-  setOpen: (v: boolean) => void;
-  surface: ShellSurfaceRef;
-  segment: string;
-  mode: string;
-  setMode: (m: string) => void;
-  messages: AnaMessage[];
-  /** The turn's text, and the files it carries by upload id (composer sends only). */
-  onSend: (text: string, files?: SentAttachment[]) => void;
-  onAct: (id: string) => void;
-  /** First-run AnA welcome (P1, assist-only). Null once the client has started
-   *  a conversation or dismissed it — the rail only renders it when present. */
-  welcome?: OnboardingWelcome | null;
-  onDismissWelcome?: () => void;
-  /** Starts a fresh AnA thread — aborts any in-flight run, clears the rail
-   *  transcript, and drops the thread id so the next send opens a new server
-   *  thread. Prior threads persist and are reachable from the
-   *  conversation-thread surface, so this is non-destructive. An absent handler
-   *  disables the button rather than leaving it inert. */
-  onNewThread?: () => void;
-  isLoadingThread?: boolean;
-  threadLoadError?: { threadId: string; message: string } | null;
-  onRetryThread?: () => void;
-  /**
-   * Mid-run control. The server has supported pause / resume / cancel /
-   * interject at the agentic loop's round boundaries since run control
-   * shipped, and `useAnaChat` exposes all four — the rail offered none of
-   * them, so a human watching AnA work a question the wrong way could only
-   * wait for her to finish. Absent handlers simply hide the affordance.
-   */
-  runStatus?: 'running' | 'paused' | 'cancelled' | null;
-  /** Why the run is held, when it is: a Manual hold is answered from the strip (row 74). */
-  runHold?: AnaRunHold | null;
-  /** The policy the turn in flight was sent with: the strip says what a steer does under Manual. */
-  turnRunPolicy?: AnaRunPolicy | null;
-  streaming?: boolean;
-  onPause?: () => void;
-  onResume?: () => void;
-  onStop?: () => void;
-  /** Splices a steer into the next round. Capped server-side at 2000 chars. */
-  /* Returns whether the server ACCEPTED the steer, so the composer can keep
-     the text on a refusal instead of silently eating it. `void` is still
-     allowed: a caller that reports nothing is treated as accepted, which is
-     the pre-existing behaviour rather than a fabricated failure. */
-  onSteer?: (message: string) => void | boolean | Promise<boolean | void>;
-  /** Lets a welcome starter open a real surface (e.g. the upload flow). */
-  onNav?: (id: string) => void;
-  /** Scopes chat uploads so extracted text lands in that project's memory.
-   *  Null is valid — the file still uploads, it is just not project-scoped. */
-  projectId?: string | number | null;
-  /**
-   * AnA Live Drive toggle (V2App owns the state machine). `locked` carries the
-   * server's honest entitlement deny from the last attempted turn — the
-   * control stays enabled with the real required tier named, never a
-   * disabled, reasonless button (the platform's Locked-never-dead rule).
-   */
-  liveDrive?: AnaRailLiveDrive;
-  /**
-   * The live work dock (AnaWorkPanel): the raw chat turns, not the adapted
-   * `messages` above, because the panel reads the progress record, tool
-   * timings and outputs that the rail's message shape does not carry. Absent
-   * → no dock (tests that render the rail without a chat instance).
-   */
-  work?: {
-    messages: AnaChatMessage[];
-    pendingSteers?: string[];
-  };
-}) {
-  const [draft, setDraft] = React.useState('');
-
-  /* Ask / Agent IS the Live Drive preference, said as what it means for the
-     person. It used to be its own local flag that prefixed "[Agent] " to the
-     message — which the shell stripped before sending (V2App ask), so the two
-     modes behaved identically: "Agent — AnA takes governed actions" changed
-     nothing, and "Ask — you act" was untrue whenever Live Drive was on, which
-     is the default. Someone trying AnA's agentic mode saw exactly nothing
-     happen. Now Agent is AnA operating the screens (Live Drive on, not locked)
-     and Ask is AnA answering with the moves offered as buttons. One
-     preference, the same one the composer's "AnA drives" switch sets. */
-  const agent = Boolean(liveDrive?.on && !liveDrive.locked);
-  /* What AnA does between steps (row 74) — a separate question from Ask /
-     Agent, which is who operates the screens. Null outside the shell. */
-  const policyLabel = useRunPolicyLabel();
-  const [plusOpen, setPlusOpen] = React.useState(false);
-  const [modeOpen, setModeOpen] = React.useState(false);
-  const modeMenuId = React.useId();
-  /* The progress panel: shown by default, hidden by one shared per-browser
-     choice (workDock.ts) that every host honours. The chip in the header is
-     its one control — the panel sits directly beneath it, and a second close
-     a few pixels away would be two affordances for one action. */
-  const dock = useProgressDock();
-  const workVisible = Boolean(work) && dock.open;
-  /* Background investigations: read only while the dock shows them, and
-     re-read the moment a turn ends (a turn can start or finish one). */
-  const agentActivity = useAgentActivity(workVisible, streaming);
-  const fileRef = React.useRef<HTMLInputElement>(null);
-  const imgRef = React.useRef<HTMLInputElement>(null);
-  /* `@app` — the inline way to name a capability (appMentions.tsx). The menu
-     opens on `@`, inserts `@<label>`, and the server reads the label back
-     against the same vocabulary; nothing else travels. */
-  const draftRef = React.useRef<HTMLTextAreaElement>(null);
-  const mentions = useAppMentions(draft, setDraft, draftRef);
-
-  /* The attach button used to be a lie.
-   *
-   * State was `useState<string[]>` and addFiles did
-   * `Array.from(fl).map((x) => x.name)` — it kept the NAMES and dropped the
-   * File objects on the floor. Nothing was ever uploaded. The composer then
-   * sent `Attached ${files.length} file(s)`, so a user could pick a PDF, watch
-   * a chip with its filename appear, hit send, and get an answer from an
-   * assistant that had never received a single byte of it. On a regulatory
-   * platform, an assistant confidently answering about a document it cannot
-   * see is worse than one that refuses.
-   *
-   * Now uploads go through the shared useChatUpload hook — the same
-   * /api/chat/upload path the main Ana composer, the MDX rail and the PDEV
-   * dock use, which OCRs the document and writes its text into project memory
-   * so AnA can actually retrieve it. */
-  const { attachments, addFiles, removeAttachment, clear: clearAttachments, statusMessage } =
-    useChatUpload({ projectId });
-
-  const readyAttachments = attachments.filter((a) => a.status === 'ready');
-  const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
-  const failedAttachments = attachments.filter((a) => a.status === 'error');
-  // The effort the mode buys, never a model (row 74, ADR-0015 §9).
-  const effortLabel = ANA_MODES.find((m) => m.id === mode)?.effortLabel ?? 'Balanced';
-  /* AnA's per-surface context is local, and no longer claims otherwise.
-   *
-   * This used to fetch `GET /api/coauthor?surface=…&segment=…` under a comment
-   * calling it a HARD RULE that bound AnA to "the real co-author endpoint".
-   * There is no such endpoint. server/routes/coauthor.ts mounts `/sessions`,
-   * `/documents`, `/documents/:id` and `/templates` — it has no root handler, so
-   * that request 404'd on every render of every surface, forever, and the result
-   * was discarded into the same fixture fallback used when it was never issued.
-   *
-   * The header also carried a `<SampleTag>` whose "Sample data" state meant
-   * "backend not reachable — showing sample data from the codebase fixture
-   * shape". That was true while the co-author fixture supplied an invented
-   * programme, a readiness percentage and an activity feed. Those fields are
-   * gone (registryModel.ts), and everything the block still renders — the module
-   * label, what AnA is attached to here, the CTD section for authoring surfaces,
-   * the action prompts — is reference config, identical for every tenant and
-   * every connection state. A pill announcing "sample data" over config would be
-   * a new inaccuracy in the opposite direction, so it is removed rather than
-   * re-labelled. If per-surface AnA context becomes a real server concern, add
-   * the endpoint and the provenance signal together. */
-  const ac: AnaContext = getAnaContext(surface.id, segment);
-  const suggestions = ac.suggestions?.length ? ac.suggestions : [];
-  const send = () => {
-    const t = draft.trim();
-
-    // Never send while an upload is in flight. The previous composer had no
-    // concept of "in flight" at all, so this case could not arise — and that
-    // was the bug.
-    if (uploadingAttachments.length > 0 || isLoadingThread || threadLoadError) return;
-
-    // Only files the server confirmed it read are referenced. A failed upload
-    // must never be described as attached: the chip stays visible with its
-    // error, and the message says nothing about it.
-    if (!t && readyAttachments.length === 0) return;
-
-    // With text, the attachment reference is appended so AnA has both. Without
-    // text, the reference IS the message — and it names the files it actually
-    // received rather than counting chips the user happened to see. The files
-    // themselves go by id, so the stream opens them and says it did.
-    const { body: bodyText, files } = composeTurn(t, attachments);
-
-    onSend(bodyText, files);
-    setDraft('');
-    clearAttachments();
-  };
-
-  /* Continue is offered on the latest settled turn only, through the rail's
-     own send path, as a new turn (anaWorkModel.continueTurnIndex). */
-  const continueAt = continueTurnIndex(messages.map((t) => ({ role: t.role, streaming: t.activity?.streaming })), streaming);
-
-  if (!open) {
-    return (
-      <aside className="ana-seam" aria-label="AnA (collapsed)">
-        <button type="button" className="ana-seam-btn" onClick={() => setOpen(true)} title="Open AnA · ⌘\">
-          <span className="ana-seam-mark">✻</span>
-          <span className="ana-seam-label">AnA</span>
-        </button>
-      </aside>
-    );
-  }
-  return (
-    <aside className="ana" aria-label="AnA assistant">
-      <div className="ana-hdr">
-        <div className="ana-id">
-          <span className="ana-id-mark">✻</span>
-          <div>
-            <div className="ana-id-name">AnA — Co-Author</div>
-            <div className="ana-id-model">
-              {effortLabel} effort · in {ac.module || 'this workspace'}
-            </div>
-          </div>
-        </div>
-        <div className="ana-actions">
-          {work && (
-            <AnaProgressChip
-              ref={dock.chipRef}
-              messages={work.messages}
-              streaming={streaming}
-              open={dock.open}
-              onToggle={dock.toggle}
-              controls={dock.panelId}
-            />
-          )}
-          <button
-            type="button"
-            className="tb-btn"
-            title="New thread"
-            aria-label="New thread"
-            onClick={onNewThread}
-            disabled={!onNewThread}
-          >
-            {I.plus}
-          </button>
-          <button type="button" className="tb-btn" onClick={() => setOpen(false)} title="Collapse · ⌘\">
-            {I.panelRight}
-          </button>
-        </div>
-      </div>
-      {/* NOT aria-live. It was, and that made the entire growing transcript a
-          live region: every streamed token, every new tool row and round
-          heading was a mutation inside it, so a screen-reader user got the
-          whole subtree re-read instead of a status message — and any narrow
-          region nested inside was undefined behaviour on top. Status is
-          announced by the narrow, always-mounted regions that own it:
-          AnaActivity for what AnA is doing, and the upload region below. */}
-      <div className="ana-body">
-        {/* AnA's progress: her plan or the phases, and what the session used.
-            Above the transcript so the person sees the work before the words;
-            AnaActivity below keeps the per-turn record. */}
-        {work && workVisible && (
-          <AnaWorkPanel
-            id={dock.panelId}
-            messages={work.messages}
-            streaming={streaming}
-            runStatus={runStatus}
-            runHold={runHold}
-            pendingSteers={work.pendingSteers}
-            queue={agentActivity}
-            context={{
-              project: projectLabel(),
-              module: ac.module || null,
-              surface: surface.label,
-              engine: effortLabel,
-            }}
-          />
-        )}
-        {welcome && (
-          <div className="ana-welcome">
-            <div className="ana-welcome-greet">
-              <span className="ana-welcome-mark">✻</span> {welcome.greeting}
-            </div>
-            <div className="ana-welcome-sub">{welcome.subline}</div>
-            <div className="ana-welcome-starters">
-              {welcome.starters.map((s) => (
-                <button
-                  key={s.label}
-                  type="button"
-                  className="ana-welcome-starter"
-                  // A starter either opens a real flow (upload) or begins a
-                  // live AnA turn — never a canned reply either way.
-                  onClick={() => (s.navTo && onNav ? onNav(s.navTo) : onSend(s.prompt))}
-                >
-                  <span className="ico">
-                    {(s.iconKey ? (I as Record<string, React.ReactNode>)[s.iconKey] : null) ?? I.sparkles}
-                  </span>
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            {onDismissWelcome && (
-              <button type="button" className="ana-welcome-dismiss" onClick={onDismissWelcome}>
-                Skip for now
-              </button>
-            )}
-          </div>
-        )}
-        {ac.module && (
-          <div className="ana-ctx">
-            <div className="ana-ctx-module">
-              <span className="ico">{(ac.icon && I[ac.icon]) || I.grid}</span>
-              <div className="ana-ctx-module-mid">
-                <div className="ana-ctx-module-k">Working in</div>
-                <div className="ana-ctx-module-v">{ac.module}</div>
-              </div>
-            </div>
-            <div className="ana-ctx-here">{ac.here}</div>
-            {ac.program && (
-              <div className="ana-ctx-prog">
-                <span className="ico">{I.gitBranch}</span>
-                {ac.program}
-              </div>
-            )}
-            <div className="ana-ctx-cell">
-              <span className="ana-ctx-k">{ac.section ? 'Current section' : 'Focus'}</span>
-              <span className="ana-ctx-section">{ac.focus}</span>
-            </div>
-            {/* Stage + readiness render only when a surface's own context
-                actually supplies them. They used to be unconditional, filled
-                from the per-segment co-author FIXTURE — so every surface showed
-                "Draft · 72% ready" about a programme that did not exist. With
-                the fixture retired these are usually absent, and an absent
-                readiness must show nothing rather than a confident "0%": in a
-                regulated tool a fabricated completeness number is worse than no
-                number at all. */}
-            {(ac.stage || typeof ac.readiness === 'number') && (
-              <div className="ana-ctx-grid">
-                {ac.stage && (
-                  <div className="ana-ctx-cell">
-                    <span className="ana-ctx-k">Stage</span>
-                    <span className="ana-ctx-stage">{ac.stage}</span>
-                  </div>
-                )}
-                {typeof ac.readiness === 'number' && (
-                  <div className="ana-ctx-cell">
-                    <span className="ana-ctx-k">Readiness</span>
-                    <span className="ana-ctx-ready">
-                      <span className="ana-ctx-bar">
-                        <span style={{ width: `${ac.readiness}%` }} />
-                      </span>
-                      {ac.readiness}%
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-            {ac.evidence && (
-              <div className="ana-ctx-cell">
-                <span className="ana-ctx-k">Linked evidence</span>
-                <div className="ana-ctx-evi">
-                  {ac.evidence.map((e, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      className="ana-ctx-chip"
-                      onClick={() => onSend(`Show the ${e.count} linked ${e.label} in ${ac.module}`)}
-                    >
-                      <b>{e.count}</b> {e.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {ac.activity && (
-              <div className="ana-ctx-cell">
-                <span className="ana-ctx-k">Recent activity</span>
-                <div className="ana-ctx-acts">
-                  {ac.activity.map((a, i) => (
-                    <div key={i} className={`ana-ctx-act ${a.type}`}>
-                      <span className="ico">{a.type === 'alert' ? I.alertTriangle : I.check}</span>
-                      <span className="t">{a.text}</span>
-                      <span className="w">{a.when}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        {messages.length === 0 && (
-          <div className="ana-greet">
-            <div className="ana-greet-mark">✻</div>
-            <div className="ana-greet-t">AnA is working in {ac.module || 'this workspace'}</div>
-            <div className="ana-greet-s">
-              {ac.here ? ac.here[0].toUpperCase() + ac.here.slice(1) : 'Ask about this module'}. Ask
-              below, or pick an action — every change is tracked and governed.
-            </div>
-            {suggestions.length > 0 && (
-              <div className="ana-greet-chips">
-                {suggestions.slice(0, 3).map((s, i) => (
-                  <button key={i} type="button" className="ana-greet-chip" onClick={() => onSend(s)}>
-                    {I.sparkles}
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        {messages.map((m, i) => (
-            /* `is-ana` / `is-user`, not the bare role: a message classed `ana`
-               matched the rail CONTAINER's own `.c2c-v2 .ana` rule (100vh,
-               overflow hidden, a left border, flex-shrink), so every AnA
-               message was clipped to whatever height the column left it. */
-            <div key={i} className={`ana-msg is-${m.role}`}>
-              {m.role === 'ana' && (
-                <div className="who">
-                  {/* The model that answered, only when the server said which:
-                      the mode's effort word is not a model (ADR-0015 §9). */}
-                  {m.model ? `AnA · ${m.model}` : 'AnA'}
-                  {m.sample ? ' · sample' : ''}
-                </div>
-              )}
-              {/* AnA's text is markdown (the response register allows headers
-                  only in artifacts, bold for a term, lists when enumerable).
-                  Rendered through the codebase's one audited markdown path —
-                  renderSafeMarkdown (marked → DOMPurify) — so a header is a
-                  heading and not a literal "##". The person's own text stays
-                  plain: it is never parsed as markup. */}
-              {/* Her work first, then the answer it produced, then the output —
-                  the order every host renders a turn in, and the reference's. */}
-              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} onContinue={i === continueAt ? () => onSend(CONTINUE_PROMPT) : undefined} />}
-              {m.role === 'ana' ? (
-                <div className="ana-msg-bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(m.body ?? '') }} />
-              ) : (
-                <div className="ana-msg-bd">{m.body}</div>
-              )}
-              {/* Caveats sit directly under the answer they qualify, and never
-                  inside the work record. `useAnaChat` records a
-                  server degraded-mode signal, and a timeout, on the message —
-                  and on timeout it KEEPS whatever text had already streamed.
-                  Nothing rendered these, so a turn cut off mid-answer showed
-                  its truncated text with no sign it was truncated: an
-                  incomplete result presented as a complete one. */}
-              {/* The pre-mortem artifact, when this turn assembled one. No
-                  `onExport` is passed: the rail has no DOCX route for it, and
-                  the panel now disables that action and says where export lives
-                  rather than offering a button that does nothing. */}
-              {m.role === 'ana' && m.crlPremortem && (
-                <div className="ana-premortem">
-                  <CrlPremortemPanel artifact={m.crlPremortem} />
-                </div>
-              )}
-              {/* How well-grounded the answer is. Above the caveats on purpose:
-                  they say what went wrong, this says how far the answer can be
-                  trusted, which is read first. */}
-              {m.role === 'ana' && <AnaGrounding evidence={m.evidence} />}
-              {/* Steers AnA accepted for this turn. Shown because a steer you
-                  cannot see afterwards is one you cannot tell was taken — and
-                  the server has already written it into the decision lineage. */}
-              {m.role === 'ana' && Array.isArray(m.interjections) && m.interjections.length > 0 && (
-                <div className="ana-steers">
-                  {m.interjections.map((t, si) => (
-                    <div key={si} className="ana-steer">
-                      <span className="ana-steer-ic" aria-hidden="true">{I.chevRight}</span>
-                      <span><span className="ana-steer-k">You steered AnA:</span> {t}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {m.role === 'ana' && <AnaMessageWarnings warnings={m.warnings} />}
-              {/* Her output beneath the answer. It opens the full
-                  conversation on this same thread, where the draft is the
-                  document canvas (docs/design/ANA_DOCUMENT_CANVAS.md). */}
-              {m.role === 'ana' && m.output && (
-                <AnaOutputCards
-                  message={m.output}
-                  onOpen={onNav ? () => openThisConversation(onNav) : undefined}
-                  openLabel="Open in conversation"
-                />
-              )}
-              {m.role === 'ana' && Array.isArray(m.actions) && m.actions.length > 0 && (
-                <div className="ana-msg-actions">
-                  {m.actions.map((id) => {
-                    const a = AI_ACTIONS.find((x) => x.id === id);
-                    if (!a) return null;
-                    return (
-                      <button key={id} type="button" className="ana-next-chip" onClick={() => onAct(id)}>
-                        {I.arrowRight}
-                        {a.label}
-                        {a.governed ? (
-                          <span className="ana-chip-gov" title="Governed · e-sign required">
-                            {I.lock}
-                          </span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              {m.role === 'ana' &&
-                Array.isArray(m.executedActions) &&
-                m.executedActions.length > 0 && (
-                  <div className="ana-msg-executed">
-                    {/* Navigation, screen actions and demonstration starts are
-                        controls; everything else is a record. One renderer,
-                        shared with every other chat (AnaActionChips). A locked
-                        workspace gets no demo button: the menu hides its
-                        demonstrations there too. */}
-                    <AnaActionChips
-                      actions={m.executedActions}
-                      onNav={onNav}
-                      onStartDemo={
-                        liveDrive && !liveDrive.locked ? liveDrive.onStartDemo : undefined
-                      }
-                    />
-                  </div>
-                )}
-              {m.role === 'ana' &&
-                Array.isArray(m.pendingSignoffs) &&
-                m.pendingSignoffs.length > 0 && <RailSignoffs signoffs={m.pendingSignoffs} />}
-            </div>
-        ))}
-      </div>
-      <div className="ana-foot">
-        {ac.actions && (
-          <div className="ana-coauth">
-            <div className="ana-coauth-h">What AnA can do here</div>
-            <div className="ana-coauth-row">
-              {ac.actions.map((a, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className="ana-coauth-act"
-                  onClick={() => onSend(a.prompt ?? a.label)}
-                >
-                  <span className="ico">{(a.icon && I[a.icon]) || I.sparkles}</span>
-                  {a.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        {/* Mid-run control — pause, resume, steer, stop, and Manual's hold. One
-            strip, shared with the conversation screen (AnaWorkSections.tsx),
-            where the rail is not drawn; its docblock says what each does. */}
-        <RunControlStrip
-          streaming={streaming}
-          runStatus={runStatus}
-          runHold={runHold}
-          runPolicy={turnRunPolicy}
-          onPause={onPause}
-          onResume={onResume}
-          onStop={onStop}
-          onSteer={onSteer}
-        />
-        <div className="ana-composer">
-          {isLoadingThread && <p role="status">Loading conversation…</p>}
-          {threadLoadError && (
-            <div role="alert">
-              <p>{threadLoadError.message}</p>
-              {onRetryThread && (
-                <button type="button" onClick={onRetryThread}>Retry loading conversation</button>
-              )}
-            </div>
-          )}
-          {attachments.length > 0 && (
-            <div className="ana-files">
-              {attachments.map((a) => {
-                // The chip states what actually happened. A chip that shows a
-                // filename and nothing else is what let the old composer imply
-                // a file had been received when it had not.
-                const label =
-                  a.status === 'uploading'
-                    ? `Uploading ${a.name}…`
-                    : a.status === 'error'
-                      ? `${a.name} — ${a.error || 'upload failed'}`
-                      : `${a.name} · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords)}`;
-                return (
-                  <span
-                    key={a.id}
-                    className={`ana-file ana-file-${a.status}`}
-                    title={label}
-                  >
-                    <span className="ico">{I.paperclip}</span>
-                    {label}
-                    <button
-                      type="button"
-                      aria-label={`Remove ${a.name}`}
-                      onClick={() => removeAttachment(a.id)}
-                    >
-                      {I.close}
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-          )}
-          {/* Upload lifecycle for screen readers: the chips above are visual
-              only, and a failed upload must be announced, not just coloured. */}
-          <span aria-live="polite" style={SR_ONLY_STYLE}>
-            {statusMessage}
-          </span>
-          <textarea
-            ref={draftRef}
-            rows={1}
-            placeholder={agent ? 'Describe a task for AnA to carry out…' : 'Ask AnA, type @ to name an app…'}
-            value={draft}
-            aria-autocomplete="list"
-            aria-controls={mentions.open ? 'ana-rail-mentions' : undefined}
-            aria-expanded={mentions.open}
-            onChange={(e) => { setDraft(e.target.value); mentions.sync(e.currentTarget); }}
-            onSelect={(e) => mentions.sync(e.currentTarget)}
-            onBlur={() => mentions.close()}
-            onKeyDown={(e) => {
-              if (mentions.onKeyDown(e)) return;
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-            }}
-          />
-          <AppMentionMenu api={mentions} id="ana-rail-mentions" />
-          <input
-            ref={fileRef}
-            type="file"
-            multiple
-            // Was ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.xml" — it offered
-            // spreadsheet and XML types the extraction service cannot read, so
-            // picking one produced a chip and no content. CHAT_UPLOAD_ACCEPT is
-            // the single source of truth for what the server can actually
-            // extract; the picker now offers exactly that.
-            accept={CHAT_UPLOAD_ACCEPT}
-            className="ana-hidden-input"
-            onChange={(e) => {
-              addFiles(e.target.files);
-              // Reset so re-picking the same file fires onChange again.
-              e.target.value = '';
-            }}
-          />
-          <input
-            ref={imgRef}
-            type="file"
-            multiple
-            accept="image/png,image/jpeg,image/gif,image/webp"
-            className="ana-hidden-input"
-            onChange={(e) => {
-              addFiles(e.target.files);
-              e.target.value = '';
-            }}
-          />
-          <div className="ana-crow">
-            <div className="ana-tools">
-              <button
-                type="button"
-                className="ana-tool"
-                title="Attach"
-                aria-label="Attach"
-                onClick={() => {
-                  setPlusOpen((o) => !o);
-                  setModeOpen(false);
-                }}
-              >
-                {I.plus}
-              </button>
-            </div>
-            <div className="ana-right">
-              <button
-                type="button"
-                className="ana-modepull"
-                aria-haspopup="dialog"
-                aria-expanded={modeOpen}
-                aria-controls={modeOpen ? modeMenuId : undefined}
-                onClick={() => {
-                  setModeOpen((o) => !o);
-                  setPlusOpen(false);
-                }}
-                title="Control & engine"
-              >
-                <span className="ana-modepull-ic">{agent ? I.wand : I.sparkles}</span>
-                <span>
-                  {agent ? 'Agent' : 'Ask'} · {ANA_MODES.find((m) => m.id === mode)?.effortLabel}
-                  {policyLabel ? ` · ${policyLabel}` : null}
-                </span>
-                {I.down}
-              </button>
-              <button
-                type="button"
-                className="ana-send"
-                disabled={
-                  isLoadingThread || Boolean(threadLoadError) ||
-                  uploadingAttachments.length > 0 ||
-                  (!draft.trim() && readyAttachments.length === 0)
-                }
-                onClick={send}
-                aria-label="Send"
-              >
-                {I.arrowUp}
-              </button>
-            </div>
-          </div>
-          {plusOpen && (
-            <div className="ana-menu" onMouseLeave={() => setPlusOpen(false)}>
-              <div className="ana-menu-sec">Suggested</div>
-              {suggestions.map((s, i) => (
-                <button
-                  key={`sg${i}`}
-                  type="button"
-                  className="ana-menu-item"
-                  onClick={() => {
-                    onSend(s);
-                    setPlusOpen(false);
-                  }}
-                >
-                  <span className="ico">{I.sparkles}</span>
-                  {s}
-                </button>
-              ))}
-              <div className="ana-menu-sec">Files</div>
-              <button
-                type="button"
-                className="ana-menu-item"
-                onClick={() => {
-                  fileRef.current?.click();
-                  setPlusOpen(false);
-                }}
-              >
-                {/* Was "PDF · DOCX · XLSX · CSV" — XLSX and CSV are not
-                    extractable, so the menu named formats that would be
-                    rejected. This lists what the server can actually read. */}
-                <span className="ico">{I.paperclip}</span>Attach file<span className="mh">PDF · DOCX · TXT</span>
-              </button>
-              <button
-                type="button"
-                className="ana-menu-item"
-                onClick={() => {
-                  imgRef.current?.click();
-                  setPlusOpen(false);
-                }}
-              >
-                <span className="ico">{I.image}</span>Attach image or scan
-              </button>
-              <button
-                type="button"
-                className="ana-menu-item"
-                onClick={() => {
-                  onSend('Reference a document from the Vault');
-                  setPlusOpen(false);
-                }}
-              >
-                <span className="ico">{I.vault}</span>Reference from Vault
-              </button>
-              <div className="ana-menu-sec">Data &amp; connectors</div>
-              <button
-                type="button"
-                className="ana-menu-item"
-                onClick={() => {
-                  onSend('Connect a data source');
-                  setPlusOpen(false);
-                }}
-              >
-                <span className="ico">{I.database}</span>Connect data source<span className="mh">FAERS · EUDAMED</span>
-              </button>
-              <button
-                type="button"
-                className="ana-menu-item"
-                onClick={() => {
-                  onSend('Reference another project');
-                  setPlusOpen(false);
-                }}
-              >
-                <span className="ico">{I.folder}</span>Reference another project
-              </button>
-              <button
-                type="button"
-                className="ana-menu-item"
-                onClick={() => {
-                  onSend('Manage connectors');
-                  setPlusOpen(false);
-                }}
-              >
-                <span className="ico">{I.settings}</span>Manage connectors
-              </button>
-              <div className="ana-menu-sec">Intelligence</div>
-              <button
-                type="button"
-                className="ana-menu-item"
-                onClick={() => {
-                  onSend('>run a RIM tool');
-                  setPlusOpen(false);
-                }}
-              >
-                <span className="ico">{I.zap}</span>Run a RIM tool
-              </button>
-              <button
-                type="button"
-                className="ana-menu-item"
-                onClick={() => {
-                  // Start a command in the composer: the menu of commands the
-                  // server parses opens from the leading `/`.
-                  setPlusOpen(false);
-                  setDraft('/');
-                  requestAnimationFrame(() => {
-                    const el = draftRef.current;
-                    if (!el) return;
-                    el.focus();
-                    el.setSelectionRange(1, 1);
-                    mentions.sync(el);
-                  });
-                }}
-              >
-                <span className="ico">{I.terminal}</span>Slash commands
-              </button>
-            </div>
-          )}
-          {modeOpen && (
-            <div className="ana-menu" role="dialog" aria-label="Control & engine" id={modeMenuId} onMouseLeave={() => setModeOpen(false)}>
-              <div className="ana-menu-sec">Control</div>
-              <button
-                type="button"
-                className="ana-menu-item"
-                data-on={!agent || undefined}
-                onClick={() => {
-                  if (liveDrive?.on) liveDrive.setOn(false);
-                  setModeOpen(false);
-                }}
-              >
-                <span className="ico">{I.sparkles}</span>Ask
-                <span className="mh">AnA answers; screen moves come as buttons you press</span>
-              </button>
-              {liveDrive && (
-                <button
-                  type="button"
-                  className="ana-menu-item"
-                  data-on={agent || undefined}
-                  aria-disabled={liveDrive.locked ? true : undefined}
-                  onClick={() => {
-                    // A locked workspace keeps the item visible for its reason;
-                    // it does not pretend to switch anything on.
-                    if (!liveDrive.locked && !liveDrive.on) liveDrive.setOn(true);
-                    setModeOpen(false);
-                  }}
-                >
-                  <span className="ico">{I.wand}</span>Agent
-                  <span className="mh">
-                    {liveDrive.locked
-                      ? liveDrive.locked.requiredTier
-                        ? `Requires the ${liveDrive.locked.requiredTier} plan`
-                        : 'Not available for this workspace'
-                      : 'AnA operates the screens as she works; you can take over'}
-                  </span>
-                </button>
-              )}
-              {liveDrive && !liveDrive.locked && liveDrive.onStartTour && (
-                <button
-                  type="button"
-                  className="ana-menu-item"
-                  onClick={() => {
-                    /* The one-click support story: consent (the toggle turns
-                       on, visibly — same switch, same take-over rights) and
-                       the ask in one gesture. The shell owns the sequencing
-                       (onStartTour) because sending in the same tick as the
-                       toggle flip would race the state commit and the tour
-                       turn would stream without live_drive — the exact trap
-                       useAnaChat documents for toolsOverride. */
-                    setModeOpen(false);
-                    liveDrive.onStartTour?.();
-                  }}
-                >
-                  <span className="ico">{I.rocket}</span>Show me around
-                  <span className="mh">AnA gives a live tour, driving the screens</span>
-                </button>
-              )}
-              {liveDrive && !liveDrive.locked && liveDrive.onStartDemo && (
-                <>
-                  <div className="ana-menu-sec">Demonstrations</div>
-                  {availableDemoScripts().map((d) => (
-                    <button
-                      key={d.id}
-                      type="button"
-                      className="ana-menu-item"
-                      onClick={() => {
-                        /* Same commit-then-send sequencing as the tour — the
-                           shell queues the ask and flips toggle + demo mode in
-                           one click's batch (see queueDriveAsk in V2App). */
-                        setModeOpen(false);
-                        liveDrive.onStartDemo?.(d.id, d.title);
-                      }}
-                    >
-                      <span className="ico">{d.kind === 'sales' ? I.barChart : I.book}</span>
-                      {d.title}
-                      <span className="mh">{`≈${d.minutes} min · ${d.steps} stops · AnA drives, you can interrupt`}</span>
-                    </button>
-                  ))}
-                </>
-              )}
-              {policyLabel && (
-                <>
-                  {/* Between steps: Manual or Auto. Its own section, apart
-                      from Ask / Agent above, which it does not change. */}
-                  <div className="ana-menu-sec">Between steps</div>
-                  <RunPolicySwitch variant="menu" />
-                </>
-              )}
-              <div className="ana-menu-sec">Engine</div>
-              <EngineChoices variant="rail" mode={mode} onChoose={setMode} />
-            </div>
-          )}
-          {liveDrive?.on && (
-            <div className="ana-agent-note">
-              <span className="ico">{I.play}</span>
-              {liveDrive.locked
-                ? liveDrive.locked.requiredTier
-                  ? `Live Drive requires the ${liveDrive.locked.requiredTier} plan — AnA will offer destinations as chips instead.`
-                  : 'Live Drive is not available for this workspace — AnA will offer destinations as chips instead.'
-                : 'Agent — AnA operates your screens as she works. Take over any time (Esc). Changes to the official record still wait for you to confirm them.'}
-            </div>
-          )}
-        </div>
-      </div>
-    </aside>
   );
 }
 

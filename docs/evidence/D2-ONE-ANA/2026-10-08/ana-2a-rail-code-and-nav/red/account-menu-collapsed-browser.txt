@@ -1,0 +1,19 @@
+[before] Chromium (playwright 1.56.1), viewport 1280x800, rail collapsed
+rail: 56px wide, overflow: hidden
+account menu box: left 8px, 248px wide
+  MISS Admin                        centre (132,194) -> acct-scrim
+  MISS Access requests              centre (132,225) -> acct-scrim
+  MISS Usage & limits               centre (132,256) -> acct-scrim
+  MISS Billing                      centre (132,287) -> acct-scrim
+  MISS Apps catalog                 centre (132,318) -> acct-scrim
+  MISS Medical Device & IVD         centre (132,381) -> acct-scrim
+  MISS Biotech & Pharma             centre (132,412) -> acct-scrim
+  MISS Diagnostics                  centre (132,443) -> acct-scrim
+  MISS CRO / Research               centre (132,474) -> acct-scrim
+  MISS Health Systems               centre (132,505) -> acct-scrim
+  MISS View all plans               centre (132,549) -> acct-scrim
+  MISS Set up a workspace           centre (132,580) -> acct-scrim
+  MISS Codebase coverage            centre (132,611) -> acct-scrim
+  MISS Get help                     centre (132,642) -> acct-scrim
+  MISS Log out                      centre (132,686) -> acct-scrim
+0 of 15 menu items receive a click at their centre

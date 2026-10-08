@@ -17,250 +17,221 @@
  * reasoning and the answer's caveats.
  *
  * WHAT IS PINNED
- * That the controls appear only while a run is live, that each reaches the
- * hook, and — the honesty half — that the copy never promises an instant stop.
- * Control lands at a ROUND BOUNDARY, so a label saying otherwise would be the
- * interface overstating what the server does.
+ * That each control reaches the hook, and — the honesty half — that the copy
+ * never promises an instant stop. Control lands at a ROUND BOUNDARY, so a
+ * label saying otherwise would be the interface overstating what the server
+ * does.
+ *
+ * WHERE
+ * These cases ran on the right rail's strip and its own steer box. The rail is
+ * gone (docs/design/ONE_ANA_ONE_CANVAS.md, slice 9); they run on the
+ * conversation, where the strip keeps Pause, Resume and Stop and the composer
+ * is the one box that steers (slice 4, oneBoxDuringRun.test.tsx). Which strip
+ * appears before a run is controllable, and none when nothing runs, is pinned
+ * in anaRunControlStrip.test.tsx.
  */
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, fireEvent } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+
+import type { AnaChatMessage, UseAnaChatReturn } from '../../components/ana/useAnaChat';
 
 vi.mock('../dataConnect', () => ({
   connected: () => false,
+  EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
 }));
 vi.mock('../../../utils/authToken', () => ({ getAuthHeaders: () => ({ Authorization: 'Bearer t' }) }));
+/* The conversation screen's private chat — never the one acted on here. */
+vi.mock('../../components/ana/useAnaChat', () => ({
+  useAnaChat: () => ({
+    messages: [],
+    isStreaming: false,
+    isLoadingThread: false,
+    threadId: null,
+    runStatus: null,
+    runHold: null,
+    pendingSteers: [],
+    pause: vi.fn(),
+    resume: vi.fn(),
+    interject: vi.fn(),
+    stop: vi.fn(),
+    reset: vi.fn(),
+    send: vi.fn(),
+    loadThread: vi.fn(),
+  }),
+}));
 
-import { AnaRail, type AnaMessage } from '../Shell';
+import { ConversationThread } from '../surfaces/ConversationThread';
 
-afterEach(cleanup);
+const RUNNING: AnaChatMessage[] = [
+  { id: 'u1', role: 'user', text: 'Compare the endpoints' } as AnaChatMessage,
+  { id: 'a1', role: 'assistant', text: '', streaming: true, sentAt: 1_000 } as AnaChatMessage,
+];
 
-const surface = { id: 'cmc', label: 'CMC' };
-
-function renderRail(over: Record<string, unknown> = {}, messages: AnaMessage[] = []) {
-  const handlers = {
-    onPause: vi.fn(), onResume: vi.fn(), onStop: vi.fn(), onSteer: vi.fn(),
-  };
-  const utils = render(
-    <AnaRail
-      open setOpen={() => {}} surface={surface} segment="biotech"
-      mode="standard" setMode={() => {}} messages={messages}
-      onSend={vi.fn()} onAct={vi.fn()} projectId={42}
-      streaming runStatus="running" {...handlers} {...over}
-    />,
-  );
-  return { ...utils, ...handlers };
+function shellChat(over: Partial<UseAnaChatReturn> = {}): UseAnaChatReturn {
+  return {
+    messages: RUNNING,
+    isStreaming: true,
+    send: vi.fn(async () => undefined),
+    stop: vi.fn(),
+    runStatus: 'running',
+    runHold: null,
+    pause: vi.fn(async () => true),
+    resume: vi.fn(async () => true),
+    interject: vi.fn(async () => true),
+    pendingSteers: [],
+    reset: vi.fn(),
+    loadThread: vi.fn(async () => undefined),
+    threadId: 'thread-1',
+    isLoadingThread: false,
+    ...over,
+  } as UseAnaChatReturn;
 }
 
-describe('mid-run control reaches the rail', () => {
-  it('offers nothing while no run is in flight', () => {
-    const { container } = renderRail({ streaming: false, runStatus: null });
-    expect(container.querySelector('.ana-runctl')).toBeNull();
+async function mount(chat: UseAnaChatReturn) {
+  const utils = render(
+    <ConversationThread
+      surface={{ id: 'conversation-thread', label: 'Conversation' } as never}
+      segment="biotech"
+      onNav={vi.fn()}
+      shellChat={chat}
+    />,
+  );
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 10));
   });
+  return utils;
+}
 
-  it('offers only Stop while a run is streaming but not yet controllable', () => {
-    // `runStatus` stays null until `run_started` arrives — and a turn that
-    // opened no run row (no resolvable tenant, so no NOT NULL organization_id)
-    // never sends one. V2App therefore passes no pause/resume/steer handler in
-    // that case, and the strip must render exactly what it was given rather
-    // than buttons that quietly do nothing. Stop survives: it aborts the
-    // client's own request, which works with or without a server-side run.
-    renderRail({ runStatus: null, onPause: undefined, onResume: undefined, onSteer: undefined });
-    expect(screen.queryByRole('button', { name: 'Pause' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Resume' })).toBeNull();
-    expect(screen.queryByLabelText('Steer this run')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Stop' })).toBeTruthy();
-  });
+const steerBox = () => screen.getByLabelText('Steer this run') as HTMLTextAreaElement;
+const steer = (v: string) => {
+  const box = steerBox();
+  fireEvent.change(box, { target: { value: v } });
+  fireEvent.keyDown(box, { key: 'Enter' });
+  return box;
+};
 
-  it('pauses the run', () => {
-    const { onPause } = renderRail();
+beforeEach(() => {
+  delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) })));
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
+});
+
+describe('mid-run control reaches the conversation', () => {
+  it('pauses the run', async () => {
+    const chat = shellChat();
+    await mount(chat);
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
-    expect(onPause).toHaveBeenCalledTimes(1);
+    expect(chat.pause).toHaveBeenCalledTimes(1);
   });
 
-  it('offers Resume, not Pause, once paused', () => {
-    const { onResume } = renderRail({ runStatus: 'paused' });
+  it('offers Resume, not Pause, once paused', async () => {
+    const chat = shellChat({ runStatus: 'paused' });
+    await mount(chat);
     expect(screen.queryByRole('button', { name: 'Pause' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
-    expect(onResume).toHaveBeenCalledTimes(1);
+    expect(chat.resume).toHaveBeenCalledTimes(1);
   });
 
-  it('stops the run', () => {
-    const { onStop } = renderRail();
+  it('stops the run', async () => {
+    const chat = shellChat();
+    await mount(chat);
     fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
-    expect(onStop).toHaveBeenCalledTimes(1);
-  });
-
-  it('sends a steer into the running turn', async () => {
-    const { onSteer, container } = renderRail();
-    const input = screen.getByLabelText('Steer this run') as HTMLInputElement;
-    fireEvent.change(input, { target: { value: 'focus on EU MDR Article 61(5)' } });
-    fireEvent.submit(container.querySelector('.ana-runctl-steer') as HTMLFormElement);
-    expect(onSteer).toHaveBeenCalledWith('focus on EU MDR Article 61(5)');
-    // Clearing is a microtask later than it used to be, and deliberately so: the
-    // box now empties only once the server has ACCEPTED the steer, because
-    // emptying it is the only acknowledgement this control has and a refusal
-    // used to be indistinguishable from a send. Hence the await.
-    await act(async () => {});
-    expect(input.value).toBe('');
-    // The original reason for clearing — that a stray Enter cannot send the same
-    // steer twice — is now carried by the in-flight guard instead, which holds
-    // during the window where the text is still on screen awaiting an answer.
-    expect(onSteer).toHaveBeenCalledTimes(1);
+    expect(chat.stop).toHaveBeenCalledTimes(1);
   });
 
   it('does not double-send while the first steer is still in flight', async () => {
     let release!: (v: boolean) => void;
-    const onSteer = vi.fn(() => new Promise<boolean>((r) => { release = r; }));
-    const { container } = renderRail({ onSteer });
-    const input = screen.getByLabelText('Steer this run') as HTMLInputElement;
-    const form = container.querySelector('.ana-runctl-steer') as HTMLFormElement;
-    fireEvent.change(input, { target: { value: 'narrow to Class III' } });
-    fireEvent.submit(form);
+    const chat = shellChat({ interject: vi.fn(() => new Promise<boolean>((r) => { release = r; })) });
+    await mount(chat);
+    const box = steer('narrow to Class III');
     // The text is still on screen while the server is deciding — a second Enter
     // in that window must not queue the same instruction again.
-    fireEvent.submit(form);
-    expect(onSteer).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(chat.interject).toHaveBeenCalledTimes(1);
     await act(async () => { release(true); });
-    expect(input.value).toBe('');
+    expect(box.value).toBe('');
   });
 
-  it('refuses to send an empty steer', () => {
-    const { onSteer, container } = renderRail();
-    fireEvent.submit(container.querySelector('.ana-runctl-steer') as HTMLFormElement);
-    expect(onSteer).not.toHaveBeenCalled();
+  it('refuses to send an empty steer', async () => {
+    const chat = shellChat();
+    await mount(chat);
+    expect((screen.getByTestId('ct-steer-send') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.keyDown(steerBox(), { key: 'Enter' });
+    expect(chat.interject).not.toHaveBeenCalled();
   });
 
-  it('pause never promises an instant stop', () => {
+  it('pause never promises an instant stop', async () => {
     // Pause still lands at a round boundary, deliberately: killing a tool in
     // flight to pause throws the work away and then has to redo it. "Paused"
     // alone would claim the step stopped dead, which is not what pause does.
-    const { container } = renderRail({ runStatus: 'paused' });
+    const { container } = await mount(shellChat({ runStatus: 'paused' }));
     expect(container.querySelector('.ana-runctl-state')?.textContent).toContain('after this step');
   });
 
-  it('stop does not borrow pause\'s promise — it cuts the step in flight', () => {
-    // Stop now aborts generation and abandons the tool in flight, so copy
-    // saying "after this step" would understate it in the other direction.
-    const { container } = renderRail({ runStatus: 'cancelled' });
-    const state = container.querySelector('.ana-runctl-state')?.textContent ?? '';
-    expect(state).not.toContain('after this step');
+  it("stop does not borrow pause's promise — it cuts the step in flight", async () => {
+    // Stop aborts generation and abandons the tool in flight, so copy saying
+    // "after this step" would understate it in the other direction.
+    const { container } = await mount(shellChat({ runStatus: 'cancelled' }));
+    expect(container.querySelector('.ana-runctl-state')?.textContent ?? '').not.toContain('after this step');
   });
 
-  it('never claims stopped before the server has said so', () => {
+  it('never claims stopped before the server has said so', async () => {
     // Abort is not instantaneous. The terminal word belongs to the server's
-    // acknowledgement; until then the state is in progress, or the interface
-    // is overstating what happened — the same fault as the old copy, pointing
-    // the other way.
-    const { container } = renderRail({ runStatus: 'cancelled' });
+    // acknowledgement; until then the state is in progress.
+    const { container } = await mount(shellChat({ runStatus: 'cancelled' }));
     const state = container.querySelector('.ana-runctl-state')?.textContent ?? '';
     expect(state).toMatch(/Stopping/);
     expect(state).not.toMatch(/\bStopped\b/);
-  });
-
-  it('the steer field is separate from the composer draft', () => {
-    // One buffer for both would make a half-typed sentence ambiguous: steer the
-    // running turn, or start the next one?
-    const { container } = renderRail();
-    const steer = screen.getByLabelText('Steer this run') as HTMLInputElement;
-    fireEvent.change(steer, { target: { value: 'narrow to Class III' } });
-    const composer = container.querySelector('.ana-composer textarea') as HTMLTextAreaElement;
-    expect(composer?.value ?? '').toBe('');
-  });
-});
-
-describe('a steer AnA took is visible afterwards', () => {
-  it('shows the accepted steer under the answer it shaped', () => {
-    renderRail({ streaming: false, runStatus: null }, [
-      { role: 'ana', body: 'Under EU MDR, Article 61(5) permits…', interjections: ['focus on EU MDR'] },
-    ] as AnaMessage[]);
-
-    expect(screen.getByText(/You steered AnA/)).toBeTruthy();
-    expect(screen.getByText(/focus on EU MDR/)).toBeTruthy();
-  });
-
-  it('adds no steer furniture to a turn that was never steered', () => {
-    const { container } = renderRail({ streaming: false, runStatus: null }, [
-      { role: 'ana', body: 'A plain answer.' },
-    ] as AnaMessage[]);
-
-    expect(container.querySelector('.ana-steers')).toBeNull();
   });
 });
 
 /**
  * A steer the server REFUSED is not a steer that was sent.
  *
- * WHAT WENT WRONG
- * `onSteer(v); setSteer('')` cleared the box synchronously, before anything
- * knew the server's answer. `interject` does return one — `control()` answers
- * `false` on a 404 (the run is already gone), a 409, a validation refusal and
- * on a thrown fetch — but every call site discarded it (`void
- * anaChat.interject(m)` at V2App.tsx:829 and :871).
- *
- * So all four failures looked exactly like success: the sentence disappeared
- * from the input, which is the only acknowledgement this control has, and
- * nothing anywhere recorded that it had been typed. The person had steered a
- * run into nothing and had no way to know.
- *
- * WHAT IS PINNED
- * That an accepted steer still clears (the old behaviour must survive), that a
- * refused one keeps the text so it can be resent without retyping, and that the
- * refusal is stated rather than left to be inferred from a box that did not
- * empty. A handler that reports nothing is treated as accepted — the
- * pre-existing contract — because telling someone their steer failed on no
- * evidence is its own fabrication.
+ * `interject` answers `false` on a 404 (the run is already gone), a 409, a
+ * validation refusal and on a thrown fetch. A box that emptied on any of those
+ * looked exactly like success. An accepted steer still clears; a refused one
+ * keeps the text so it can be resent without retyping, and the refusal is
+ * stated. A handler that reports nothing is treated as accepted — telling
+ * someone their steer failed on no evidence is its own fabrication.
  */
 describe('a steer the server refused says so, and keeps the text', () => {
-  const submit = (v: string) => {
-    const input = screen.getByLabelText('Steer this run') as HTMLInputElement;
-    fireEvent.change(input, { target: { value: v } });
-    fireEvent.submit(input.closest('form')!);
-    return input;
-  };
-
-  it('clears the box when the server accepts', async () => {
-    const input = (() => {
-      renderRail({ onSteer: vi.fn().mockResolvedValue(true) });
-      return submit('narrow to Class III');
-    })();
+  it('KEEPS the text, says it was not sent, and marks the box invalid', async () => {
+    await mount(shellChat({ interject: vi.fn().mockResolvedValue(false) }));
+    const box = steer('narrow to Class III');
     await act(async () => {});
-    expect(input.value).toBe('');
-    expect(screen.queryByText(/Not sent/)).toBeNull();
-  });
-
-  it('KEEPS the text and says it was not sent when the server refuses', async () => {
-    renderRail({ onSteer: vi.fn().mockResolvedValue(false) });
-    const input = submit('narrow to Class III');
-    await act(async () => {});
-    // The whole defect in one assertion: the sentence must still be there.
-    expect(input.value).toBe('narrow to Class III');
+    expect(box.value).toBe('narrow to Class III');
     expect(screen.getByText(/Not sent — AnA did not accept this steer/)).toBeTruthy();
-    expect(input.getAttribute('aria-invalid')).toBe('true');
+    expect(box.getAttribute('aria-invalid')).toBe('true');
   });
 
   it('treats a thrown handler as a refusal, not a send', async () => {
-    renderRail({ onSteer: vi.fn().mockRejectedValue(new Error('network')) });
-    const input = submit('stop citing 2019');
+    await mount(shellChat({ interject: vi.fn().mockRejectedValue(new Error('network')) }));
+    const box = steer('stop citing 2019');
     await act(async () => {});
-    expect(input.value).toBe('stop citing 2019');
+    expect(box.value).toBe('stop citing 2019');
     expect(screen.getByText(/Not sent/)).toBeTruthy();
   });
 
   it('treats a handler that reports nothing as accepted (unchanged contract)', async () => {
-    renderRail({ onSteer: vi.fn() });
-    const input = submit('shorter');
+    await mount(shellChat({ interject: vi.fn().mockResolvedValue(undefined) as unknown as UseAnaChatReturn['interject'] }));
+    const box = steer('shorter');
     await act(async () => {});
-    expect(input.value).toBe('');
+    expect(box.value).toBe('');
     expect(screen.queryByText(/Not sent/)).toBeNull();
   });
 
   it('clears the refusal once the person edits the text again', async () => {
-    renderRail({ onSteer: vi.fn().mockResolvedValue(false) });
-    const input = submit('narrow to Class III');
+    await mount(shellChat({ interject: vi.fn().mockResolvedValue(false) }));
+    const box = steer('narrow to Class III');
     await act(async () => {});
     expect(screen.getByText(/Not sent/)).toBeTruthy();
-    fireEvent.change(input, { target: { value: 'narrow to Class II' } });
+    fireEvent.change(box, { target: { value: 'narrow to Class II' } });
     expect(screen.queryByText(/Not sent/)).toBeNull();
   });
 });

@@ -310,10 +310,10 @@ export interface RunControlStripProps {
 }
 
 /**
- * Mid-run control: the one strip, rendered by the rail (Shell.tsx AnaRail) and
- * above the conversation screen's composer (ConversationThread), which the
- * rail is not drawn beside. Moved here from the rail (row 74, S4) so a Manual
- * hold can be answered wherever AnA is waiting.
+ * Mid-run control: the one strip, rendered above the conversation screen's
+ * composer (ConversationThread). Moved here from the right rail (row 74, S4),
+ * which is deleted (ana-2a), so a Manual hold can be answered wherever AnA is
+ * waiting.
  *
  * The three actions have three different scopes, and the copy says which is
  * which rather than one blanket promise:

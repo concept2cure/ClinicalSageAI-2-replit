@@ -37,8 +37,9 @@ import '../styles/admin-access.css';
  * the rail, while all seven of the hand-offs below still called `onAsk`. That
  * combination is worse here than anywhere else in the product: a
  * governed command comes back from ANA as a `pendingSignoff`, and the §11.50
- * e-signature prompt is drawn BY the rail (V2App `adaptChatMessage` → AnaRail →
- * GovernedActionSignoff). Hiding the rail did not defer the signature gate, it
+ * e-signature prompt was drawn BY the rail (V2App `adaptChatMessage` → AnaRail →
+ * GovernedActionSignoff; since ana-2a the rail is deleted and the prompt is
+ * drawn in the conversation, ConversationThread). Hiding the rail did not defer the signature gate, it
  * hid it — "Invite member", "Grant access", "Rotate API key" and "Change
  * setting" all appeared to do nothing, and the prompt to sign for them
  * reappeared later on whatever surface the admin opened next, because `ask()`
