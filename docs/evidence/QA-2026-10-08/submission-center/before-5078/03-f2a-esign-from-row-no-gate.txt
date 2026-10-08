@@ -1,0 +1,85 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+RP
+Concept2Cure.RI
+›
+Submission center
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+SUBMISSION
+Submission center
+
+Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+
+HLV-333 — Investigational New Drug Application (QA-J1) · IND · FDA (US)
+Investigational New Drug Application · IND · FDA (US)
+QA-J1 Ardemvir · relapsing multiple sclerosis (IND) · IND · FDA (US)
+Investigational New Drug Application · IND · FDA (US)
+QA member-created project (should be refused) · IND · FDA (US)
+Nexavir · moderate-to-severe Crohn's disease (IND) · IND · FDA (US)
+C2C-001 IND (FDA) · IND · FDA (US)
+Vorelinib · KIT-mutant GIST (IND) · IND · FDA (US)
+BX-256 · systemic lupus erythematosus (IND) · IND · FDA (US)
+BX-301 (anti-BCMA mAb) · IND · FDA (US)
+BX-204 (NDA 212345 · 505(b)(1)) · NDA · FDA (US)
+MDX-100 510(k) (FDA) · 510(k) · FDA (US)
+WHERE VORELINIB · KIT-MUTANT GIST (IND) STANDS
+Vorelinib · KIT-mutant GIST (IND) (Vorelinib · BX-512) — a FDA (US) IND at the original stage.
+2 eCTD sequences tracked. Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+Open the sequences
+Or move through the workspaces below — plan, build, validate, dispatch.
+Submissions
+Planner
+Builder
+Sequences
+Validation
+Shadow review
+Cross-region
+Dispatch
+Sequences · Vorelinib · KIT-mutant GIST (IND)
+draft → assembling → validated → frozen → dispatched
+Transitions POST the real lifecycle endpoint and the server's verdict is shown verbatim. Freeze and Dispatch are irreversible — the generic endpoint refuses them, so those two open the Part 11 e-signature chain instead. Selecting a row sets the working sequence for the Builder, Validation, Shadow review, Cross-region and Dispatch workspaces.
+0000
+Original Sequence
+FDA (US)
+VALIDATED
+Frozen
+Assembling
+0001
+Amendment Sequence
+FDA (US)
+DRAFT
+Assembling
+amendment
+response
+annual
+variation
+withdrawal
+Start sequence 0002
+Electronic signature
+21 CFR Part 11 · §11.50 · §11.100 · §11.200
+YOU ARE SIGNING
+Sequence 0000 · Vorelinib · KIT-mutant GIST (IND)
+FDA (US) · ectd-sequence:6 · irreversible content lock
+RP
+Raj Patel
+raj.patel@concept2cure.pro
+Signature meaning · §11.50
+Approval
+Responsibility
+You approve this content for use
+Reason for this action
+Minimum 8 characters.
+Password · §11.200
+Cancel
+Sign and commit

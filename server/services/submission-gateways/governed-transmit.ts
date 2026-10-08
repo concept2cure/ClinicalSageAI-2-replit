@@ -495,8 +495,9 @@ export async function executeGovernedTransmit(
   if (input.clientBundle && bundleTrustEnforced()) {
     throw new GovernedTransmitRefusal(
       'CLIENT_DESCRIPTOR_REFUSED',
-      'Client-supplied bundle descriptors are not accepted in this environment; ' +
-        'transmit a tenant-owned packageId (POST /api/submission-ops/packages/:packageId/assemble first).',
+      // User copy names no API route (QA 2026-10-08, j6): it reaches a toast.
+      'Client-supplied bundle descriptors are not accepted in this environment. ' +
+        'Transmit a package of this organization by its package id, after assembling it.',
       422,
     );
   }
@@ -516,7 +517,9 @@ export async function executeGovernedTransmit(
   if (!bundle) {
     throw new GovernedTransmitRefusal(
       'BUNDLE_NOT_ASSEMBLED',
-      'No assembled bundle; call POST /api/submission-ops/packages/:packageId/assemble first.',
+      // Plain words, no API route (QA 2026-10-08, j6: the toast told a client
+      // to call POST /api/submission-ops/…). The code stays BUNDLE_NOT_ASSEMBLED.
+      'No assembled package was found for this package id. Assemble the package first, then transmit it.',
       422,
     );
   }

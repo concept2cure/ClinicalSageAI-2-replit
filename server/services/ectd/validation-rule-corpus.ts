@@ -272,6 +272,19 @@ export const RULE_CORPUS: ValidationRule[] = [
     findingCode: 'DOCUMENT_CONTENT_MISMATCH',
   },
   {
+    // 2026-10-08 (QA j6). FD5, founder decision 2026-10-01: nothing is grandfathered.
+    id: 'DOCUMENT_NOT_APPROVED',
+    title: 'Every leaf’s source document is approved for transmission',
+    category: 'integrity',
+    regions: ['ich'],
+    severity: 'high',
+    rationale:
+      'Only approved documents leave for an agency: a Vault version must be approved on its lifecycle record, current, and approved for the bytes staged (vaultVersionNotTransmittable); an authored document must be at an approved status (notFinalizedStatus). The assembler already refused such a leaf at freeze, dispatch and transmit, but only after the e-signature was taken. Readiness reports it beside the leaf so the refusal is seen before anyone signs.',
+    source: PRODUCT_POLICY,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'DOCUMENT_NOT_APPROVED',
+  },
+  {
     id: 'UNPLACEABLE_DOCUMENT_TABLE',
     title: 'Every non-delete leaf points at a document table the assembler can materialize',
     category: 'integrity',

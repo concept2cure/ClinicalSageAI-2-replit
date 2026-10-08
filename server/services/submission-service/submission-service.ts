@@ -47,6 +47,9 @@ import { programInOrganization } from '../c2c/program-access';
 import { requiresIndependence } from '../governance/separation-of-duties';
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
 import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
+import { regulatoryPrograms } from '../../../shared/schema/programs';
+import { usableIdentifier } from '../ectd/regulatory-identifiers';
+import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readiness';
 import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
 import {
   validateSectionCode,
@@ -66,7 +69,9 @@ export type SubmissionErrorCode =
   | 'DISPATCH_BLOCKED'
   | 'FORBIDDEN'
   | 'CROSS_PROJECT'
-  | 'ALREADY_PLACED';
+  | 'ALREADY_PLACED'
+  | 'VALIDATION_FAILED'
+  | 'UNANCHORED_SUBMISSION';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -96,6 +101,8 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   FORBIDDEN: 403,
   CROSS_PROJECT: 409,
   ALREADY_PLACED: 409,
+  VALIDATION_FAILED: 422,
+  UNANCHORED_SUBMISSION: 409,
 };
 
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
@@ -422,6 +429,9 @@ export async function transitionSequence(
   if (!canTransitionSequence(seq.status, toStatus)) {
     throw new SubmissionError('INVALID_STATE', `Cannot transition sequence from ${seq.status} to ${toStatus}.`);
   }
+  // Validated is a claim about the content, so it is made only after the
+  // validation it names has run and found no error (QA 2026-10-08, j6).
+  const validation = toStatus === 'validated' ? await validateForValidatedStatus(seq, ctx) : null;
   const frozenAt = toStatus === 'frozen' ? new Date() : undefined;
   /* Same compare-and-set as the governed twin: `seq.status` was read above and
      canTransitionSequence was evaluated against it, so the write must apply only
@@ -430,7 +440,15 @@ export async function transitionSequence(
      transition it never saw. */
   const [row] = await db
     .update(ectdSequences)
-    .set({ status: toStatus, updatedAt: new Date(), ...(frozenAt ? { frozenAt } : {}) })
+    .set({
+      status: toStatus,
+      updatedAt: new Date(),
+      ...(frozenAt ? { frozenAt } : {}),
+      // The recorded verdict travels with the status: 'passed' when the
+      // validation above cleared it, and cleared again when the sequence
+      // leaves Validated for an earlier stage.
+      ...(validation ? { validationStatus: 'passed' } : seq.status === 'validated' ? { validationStatus: null } : {}),
+    })
     .where(
       and(
         eq(ectdSequences.id, id),
@@ -456,9 +474,55 @@ export async function transitionSequence(
     action: toStatus === 'frozen' ? 'SEQUENCE_FROZEN' : 'SEQUENCE_TRANSITIONED',
     resourceType: 'ectd_sequence',
     resourceId: id,
-    details: { from: seq.status, to: toStatus },
+    details: { from: seq.status, to: toStatus, ...(validation ? { validation } : {}) },
   });
   return { ...(row as EctdSequence), auditTrail };
+}
+
+/**
+ * Run the sequence's deterministic validation — the dispatch-readiness checks
+ * over its canonical leaves, the same findings the Validation tab shows — and
+ * refuse Validated while any of them is an error. Returns the counts recorded
+ * with the transition.
+ *
+ * QA 2026-10-08 (j6, finding 2): Validated was a free label. A sequence moved
+ * to it with no validation run and validation_status NULL, while the Dispatch
+ * tab told the user a sequence must be Validated before it can be frozen.
+ *
+ * The leaf manifest is read before and after the checks: a leaf written while
+ * they ran is content they did not judge, so the move is refused rather than
+ * recorded as validated. (A leaf written after the move reverts it — see
+ * lockSequenceForLeafWrite.) Warnings do not block: they are the region's
+ * informative findings, as they are for dispatch. Freeze and dispatch keep
+ * their own gates; this one decides only what Validated may claim.
+ */
+async function validateForValidatedStatus(
+  seq: EctdSequence,
+  ctx: { organizationId: number },
+): Promise<{ errors: number; warnings: number; leafCount: number }> {
+  const before = await sequenceLeafManifestDigest(asQueryable(pool), seq.id, ctx.organizationId);
+  const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
+  const a = await assessSequenceDispatchReadiness({ sequenceId: seq.id, organizationId: ctx.organizationId });
+  const errors = a.readiness.findings.filter((f) => f.severity === 'error');
+  if (errors.length > 0) {
+    const shown = errors
+      .slice(0, 5)
+      .map((f) => (f.sectionCode ? `${f.sectionCode}: ${f.message}` : f.message))
+      .join(' ');
+    throw new SubmissionError(
+      'VALIDATION_FAILED',
+      `Sequence ${seq.sequenceNumber} was not marked Validated: its validation found ${errors.length} ` +
+        `${errors.length === 1 ? 'error' : 'errors'}. ${shown}${errors.length > 5 ? ` (and ${errors.length - 5} more in the Validation tab)` : ''}`,
+    );
+  }
+  const after = await sequenceLeafManifestDigest(asQueryable(pool), seq.id, ctx.organizationId);
+  if (before !== after) {
+    throw new SubmissionError(
+      'INVALID_STATE',
+      `Sequence ${seq.sequenceNumber}'s leaves changed while it was being validated, so it was not marked Validated. Validate it again.`,
+    );
+  }
+  return { errors: 0, warnings: a.readiness.warnings, leafCount: a.leafCount };
 }
 
 // ── Governed freeze / dispatch (the SUBMIT step of assemble→submit→transmit) ──
@@ -945,6 +1009,110 @@ async function assertSequencePackageable(
   return assembledAgainst;
 }
 
+/**
+ * Gates 2 and 3 of a governed freeze or dispatch: everything but the
+ * signature. Throws DISPATCH_BLOCKED with the refusal; returns the assessment
+ * and the leaf-manifest digest the package gate assembled against.
+ *
+ * Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof),
+ * composed for the step (`verdictFor` picks which verdict). Freeze takes every
+ * gate except the REQUIREMENT for a §11.70 release signature: that control is
+ * the transmit re-check, a release signature comes from a signed package
+ * orchestrator run, and requiring one to freeze inverted the order the product
+ * works in — freeze, then build and sign the release. A tampered signature
+ * still blocks a freeze, and dispatch is unchanged. See assess-dispatch-
+ * readiness → composeDispatchGatesForStep.
+ *
+ * Gate 3 — the package this sequence would transmit (2026-09-23, W5/D7).
+ * Transmit refuses a package that leaves out a placed leaf, carries an
+ * unapproved document, or cannot materialize a source (assembledTransmit-
+ * Blockers). Readiness does not assemble, so those refusals used to surface
+ * only at transmit — after freeze had made the leaves immutable and dispatch
+ * had removed every way back: a signed sequence that could never be sent.
+ * The same assembly and the same rule run here, while the author can still act.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic): the filing-order rule runs FIRST, so a
+ * sequence waiting on a lower one is told to wait rather than told its leaves
+ * cannot be packaged — the lifecycle binding it would fail on is judged
+ * against an inventory that is about to change.
+ *
+ * Extracted 2026-10-08 (QA j6, finding 1) so precheckGovernedStep asks these
+ * exact gates BEFORE a signature is taken: the client signed first and asked
+ * the gate second, so a refused freeze left an executed approval signature.
+ */
+async function governedContentGates(
+  seq: EctdSequence,
+  ctx: { organizationId: number; userId: number },
+  step: 'freeze' | 'dispatch',
+  verdictFor: (a: DispatchReadinessAssessment) => { cleared: boolean; blockers: string[] },
+): Promise<{ assessment: DispatchReadinessAssessment; assembledAgainst: string | null }> {
+  const toStatus = step === 'freeze' ? 'frozen' : 'dispatched';
+  const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
+  const assessment = await assessSequenceDispatchReadiness({ sequenceId: seq.id, organizationId: ctx.organizationId });
+  const stepGate = verdictFor(assessment);
+  if (!stepGate.cleared) {
+    throw new SubmissionError(
+      'DISPATCH_BLOCKED',
+      `Dispatch gate blocks ${toStatus}: ${stepGate.blockers.join(' ')}`
+    );
+  }
+  const orderRefusal = await filingOrderRefusal(asQueryable(pool), seq, ctx.organizationId, step);
+  if (orderRefusal) throw new SubmissionError('DISPATCH_BLOCKED', orderRefusal);
+  const assembledAgainst = await assertSequencePackageable(seq.id, ctx, step);
+  return { assessment, assembledAgainst };
+}
+
+/** What a precheck of a governed step answers. `cleared: false` carries the
+ *  server's refusal, in the words the step itself would refuse with. */
+export interface GovernedStepPrecheck {
+  step: GovernedSequenceStep;
+  cleared: boolean;
+  refusal: string | null;
+  /** Transmit only: where it would go and whether that gateway can send. */
+  transmit?: SequenceTransmitReadiness;
+}
+
+/**
+ * Would this governed step be refused for a reason other than its signature?
+ * Runs the step's own gates — for freeze and dispatch, governedContentGates
+ * (the dispatch verdict as it will stand once the dispatch signature is
+ * recorded, since that signature is the one about to be taken); for transmit,
+ * sequenceTransmitReadiness — and changes nothing a governed step depends on.
+ * The package gate's assembly writes its own ECTD_ASSEMBLED audit row, as it
+ * does at freeze.
+ *
+ * QA 2026-10-08 (j6, finding 1): the Sequences row opened the e-signature with
+ * no gate shown, the client posted the signature, and only then did the freeze
+ * refuse — an executed approval signature for a freeze that did not happen.
+ * The client now asks here first and signs only on `cleared`. The step still
+ * runs every gate again itself; this is advice, never authority.
+ */
+export async function precheckGovernedStep(
+  id: number,
+  step: GovernedSequenceStep,
+  ctx: { organizationId: number; userId: number },
+  opts: { environment?: 'staging' | 'production' } = {},
+): Promise<GovernedStepPrecheck> {
+  if (step === 'transmit') {
+    const transmit = await sequenceTransmitReadiness(id, ctx, opts.environment);
+    return { step, cleared: transmit.refusal === null, refusal: transmit.refusal, transmit };
+  }
+  const seq = await getSequence(id, ctx);
+  const toStatus = step === 'freeze' ? 'frozen' : 'dispatched';
+  if (!canTransitionSequence(seq.status, toStatus)) {
+    return { step, cleared: false, refusal: `Cannot transition sequence from ${seq.status} to ${toStatus}.` };
+  }
+  try {
+    await governedContentGates(seq, ctx, step, (a) => (step === 'freeze' ? a.freezeGate : a.dispatchGateOnSigning));
+    return { step, cleared: true, refusal: null };
+  } catch (err) {
+    if (err instanceof SubmissionError && err.code === 'DISPATCH_BLOCKED') {
+      return { step, cleared: false, refusal: err.message };
+    }
+    throw err;
+  }
+}
+
 async function applyGovernedSequenceTransition(
   id: number,
   toStatus: 'frozen' | 'dispatched',
@@ -968,38 +1136,14 @@ async function applyGovernedSequenceTransition(
     );
   }
 
-  // Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof),
-  // composed for THIS step. Freeze takes every gate except the REQUIREMENT for a
-  // §11.70 release signature: that control is the transmit re-check, a release
-  // signature comes from a signed package orchestrator run, and requiring one to
-  // freeze inverted the order the product works in — freeze, then build and sign
-  // the release. A tampered signature still blocks a freeze, and dispatch is
-  // unchanged. See assess-dispatch-readiness → composeDispatchGatesForStep.
-  const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
-  const assessment = await assessSequenceDispatchReadiness({ sequenceId: id, organizationId: ctx.organizationId });
-  const stepGate = toStatus === 'frozen' ? assessment.freezeGate : assessment.gate;
-  if (!stepGate.cleared) {
-    throw new SubmissionError(
-      'DISPATCH_BLOCKED',
-      `Dispatch gate blocks ${toStatus}: ${stepGate.blockers.join(' ')}`
-    );
-  }
-
-  // Gate 3 — the package this sequence would transmit (2026-09-23, W5/D7).
-  // Transmit refuses a package that leaves out a placed leaf, carries an
-  // unapproved document, or cannot materialize a source (assembledTransmit-
-  // Blockers). Readiness does not assemble, so those refusals used to surface
-  // only at transmit — after freeze had made the leaves immutable and dispatch
-  // had removed every way back: a signed sequence that could never be sent.
-  // The same assembly and the same rule run here, while the author can still act.
-  //
-  // 2026-09-23 (W5/D7, round-2 skeptic): the filing-order rule runs FIRST, so a
-  // sequence waiting on a lower one is told to wait rather than told its leaves
-  // cannot be packaged — the lifecycle binding it would fail on is judged
-  // against an inventory that is about to change.
-  const orderRefusal = await filingOrderRefusal(asQueryable(pool), seq, ctx.organizationId, step);
-  if (orderRefusal) throw new SubmissionError('DISPATCH_BLOCKED', orderRefusal);
-  const assembledAgainst = await assertSequencePackageable(id, ctx, step);
+  // Gates 2 and 3 — see governedContentGates. Freeze reads the freeze verdict;
+  // dispatch reads `gate`, with the dispatch signature above now on record.
+  const { assessment, assembledAgainst } = await governedContentGates(
+    seq,
+    ctx,
+    step === 'freeze' ? 'freeze' : 'dispatch',
+    (a) => (toStatus === 'frozen' ? a.freezeGate : a.gate),
+  );
 
   // The state change and its chained audit row commit together, or neither.
   // 'dispatched' queues the sequence for transmit (dispatch_status pending);
@@ -1323,6 +1467,103 @@ async function releaseTransmitSlot(sequenceId: number, organizationId: number): 
       WHERE id = $1 AND organization_id = $2 AND dispatch_status = $3`,
     [sequenceId, organizationId, TRANSMITTING_STATUS],
   );
+}
+
+/** Whether, and where, a sequence can be transmitted — read before anyone signs. */
+export interface SequenceTransmitReadiness {
+  sequenceStatus: string;
+  dispatchStatus: string | null;
+  /** The gateway transmitRouteFor names, or why it names none. */
+  route: { ok: true; region: string; gateway: string } | { ok: false; reason: string };
+  /** Credentials per environment: null when the route names no gateway or the
+   *  check could not run (unknown is not "configured"). */
+  configured: { staging: boolean | null; production: boolean | null };
+  /** The program's recorded agency application number, when one is usable. */
+  recordedApplicationNumber: string | null;
+  /** The transmit-time dispatch gate (`gate`, every gate composed). */
+  gate: { cleared: boolean; blockers: string[] };
+  /** Why transmit would be refused before the wire — for `environment` when
+   *  one is given, else for every environment — or null when it would not. */
+  refusal: string | null;
+}
+
+/**
+ * The pre-signature half of transmitSequence, as a read: status, re-send rule,
+ * the dispatch gate, the route, and the gateway's credentials. Same functions,
+ * same order, minus Gate 1 (the signature that has not been taken yet).
+ *
+ * QA 2026-10-08 (j6, the blocker): a dispatched sequence had no path to a
+ * package or a transmit, and the copy promised "the governed transmit path"
+ * without naming it. The Dispatch tab reads this to say where the sequence
+ * would go and whether that gateway can send — "not configured" is said
+ * before a password is typed, never discovered after.
+ */
+export async function sequenceTransmitReadiness(
+  sequenceId: number,
+  ctx: { organizationId: number; userId: number },
+  environment?: 'staging' | 'production',
+): Promise<SequenceTransmitReadiness> {
+  const seq = await getSequence(sequenceId, ctx);
+  const submission = await getSubmission(seq.submissionId, ctx);
+  const routed = transmitRouteFor(seq.region, submission.clientType, submission.applicationType || seq.type);
+  const route: SequenceTransmitReadiness['route'] = routed.ok
+    ? { ok: true, region: routed.gwRegion, gateway: routed.gwName }
+    : { ok: false, reason: routed.reason };
+
+  const configured: SequenceTransmitReadiness['configured'] = { staging: null, production: null };
+  if (routed.ok) {
+    const { getGateway } = await import('../submission-gateways/index');
+    // transmitRouteFor returns valid Region/GatewayName values, as transmitSequence relies on.
+    const gw = getGateway(routed.gwRegion as Parameters<typeof getGateway>[0], routed.gwName as Parameters<typeof getGateway>[1]);
+    for (const env of ['staging', 'production'] as const) {
+      try {
+        configured[env] = await gw.isConfigured(ctx.organizationId, env);
+      } catch {
+        configured[env] = null;
+      }
+    }
+  }
+
+  const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
+  const assessment = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ctx.organizationId });
+  const gate = { cleared: assessment.gate.cleared, blockers: [...assessment.gate.blockers] };
+
+  let recordedApplicationNumber: string | null = null;
+  if (submission.programId) {
+    const [program] = await db
+      .select({ applicationNumber: regulatoryPrograms.applicationNumber })
+      .from(regulatoryPrograms)
+      .where(and(eq(regulatoryPrograms.id, submission.programId), eq(regulatoryPrograms.organizationId, ctx.organizationId)))
+      .limit(1);
+    recordedApplicationNumber = usableIdentifier('applicationNumber', program?.applicationNumber ?? null);
+  }
+
+  const gatewayRefusal = (): string | null => {
+    if (!route.ok) return route.reason;
+    const envs = environment ? [environment] : (['staging', 'production'] as const);
+    const unusable = envs.filter((e) => configured[e] !== true);
+    if (unusable.length < envs.length) return null;
+    const unknown = unusable.some((e) => configured[e] === null);
+    return unknown
+      ? `Whether this sequence's agency gateway is configured for ${envs.join(' or ')} could not be checked, so nothing can be sent until it can.`
+      : `This sequence's agency gateway has no ${envs.join(' or ')} credentials configured for this organization, so nothing can be sent. Nothing was signed or transmitted.`;
+  };
+  const refusal =
+    seq.status !== 'dispatched'
+      ? `Sequence must be dispatched before transmit (current: ${seq.status}).`
+      : resendRefusal(seq.dispatchStatus) ??
+        (!gate.cleared ? `Dispatch gate blocks transmit: ${gate.blockers.join(' ')}` : null) ??
+        gatewayRefusal();
+
+  return {
+    sequenceStatus: seq.status,
+    dispatchStatus: seq.dispatchStatus ?? null,
+    route,
+    configured,
+    recordedApplicationNumber,
+    gate,
+    refusal,
+  };
 }
 
 /**
@@ -1897,6 +2138,8 @@ async function verifyLeafSource(
 export type UpsertedLeaf = SubmissionLeaf & {
   auditTrail: AuditRowOutcome | null;
   unchanged?: true;
+  /** Set when the write returned a Validated sequence to Assembling. */
+  sequenceStatusChanged?: LeafWriteSequenceChange;
 };
 
 /** Create or update a leaf placement. Refuses if the parent sequence is locked. */
@@ -2055,7 +2298,9 @@ async function lockSequenceForLeafWrite<T>(
   sequenceId: number,
   ctx: { organizationId: number },
   write: (tx: LeafWriteTx) => Promise<T>,
-): Promise<T> {
+  /** Whether `write`'s result changed a leaf. A no-op leaves Validated standing. */
+  changed: (result: T) => boolean = () => true,
+): Promise<{ value: T; revertedFromValidated: boolean }> {
   return db.transaction(async (tx) => {
     const locked = await tx.execute(sql`
       SELECT status FROM ectd_sequences
@@ -2066,8 +2311,42 @@ async function lockSequenceForLeafWrite<T>(
     if (isSequenceLocked(row.status)) {
       throw new SubmissionError('INVALID_STATE', `Sequence is ${row.status}; its leaves are immutable.`);
     }
-    return write(tx);
+    const value = await write(tx);
+    /* QA 2026-10-08 (j6, finding 3): a leaf placed into a Validated sequence
+       left it Validated, so the status claimed a validation of content that
+       had changed. A leaf change now returns the sequence to Assembling and
+       clears its recorded verdict, in the same transaction and under the same
+       lock as the write, so no reader sees the new leaf beside the old claim. */
+    const revertedFromValidated = row.status === 'validated' && changed(value);
+    if (revertedFromValidated) {
+      await tx.execute(sql`
+        UPDATE ectd_sequences SET status = 'assembling', validation_status = NULL, updated_at = NOW()
+         WHERE id = ${sequenceId} AND organization_id = ${ctx.organizationId} AND status = 'validated'`);
+    }
+    return { value, revertedFromValidated };
   });
+}
+
+/** What a leaf write did to its sequence's status, when it changed it, and
+ *  what became of the §11.10(e) row recording that. */
+export type LeafWriteSequenceChange = { from: 'validated'; to: 'assembling'; auditTrail: AuditRowOutcome };
+
+/** The §11.10(e) row for a sequence a leaf write returned to Assembling. The
+ *  move is committed with the leaf; a lost row is reported, never undone. */
+async function recordRevertedValidation(
+  sequenceId: number,
+  leafId: number,
+  ctx: { organizationId: number; userId: number },
+): Promise<LeafWriteSequenceChange> {
+  const auditTrail = await recordAuditRow({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    action: 'SEQUENCE_TRANSITIONED',
+    resourceType: 'ectd_sequence',
+    resourceId: sequenceId,
+    details: { from: 'validated', to: 'assembling', cause: 'leaf_changed', leafId },
+  });
+  return { from: 'validated', to: 'assembling', auditTrail };
 }
 
 export async function upsertLeaf(
@@ -2206,6 +2485,18 @@ export async function upsertLeaf(
       'This document belongs to another project. A filing can hold only its own project’s documents.',
     );
   }
+  /* P-14 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08): a program's document
+     is placed only into a submission anchored to that program. A submission
+     that records no program is an unknown dossier, so the placement cannot be
+     judged and fails closed; this used to be allowed and only recorded. A
+     document whose store records no program is not judged here. */
+  if (!submissionProgramId && documentProgramId) {
+    throw new SubmissionError(
+      'UNANCHORED_SUBMISSION',
+      'This submission is not anchored to a project, and this document belongs to one. A project’s document is placed ' +
+        'only into a submission anchored to that project, so the submission must be anchored to it first. Nothing was placed.',
+    );
+  }
   /* What the ledger records about the document placed (LX-11): which document,
      the pin it took, and both projects. The row said only the sequence, the
      section and a reason. */
@@ -2256,7 +2547,7 @@ export async function upsertLeaf(
     /* The document the leaf pointed at before this write (PF-11): the ledger
        named only the new one, so a re-point left no record of what it replaced.
        Read in the same locked transaction, by the UPDATE's own WHERE. */
-    const { previous, rows: updated } = await lockSequenceForLeafWrite(input.sequenceId, ctx, async (tx) => {
+    const { value: { previous, rows: updated }, revertedFromValidated } = await lockSequenceForLeafWrite(input.sequenceId, ctx, async (tx) => {
       const [prev] = await tx
         .select({
           documentTable: submissionLeaves.documentTable,
@@ -2291,7 +2582,7 @@ export async function upsertLeaf(
       .where(leafWhere)
       .returning();
       return { previous: prev ?? null, rows };
-    });
+    }, (r) => r.rows.length > 0);
     const [row] = updated;
     if (!row) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
     const previousDocument = previous
@@ -2328,7 +2619,10 @@ export async function upsertLeaf(
         ...(input.reason ? { reason: input.reason } : {}),
       },
     });
-    return { ...(row as SubmissionLeaf), auditTrail };
+    const sequenceStatusChanged = revertedFromValidated
+      ? await recordRevertedValidation(input.sequenceId, input.leafId, ctx)
+      : undefined;
+    return { ...(row as SubmissionLeaf), auditTrail, ...(sequenceStatusChanged ? { sequenceStatusChanged } : {}) };
   }
 
   /* One live leaf per document per section, in one sequence (QA j3 finding (a),
@@ -2340,7 +2634,7 @@ export async function upsertLeaf(
      A DIFFERENT document may still share a section: several New leaves in one
      section is a readiness INFO (dispatch-readiness DUPLICATE_NEW_SECTION, "without
      erroring"), not a refusal, so it is not judged here. */
-  const placed = await lockSequenceForLeafWrite(input.sequenceId, ctx, async (tx) => {
+  const { value: placed, revertedFromValidated } = await lockSequenceForLeafWrite(input.sequenceId, ctx, async (tx) => {
     const live = await sameDocumentLeafInSection(tx, input, ctx.organizationId);
     if (live) return { kind: 'live' as const, live };
     const [inserted] = await tx
@@ -2364,7 +2658,7 @@ export async function upsertLeaf(
       })
       .returning();
     return { kind: 'inserted' as const, inserted };
-  });
+  }, (r) => r.kind === 'inserted');
   if (placed.kind === 'live') return alreadyPlaced(placed.live, input);
   const row = placed.inserted;
   // Part 11 §11.10(e), on the same terms as the update branch: the INSERT above
@@ -2382,7 +2676,10 @@ export async function upsertLeaf(
       ...(input.reason ? { reason: input.reason } : {}),
     },
   });
-  return { ...(row as SubmissionLeaf), auditTrail };
+  const sequenceStatusChanged = revertedFromValidated
+    ? await recordRevertedValidation(input.sequenceId, row.id, ctx)
+    : undefined;
+  return { ...(row as SubmissionLeaf), auditTrail, ...(sequenceStatusChanged ? { sequenceStatusChanged } : {}) };
 }
 
 /**
@@ -2433,12 +2730,20 @@ function alreadyPlaced(live: SubmissionLeaf, input: UpsertLeafInput): UpsertedLe
  * empty body today and therefore does not yet forward this; carrying it into the
  * response is a change to that route, not to this service.
  */
-export type RemovedLeaf = { leafId: number; auditTrail: AuditRowOutcome };
+export type RemovedLeaf = {
+  leafId: number;
+  auditTrail: AuditRowOutcome;
+  /** Set when the removal returned a Validated sequence to Assembling. */
+  sequenceStatusChanged?: LeafWriteSequenceChange;
+};
 
 export async function removeLeaf(
   leafId: number,
   sequenceId: number,
-  ctx: { organizationId: number; userId: number }
+  ctx: { organizationId: number; userId: number },
+  /** Why the leaf is removed, recorded on the LEAF_REMOVED row exactly as
+   *  given (the human door requires it, as it does for a placement). */
+  reason?: string | null,
 ): Promise<RemovedLeaf> {
   const seq = await getSequence(sequenceId, ctx);
   if (isSequenceLocked(seq.status)) {
@@ -2464,7 +2769,7 @@ export async function removeLeaf(
   }
 
   // Under the sequence row lock (2026-09-23, W5/D7, round-2 skeptic).
-  const [row] = await lockSequenceForLeafWrite(sequenceId, ctx, (tx) => tx
+  const { value: [row], revertedFromValidated } = await lockSequenceForLeafWrite(sequenceId, ctx, (tx) => tx
     .update(submissionLeaves)
     .set({ deletedAt: new Date(), updatedAt: new Date() })
     .where(
@@ -2475,7 +2780,7 @@ export async function removeLeaf(
         isNull(submissionLeaves.deletedAt)
       )
     )
-    .returning());
+    .returning(), (rows) => rows.length > 0);
   if (!row) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
 
   // Part 11 §11.10(e). The soft delete above is committed and is not reinstated
@@ -2488,9 +2793,10 @@ export async function removeLeaf(
     action: 'LEAF_REMOVED',
     resourceType: 'submission_leaf',
     resourceId: leafId,
-    details: { sequenceId, sectionCode: row.sectionCode },
+    details: { sequenceId, sectionCode: row.sectionCode, ...(reason ? { reason } : {}) },
   });
-  return { leafId, auditTrail };
+  const sequenceStatusChanged = revertedFromValidated ? await recordRevertedValidation(sequenceId, leafId, ctx) : undefined;
+  return { leafId, auditTrail, ...(sequenceStatusChanged ? { sequenceStatusChanged } : {}) };
 }
 
 export default {

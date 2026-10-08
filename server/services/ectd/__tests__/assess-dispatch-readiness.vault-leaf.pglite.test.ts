@@ -24,6 +24,13 @@
  * The release-signature resolver is stubbed (its store is not in this harness
  * and it has its own journey); every other gate input is read from the
  * database by the assessor itself.
+ *
+ * 2026-10-08 (QA j6): readiness now applies FD5 itself — a Vault version is
+ * transmittable only when its lifecycle record is approved for these bytes
+ * (vaultVersionNotTransmittable) — so the "resolves" cases seed that record,
+ * and a version with none is DOCUMENT_NOT_APPROVED beside its section. The
+ * assembly after the e-signature applied the same rule; this is that refusal
+ * read before anyone signs.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createHash } from 'crypto';
@@ -52,14 +59,22 @@ const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 let seqCounter = 0;
 const nextUuid = () => `6666${(++seqCounter).toString().padStart(4, '0')}-6666-4666-8666-666666666666`;
 
-async function seedVaultDoc(): Promise<{ uuid: string; hash: string }> {
+async function seedVaultDoc(opts: { approved?: boolean } = {}): Promise<{ uuid: string; hash: string }> {
   const uuid = nextUuid();
   const hash = sha(`bytes-${uuid}`);
   await harness.pglite.query(
-    `INSERT INTO vault.documents (id, program_id, storage_version_id, content_hash, file_name)
-     VALUES ($1::uuid, $2::uuid, $3, $4, 'doc.pdf')`,
-    [uuid, PROGRAM, `ver-${uuid}`, hash],
+    `INSERT INTO vault.documents (id, program_id, organization_id, document_code, storage_version_id, content_hash, file_name)
+     VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, 'doc.pdf')`,
+    [uuid, PROGRAM, ORG, `code-${uuid.slice(0, 8)}`, `ver-${uuid}`, hash],
   );
+  // FD5: approved on its lifecycle record, for exactly these bytes.
+  if (opts.approved !== false) {
+    await harness.pglite.query(
+      `INSERT INTO canonical_documents (canonical_id, organization_id, project_id, title, document_type, stage, has_content, content_hash, source_refs)
+       VALUES ($1, $2, $3, 'doc.pdf', 'OTHER', 'approved', true, $4, jsonb_build_object('vault_documents', jsonb_build_object('nativeId', $5::text, 'role', 'artifact')))`,
+      [`cd-${uuid}`, ORG, PROGRAM, hash, uuid],
+    );
+  }
   return { uuid, hash };
 }
 
@@ -100,8 +115,11 @@ beforeAll(async () => {
   await harness.pglite.exec(`
     CREATE SCHEMA IF NOT EXISTS vault;
     CREATE TABLE IF NOT EXISTS regulatory_programs (id UUID PRIMARY KEY, organization_id INTEGER, deleted_at TIMESTAMPTZ);
+    -- supersedes_id / organization_id / document_code: the family columns the
+    -- transmit rule reads to decide whether a version is current.
     CREATE TABLE IF NOT EXISTS vault.documents (
-      id UUID PRIMARY KEY, program_id UUID NOT NULL, storage_version_id TEXT, content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ
+      id UUID PRIMARY KEY, program_id UUID NOT NULL, organization_id INTEGER, document_code TEXT, supersedes_id UUID,
+      storage_version_id TEXT, content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ
     );
     -- The Shadow Review store the assessor reads (shared/schema/shadow-review.ts).
     CREATE TABLE IF NOT EXISTS shadow_review_runs (
@@ -174,5 +192,27 @@ describe('assessSequenceDispatchReadiness — vault-backed leaves resolve', () =
       expect(gate.cleared).toBe(false);
       expect(gate.blockers.join(' ')).toMatch(/Shadow Review/);
     }
+  });
+
+  /* QA 2026-10-08 (j6, finding 1): three Vault leaves "Not sent for review" were
+     absent from the Dispatch blockers; the refusal that named them ran only in
+     the assembly after the freeze e-signature, with the file name in the
+     section slot. */
+  it('a Vault version with no approved lifecycle record is DOCUMENT_NOT_APPROVED beside its section, and blocks the freeze gate', async () => {
+    const sequenceId = await seedSequence();
+    const approved = await seedVaultDoc();
+    const unreviewed = await seedVaultDoc({ approved: false });
+    await seedLeaf(sequenceId, { sectionCode: '3.2.P.8', title: 'Stability Protocol', documentTable: 'vault_documents', documentUuid: approved.uuid, pin: approved.hash });
+    await seedLeaf(sequenceId, { sectionCode: '3.2.S.4.1', title: 'DS Specification', documentTable: 'vault_documents', documentUuid: unreviewed.uuid, pin: unreviewed.hash });
+
+    const a = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG });
+    const notApproved = a.readiness.findings.filter((f) => f.code === 'DOCUMENT_NOT_APPROVED');
+    expect(notApproved).toHaveLength(1);
+    expect(notApproved[0].sectionCode).toBe('3.2.S.4.1');
+    expect(notApproved[0].severity).toBe('error');
+    expect(notApproved[0].message).toContain('not reviewed');
+    expect(a.validationErrors).toBe(1);
+    expect(a.freezeGate.cleared).toBe(false);
+    expect(a.freezeGate.blockers.join(' ')).toMatch(/1 open error-severity validation finding/);
   });
 });

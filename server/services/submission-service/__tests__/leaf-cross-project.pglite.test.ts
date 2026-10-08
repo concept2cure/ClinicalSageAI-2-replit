@@ -9,8 +9,11 @@
  * sequence belongs to (submissions.program_id, LX-22) — they must be the same,
  * or the placement is refused 409 CROSS_PROJECT and nothing is written. When the
  * submission records no project (created before submissions carried one), the
- * placement cannot be judged and is allowed, and the ledger records both sides
- * so it can be judged later.
+ * placement of a project's document is refused 409 UNANCHORED_SUBMISSION and
+ * nothing is written (P-14, docs/LAUNCH_DEFINITION_OF_DONE.md: a document is
+ * placed only into a submission anchored to its program; this case used to be
+ * allowed and recorded). The submission is anchored first, in the Submission
+ * Center.
  *
  * The LEAF_CREATED / LEAF_UPDATED ledger rows used to carry the sequence, the
  * section and a reason — not the document placed or the pin it took. They now
@@ -241,8 +244,18 @@ describe('upsertLeaf keeps a filing inside its project', () => {
     });
   });
 
-  it('allows a placement it cannot judge (the submission records no project), and records both sides', async () => {
-    await vaultLeaf(SEQ_L, V_B);
-    expect(lastLedgerDetails()).toMatchObject({ documentUuid: V_B, programId: null, documentProgramId: P_B });
+  /* P-14 (founder decision, 2026-10-08): this case was "allows a placement it
+     cannot judge … and records both sides". A placement into a submission that
+     belongs to no program is a placement into an unknown dossier, so a
+     program's document is refused there, by name, and nothing is written. */
+  it('refuses a project document placed into a submission that records no project (P-14), and writes nothing', async () => {
+    const before = await leafCount(SEQ_L);
+    logAction.mockClear();
+    const err = await vaultLeaf(SEQ_L, V_B).catch((e) => e);
+    expect(err).toBeInstanceOf(SubmissionError);
+    expect(err.code).toBe('UNANCHORED_SUBMISSION');
+    expect(err.message).toMatch(/anchored/i);
+    expect(await leafCount(SEQ_L)).toBe(before);
+    expect(logAction).not.toHaveBeenCalled();
   });
 });

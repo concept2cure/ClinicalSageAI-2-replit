@@ -980,6 +980,14 @@ router.delete('/sequences/:seqId/leaves/:leafId', limiter, requireRole(AUTHOR), 
   if (seqId === null || leafId === null) {
     return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence or leaf id.' } });
   }
+  /* A removal decides what content leaves a regulator-facing sequence, the
+     inverse of a placement, so it takes the reason a placement takes (PX-1) and
+     records it on the LEAF_REMOVED row. QA 2026-10-08 (j6): the Builder had no
+     remove control at all; the one it has now sends the reason. */
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) {
+    return res.status(400).json({ error: { code: 'REASON_REQUIRED', message: reason.error }, field: 'reason' });
+  }
   try {
     /* WO-16C #133. `removeLeaf` now reports what became of its §11.10(e) row,
        and this route answered 204 No Content — which has no body to put it in, so
@@ -993,8 +1001,13 @@ router.delete('/sequences/:seqId/leaves/:leafId', limiter, requireRole(AUTHOR), 
        reporting's sake. Same reason and same shape as the predicate-intelligence
        proxy, which forwards an upstream body verbatim and therefore also reports
        through headers. */
-    const removal = await removeLeaf(leafId, seqId, ctx);
+    const removal = await removeLeaf(leafId, seqId, ctx, reason.reason);
     setAuditRowHeaders(res, removal.auditTrail);
+    // A removal from a Validated sequence returned it to Assembling; the 204
+    // has no body, so the change rides on a header like the audit outcome.
+    if (removal.sequenceStatusChanged) {
+      res.setHeader('X-Sequence-Status-Changed', `${removal.sequenceStatusChanged.from}->${removal.sequenceStatusChanged.to}`);
+    }
     res.status(204).end();
   } catch (err) {
     fail(res, err);
@@ -1714,6 +1727,31 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
 // the e-signature AND the deterministic dispatch gate — so a sequence cannot be
 // frozen or dispatched while the gate blocks. Neither transmits.
 const governedTransitionSchema = z.object({ signatureActionId: z.string().min(1).max(128) });
+
+// ── Governed precheck (ask the step's gates BEFORE a signature is taken) ─────
+// QA 2026-10-08 (j6): the client signed first and asked the gate second, so a
+// refused freeze left an executed approval signature. This runs the step's own
+// gates without a signature (precheckGovernedStep) and answers 200 with
+// { cleared, refusal } either way — a refusal here is the answer, not an error.
+// It authorizes nothing: the step re-runs every gate itself.
+const governedPrecheckSchema = z.object({
+  step: z.enum(['freeze', 'dispatch', 'transmit']),
+  environment: z.enum(['staging', 'production']).optional(),
+});
+router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = governedPrecheckSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { precheckGovernedStep } = await import('../services/submission-service/submission-service');
+    res.json(await precheckGovernedStep(seqId, parsed.data.step, ctx, { environment: parsed.data.environment }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
 
 router.post('/sequences/:seqId/freeze', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);

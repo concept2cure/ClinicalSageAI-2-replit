@@ -35,6 +35,8 @@ import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyStat
 import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { PlacementReasonField, placementReasonOk } from './filingTarget';
+import { downloadBlob } from '../download';
+import { gatewayLabel } from '../gatewayLabels';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -88,6 +90,10 @@ export function Chip({ map, k }: { map: Record<string, ToneMap>; k: string }) {
 const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
 const lensL = (v: string) => SC_LENSES.find((l) => l.v === v)?.l ?? v;
 
+/** A server sentence used as a clause: its closing period dropped, so the
+ *  sentence it is spliced into does not end in "..". */
+export const clause = (s: string): string => s.replace(/[.\s]+$/, '');
+
 /* ── mutateVerbatim — awaited mutation, server verdict verbatim ──────────────
  *
  * `liveMutateOrNull` reports a non-OK response as `HTTP <status> <path>`, which
@@ -111,6 +117,8 @@ export interface MutateResult<T> {
   unconfirmed?: boolean;
   status?: number;
   code?: string;
+  /** The response headers of a confirmed answer (a 204 carries its news there). */
+  headers?: Headers;
 }
 
 /**
@@ -129,7 +137,7 @@ function messageFromBody(p: unknown, status: number): string {
 }
 
 export async function mutateVerbatim<T>(
-  method: 'POST' | 'PUT',
+  method: 'POST' | 'PUT' | 'DELETE',
   path: string,
   body?: unknown,
 ): Promise<MutateResult<T>> {
@@ -140,8 +148,7 @@ export async function mutateVerbatim<T>(
       const code = mutationCode(p);
       return { data: null, error: messageFromBody(p, res.status), status: res.status, code, unconfirmed: mutationUnconfirmed(res.status, code) };
     }
-    const data = (await res.json().catch(() => null)) as T | null;
-    return { data, status: res.status, unconfirmed: data == null };
+    return confirmedResult<T>(res);
   } catch (e) {
     const payload = (e as { payload?: unknown } | null)?.payload;
     const detail = (payload as { detail?: unknown } | null)?.detail;
@@ -165,6 +172,17 @@ export async function mutateVerbatim<T>(
       unconfirmed, status, code,
     };
   }
+}
+
+/**
+ * An OK answer. 204 No Content is confirmed with nothing to read — the write
+ * happened (a leaf removal answers so). Every other OK answer is confirmed only
+ * by its body.
+ */
+async function confirmedResult<T>(res: Response): Promise<MutateResult<T>> {
+  if (res.status === 204) return { data: null, status: 204, headers: res.headers };
+  const data = (await res.json().catch(() => null)) as T | null;
+  return { data, status: res.status, unconfirmed: data == null, headers: res.headers };
 }
 
 /** Only a definite refusal can justify saying that a write did not occur. */
@@ -266,6 +284,12 @@ interface LeafSourceResolution {
   storedSha256: string | null;
   pin: 'match' | 'mismatch' | 'unpinned' | 'unverifiable';
   reason: string | null;
+  /** Why the document may not be transmitted ('not reviewed', 'draft', …), from
+   *  the rule freeze and transmit apply; null when approved; absent for a store
+   *  with no approval state or a server that predates it. */
+  notTransmittable?: string | null;
+  /** The document has no content to build a leaf from. */
+  noContent?: boolean;
 }
 
 /* The Builder's "Source document" cell. "unlinked" is reserved for a leaf that
@@ -283,6 +307,27 @@ const SOURCE_VERDICT: Record<LeafSourceResolution['status'], { chip: string; ton
   missing: { chip: 'not found in this organization', tone: 'tone-err' },
   content_changed: { chip: 'content changed since filing', tone: 'tone-warn' },
 };
+/** The chip for a resolved source: the store's status first, then empty
+ *  content, then approval, then the pin. Approval is never inferred from a pin. */
+function sourceVerdict(r: LeafSourceResolution): { chip: string; tone: string; title?: string } | null {
+  const byStatus = SOURCE_VERDICT[r.status];
+  if (byStatus) return { ...byStatus, title: r.reason ?? undefined };
+  if (r.noContent) return { chip: 'no content', tone: 'tone-err', title: r.reason ?? undefined };
+  if (r.notTransmittable) {
+    return {
+      chip: `not approved: ${r.notTransmittable}`,
+      tone: 'tone-warn',
+      title: 'Only approved documents are transmitted. Freeze, dispatch and transmit refuse this leaf until the document is approved.',
+    };
+  }
+  return pinVerdict(r);
+}
+function pinVerdict(r: LeafSourceResolution): { chip: string; tone: string; title?: string } | null {
+  if (r.pin === 'match') return { chip: 'source verified', tone: 'tone-ok', title: r.reason ?? undefined };
+  if (r.pin === 'unpinned') return { chip: 'no content pin', tone: 'tone-idle', title: r.reason ?? undefined };
+  return null;
+}
+
 function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
   const key = leaf.documentUuid ?? (leaf.documentId != null ? String(leaf.documentId) : null);
   if (!leaf.documentTable || key == null) return <>unlinked</>;
@@ -293,21 +338,19 @@ function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
      A uuid is shown short with the full value on hover. */
   const label = documentSourceLabel(leaf.documentTable, isUuid ? `${key.slice(0, 8)}…` : key);
   const r = leaf.sourceDocument ?? null;
-  const verdict = r
-    ? SOURCE_VERDICT[r.status] ??
-      (r.pin === 'match'
-        ? { chip: 'source verified', tone: 'tone-ok' }
-        : r.pin === 'unpinned'
-          ? { chip: 'no content pin', tone: 'tone-idle' }
-          : null)
-    : null;
+  /* "source verified" said only that the content pin matched. On a Vault
+     version nobody had reviewed it read as approval (QA 2026-10-08, j6): the
+     same version showed "Not sent for review" in the Vault. A document that is
+     empty or not approved now says so first, in the server's words, and the
+     green chip is kept for a pinned, approved source. */
+  const verdict = r ? sourceVerdict(r) : null;
   return (
     <>
       <span className="sc-mono" title={isUuid ? key : undefined}>{label}</span>
       {verdict && (
         <>
           {' '}
-          <span className={`rd-chip ${verdict.tone}`} title={r?.reason ?? undefined}>{verdict.chip}</span>
+          <span className={`rd-chip ${verdict.tone}`} title={verdict.title}>{verdict.chip}</span>
         </>
       )}
     </>
@@ -322,10 +365,75 @@ interface CoauthorDocRow {
   status: string;
 }
 
+/** What a leaf write answers beyond the row: a no-op, or a status it moved. */
+interface LeafWriteAnswer {
+  id: number;
+  sectionCode?: string;
+  unchanged?: true;
+  sequenceStatusChanged?: { from: string; to: string };
+}
+
+/** What a leaf write did, for the Builder to re-read what changed. */
+export interface LeafWriteEffect {
+  /** A leaf was written or removed (the list must be re-read). */
+  changed: boolean;
+  /** The sequence's status moved (the sequence list must be re-read). */
+  sequenceChanged: boolean;
+}
+
+/** The sentence a status the server moved adds to a leaf write's notice. */
+function revertedSentence(seq: SeqRow, change: { from: string; to: string } | undefined): string {
+  if (!change) return '';
+  return ` Sequence ${seq.sequenceNumber} was ${SC_SEQ_STATUS[change.from]?.l ?? change.from}; changing its leaves returned it to ${
+    SC_SEQ_STATUS[change.to]?.l ?? change.to
+  }, so validate it again.`;
+}
+
+/** An original sequence has nothing earlier to act on: the server refuses a
+ *  replace, append or delete there (LIFECYCLE_OP_IN_ORIGINAL), so it is not offered. */
+const isOriginalSequence = (seq: SeqRow) => seq.type === 'original' || seq.sequenceNumber === '0000';
+
+/** What a placement answered, as the notice and the re-reads it calls for. */
+function placementAnswer(seq: SeqRow, title: string, r: MutateResult<LeafWriteAnswer>): { notice: Notice; effect: LeafWriteEffect } {
+  if (!r.data || typeof r.data.id !== 'number') {
+    return { notice: { tone: 'err', text: `The leaf was not placed — ${clause(r.error ?? 'the request failed')}.` }, effect: { changed: false, sequenceChanged: false } };
+  }
+  const at = typeof r.data.sectionCode === 'string' ? r.data.sectionCode : '(section code not returned)';
+  /* QA 2026-10-08 (j6): the same document placed into the same section again
+     came back as the existing leaf, marked `unchanged`, and this read
+     "placed … server-confirmed" — a placement that did not happen. */
+  if (r.data.unchanged) {
+    return {
+      notice: { tone: 'warn', text: `“${title}” is already leaf #${r.data.id} at ${at} in this sequence, with the same operation. Nothing was placed, so nothing was recorded.` },
+      effect: { changed: false, sequenceChanged: false },
+    };
+  }
+  return {
+    notice: { tone: 'ok', text: `Leaf ${at} placed from “${title}” — server-confirmed (leaf #${r.data.id}).${revertedSentence(seq, r.data.sequenceStatusChanged)}` },
+    effect: { changed: true, sequenceChanged: Boolean(r.data.sequenceStatusChanged) },
+  };
+}
+
+/** What the chosen lifecycle operation does, said beside the select.
+ *  QA 2026-10-08 (j6): a Replace was saved with nothing to say what it
+ *  replaces. The operation is bound to a filed leaf by section and document
+ *  when the package is assembled (package-from-core), so the form says that
+ *  rather than implying a target it does not record. */
+function lifecycleOpNote(seq: SeqRow, op: string): string {
+  if (isOriginalSequence(seq)) {
+    return `Sequence ${seq.sequenceNumber} is an original, so every leaf is New: nothing earlier exists to replace, append to or delete.`;
+  }
+  if (op === 'new') return 'New adds this document to the section.';
+  return `${SC_LIFECYCLE_OPS[op]?.l ?? op} acts on the leaf already filed for this same document in this section, in an earlier sequence that was sent. It is bound when the package is assembled; the freeze check refuses one that binds to no filed leaf, before anyone signs.`;
+}
+
 /** Place a Co-Author document into the sequence as a leaf — a REAL persisted
  *  PUT (upsertLeaf), sourced from the real coauthor_documents list. No source
  *  document, no leaf: the picker never invents a document to place. */
-function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => void }) {
+function AddLeafForm({ seq, onDone }: { seq: SeqRow; onDone: (n: Notice, effect: LeafWriteEffect) => void }) {
+  const seqId = seq.id;
+  const original = isOriginalSequence(seq);
+  const opsOffered = Object.entries(SC_LIFECYCLE_OPS).filter(([v]) => !original || v === 'new');
   const [open, setOpen] = React.useState(false);
   const docsPath = open ? '/api/coauthor/documents' : null;
   const docs = useLiveData<{ documents: CoauthorDocRow[] }>(
@@ -340,6 +448,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   const [reason, setReason] = React.useState('');
   const [saving, setSaving] = React.useState(false);
   const doc = docRows.find((d) => d.id === docId) ?? null;
+  const effectiveOp = original ? 'new' : op;
 
   if (!open) {
     return (
@@ -354,25 +463,21 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   const place = async () => {
     if (!doc || !section.trim() || !placementReasonOk(reason) || saving) return;
     setSaving(true);
-    const r = await mutateVerbatim<LeafRow>('PUT', `/api/submissions/sequences/${seqId}/leaves`, {
+    const r = await mutateVerbatim<LeafWriteAnswer>('PUT', `/api/submissions/sequences/${seqId}/leaves`, {
       sectionCode: section.trim(),
       title: doc.title,
-      lifecycleOp: op,
+      lifecycleOp: effectiveOp,
       documentTable: 'coauthor_documents',
       documentId: doc.id,
       reason: reason.trim(),
     });
     setSaving(false);
+    const answer = placementAnswer(seq, doc.title, r);
+    onDone(answer.notice, answer.effect);
     if (r.data && typeof r.data.id === 'number') {
-      onDone({
-        tone: 'ok',
-        text: `Leaf ${typeof r.data.sectionCode === 'string' ? r.data.sectionCode : '(section code not returned)'} placed from “${doc.title}” — server-confirmed (leaf #${r.data.id}).`,
-      });
       setDocId(null);
       setSection('');
       setReason('');
-    } else {
-      onDone({ tone: 'err', text: `The leaf was not placed — ${r.error ?? 'the request failed'}.` });
     }
   };
 
@@ -429,15 +534,19 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
             <select
               id="sc-leaf-op"
               className="sc-subpick"
-              value={op}
+              value={effectiveOp}
               onChange={(e) => setOp(e.target.value)}
+              aria-describedby="sc-leaf-op-note"
             >
-              {Object.entries(SC_LIFECYCLE_OPS).map(([v, m]) => (
+              {opsOffered.map(([v, m]) => (
                 <option key={v} value={v}>
                   {m.l}
                 </option>
               ))}
             </select>
+            <span id="sc-leaf-op-note" className="sp-row-s">
+              {lifecycleOpNote(seq, effectiveOp)}
+            </span>
           </div>
           <PlacementReasonField value={reason} onChange={setReason} idPrefix="sc-leaf" disabled={saving} variant="inline" />
           <button
@@ -457,7 +566,72 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   );
 }
 
-export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
+/**
+ * Remove one leaf — DELETE /sequences/:seqId/leaves/:leafId with the reason the
+ * server records on LEAF_REMOVED. QA 2026-10-08 (j6): the route existed and no
+ * control called it, so a duplicate or misplaced leaf could not be taken out.
+ */
+function RemoveLeafControl({
+  seq,
+  leaf,
+  onDone,
+}: {
+  seq: SeqRow;
+  leaf: LeafRow;
+  onDone: (n: Notice, effect: LeafWriteEffect) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [reason, setReason] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  if (!open) {
+    return (
+      <button type="button" className="sc-trans-b" aria-label={`Remove leaf ${leaf.sectionCode} ${leaf.title}`} onClick={() => setOpen(true)}>
+        Remove
+      </button>
+    );
+  }
+  const remove = async () => {
+    if (!placementReasonOk(reason) || busy) return;
+    setBusy(true);
+    const r = await mutateVerbatim<null>('DELETE', `/api/submissions/sequences/${seq.id}/leaves/${leaf.id}`, { reason: reason.trim() });
+    setBusy(false);
+    if (r.status === 204) {
+      const moved = r.headers?.get('X-Sequence-Status-Changed') ?? null;
+      const [from, to] = moved ? moved.split('->') : [];
+      onDone(
+        {
+          tone: 'ok',
+          text: `Leaf ${leaf.sectionCode} (“${leaf.title}”) removed — server-confirmed.${revertedSentence(seq, from && to ? { from, to } : undefined)}`,
+        },
+        { changed: true, sequenceChanged: Boolean(moved) },
+      );
+      setOpen(false);
+    } else {
+      onDone(
+        {
+          tone: 'err',
+          text: r.unconfirmed
+            ? `We cannot confirm whether leaf ${leaf.sectionCode} was removed. Check the leaves before retrying.`
+            : `Leaf ${leaf.sectionCode} was not removed — ${clause(r.error ?? 'the request failed')}.`,
+        },
+        { changed: Boolean(r.unconfirmed), sequenceChanged: Boolean(r.unconfirmed) },
+      );
+    }
+  };
+  return (
+    <div className="sc-leafform">
+      <PlacementReasonField value={reason} onChange={setReason} idPrefix={`sc-leaf-rm-${leaf.id}`} disabled={busy} variant="inline" />
+      <button type="button" className="sp-primary sc-btn" disabled={!placementReasonOk(reason) || busy} onClick={remove}>
+        {busy ? 'Removing…' : 'Remove leaf'}
+      </button>
+      <button type="button" className="sc-trans-b" onClick={() => setOpen(false)} disabled={busy}>
+        Cancel
+      </button>
+    </div>
+  );
+}
+
+export function BuilderWorkspace({ seq, onSequenceChanged }: { seq: SeqRow; onSequenceChanged?: () => void }) {
   const [bump, setBump] = React.useState(0);
   const leavesPath = `/api/submissions/sequences/${seq.id}/leaves`;
   /* The module header promises a wrong-shaped 200 reaches the error branch;
@@ -466,6 +640,11 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
   const leaves = useLiveRows<LeafRow>(leavesPath, [leavesPath, bump], isRowsWith<LeafRow>('id', 'sectionCode'));
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const locked = seq.status === 'frozen' || seq.status === 'dispatched';
+  const afterWrite = (n: Notice, effect: LeafWriteEffect) => {
+    setNotice(n);
+    if (effect.changed) setBump((b) => b + 1);
+    if (effect.sequenceChanged) onSequenceChanged?.();
+  };
 
   return (
     <div className="pj-card">
@@ -501,6 +680,7 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
                 <th>Operation</th>
                 <th>Granularity</th>
                 <th>Source document</th>
+                {!locked && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -517,6 +697,11 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
                   <td>
                     <LeafSourceCell leaf={l} />
                   </td>
+                  {!locked && (
+                    <td>
+                      <RemoveLeafControl seq={seq} leaf={l} onDone={afterWrite} />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -528,13 +713,7 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
             its leaves are immutable and cannot be added to or changed.
           </div>
         ) : !leaves.loading && !leaves.error ? (
-          <AddLeafForm
-            seqId={seq.id}
-            onDone={(n) => {
-              setNotice(n);
-              if (n.tone === 'ok') setBump((b) => b + 1);
-            }}
-          />
+          <AddLeafForm seq={seq} onDone={afterWrite} />
         ) : null}
       </div>
     </div>
@@ -1218,6 +1397,203 @@ interface DispatchQcResult {
   narrativeUnavailable: { code: string; message: string } | null;
 }
 
+/** The governed steps the parent's e-signature chain runs. */
+export type GovernedKind = 'freeze' | 'dispatch' | 'transmit';
+/** What a transmit needs beyond its signature (POST /sequences/:id/transmit). */
+export interface TransmitRequest {
+  environment: 'staging' | 'production';
+  applicationId: string;
+}
+
+/** POST /sequences/:seqId/governed-precheck {step:'transmit'} → its `transmit`. */
+export interface TransmitReadiness {
+  sequenceStatus: string;
+  dispatchStatus: string | null;
+  route: { ok: true; region: string; gateway: string } | { ok: false; reason: string };
+  configured: { staging: boolean | null; production: boolean | null };
+  recordedApplicationNumber: string | null;
+  gate: { cleared: boolean; blockers: string[] };
+  refusal: string | null;
+}
+/** POST /sequences/:seqId/governed-precheck — the step's gates, asked before signing. */
+export interface GovernedPrecheck {
+  step: GovernedKind;
+  cleared: boolean;
+  refusal: string | null;
+  transmit?: TransmitReadiness;
+}
+
+const credentialWord = (v: boolean | null): string =>
+  v === true ? 'configured' : v === false ? 'not configured' : 'could not be checked';
+
+/** Why a transmit to `env` would be refused, from the server's precheck; null when it would not. */
+function transmitBlockedBy(t: TransmitReadiness, env: 'staging' | 'production'): string | null {
+  if (t.refusal && !/credentials configured|is configured for/.test(t.refusal)) return t.refusal;
+  if (!t.route.ok) return t.route.reason;
+  const gw = gatewayLabel(t.route.gateway);
+  if (t.configured[env] === null) return `Whether ${gw} is configured for ${env} could not be checked, so nothing can be sent until it can.`;
+  if (t.configured[env] !== true) {
+    return `${gw} has no ${env} credentials configured for this organization, so nothing can be sent. An administrator adds them under Gateway accounts.`;
+  }
+  return null;
+}
+
+/**
+ * The package, downloaded: POST /api/ectd/export/:submissionId {sequenceNumber}
+ * — the canonical eCTD export (assemble-from-core, index.xml, structural
+ * validation that fails closed), the route eCTD compile downloads from. QA
+ * 2026-10-08 (j6, the blocker): the Submission Center had no export or download
+ * control, and nothing here called this route.
+ */
+function PackageDownload({ sub, seq }: { sub: SubLike; seq: SeqRow }) {
+  const [pkg, setPkg] = React.useState<{ phase: 'idle' | 'running' | 'done' | 'error'; text?: string }>({ phase: 'idle' });
+  const final = seq.status === 'dispatched' || seq.status === 'frozen';
+  const download = async () => {
+    if (pkg.phase === 'running') return;
+    setPkg({ phase: 'running' });
+    try {
+      const res = await apiRequest('POST', `/api/ectd/export/${sub.id}`, { sequenceNumber: seq.sequenceNumber });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as unknown;
+        setPkg({ phase: 'error', text: serverMessage(body) ?? `The package was not returned (HTTP ${res.status}).` });
+        return;
+      }
+      const blob = await res.blob();
+      const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? `sequence-${seq.sequenceNumber}.zip`;
+      const saved = downloadBlob(name, blob);
+      setPkg(saved
+        ? { phase: 'done', text: `Package ${name} downloaded (${Math.max(1, Math.round(blob.size / 1024))} KB) — assembled from sequence ${seq.sequenceNumber}'s leaves as they stand now, with its index.xml.` }
+        : { phase: 'error', text: 'The package was assembled but this browser did not save it. Try again.' });
+    } catch (e) {
+      setPkg({ phase: 'error', text: redactInternals(e instanceof Error ? e.message : '', 'The package could not be assembled right now.') });
+    }
+  };
+  const label = final ? 'Download the eCTD package (zip)' : 'Download an inspection copy of the package (zip)';
+  return (
+    <>
+      <div className="cm-pushbar sc-mb">
+        <button type="button" className="sc-trans-b" disabled={pkg.phase === 'running'} onClick={download}>
+          {I.layers} {pkg.phase === 'running' ? 'Assembling the package…' : label}
+        </button>
+      </div>
+      {pkg.phase === 'done' && <div className="sc-verdict tone-ok" role="status">{pkg.text}</div>}
+      {pkg.phase === 'error' && <div className="sc-verdict tone-err" role="status">The package was not returned — {clause(pkg.text ?? 'the request failed')}.</div>}
+    </>
+  );
+}
+
+/** Where the transmit would go and with which credentials, as the server answered. */
+function TransmitFacts({ t }: { t: TransmitReadiness }) {
+  const rows: Array<[string, string]> = [
+    ['Gateway', t.route.ok ? `${gatewayLabel(t.route.gateway)} (${t.route.region.toUpperCase()})` : 'none for this filing'],
+    ['Staging credentials', credentialWord(t.configured.staging)],
+    ['Production credentials', credentialWord(t.configured.production)],
+    ['Dispatch status', t.dispatchStatus ?? 'pending'],
+  ];
+  return (
+    <div className="tl-spec-grid sc-spec">
+      {rows.map(([k, v]) => (
+        <div key={k} className="tl-spec-row">
+          <span className="tl-spec-k">{k}</span>
+          <span className="tl-spec-v">{v}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The transmit of a dispatched sequence: POST /sequences/:seqId/transmit, run
+ * by the parent's Part 11 chain. Where it would go and whether that gateway
+ * holds credentials is read first (governed-precheck {step:'transmit'}), so
+ * "not configured" is said here, before a password is typed — never
+ * discovered after (QA 2026-10-08, j6, the blocker).
+ */
+function TransmitPanel({ seq, onTransmit, canSign }: { seq: SeqRow; onTransmit: (req: TransmitRequest) => void; canSign: boolean }) {
+  const [ready, setReady] = React.useState<{ phase: 'loading' | 'done' | 'error'; t?: TransmitReadiness; error?: string }>({ phase: 'loading' });
+  const [environment, setEnvironment] = React.useState<'staging' | 'production'>('staging');
+  const [applicationId, setApplicationId] = React.useState('');
+  React.useEffect(() => {
+    let cancelled = false;
+    void mutateVerbatim<GovernedPrecheck>('POST', `/api/submissions/sequences/${seq.id}/governed-precheck`, { step: 'transmit' }).then((r) => {
+      if (cancelled) return;
+      const t = r.data?.transmit;
+      if (t) {
+        setReady({ phase: 'done', t });
+        setApplicationId((v) => v || t.recordedApplicationNumber || '');
+      } else {
+        setReady({ phase: 'error', error: r.error ?? 'the transmit check did not answer' });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [seq.id]);
+
+  if (ready.phase === 'loading') return <div role="status" className="scaf-note sc-mt">Checking where this sequence would be sent…</div>;
+  const t = ready.t;
+  if (!t) {
+    return (
+      <div className="sc-verdict tone-err sc-mt" role="status">
+        Whether this sequence can be transmitted could not be checked — {clause(ready.error ?? 'no answer')}. Nothing is offered until it can.
+      </div>
+    );
+  }
+  const blockedBy = transmitBlockedBy(t, environment);
+  const appNumber = applicationId.trim();
+  return (
+    <div className="sc-mt">
+      <TransmitFacts t={t} />
+      <div className="sc-leafform sc-mt">
+        <div className="sc-field">
+          <label htmlFor="sc-tx-env">Environment</label>
+          <select id="sc-tx-env" className="sc-subpick" value={environment} onChange={(e) => setEnvironment(e.target.value as 'staging' | 'production')}>
+            <option value="staging">Staging (agency test)</option>
+            <option value="production">Production</option>
+          </select>
+        </div>
+        <div className="sc-field">
+          <label htmlFor="sc-tx-app">Agency application number</label>
+          <input id="sc-tx-app" className="sc-subpick" type="text" value={applicationId} placeholder="e.g. 000512" onChange={(e) => setApplicationId(e.target.value)} />
+        </div>
+        <button
+          type="button"
+          className="sp-primary sc-btn"
+          disabled={blockedBy !== null || !appNumber || !canSign}
+          onClick={() => onTransmit({ environment, applicationId: appNumber })}
+        >
+          {I.rocket} Transmit sequence {seq.sequenceNumber} (Part 11 e-signature)
+        </button>
+      </div>
+      {blockedBy ? (
+        <div className="sc-verdict tone-warn sc-mt" role="status">Transmit is not available: {clause(blockedBy)}.</div>
+      ) : !appNumber ? (
+        <div className="scaf-note sc-mt">
+          No agency application number is recorded for this program. Enter the number the agency assigned; a package is never sent without one.
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** The package and the transmit, for this sequence (QA 2026-10-08, j6, the blocker). */
+function PackageAndTransmit({ sub, seq, onTransmit, canSign }: { sub: SubLike; seq: SeqRow; onTransmit: (req: TransmitRequest) => void; canSign: boolean }) {
+  return (
+    <div className="sc-mt">
+      <div className="tl-spec-k sc-mb">Package and transmit</div>
+      <PackageDownload sub={sub} seq={seq} />
+      {seq.status === 'dispatched' ? (
+        <TransmitPanel seq={seq} onTransmit={onTransmit} canSign={canSign} />
+      ) : (
+        <div className="scaf-note sc-mt">
+          Transmit opens once sequence {seq.sequenceNumber} is dispatched. It sends this package to the region&#39;s agency gateway,
+          under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function DispatchWorkspace({
   sub,
   seq,
@@ -1225,7 +1601,7 @@ export function DispatchWorkspace({
 }: {
   sub: SubLike;
   seq: SeqRow;
-  onGoverned: (seq: SeqRow, kind: 'freeze' | 'dispatch') => void;
+  onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest) => void;
 }) {
   const path = `/api/submissions/sequences/${seq.id}/dispatch-readiness`;
   const live = useLiveData<ReadinessAssessment>(
@@ -1433,13 +1809,12 @@ export function DispatchWorkspace({
                 </button>
               )}
             </div>
-            {seq.status === 'dispatched' && (
-              <div className="scaf-note sc-mt">
-                Sequence {seq.sequenceNumber} is dispatched. Wire transmission to the agency
-                gateway runs through the governed transmit path, and only when the region gateway
-                is configured for this organization.
-              </div>
-            )}
+            <PackageAndTransmit
+              sub={sub}
+              seq={seq}
+              canSign={!cannotSign}
+              onTransmit={(req) => onGoverned(seq, 'transmit', req)}
+            />
             {/* A freeze instruction reads the FREEZE verdict. Gated on `gate`,
                 it was hidden for every IND / NDA / BLA / MAA sequence — a third
                 instance of the step-verdict defect, beside the two buttons. */}

@@ -372,5 +372,46 @@ describe('resolver verdicts become findings', () => {
     ]);
     expect(r.errors).toBe(0);
   });
+
+  /* QA 2026-10-08 (j6, findings 1 and 11). An unapproved Vault version read
+     "source verified" in the Builder and was absent from the Dispatch blockers;
+     the refusal that named it ran only in the assembly after the e-signature. */
+  it('a resolved leaf whose document is not approved is DOCUMENT_NOT_APPROVED, naming the leaf and its section', () => {
+    const r = computeDispatchReadiness([vaultLeaf(resolution({ notTransmittable: 'not reviewed' }))]);
+    const f = r.findings.find((x) => x.code === 'DOCUMENT_NOT_APPROVED');
+    expect(f?.severity).toBe('error');
+    expect(f?.sectionCode).toBe('m2.5');
+    expect(f?.message).toContain('not reviewed');
+    expect(f?.message).toContain(VAULT_UUID);
+    expect(r.errors).toBe(1);
+  });
+
+  it('an approved document, a delete, and a missing document raise no DOCUMENT_NOT_APPROVED', () => {
+    const approved = computeDispatchReadiness([vaultLeaf(resolution({ notTransmittable: null }))]);
+    expect(approved.findings.some((x) => x.code === 'DOCUMENT_NOT_APPROVED')).toBe(false);
+    const del = computeDispatchReadiness([
+      goodLeaf({ sectionCode: 'm1.2', title: 'Cover' }),
+      { ...vaultLeaf(resolution({ notTransmittable: 'draft' })), lifecycleOp: 'delete' },
+    ]);
+    expect(del.findings.some((x) => x.code === 'DOCUMENT_NOT_APPROVED')).toBe(false);
+    const missing = computeDispatchReadiness([vaultLeaf(resolution({ status: 'missing', notTransmittable: 'not found' }))]);
+    expect(missing.findings.map((x) => x.code)).not.toContain('DOCUMENT_NOT_APPROVED');
+  });
+
+  /* QA 2026-10-08 (j6, finding 7). "Re-place the leaf to pin its content" was
+     printed over documents with no content, which no placement can pin. */
+  it('a document with no content is UNRESOLVED_DOCUMENT, not a pin warning that re-placing cannot clear', () => {
+    const r = computeDispatchReadiness([
+      goodLeaf({ sectionCode: '1.2', title: 'Cover Letter', document: resolution({
+        keyKind: 'integer', documentTable: 'coauthor_documents', documentId: 5, documentUuid: null,
+        pin: 'unpinned', pinnedSha256: null, storedSha256: null, reason: 'the document has no authored content', noContent: true,
+      }) }),
+    ]);
+    expect(r.findings.map((x) => x.code)).not.toContain('DOCUMENT_CONTENT_NOT_PINNED');
+    const f = r.findings.find((x) => x.code === 'UNRESOLVED_DOCUMENT');
+    expect(f?.severity).toBe('error');
+    expect(f?.message).toContain('no authored content');
+    expect(f?.message).not.toMatch(/Re-place the leaf to pin/);
+  });
 });
 

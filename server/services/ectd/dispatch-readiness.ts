@@ -37,6 +37,13 @@
  *     assembler cannot build into the package. transmitSequence fails closed on
  *     ANY unresolved leaf, external ones included, so a dispatch-clear verdict
  *     here would promise an operator a transmit the system will refuse.
+ *   - DOCUMENT_NOT_APPROVED — the source document resolves but is not
+ *     transmittable (a Vault version not approved for these bytes, a draft or
+ *     frozen-not-approved co-author document, …), judged by the assembler's
+ *     own rule (leaf-source-resolver notFinalizedStatus / vault-lifecycle
+ *     vaultVersionNotTransmittable). FD5, founder decision 2026-10-01. Added
+ *     2026-10-08 (QA j6) so the verdict read before an e-signature names the
+ *     leaf that the post-signature assembly would refuse.
  *   - INVALID_LIFECYCLE_OP — an operation outside new|replace|append|delete
  *   - JP_ECTD_V4_REQUIRED — an original sequence for a Japanese application
  *     on or after the date PMDA stopped accepting eCTD v3.2.2 for new
@@ -128,6 +135,25 @@ export interface LeafDocumentResolution {
   pin: LeafDocumentPinVerdict;
   /** Human-readable detail for anything but a clean resolution. */
   reason: string | null;
+  /**
+   * Why the document may not be transmitted, in the words the assembler's
+   * refusal prints ('not reviewed', 'draft', 'frozen, not approved', …), or
+   * null when it may. Absent for a store with no approval state (rendered
+   * files, uploads) and on resolutions built before this field existed.
+   * The assembler applies the same rule (materializeLeafSources →
+   * assembledTransmitBlockers), and the governed freeze, dispatch and transmit
+   * refuse on it; carried here so the verdict the client reads BEFORE an
+   * e-signature names the leaf (QA 2026-10-08, j6).
+   */
+  notTransmittable?: string | null;
+  /**
+   * The document exists but holds no content the assembler can build into a
+   * leaf (an empty co-author body or governed section). The assembler reports
+   * such a leaf unresolved, and no placement can pin it, so it is not a
+   * pin warning (QA 2026-10-08, j6: "Re-place the leaf to pin its content"
+   * could not clear it).
+   */
+  noContent?: boolean;
 }
 
 export interface ReadinessLeaf {
@@ -316,6 +342,57 @@ function pointerLabel(leaf: ReadinessLeaf): string {
 }
 
 /**
+ * What a resolved document's CONTENT and APPROVAL say about its leaf. Not
+ * raised on a delete: a withdrawal ships none of the document.
+ *
+ *  - QA 2026-10-08 (j6): a document with no content was reported as a pin
+ *    warning whose advice ("re-place the leaf") cannot work — there is nothing
+ *    to pin. The assembler leaves such a leaf out of the package, and freeze,
+ *    dispatch and transmit refuse it, so it is the error those steps report.
+ *  - 2026-09-22 (W5/D7): a resolved leaf with no pin used to produce nothing,
+ *    so "content not verified" read exactly like "content matches".
+ *  - FD5 (founder decision 2026-10-01): only approved documents leave for an
+ *    agency. Freeze, dispatch and transmit already refused an unapproved leaf,
+ *    but only after the assembly that runs once the e-signature is taken; the
+ *    gate the client reads before signing did not name it (QA 2026-10-08, j6).
+ */
+function contentFindings(leaf: ReadinessLeaf, resolution: LeafDocumentResolution, isDelete: boolean): ReadinessFinding[] {
+  if (isDelete || resolution.status === 'missing') return [];
+  if (resolution.status === 'resolved' && resolution.noContent) {
+    return [{
+      severity: 'error',
+      code: 'UNRESOLVED_DOCUMENT',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, which has no authored content, so it cannot be ` +
+        'assembled into the package. Write the document first; its content is pinned when it is placed again.',
+    }];
+  }
+  const out: ReadinessFinding[] = [];
+  if (resolution.status === 'resolved' && resolution.pin === 'unpinned') {
+    out.push({
+      severity: 'warning',
+      code: 'DOCUMENT_CONTENT_NOT_PINNED',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, but no content hash was pinned when it was placed, ` +
+        'so whether the document still holds what was placed cannot be verified. Re-place the leaf to pin its content.',
+    });
+  }
+  if (resolution.notTransmittable) {
+    out.push({
+      severity: 'error',
+      code: 'DOCUMENT_NOT_APPROVED',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, which is ${resolution.notTransmittable}. ` +
+        'Only approved documents are transmitted, so freeze, dispatch and transmit refuse this sequence until the document is approved.',
+    });
+  }
+  return out;
+}
+
+/**
  * What the DB-bound resolver found behind a complete pointer. A document the
  * resolver could not find is exactly as unassemblable as no pointer at all,
  * and reads under the same code; a document whose content no longer matches
@@ -348,18 +425,7 @@ function resolutionFindings(leaf: ReadinessLeaf, isDelete: boolean): ReadinessFi
         `${resolution.reason ? ` — ${resolution.reason}` : ''}. Re-file the leaf against the current document, or restore the filed content, before dispatch.`,
     });
   }
-  // 2026-09-22 (W5/D7): a resolved leaf with no pin used to produce nothing,
-  // so "content not verified" read exactly like "content matches".
-  if (!isDelete && resolution.status === 'resolved' && resolution.pin === 'unpinned') {
-    out.push({
-      severity: 'warning',
-      code: 'DOCUMENT_CONTENT_NOT_PINNED',
-      sectionCode: leaf.sectionCode,
-      message:
-        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, but no content hash was pinned when it was placed, ` +
-        'so whether the document still holds what was placed cannot be verified. Re-place the leaf to pin its content.',
-    });
-  }
+  out.push(...contentFindings(leaf, resolution, isDelete));
   return out;
 }
 

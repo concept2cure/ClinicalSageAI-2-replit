@@ -67,9 +67,12 @@ beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, governedSections: true });
   holder.db = harness.db;
 
+  // Anchored to the project its own governed document belongs to (P-14,
+  // 2026-10-08: a project's document is placed only into a submission
+  // anchored to that project; an unanchored one now refuses the placement).
   const [submission] = await q<{ id: number | string }>(
-    `INSERT INTO submissions (title, application_type, client_type, primary_region, organization_id, created_by)
-     VALUES ('MDR technical file', 'mdr', 'mdx', 'eu', $1, $2) RETURNING id`,
+    `INSERT INTO submissions (title, application_type, client_type, primary_region, organization_id, created_by, program_id)
+     VALUES ('MDR technical file', 'mdr', 'mdx', 'eu', $1, $2, '00000000-0000-0000-0000-000000000001') RETURNING id`,
     [OWNER.organizationId, OWNER.userId],
   );
   const [sequence] = await q<{ id: number | string }>(
