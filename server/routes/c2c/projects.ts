@@ -83,6 +83,7 @@ import { uploadedBinaryAvailableSql } from '../../services/document-data-disposi
 import { lockDocumentDispositionProgram } from '../../services/document-data-disposition/program-lock.js';
 import { readRecordedUploadLineage } from '../../services/document-data-disposition/recorded-lineage.js';
 import { loadUploadedFile, sha256Hex, UploadedFileError, type UploadedFile } from '../../services/ana/uploaded-file-access.js';
+import { supersededSql } from '../../services/vault/vault-version-family.js';
 
 // People are named through public.actor_name, not a join on users: since users
 // took row-level security (D3, 2026-09-28) a tenant scope reads only current
@@ -1355,16 +1356,26 @@ const PROJECT_RECORD_READS: ReadonlyArray<readonly [string, string]> = [
   ['submissions', `SELECT id, title, application_type, primary_region, status, lifecycle_stage
                      FROM submissions WHERE program_id = $1 AND organization_id = $2 AND deleted_at IS NULL
                     ORDER BY updated_at DESC NULLS LAST, id DESC LIMIT 200`],
+  // The Data room's live-source predicate (listClientDocuments with
+  // currentOnly): a withdrawn source is not in it, a source a re-upload retired
+  // (is_current = false) is not in it, and only client documents are. A row
+  // older than the is_current column still counts (IS NOT FALSE).
   ['sources', `SELECT id, title, source_type, checksum, created_at
                  FROM cre_evidence_sources WHERE client_program_id = $1 AND organization_id = $2
+                  AND deleted_at IS NULL AND source_type = 'client_document'
+                  AND is_current IS NOT FALSE
                 ORDER BY created_at DESC LIMIT 200`],
   ['authoringDocuments', `SELECT id, title, status, created_at
                             FROM authoring_documents WHERE client_program_id = $1 AND tenant_id = $2
                            ORDER BY created_at DESC LIMIT 200`],
+  // A document is its current version (the Vault tree's rule, VR-09): a row a
+  // live later version supersedes is one of the document's versions, not a
+  // document of its own.
   ['vaultDocuments', `SELECT d.id, d.document_code, d.document_title, d.version, d.created_at
                         FROM vault.documents d
                         JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $2
                        WHERE d.program_id = $1 AND d.deleted_at IS NULL
+                         AND NOT ${supersededSql('d')}
                        ORDER BY d.created_at DESC LIMIT 200`],
   ['studyDesigns', `SELECT study_id AS id, protocol_title AS title, study_phase, protocol_status
                       FROM cdisc_prm_studies WHERE program_id = $1 AND tenant_id = $2

@@ -1,0 +1,42 @@
+BEGIN
+-- project and organization
+                  id                  | organization_id |               name                | live 
+--------------------------------------+-----------------+-----------------------------------+------
+ 50c41bb6-5796-4dc6-a848-72e4d1246ebd |               1 | Vorelinib · KIT-mutant GIST (IND) | t
+
+-- (1) current vault documents: live rows, not superseded by a live successor, in this organization
+ current_vault_documents 
+-------------------------
+                      10
+
+-- (1b) live vault rows for the project, before the supersession rule (for context)
+ live_vault_rows 
+-----------------
+              12
+
+-- (2) records count by the NEW vaultDocuments query text (projects.ts PROJECT_RECORD_READS), $1 = project, $2 = org = 1
+ records_vault_documents 
+-------------------------
+                      10
+
+-- (2b) records count by the NEW sources query text, $1 = project, $2 = org = 1
+ records_sources 
+-----------------
+              20
+
+-- (3) Data room sources under its live-source predicate (listClientDocuments, currentOnly, programId; org clause as written there)
+ data_room_sources_predicate 
+-----------------------------
+                          20
+
+-- (3b) what the project holds in cre_evidence_sources, by the three exclusions (for context)
+ all_rows | soft_deleted | not_client_document | retired 
+----------+--------------+---------------------+---------
+       22 |            0 |                   0 |       2
+
+-- (4) Vault tree upload total: headsWhere with the disposition eligibility the tree applies (for context)
+ tree_upload_heads 
+-------------------
+                10
+
+ROLLBACK
