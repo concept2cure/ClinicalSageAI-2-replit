@@ -173,13 +173,6 @@ export function openReviewDocument(
 
 /* ── Review-decision modal ── */
 
-/** Why the server did not record a review decision, or null when it did. */
-async function decisionRefusal(res: Response): Promise<string | null> {
-  const body = await res.json().catch(() => null);
-  if (res.ok && (body as { success?: boolean } | null)?.success === true) return null;
-  return serverMessage(body) ?? 'The decision was not recorded (HTTP ' + res.status + '). Nothing changed.';
-}
-
 function DecisionModal({ onClose, item, onRecorded }: {
   onClose: () => void;
   item: ReviewItem;
@@ -210,7 +203,7 @@ function DecisionModal({ onClose, item, onRecorded }: {
   const [err, setErr] = useState('');
 
   const chosen = decision !== '';
-  const needsReason = chosen && decision !== 'approved';
+  const needsReason = decision !== 'approved' && chosen;
   const reasonOk = !needsReason || reason.trim().length >= 8;
 
   const record = async () => {
@@ -227,9 +220,10 @@ function DecisionModal({ onClose, item, onRecorded }: {
         '/api/authoring/documents/' + encodeURIComponent(String(item?.id ?? '')) + '/review',
         { review_status: decision, review_comments: reason.trim() || undefined },
       );
-      const refused = await decisionRefusal(res);
-      if (refused) {
-        setErr(refused);
+      const body = await res.json().catch(() => null);
+      const payload = body as { success?: boolean } | null;
+      if (!res.ok || payload?.success !== true) {
+        setErr(serverMessage(body) ?? 'The decision was not recorded (HTTP ' + res.status + '). Nothing changed.');
         return;
       }
       onRecorded?.(decision);
