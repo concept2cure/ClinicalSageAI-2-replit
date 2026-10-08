@@ -1,0 +1,36 @@
+# RED — server/routes/c2c/__tests__/projects-create.test.ts (the two new refusal cases) with HEAD's projects.ts + program-project-anchor.ts swapped in
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 403 without org context 27ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 when name is missing 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 on an invalid programType (never reaches SQL) 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > inserts into regulatory_programs and returns the portfolio display contract 9ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > derives product_type from program_type when the client omits it 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > retries with a suffixed code on a unique-code collision (23505) 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > runs the insert and the scaffold in ONE transaction, and releases the client 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > surfaces a scaffold skip in the 201 body instead of failing or hiding it 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > reports the scaffolded document and section count on success 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01) 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses the create when the org is at its licensed program quota 2ms
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent 19ms
+   → expected 201 to be 503 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen 5ms
+   → expected 201 to be 409 // Object.is equality
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates the submissions row transactionally for a drug program (nda) 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > reuses only a spine already anchored to THIS program 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a device program (510k) 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a CER program 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01) 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent
+AssertionError: expected 201 to be 503 // Object.is equality
+ FAIL  server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen
+AssertionError: expected 201 to be 409 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 24 passed (26)

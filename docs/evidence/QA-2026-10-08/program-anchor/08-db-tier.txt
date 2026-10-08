@@ -1,0 +1,46 @@
+# The full DB tier (vitest.db.config.ts, 150 files, serial) on concept2cure-ri_qa_fresh2, RLS_ENFORCE=on, after deploy-migrate with 20261008.
+# The working tree is shared with other fixers whose uncommitted edits changed between runs.
+
+## run 1 (05:58Z), after deploy-migrate runs 1-2:
+ Test Files  2 failed | 148 passed (150)
+      Tests  3 failed | 1581 passed (1584)
+  failures: append-only-store-grants (2), turn-record-purge-door (1): app_service held UPDATE on regulatory_harmonization.export_job_audit_log.
+  cause: deploy-migrate runs 1-2 had no runtime role to refresh, so the grant ceiling was not re-applied after the replay (05-deploy-migrate-fresh2.txt).
+  after deploy-migrate run 3 (APP_DATABASE_URL set): those two files + c2c-project-persistence:
+ Test Files  3 passed (3)
+      Tests  33 passed (33)
+
+## run 2 (06:07Z):
+ Test Files  2 failed | 148 passed (150)
+      Tests  1563 passed | 21 skipped (1584)
+  failures: admin-change-audit, users-rls at file level (two-tenant fixture): duplicate project_industry_profiles program_id at provisioning, and documents rows holding fixture workspaces 354 and 322 at teardown.
+  The fixture uses fixed org/program ids (90301/90302) and a per-process TAG; no 20261008 row was in those orgs (its rows were in 24, 25, 91001, 91002).
+  re-run of tenant-purge, project-scope-boundary, admin-change-audit, users-rls in that order:
+ Test Files  4 passed (4)
+      Tests  47 passed (47)
+
+## run 3 (06:16Z):
+ Test Files  6 failed | 144 passed (150)
+      Tests  16 failed | 1568 passed (1584)
+  failures (16, in 6 files) — every one a 500 from user administration, none touching projects, programs or the anchor:
+    tests/db/actor-displays.dbtest.ts :: activity feeds and the MDx audit list name people who left (D3) > the MDx admin audit band names the leaver, not 'Unknown account'
+    tests/db/admin-change-audit.dbtest.ts :: a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+    tests/db/admin-change-audit.dbtest.ts :: a member's role change (DP-49) > writes exactly one chained row on the organisation's chain, with the roles, the member and the r
+    tests/db/admin-change-audit.dbtest.ts :: a member's removal (DP-49) > when its audit row cannot be written, the member stays
+    tests/db/admin-change-audit.dbtest.ts :: a member's removal (DP-49) > writes one chained row with the role the member held
+    tests/db/compliance-reports.dbtest.ts :: administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a remov
+    tests/db/invitation-acceptance.dbtest.ts :: the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+    tests/db/invitation-acceptance.dbtest.ts :: the invitee, signed into their own organization (D3) > accepts it: the membership is written, and the token for B is then admi
+    tests/db/invitation-acceptance.dbtest.ts :: the invitee, signed into their own organization (D3) > declines it: no membership, the invitation kept as declined
+    tests/db/invitation-acceptance.dbtest.ts :: nobody else can see or answer it (D3) > another member of A cannot see, accept or decline an invitation that is not theirs
+    tests/db/invitation-acceptance.dbtest.ts :: nobody else can see or answer it (D3) > the lookup answers only about the calling organization's own members
+    tests/db/memberships.dbtest.ts :: the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to th
+    tests/db/memberships.dbtest.ts :: the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's 
+    tests/db/users-rls.dbtest.ts :: user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored 
+    tests/db/users-rls.dbtest.ts :: user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of faili
+    tests/db/users-rls.dbtest.ts :: user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one
+  underlying: '[tenant-users] Error creating user / updating user role', '[mdx-admin] admin failed: Cannot read properties of undefined (reading includes)'.
+  All six files passed in run 1 (admin-change-audit and users-rls failed in run 2 only at the shared fixture, above; the other four passed).
+  The tree carries other fixers' uncommitted edits in exactly these paths: server/routes/tenant-users.ts, server/services/tenant/membership-change.ts,
+  server/middleware/orgMembership.ts, server/routes/mdx-admin.ts, server/services/roleBasedAccess.ts. When they landed relative to run 3 is not
+  known here. This change touches none of them, and in the same run actor-displays' cases that go through the projects router pass.

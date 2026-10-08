@@ -1,0 +1,44 @@
+-- 01-repro-qa-db.txt — READ-ONLY queries against c2c_qa (the 2026-10-08 QA database), 2026-10-08T05:59:01Z
+-- Every program and its anchor row (projects.regulatory_program_id), org-scoped as resolveProgramProjectAnchor reads it.
+  code   |                         name                         | org |     created_at      |      created_via      | anchor_project_id 
+---------+------------------------------------------------------+-----+---------------------+-----------------------+-------------------
+ BX-099  | BX-099 · generalized myasthenia gravis (MAA)         |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ BX-204  | BX-204 Continuous Glucose Monitor                    |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ BX-256  | BX-256 · systemic lupus erythematosus (IND)          |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ BX-301  | BX-301 · paroxysmal nocturnal hemoglobinuria (BLA)   |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ BX-420  | BX-420 · neuromyelitis optica (J-NDA)                |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ BX-512  | Vorelinib · KIT-mutant GIST (IND)                    |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ CV-117  | CV-117 ECG Patch                                     |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ IV-415  | IV-415 Companion Diagnostic                          |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ NM-512  | NM-512 Neuromodulation Lead                          |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ OR-801  | OR-801 Pedicle Screw System                          |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ PM-660  | PM-660 Patient Monitor                               |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ RX-340  | RX-340 Surgical Stapler                              |   1 | 2026-10-07 23:22:54 | (not intake)          |                  
+ NXV-777 | Nexavir · moderate-to-severe Crohn's disease (IND)   |   1 | 2026-10-07 23:45:20 | v2-new-project-wizard |                 6
+ QMPS    | QA member-created project (should be refused)        |   1 | 2026-10-08 00:06:30 | v2-new-project-wizard |                 7
+ Q       | Investigational New Drug Application                 |   1 | 2026-10-08 00:08:25 | v2-new-project-wizard |                 8
+ ARD-410 | QA-J1 Ardemvir · relapsing multiple sclerosis (IND)  |   1 | 2026-10-08 00:28:15 | v2-new-project-wizard |                 9
+ ARD-411 | Investigational New Drug Application                 |   1 | 2026-10-08 00:31:00 | v2-new-project-wizard |                10
+ H       | HLV-333 — Investigational New Drug Application (QA-J |   1 | 2026-10-08 01:19:11 | v2-new-project-wizard |                11
+ Q       | J9 Selfserve IND                                     |  15 | 2026-10-08 03:07:47 | v2-new-project-wizard |                12
+ HLV-334 | HLV-334 — Investigational New Drug Application (QA-F |   1 | 2026-10-08 03:16:11 | v2-new-project-wizard |                13
+(20 rows)
+
+-- Summary: unanchored programs by how they were created
+      created_via      | programs | unanchored 
+-----------------------+----------+------------
+ (not intake: seed)    |       12 |         12
+ v2-new-project-wizard |        8 |          0
+(2 rows)
+
+-- The organisations' workspaces (intake's anchor rule reads these)
+ organization_id | workspaces | marked_own 
+-----------------+------------+------------
+               1 |          1 |          0
+               2 |          1 |          1
+              14 |          1 |          1
+              15 |          1 |          1
+              32 |          1 |          1
+              33 |          1 |          1
+(6 rows)
+

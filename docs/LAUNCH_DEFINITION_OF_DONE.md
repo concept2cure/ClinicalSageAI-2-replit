@@ -257,6 +257,15 @@ tasks and AnA's project context answer "no record" for them. Intake creates the 
 program. Existing unanchored programs are anchored by an idempotent statement in the migration set (Rule 1), not by a
 laptop script.
 
+The fixer raised three questions about P-19, decided the same day:
+- An organisation with several workspaces and none marked as its own is refused (409) rather than having one guessed.
+  The workspace decides who may see a project. The follow-up is a workspace choice in the New Project wizard for
+  multi-client organisations (a CRO), not a default.
+- When a backfilled program's recorded creator is not a user id, its project owner is left empty. Ownership grants
+  access, so it is not inferred.
+- The demo seeds use the code BX-204 for two different products. The seed's dossier-map project gets its own code;
+  demo data must not depend on a code collision.
+
 ### P-20 — A safety report never infers what nobody stated
 
 The onset date is stated either as a date or explicitly as unknown; a blank is refused. When expectedness is not

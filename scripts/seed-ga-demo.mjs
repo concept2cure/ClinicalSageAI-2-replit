@@ -949,6 +949,29 @@ async function seed() {
       }
     }
 
+    // ── Every program this seed wrote has its project record (P-19) ─────────
+    // The domain modules insert regulatory_programs directly, not through
+    // intake, which writes the program's projects row in the same transaction.
+    // Provisioning runs the migration set BEFORE this seed, so the set's
+    // backfill ran while these programs did not exist: BX-256 and Vorelinib
+    // reached QA with no record, and their schedule answered "no record"
+    // (2026-10-08). The set's own file runs here, in this transaction: one
+    // statement, not a second copy of its rules. It skips with a NOTICE where a
+    // table or column is absent, so a throw here is a real fault and fails the
+    // seed rather than leaving programs without their record.
+    {
+      const anchorFile = path.join(
+        path.dirname(fileURLToPath(import.meta.url)), '..', 'migrations', '20261008_program_project_anchor_backfill.sql',
+      );
+      const onNotice = (n) => { if (String(n.message).startsWith('P-19')) console.log(`   ${n.message}`); };
+      client.on('notice', onNotice);
+      try {
+        await client.query(fs.readFileSync(anchorFile, 'utf8'));
+      } finally {
+        client.off('notice', onNotice);
+      }
+    }
+
     await client.query('COMMIT');
 
     // ── Summary ───────────────────────────────────────────────────

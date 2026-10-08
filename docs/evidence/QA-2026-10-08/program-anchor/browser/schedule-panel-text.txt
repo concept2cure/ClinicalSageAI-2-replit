@@ -1,0 +1,50 @@
+# The Schedule panel's text on the Plan tab (from each page's innerText)
+== before BX-256
+Schedule
+AnA's regulatory milestone plan for this project
+This program has no schedule record
+A schedule of events is kept on the program's project record, and this program has none, so no milestones can be shown or generated for it here.
+== before Vorelinib
+Schedule
+AnA's regulatory milestone plan for this project
+This program has no schedule record
+A schedule of events is kept on the program's project record, and this program has none, so no milestones can be shown or generated for it here.
+== after BX-256
+Schedule
+AnA's regulatory milestone plan for this project
+No schedule generated
+Ask AnA to generate one — a regulatory milestone plan grounded in this project's pathway — or generate it from the pathway template below.
+== after Vorelinib
+Schedule
+AnA's regulatory milestone plan for this project
+No schedule generated
+Ask AnA to generate one — a regulatory milestone plan grounded in this project's pathway — or generate it from the pathway template below.
+== after new wizard program
+Schedule
+AnA's regulatory milestone plan for this project
+No schedule generated
+Ask AnA to generate one — a regulatory milestone plan grounded in this project's pathway — or generate it from the pathway template below.
+
+# console/API errors recorded on the after run (browser-log.json):
+[
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5081/concept2cure/project-home?program=099991d1-dac8-43c5-b88a-8baab26194ee"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5081/concept2cure/project-home?program=50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5081/concept2cure/projects"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5081/concept2cure/project-home?program=b9073205-f254-4674-ad47-4526fe7ddb51"
+  }
+]

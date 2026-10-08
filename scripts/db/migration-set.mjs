@@ -3048,6 +3048,17 @@ export const C2C_MIGRATION_FILES = [
   // final RLS sweeps because this is public + organization_id INTEGER.
   'migrations/20261006_document_data_dispositions.sql',
 
+  // ── Every program has its project record (2026-10-08, P-19) ──────────────
+  // Inserts the projects row intake inserts (ensureProgramProjectAnchor's
+  // values and workspace rule) for each live program that no projects row
+  // anchors: programs a seed or a pre-anchor intake wrote. Skips, with a
+  // NOTICE, an organisation whose workspace is ambiguous, and a program another
+  // organisation's row names. After 20260814 (whose code/name link runs first),
+  // 20260923, 20260926b and 20261001b. INSERT … WHERE NOT EXISTS … ON CONFLICT
+  // DO NOTHING; creates no table, drops nothing. Evidence
+  // docs/evidence/QA-2026-10-08/program-anchor/.
+  'migrations/20261008_program_project_anchor_backfill.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
