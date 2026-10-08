@@ -313,6 +313,15 @@ The 2026-10-08 onboarding fix (`ddc8c0db5`) raised these:
 - **Scopes are derived from the checks that enforce them.** Organisations do not edit them, and the "Edit scopes"
   control does not offer it. Approver and reviewer as SCIM groups come after launch.
 
+Follow-up decisions on P-25, from the account panel (`e6fbacf33`):
+- A person's name stays read-only in the panel. It is printed on their future signatures, and the route that writes
+  it validates nothing and leaves no audit record.
+- `GET /session` names no organisation when the session has none. It must not fall back to "Concept2Cure".
+- Now that enrolment exists, ADR-0014 P1-2b is enforced for electronic signatures in production. A signer with no
+  authenticator is refused, with "Enrol an authenticator in Account to sign. Nothing was signed."
+- Wrong codes at `/mfa/enable` and `/mfa/disable` count against the per-account limit, as at `/mfa/verify`.
+- `authService.updateProfile` points at a route that does not exist, and is removed.
+
 ### P-26 — A report shows only what an engine computed, for the program asked about
 
 From the reporting fix (`4ac15bdd1`):
