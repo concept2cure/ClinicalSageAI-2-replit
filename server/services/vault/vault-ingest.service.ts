@@ -151,20 +151,8 @@ export type VaultIngestResult =
       /** Present when these bytes were already recorded here (vault-reupload.ts). */
       reupload?: { unchanged: boolean; changes: ReuploadChange[]; differs: ReuploadDiffer[] };
     }
-  | {
-      ok: false;
-      status: number;
-      code: string;
-      message: string;
-      /**
-       * VERSION_CONTENT_CONFLICT only: the current version at the conflicting
-       * code, which a new version of these bytes is added to (a check-in). Named
-       * so a surface can offer it rather than leave the file at a dead end
-       * (QA-2026-10-08). Absent when no document holds the code.
-       */
-      headDocumentId?: string;
-      headVersion?: string;
-    };
+  /** VERSION_CONTENT_CONFLICT: the current version at that code, which a check-in adds to. */
+  | { ok: false; status: number; code: string; message: string; headDocumentId?: string; headVersion?: string };
 
 /**
  * Admit a document into the governed vault. Must be called inside the acting
@@ -631,10 +619,7 @@ async function admitVaultDocument(
        trail says was admitted. Refuse, and say what to do: a new version is a
        new record, not an edit of the old one. */
     if (!doc) {
-      /* Name the current version at this code, so the caller can offer the new
-         version rather than refuse with no way forward. A data-room filing and a
-         Vault upload of the same file name reach this same code (vault-file-upload-
-         to-vault.ts), so both get the same offer. */
+      /* The head a new version is offered against (vault-version-checkin.ts). */
       const head = await currentVersionOfCode(client, { organizationId: orgId, programId: args.programId, documentCode });
       await client.query('ROLLBACK');
       return {
