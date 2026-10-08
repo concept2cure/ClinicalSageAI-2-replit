@@ -62,6 +62,10 @@ export interface CtTurn {
   contextUsed?: string[];
   /** What went wrong around the answer (a failed save, a timeout), shown under it. */
   warnings?: string[];
+  /** The steers the person sent mid-run that AnA accepted, in order, shown under the answer they shaped. */
+  interjections?: string[];
+  /** The CRL/RTF pre-mortem artifact, when the turn assembled one (CrlPremortemPanel). */
+  crlPremortem?: import('../../components/ana/CrlPremortemPanel').CrlPremortemArtifact;
   /** What was checked about the answer (AnaGrounding): the engine's check and AnA's labels. */
   evidence?: AnaGroundingEvidence;
   doc?: any;
@@ -82,7 +86,7 @@ export interface CtTurn {
   /**
    * The turn's real activity record, rendered by <AnaActivity />.
    *
-   * The same mapping the shell rail uses (`adaptChatMessage` in V2App.tsx):
+   * The same mapping the shell rail used (`adaptChatMessage` in V2App.tsx, deleted with the rail in ana-2a):
    * the phase AnA is in, the lens she read the question through, the document
    * type she detected, every deterministic tool she called with its round and
    * status, her extended reasoning, and the deliverable's title. `toTurn`

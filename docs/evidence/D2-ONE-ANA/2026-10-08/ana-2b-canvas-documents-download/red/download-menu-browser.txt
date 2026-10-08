@@ -1,0 +1,29 @@
+# Download menu in a real browser — the menu as reviewed (before this change)
+# Chromium headless_shell 1194 (Playwright), real stylesheets (design-system/colors_and_type.css, app-v2.css, authoring-v2.css as reviewed),
+# real AuthoringCreateExport / CanvasDocumentList / DownloadMenu (as reviewed) bundled by browser/build.mjs; run: node browser/check.mjs before.js <reviewed authoring-v2.css> <out>
+# For each item: elementFromPoint at its centre must be the item. 'scroller scrollTop after open' is .ed-doc-actions (or .cdl) scrolled by the menu opening.
+
+authoring 1440px  menu open: true  position: absolute  background: rgb(250, 249, 245)  top layer: false  items hit-testable: 1 of 5  scroller scrollTop after open: 71  focus: Working copy (Word)  download: none  
+authoring  390px  menu open: true  position: absolute  background: rgb(250, 249, 245)  top layer: false  items hit-testable: 2 of 5  scroller scrollTop after open: 77  focus: Working copy (Word)  download: Clinical_Overview_working_copy.pdf (21 bytes)  
+canvas    1440px  menu open: true  position: absolute  background: rgb(250, 249, 245)  top layer: false  items hit-testable: 1 of 5  scroller scrollTop after open: 41  focus: Working copy (Word)  download: none  
+canvas     390px  menu open: true  position: absolute  background: rgb(250, 249, 245)  top layer: false  items hit-testable: 2 of 5  scroller scrollTop after open: 77  focus: Working copy (Word)  download: Clinical_Overview_working_copy.pdf (21 bytes)  
+list      1440px  menu open: true  position: absolute  background: rgb(250, 249, 245)  top layer: false  items hit-testable: 2 of 2  scroller scrollTop after open: 0  focus: Working copy (Word)  download: Clinical_Overview_working_copy.pdf (21 bytes)  list scrolled 40px: button top 145->145, menu-to-button gap 4->4px  
+list       390px  menu open: true  position: absolute  background: rgb(250, 249, 245)  top layer: false  items hit-testable: 2 of 2  scroller scrollTop after open: 0  focus: Working copy (Word)  download: Clinical_Overview_working_copy.pdf (21 bytes)  list scrolled 40px: button top 221->181, menu-to-button gap 4->4px  
+  not hit-testable: authoring 1440px "Working copy (PDF)" at (1270,70) -> div.ed-doc-inner
+  not hit-testable: authoring 1440px "Controlled export (Word)" at (1270,156) -> p.
+  not hit-testable: authoring 1440px "Controlled export (PDF)" at (1270,185) -> p.
+  not hit-testable: authoring 1440px "Controlled export (XML)" at (1270,214) -> p.
+  not hit-testable: authoring 390px "Controlled export (Word)" at (226,190) -> p.
+  not hit-testable: authoring 390px "Controlled export (PDF)" at (226,219) -> p.
+  not hit-testable: authoring 390px "Controlled export (XML)" at (226,248) -> p.
+  not hit-testable: canvas 1440px "Working copy (PDF)" at (1257,234) -> div.ed-doc-inner
+  not hit-testable: canvas 1440px "Controlled export (Word)" at (1257,319) -> p.
+  not hit-testable: canvas 1440px "Controlled export (PDF)" at (1257,348) -> p.
+  not hit-testable: canvas 1440px "Controlled export (XML)" at (1257,377) -> p.
+  not hit-testable: canvas 390px "Controlled export (Word)" at (225,333) -> p.
+  not hit-testable: canvas 390px "Controlled export (PDF)" at (225,362) -> p.
+  not hit-testable: canvas 390px "Controlled export (XML)" at (225,391) -> p.
+  toast authoring 390px [ok] Downloaded a working copy of Clinical Overview (PDF). Every page is marked DRAFT — uncontrolled copy.
+  toast canvas 390px [ok] Downloaded a working copy of Clinical Overview (PDF). Every page is marked DRAFT — uncontrolled copy.
+  toast list 1440px [ok] Downloaded a working copy of Clinical Overview (PDF). Every page is marked DRAFT — uncontrolled copy.
+  toast list 390px [ok] Downloaded a working copy of Clinical Overview (PDF). Every page is marked DRAFT — uncontrolled copy.

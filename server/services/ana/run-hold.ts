@@ -188,14 +188,16 @@ class TurnHold implements RunHold {
   private async waitWhilePaused(round: number, announce?: RunHoldAnnounce, signal?: AbortSignal): Promise<RunHoldOutcome> {
     // Issued before the first read: a pause this waiter opens is timed from
     // here, as the stream's pauseStart was.
-    let seen = await this.read();
+    let seen = await this.read(signal);
+    if (!this.canConsumeRead(seen, signal)) return 'cancelled';
     let endDue = true;
     while (seen.status === 'paused') {
       if (this.isExpired) return 'expired';
       if (seen.mark !== this.closes) {
         // Another waiter saw the last pause end after this read was issued.
         // Read again before announcing anything.
-        seen = await this.read();
+        seen = await this.read(signal);
+        if (!this.canConsumeRead(seen, signal)) return 'cancelled';
         continue;
       }
       const pause = (this.current ??= { start: seen.at });
@@ -212,15 +214,36 @@ class TurnHold implements RunHold {
         endDue = true;
         if ((await this.waitForChange(signal)) === 'aborted') return 'cancelled';
       }
-      seen = await this.read();
+      seen = await this.read(signal);
+      if (!this.canConsumeRead(seen, signal)) return 'cancelled';
     }
     return this.leave(seen.status, round);
   }
 
-  private async read(): Promise<RowRead> {
+  /** Called at the consumer boundary, after every awaited read. */
+  private canConsumeRead(seen: RowRead | null, signal?: AbortSignal): seen is RowRead {
+    return seen !== null && !signal?.aborted;
+  }
+
+  private async read(signal?: AbortSignal): Promise<RowRead | null> {
     const mark = this.closes;
     const at = this.now();
-    return { status: await this.deps.readStatus(), mark, at };
+    if (signal?.aborted) return null;
+    if (!signal) return { status: await this.deps.readStatus(), mark, at };
+    let onAbort!: () => void;
+    const stopped = new Promise<null>(resolve => {
+      onAbort = () => resolve(null);
+      signal.addEventListener('abort', onAbort, { once: true });
+    });
+    try {
+      // Observe the query even if Stop wins, without waiting for its result.
+      const reading = this.deps.readStatus().then(status => ({ status, mark, at }));
+      const seen = await Promise.race([reading, stopped]);
+      // Stop may land after the read resolves but before its continuation.
+      return signal.aborted ? null : seen;
+    } finally {
+      signal.removeEventListener('abort', onAbort);
+    }
   }
 
   private closePause(pause: PauseInterval): void {

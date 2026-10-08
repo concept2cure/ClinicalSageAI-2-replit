@@ -68,12 +68,13 @@ import {
 } from './DocumentWorkbench';
 import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { FileToVaultDialog } from './FileToVaultDialog';
-import { AssignReviewDialog } from './AssignReviewDialog';
+import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramRead, programHeadline, programLineFor } from './programSummary';
 import { describeProvenance, moduleWasAssumed, type DocumentProvenance } from './provenance';
+import { OpenedDocumentPending, StatusPill, ToDocumentsButton } from './CanvasDocumentList';
 
-/** GET /docs/:id → `document` (the columns this card reads). */
-interface DocRow {
+/** GET /docs/:id → `document` (the columns this card reads; `created_by` is the author, never offered as its reviewer). */
+interface DocRow extends Pick<AuthDoc, 'created_by'> {
   id: string;
   title: string;
   module: string | null;
@@ -129,6 +130,25 @@ export interface DocumentCanvasProps {
    * document being built, and to name it on turns while it is open.
    */
   onEditorBridge?: (docId: string, bridge: EditorBridge | null, open: boolean) => void;
+  /**
+   * The conversation's Documents list (docs/design/ONE_ANA_ONE_CANVAS.md
+   * §4.1, §4.3). Given, the editor's bar carries "← Documents (n)", which
+   * closes this document and shows the list in its place. `listCount` is how
+   * many the conversation built, when known.
+   */
+  onShowList?: () => void;
+  listCount?: number | null;
+  /**
+   * No card in the conversation: the document was opened from the Documents
+   * list and has no turn of its own on screen (another conversation's, or a
+   * turn whose trace lost its id). Only the editor, beside the conversation.
+   */
+  cardless?: boolean;
+  /**
+   * Whether closing the editor hands focus back to this card's open control.
+   * The host says no when focus belongs elsewhere (the list row that opened it).
+   */
+  returnFocus?: boolean;
 }
 
 /** The stored document type (`product_code`), in words: `clinical_overview` → "Clinical overview". */
@@ -206,6 +226,7 @@ export function DocumentCanvas({
   paneEl = null,
   refreshKey = 0,
   onEditorBridge,
+  onShowList, listCount = null, cardless = false, returnFocus = true,
 }: DocumentCanvasProps) {
   /* Beside the conversation the card stays in the thread, marked as the
      document that is open; in place it gives way to the editor. */
@@ -333,7 +354,12 @@ export function DocumentCanvas({
      the render after `expanded` flips, so a focus call made on that first
      pass reached a null ref and did nothing at all. The effect therefore
      waits for the control, rather than firing once into an empty ref. */
-  const wasExpanded = useRef(expanded);
+  /* A canvas opened from the list mounts already expanded, and must still
+     move focus into what opened: so it starts as "was closed". */
+  const wasExpanded = useRef(cardless ? false : expanded);
+  /* "← Documents" closes the editor and the list takes the focus, not this
+     card; so does a host that says focus belongs elsewhere (`returnFocus`). */
+  const toList = useRef(false);
   useEffect(() => {
     if (expanded) {
       const back = backBtnRef.current;
@@ -342,9 +368,14 @@ export function DocumentCanvas({
       wasExpanded.current = true;
       return;
     }
-    if (wasExpanded.current) expandBtnRef.current?.focus({ preventScroll: true });
+    if (wasExpanded.current && returnFocus && !toList.current) expandBtnRef.current?.focus({ preventScroll: true });
+    toList.current = false;
     wasExpanded.current = false;
-  }, [expanded, workbenchMounted, doc]);
+  }, [expanded, workbenchMounted, doc, returnFocus]);
+  const showList = () => {
+    toList.current = true;
+    onShowList?.();
+  };
 
   const provenance: DocumentProvenance | null = doc
     ? describeProvenance(doc.provenance, { inThisConversation: fromThisConversation })
@@ -411,11 +442,13 @@ export function DocumentCanvas({
       ref={rootRef}
       className="dcv"
       data-expanded={expanded || undefined}
-      aria-labelledby={titleId}
+      aria-labelledby={cardless ? undefined : titleId}
+      aria-label={cardless ? title : undefined}
       data-testid="document-canvas"
       data-doc-id={docId}
     >
-      {/* ── The card ── */}
+      {/* ── The card ── (none when the document was opened from the list) */}
+      {!cardless && (
       <div className="dcv-card" hidden={expanded && !beside} data-open-beside={(expanded && beside) || undefined}>
         <div className="dcv-head">
           <div className="dcv-kind">
@@ -570,7 +603,7 @@ export function DocumentCanvas({
             aria-describedby={actRefusal(access.assignReview) ? assignRefusalId : undefined}
             data-testid="dc-assign-review"
           >
-            {I.user} Assign review
+            {I.send} Send for review
           </button>
           {actRefusal(access.assignReview) && (
             <span id={assignRefusalId} style={{ fontSize: 11.5, color: 'var(--text-400)' }}>
@@ -592,19 +625,29 @@ export function DocumentCanvas({
           </button>
         </div>
       </div>
+      )}
 
-      {/* ── The editor: beside the conversation when the thread gives a pane, else in place ── */}
-      {workbenchMounted && doc && (() => {
+      {/* ── The editor: beside the conversation when the thread gives a pane, else in place ──
+          Opened from the list (`cardless`) there is no card to read the record
+          on, so the region opens at once and says it is reading, or why it
+          could not; the bar is the same element throughout, so focus on it
+          survives the editor arriving. */}
+      {((workbenchMounted && doc) || (cardless && expanded)) && (() => {
         const region = (
         <div ref={expandedRef} className="dcv-expanded" id={expandedId} hidden={!expanded} data-testid="dc-expanded" data-beside={beside || undefined}>
           <div className="dcv-bar">
+            {onShowList && <ToDocumentsButton count={listCount} onClick={showList} />}
             <button ref={backBtnRef} type="button" className="ed-back" onClick={() => onExpandedChange(false)} data-testid="dc-back">
-              {I.left} Back to conversation
+              {onShowList ? I.close : I.left} Back to conversation
             </button>
-            <span className="dcv-bar-t" title={doc.title}>{doc.title}</span>
+            <span className="dcv-bar-t" title={title}>{title}</span>
+            {/* Always in view while the document is open (§4.1, §4.8): with no
+                card, or with the card hidden at narrow widths, nothing else says it is a draft. */}
+            {doc && <StatusPill status={doc.status} testId="dc-status" />}
             {programLine && <span className="dcv-bar-p">{programLine}</span>}
             <span className="dcv-bar-hint" aria-hidden="true">Esc</span>
           </div>
+          {workbenchMounted && doc ? (
           <div className="dcv-workbench">
             {/* `hostShowsBack`: the bar above already carries "Back to
                 conversation" and the Esc hint, so the workbench must not draw
@@ -625,6 +668,7 @@ export function DocumentCanvas({
               onAsk={onAsk}
             />
           </div>
+          ) : <OpenedDocumentPending failed={state === 'error'} message={error} onRetry={() => void load()} />}
         </div>
         );
         return beside && paneEl ? createPortal(region, paneEl) : region;
@@ -643,13 +687,13 @@ export function DocumentCanvas({
         />
       )}
       {assignReviewOpen && doc && (
-        <AssignReviewDialog
+        <SendForReviewDialog
           docId={doc.id}
           docTitle={doc.title}
           programId={programId}
-          sectionCode={first?.code ?? null}
+          sectionCode={first?.code ?? null} authorId={doc.created_by != null ? String(doc.created_by) : null}
           onClose={() => setAssignReviewOpen(false)}
-          onCreated={() => undefined}
+          onOpenBoard={() => { setAssignReviewOpen(false); onNav('review'); }}
           fireToast={fireToast}
         />
       )}

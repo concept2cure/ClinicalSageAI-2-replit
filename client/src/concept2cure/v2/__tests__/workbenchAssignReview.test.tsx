@@ -1,17 +1,24 @@
 // @vitest-environment jsdom
 /**
- * DocumentWorkbench — Assign review and the Tasks rail.
+ * DocumentWorkbench — the review task and the Tasks rail.
  *
  * The one tasking path (ReviewTasksPanel.tsx header): POST /api/tasks/tasks
  * creates the task with its origin recorded as this document
  * (sourceEntityType 'authoring_document', sourceEntityId <docId>) and the
  * program in moduleData; the rail lists GET /api/tasks/tasks/by-module/Authoring
  * filtered to that origin; Complete is the path's own PATCH transition, and a
- * 428 ESIGN_REQUIRED is reported as the ceremony it is, on the Task board.
+ * 428 ESIGN_REQUIRED opens the signing ceremony on the document.
+ *
+ * 2026-10-08: the workbench sends a document for review through
+ * SendForReviewDialog (the review request, then each reviewer's task; pinned
+ * in sendForReview.test.tsx). The task create, its confirmation and its
+ * reconciliation below are AssignReviewDialog's, which that dialog reuses and
+ * the canvas card still opens directly.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiRequestError } from '@/lib/queryClient';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -49,8 +56,6 @@ const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json
 
 /** The task ledger as the mock server holds it. */
 let ledger: Array<Record<string, unknown>> = [];
-/** The review requests the mock server received, in order. */
-let requests: Array<{ url: string; body?: Record<string, unknown> }> = [];
 let patch: (taskId: string, body: Record<string, unknown>) => Response;
 
 function mockApi() {
@@ -64,20 +69,20 @@ function mockApi() {
       return ok({ sections: [{ id: SEC, doc_id: DOC, code: '2.5.1', title: 'Rationale', content: '<p>The product rationale.</p>', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });
     }
     if (url === '/api/task-management/assignees') return ok({ success: true, data: [{ id: '42', name: 'OQ Signer' }, { id: '1', name: 'Jon Smith' }], total: 2 });
-    // The review request (QA 2026-10-08, j4): recorded for the named reviewer, with the Reviewer grant.
-    if (method === 'POST' && url.endsWith('/request-review')) {
-      requests.push({ url, body });
-      const id = String((body?.reviewers as Array<{ id: string }>)?.[0]?.id ?? '');
-      return ok({ success: true, reviews: [{ reviewer_id: id, review_status: 'pending' }], grants: [{ reviewerId: id, granted: true, permissionId: 'p-1' }] });
-    }
     if (method === 'POST' && url === '/api/tasks/tasks') {
       const row = { id: ledger.length + 1, taskId: `TASK-1758-${ledger.length + 1}`, organizationId: 2, status: body?.status ?? 'pending', assigneeName: body?.assigneeId === 42 ? 'OQ Signer' : null, createdAt: '2026-09-21T18:00:00Z', ...body };
       ledger.push(row);
       return ok({ success: true, data: row });
     }
+    if (method === 'POST' && url === `/api/authoring/documents/${DOC}/request-review`) {
+      const reviewers = (body?.reviewers ?? []) as Array<{ id: string; name?: string }>;
+      return ok({ success: true, reviews: reviewers.map((r, i) => ({ id: `rev-${i + 1}`, doc_id: DOC, reviewer_id: r.id, reviewer_name: r.name ?? null, review_status: 'pending' })) });
+    }
     if (method === 'GET' && url === '/api/tasks/tasks/by-module/Authoring') {
       return ok({ success: true, data: ledger, count: ledger.length });
     }
+    // The document's review requests: none, so a review task here is a task-only assignment.
+    if (method === 'GET' && url === `/api/authoring/documents/${DOC}/reviews`) return ok({ success: true, reviews: [] });
     if (method === 'PATCH' && url.startsWith('/api/tasks/tasks/')) return patch(decodeURIComponent(url.slice('/api/tasks/tasks/'.length)), body ?? {});
     if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'C2C-101', phase: 'planning' });
     if (url.startsWith('/api/c2c/documents/')) return ok({ success: false }, 404);
@@ -90,7 +95,6 @@ const props = () => ({ surface: { id: 'document-authoring', label: 'Authoring' }
 beforeEach(() => {
   (window as any).C2C_PROJECT = { id: PID, title: 'C2C-101' };
   ledger = [];
-  requests = [];
   patch = (taskId, body) => {
     const row = ledger.find(r => r.taskId === taskId);
     if (row) row.status = body.status;
@@ -103,20 +107,18 @@ afterEach(() => {
   delete (window as any).C2C_PROJECT;
 });
 
-describe('DocumentWorkbench — Assign review', () => {
-  it('creates a review task through POST /api/tasks/tasks linked to the document, and the Tasks rail lists it with its state', async () => {
-    render(<DocumentAuthoring {...props()} />);
-    await screen.findAllByText('Rationale');
-    fireEvent.click(await screen.findByTestId('assign-review-open'));
-    const dlg = await screen.findByTestId('assign-review-dialog');
+describe('DocumentWorkbench — review tasks', () => {
+  it('the task create is POST /api/tasks/tasks linked to the document, and the Tasks rail lists it with its state', async () => {
+    const p = dialogProps();
+    render(<AssignReviewDialog {...p} docTitle="Module 2.5 Clinical Overview" sectionCode="2.5.1" />);
     // The roster is the Task board's roster.
-    await waitFor(() => expect(within(dlg).getByRole('option', { name: 'OQ Signer' })).toBeTruthy());
-    expect((within(dlg).getByTestId('ar-submit') as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.change(within(dlg).getByTestId('ar-assignee'), { target: { value: '42' } });
+    await screen.findByRole('option', { name: 'OQ Signer' });
+    expect((screen.getByTestId('ar-submit') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByTestId('ar-assignee'), { target: { value: '42' } });
     // A date that is never today or past: the row then shows the date itself, not "due today" or "overdue".
-    fireEvent.change(within(dlg).getByTestId('ar-due'), { target: { value: '2099-10-05' } });
-    fireEvent.change(within(dlg).getByTestId('ar-instructions'), { target: { value: 'Check the efficacy claims against the SAP.' } });
-    fireEvent.click(within(dlg).getByTestId('ar-submit'));
+    fireEvent.change(screen.getByTestId('ar-due'), { target: { value: '2099-10-05' } });
+    fireEvent.change(screen.getByTestId('ar-instructions'), { target: { value: 'Check the efficacy claims against the SAP.' } });
+    fireEvent.click(screen.getByTestId('ar-submit'));
 
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/tasks/tasks', expect.objectContaining({
       title: 'Review: Module 2.5 Clinical Overview',
@@ -130,9 +132,13 @@ describe('DocumentWorkbench — Assign review', () => {
     })));
     const sent = apiRequest.mock.calls.find(c => c[0] === 'POST' && c[1] === '/api/tasks/tasks')![2] as Record<string, unknown>;
     expect(String(sent.dueDate)).toMatch(/^2099-10-05T/);
+    await waitFor(() => expect(p.onCreated).toHaveBeenCalledWith({ taskId: 'TASK-1758-1', assigneeName: 'OQ Signer' }));
+    cleanup();
 
-    // The dialog closes and the Tasks rail opens on the created task.
-    await waitFor(() => expect(screen.queryByTestId('assign-review-dialog')).toBeNull());
+    // The workbench's Tasks rail lists the task the ledger now holds.
+    render(<DocumentAuthoring {...props()} />);
+    await screen.findAllByText('Rationale');
+    fireEvent.click(screen.getByTestId('tasks-rail-open'));
     const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
     const row = await within(rail).findByTestId('rt-row');
     expect(row.textContent).toContain('Review: Module 2.5 Clinical Overview');
@@ -157,21 +163,24 @@ describe('DocumentWorkbench — Assign review', () => {
     expect(within(rail).getByText('0 open · 1 total')).toBeTruthy();
   });
 
-  it('a 428 ESIGN_REQUIRED completion is reported as the §11.50 ceremony on the Task board, not swallowed', async () => {
+  it('a 428 ESIGN_REQUIRED completion opens the §11.50 ceremony on the document, not swallowed and not on the Task board', async () => {
     ledger = [{ id: 1, taskId: 'TASK-2', title: 'Review: Module 2.5 Clinical Overview', status: 'in-progress', priority: 'high', assigneeName: 'OQ Signer', assigneeId: 42, dueDate: null, description: null, sourceEntityType: 'authoring_document', sourceEntityId: DOC, approvalRequired: true, approvalStatus: null, createdAt: null }];
     patch = () => {
       throw new ApiRequestError('Completing this task requires an electronic signature.', 428, { success: false, code: 'ESIGN_REQUIRED' }, 'ESIGN_REQUIRED');
     };
     const p = props();
-    render(<DocumentAuthoring {...p} />);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    render(<QueryClientProvider client={client}><DocumentAuthoring {...p} /></QueryClientProvider>);
     await screen.findAllByText('Rationale');
     fireEvent.click(screen.getByTestId('tasks-rail-open'));
     const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
     expect((await within(rail).findByTestId('rt-row')).textContent).toContain('needs e-signature to complete');
     fireEvent.click(within(rail).getByTestId('rt-complete'));
-    expect(await within(rail).findByText(/requires an electronic signature \(21 CFR 11 §11\.50\)/)).toBeTruthy();
-    fireEvent.click(within(rail).getByRole('button', { name: 'Open Task board' }));
-    expect(p.onNav).toHaveBeenCalledWith('task-board');
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog.textContent).toContain('Electronic signature');
+    expect(within(dialog).getByLabelText(/Password/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Open Task board' })).toBeNull();
+    expect(p.onNav).not.toHaveBeenCalledWith('task-board');
     // Nothing was claimed: the state chip is unchanged.
     expect(within(rail).getByText('In progress')).toBeTruthy();
   });
@@ -294,7 +303,7 @@ describe('review assignment confirmation and context', () => {
 
 
 describe('workbench reconciles an unconfirmed review assignment', () => {
-  it('opens the task list after a lost response and shows the task that actually committed', async () => {
+  it('opens the task list after a lost task response and shows the task that actually committed', async () => {
     const original = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation(async (method, url, body) => {
       const result = await original(method, url, body);
@@ -302,16 +311,21 @@ describe('workbench reconciles an unconfirmed review assignment', () => {
       return result;
     });
     render(<DocumentAuthoring {...props()} />); await screen.findAllByText('Rationale');
-    fireEvent.click(screen.getByTestId('assign-review-open')); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
-    await screen.findByTestId('ar-error');
+    fireEvent.click(screen.getByTestId('send-for-review-open'));
+    fireEvent.click(await screen.findByTestId('sfr-reviewer-42'));
+    fireEvent.change(screen.getByTestId('sfr-reason'), { target: { value: 'Ready for medical review.' } });
+    fireEvent.click(screen.getByTestId('sfr-submit'));
+    // The request stands; the task's outcome is unknown (never "no task"), and it is not sent twice.
+    const taskLine = await screen.findByTestId('sfr-tasks');
+    expect(taskLine.textContent).toMatch(/outcome is unknown/);
+    expect(taskLine.textContent).not.toMatch(/no task/i);
     expect(ledger).toHaveLength(1);
-    expect((screen.getByTestId('ar-submit') as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(screen.getByTestId('ar-submit'));
+    expect(screen.queryByTestId('sfr-submit')).toBeNull();
     expect(apiRequest.mock.calls.filter(c => c[0] === 'POST' && c[1] === '/api/tasks/tasks')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Check existing review tasks' }));
     const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
     expect((await within(rail).findByTestId('rt-row')).textContent).toContain('Review: Module 2.5 Clinical Overview');
-    expect(screen.queryByTestId('assign-review-dialog')).toBeNull();
+    expect(screen.queryByTestId('send-for-review-dialog')).toBeNull();
   });
 });
 
@@ -332,45 +346,16 @@ describe('known assignment refusal', () => {
 
 
 /* QA 2026-10-08 (browser walk j4-authoring, docs/evidence/QA-2026-10-08/authoring/).
-   Assign review created a task and nothing else: the Review board never saw
-   the request, the reviewer was granted nothing on the document, and the author
-   could assign the review to herself. */
-describe('Assign review requests the review, before the task, and never from the author', () => {
-  it('requests the review on the document first, then creates the task, and says the reviewer was given the Reviewer role', async () => {
-    const p = dialogProps();
-    render(<AssignReviewDialog {...p} />); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
-    await waitFor(() => expect(p.onCreated).toHaveBeenCalled());
-    const posts = apiRequest.mock.calls.filter(c => c[0] === 'POST').map(c => c[1]);
-    expect(posts).toEqual([`/api/authoring/documents/${DOC}/request-review`, '/api/tasks/tasks']);
-    expect(requests[0].body).toEqual({ reviewers: [{ id: '42', name: 'OQ Signer' }] });
-    expect(p.fireToast).toHaveBeenCalledWith(expect.stringMatching(/Review requested.*Reviewer role on this document/));
-  });
-
+   The author could assign the review to herself. The roster both review
+   dialogs offer leaves the author out (useReviewerRoster). The request-review
+   cases of this walk (request first, the Reviewer grant, the author refusal)
+   moved to sendForReview.test.tsx with the request itself: on the merge with
+   the D2 ana-2c work, SendForReviewDialog is the one review-request path. */
+describe('the reviewer roster never offers the author', () => {
   it('does not offer the document’s author as its reviewer, and says why', async () => {
     render(<AssignReviewDialog {...dialogProps()} authorId="1" />);
     await screen.findByRole('option', { name: 'OQ Signer' });
     expect(screen.queryByRole('option', { name: 'Jon Smith' })).toBeNull();
     expect(screen.getByTestId('ar-author-note').textContent).toMatch(/a different person reviews/);
-  });
-
-  it('an author refusal from the server creates no task', async () => {
-    const p = dialogProps(); const original = apiRequest.getMockImplementation()!;
-    apiRequest.mockImplementation((method, url, body) => method === 'POST' && String(url).endsWith('/request-review')
-      ? Promise.reject(new ApiRequestError('The author of a document cannot review it. Choose someone else as the reviewer. Nothing was requested.', 409, {}, 'REVIEWER_IS_AUTHOR'))
-      : original(method, url, body));
-    render(<AssignReviewDialog {...p} />); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
-    expect((await screen.findByRole('alert')).textContent).toMatch(/refused.*author of a document cannot review it/i);
-    expect(apiRequest.mock.calls.filter(c => c[0] === 'POST' && c[1] === '/api/tasks/tasks')).toHaveLength(0);
-    expect(p.onCreated).not.toHaveBeenCalled();
-  });
-
-  it('a requester who may not grant access is told the reviewer was given none', async () => {
-    const p = dialogProps(); const original = apiRequest.getMockImplementation()!;
-    apiRequest.mockImplementation((method, url, body) => method === 'POST' && String(url).endsWith('/request-review')
-      ? Promise.resolve(ok({ success: true, reviews: [{ reviewer_id: '42' }], grants: [{ reviewerId: '42', granted: false, reason: 'No review access was granted: only the document’s owner or an administrator grants access to it.' }] }))
-      : original(method, url, body));
-    render(<AssignReviewDialog {...p} />); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
-    await waitFor(() => expect(p.onCreated).toHaveBeenCalled());
-    expect(p.fireToast).toHaveBeenCalledWith(expect.stringMatching(/No review access was granted/));
   });
 });

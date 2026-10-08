@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Comments rail closes on Escape and returns focus to its toggle 985ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the History rail closes on Escape and returns focus to its toggle 716ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Sources rail closes on Escape and returns focus to its toggle 905ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Signatures rail closes on Escape and returns focus to its toggle 525ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Audit rail closes on Escape and returns focus to its toggle 397ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Exports rail closes on Escape and returns focus to its toggle 563ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Comments rail has its own labelled close control 417ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the History rail has its own labelled close control 548ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Sources rail has its own labelled close control 503ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Signatures rail has its own labelled close control 435ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Audit rail has its own labelled close control 474ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Exports rail has its own labelled close control 554ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > leaves Escape to a text field inside the rail 299ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-5: the ledger verdict is announced > puts an intact verdict in a status region 583ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-5: the ledger verdict is announced > puts a broken verdict in an alert region 542ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-5: the ledger verdict is announced > puts a failed check in an alert region 375ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-6: closing the section rename returns focus to Rename > after Escape 576ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-6: closing the section rename returns focus to Rename > after Cancel 603ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-6: closing the section rename returns focus to Rename > an Escape the rename handled does not also close the AnA rail 383ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-6: closing the section rename returns focus to Rename > after a successful rename 500ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GE-P-3: governed acts the server will refuse are disabled with the reason > disables each refused act, states why, and hands the bar its refusals 329ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GE-P-3: governed acts the server will refuse are disabled with the reason > leaves every act enabled when the access is unknown — not returned, or unreadable 322ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GE-P-3: governed acts the server will refuse are disabled with the reason > enables an act the server allows 328ms
+
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+   Start at  06:00:35
+   Duration  18.19s (transform 3.46s, setup 294ms, import 4.55s, tests 11.88s, environment 978ms)
+

@@ -31,7 +31,6 @@ vi.mock('../../components/ana/useAnaChat', () => ({
   }),
 }));
 
-import { AnaRail, type AnaMessage } from '../Shell';
 import { ConversationThread } from '../surfaces/ConversationThread';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
@@ -41,9 +40,10 @@ import type { OwnedSurfaceViewProps } from '../surfaceViews';
  *
  * The rail drew a message's warnings — a save that failed, a timeout, a model
  * the request pinned that was refused — under the answer. The conversation
- * screen did not draw them at all, and the rail is not mounted while that
- * screen is open, so Home's questions (which land there) showed none of them:
- * an error rendered as a clean answer. One component now draws them on both.
+ * screen did not draw them at all, so Home's questions (which land there)
+ * showed none of them: an error rendered as a clean answer. One component,
+ * AnaMessageWarnings, draws them. The rail is gone (ONE_ANA_ONE_CANVAS.md,
+ * slice 9); the conversation is where AnA answers.
  */
 afterEach(cleanup);
 beforeEach(() => {
@@ -96,16 +96,5 @@ describe('the conversation screen', () => {
     await mount(chat(messages(undefined)));
     expect(warningsShown()).toEqual([]);
     expect(document.querySelector('.ana-msg-warnings')).toBeNull();
-  });
-});
-
-describe('the rail (control: it already showed them; one component now draws both)', () => {
-  it("shows an AnA message's warnings", () => {
-    const msgs: AnaMessage[] = [{ role: 'ana', body: 'Here is the synopsis.', warnings: [WARNING] }];
-    const surface = { id: 'vault', label: 'Vault', icon: 'vault', notes: '' } as unknown as Parameters<typeof AnaRail>[0]['surface'];
-    render(
-      <AnaRail open setOpen={() => {}} surface={surface} segment="biotech" mode="standard" setMode={() => {}} messages={msgs} onSend={() => {}} onAct={() => {}} />,
-    );
-    expect(warningsShown()).toEqual([WARNING]);
   });
 });

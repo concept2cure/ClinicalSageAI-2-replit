@@ -1,30 +1,35 @@
 /**
- * AnA's per-turn prefetch reads the project a PROGRAM is anchored to, never NaN.
+ * The route prefetch and the relational overlay read the project the person is
+ * in (ana-14, 2026-10-08).
  *
- * QA 2026-10-08 (j5, "AnA's relational overlay fails silently on every project
- * turn (program UUID coerced to NaN)"): the composer names the open project by
- * its regulatory_programs UUID. prefetchRouteIntelligenceContext converted it
- * with Number(projectId) — NaN — and handed that to loadRelationalOverlay
- * outside the isFinite guard the other project reads had, so every turn logged
- * `invalid input syntax for type integer: "NaN"` and AnA got no relational
- * notes. The session briefing took the same NaN.
+ * prefetchRouteIntelligenceContext took Number(projectId): NaN for the program
+ * UUID the v2 app sends. The project feedback, profile and regulatory snapshot
+ * reads were skipped, and the relational overlay and session briefing were sent
+ * NaN; the overlay's read failed whole, the person's own notes included
+ * (server.log:11715). The stream route now resolves the integer projects.id
+ * once and passes it (projectIdNumber); without it, only an integer names a
+ * project, and a UUID is no project rather than NaN.
  *
- * The id is now resolved once through the one project-ref resolver
- * (services/c2c/project-ref.ts): an integer is itself, a program UUID is its
- * anchored projects row, anything else is no project.
+ * The same break was found independently in the QA walk of 2026-10-08 (j5,
+ * `invalid input syntax for type integer: "NaN"` on every project turn). That
+ * fix resolved the UUID a second time inside this prefetch; on the merge the
+ * route's single resolution (stream.ts resolveTurnProject) is the one kept, and
+ * the walk's "no project named" case is carried over below.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   feedback: vi.fn(), profile: vi.fn(), rim: vi.fn(), relational: vi.fn(), external: vi.fn(),
-  briefing: vi.fn(), deadline: vi.fn(), contradictions: vi.fn(), ref: vi.fn(),
+  briefing: vi.fn(), deadline: vi.fn(), contradictions: vi.fn(), query: vi.fn(),
 }));
-vi.mock('../orchestrator.js', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../orchestrator.js')>()),
+vi.mock('../../../db.js', () => ({ pool: { query: h.query }, getPool: () => ({ query: h.query }), db: { query: h.query } }));
+vi.mock('../../../db', () => ({ pool: { query: h.query }, getPool: () => ({ query: h.query }), db: { query: h.query } }));
+vi.mock('../orchestrator.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../orchestrator.js')>(),
   prefetchProjectIntelligence: h.profile, preloadRIMContext: h.rim,
 }));
-vi.mock('../../intelligence/learning-loop-service.js', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../intelligence/learning-loop-service.js')>()),
+vi.mock('../../intelligence/learning-loop-service.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../../intelligence/learning-loop-service.js')>(),
   getFeedbackSummary: h.feedback,
 }));
 vi.mock('../relational-profile-service.js', () => ({ loadRelationalOverlay: h.relational }));
@@ -33,61 +38,62 @@ vi.mock('../../ana/session-briefing.js', () => ({ getSessionBriefing: h.briefing
 vi.mock('../../ana/deadline-radar.js', () => ({ getDeadlineRadar: h.deadline, buildDeadlineRadarBlock: () => '' }));
 vi.mock('../../ana/contradiction-watch.js', () => ({ getOpenContradictionsForOrg: h.contradictions, buildContradictionWatchBlock: () => '' }));
 vi.mock('../../decision-lifecycle-service.js', () => ({ decisionLifecycleService: { getDecisionContext: () => [] } }));
-vi.mock('../../c2c/project-ref.js', () => ({ integerProjectForRef: h.ref }));
 
 import { prefetchRouteIntelligenceContext } from '../chat-context-builder';
 
-const PROGRAM = '099991d1-dac8-43c5-b88a-8baab26194ee';
+const PROGRAM = 'd6160c9f-33d2-4be9-b779-eb27375f6e49';
+const INPUT = { organizationId: 7, projectId: PROGRAM, userId: 9, authoringContext: { sectionCode: '3.2' }, sessionStart: true };
 
 beforeEach(() => {
-  for (const m of Object.values(h)) m.mockReset();
+  for (const mock of Object.values(h)) mock.mockReset();
+  h.query.mockResolvedValue({ rows: [] });
   h.feedback.mockResolvedValue({ totalFeedback: 0 });
-  h.profile.mockResolvedValue(null);
-  h.rim.mockResolvedValue('');
-  h.relational.mockResolvedValue('Relational notes');
+  h.profile.mockResolvedValue({ regulatoryStrategy: 'Retain stability arm' });
+  h.rim.mockResolvedValue('RIM context');
+  h.relational.mockResolvedValue('Relational context');
   h.external.mockResolvedValue('');
-  h.briefing.mockResolvedValue({ block: 'Briefing' });
+  h.briefing.mockResolvedValue({ block: '' });
   h.deadline.mockResolvedValue({});
   h.contradictions.mockResolvedValue([]);
 });
 
-const anyNaN = (calls: unknown[][]) => JSON.stringify(calls.map((c) => c.map((a) => (typeof a === 'number' && Number.isNaN(a) ? 'NaN!' : a)))).includes('NaN!');
+describe('route prefetch with a program UUID', () => {
+  it('reads the project the route resolved: profile, feedback, snapshot, overlay and briefing get 42', async () => {
+    const result = await prefetchRouteIntelligenceContext({ ...INPUT, projectIdNumber: 42 });
 
-describe('prefetch — program UUID → anchored project', () => {
-  it('reads the relational overlay, briefing and project context for the anchored project', async () => {
-    h.ref.mockResolvedValue(11);
-    const result = await prefetchRouteIntelligenceContext({ projectId: PROGRAM, organizationId: 1, userId: 9, sessionStart: true });
-
-    expect(h.ref).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ ref: PROGRAM, orgId: 1 }));
-    expect(h.relational).toHaveBeenCalledWith({ organizationId: 1, userId: 9, projectId: 11 });
-    expect(h.briefing).toHaveBeenCalledWith({ organizationId: 1, projectId: 11 });
-    expect(h.feedback).toHaveBeenCalledWith(11, 1);
-    expect(h.profile).toHaveBeenCalledWith(11, 1);
-    expect(result.relationalOverlay).toBe('Relational notes');
+    expect(result.projectIdNumber).toBe(42);
+    expect(h.profile).toHaveBeenCalledWith(42, 7);
+    expect(h.feedback).toHaveBeenCalledWith(42, 7);
+    expect(h.rim).toHaveBeenCalledWith('42', 7);
+    expect(h.relational).toHaveBeenCalledWith(expect.objectContaining({ projectId: 42 }));
+    expect(h.briefing).toHaveBeenCalledWith(expect.objectContaining({ projectId: 42 }));
+    expect(result.projectProfile).toEqual({ regulatoryStrategy: 'Retain stability arm' });
+    expect(result.unavailableSources).toEqual([]);
+    // The orchestrator still names the project as the person did.
+    expect(result.orchestratorAuthoringContext?.projectId).toBe(PROGRAM);
   });
 
-  it('an unanchored program is no project: no NaN reaches any read, and nothing is reported missing', async () => {
-    h.ref.mockResolvedValue(null);
-    const result = await prefetchRouteIntelligenceContext({ projectId: PROGRAM, organizationId: 1, userId: 9, sessionStart: true });
+  it.each([null, undefined])('with no project id resolved (%s), a UUID is no project: never NaN', async projectIdNumber => {
+    const result = await prefetchRouteIntelligenceContext({ ...INPUT, projectIdNumber });
 
-    expect(h.relational).toHaveBeenCalledWith({ organizationId: 1, userId: 9, projectId: null });
-    expect(h.briefing).toHaveBeenCalledWith({ organizationId: 1, projectId: null });
-    expect(h.feedback).not.toHaveBeenCalled();
+    expect(result.projectIdNumber).toBeNull();
     expect(h.profile).not.toHaveBeenCalled();
-    for (const m of [h.relational, h.briefing, h.feedback, h.profile, h.rim]) expect(anyNaN(m.mock.calls)).toBe(false);
+    expect(h.relational).toHaveBeenCalledWith(expect.objectContaining({ projectId: null }));
+    expect(h.briefing).toHaveBeenCalledWith(expect.objectContaining({ projectId: null }));
     expect(result.unavailableSources).toEqual([]);
   });
 
-  it('an integer project id is still itself', async () => {
-    h.ref.mockResolvedValue(33);
-    await prefetchRouteIntelligenceContext({ projectId: 33, organizationId: 1, userId: 9 });
-    expect(h.relational).toHaveBeenCalledWith({ organizationId: 1, userId: 9, projectId: 33 });
-    expect(h.profile).toHaveBeenCalledWith(33, 1);
+  it('an integer project id still names its project without the route resolving it', async () => {
+    const result = await prefetchRouteIntelligenceContext({ ...INPUT, projectId: 'proj_33' });
+    expect(result.projectIdNumber).toBe(33);
+    expect(h.profile).toHaveBeenCalledWith(33, 7);
   });
 
-  it('no project named: the resolver is not asked and the overlay is user-level', async () => {
-    await prefetchRouteIntelligenceContext({ projectId: null, organizationId: 1, userId: 9 });
-    expect(h.ref).not.toHaveBeenCalled();
-    expect(h.relational).toHaveBeenCalledWith({ organizationId: 1, userId: 9, projectId: null });
+  it('no project named: nothing project-scoped is read and the overlay is user-level', async () => {
+    const result = await prefetchRouteIntelligenceContext({ ...INPUT, projectId: null });
+    expect(result.projectIdNumber).toBeNull();
+    expect(h.profile).not.toHaveBeenCalled();
+    expect(h.feedback).not.toHaveBeenCalled();
+    expect(h.relational).toHaveBeenCalledWith({ organizationId: 7, userId: 9, projectId: null });
   });
 });

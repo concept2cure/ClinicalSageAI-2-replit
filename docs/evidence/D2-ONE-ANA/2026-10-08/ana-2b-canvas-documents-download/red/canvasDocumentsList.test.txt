@@ -1,0 +1,928 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > reopened with no card in the transcript, the right column lists them, read by conversation id 5091ms
+   → Unable to find an element by: [data-testid="ct-documents"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > Open puts the document in the one editor, beside the conversation 5021ms
+   → Unable to find role="button" and name "Open Clinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a document whose card is in the transcript opens through that card: no second editor 5043ms
+   → Unable to find role="button" and name "Open Clinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > an open document reaches the list from its bar, "← Documents (2)", and focus lands on the list 5025ms
+   → Unable to find role="button" and name "Open Clinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > closing a document the list opened hands focus back to its row 5020ms
+   → Unable to find role="button" and name "Open Clinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > "This project" lists what AnA built in the open project 5024ms
+   → Unable to find an element by: [data-testid="ct-documents"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a row offers "Download working copy", with working copies only, marked as uncontrolled 5029ms
+   → Unable to find role="button" and name "Download working copy of Clinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a failed read is an error with a retry, never an empty list 5019ms
+   → Unable to find an element by: [data-testid="ct-documents-toggle"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a document the list opened whose record does not read says so beside the conversation, with a retry 5016ms
+   → Unable to find role="button" and name "Open Nonclinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > empty is said in words, and the column stays closed until asked 5016ms
+   → Unable to find an element by: [data-testid="ct-documents-toggle"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > at 1100px and narrower it never takes the screen by itself; the header opens it 5019ms
+   → Unable to find an element by: [data-testid="ct-documents-toggle"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > closed by the person, it stays closed, and focus returns to the header control 5021ms
+   → Unable to find an element by: [data-testid="ct-documents"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > is read again when an AnA turn ends 5024ms
+   → expected +0 to be 1 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-wrap"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-thread-head"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33...
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > reopened with no card in the transcript, the right column lists them, read by conversation id
+TestingLibraryElementError: Unable to find an element by: [data-testid="ct-documents"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:155:18
+    153|   it('reopened with no card in the transcript, the right column lists …
+    154|     render(<ConversationThread {...OWNED_PROPS} />);
+    155|     await screen.findByTestId('ct-documents');
+       |                  ^
+    156|     expect(pane().hidden).toBe(false);
+    157|     expect(pane().getAttribute('data-state')).toBe('list');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > Open puts the document in the one editor, beside the conversation
+TestingLibraryElementError: Unable to find role="button" and name "Open Clinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:176:34
+    174|   it('Open puts the document in the one editor, beside the conversatio…
+    175|     render(<ConversationThread {...OWNED_PROPS} />);
+    176|     fireEvent.click(await screen.findByRole('button', { name: 'Open Cl…
+       |                                  ^
+    177|     await waitFor(() => expect(pane().getAttribute('data-state')).toBe…
+    178|     expect(screen.queryByTestId('ct-documents')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a document whose card is in the transcript opens through that card: no second editor
+TestingLibraryElementError: Unable to find role="button" and name "Open Clinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:196:34
+    194|     ];
+    195|     render(<ConversationThread {...OWNED_PROPS} />);
+    196|     fireEvent.click(await screen.findByRole('button', { name: 'Open Cl…
+       |                                  ^
+    197|     await waitFor(() => expect(pane().getAttribute('data-state')).toBe…
+    198|     const canvases = screen.getAllByTestId('document-canvas').filter((…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > an open document reaches the list from its bar, "← Documents (2)", and focus lands on the list
+TestingLibraryElementError: Unable to find role="button" and name "Open Clinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:206:34
+    204|   it('an open document reaches the list from its bar, "← Documents (2)…
+    205|     render(<ConversationThread {...OWNED_PROPS} />);
+    206|     fireEvent.click(await screen.findByRole('button', { name: 'Open Cl…
+       |                                  ^
+    207|     const back = await screen.findByTestId('dc-documents');
+    208|     expect(back.textContent).toContain('Documents (2)');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > closing a document the list opened hands focus back to its row
+TestingLibraryElementError: Unable to find role="button" and name "Open Clinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:218:34
+    216|   it('closing a document the list opened hands focus back to its row',…
+    217|     render(<ConversationThread {...OWNED_PROPS} />);
+    218|     fireEvent.click(await screen.findByRole('button', { name: 'Open Cl…
+       |                                  ^
+    219|     fireEvent.click(await screen.findByTestId('dc-back'));
+    220|     await screen.findByTestId('ct-documents');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > "This project" lists what AnA built in the open project
+TestingLibraryElementError: Unable to find an element by: [data-testid="ct-documents"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:226:18
+    224|   it('"This project" lists what AnA built in the open project', async …
+    225|     render(<ConversationThread {...OWNED_PROPS} />);
+    226|     await screen.findByTestId('ct-documents');
+       |                  ^
+    227|     const projectScope = screen.getByRole('button', { name: 'This proj…
+    228|     expect(screen.getByRole('button', { name: 'This conversation' }).g…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a row offers "Download working copy", with working copies only, marked as uncontrolled
+TestingLibraryElementError: Unable to find role="button" and name "Download working copy of Clinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:241:34
+    239|   it('a row offers "Download working copy", with working copies only, …
+    240|     render(<ConversationThread {...OWNED_PROPS} />);
+    241|     fireEvent.click(await screen.findByRole('button', { name: 'Downloa…
+       |                                  ^
+    242|     const menu = screen.getByRole('menu');
+    243|     const items = within(menu).getAllByRole('menuitem').map((m) => m.g…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a failed read is an error with a retry, never an empty list
+TestingLibraryElementError: Unable to find an element by: [data-testid="ct-documents-toggle"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:264:33
+    262|     render(<ConversationThread {...OWNED_PROPS} />);
+    263|     // An unread count never opens the list by itself; the header asks…
+    264|     const toggle = await screen.findByTestId('ct-documents-toggle');
+       |                                 ^
+    265|     await waitFor(() => expect(calls).toBe(1));
+    266|     expect(pane().hidden).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a document the list opened whose record does not read says so beside the conversation, with a retry
+TestingLibraryElementError: Unable to find role="button" and name "Open Nonclinical Overview"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:287:34
+    285|     });
+    286|     render(<ConversationThread {...OWNED_PROPS} />);
+    287|     fireEvent.click(await screen.findByRole('button', { name: 'Open No…
+       |                                  ^
+    288|     const region = await screen.findByTestId('dc-expanded');
+    289|     expect(pane().contains(region)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > empty is said in words, and the column stays closed until asked
+TestingLibraryElementError: Unable to find an element by: [data-testid="ct-documents-toggle"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:303:33
+    301|     conversationRows = [];
+    302|     render(<ConversationThread {...OWNED_PROPS} />);
+    303|     const toggle = await screen.findByTestId('ct-documents-toggle');
+       |                                 ^
+    304|     await waitFor(() => expect(gets(CONVERSATION_URL).length).toBeGrea…
+    305|     expect(pane().hidden).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > at 1100px and narrower it never takes the screen by itself; the header opens it
+TestingLibraryElementError: Unable to find an element by: [data-testid="ct-documents-toggle"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:316:33
+    314|     narrow = true;
+    315|     render(<ConversationThread {...OWNED_PROPS} />);
+    316|     const toggle = await screen.findByTestId('ct-documents-toggle');
+       |                                 ^
+    317|     await waitFor(() => expect(toggle.textContent).toContain('Document…
+    318|     expect(pane().hidden).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > closed by the person, it stays closed, and focus returns to the header control
+TestingLibraryElementError: Unable to find an element by: [data-testid="ct-documents"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:326:18
+    324|   it('closed by the person, it stays closed, and focus returns to the …
+    325|     const { rerender } = render(<ConversationThread {...OWNED_PROPS} /…
+    326|     await screen.findByTestId('ct-documents');
+       |                  ^
+    327|     fireEvent.click(screen.getByRole('button', { name: 'Close the docu…
+    328|     expect(screen.queryByTestId('ct-documents')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > is read again when an AnA turn ends
+AssertionError: expected +0 to be 1 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-wrap"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-thread-head"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33...
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:338:63
+    336|     chatStreaming.current = true;
+    337|     const { rerender } = render(<ConversationThread {...OWNED_PROPS} /…
+    338|     await waitFor(() => expect(gets(CONVERSATION_URL).length).toBe(1));
+       |                                                               ^
+    339|     chatStreaming.current = false;
+    340|     rerender(<ConversationThread {...OWNED_PROPS} />);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed (13)
+   Start at  05:04:15
+   Duration  70.34s (transform 2.78s, setup 248ms, import 3.54s, tests 65.38s, environment 826ms)
+

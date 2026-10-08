@@ -1,0 +1,19 @@
+[after] Chromium (playwright 1.56.1), viewport 1280x800, rail collapsed
+rail: 56px wide, overflow: visible
+account menu box: left 8px, 248px wide
+  OK   Admin                        centre (132,194) -> the item
+  OK   Access requests              centre (132,225) -> the item
+  OK   Usage & limits               centre (132,256) -> the item
+  OK   Billing                      centre (132,287) -> the item
+  OK   Apps catalog                 centre (132,318) -> the item
+  OK   Medical Device & IVD         centre (132,381) -> the item
+  OK   Biotech & Pharma             centre (132,412) -> the item
+  OK   Diagnostics                  centre (132,443) -> the item
+  OK   CRO / Research               centre (132,474) -> the item
+  OK   Health Systems               centre (132,505) -> the item
+  OK   View all plans               centre (132,549) -> the item
+  OK   Set up a workspace           centre (132,580) -> the item
+  OK   Codebase coverage            centre (132,611) -> the item
+  OK   Get help                     centre (132,642) -> the item
+  OK   Log out                      centre (132,686) -> the item
+15 of 15 menu items receive a click at their centre

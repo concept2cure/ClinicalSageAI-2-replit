@@ -436,6 +436,12 @@ export function streamRefusalText(err: unknown): string {
   if (failure?.code === 'THREAD_FORBIDDEN') {
     return 'That conversation belongs to another user. Select your own conversation or start a new one. Your request was not sent to the AI provider.';
   }
+  /* A conversation is bound to the project it was started in; the server
+     refuses a turn that names another (slice 5, server half). The host offers
+     "New conversation in <project>" from the code recorded on the message. */
+  if (failure?.code === 'THREAD_PROJECT_MISMATCH') {
+    return 'This conversation belongs to another project. Start a new conversation in the project you have open. Your request was not sent to the AI provider.';
+  }
   if (failure?.status === 401) {
     return 'Your sign-in could not be verified. Sign in again to ask AnA. Prior turns are preserved.';
   }
@@ -510,6 +516,9 @@ function partialReplyRecoveryText(err: unknown): string {
   const failure = err as { code?: string; status?: number } | undefined;
   if (failure?.code === 'THREAD_FORBIDDEN') {
     return 'Select your own conversation or start a new one before asking again.';
+  }
+  if (failure?.code === 'THREAD_PROJECT_MISMATCH') {
+    return 'Start a new conversation in the project you have open before asking again.';
   }
   if (failure?.status === 401) return 'Sign in again before asking AnA to continue.';
   if (failure?.status === 403) return 'Ask an administrator to review your access before asking AnA to continue.';
@@ -1948,6 +1957,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               return {
                 ...m,
                 text: m.text.length > 0 ? m.text : streamRefusalText(err),
+                /* What the server refused the turn with, so a host can offer
+                   the way out the refusal names. */
+                ...(typeof err?.code === 'string' && err.code ? { refusalCode: err.code } : {}),
                 streaming: false,
                 statusPhase: undefined,
                 completedAt: Date.now(),

@@ -4,7 +4,7 @@
 //   2. One program created through the New Project wizard, then its project home.
 import fs from 'node:fs';
 import path from 'node:path';
-import { chromium, signIn, watchedPage, snap, sleep, say, BASE, OUT, writeLog } from '../qa/lib.mjs';
+import { chromium, signIn, watchedPage, snap, sleep, say, BASE, OUT, writeLog } from '../../rate-limits/scripts/lib.mjs';
 
 const RAJ = { email: 'raj.patel@concept2cure.pro', password: process.env.QA_TEAM_PASSWORD };
 if (!RAJ.password) throw new Error('QA_TEAM_PASSWORD not set');

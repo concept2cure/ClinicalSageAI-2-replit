@@ -1,0 +1,17 @@
+{
+  "publication_base": "7eb3695b36b5e403ad94f9fc88e093174b2c4687",
+  "qualification_checkpoint": "7386ce34cf624d54eed2a9e21246646d3a84f3ba",
+  "base_client_tree": "ae4345358e38f20f620b0a981516b85bcf6f7c09",
+  "qualified_client_tree": "ae4345358e38f20f620b0a981516b85bcf6f7c09",
+  "client_tree_unchanged": true,
+  "client_paths_changed": [],
+  "out_of_scope_paths": [],
+  "allowed_source_paths": [
+    "server/services/ana/run-hold.ts",
+    "server/services/ana/turn-run-policy.ts",
+    "server/routes/ana-ri/stream.ts",
+    "server/services/ana/__tests__/run-hold-cancellation.test.ts",
+    "server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts"
+  ],
+  "evidence_directory": "docs/evidence/D4/2026-10-08-ana-hold-cancellation/"
+}

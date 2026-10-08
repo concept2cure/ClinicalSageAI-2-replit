@@ -204,7 +204,8 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
 
     const box = await screen.findByPlaceholderText(/Ask about 3\.2\.S\.1/);
     fireEvent.change(box, { target: { value: 'Is this claim supported by the linked evidence?' } });
-    fireEvent.click(screen.getByRole('button', { name: /Send/ }));
+    // Exactly 'Send': the header's 'Send for review' is another act.
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     const pane = await screen.findByLabelText(/AnA — document authoring/);
     await waitFor(() => expect(pane.textContent).toMatch(/Is this claim supported/));

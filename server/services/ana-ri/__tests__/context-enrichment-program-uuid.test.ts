@@ -15,7 +15,12 @@ const h = vi.hoisted(() => ({ summary: vi.fn(), query: vi.fn(), ref: vi.fn() }))
 vi.mock('../../../db.js', () => ({ pool: { query: h.query }, getPool: () => ({ query: h.query }) }));
 vi.mock('../../../db', () => ({ pool: { query: h.query }, getPool: () => ({ query: h.query }) }));
 vi.mock('../../intelligence/project-intelligence-service.js', () => ({ getProjectIntelligence: h.summary }));
-vi.mock('../../c2c/project-ref.js', () => ({ integerProjectForRef: h.ref }));
+// The one resolution enrichContextForChat makes (strictProjectRowForRef, ana-14); this test's
+// first version mocked a second resolver inside enrichWithProjectSummary, removed on the merge.
+vi.mock('../../c2c/program-project-anchor.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../c2c/program-project-anchor.js')>()),
+  strictProjectRowForRef: h.ref,
+}));
 import { enrichContextForChat } from '../context-enrichment';
 
 const PROGRAM = '099991d1-dac8-43c5-b88a-8baab26194ee';

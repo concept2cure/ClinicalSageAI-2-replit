@@ -278,8 +278,8 @@ describe('DocumentCanvas — accessibility smoke', () => {
     fireEvent.click(screen.getByTestId('dc-assign-review'));
     const dlg = await screen.findByRole('dialog');
     expect(dlg.getAttribute('aria-modal')).toBe('true');
-    expect(document.getElementById(dlg.getAttribute('aria-labelledby')!)?.textContent).toBe('Assign review');
-    expect(screen.getByLabelText(/Reviewer/)).toBeTruthy();
+    expect(document.getElementById(dlg.getAttribute('aria-labelledby')!)?.textContent).toBe('Send for review');
+    expect(screen.getByLabelText(/Reason for the request/)).toBeTruthy();
     fireEvent.keyDown(document, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });

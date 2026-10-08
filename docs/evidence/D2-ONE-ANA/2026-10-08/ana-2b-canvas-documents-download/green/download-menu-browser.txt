@@ -1,0 +1,15 @@
+# Download menu in a real browser — after this change
+# Same harness and browser; the tree's DownloadMenu.tsx and authoring-v2.css. run: node browser/check.mjs after.js current <out>
+
+authoring 1440px  menu open: true  position: fixed  background: rgb(250, 249, 245)  top layer: true  items hit-testable: 5 of 5  scroller scrollTop after open: 0  focus: Working copy (Word)  download: Clinical_Overview_working_copy.pdf (21 bytes)  
+authoring  390px  menu open: true  position: fixed  background: rgb(250, 249, 245)  top layer: true  items hit-testable: 5 of 5  scroller scrollTop after open: 0  focus: Working copy (Word)  download: Clinical_Overview_working_copy.pdf (21 bytes)  
+canvas    1440px  menu open: true  position: fixed  background: rgb(250, 249, 245)  top layer: true  items hit-testable: 5 of 5  scroller scrollTop after open: 0  focus: Working copy (Word)  download: Clinical_Overview_working_copy.pdf (21 bytes)  
+canvas     390px  menu open: true  position: fixed  background: rgb(250, 249, 245)  top layer: true  items hit-testable: 5 of 5  scroller scrollTop after open: 0  focus: Working copy (Word)  download: Clinical_Overview_working_copy.pdf (21 bytes)  
+list      1440px  menu open: true  position: fixed  background: rgb(250, 249, 245)  top layer: true  items hit-testable: 2 of 2  scroller scrollTop after open: 0  focus: Working copy (Word)  download: Clinical_Overview_working_copy.pdf (21 bytes)  list scrolled 40px: button top 145->145, menu-to-button gap 6->6px  
+list       390px  menu open: true  position: fixed  background: rgb(250, 249, 245)  top layer: true  items hit-testable: 2 of 2  scroller scrollTop after open: 0  focus: Working copy (Word)  download: Clinical_Overview_working_copy.pdf (21 bytes)  list scrolled 40px: button top 221->181, menu-to-button gap 6->6px  
+  toast authoring 1440px [ok] Working copy of Clinical Overview (PDF) requested in your browser. Every page is marked DRAFT — uncontrolled copy.
+  toast authoring 390px [ok] Working copy of Clinical Overview (PDF) requested in your browser. Every page is marked DRAFT — uncontrolled copy.
+  toast canvas 1440px [ok] Working copy of Clinical Overview (PDF) requested in your browser. Every page is marked DRAFT — uncontrolled copy.
+  toast canvas 390px [ok] Working copy of Clinical Overview (PDF) requested in your browser. Every page is marked DRAFT — uncontrolled copy.
+  toast list 1440px [ok] Working copy of Clinical Overview (PDF) requested in your browser. Every page is marked DRAFT — uncontrolled copy.
+  toast list 390px [ok] Working copy of Clinical Overview (PDF) requested in your browser. Every page is marked DRAFT — uncontrolled copy.

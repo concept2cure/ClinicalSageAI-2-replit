@@ -1,0 +1,16 @@
+# 2026-10-08T06:32:54Z npx vitest run --config vitest.config.ts server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts
+# sources: before review: the implementer's stream.ts and context-enrichment.ts, program-project-anchor.ts at HEAD (chat-context-builder.ts and relational-profile-service.ts are the same in both)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id NaN, never sending it 2ms
+ ✓ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id 0, never sending it 1ms
+ ✓ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id -1, never sending it 0ms
+ ✓ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id 1.5, never sending it 0ms
+ ✓ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > passes an integer project id through 0ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  06:32:55
+   Duration  620ms (transform 198ms, setup 139ms, import 96ms, tests 8ms, environment 0ms)
+

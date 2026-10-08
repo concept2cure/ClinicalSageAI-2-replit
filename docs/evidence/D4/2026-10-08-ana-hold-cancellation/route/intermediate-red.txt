@@ -1,0 +1,130 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts
+{
+  "timestamp": "2026-10-08T05:53:43.852Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:53:43.852Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts
+{
+  "timestamp": "2026-10-08T05:53:43.852Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold reads through the production route > person hold ends before its pending read, and ignores a later stale paused result 84ms
+   → canceled hold consumed queued instructions: expected 1 to be +0 // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold reads through the production route > manual hold ends before its pending read, and ignores a later stale paused result 61ms
+   → canceled hold consumed queued instructions: expected 3 to be 2 // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold wakes through the production route > person hold ends while the 5 s wake remains unresolved 56ms
+   → canceled hold consumed queued instructions: expected 1 to be +0 // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold wakes through the production route > manual hold ends while the 5 s wake remains unresolved 56ms
+   → canceled hold consumed queued instructions: expected 3 to be 2 // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > normal Continue still answers a parent hold > person hold resumes and runs the intended step 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > normal Continue still answers a parent hold > manual hold resumes and runs the intended step 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold reads through the production route > person hold ends before its pending read, and ignores a later stale paused result
+AssertionError: canceled hold consumed queued instructions: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts:158:71
+    156|       expectStopped(pending.state.events);
+    157|       expect(h.state.wakes).toEqual([]);
+    158|       expect(io.drains, 'canceled hold consumed queued instructions').…
+       |                                                                       ^
+    159|       read.resolve('paused');
+    160|       await checkpoint();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold reads through the production route > manual hold ends before its pending read, and ignores a later stale paused result
+AssertionError: canceled hold consumed queued instructions: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts:158:71
+    156|       expectStopped(pending.state.events);
+    157|       expect(h.state.wakes).toEqual([]);
+    158|       expect(io.drains, 'canceled hold consumed queued instructions').…
+       |                                                                       ^
+    159|       read.resolve('paused');
+    160|       await checkpoint();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold wakes through the production route > person hold ends while the 5 s wake remains unresolved
+AssertionError: canceled hold consumed queued instructions: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts:188:71
+    186|       expectStopped(pending.state.events);
+    187|       expect(h.state.wakes).toEqual([5_000]);
+    188|       expect(io.drains, 'canceled hold consumed queued instructions').…
+       |                                                                       ^
+    189|     } finally {
+    190|       h.state.forced = 'cancelled';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold wakes through the production route > manual hold ends while the 5 s wake remains unresolved
+AssertionError: canceled hold consumed queued instructions: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts:188:71
+    186|       expectStopped(pending.state.events);
+    187|       expect(h.state.wakes).toEqual([5_000]);
+    188|       expect(io.drains, 'canceled hold consumed queued instructions').…
+       |                                                                       ^
+    189|     } finally {
+    190|       h.state.forced = 'cancelled';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  13:53:40
+   Duration  6.90s (transform 3.95s, setup 68ms, import 6.33s, tests 273ms, environment 0ms)

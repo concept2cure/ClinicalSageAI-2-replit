@@ -1,0 +1,62 @@
+GREEN: the working tree as it stands.
+npx vitest run --config vitest.config.ts <the file(s) below>
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > exactly the places, in order 409ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > every entry opens a screen in this release 48ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Quality is on the rail, and opens Quality 273ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > New conversation opens Home, where the one conversation starts 162ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > no entry carries an AnA badge, and no section lists retired or locked screens 25ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > the mark goes to Home 86ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > the rail’s Conversation entry opens the conversation screen, and is marked when it is open 111ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > ⌘K finds Conversation and opens the conversation screen 48ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the task board filtered to the signed-in person’s tasks 315ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the board at its own address, not the action’s alias 77ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Artifacts center, no longer a rail entry, is reached from ⌘K > the top bar’s search opens the palette, and the result opens Artifacts center 185ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > offers the Apps catalog 126ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > offers every client type once, the current one checked, by more than colour 155ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > choosing a client type sets it 84ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > choosing the type already chosen changes nothing and closes the menu 99ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 50ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 105ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 69ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 109ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 89ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > a rail entry that applies a screen action names a registered, ungoverned action on its own screen 3ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every rail entry opens Home or a registered surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every NAV_GROUP_OF / NAV_HIDDEN id resolves to a registered surface 2ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every segment-module item resolves to a registered surface 8ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every surface-scoped action key resolves (except the _default catch-all) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > deep-link aliases point at registered surfaces 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every segment defaultSurface resolves 3ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > client-type tier listings partition sensibly 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > CMC / Module 3 is not a place in this release, and not a hidden surface either 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > Quality is a place, not a hidden surface 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > AnA modes display engine labels, never vendor/model names 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > each mode names its effort, in the words of the effort the server runs 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > getAnaContext derives a context for unknown surfaces without throwing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > getAnaContext uses surface-tuned context where the kit ships one 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > the e-sign meaning enum is the INSTALL §5 ten-value list 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > client categories carry icons for the account menu 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > the retired lane ids are gone from SEGMENTS — one lane, not three 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > getSegment('biotech') and getSegment('pharma') resolve to the merged lane 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > one module list serves both retired ids — the duplicate is deleted, not hidden 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > the client type list offers the merged lane once, not the two company labels 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every rail client-category id resolves to a real segment 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > getAnaContext says only what is true about where the person is > no authoring surface reports a section or sends a prompt that presumes one 8ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > getAnaContext says only what is true about where the person is > the focus on an authoring surface does not change with the client type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > getAnaContext says only what is true about where the person is > no registered surface puts an internal identifier in module, here or focus 80ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > getAnaContext says only what is true about where the person is > Home is named Home, not by its raw id 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > no nav entry promises a feature that does not exist > there is no "Starred Items" entry (nothing in the product can be starred) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > no nav entry promises a feature that does not exist > Projects, the destination that entry opened, is on the rail 0ms
+
+ Test Files  2 passed (2)
+      Tests  50 passed (50)
+   Start at  06:07:09
+   Duration  6.92s (transform 2.00s, setup 402ms, import 2.20s, tests 2.76s, environment 1.04s)
+

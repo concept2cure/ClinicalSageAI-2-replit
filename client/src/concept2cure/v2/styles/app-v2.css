@@ -27,9 +27,6 @@
   --idle-muted: #eeece4;
   --rail: 264px;
   --rail-collapsed: 56px;
-  --ana: 380px;
-  /* No right rail, so no seam for it (ONE_ANA_ONE_CANVAS.md, slice 9). */
-  --ana-seam: 0px;
 
   /* Fixed near-black for shadow tinting. Declared here because the shell USES it
      (admin-access.css) while the only other declaration in the app graph is
@@ -402,7 +399,6 @@
 /* port helpers — the kit expressed these as one-off inline style attributes;
    classes keep the TSX clean and the CSP surface minimal */
 .c2c-v2 .ana-hidden-input { display: none; }
-.c2c-v2 .ana-ctx-module-mid { flex: 1; }
 .c2c-v2 .rail-account .chev { color: var(--text-400); font-size: 14px; }
 .c2c-v2 .cmdk-list { max-height: 380px; }
 .c2c-v2 .cmdk-empty { padding: 20px 16px; text-align: center; color: var(--text-400); font-size: 12px; }
@@ -666,10 +662,6 @@
 .c2c-v2 .tdo-chk{margin-left:auto;color:var(--accent-100)!important;font-size:15px;}
 .c2c-v2 .tb-dom-foot{display:flex;gap:7px;align-items:flex-start;padding:9px 8px 5px;margin-top:4px;border-top:1px solid var(--border);font-size:10.5px;line-height:1.45;color:var(--text-400);}
 .c2c-v2 .tb-dom-foot .ico{font-size:13px;flex-shrink:0;margin-top:1px;}
-/* rail "in your domain" cue — accent bar on the active segment's focus modules (not a regroup) */
-.c2c-v2 .nav-item[data-focus]{position:relative;}
-.c2c-v2 .nav-item[data-focus]:not([aria-current])::before{content:'';position:absolute;left:1px;top:50%;transform:translateY(-50%);width:2.5px;height:14px;border-radius:2px;background:var(--accent-100);opacity:.8;}
-.c2c-v2 .nav-item[data-focus] .lbl{color:var(--text-100);}
 
 /* ════════ Orchestration (workflowRuns · approvalCheckpoints · readinessEvaluations) ════════ */
 .c2c-v2 .pj-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin:2px 0 18px;}
@@ -1049,41 +1041,16 @@
 @media(max-width:980px){.c2c-v2 .pj-grid{grid-template-columns:1fr;}}
 .c2c-v2 .pj-main{display:flex;flex-direction:column;gap:20px;min-width:0;}
 .c2c-v2 .pj-side{display:flex;flex-direction:column;gap:14px;position:sticky;top:14px;}
-.c2c-v2 .pj-convo{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:16px;background:var(--bg-000);overflow:hidden;box-shadow:0 1px 2px rgb(20 20 19 / .04);}
-.c2c-v2 .pj-convo-h{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--bg-050);}
-.c2c-v2 .pj-convo-mark{width:24px;height:24px;border-radius:7px;background:var(--accent-000);color:var(--accent-100);display:flex;align-items:center;justify-content:center;}
-.c2c-v2 .pj-convo-mark svg{width:14px;height:14px;}
-.c2c-v2 .pj-convo-id{display:flex;flex-direction:column;min-width:0;flex:1;}
-.c2c-v2 .pj-convo-t{font-size:12.5px;font-weight:600;color:var(--text-100);}
-.c2c-v2 .pj-convo-ctx{font-size:11px;color:var(--text-300);}
-.c2c-v2 .pj-convo-open{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--accent-200);font-weight:500;flex-shrink:0;}
-.c2c-v2 .pj-convo-open svg{width:13px;height:13px;}
-.c2c-v2 .pj-convo-scroll{max-height:360px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;}
-.c2c-v2 .pj-convo-activity{border:1px solid var(--border);border-radius:10px;background:var(--bg-050);padding:9px 11px;}
-.c2c-v2 .pj-convo-act-h{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:6px;}
-.c2c-v2 .pj-convo-act{display:flex;align-items:baseline;gap:8px;padding:3px 0;font-size:12px;}
-.c2c-v2 .pj-convo-act-who{font-weight:600;color:var(--text-300);min-width:54px;flex-shrink:0;}
-.c2c-v2 .pj-convo-act-who[data-ana]{color:var(--accent-200);}
-.c2c-v2 .pj-convo-act-what{flex:1;color:var(--text-200);}
-.c2c-v2 .pj-convo-act-when{color:var(--text-400);font-size:11px;flex-shrink:0;}
-.c2c-v2 .pj-msg{display:flex;gap:9px;max-width:100%;}
-.c2c-v2 .pj-msg.user{justify-content:flex-end;}
-.c2c-v2 .pj-msg-av{width:24px;height:24px;border-radius:50%;background:var(--accent-000);color:var(--accent-100);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.c2c-v2 .pj-msg-av svg{width:13px;height:13px;}
-.c2c-v2 .pj-msg-b{font-size:13px;line-height:1.55;color:var(--text-100);border-radius:12px;padding:9px 12px;max-width:82%;}
-.c2c-v2 .pj-msg.ana .pj-msg-b{background:var(--bg-100);}
-.c2c-v2 .pj-msg.user .pj-msg-b{background:var(--accent-strong);color:var(--accent-on-strong);}
-.c2c-v2 .pj-msg-typing{display:inline-flex;gap:4px;align-items:center;}
-.c2c-v2 .pj-msg-typing span{width:6px;height:6px;border-radius:50%;background:var(--text-400);animation:pjtype 1.2s infinite;}
-.c2c-v2 .pj-msg-typing span:nth-child(2){animation-delay:.2s;}
-.c2c-v2 .pj-msg-typing span:nth-child(3){animation-delay:.4s;}
-@keyframes pjtype{0%,60%,100%{opacity:.3;}30%{opacity:1;}}
-.c2c-v2 .pj-convo .pj-composer{border:none;border-top:1px solid var(--border);border-radius:0;box-shadow:none;}
-.c2c-v2 .pj-convo .pj-composer:focus-within{box-shadow:none;}
+.c2c-v2 .pj-convo{display:flex;flex-direction:column;gap:8px;}
 .c2c-v2 .pj-composer{border:1.5px solid var(--accent-muted);border-radius:14px;background:var(--bg-000);padding:13px 14px;box-shadow:0 1px 2px rgb(20 20 19 / .04);}
 .c2c-v2 .pj-composer:focus-within{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
-.c2c-v2 .pj-composer textarea{width:100%;border:none;background:none;outline:none;resize:none;font-family:var(--font-sans);font-size:14px;line-height:1.5;color:var(--text-100);}
+.c2c-v2 .pj-composer textarea{display:block;width:100%;min-width:0;box-sizing:border-box;border:none;background:none;outline:none;resize:none;font-family:var(--font-sans);font-size:14px;line-height:1.5;color:var(--text-100);}
 .c2c-v2 .pj-composer textarea::placeholder{color:var(--text-400);}
+/* Project home's start box (ONE_ANA_ONE_CANVAS.md §2.3): a heading and the
+   composer. The chat chrome it replaced (header, bubbles, typing dots) went
+   with the pretend conversation it drew. */
+.c2c-v2 .pj-start-h{display:flex;flex-direction:column;gap:2px;}
+.c2c-v2 .pj-start-h h2{margin:0;font-size:15px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .pj-composer-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
 .c2c-v2 .pj-comp-attach{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-300);font-size:16px;}
 .c2c-v2 .pj-comp-attach:hover{border-color:var(--accent-100);color:var(--accent-100);}
@@ -1096,6 +1063,10 @@
 .c2c-v2 .pj-sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px;}
 .c2c-v2 .pj-sec-h h2{font-size:13.5px;font-weight:600;color:var(--text-100);margin:0;}
 .c2c-v2 .pj-sec-h .sec-sub{font-size:11px;color:var(--text-400);}
+/* The project's files on the Evidence stage (slice 23): the editor's files
+   panel, bounded so a large vault scrolls inside the section, not the page. */
+.c2c-v2 .pj-evidence .pf-search{padding:0 0 10px;border-bottom:none;}
+.c2c-v2 .pj-evidence .pf-list{max-height:480px;border:1px solid var(--border);border-radius:var(--radius-md);}
 .c2c-v2 .pj-convo{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:10px 6px;border-bottom:1px solid var(--border);}
 .c2c-v2 .pj-convo:last-child{border-bottom:none;}
 .c2c-v2 .pj-convo:hover{background:var(--bg-050);border-radius:var(--radius-lg);}
@@ -1306,7 +1277,9 @@
 .c2c-v2 ::-webkit-scrollbar-thumb:hover{background:rgba(20,20,19,.2);background-clip:padding-box;}
 
 /* ── Shell grid ── */
-.c2c-v2.shell{display:grid;grid-template-columns:var(--rail) 1fr var(--ana);grid-template-rows:100vh;height:100vh;overflow:hidden;background:var(--bg-000);}
+/* Two columns, nav | page. The third, AnA's, went with the right rail
+   (docs/design/ONE_ANA_ONE_CANVAS.md, slices 9 and 2A). */
+.c2c-v2.shell{display:grid;grid-template-columns:var(--rail) 1fr;grid-template-rows:100vh;height:100vh;overflow:hidden;background:var(--bg-000);}
 /* ── Phone-width rail (<=640px) ──
    At 430px the 264px expanded rail crushed the content column to nothing —
    the whole app behind an open rail was unusable. The grid now always
@@ -1328,41 +1301,6 @@
   }
   .c2c-v2.shell:not([data-collapsed="true"]) .rail-scrim { display: block; }
 }
-/* ── Tablet- and phone-width AnA rail (<=900px) ──
-     The AnA column had no breakpoint at all: with the rail open the grid was
-     `56px | 1fr | 380px` on a 390px screen — the centre column negative, the
-     conversation rail alone wider than the viewport, and its composer off the
-     right edge. Same treatment as the rail: the grid gives the column up
-     (`0`), and the open rail paints OVER the content as a fixed drawer from
-     the right, above `.ana-scrim`, which tap-closes it; Escape does the same
-     through the shell-level listener. The closed state keeps its 32px seam so
-     the way back in is still on screen. Measured before this rule: at 834px
-     and 768px the three-column grid left a 398px / 332px content column; at
-     430px the content column was 0px; at 390px the AnA composer was off the
-     right edge. Nothing here applies above 900px. */
-@media (max-width: 900px) {
-  .c2c-v2.shell[data-ana-open="true"] { grid-template-columns: var(--rail) 1fr 0; }
-  .c2c-v2.shell[data-ana-open="true"][data-collapsed="true"] { grid-template-columns: var(--rail-collapsed) 1fr 0; }
-  .c2c-v2.shell[data-ana-open="true"] .ana {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: min(380px, 92vw);
-    z-index: 61;
-    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.25);
-  }
-  .c2c-v2.shell[data-ana-open="true"] .ana-scrim { display: block; }
-}
-.c2c-v2 .ana-scrim {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  background: rgba(0, 0, 0, 0.35);
-  animation: rail-scrim-in 200ms ease-out;
-}
-@media (prefers-reduced-motion: reduce) { .c2c-v2 .ana-scrim { animation: none; } }
 .c2c-v2 .rail-scrim {
   display: none;
   position: fixed;
@@ -1373,15 +1311,15 @@
 }
 @keyframes rail-scrim-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .c2c-v2 .rail-scrim { animation: none; } }
-.c2c-v2.shell[data-collapsed="true"]{grid-template-columns:var(--rail-collapsed) 1fr var(--ana);}
-.c2c-v2.shell[data-ana-open="false"]{grid-template-columns:var(--rail) 1fr var(--ana-seam);}
-.c2c-v2.shell[data-collapsed="true"][data-ana-open="false"]{grid-template-columns:var(--rail-collapsed) 1fr var(--ana-seam);}
-/* editor & other AnA-hidden surfaces: no trailing assist column */
-.c2c-v2.shell[data-editor="true"]{grid-template-columns:var(--rail) 1fr 0;}
-.c2c-v2.shell[data-editor="true"][data-collapsed="true"]{grid-template-columns:var(--rail-collapsed) 1fr 0;}
+.c2c-v2.shell[data-collapsed="true"]{grid-template-columns:var(--rail-collapsed) 1fr;}
 
 /* ── Rail ── */
-.c2c-v2 .rail{grid-column:1;grid-row:1;height:100vh;display:flex;flex-direction:column;background:var(--bg-100);border-right:1px solid var(--border);overflow:hidden;}
+/* The rail does not clip: its account menu opens above the account button and
+   is 248px wide, wider than the 56px collapsed rail (the default). Clipped,
+   the menu showed a 48px sliver and a click on any item landed on the scrim
+   and closed it; the client type and the Apps catalog are in that menu. The
+   list scrolls and clips inside .rail-scroll instead. */
+.c2c-v2 .rail{grid-column:1;grid-row:1;height:100vh;display:flex;flex-direction:column;background:var(--bg-100);border-right:1px solid var(--border);min-width:0;}
 .c2c-v2 .rail-top{display:flex;align-items:center;justify-content:space-between;height:var(--topbar);padding:0 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .c2c-v2 .rail-logo{display:flex;align-items:center;gap:9px;min-width:0;}
 .c2c-v2 .rail-logo img{width:24px;height:24px;flex-shrink:0;border-radius:var(--radius-md);}
@@ -1394,8 +1332,7 @@
 .c2c-v2 .rail-foot .rail-collapse{margin:0 auto 6px;}
 .c2c-v2 .rail-collapse{width:26px;height:26px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-300);flex-shrink:0;font-size:16px;}
 .c2c-v2 .rail-collapse:hover{background:var(--bg-200);color:var(--text-100);}
-.c2c-v2 .rail-scroll{flex:1;overflow-y:auto;padding:6px 0 12px;}
-.c2c-v2 .rail-section{padding:14px 18px 5px;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);}
+.c2c-v2 .rail-scroll{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;padding:6px 0 12px;}
 .c2c-v2 .rc-move{color:var(--success);font-weight:600;}
 .c2c-v2 .rc-move-tag{font-size:10px;color:var(--text-400);font-weight:400;}
 .c2c-v2 .riskmx-dot[data-moved]{box-shadow:0 0 0 2px var(--success-muted);}
@@ -1405,7 +1342,6 @@
 .c2c-v2 .risk-br-cta{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--accent-200);background:var(--bg-000);border:1px solid var(--accent-muted);border-radius:var(--radius-md);padding:6px 10px;white-space:nowrap;flex-shrink:0;cursor:pointer;}
 .c2c-v2 .risk-br-cta:hover{background:var(--accent-000);}
 .c2c-v2 .risk-br-cta svg{width:13px;height:13px;}
-.c2c-v2.shell[data-collapsed="true"] .rail-section{height:1px;padding:8px 0 0;margin:0 12px;overflow:hidden;color:transparent;border-top:1px solid var(--border);}
 .c2c-v2 .rail-nav{display:flex;flex-direction:column;gap:1px;padding:0 8px;}
 .c2c-v2 .nav-item{display:flex;align-items:center;gap:10px;min-height:30px;padding:5px 8px;border-radius:var(--radius-md);color:var(--text-200);font-size:13px;transition:background var(--dur) var(--ease);white-space:nowrap;overflow:hidden;width:100%;position:relative;}
 .c2c-v2 .nav-item .ico{width:16px;height:16px;font-size:16px;flex-shrink:0;color:var(--text-400);display:flex;align-items:center;justify-content:center;}
@@ -1419,21 +1355,12 @@
 .c2c-v2 .nav-item[aria-current="page"]{background:var(--accent-000);color:var(--accent-200);font-weight:500;}
 .c2c-v2 .nav-item[aria-current="page"] .ico{color:var(--accent-100);}
 .c2c-v2 .nav-item[aria-current="page"]::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:2.5px;border-radius:2px;background:var(--accent-100);}
-/* A chosen client category is a setting (aria-pressed), not a location: an
-   inset ring and the accent icon — a shape as well as a colour — and never the
-   current-page fill and bar. */
-.c2c-v2 .nav-item[aria-pressed="true"]{color:var(--text-100);font-weight:500;box-shadow:inset 0 0 0 1px var(--accent-muted);}
-.c2c-v2 .nav-item[aria-pressed="true"] .ico{color:var(--accent-100);}
-.c2c-v2.shell[data-collapsed="true"] .nav-item .lbl, .c2c-v2.shell[data-collapsed="true"] .nav-dot{display:none;}
+/* The client type is no longer a rail entry (it is the account menu's
+   "Client type", a checked menu item), so no rail rule draws a chosen one. */
+.c2c-v2.shell[data-collapsed="true"] .nav-item .lbl{display:none;}
 .c2c-v2.shell[data-collapsed="true"] .nav-item{justify-content:center;padding:5px;}
-.c2c-v2 .nav-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.c2c-v2 .nav-dot[data-r="contract-ready"]{background:var(--success);}
-.c2c-v2 .nav-dot[data-r="routes-ready"]{background:var(--ai);}
-.c2c-v2 .nav-dot[data-r="kit-only"]{background:var(--warning);}
-.c2c-v2 .nav-dot[data-r="planned"]{background:var(--idle);}
-/* license indicator — green light = entitled · lock = not licensed */
+/* license indicator — a lock = not licensed */
 .c2c-v2 .nav-lic{flex-shrink:0;display:flex;align-items:center;justify-content:center;}
-.c2c-v2 .nav-lic[data-lic="on"]{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 2px var(--success-muted);}
 .c2c-v2 .nav-lic[data-lic="off"]{font-size:13px;color:var(--text-400);}
 .c2c-v2 .nav-item:hover .nav-lic[data-lic="off"]{color:var(--warning);}
 .c2c-v2.shell[data-collapsed="true"] .nav-lic{display:none;}
@@ -1468,10 +1395,6 @@
 .c2c-v2 .nav-unlock-status{margin-top:2px;font-size:11.5px;font-weight:500;color:var(--text-400);}
 .c2c-v2 .nav-unlock-body{margin:12px 0 0;font-size:13px;line-height:1.55;color:var(--text-300);}
 .c2c-v2 .nav-unlock-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
-.c2c-v2 .nav-badge{margin-left:auto;flex-shrink:0;font-size:10px;font-weight:600;letter-spacing:.02em;color:var(--accent-on-strong);background:var(--accent-strong);border-radius:999px;padding:1px 6px;}
-.c2c-v2 .nav-count{margin-left:auto;flex-shrink:0;font-size:10.5px;font-weight:600;color:var(--text-400);background:var(--bg-200);border-radius:999px;padding:1px 7px;min-width:20px;text-align:center;}
-.c2c-v2 .nav-item[aria-current="page"] .nav-count{color:var(--accent-200);background:var(--accent-muted);}
-.c2c-v2.shell[data-collapsed="true"] .nav-badge, .c2c-v2.shell[data-collapsed="true"] .nav-count{display:none;}
 .c2c-v2 .rail-foot{flex-shrink:0;border-top:1px solid var(--border);padding:8px;}
 .c2c-v2 .rail-account{display:flex;align-items:center;gap:9px;width:100%;padding:6px 8px;border-radius:var(--radius-md);}
 .c2c-v2 .rail-account:hover{background:var(--bg-200);}
@@ -1513,12 +1436,10 @@
    1100px — the search box is its icon and ⌘K. Shrunk further it showed a
    clipped sliver of its label and still took the crumbs' room. The button's
    aria-label (Shell.tsx) keeps its name when the label is not drawn. */
-@media (max-width:1500px){.c2c-v2.shell[data-ana-open="true"] .tb-cmdk .lbl{display:none;}.c2c-v2.shell[data-ana-open="true"] .tb-cmdk{flex:0 0 auto;min-width:0;}}
 @media (max-width:1100px){.c2c-v2 .tb-cmdk .lbl{display:none;}.c2c-v2 .tb-cmdk{flex:0 0 auto;min-width:0;}}
 /* Same pressure, the crumbs: the root crumb repeats the brand mark beside it,
    so it goes first rather than ellipsizing to "Concept2…" and taking the page
    name's room. */
-@media (max-width:1500px){.c2c-v2.shell[data-ana-open="true"] .crumbs .crumb-root,.c2c-v2.shell[data-ana-open="true"] .crumbs .crumb-root-sep{display:none;}}
 @media (max-width:1100px){.c2c-v2 .crumbs .crumb-root,.c2c-v2 .crumbs .crumb-root-sep{display:none;}}
 .c2c-v2 .tb-cmdk .kbd{font-family:var(--font-mono);font-size:10px;padding:1px 5px;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-400);}
 .c2c-v2 .tb-btn{width:32px;height:32px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-400);font-size:17px;}
@@ -1668,55 +1589,13 @@
 .c2c-v2 .fc-detail-ask:hover{background:var(--bg-100);}.c2c-v2 .fc-detail-ask svg{width:15px;height:15px;}
 
 
-/* ── AnA rail ── */
-.c2c-v2 .ana{grid-column:3;grid-row:1;height:100vh;display:flex;flex-direction:column;min-height:0;background:var(--bg-050);border-left:1px solid var(--border);overflow:hidden;}
-.c2c-v2 .ana-seam{grid-column:3;grid-row:1;height:100vh;display:flex;align-items:flex-start;justify-content:center;background:var(--bg-100);border-left:1px solid var(--border);}
-.c2c-v2 .ana-seam-btn{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0;width:100%;color:var(--text-400);}
-.c2c-v2 .ana-seam-btn:hover{color:var(--accent-100);}
-.c2c-v2 .ana-seam-mark{font-size:15px;color:var(--accent-100);}
-.c2c-v2 .ana-seam-label{writing-mode:vertical-rl;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;}
-.c2c-v2 .ana-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.c2c-v2 .ana-id{display:flex;align-items:center;gap:9px;}
-.c2c-v2 .ana-id-mark{width:26px;height:26px;border-radius:7px;background:var(--accent-000);color:var(--accent-100);display:flex;align-items:center;justify-content:center;font-size:14px;}
-.c2c-v2 .ana-id-name{font-size:13px;font-weight:600;}
-.c2c-v2 .ana-id-model{font-size:10px;color:var(--text-400);}
-.c2c-v2 .ana-actions{display:flex;gap:2px;}
+/* ── AnA, shared pieces (the right rail that first used them is gone) ── */
 .c2c-v2 .ana-modes{display:flex;gap:4px;padding:10px 12px;border-bottom:1px solid var(--border);}
 .c2c-v2 .ana-mode{flex:1;display:flex;flex-direction:column;gap:1px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);transition:background var(--dur), border-color var(--dur);}
 .c2c-v2 .ana-mode .l{font-size:11px;font-weight:500;}
 .c2c-v2 .ana-mode .m{font-size:10px;color:var(--text-400);}
 .c2c-v2 .ana-mode.on{border-color:var(--accent-100);background:var(--accent-000);}
 .c2c-v2 .ana-mode.on .l{color:var(--accent-200);}
-.c2c-v2 .ana-body{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:14px;}
-.c2c-v2 .ana-ctx{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:11px;}
-.c2c-v2 .ana-ctx-prog{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--accent-200);}
-.c2c-v2 .ana-ctx-prog .ico{font-size:13px;}
-.c2c-v2 .ana-ctx-cell{display:flex;flex-direction:column;gap:4px;}
-.c2c-v2 .ana-ctx-k{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-400);font-weight:600;}
-.c2c-v2 .ana-ctx-section{font-size:14px;font-weight:600;color:var(--text-100);font-family:var(--font-serif);}
-.c2c-v2 .ana-ctx-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.c2c-v2 .ana-ctx-stage{display:inline-flex;align-self:flex-start;padding:2px 9px;border-radius:999px;background:var(--warning-muted);color:var(--warning);font-size:11px;font-weight:600;}
-.c2c-v2 .ana-ctx-ready{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text-100);}
-.c2c-v2 .ana-ctx-bar{flex:1;height:5px;border-radius:999px;background:var(--bg-200);overflow:hidden;}
-.c2c-v2 .ana-ctx-bar > span{display:block;height:100%;border-radius:999px;background:var(--accent-100);}
-.c2c-v2 .ana-ctx-evi{display:flex;flex-wrap:wrap;gap:6px;}
-.c2c-v2 .ana-ctx-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:var(--bg-100);font-size:11px;color:var(--text-300);transition:background var(--dur), border-color var(--dur), color var(--dur);}
-.c2c-v2 .ana-ctx-chip:hover{border-color:var(--accent-100);color:var(--text-100);background:var(--accent-000);}
-.c2c-v2 .ana-ctx-chip b{color:var(--text-100);font-weight:600;}
-.c2c-v2 .ana-ctx-acts{display:flex;flex-direction:column;gap:6px;}
-.c2c-v2 .ana-ctx-act{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-300);}
-.c2c-v2 .ana-ctx-act .ico{font-size:13px;flex-shrink:0;}
-.c2c-v2 .ana-ctx-act .t{flex:1;min-width:0;}
-.c2c-v2 .ana-ctx-act .w{font-size:10px;color:var(--text-400);}
-.c2c-v2 .ana-ctx-act.alert .ico{color:var(--warning);}
-.c2c-v2 .ana-ctx-act.alert .t{color:var(--text-200);font-weight:500;}
-.c2c-v2 .ana-ctx-act.edit .ico{color:var(--success);}
-.c2c-v2 .ana-coauth{margin-bottom:10px;}
-.c2c-v2 .ana-coauth-h{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-400);font-weight:600;margin-bottom:7px;}
-.c2c-v2 .ana-coauth-row{display:flex;flex-wrap:wrap;gap:6px;}
-.c2c-v2 .ana-coauth-act{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:var(--bg-000);font-size:11.5px;font-weight:500;color:var(--text-200);transition:background var(--dur), border-color var(--dur), color var(--dur);text-align:left;}
-.c2c-v2 .ana-coauth-act:hover{border-color:var(--accent-100);color:var(--accent-200);background:var(--accent-000);}
-.c2c-v2 .ana-coauth-act .ico{font-size:13px;color:var(--accent-100);flex-shrink:0;}
 .c2c-v2 .ana-pedigree{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:500;}
 .c2c-v2 .ana-pedigree[data-p="deterministic_registry"]{background:var(--success-muted);color:var(--success);}
 .c2c-v2 .ana-pedigree[data-p="model_assisted"]{background:var(--warning-muted);color:var(--warning);}
@@ -1724,43 +1603,12 @@
 .c2c-v2 .ana-sugg{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);font-size:12px;color:var(--text-200);width:100%;transition:background var(--dur), border-color var(--dur), color var(--dur);}
 .c2c-v2 .ana-sugg:hover{border-color:var(--accent-100);color:var(--text-100);background:var(--accent-000);}
 .c2c-v2 .ana-sugg .ico{color:var(--accent-100);font-size:14px;flex-shrink:0;}
-.c2c-v2 .ana-msg{display:flex;flex-direction:column;gap:3px;}
-.c2c-v2 .ana-msg .who{font-size:10px;color:var(--text-400);font-weight:500;}
 /* governed sign-offs AnA asks for inside a message, and the outcome line each one becomes */
 .c2c-v2 .ana-msg-signoffs{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
 .c2c-v2 .ana-signoff-done{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--success);}
 .c2c-v2 .ana-signoff-done[data-tone="error"]{color:var(--error);}
 .c2c-v2 .ana-signoff-done svg{width:13px;height:13px;flex-shrink:0;}
-/* `ana-msg-bd`, not `bd`: Batch Draft's page root is `.c2c-v2 .bd` (26px 30px
-   60px padding, centred at 1160px), and on every rail message it indented the
-   answer and opened a 60px gap under it. */
-.c2c-v2 .ana-msg .ana-msg-bd{font-size:12.5px;line-height:1.5;}
-.c2c-v2 .ana-msg.is-user .ana-msg-bd{background:var(--bg-200);padding:8px 11px;border-radius:12px 12px 4px 12px;align-self:flex-end;max-width:88%;}
-.c2c-v2 .ana-msg.is-ana .ana-msg-bd{font-family:var(--font-serif);}
 .c2c-v2 .ana-empty{font-size:12px;color:var(--text-400);line-height:1.5;}
-.c2c-v2 .ana-foot{flex-shrink:0;border-top:1px solid var(--border);padding:10px 12px;}
-.c2c-v2 .ana-composer{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-xl);padding:8px 10px;transition:border-color var(--dur);}
-.c2c-v2 .ana-composer:focus-within{border-color:var(--accent-200);}
-.c2c-v2 .ana-composer textarea{width:100%;resize:none;font-size:12.5px;line-height:1.5;max-height:120px;}
-.c2c-v2 .ana-crow{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
-.c2c-v2 .ana-crow .hint{font-size:10px;color:var(--text-400);}
-.c2c-v2 .ana-send{width:28px;height:28px;border-radius:50%;background:var(--accent-strong);color:var(--accent-on-strong);display:flex;align-items:center;justify-content:center;font-size:14px;}
-.c2c-v2 .ana-send:disabled{background:var(--bg-300);cursor:default;}
-.c2c-v2 .ana-composer{position:relative;}
-.c2c-v2 .ana-files{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
-.c2c-v2 .ana-file{display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--bg-100);border:1px solid var(--border);border-radius:999px;padding:3px 6px 3px 9px;color:var(--text-200);max-width:100%;}
-.c2c-v2 .ana-file>span:not(.ico){overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;}
-.c2c-v2 .ana-file .ico{font-size:12px;color:var(--text-400);}
-.c2c-v2 .ana-file button{display:inline-flex;color:var(--text-400);font-size:12px;}
-.c2c-v2 .ana-file button:hover{color:var(--error);}
-.c2c-v2 .ana-tools{display:flex;gap:4px;}
-.c2c-v2 .ana-tool{width:30px;height:30px;border-radius:var(--radius-lg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-300);font-size:17px;transition:background var(--dur), color var(--dur);}
-.c2c-v2 .ana-tool:hover{background:var(--bg-100);color:var(--text-100);}
-.c2c-v2 .ana-right{display:flex;align-items:center;gap:6px;}
-.c2c-v2 .ana-modepull{display:flex;align-items:center;gap:5px;height:30px;padding:0 8px;border-radius:var(--radius-lg);border:1px solid var(--border);font-size:11.5px;color:var(--text-200);font-weight:500;transition:background var(--dur);}
-.c2c-v2 .ana-modepull:hover{background:var(--bg-100);}
-.c2c-v2 .ana-modepull-ic{color:var(--accent-100);font-size:14px;display:flex;}
-.c2c-v2 .ana-modepull>svg:last-child{font-size:13px;color:var(--text-400);}
 .c2c-v2 .ana-menu{position:absolute;bottom:calc(100% + 8px);left:0;right:0;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--v2-shadow-lg);padding:6px;z-index:20;max-height:360px;overflow-y:auto;}
 .c2c-v2 .ana-menu.ana-mention{max-height:280px;}
 .c2c-v2 .ana-mention-sub{margin-left:auto;padding-left:12px;font-size:11.5px;color:var(--text-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%;}
@@ -1772,8 +1620,6 @@
 .c2c-v2 .ana-menu-item .ico{font-size:15px;color:var(--text-400);display:flex;flex-shrink:0;}
 .c2c-v2 .ana-menu-item[data-on="true"] .ico{color:var(--accent-100);}
 .c2c-v2 .ana-menu-item .mh{margin-left:auto;font-size:10px;color:var(--text-400);white-space:nowrap;}
-.c2c-v2 .ana-agent-note{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:10.5px;color:var(--accent-200);background:var(--accent-000);border-radius:var(--radius-md);padding:7px 10px;line-height:1.4;}
-.c2c-v2 .ana-agent-note .ico{font-size:13px;flex-shrink:0;}
 .c2c-v2 .ana-action{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);padding:11px 12px;}
 .c2c-v2 .ana-action-h{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;margin-bottom:8px;}
 .c2c-v2 .ana-action-h .ico{color:var(--accent-100);font-size:15px;}
@@ -1785,9 +1631,6 @@
 .c2c-v2 .ana-action-warn .ico{font-size:13px;flex-shrink:0;}
 .c2c-v2 .ana-action-prov{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:var(--text-400);font-family:var(--font-mono);border-top:1px solid var(--border);padding-top:7px;margin-top:2px;}
 .c2c-v2 .ana-action-next{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
-.c2c-v2 .ana-next-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:999px;color:var(--accent-200);}
-.c2c-v2 .ana-next-chip:hover{background:var(--accent-000);}
-.c2c-v2 .ana-next-chip svg{font-size:12px;}
 /* Executed-action chips. The inert ones report what AnA already did; the
    navigation one is an offer, so it is the only <button> among them and the
    only one that carries a focus ring. Tokens only — `ci:token-cascade` and
@@ -1803,11 +1646,9 @@
 @media (prefers-reduced-motion:reduce){
   .c2c-v2 .ana-exec-chip.is-nav{transition:none;}
 }
-.c2c-v2 .ana-msg-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
 
 /* The panel brings its own CSS module; this only gives it room in the
    rail's rhythm. */
-.c2c-v2 .ana-premortem{margin-top:8px;}
 
 /* How well-grounded the answer is.
    Deliberately the work record's vocabulary — same left rule, same 11.5px
@@ -1886,7 +1727,6 @@
 .c2c-v2 .ana-drive-strip{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:6px;max-width:min(560px,calc(100vw - 32px));padding:8px 10px 8px 14px;background:var(--bg-000);border:1px solid var(--border);border-radius:20px;box-shadow:var(--v2-shadow-lg);animation:ana-drive-in 200ms ease-out;}
 .c2c-v2 .ana-drive-row{display:flex;align-items:center;gap:10px;min-width:0;}
 .c2c-v2 .ana-drive-narration{font-size:12px;line-height:1.45;color:var(--text-200);padding:0 4px 2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-.c2c-v2.shell[data-ana-open="true"] .ana-drive-strip{left:calc(50% - var(--ana) / 2);}
 .c2c-v2 .ana-drive-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;flex:none;}
 .c2c-v2 .ana-drive-title{font-size:12px;font-weight:600;color:var(--text-100);white-space:nowrap;}
 .c2c-v2 .ana-drive-step{font-size:12px;color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
@@ -1926,12 +1766,19 @@
 }
 .c2c-v2 .ana-runctl-btn:focus-visible,.c2c-v2 .ana-runctl-go:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
 
-/* A steer the human sent and AnA took, shown under the answer it shaped. */
+/* Under an answer in the conversation (ConversationThread AnaTurn): the steers
+   the person sent and AnA took, and the CRL/RTF pre-mortem when the turn
+   assembled one. The right rail drew both until it was deleted
+   (docs/evidence/D2-ONE-ANA/2026-10-08/ana-2a-rail-code-and-nav). The panel
+   brings its own CSS module; .ana-premortem only gives it room. */
 .c2c-v2 .ana-steers{display:flex;flex-direction:column;gap:4px;margin-top:6px;}
 .c2c-v2 .ana-steer{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;line-height:1.5;color:var(--text-300);}
 .c2c-v2 .ana-steer-ic{display:inline-flex;flex:none;margin-top:1px;color:var(--text-300);}
 .c2c-v2 .ana-steer-ic svg{font-size:12px;}
 .c2c-v2 .ana-steer-k{color:var(--text-100);font-weight:500;}
+.c2c-v2 .ana-premortem{margin-top:8px;}
+
+/* A steer the human sent and AnA took, shown under the answer it shaped. */
 
 /* A caveat about the answer above it — a degraded-mode signal, or a turn cut
    short. --warning carries meaning here, so it is never the ONLY carrier: the
@@ -2033,8 +1880,6 @@
   .c2c-v2 .ana-activity-toggle{transition:none;}
 }
 
-.c2c-v2 .ana-chip-gov{display:inline-flex;align-items:center;margin-left:3px;color:var(--text-400);}
-.c2c-v2 .ana-chip-gov svg{font-size:10px;}
 
 /* ── AnA's progress — the panel and its chip (AnaWorkPanel) ─────────────── */
 /* One quiet column: the plan on a vertical rail, then Outputs and "Used in
@@ -2496,16 +2341,12 @@
 .c2c-v2 .switch[data-on="true"]{background:var(--accent-100);}
 .c2c-v2 .switch[data-on="true"]::after{transform:translateX(16px);}
 
-.c2c-v2 .ana-greet{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:40px 18px;}
-.c2c-v2 .ana-greet-mark{width:40px;height:40px;border-radius:11px;background:var(--accent-000);color:var(--accent-100);display:flex;align-items:center;justify-content:center;font-size:20px;}
-.c2c-v2 .ana-greet-t{font-size:16px;font-weight:600;font-family:var(--font-serif);}
 /* This renders a surface's own `here` description. When several of those
    quoted an endpoint (an API path offers no break opportunity) the line ran
    out of the fixed 240px box on seven surfaces. No description quotes a path
    any more (registryModel.surfaceCtx.ts), but a prose block with a fixed
    max-width that renders content-derived strings has to be able to break
    them regardless — see ledger L111. */
-.c2c-v2 .ana-greet-s{font-size:12px;color:var(--text-400);line-height:1.5;max-width:240px;overflow-wrap:break-word;}
 
 /* ════════ HAQ Manager (haq-manager.jsx) ════════ */
 .c2c-v2 .haq{max-width:1180px;margin:0 auto;padding:22px 24px 40px;}
@@ -3766,7 +3607,7 @@
 .c2c-v2 .al-btn2{ display:inline-flex; align-items:center; gap:6px; background:var(--bg-000); color:var(--text-200); border:1px solid var(--border); border-radius:9px; padding:9px 14px; font-size:13px; cursor:pointer; }
 .c2c-v2 .al-note{ font-size:12.5px; color:var(--text-300); }
 .c2c-v2 .acct-scrim{ position:fixed; inset:0; z-index:40; }
-.c2c-v2 .acct-menu{ position:absolute; bottom:calc(100% + 6px); left:8px; right:auto; min-width:248px; max-width:calc(100vw - 24px); z-index:50; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.18); padding:6px; }
+.c2c-v2 .acct-menu{ position:absolute; bottom:calc(100% + 6px); left:8px; right:auto; min-width:248px; max-width:calc(100vw - 24px); max-height:calc(100vh - 88px); overflow-y:auto; z-index:50; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.18); padding:6px; }
 .c2c-v2 .acct-head{ display:flex; align-items:center; gap:9px; padding:8px 10px 10px; border-bottom:1px solid var(--border); margin-bottom:6px; }
 .c2c-v2 .acct-head .avatar{ width:30px; height:30px; border-radius:999px; background:var(--accent-strong); color:var(--accent-on-strong); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; }
 .c2c-v2 .acct-head .nm{ font-size:13px; font-weight:600; color:var(--text-100); }
@@ -3781,6 +3622,14 @@
 .c2c-v2 .acct-item .ico{ display:inline-flex; color:var(--text-400); }
 .c2c-v2 .acct-item .ico svg{ width:15px; height:15px; }
 .c2c-v2 .acct-sep{ height:1px; background:var(--border); margin:6px 4px; }
+/* The client type, chosen here (it was the rail's "Client categories" list,
+   ONE_ANA_ONE_CANVAS.md §5). The chosen one carries a check mark as well as
+   aria-checked: colour is never the only channel. */
+.c2c-v2 .acct-group{ display:flex; flex-direction:column; }
+.c2c-v2 .acct-sec{ padding:4px 10px 2px; font-size:11px; font-weight:600; letter-spacing:.02em; color:var(--text-400); }
+.c2c-v2 .acct-item[aria-checked="true"]{ color:var(--text-100); }
+.c2c-v2 .acct-check{ margin-left:auto; display:inline-flex; color:var(--accent-200); }
+.c2c-v2 .acct-check svg{ width:14px; height:14px; }
 /* ── shell-required blocks from kit specialist.css (§11.50 e-sign modal) ── */
 .c2c-v2 .esign-bd{position:fixed;inset:0;background:rgba(20,20,19,.4);display:flex;align-items:center;justify-content:center;z-index:60;}
 .c2c-v2 .esign-modal{width:min(440px,92vw);background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-2xl);box-shadow:var(--v2-shadow-lg);overflow:hidden;}

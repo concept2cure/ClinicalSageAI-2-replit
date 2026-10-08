@@ -143,7 +143,10 @@ describe('useAppMentions in a composer', () => {
 
 describe('every composer host is wired to the one hook', () => {
   const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-  for (const f of ['Shell.tsx', 'surfaces/ConversationThread.tsx', 'surfaces/Surfaces.tsx']) {
+  // Shell.tsx held the right rail's composer; the rail is deleted
+  // (docs/evidence/D2-ONE-ANA/2026-10-08/ana-2a-rail-code-and-nav). The
+  // conversation's composer is ConversationThread.tsx's, listed here.
+  for (const f of ['surfaces/ConversationThread.tsx', 'surfaces/Surfaces.tsx']) {
     it(`${f} uses useAppMentions and renders AppMentionMenu on its textarea`, () => {
       const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
       expect(src).toMatch(/useAppMentions\(draft, setDraft, draftRef\)/);

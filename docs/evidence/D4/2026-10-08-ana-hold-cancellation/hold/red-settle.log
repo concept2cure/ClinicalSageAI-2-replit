@@ -1,0 +1,52 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > releases immediately, cleans its listener, and observes a later query rejection 4ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > also releases during a later read and closes the held-time interval 2ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > does not apply a stale paused result after Stop 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > does not apply a stale running result after Stop 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > cancels one pending reader while another waiter can still resume normally 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > removes read listeners after an uninterrupted status read completes 0ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending null policy hold when Stop lands 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending auto policy hold when Stop lands 0ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending manual policy hold when Stop lands 2ms
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > person hold cancelled by outcome does not start another drain 5ms
+   → expected { done: false } to deeply equal { done: true, value: 'abort' }
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > person hold cancelled by signal does not start another drain 1ms
+   → expected { done: false } to deeply equal { done: true, value: 'abort' }
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > manual hold cancelled by outcome does not start another drain 2ms
+   → expected { done: false } to deeply equal { done: true, value: 'abort' }
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > manual hold cancelled by signal does not start another drain 6ms
+   → expected { done: false } to deeply equal { done: true, value: 'abort' }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > person hold cancelled by outcome does not start another drain
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > person hold cancelled by signal does not start another drain
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > manual hold cancelled by outcome does not start another drain
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > manual hold cancelled by signal does not start another drain
+AssertionError: expected { done: false } to deeply equal { done: true, value: 'abort' }
+
+Compared values have no visual difference.
+
+ ❯ server/services/ana/__tests__/run-hold-cancellation.test.ts:257:22
+    255|     try {
+    256|       await flush();
+    257|       expect(result).toEqual({ done: true, value: 'abort' });
+       |                      ^
+    258|       expect(drainSteers).toHaveBeenCalledTimes(kind === 'manual' ? 1 …
+    259|       expect(status).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 9 passed (13)
+   Start at  13:53:41
+   Duration  436ms (transform 122ms, setup 80ms, import 75ms, tests 29ms, environment 0ms)

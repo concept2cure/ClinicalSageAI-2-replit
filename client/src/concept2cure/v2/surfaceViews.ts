@@ -373,9 +373,10 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // NO `ownsConversation`. All seven of this surface's AnA hand-offs are
   // GOVERNED mutations — invite a member, grant program access, edit role
   // scopes, rotate an API key, change an org setting — and the §11.50 e-sign
-  // prompt for a governed command is rendered by the rail, from the real
+  // prompt for a governed command was rendered by the rail, from the real
   // `pendingSignoffs` on the turn (V2App adaptChatMessage → AnaRail →
-  // GovernedActionSignoff). Hiding the rail hid the signature gate: the prompt
+  // GovernedActionSignoff; the rail is deleted since ana-2a, and the prompt is
+  // drawn in the conversation, ConversationThread). Hiding the rail hid the signature gate: the prompt
   // was drawn into a column this screen never showed. The layout affords the
   // rail — `.adm-members-layout` is `minmax(0,1fr) 320px` with a 1100px
   // single-column fallback and `.adm-access{min-width:0}` — so the rail is the

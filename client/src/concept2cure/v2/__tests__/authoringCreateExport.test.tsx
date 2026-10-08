@@ -31,6 +31,15 @@ function ok(payload: unknown, status = 200) {
 }
 
 const PROJECT = '11111111-1111-4111-8111-111111111111';
+
+/* The export formats are items of the one Download menu (editor/DownloadMenu.tsx). */
+function controlledItem(format: 'Word' | 'PDF' | 'XML'): HTMLElement {
+  if (!screen.queryByRole('menu')) fireEvent.click(screen.getByRole('button', { name: /^Download/ }));
+  return screen.getByRole('menuitem', { name: `Controlled export (${format})` });
+}
+function exportAs(format: 'Word' | 'PDF' | 'XML') {
+  fireEvent.click(controlledItem(format));
+}
 afterEach(() => {
   cleanup();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
@@ -47,11 +56,11 @@ describe('Authoring export confirmation and recovery', () => {
     const fireToast = vi.fn();
     const onCheckExports = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} onCheckExports={onCheckExports} />);
-    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    exportAs('Word');
     const issue = await screen.findByRole('alert');
     expect(issue.textContent).toMatch(/cannot confirm.*recorded/i);
     expect(issue.textContent).not.toMatch(/document is unchanged|no file was produced/i);
-    expect((screen.getByRole('button', { name: /Word/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(controlledItem('Word').getAttribute('aria-disabled')).toBe('true');
     fireEvent.click(screen.getByRole('button', { name: /Check export history/ }));
     expect(onCheckExports).toHaveBeenCalledOnce();
     expect(apiRequest.mock.calls.filter(c => c[0] === 'POST')).toHaveLength(1);
@@ -61,7 +70,7 @@ describe('Authoring export confirmation and recovery', () => {
   it.each([502, 500])('an untyped %s does not assert that nothing was recorded', async (status) => {
     wireExport(async () => { throw new ApiRequestError('Service unavailable', status); });
     render(<AuthoringCreateExport {...base} docId="D1" />);
-    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
+    exportAs('PDF');
     expect((await screen.findByRole('alert')).textContent).toMatch(/cannot confirm.*recorded/i);
   });
 
@@ -70,7 +79,7 @@ describe('Authoring export confirmation and recovery', () => {
     const onExported = vi.fn();
     const fireToast = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} onExported={onExported} />);
-    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    exportAs('Word');
     expect((await screen.findByRole('alert')).textContent).toMatch(/recorded.*file.*not received/i);
     expect(onExported).toHaveBeenCalledWith('docx');
     expect(URL.createObjectURL).not.toHaveBeenCalled();
@@ -80,7 +89,7 @@ describe('Authoring export confirmation and recovery', () => {
   it('an empty body is not passed to the download primitive', async () => {
     wireExport(async () => ({ ok: true, status: 200, blob: async () => new Blob([]) }) as Response);
     render(<AuthoringCreateExport {...base} docId="D1" />);
-    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    exportAs('Word');
     expect((await screen.findByRole('alert')).textContent).toMatch(/recorded.*file.*not received/i);
     expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
@@ -89,17 +98,17 @@ describe('Authoring export confirmation and recovery', () => {
     wireExport(async () => { throw new ApiRequestError('Rendering failed', 500, undefined, 'EXPORT_NOT_RECORDED'); });
     const fireToast = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
-    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    exportAs('Word');
     await waitFor(() => expect(fireToast).toHaveBeenCalled());
     expect(String(fireToast.mock.calls[0][0])).toMatch(/no export was recorded/i);
-    expect((screen.getByRole('button', { name: /Word/ }) as HTMLButtonElement).disabled).toBe(false);
+    expect(controlledItem('Word').getAttribute('aria-disabled')).toBeNull();
   });
 
   it('the server’s confirmed-record delivery failure refreshes history', async () => {
     wireExport(async () => { throw new ApiRequestError('Delivery failed', 500, undefined, 'EXPORT_DELIVERY_FAILED'); });
     const onExported = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" onExported={onExported} />);
-    fireEvent.click(screen.getByRole('button', { name: /XML/ }));
+    exportAs('XML');
     expect((await screen.findByRole('alert')).textContent).toMatch(/recorded.*file.*not received/i);
     expect(onExported).toHaveBeenCalledWith('xml');
   });
@@ -111,8 +120,8 @@ describe('Authoring export context isolation', () => {
     let resolve!: (value: Response) => void;
     wireExport(() => new Promise<Response>(r => { resolve = r; }));
     render(<AuthoringCreateExport {...base} docId="D1" />);
-    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
-    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
+    exportAs('Word');
+    exportAs('PDF');
     expect(apiRequest.mock.calls.filter(c => c[0] === 'POST')).toHaveLength(1);
     await act(async () => resolve({ ok: true, status: 200, blob: async () => new Blob(['PK']) } as Response));
   });
@@ -123,13 +132,13 @@ describe('Authoring export context isolation', () => {
     const onExported = vi.fn();
     const fireToast = vi.fn();
     const { rerender } = render(<AuthoringCreateExport {...base} docId="D1" onExported={onExported} fireToast={fireToast} />);
-    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    exportAs('Word');
     rerender(<AuthoringCreateExport {...base} docId="D2" onExported={onExported} fireToast={fireToast} />);
     await act(async () => resolve({ ok: true, status: 200, blob: async () => new Blob(['PK']) } as Response));
     expect(onExported).not.toHaveBeenCalled();
     expect(fireToast).not.toHaveBeenCalled();
     expect(URL.createObjectURL).not.toHaveBeenCalled();
-    expect((screen.getByRole('button', { name: /Word/ }) as HTMLButtonElement).disabled).toBe(false);
+    expect(controlledItem('Word').getAttribute('aria-disabled')).toBeNull();
   });
 
   it.each(['document round-trip', 'project switch', 'unmount'])('ignores a pending old body after %s', async (change) => {
@@ -139,7 +148,7 @@ describe('Authoring export context isolation', () => {
     const fireToast = vi.fn();
     const props = { ...base, docId: 'D1', onExported, fireToast };
     const { rerender, unmount } = render(<AuthoringCreateExport {...props} />);
-    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    exportAs('Word');
     await waitFor(() => expect(resolve).toBeTypeOf('function'));
     if (change === 'document round-trip') {
       rerender(<AuthoringCreateExport {...props} docId="D2" />);
@@ -171,7 +180,8 @@ beforeEach(() => {
   URL.revokeObjectURL = vi.fn();
 });
 
-const base = { docTitle: 'Nonclinical Overview', module: 'M2', fireToast: vi.fn(), onDocCreated: vi.fn(), onSectionCreated: vi.fn() };
+/* The controlled export is offered only for a sealed document (ONE_ANA_ONE_CANVAS.md §4.5). */
+const base = { docTitle: 'Nonclinical Overview', docStatus: 'APPROVED', module: 'M2', fireToast: vi.fn(), onDocCreated: vi.fn(), onSectionCreated: vi.fn() };
 
 describe('AuthoringCreateExport — a document belongs to a project (PF-07)', () => {
   it('with no project open, New document is disabled, says why, and nothing is posted', async () => {
@@ -293,7 +303,7 @@ describe('AuthoringCreateExport — create → publish', () => {
   it('exports the assembled document as Word via POST /docs/:id/export', async () => {
     const fireToast = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
-    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    exportAs('Word');
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/authoring/docs/D1/export');
       expect(call).toBeTruthy();
@@ -306,7 +316,7 @@ describe('AuthoringCreateExport — create → publish', () => {
   it('exports a real PDF via POST /docs/:id/export {format: pdf}', async () => {
     const fireToast = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
-    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
+    exportAs('PDF');
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/authoring/docs/D1/export' && (c[2] as any)?.format === 'pdf');
       expect(call).toBeTruthy();
@@ -329,7 +339,7 @@ describe('AuthoringCreateExport — create → publish', () => {
     });
     const fireToast = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
-    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
+    exportAs('PDF');
     await waitFor(() => expect(fireToast).toHaveBeenCalled());
     const msg = String(fireToast.mock.calls[0][0]);
     expect(msg).toMatch(/plain-text rendering/i);
@@ -345,7 +355,7 @@ describe('AuthoringCreateExport — create → publish', () => {
     try {
       const fireToast = vi.fn();
       render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
-      fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+      exportAs('Word');
       await waitFor(() => expect(fireToast).toHaveBeenCalled());
       expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/browser blocked the download/), 'error');
       expect(fireToast).not.toHaveBeenCalledWith(expect.stringMatching(/^Exported/));
@@ -363,17 +373,21 @@ describe('AuthoringCreateExport — create → publish', () => {
     });
     const fireToast = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
-    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    exportAs('Word');
     await waitFor(() => expect(fireToast).toHaveBeenCalled());
     const msg = String(fireToast.mock.calls[0][0]);
     expect(msg).toMatch(/Freeze or approve it first/);
     expect(msg).not.toMatch(/Check your connection/);
   });
 
-  it('offers no export on a draft document, and says why', () => {
+  it('offers no controlled export on a draft document, and says why beside it', () => {
     render(<AuthoringCreateExport {...base} docId="D1" docStatus="DRAFT" />);
-    const word = screen.getByRole('button', { name: /Word/ }) as HTMLButtonElement;
-    expect(word.disabled).toBe(true);
-    expect(word.title).toMatch(/Freeze or approve this document/);
+    const word = controlledItem('Word');
+    expect(word.getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByTestId('dlm-ctl-reason').textContent).toBe('Freeze or approve to export a controlled copy');
+    // The reason is read with the item, not only seen.
+    expect(word.getAttribute('aria-describedby')).toBe(screen.getByTestId('dlm-ctl-reason').id);
+    fireEvent.click(word);
+    expect(apiRequest.mock.calls.some((c) => String(c[1]).endsWith('/export'))).toBe(false);
   });
 });

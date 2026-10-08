@@ -1,0 +1,348 @@
+[
+  {
+    "mode": "authoring",
+    "width": 1440,
+    "menuOpen": true,
+    "position": "absolute",
+    "menuBackground": "rgb(250, 249, 245)",
+    "topLayer": false,
+    "scrollerScrollTop": 71,
+    "focusedOnOpen": "Working copy (Word)",
+    "follows": null,
+    "itemsHitTestable": "1 of 5",
+    "items": [
+      {
+        "label": "Working copy (Word)",
+        "x": 1270,
+        "y": 26,
+        "hit": true,
+        "at": "button.dlm-item",
+        "onScreen": true
+      },
+      {
+        "label": "Working copy (PDF)",
+        "x": 1270,
+        "y": 70,
+        "hit": false,
+        "at": "div.ed-doc-inner",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (Word)",
+        "x": 1270,
+        "y": 156,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (PDF)",
+        "x": 1270,
+        "y": 185,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (XML)",
+        "x": 1270,
+        "y": 214,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      }
+    ],
+    "download": null,
+    "toasts": [],
+    "errors": []
+  },
+  {
+    "mode": "authoring",
+    "width": 390,
+    "menuOpen": true,
+    "position": "absolute",
+    "menuBackground": "rgb(250, 249, 245)",
+    "topLayer": false,
+    "scrollerScrollTop": 77,
+    "focusedOnOpen": "Working copy (Word)",
+    "follows": null,
+    "itemsHitTestable": "2 of 5",
+    "items": [
+      {
+        "label": "Working copy (Word)",
+        "x": 226,
+        "y": 61,
+        "hit": true,
+        "at": "button.dlm-item",
+        "onScreen": true
+      },
+      {
+        "label": "Working copy (PDF)",
+        "x": 226,
+        "y": 105,
+        "hit": true,
+        "at": "button.dlm-item",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (Word)",
+        "x": 226,
+        "y": 190,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (PDF)",
+        "x": 226,
+        "y": 219,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (XML)",
+        "x": 226,
+        "y": 248,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      }
+    ],
+    "download": {
+      "name": "Clinical_Overview_working_copy.pdf",
+      "bytes": 21
+    },
+    "toasts": [
+      {
+        "m": "Downloaded a working copy of Clinical Overview (PDF). Every page is marked DRAFT — uncontrolled copy.",
+        "tone": "ok"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "mode": "canvas",
+    "width": 1440,
+    "menuOpen": true,
+    "position": "absolute",
+    "menuBackground": "rgb(250, 249, 245)",
+    "topLayer": false,
+    "scrollerScrollTop": 41,
+    "focusedOnOpen": "Working copy (Word)",
+    "follows": null,
+    "itemsHitTestable": "1 of 5",
+    "items": [
+      {
+        "label": "Working copy (Word)",
+        "x": 1257,
+        "y": 190,
+        "hit": true,
+        "at": "button.dlm-item",
+        "onScreen": true
+      },
+      {
+        "label": "Working copy (PDF)",
+        "x": 1257,
+        "y": 234,
+        "hit": false,
+        "at": "div.ed-doc-inner",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (Word)",
+        "x": 1257,
+        "y": 319,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (PDF)",
+        "x": 1257,
+        "y": 348,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (XML)",
+        "x": 1257,
+        "y": 377,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      }
+    ],
+    "download": null,
+    "toasts": [],
+    "errors": []
+  },
+  {
+    "mode": "canvas",
+    "width": 390,
+    "menuOpen": true,
+    "position": "absolute",
+    "menuBackground": "rgb(250, 249, 245)",
+    "topLayer": false,
+    "scrollerScrollTop": 77,
+    "focusedOnOpen": "Working copy (Word)",
+    "follows": null,
+    "itemsHitTestable": "2 of 5",
+    "items": [
+      {
+        "label": "Working copy (Word)",
+        "x": 225,
+        "y": 204,
+        "hit": true,
+        "at": "button.dlm-item",
+        "onScreen": true
+      },
+      {
+        "label": "Working copy (PDF)",
+        "x": 225,
+        "y": 248,
+        "hit": true,
+        "at": "button.dlm-item",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (Word)",
+        "x": 225,
+        "y": 333,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (PDF)",
+        "x": 225,
+        "y": 362,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      },
+      {
+        "label": "Controlled export (XML)",
+        "x": 225,
+        "y": 391,
+        "hit": false,
+        "at": "p.",
+        "onScreen": true
+      }
+    ],
+    "download": {
+      "name": "Clinical_Overview_working_copy.pdf",
+      "bytes": 21
+    },
+    "toasts": [
+      {
+        "m": "Downloaded a working copy of Clinical Overview (PDF). Every page is marked DRAFT — uncontrolled copy.",
+        "tone": "ok"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "mode": "list",
+    "width": 1440,
+    "menuOpen": true,
+    "position": "absolute",
+    "menuBackground": "rgb(250, 249, 245)",
+    "topLayer": false,
+    "scrollerScrollTop": 0,
+    "focusedOnOpen": "Working copy (Word)",
+    "follows": {
+      "before": {
+        "gap": 4,
+        "btnTop": 145
+      },
+      "after": {
+        "gap": 4,
+        "btnTop": 145
+      },
+      "stillOpen": true
+    },
+    "itemsHitTestable": "2 of 2",
+    "items": [
+      {
+        "label": "Working copy (Word)",
+        "x": 1289,
+        "y": 232,
+        "hit": true,
+        "at": "button.dlm-item",
+        "onScreen": true
+      },
+      {
+        "label": "Working copy (PDF)",
+        "x": 1289,
+        "y": 276,
+        "hit": true,
+        "at": "button.dlm-item",
+        "onScreen": true
+      }
+    ],
+    "download": {
+      "name": "Clinical_Overview_working_copy.pdf",
+      "bytes": 21
+    },
+    "toasts": [
+      {
+        "m": "Downloaded a working copy of Clinical Overview (PDF). Every page is marked DRAFT — uncontrolled copy.",
+        "tone": "ok"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "mode": "list",
+    "width": 390,
+    "menuOpen": true,
+    "position": "absolute",
+    "menuBackground": "rgb(250, 249, 245)",
+    "topLayer": false,
+    "scrollerScrollTop": 0,
+    "focusedOnOpen": "Working copy (Word)",
+    "follows": {
+      "before": {
+        "gap": 4,
+        "btnTop": 221
+      },
+      "after": {
+        "gap": 4,
+        "btnTop": 181
+      },
+      "stillOpen": true
+    },
+    "itemsHitTestable": "2 of 2",
+    "items": [
+      {
+        "label": "Working copy (Word)",
+        "x": 200,
+        "y": 308,
+        "hit": true,
+        "at": "button.dlm-item",
+        "onScreen": true
+      },
+      {
+        "label": "Working copy (PDF)",
+        "x": 200,
+        "y": 352,
+        "hit": true,
+        "at": "button.dlm-item",
+        "onScreen": true
+      }
+    ],
+    "download": {
+      "name": "Clinical_Overview_working_copy.pdf",
+      "bytes": 21
+    },
+    "toasts": [
+      {
+        "m": "Downloaded a working copy of Clinical Overview (PDF). Every page is marked DRAFT — uncontrolled copy.",
+        "tone": "ok"
+      }
+    ],
+    "errors": []
+  }
+]

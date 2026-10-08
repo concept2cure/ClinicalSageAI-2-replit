@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useId } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
@@ -11,6 +12,7 @@ import { RunPolicySwitch } from '../RunPolicySwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from '../editor/anaInsertGate';
 import { useChatUpload, readyAttachmentLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
+import { CHAT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import { SignoffList } from '../SignoffList';
 import { apiCall, apiErrorText } from '../apiCall';
@@ -29,8 +31,13 @@ import '../styles/project-home-v2.css';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { AnaMarkdown } from '../AnaMarkdown';
 import { AnaMessageWarnings } from '../AnaMessageWarnings';
+import { CrlPremortemPanel } from '../../components/ana/CrlPremortemPanel';
 import { AnaGrounding } from '../AnaGrounding';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
+import {
+  CanvasDocumentList, documentListUrl, rowsOf, useDocumentList, useNarrowCanvas,
+  type BuiltDocument, type ListFocus, type ListScope,
+} from '../editor/CanvasDocumentList';
 import type { EditorBridge } from '../editor/DocumentWorkbench';
 import { isProgramId, openDraftAsDocument } from '../editor/draftToDocument';
 import {
@@ -99,6 +106,10 @@ function toTurn(m: AnaChatMessage): CtTurn {
      * other place the prompt is drawn, is by definition not on screen.
      */
     warnings: nonEmpty(m.warnings),
+    /* Drawn by the right rail until it was deleted, and dropped here: a steer
+       AnA accepted, and the pre-mortem the turn assembled. */
+    interjections: nonEmpty(m.interjections),
+    crlPremortem: m.crlPremortem,
     executedActions: nonEmpty(m.executedActions),
     pendingSignoffs: nonEmpty(m.pendingSignoffs),
     /* The authoring document this turn drafted, when it drafted one — the
@@ -263,12 +274,48 @@ interface AnaTurnProps {
     refreshKey?: number;
     /** Told the open section of this document's editor, and whether it is on screen. */
     onEditorBridge?: (docId: string, bridge: EditorBridge | null, open: boolean) => void;
+    /** "← Documents (n)" in the editor's bar: close it and show the list. */
+    onShowList?: () => void;
+    listCount?: number | null;
+    /** False when focus belongs to the list row that opened this document. */
+    returnFocus?: boolean;
   };
   /** The open section this answer can be inserted into, while a document is open. */
   insertTarget?: InsertTarget;
+  /** Rendered last in the turn: what the person can do about how it ended. */
+  after?: React.ReactNode;
 }
 
-function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, insertTarget }: AnaTurnProps) {
+/* What the right rail drew under an answer, drawn here since the rail is
+   deleted (ana-2a): the steers AnA accepted for the turn — a steer the person
+   cannot see afterwards is one they cannot tell was taken, and the server has
+   already written it into the decision lineage — and the CRL/RTF pre-mortem
+   the turn assembled. No `onExport` on the panel: this screen has no DOCX
+   route for it, and the panel then disables the action and says where export
+   lives. */
+function TurnSteersAndPremortem({ turn }: { turn: CtTurn }) {
+  return (
+    <>
+      {turn.interjections && (
+        <div className="ana-steers">
+          {turn.interjections.map((t, si) => (
+            <div key={si} className="ana-steer">
+              <span className="ana-steer-ic" aria-hidden="true">{I.chevRight}</span>
+              <span><span className="ana-steer-k">You steered AnA:</span> {t}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {turn.crlPremortem && (
+        <div className="ana-premortem">
+          <CrlPremortemPanel artifact={turn.crlPremortem} />
+        </div>
+      )}
+    </>
+  );
+}
+
+function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, insertTarget, after }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
@@ -328,6 +375,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, inser
         {/* What went wrong around the answer (a failed save, a timeout), as
             the rail shows it: this screen showed none (row 74, ADR-0015 §9). */}
         <AnaMessageWarnings warnings={turn.warnings} />
+        <TurnSteersAndPremortem turn={turn} />
         {/* What was checked about the answer, directly under it: the engine's
             check of its specific claims against this turn's sources, then
             AnA's labels, the same strip as the rail and the editor. Never under
@@ -352,6 +400,9 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, inser
             paneEl={canvas.paneEl}
             refreshKey={canvas.refreshKey}
             onEditorBridge={canvas.onEditorBridge}
+            onShowList={canvas.onShowList}
+            listCount={canvas.listCount}
+            returnFocus={canvas.returnFocus}
           />
         )}
         {turn.links && (
@@ -394,7 +445,52 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, inser
             doneClassName="ana-signoff-done"
           />
         )}
+        {after}
       </div>
+    </div>
+  );
+}
+
+/** The code the stream refuses a turn with when this conversation belongs to another project. */
+export const THREAD_PROJECT_MISMATCH = 'THREAD_PROJECT_MISMATCH';
+
+/** The person's own question that the turn at `index` answered (the user turn before it). */
+function questionBefore(messages: AnaChatMessage[], index: number): AnaChatMessage | null {
+  for (let i = index - 1; i >= 0; i--) {
+    if (messages[i].role === 'user') return messages[i].text.trim() ? messages[i] : null;
+  }
+  return null;
+}
+
+/**
+ * Under a turn the server refused because this conversation belongs to another
+ * project (docs/design/ONE_ANA_ONE_CANVAS.md §4.8, slice 5): the one way out.
+ * A new conversation in the project open now, asking the same question again.
+ * The question is the person's own; nothing is written for them, and the
+ * refused conversation stays as it was.
+ */
+function ProjectMismatchOffer({ messages, index, projectName, disabled, onStart }: {
+  messages: AnaChatMessage[];
+  index: number;
+  projectName: string | null;
+  disabled: boolean;
+  onStart: (question: AnaChatMessage) => void;
+}) {
+  if (messages[index]?.refusalCode !== THREAD_PROJECT_MISMATCH) return null;
+  const question = questionBefore(messages, index);
+  if (!question) return null;
+  return (
+    <div className="ct-refs" data-testid="ct-project-mismatch">
+      <button
+        type="button"
+        className="ct-ref"
+        onClick={() => onStart(question)}
+        disabled={disabled}
+        title={disabled ? 'AnA is still answering. A new conversation can start once she has finished.' : undefined}
+      >
+        <span className="ct-ref-ic">{I.plus}</span>
+        <span className="ct-ref-l">Ask again in a new conversation in {projectName || 'the open project'}</span>
+      </button>
     </div>
   );
 }
@@ -842,6 +938,7 @@ export interface AskOrigin {
 
 export function ConversationThread({ onNav, liveDrive, shellChat, engine }: OwnedSurfaceViewProps) {
   const [engineOpen, setEngineOpen] = useState(false);
+  const engineMenuId = useId();
   const [location, navigate] = useLocation();
   /* The conversation the URL names (routing.ts), read once, at mount. It is
      what a reload leaves: the window global below does not survive one. */
@@ -1009,16 +1106,6 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     setDraft(text);
     draftRef.current?.focus();
   };
-  /* Beside the conversation, an ask from the editor lands in the composer in
-     view. Too narrow for two columns the conversation is hidden while the
-     editor is open (authoring-v2.css), so the ask closes the editor first:
-     the prefilled message is then on screen, never typed behind the document. */
-  const canvasAsk = (text: string) => {
-    if (typeof window !== 'undefined' && window.matchMedia?.('(max-width: 1100px)').matches) {
-      setExpandedDocId(null);
-    }
-    prefillComposer(text);
-  };
   /* Scoped to the open project so extracted text lands in THAT project's
      memory, exactly as the shell composer and ProjectHome do. Null when no
      project is open, which the hook accepts — the file is still read, it just
@@ -1079,18 +1166,142 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     setExpandedDocId(readyDoc.docId);
     setReadyDoc(null);
   };
-  const historyFailed = loadErr || !!anaChat.threadLoadError;
-  const historyUnavailable = anaChat.isLoadingThread || historyFailed;
-  /* The one turn Continue may be offered on: the latest, settled, with nothing
-     in flight. It sends a new turn on this conversation; the stopped run is
-     over, so there is nothing to resume. */
-  const continueAt = continueTurnIndex(anaChat.messages, busy);
+
   /* This was `const artifacts: CtArtifact[] = []` — a literal, so the panel
      below it, the whole `ArtifactCard` component and every control on it were
      unreachable code that nonetheless looked finished. The drafts were already
      on the messages; nothing read them. */
   const artifacts: CtArtifact[] = conversationArtifacts(anaChat.messages)
     .filter((a) => !(a.messageId && openedDrafts[a.messageId]));
+
+  /* ── The canvas's Documents list (docs/design/ONE_ANA_ONE_CANVAS.md §4.3) ──
+     The documents this conversation built, read from the authoring store by
+     the conversation they were built in, so the list survives a reload: the
+     step trace it used to be rebuilt from keeps a capped copy that had cut
+     the id off. With nothing open, the right column shows the list when the
+     conversation has built a document, there is room beside the conversation,
+     and the list would hide nothing (below). At 1100px and narrower the
+     column takes the screen, so there it shows only when asked for. The person closes it, asks for it from
+     the header, and reaches it from an open document ("← Documents"). It is
+     re-read when an AnA turn ends. */
+  const conversationId = anaChat.threadId ?? (isNew || isCurrent ? null : sel.id);
+  const narrowCanvas = useNarrowCanvas();
+  /* Read when an act happens, not from the last render. */
+  const narrowNow = () => narrowCanvas || (typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 1100px)').matches);
+  const [listMode, setListMode] = useState<'auto' | 'open' | 'closed'>('auto');
+  const [listScope, setListScope] = useState<ListScope>('conversation');
+  const [listFocus, setListFocus] = useState<ListFocus | null>(null);
+  /* The document the list opened: closing it hands focus back to its row. */
+  const [openedFromList, setOpenedFromList] = useState<string | null>(null);
+  /* Focus has landed where the list was asked to put it; the document the
+     list opened has been handed back. */
+  const clearListFocus = useCallback(() => {
+    setListFocus(null);
+    setOpenedFromList(null);
+  }, []);
+  const builtList = useDocumentList(documentListUrl('conversation', conversationId), turnsSettled);
+  const projectOpen = isProgramId(shellProjectId);
+  const projectList = useDocumentList(
+    listScope === 'project' && isProgramId(shellProjectId) ? documentListUrl('project', shellProjectId) : null,
+    turnsSettled,
+  );
+  const listRead = listScope === 'project' && projectOpen ? projectList : builtList;
+  const builtCount = rowsOf(builtList.read)?.length ?? null;
+  /* The count beside "Documents" is of the list it opens, in the scope the
+     person last chose. */
+  const listCount = rowsOf(listRead.read)?.length ?? null;
+  /* By itself the list takes the right column only where it hides nothing the
+     person has open there. That column, when open, holds AnA's progress and
+     the drafts that are not authoring documents (type B: not in this list
+     until slice 25 makes every AnA document one). A draft there, or a turn
+     still running, keeps it on screen; the header's "Documents" still opens
+     the list. */
+  const sideHoldsWork = dock.open && (artifacts.length > 0 || busy);
+  const listShown = !expandedDocId
+    && (listMode === 'open' || (listMode === 'auto' && !!builtCount && !narrowCanvas && !sideHoldsWork));
+  const paneId = useId();
+  const docsToggleRef = useRef<HTMLButtonElement>(null);
+  /* A document opened from the list that has no card in this transcript
+     (another conversation's, or one whose turn lost its id) is mounted here
+     with no card, and opens in the same editor beside the conversation. */
+  const [listOpened, setListOpened] = useState<Record<string, { docId: string; programId: string | null; title: string; fromThisConversation: boolean }>>({});
+  const cardDocIds = new Set(turns.map((t) => t.authoringDoc?.docId).filter((x): x is string => !!x));
+  const openFromList = (doc: BuiltDocument) => {
+    if (!cardDocIds.has(doc.id)) {
+      setListOpened((prev) => (prev[doc.id] ? prev : {
+        ...prev,
+        [doc.id]: { docId: doc.id, programId: doc.programId, title: doc.title, fromThisConversation: !!conversationId && doc.conversationId === conversationId },
+      }));
+    }
+    setOpenedFromList(doc.id);
+    setListMode('open');
+    setListFocus({ kind: 'row', docId: doc.id });
+    setReadyDoc((prev) => (prev?.docId === doc.id ? null : prev));
+    setExpandedDocId(doc.id);
+  };
+  /* "← Documents (n)" in an open document's bar. */
+  const showListFromCanvas = useCallback(() => {
+    setExpandedDocId(null);
+    setListMode('open');
+    setListFocus({ kind: 'heading' });
+  }, []);
+  const closeList = () => {
+    setListMode('closed');
+    setListFocus(null);
+    docsToggleRef.current?.focus();
+  };
+  const toggleList = () => setListMode(listShown ? 'closed' : 'open');
+  /* Closing the open document toward the conversation: "Back to
+     conversation", Escape, or an ask from the editor. Beside the conversation
+     the right column goes back to what it showed. At 1100px and narrower that
+     column takes the screen, so the list closes too and the conversation is
+     what is shown, as the button says; "← Documents" is the way to the list.
+     Focus then goes where the person can carry on: the composer after an ask,
+     the header's "Documents" after closing a document the list had opened. */
+  const focusAfterClose = useRef<'composer' | 'toggle' | null>(null);
+  const closeDocument = (then: 'composer' | null = null) => {
+    const wasOpen = expandedDocId !== null;
+    setExpandedDocId(null);
+    if (!wasOpen || !narrowNow()) return;
+    const listWouldShow = listMode === 'open';
+    if (listWouldShow) setListMode('closed');
+    const target = then ?? (listWouldShow ? 'toggle' : null);
+    if (target) focusAfterClose.current = target;
+  };
+  useEffect(() => {
+    const target = focusAfterClose.current;
+    if (!target || expandedDocId) return;
+    focusAfterClose.current = null;
+    /* The row that opened the document is not on screen to take focus back. */
+    setListFocus(null);
+    setOpenedFromList(null);
+    (target === 'composer' ? draftRef.current : docsToggleRef.current)?.focus();
+  }, [expandedDocId]);
+  /* A card's own Open: closing then hands focus back to the card, not a row. */
+  const openFromCard = (docId: string, open: boolean) => {
+    if (open) {
+      setOpenedFromList(null);
+      setListFocus(null);
+      setExpandedDocId(docId);
+      return;
+    }
+    closeDocument();
+  };
+  /* Beside the conversation, an ask from the editor lands in the composer in
+     view. Too narrow for two columns the conversation is hidden while the
+     editor is open (authoring-v2.css), so the ask closes the editor first:
+     the prefilled message is then on screen, never typed behind the document
+     or behind the list. */
+  const canvasAsk = (text: string) => {
+    if (narrowNow()) closeDocument('composer');
+    prefillComposer(text);
+  };
+  const historyFailed = loadErr || !!anaChat.threadLoadError;
+  const historyUnavailable = anaChat.isLoadingThread || historyFailed;
+  /* The one turn Continue may be offered on: the latest, settled, with nothing
+     in flight. It sends a new turn on this conversation; the stopped run is
+     over, so there is nothing to resume. */
+  const continueAt = continueTurnIndex(anaChat.messages, busy);
   /* A card's draft, opened as a document in the open project: the one already
      made from this turn's draft, or a new one through from-draft. It opens
      beside the conversation. Refusals are said, never shown as success. */
@@ -1369,6 +1580,11 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     setLoadErr(false);
     setOpenId(null);
     setExpandedDocId(null);
+    setListMode('auto');
+    setListScope('conversation');
+    setListFocus(null);
+    setListOpened({});
+    setOpenedFromList(null);
     (window as any).C2C_CONVO = shellChat ? { id: 'current', seed: null } : { id: 'new', seed: null };
     /* The old conversation's id leaves the address too: a reload now opens
        the new, empty one, as the screen shows. */
@@ -1376,6 +1592,23 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
       navigate(locationForConversation(null) + window.location.search + window.location.hash, { replace: true });
     }
     draftRef.current?.focus();
+  };
+  /* The way out of a conversation that belongs to another project (slice 5):
+     a new conversation, in the project open now, with the same question. */
+  const restartInOpenProject = (question: AnaChatMessage) => {
+    if (cannotStartOver) return;
+    startNewConversation();
+    void anaChat.send(question.text, question.attachments);
+  };
+  /* The progress chip shows the side column; while the list holds the right
+     column, pressing it puts the progress there instead. */
+  const toggleProgress = () => {
+    if (!listShown) {
+      dock.toggle();
+      return;
+    }
+    setListMode('closed');
+    if (!dock.open) dock.toggle();
   };
 
   const loadingHistory = !isNew && anaChat.isLoadingThread && turns.length === 0;
@@ -1410,6 +1643,21 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
           >
             {I.plus} New conversation
           </button>
+          {/* The canvas's Documents list: shown and hidden here while no
+              document is open; an open document reaches it from its bar. */}
+          {!expandedDocId && (conversationId || projectOpen) && (
+            <button
+              ref={docsToggleRef}
+              type="button"
+              className="ct-head-open"
+              aria-expanded={listShown}
+              aria-controls={paneId}
+              onClick={toggleList}
+              data-testid="ct-documents-toggle"
+            >
+              {I.layers} Documents{listCount ? ` (${listCount})` : ''}
+            </button>
+          )}
           {/* The one place the side column is shown and hidden from. It used
               to be a chevron in the artifact panel's own header, with a 48px
               stub left behind when collapsed — a control that had to be hunted
@@ -1422,14 +1670,14 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
             streaming={anaChat.isStreaming}
             runStatus={anaChat.runStatus}
             runHold={anaChat.runHold}
-            open={dock.open}
-            onToggle={dock.toggle}
+            open={dock.open && !listShown}
+            onToggle={toggleProgress}
             controls={dock.panelId}
           />
         </div>
       </div>
 
-      <div className="ct-main" data-canvas-open={expandedDocId ? 'true' : undefined}>
+      <div className="ct-main" data-canvas-open={expandedDocId || listShown ? 'true' : undefined}>
         <div className="ct-conv">
           <div className="ct-scroll" ref={scrollRef} onScroll={onScroll}>
             <div className="ct-col">
@@ -1476,16 +1724,28 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                     onContinue={i === continueAt ? () => { void sendTurn(CONTINUE_PROMPT); } : undefined}
                     insertTarget={insertTarget}
                     canvas={t.authoringDoc ? {
-                      conversationId: anaChat.threadId ?? (isNew || isCurrent ? null : sel.id),
+                      conversationId,
                       expanded: expandedDocId === t.authoringDoc.docId,
-                      onExpandedChange: (open) => setExpandedDocId(open ? t.authoringDoc!.docId : null),
+                      onExpandedChange: (open) => openFromCard(t.authoringDoc!.docId, open),
                       onAsk: canvasAsk,
                       fireToast,
                       liveDrive,
                       paneEl: canvasPaneEl,
                       refreshKey: turnsSettled,
                       onEditorBridge,
+                      onShowList: showListFromCanvas,
+                      listCount,
+                      returnFocus: openedFromList !== t.authoringDoc.docId,
                     } : undefined}
+                    after={(
+                      <ProjectMismatchOffer
+                        messages={anaChat.messages}
+                        index={i}
+                        projectName={shellProgramName()}
+                        disabled={cannotStartOver}
+                        onStart={restartInOpenProject}
+                      />
+                    )}
                   />
                 )
               )}
@@ -1555,6 +1815,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                 className="ana-hidden-input"
                 aria-label="Attach a document for AnA to read"
                 onChange={(e) => { addFiles(e.target.files); if (fileRef.current) fileRef.current.value = ''; }}
+                accept={CHAT_UPLOAD_ACCEPT}
                 data-testid="ct-attach-input"
               />
               <button
@@ -1648,13 +1909,14 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                     className="ct-engine-pill"
                     aria-haspopup="dialog"
                     aria-expanded={engineOpen}
+                    aria-controls={engineOpen ? engineMenuId : undefined}
                     onClick={() => setEngineOpen((o) => !o)}
                     onKeyDown={(e) => { if (e.key === 'Escape') setEngineOpen(false); }}
                   >
                     Engine: {ANA_MODES.find((m) => m.id === engine.mode)?.effortLabel ?? engine.mode}
                   </button>
                   {engineOpen && (
-                    <span className="ct-engine-menu" role="dialog" aria-label="Choose the engine">
+                    <span className="ct-engine-menu" id={engineMenuId} role="dialog" aria-label="Choose the engine">
                       <EngineChoices
                         variant="rail"
                         mode={engine.mode}
@@ -1676,7 +1938,59 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
             expanded canvas portals the one editor in here, so the person edits
             with AnA's answers and the composer still in view. Empty and hidden
             until a canvas opens; each canvas's region keeps its own label. */}
-        <div className="ct-canvas-pane" ref={setCanvasPaneEl} hidden={!expandedDocId} data-testid="ct-canvas-pane" />
+        <div
+          className="ct-canvas-pane"
+          id={paneId}
+          ref={setCanvasPaneEl}
+          hidden={!expandedDocId && !listShown}
+          data-testid="ct-canvas-pane"
+          data-state={expandedDocId ? 'open' : listShown ? 'list' : 'closed'}
+        />
+        {/* The list state, portalled into the same pane the editor is: one
+            right-hand column, never two. */}
+        {canvasPaneEl && listShown && createPortal(
+          <CanvasDocumentList
+            scope={listScope === 'project' && projectOpen ? 'project' : 'conversation'}
+            onScope={(next) => { setListScope(next); setListFocus(null); }}
+            projectName={shellProgramName()}
+            projectAvailable={projectOpen}
+            read={listRead.read}
+            onRetry={listRead.reload}
+            onOpen={openFromList}
+            onClose={closeList}
+            fireToast={fireToast}
+            focus={listFocus}
+            onFocused={clearListFocus}
+          />,
+          canvasPaneEl,
+        )}
+        {/* Documents the list opened that have no card in this transcript:
+            the same canvas, with no card, its editor beside the conversation. */}
+        <div hidden>
+          {Object.values(listOpened).filter((d) => !cardDocIds.has(d.docId)).map((d) => (
+            <DocumentCanvas
+              key={d.docId}
+              cardless
+              docId={d.docId}
+              programId={d.programId}
+              conversationId={conversationId}
+              fromThisConversation={d.fromThisConversation}
+              draftTitle={d.title}
+              expanded={expandedDocId === d.docId}
+              onExpandedChange={(open) => (open ? setExpandedDocId(d.docId) : closeDocument())}
+              onNav={onNav}
+              onAsk={canvasAsk}
+              fireToast={fireToast}
+              liveDrive={liveDrive}
+              paneEl={canvasPaneEl}
+              refreshKey={turnsSettled}
+              onEditorBridge={onEditorBridge}
+              onShowList={showListFromCanvas}
+              listCount={listCount}
+              returnFocus={false}
+            />
+          ))}
+        </div>
 
         {/* The side column: AnA's live work above the governed outputs. The
             dock is the same component the shell rail mounts — progress, queue,
@@ -1687,7 +2001,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
         {/* Not drawn while a document canvas is expanded: the editor's pane
             takes that room beside the conversation, and its own rails are on
             screen. */}
-        {!panelCollapsed && !expandedDocId && (
+        {!panelCollapsed && !expandedDocId && !listShown && (
           <div className="ct-side" id={dock.panelId} data-artifacts={artifacts.length > 0 ? 'true' : 'false'}>
             <div className="ct-side-work">
               <AnaWorkPanel

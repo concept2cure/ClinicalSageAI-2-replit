@@ -1,0 +1,613 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > opens the shared signing dialog in place and sends the signed transition, never sending the signer to the Task board 343ms
+ × client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > the confirmation shows the signature the server recorded: its printed name and its time 81ms
+   → expected 'ActionComplete approval-gated taskSig…' to contain 'Olivia Q. Signer'
+ × client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > a success that does not carry the recorded signature is not shown as one, and closing re-reads the task 5089ms
+   → expected 'Signature appliedApproval signature r…' to contain 'did not carry the signature the serve…'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed-comments-h ed-comments-h-row"
+      >
+        <span>
+          Tasks
+           · Module 2.5 Clinical Overview
+        </span>
+        <button
+          aria-label="Close tasks"
+          class="ed-comments-close"
+          title="Close tasks"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-x"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18 6 6 18"
+            />
+            <path
+              d="m6 6 12 12"
+            />
+          </svg>
+        </button>
+      </div>
+      <div
+        class="rt-bar"
+      >
+        <span
+          class="rt-bar-n"
+        >
+          1 open · 1 total
+        </span>
+        <button
+          class="btn ghost"
+          data-testid="rt-send-review"
+          style="height: 28px; font-size: 12px;"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-send"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+            />
+            <path
+              d="m21.854 2.147-10.94 10.939"
+            />
+          </svg>
+           Send for review
+        </button>
+        <button
+          class="nda-open"
+          type="button"
+        >
+          Refresh
+        </button>
+      </div>
+      <div
+        aria-label="Tasks linked to this document"
+        class="rt-list"
+        role="list"
+        style=""
+      >
+        <div
+          class="rt-row"
+          data-status="in-progress"
+          data-testid="rt-row"
+          role="listitem"
+        >
+          <div
+            class="rt-row-h"
+          >
+            <span
+              class="rt-row-t"
+            >
+              Review: Module 2.5 Clinical Overview
+            </span>
+            <span
+              class="rd-chip tone-warn"
+            >
+              In progress
+            </span>
+          </div>
+          <div
+            class="rt-row-m"
+          >
+            assigned to OQ Signer · high priority · needs e-signature to complete
+          </div>
+          <div
+            class="rt-row-a"
+          >
+            <button
+              class="nda-open"
+              data-testid="rt-complete"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               Complete
+            </button>
+            <span
+              class="rt-row-id"
+              title="TASK-9"
+            >
+              TASK-9
+            </span>
+          </div>
+        </div>
+      </div>
+      <div
+        class="es-overlay"
+      >
+        <div
+          aria-labelledby="_r_d_"
+          aria-modal="true"
+          class="es-modal"
+          role="dialog"
+        >
+          <div
+            class="es-done"
+          >
+            <div
+              class="es-done-mark"
+            >
+              <svg
+                aria-hidden="true"
+                fill="none"
+                height="22"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="22"
+              >
+                <polyline
+                  points="20 6 9 17 4 12"
+                />
+              </svg>
+            </div>
+            <h3
+              id="_r_d_"
+            >
+              Signature applied
+            </h3>
+            <p>
+              Approval
+               signature recorded against 
+              Review: Module 2.5 Clinical Overview
+              . The 21 CFR Part 11 audit trail has a new entry. This cannot be undone.
+            </p>
+            <div
+              class="es-manifest"
+            >
+              <div
+                class="es-manifest-row"
+              >
+                <span>
+                  Action
+                </span>
+                <span>
+                  Complete approval-gated task
+                </span>
+              </div>
+              <div
+                class="es-manifest-row"
+              >
+                <span>
+                  Signed by
+                </span>
+                <span>
+                  OQ Signer
+                   · oq@test.co
+                </span>
+              </div>
+              <div
+                class="es-manifest-row"
+              >
+                <span>
+                  Meaning
+                </span>
+                <span>
+                  Approval
+                </span>
+              </div>
+              <div
+                class="es-manifest-row"
+              >
+                <span>
+                  Reason
+                </span>
+                <span>
+                  Reviewed against the acceptance criteria.
+                </span>
+              </div>
+              <div
+                class="es-manifest-row"
+              >
+                <span>
+                  When
+                </span>
+                <time
+                  class="es-mono"
+                  datetime="2026-10-08T05:47:14.704Z"
+                  style="display: inline-flex; flex-direction: column; gap: 2px;"
+                >
+                  <span>
+                    2026-10-08 05:47:14 UTC
+                  </span>
+                  <span
+                    style="opacity: 0.65; font-size: 0.85em;"
+                  >
+                    Oct 08, 2026, 05:47
+                     · 
+                    UTC
+                  </span>
+                </time>
+              </div>
+            </div>
+            <div
+              class="es-foot"
+            >
+              <button
+                class="es-btn-primary"
+                type="button"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > closing the dialog without signing changes nothing and claims nothing 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > the confirmation shows the signature the server recorded: its printed name and its time
+AssertionError: expected 'ActionComplete approval-gated taskSig…' to contain 'Olivia Q. Signer'
+
+Expected: "Olivia Q. Signer"
+Received: "ActionComplete approval-gated taskSigned byOQ Signer · oq@test.coMeaningApprovalReasonReviewed against the acceptance criteria.When2026-10-08 05:47:14 UTCOct 08, 2026, 05:47 · UTC"
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx:133:34
+    131|     const manifest = dialog.querySelector('.es-manifest') as HTMLEleme…
+    132|     // The server's printed name, not the signed-in user the dialog wa…
+    133|     expect(manifest.textContent).toContain('Olivia Q. Signer');
+       |                                  ^
+    134|     expect(manifest.textContent).not.toContain('oq@test.co');
+    135|     // The server's time, not the browser's clock.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > a success that does not carry the recorded signature is not shown as one, and closing re-reads the task
+AssertionError: expected 'Signature appliedApproval signature r…' to contain 'did not carry the signature the serve…'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed-comments-h ed-comments-h-row"
+      >
+        <span>
+          Tasks
+           · Module 2.5 Clinical Overview
+        </span>
+        <button
+          aria-label="Close tasks"
+          class="ed-comments-close"
+          title="Close tasks"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-x"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18 6 6 18"
+            />
+            <path
+              d="m6 6 12 12"
+            />
+          </svg>
+        </button>
+      </div>
+      <div
+        class="rt-bar"
+      >
+        <span
+          class="rt-bar-n"
+        >
+          1 open · 1 total
+        </span>
+        <button
+          class="btn ghost"
+          data-testid="rt-send-review"
+          style="height: 28px; font-size: 12px;"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-send"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+            />
+            <path
+              d="m21.854 2.147-10.94 10.939"
+            />
+          </svg>
+           Send for review
+        </button>
+        <button
+          class="nda-open"
+          type="button"
+        >
+          Refresh
+        </button>
+      </div>
+      <div
+        aria-label="Tasks linked to this document"
+        class="rt-list"
+        role="list"
+        style=""
+      >
+        <div
+          class="rt-row"
+          data-status="in-progress"
+          data-testid="rt-row"
+          role="listitem"
+        >
+          <div
+            class="rt-row-h"
+          >
+            <span
+              class="rt-row-t"
+            >
+              Review: Module 2.5 Clinical Overview
+            </span>
+            <span
+              class="rd-chip tone-warn"
+            >
+              In progress
+            </span>
+          </div>
+          <div
+            class="rt-row-m"
+          >
+            assigned to OQ Signer · high priority · needs e-signature to complete
+          </div>
+          <div
+            class="rt-row-a"
+          >
+            <button
+              class="nda-open"
+              data-testid="rt-complete"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+               Complete
+            </button>
+            <span
+              class="rt-row-id"
+              title="TASK-9"
+            >
+              TASK-9
+            </span>
+          </div>
+        </div>
+      </div>
+      <div
+        class="es-overlay"
+      >
+        <div
+          aria-labelledby="_r_d_"
+          aria-modal="true"
+          class="es-modal"
+          role="dialog"
+        >
+          <div
+            class="es-done"
+          >
+            <div
+              class="es-done-mark"
+            >
+              <svg
+                aria-hidden="true"
+                fill="none"
+                height="22"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="22"
+              >
+                <polyline
+                  points="20 6 9 17 4 12"
+                />
+              </svg>
+            </div>
+            <h3
+              id="_r_d_"
+            >
+              Signature applied
+            </h3>
+            <p>
+              Approval
+               signature recorded against 
+              Review: Module 2.5 Clinical Overview
+              . The 21 CFR Part 11 audit trail has a new entry. This cannot be undone.
+            </p>
+            <div
+              class="es-manifest"
+            >
+              <div
+                class="es-manifest-row"
+              >
+                <span>
+                  Action
+                </span>
+                <span>
+                  Complete approval-gated task
+                </span>
+              </div>
+              <div
+                class="es-manifest-row"
+              >
+                <span>
+                  Signed by
+                </span>
+                <span>
+                  OQ Signer
+                   · oq@test.co
+                </span>
+              </div>
+              <div
+                class="es-manifest-row"
+              >
+                <span>
+                  Meaning
+                </span>
+                <span>
+                  Approval
+                </span>
+              </div>
+              <div
+                class="es-manifest-row"
+              >
+                <span>
+                  Reason
+                </span>
+                <span>
+                  Reviewed against the acceptance criteria.
+                </span>
+              </div>
+              <div
+                class="es-manifest-row"
+              >
+                <span>
+                  When
+                </span>
+                <time
+                  class="es-mono"
+                  datetime="2026-10-08T05:47:14.704Z"
+                  style="display: inline-flex; flex-direction: column; gap: 2px;"
+                >
+                  <span>
+                    2026-10-08 05:47:14 UTC
+                  </span>
+                  <span
+                    style="opacity: 0.65; font-size: 0.85em;"
+                  >
+                    Oct 08, 2026, 05:47
+                     · 
+                    UTC
+                  </span>
+                </time>
+              </div>
+            </div>
+            <div
+              class="es-foot"
+            >
+              <button
+                class="es-btn-primary"
+                type="button"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+Expected: "did not carry the signature the server recorded"
+Received: "Signature appliedApproval signature recorded against Review: Module 2.5 Clinical Overview. The 21 CFR Part 11 audit trail has a new entry. This cannot be undone.ActionComplete approval-gated taskSigned byOQ Signer · oq@test.coMeaningApprovalReasonReviewed against the acceptance criteria.When2026-10-08 05:47:14 UTCOct 08, 2026, 05:47 · UTCDone"
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx:148:52
+    146|     fireEvent.click(within(dialog).getByRole('button', { name: /Sign a…
+    147|
+    148|     await waitFor(() => expect(dialog.textContent).toContain('did not …
+       |                                                    ^
+    149|     expect(within(dialog).queryByText('Signature applied')).toBeNull();
+    150|     const reads = () => apiRequest.mock.calls.filter(c => c[0] === 'GE…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  05:47:13
+   Duration  6.75s (transform 325ms, setup 173ms, import 393ms, tests 5.54s, environment 480ms)
+

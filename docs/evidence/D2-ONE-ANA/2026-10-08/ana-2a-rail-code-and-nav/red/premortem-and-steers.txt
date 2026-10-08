@@ -1,0 +1,1005 @@
+RED: the working tree as it stands. ConversationThread.tsx (not this change's file) drops interjections and crlPremortem in toTurn, so the three cases below fail until outsideFileRequest C is applied.
+npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > a draft survives a history read, and is sent once the conversation is back > typed while history loads, it is held, then sent after loading 771ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > a draft survives a history read, and is sent once the conversation is back > typed while history failed, it is held through the retry and sent after recovery 160ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > an executed action is shown as a record — not a button, not a sample 99ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a non-signature governed command shows the reason-for-change sign-off 51ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a navigation chip that cannot say where it goes is a record, not a control 107ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a "Start demonstration" chip that cannot name its script is never a button 119ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a "Start demonstration" chip is inert when the shell gives no demo starter 136ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > never rewrites what the person typed, with Live Drive on 83ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the person's turn stays the person's > a user turn is shown as typed and grows no work record 41ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > why a turn stopped reaches the conversation > a turn the round limit cut short says so under it, with the rounds it ran 68ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > why a turn stopped reaches the conversation > a turn she ended herself claims no stop 56ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual enrollment.csv bytes, scoped to the open project 85ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual enrollment.xlsx bytes, scoped to the open project 64ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual resource.json bytes, scoped to the open project 40ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual define.xml bytes, scoped to the open project 67ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > POSTs the real File to /api/chat/upload, not just its name 50ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > names the uploaded file in the turn once it is ready, and sends it by id 139ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > does NOT claim an attachment when the upload failed 109ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > refuses to send at all when only a failed upload is present 72ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > does not send while an upload is still in flight 139ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > the chip says how the file was read once it was 82ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > the chip gives the failure reason rather than a bare filename 59ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > rejects an unsupported type without a network call 81ms
+stderr | client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > the header chip opens and closes the panel, names it, and remembers the choice
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > shows the panel with the live turn by default 105ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > renders a turn as every host does: her work, then the answer 57ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > the header chip opens and closes the panel, names it, and remembers the choice 195ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > counts her declared plan on the chip, and only that 131ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > styles the open chip by aria-expanded — the attribute the component sets — never aria-pressed 3ms
+ × client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the steers AnA accepted are under the answer they shaped > shows each accepted steer as the person’s, in order 46ms
+   → expected [] to deeply equal [ …(2) ]
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the steers AnA accepted are under the answer they shaped > adds no steer furniture to a turn that was never steered 44ms
+ × client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > mounts the panel for a turn that produced one, each risk bound to its precedent 266ms
+   → Unable to find an accessible element with the role "region" and name "CRL/RTF pre-mortem decision artifact"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Project":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-back"[39m
+  [36m/>[39m
+
+  Name "New conversation":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-head-open"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Documents":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_5b_"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"ct-head-open"[39m
+    [33mdata-testid[39m=[32m"ct-documents-toggle"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Progress· AnA's progress":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_5a_"[39m
+    [33maria-expanded[39m=[32m"true"[39m
+    [33mclass[39m=[32m"ana-step-chip"[39m
+    [33mdata-live[39m=[32m"false"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Attach a document for AnA to use":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Attach a document for AnA to use"[39m
+    [33mclass[39m=[32m"ct-comp-attach"[39m
+    [33mdata-testid[39m=[32m"ct-attach-button"[39m
+    [33mtitle[39m=[32m"Attach a document for AnA to use"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Send message to AnA":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Send message to AnA"[39m
+    [33mclass[39m=[32m"ct-comp-send"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Close progress":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Close progress"[39m
+    [33mclass[39m=[32m"ana-work-close"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Retry":
+  [36m<button[39m
+    [33mclass[39m=[32m"ana-work-link"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"ana-work-empty"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"ct-ready-doc"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"ana-work-err"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Reply to AnA":
+  [36m<textarea[39m
+    [33maria-autocomplete[39m=[32m"list"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-label[39m=[32m"Reply to AnA"[39m
+    [33mplaceholder[39m=[32m"Reply to AnA — ask, request a draft, or type @ to name an app..."[39m
+    [33mrows[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Progress":
+  [36m<h2[39m
+    [33mclass[39m=[32m"ana-work-title"[39m
+  [36m/>[39m
+
+  Name "Background":
+  [36m<h3[39m
+    [33mclass[39m=[32m"ana-work-sec-t"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Project[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-mid"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-t"[39m
+          [36m>[39m
+            [0mValidate the draft[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-m"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Conversation[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-r"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ct-head-model"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-zap"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m AnA[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ct-head-open"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New conversation[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_5b_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"ct-head-open"[39m
+            [33mdata-testid[39m=[32m"ct-documents-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-layers"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Documents[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_5a_"[39m
+            [33maria-expanded[39m=[32m"true"[39m
+            [33mclass[39m=[32m"ana-step-chip"[39m
+            [33mdata-live[39m=[32m"false"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+   ...
+ × client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > offers no export the conversation cannot perform 49ms
+   → Unable to find an element with the text: Export as DOCX. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Project[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-mid"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-t"[39m
+          [36m>[39m
+            [0mValidate the draft[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-m"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Conversation[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-r"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ct-head-model"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-zap"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m AnA[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ct-head-open"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New conversation[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_5g_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"ct-head-open"[39m
+            [33mdata-testid[39m=[32m"ct-documents-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-layers"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Documents[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_5f_"[39m
+            [33maria-expanded[39m=[32m"true"[39m
+            [33mclass[39m=[32m"ana-step-chip"[39m
+            [33mdata-live[39m=[32m"false"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+   ...
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > adds no pre-mortem furniture to a turn that produced none 39ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the steers AnA accepted are under the answer they shaped > shows each accepted steer as the person’s, in order
+AssertionError: expected [] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+- [
+-   "You steered AnA: focus on EU MDR",
+-   "You steered AnA: cite the article",
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx:528:89
+    526|     await mount(shellChat({ messages: answer({ text: 'Under EU MDR, Ar…
+    527|     const steers = document.querySelectorAll('.ana-steers .ana-steer');
+    528|     expect(Array.from(steers).map((el) => el.textContent?.replace(/\s+…
+       |                                                                                         ^
+    529|       'You steered AnA: focus on EU MDR',
+    530|       'You steered AnA: cite the article',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > mounts the panel for a turn that produced one, each risk bound to its precedent
+TestingLibraryElementError: Unable to find an accessible element with the role "region" and name "CRL/RTF pre-mortem decision artifact"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Project":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-back"[39m
+  [36m/>[39m
+
+  Name "New conversation":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-head-open"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Documents":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_5b_"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"ct-head-open"[39m
+    [33mdata-testid[39m=[32m"ct-documents-toggle"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Progress· AnA's progress":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_5a_"[39m
+    [33maria-expanded[39m=[32m"true"[39m
+    [33mclass[39m=[32m"ana-step-chip"[39m
+    [33mdata-live[39m=[32m"false"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Attach a document for AnA to use":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Attach a document for AnA to use"[39m
+    [33mclass[39m=[32m"ct-comp-attach"[39m
+    [33mdata-testid[39m=[32m"ct-attach-button"[39m
+    [33mtitle[39m=[32m"Attach a document for AnA to use"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Send message to AnA":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Send message to AnA"[39m
+    [33mclass[39m=[32m"ct-comp-send"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Close progress":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Close progress"[39m
+    [33mclass[39m=[32m"ana-work-close"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Retry":
+  [36m<button[39m
+    [33mclass[39m=[32m"ana-work-link"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"ana-work-empty"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"ct-ready-doc"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"ana-work-err"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Reply to AnA":
+  [36m<textarea[39m
+    [33maria-autocomplete[39m=[32m"list"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-label[39m=[32m"Reply to AnA"[39m
+    [33mplaceholder[39m=[32m"Reply to AnA — ask, request a draft, or type @ to name an app..."[39m
+    [33mrows[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Progress":
+  [36m<h2[39m
+    [33mclass[39m=[32m"ana-work-title"[39m
+  [36m/>[39m
+
+  Name "Background":
+  [36m<h3[39m
+    [33mclass[39m=[32m"ana-work-sec-t"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Project[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-mid"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-t"[39m
+          [36m>[39m
+            [0mValidate the draft[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-m"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Conversation[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-r"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ct-head-model"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-zap"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m AnA[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ct-head-open"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New conversation[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_5b_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"ct-head-open"[39m
+            [33mdata-testid[39m=[32m"ct-documents-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-layers"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Documents[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_5a_"[39m
+            [33maria-expanded[39m=[32m"true"[39m
+            [33mclass[39m=[32m"ana-step-chip"[39m
+            [33mdata-live[39m=[32m"false"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+   ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx:544:19
+    542|   it('mounts the panel for a turn that produced one, each risk bound t…
+    543|     await mount(shellChat({ messages: answer({ text: 'Here is the pre-…
+    544|     expect(screen.getByRole('region', { name: 'CRL/RTF pre-mortem deci…
+       |                   ^
+    545|     expect(screen.getByText(/Single pivotal trial without confirmatory…
+    546|     expect(screen.getByText(/CRL 2019-0442/)).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > offers no export the conversation cannot perform
+TestingLibraryElementError: Unable to find an element with the text: Export as DOCX. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Project[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-mid"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-t"[39m
+          [36m>[39m
+            [0mValidate the draft[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-m"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Conversation[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-r"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ct-head-model"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-zap"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m AnA[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ct-head-open"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New conversation[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_5g_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"ct-head-open"[39m
+            [33mdata-testid[39m=[32m"ct-documents-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-layers"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Documents[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_5f_"[39m
+            [33maria-expanded[39m=[32m"true"[39m
+            [33mclass[39m=[32m"ana-step-chip"[39m
+            [33mdata-live[39m=[32m"false"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+   ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx:551:24
+    549|   it('offers no export the conversation cannot perform', async () => {
+    550|     await mount(shellChat({ messages: answer({ text: 'x', crlPremortem…
+    551|     const btn = screen.getByText('Export as DOCX').closest('button') a…
+       |                        ^
+    552|     expect(btn.disabled).toBe(true);
+    553|     expect(screen.getByText(/Export is not available from here/)).toBe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 30 passed (33)
+   Start at  06:07:27
+   Duration  9.05s (transform 3.29s, setup 283ms, import 4.06s, tests 3.62s, environment 688ms)
+

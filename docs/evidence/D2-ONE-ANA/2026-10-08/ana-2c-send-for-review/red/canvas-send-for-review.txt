@@ -1,0 +1,6 @@
+ × client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — accessibility smoke > is a labelled region whose controls have names, and the dialogs it opens are modal and labelled 63ms
+   → expected 'Assign review' to be 'Send for review' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > Send for review: labelled, modal, focus trapped while open, focus restored on close 43ms
+   → expected 'Assign review' to be 'Send for review' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 23 passed (25)

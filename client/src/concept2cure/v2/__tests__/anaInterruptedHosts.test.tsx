@@ -9,16 +9,21 @@ vi.mock('../dataConnect', () => ({
   EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
 }));
 
-import { AnaRail } from '../Shell';
-import { adaptChatMessage } from '../V2App';
 import { ConversationThread } from '../surfaces/ConversationThread';
 import { CONTINUE_PROMPT } from '../anaWorkModel';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
-type HostKind = 'rail' | 'conversation';
+/* One host renders the shell's chat: the conversation screen. The right rail
+   rendered it too and was deleted (ONE_ANA_ONE_CANVAS.md, slice 9); every
+   case that ran on it runs here. */
+type HostKind = 'conversation';
 let chat!: UseAnaChatReturn;
 const fetchMock = vi.fn();
 const responses: Response[] = [];
+/* A stream handler that needs the request (its abort signal). Keyed to the
+   stream URL: the conversation screen makes reads of its own on mount, and a
+   bare mockImplementationOnce would be spent on the first of those. */
+const streamHandlers: Array<(init: { signal: AbortSignal }) => Promise<Response>> = [];
 const PARTIAL = 'The comparison suggests that the next';
 const NOTE = "AnA's response was interrupted before this turn finished. The text shown may be incomplete.";
 const recorded = { status: 'recorded', id: 'record-failed', sha256: 'f'.repeat(64) };
@@ -31,15 +36,10 @@ function response(events: unknown[]) {
   } }));
 }
 
-function Host({ kind }: { kind: HostKind }) {
+function Host(_props: { kind: HostKind }) {
   chat = useAnaChat({ initialThreadId: 'thread-selected' });
-  if (kind === 'conversation') {
-    return <ConversationThread surface={{ id: 'conversation-thread', label: 'Conversation' } as OwnedSurfaceViewProps['surface']}
-      segment="biotech" onNav={() => {}} shellChat={chat} />;
-  }
-  return <AnaRail open setOpen={() => {}} surface={{ id: 'cmc', label: 'CMC' }} segment="biotech"
-    mode="standard" setMode={() => {}} messages={chat.messages.map(adaptChatMessage)}
-    onSend={text => { void chat.send(text); }} onAct={() => {}} streaming={chat.isStreaming} />;
+  return <ConversationThread surface={{ id: 'conversation-thread', label: 'Conversation' } as OwnedSurfaceViewProps['surface']}
+    segment="biotech" onNav={() => {}} shellChat={chat} />;
 }
 
 const requests = () => fetchMock.mock.calls.filter(([url]) => url === '/api/ana-ri/stream')
@@ -50,8 +50,11 @@ const showsNote = (text: string) => Array.from(document.querySelectorAll('.ana-a
 
 beforeEach(() => {
   responses.length = 0;
+  streamHandlers.length = 0;
   fetchMock.mockReset();
-  fetchMock.mockImplementation(async (url: string) => {
+  fetchMock.mockImplementation(async (url: string, init: { signal: AbortSignal }) => {
+    const handler = url === '/api/ana-ri/stream' ? streamHandlers.shift() : undefined;
+    if (handler) return handler(init);
     if (url === '/api/ana-ri/stream') return responses.shift() ?? response([
       { type: 'text', content: 'The follow-up answer is complete.' },
       { type: 'post_done', cleanedResponse: 'The follow-up answer is complete.' },
@@ -76,7 +79,7 @@ describe('partial response timeout versus the person stopping', () => {
       controller = c;
       c.enqueue(frame({ type: 'text', content: PARTIAL }));
     } });
-    fetchMock.mockImplementationOnce(async (_url: string, init: { signal: AbortSignal }) => {
+    streamHandlers.push(async (init: { signal: AbortSignal }) => {
       init.signal.addEventListener('abort', () => {
         const error = new Error('Aborted');
         error.name = 'AbortError';
@@ -84,7 +87,7 @@ describe('partial response timeout versus the person stopping', () => {
       });
       return new Response(body);
     });
-    render(<Host kind="rail" />);
+    render(<Host kind="conversation" />);
     let sent!: Promise<void>;
     await act(async () => { sent = chat.send('Compare the endpoints'); });
     expect(continueButton()).toBeNull();
@@ -105,7 +108,7 @@ describe('partial response timeout versus the person stopping', () => {
       { type: 'tool_use', name: 'search_documents', label: 'Searching documents' },
       { type: 'error', error: 'Generation failed', turnRecord: recorded },
     ]));
-    render(<Host kind="rail" />);
+    render(<Host kind="conversation" />);
     await act(async () => { await chat.send('Compare the endpoints'); });
     expect(chat.messages.at(-1)?.toolCalls?.[0]).toMatchObject({
       status: 'error', message: 'Not finished — the turn was interrupted.',
@@ -116,7 +119,7 @@ describe('partial response timeout versus the person stopping', () => {
   });
 });
 
-describe.each<HostKind>(['rail', 'conversation'])('%s partial response recovery', kind => {
+describe.each<HostKind>(['conversation'])('%s partial response recovery', kind => {
   it('shows an incomplete note even when the failed turn was recorded, and only continues on request', async () => {
     responses.push(response([
       { type: 'text', content: PARTIAL },
@@ -164,7 +167,7 @@ describe.each<HostKind>(['rail', 'conversation'])('%s partial response recovery'
   });
 });
 
-describe.each<HostKind>(['rail', 'conversation'])('%s responses without partial model text', kind => {
+describe.each<HostKind>(['conversation'])('%s responses without partial model text', kind => {
   it.each([401, 403, 429])('preserves the existing HTTP %s refusal without a misleading Continue', async status => {
     const code = status === 429 ? 'WEEKLY_LIMIT_EXCEEDED' : 'ACCESS_DENIED';
     responses.push(new Response(JSON.stringify({ error: 'Refused', code }), { status }));
@@ -188,7 +191,7 @@ describe.each<HostKind>(['rail', 'conversation'])('%s responses without partial 
 });
 
 
-describe.each<HostKind>(['rail', 'conversation'])('%s partial response recovery guidance', kind => {
+describe.each<HostKind>(['conversation'])('%s partial response recovery guidance', kind => {
   it.each([
     [{ status: 401 }, 'Sign in again before asking AnA to continue.'],
     [{ status: 403 }, 'Ask an administrator to review your access before asking AnA to continue.'],
@@ -216,7 +219,7 @@ describe.each<HostKind>(['rail', 'conversation'])('%s partial response recovery 
 });
 
 
-describe.each<HostKind>(['rail', 'conversation'])('%s final activity reconciliation', kind => {
+describe.each<HostKind>(['conversation'])('%s final activity reconciliation', kind => {
   it.each(['search_documents', 'update_plan'])('closes an unconfirmed %s without changing received results or the finished answer', async unconfirmedTool => {
     responses.push(response([
       { type: 'tool_use', name: unconfirmedTool, label: 'Checking protocol', toolUseId: 'missing' },

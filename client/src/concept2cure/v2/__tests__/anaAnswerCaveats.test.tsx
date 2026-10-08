@@ -21,48 +21,96 @@
  * The activity record answers "how did she get here" and collapses behind a
  * disclosure. A caveat answers "how much should I trust this", which is not
  * something a reader should have to expand a twisty to discover.
+ *
+ * WHERE IT IS PINNED NOW
+ * These cases ran on the right rail. The rail is gone
+ * (docs/design/ONE_ANA_ONE_CANVAS.md, slice 9) and AnA answers in one place,
+ * the conversation, so every case runs there, on the shell's chat, the way
+ * V2App mounts it.
  */
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, render, screen } from '@testing-library/react';
 
-// Same stubs the other AnaRail suites use: the rail pulls live data and auth
-// headers on mount, neither of which this file is about.
+import type { AnaChatMessage, UseAnaChatReturn } from '../../components/ana/useAnaChat';
+
 vi.mock('../dataConnect', () => ({
   connected: () => false,
+  EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
 }));
 vi.mock('../../../utils/authToken', () => ({
   getAuthHeaders: () => ({ Authorization: 'Bearer test' }),
 }));
+/* The conversation screen's private chat — never the one rendered here. */
+vi.mock('../../components/ana/useAnaChat', () => ({
+  useAnaChat: () => ({
+    messages: [],
+    isStreaming: false,
+    isLoadingThread: false,
+    threadId: null,
+    runStatus: null,
+    pendingSteers: [],
+    pause: vi.fn(),
+    resume: vi.fn(),
+    interject: vi.fn(),
+    stop: vi.fn(),
+    reset: vi.fn(),
+    send: vi.fn(),
+    loadThread: vi.fn(),
+  }),
+}));
 
-import { AnaRail, type AnaMessage } from '../Shell';
+import { ConversationThread } from '../surfaces/ConversationThread';
+import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
-afterEach(cleanup);
+const PROPS: OwnedSurfaceViewProps = {
+  surface: { id: 'conversation-thread', label: 'Conversation' } as OwnedSurfaceViewProps['surface'],
+  segment: 'biotech',
+  onNav: () => {},
+};
 
-const surface = { id: 'cmc', label: 'CMC' };
+beforeEach(() => {
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) })));
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
+});
 
-function renderRail(messages: AnaMessage[]) {
-  return render(
-    <AnaRail
-      open
-      setOpen={() => {}}
-      surface={surface}
-      segment="biotech"
-      mode="standard"
-      setMode={() => {}}
-      messages={messages}
-      onSend={vi.fn()}
-      onAct={vi.fn()}
-      projectId={42}
-    />,
-  );
+/** The shell's chat holding one question and AnA's settled answer to it. */
+function shellChat(answer: string, warnings?: string[]): UseAnaChatReturn {
+  return {
+    messages: [
+      { id: 'u-1', role: 'user', text: 'What margin should we use?' } as AnaChatMessage,
+      { id: 'a-1', role: 'assistant', text: answer, warnings, sentAt: 1_000, completedAt: 5_000 } as AnaChatMessage,
+    ],
+    isStreaming: false,
+    send: vi.fn(async () => undefined),
+    stop: vi.fn(),
+    runStatus: null,
+    pause: vi.fn(async () => true),
+    resume: vi.fn(async () => true),
+    interject: vi.fn(async () => true),
+    pendingSteers: [],
+    reset: vi.fn(),
+    loadThread: vi.fn(async () => undefined),
+    threadId: 'thread-1',
+    isLoadingThread: false,
+  };
+}
+
+async function renderTurn(answer: string, warnings?: string[]) {
+  const utils = render(<ConversationThread {...PROPS} shellChat={shellChat(answer, warnings)} />);
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 10));
+  });
+  return utils;
 }
 
 describe('an answer carries its own caveats', () => {
-  it('says a turn timed out, instead of showing the partial text as final', () => {
-    renderRail([
-      { role: 'ana', body: 'The non-inferiority margin should be', warnings: ['Response timed out'] },
-    ]);
+  it('says a turn timed out, instead of showing the partial text as final', async () => {
+    await renderTurn('The non-inferiority margin should be', ['Response timed out']);
 
     // The partial answer is still shown — it is real, and discarding it would
     // lose work. What must NOT happen is showing it unmarked.
@@ -70,51 +118,45 @@ describe('an answer carries its own caveats', () => {
     expect(screen.getByText('Response timed out')).toBeTruthy();
   });
 
-  it('surfaces a degraded-mode warning from the server', () => {
-    renderRail([{ role: 'ana', body: 'Here is the summary.', warnings: ['Running in degraded mode'] }]);
+  it('surfaces a degraded-mode warning from the server', async () => {
+    await renderTurn('Here is the summary.', ['Running in degraded mode']);
 
     expect(screen.getByText('Running in degraded mode')).toBeTruthy();
   });
 
-  it('shows every caveat, not just the first', () => {
-    renderRail([
-      { role: 'ana', body: 'Partial.', warnings: ['Running in degraded mode', 'Response timed out'] },
-    ]);
+  it('shows every caveat, not just the first', async () => {
+    await renderTurn('Partial.', ['Running in degraded mode', 'Response timed out']);
 
     expect(screen.getByText('Running in degraded mode')).toBeTruthy();
     expect(screen.getByText('Response timed out')).toBeTruthy();
   });
 
-  it('does not need the disclosure opened — a caveat you must hunt for is hidden', () => {
-    const { container } = renderRail([
-      { role: 'ana', body: 'Partial.', warnings: ['Response timed out'] },
-    ]);
+  it('does not need the disclosure opened — a caveat you must hunt for is hidden', async () => {
+    const { container } = await renderTurn('Partial.', ['Response timed out']);
 
     // Nothing was expanded; the caveat is in the DOM and outside the record.
     expect(container.querySelector('.ana-activity-body')).toBeNull();
     expect(container.querySelector('.ana-msg-warning')).toBeTruthy();
   });
 
-  it('never states a caveat in colour alone', () => {
+  it('never states a caveat in colour alone', async () => {
     // --warning carries meaning here, so the glyph and the sentence must both
     // say it too (WCAG 1.4.1).
-    const { container } = renderRail([
-      { role: 'ana', body: 'Partial.', warnings: ['Response timed out'] },
-    ]);
+    const { container } = await renderTurn('Partial.', ['Response timed out']);
 
     const row = container.querySelector('.ana-msg-warning');
     expect(row?.querySelector('.ana-msg-warning-ic svg')).toBeTruthy();
     expect(row?.textContent).toContain('Response timed out');
   });
 
-  it('a clean turn gets no caveat furniture at all', () => {
-    const { container } = renderRail([{ role: 'ana', body: 'Here is the answer.' }]);
+  it('a clean turn gets no caveat furniture at all', async () => {
+    const { container } = await renderTurn('Here is the answer.');
 
     expect(container.querySelector('.ana-msg-warnings')).toBeNull();
   });
 
-  it('an empty warnings array is not a caveat', () => {
-    const { container } = renderRail([{ role: 'ana', body: 'Here is the answer.', warnings: [] }]);
+  it('an empty warnings array is not a caveat', async () => {
+    const { container } = await renderTurn('Here is the answer.', []);
 
     expect(container.querySelector('.ana-msg-warnings')).toBeNull();
   });

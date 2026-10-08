@@ -1,0 +1,16 @@
+GREEN: the working tree as it stands.
+npx vitest run --config vitest.config.ts <the file(s) below>
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > locked for the workspace: the conversation shows the offer as a record, not a button 3646ms
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > not locked: the same offer is a button that starts the demonstration 356ms
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > choosing a client type from the account menu > lands on that type’s default screen, which is in this release 299ms
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > choosing a client type from the account menu > choosing the type already chosen leaves the person where they are 269ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  06:07:17
+   Duration  8.68s (transform 4.59s, setup 343ms, import 2.58s, tests 4.58s, environment 849ms)
+

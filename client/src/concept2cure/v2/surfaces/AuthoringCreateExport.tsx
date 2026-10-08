@@ -14,6 +14,13 @@
  *                             binary attachment. Word (.docx), PDF (real PDF —
  *                             the server's pdf branch now renders through the
  *                             platform HTML→PDF engine), and XML are offered.
+ *   • POST /docs/:id/working-copy — a working copy of any status, marked
+ *                             "DRAFT — uncontrolled copy" on every page.
+ *
+ * Both sit in ONE Download menu (editor/DownloadMenu.tsx; docs/design/
+ * ONE_ANA_ONE_CANVAS.md §4.5): the working copy is always offered; the
+ * controlled export only for a FROZEN or APPROVED document, and otherwise is
+ * shown disabled with its reason.
  *
  * HONESTY: creates are awaited and adopt the server's row (no client-side ids);
  * export outcomes distinguish refusal, recording, and delivery; the download is the exact
@@ -28,6 +35,7 @@ import { apiRequest, serverMessage, redactInternals, type ApiRequestError } from
 import { unboundNotice } from '../governanceNotice';
 import { downloadBlob, safeFileName } from '../download';
 import { shellProgramId, useShellProject } from '../shellProject';
+import { DownloadMenu, CONTROLLED_EXPORT_REASON, isSealedStatus } from '../editor/DownloadMenu';
 
 interface AuthoringTemplate { id: string | number; name?: string | null; title?: string | null; }
 
@@ -36,8 +44,9 @@ export interface AuthoringCreateExportProps {
   docId: string | null;
   docTitle: string | null;
   /** The document's lifecycle status. Export of a filing artifact is refused
-   *  server-side (409) unless it is FROZEN or APPROVED; the buttons say so
-   *  instead of offering an act that can only fail. */
+   *  server-side (409) unless it is FROZEN or APPROVED; the menu says so
+   *  instead of offering an act that can only fail. A working copy is
+   *  offered at any status. */
   docStatus?: string | null;
   /** Module filter currently active in the tree (used as the create default). */
   module: string;
@@ -58,11 +67,15 @@ export interface AuthoringCreateExportProps {
 const NONE = '(blank document)';
 
 export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported, onCheckExports }: AuthoringCreateExportProps) {
-  const exportable = docStatus == null || docStatus === 'FROZEN' || docStatus === 'APPROVED';
+  /* Sealed, or not offered. An unknown status used to count as exportable,
+     which offered the controlled act on a document whose status nobody had
+     read; the server would refuse it, and the working copy is the act that
+     fits a document of unknown status. */
+  const exportable = isSealedStatus(docStatus);
   const [dialog, setDialog] = useState<'doc' | 'section' | null>(null);
   // Re-renders when a surface opens or switches project, so the control follows.
   const openProject = shellProgramId(useShellProject());
-  const { exportDoc, exportBlocked, recovery } = useAuthoringExport({
+  const { exportDoc, blockedReason, recovery } = useAuthoringExport({
     docId, docTitle, exportable, openProject, fireToast, onExported, onCheckExports,
   });
 
@@ -218,19 +231,17 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
           <button className="btn ghost" style={{ height: 30 }} onClick={() => setDialog('section')}>
             {I.plus} New section
           </button>
-          {/* "Publish" was the wrong verb — nothing is transmitted; this is a
-              local download of the assembled artifact. And the server refuses
-              it (409) unless the document is frozen or approved, which the
-              buttons now say instead of offering an act that can only fail. */}
-          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('docx')} disabled={exportBlocked} title={exportable ? 'Export the assembled document as Word' : 'Freeze or approve this document before exporting a filing artifact'}>
-            {I.download} Word
-          </button>
-          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('pdf')} disabled={exportBlocked} title={exportable ? 'Export the assembled document as PDF (rendered server-side)' : 'Freeze or approve this document before exporting a filing artifact'}>
-            {I.download} PDF
-          </button>
-          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('xml')} disabled={exportBlocked} title={exportable ? 'Export the assembled document as XML' : 'Freeze or approve this document before exporting a filing artifact'}>
-            {I.download} XML
-          </button>
+          {/* One Download menu where three export buttons stood, all three
+              disabled for a draft — so a document AnA had just built could
+              not be pulled down at all. "Publish" was the wrong verb before
+              that: nothing is transmitted; both acts are local downloads. */}
+          <DownloadMenu
+            docId={docId}
+            docTitle={docTitle}
+            fireToast={fireToast}
+            controlled={{ run: (f) => void exportDoc(f), blockedReason }}
+            testId="ed-download"
+          />
         </>
       )}
       <ExportRecoveryNotice {...recovery} />
@@ -341,7 +352,12 @@ function useAuthoringExport({ docId, docTitle, exportable, openProject, fireToas
   return {
     exportDoc,
     recovery: { message: exportIssue, onCheck: onCheckExports ? checkExports : undefined },
-    exportBlocked: !exportable || exporting || exportUnconfirmed,
+    /* Why the controlled export cannot run now, shown beside it; null when it can. */
+    blockedReason: !exportable
+      ? CONTROLLED_EXPORT_REASON
+      : exporting
+        ? 'An export is in progress.'
+        : exportUnconfirmed ? 'Check the export history before exporting again.' : null,
   };
 }
 

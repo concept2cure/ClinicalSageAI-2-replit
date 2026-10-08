@@ -356,6 +356,12 @@ export interface AnaChatMessage {
   /** True only when an interrupted stream delivered response text, before any failure copy. */
   interruptedWithPartialResponse?: boolean;
   /**
+   * The code the server refused this turn with, when it sent one (for example
+   * `THREAD_PROJECT_MISMATCH`: the conversation belongs to another project).
+   * A host reads it to offer the way out the refusal names; the text says why.
+   */
+  refusalCode?: string;
+  /**
    * Intent lens AnA detected for this turn (audit / risk / strategy /
    * improve / compare / auto). Rendered as a small meta chip.
    */

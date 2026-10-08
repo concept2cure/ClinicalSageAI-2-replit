@@ -13,7 +13,6 @@
 import type { Request } from 'express';
 import type { GatewayMessage } from '../ai-gateway/types.js';
 import { pool } from '../../db.js';
-import { looksLikeProgramUuid, parseIntegerProjectId } from '../../lib/project-id.js';
 import { orchestrate, type OrchestratorInput, type IntentLens, type UserRole } from './index.js';
 import { prefetchProjectIntelligence, preloadRIMContext } from './orchestrator.js';
 import type { SubmissionType } from './deficiency-taxonomy.js';
@@ -36,6 +35,7 @@ import {
   buildContradictionWatchBlock,
 } from '../ana/contradiction-watch.js';
 import { getSessionBriefing } from '../ana/session-briefing.js';
+import { parseIntegerProjectId } from '../../lib/project-id.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -129,16 +129,14 @@ type ProjectPrefetchResults = [
   PromiseSettledResult<Awaited<ReturnType<typeof preloadRIMContext>>>
 ];
 
-/* A turn names its project as an integer or a program UUID. Number(uuid) is NaN, which the relational overlay and
-   session briefing bound into SQL on every project turn (QA 2026-10-08, j5). One resolution instead
-   (services/c2c/project-ref.ts): an integer is itself, a program its anchored row, anything else none. */
-async function anchoredProjectForProgram(ref: unknown, orgId: number | null | undefined): Promise<number | null> {
-  if (!orgId || !Number.isFinite(orgId)) return null;
-  return (await import('../c2c/project-ref.js')).integerProjectForRef(async () => (await import('../../db.js')).db, { ref, orgId, context: 'ana-route-prefetch' });
-}
-
 export async function prefetchRouteIntelligenceContext(params: {
   projectId?: string | number | null;
+  /**
+   * The integer projects.id the route resolved from `projectId` (a program UUID
+   * through its linked projects row, services/c2c/project-ref.ts). Omitted:
+   * only an integer `projectId` names a project here.
+   */
+  projectIdNumber?: number | null;
   organizationId?: number | null;
   authoringContext?: Record<string, unknown>;
   /** Numeric user id — enables AnA's per-user relational personality overlay. */
@@ -150,6 +148,13 @@ export async function prefetchRouteIntelligenceContext(params: {
 }): Promise<PrefetchedRouteIntelligenceContext> {
   const { projectId, organizationId, authoringContext, userId, targetAgency, sessionStart } =
     params;
+  /* Number(projectId) was NaN for a program UUID (ana-14): the project reads
+     below were skipped, and the relational overlay and session briefing were
+     sent NaN and failed. parseIntegerProjectId is fail-closed: never NaN, and
+     never the integer a UUID's leading digits spell. */
+  const projectIdNumber = params.projectIdNumber !== undefined
+    ? params.projectIdNumber
+    : parseIntegerProjectId(projectId);
   const unavailable = new Set<string>();
   const bounded = async <T>(source: string, load: () => Promise<T>, ms = OPTIONAL_PREFETCH_TIMEOUT_MS): Promise<T> => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -167,9 +172,6 @@ export async function prefetchRouteIntelligenceContext(params: {
       clearTimeout(timer);
     }
   };
-  // Bounded like every optional read: a stalled anchor lookup is missing context, not a wait.
-  const projectIdNumber: number | null = parseIntegerProjectId(projectId) ?? (looksLikeProgramUuid(projectId)
-    ? await bounded('project record', () => anchoredProjectForProgram(projectId, organizationId)).catch(() => null) : null);
 
   let feedbackContext: OrchestratorInput['_feedbackContext'] = null;
   let projectProfile: OrchestratorInput['_projectIntelligenceProfile'] = null;

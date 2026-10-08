@@ -1,0 +1,48 @@
+# Red for the review fixes: the four new test files run against the slice as the implementer left it, before the review fixes (ProjectHome.tsx, SubmissionCenter.tsx, DispatchReadiness.tsx, programSequence.ts copied aside, swapped in, then restored).
+# Result: 12 failed, 16 passed. The 12 failures are the review's cases (11 new tests, plus the original "no submission and no sequence" test, which now also checks the hint names the IND). The 16 passes are the other 15 original tests and one pin (a cleared verdict whose validator ran shows no caveat).
+# npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx
+# (DOM dumps trimmed: only the per-test lines, failure reasons and totals are kept.)
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > lists the project’s submission from the project-scoped read 231ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > an empty project says so, which is not the same as a failure 175ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > a failed read is a failure with a retry, and the retry reads again 404ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > keeps "Open Submission Center", which opens on this project 212ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > shows the server’s verdict, its blockers and its counts, from the readiness endpoint 182ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a cleared verdict is the server’s, and says so in words 103ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a response with no gate is unanswered, never cleared 98ms
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > no submission and no sequence are said in plain words 105ms
+   → expected 'Dispatch readinessOpen readiness No s…' to contain 'The dispatch gate reads this project\…'
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > an IND project whose only submission is an MAA is not told it has no submission 5090ms
+   → expected 'Dispatch readinessOpen readiness No s…' to contain 'No IND submission for this project yet'
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a CER project (no application type is CER) names its submissions instead of denying them 5095ms
+   → expected 'Dispatch readinessOpen readiness No s…' to contain 'No CER submission for this project yet'
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a verdict for a submission matched by name is named by the list, not denied 5098ms
+   → expected 'Submissions Open Submission CenterNo …' to contain 'No submission is recorded to this pro…'
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > states each gate the server cleared without assessing, in the server’s words 95ms
+   → Unable to find an element by: [data-testid="pj-readiness-not-assessed"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > with no gate breakdown, says the external validator did not run 82ms
+   → expected 'Cleared to dispatchSequence 0001 · FD…' to contain 'External validator not run'
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > a cleared verdict whose validator ran says nothing it did not assess 89ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > reads the project-scoped list, not the organization, and lists only its submissions 292ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > says whose submissions these are and how many others the server left out 26ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > shows every submission of the organization on request, and can go back 157ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > does not guess the count of others when the server did not send one 79ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > creates the submission in the open project: no programme picker, the project named 173ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with no project open > reads the organization as before, with no scope line and the programme picker 107ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > keeps keyboard focus on the scope toggle in both directions 53ms
+   → expected <button type="button" …(1)></button> to be <button type="button" …(1)></button> // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > a project known only by its id is "the open project" once, not twice 58ms
+   → expected 'Submissions of the open project, the …' to match /Submissions of the open project\./
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > a failed scoped read does not call the list the organization’s 22ms
+   → expected 'SubmissionSubmission centerPlan, asse…' to match /this project's submissions could not …/
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > AnA asking for another project’s submission is told it is not listed here, not that it does not exist 45ms
+   → expected 'No submission named "BX-990 NDA" in t…' to match /among the open project's submissions …/
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > says in one line that the work is not filtered to this project, and no longer claims readiness is unwired 458ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > "Open My work" opens the task board on the person's own tasks, as the nav does 939ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx > DispatchReadiness — the program’s submissions of other types > says the IND is missing and names the MAA, never "no submission" 5069ms
+   → expected 'AnA · dispatch gate · proven, not gen…' to contain 'No IND submission for BX-512 IND yet'
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx > DispatchReadiness — the program’s submissions of other types > a program with nothing recorded is still "no submission", with its type named 14ms
+   → expected 'AnA · dispatch gate · proven, not gen…' to contain 'reads BX-512 IND\'s IND submission, a…'
+ Test Files  3 failed | 1 passed (4)
+      Tests  12 failed | 16 passed (28)
+   Duration  30.63s (transform 1.53s, setup 439ms, import 2.44s, tests 24.57s, environment 2.25s)
