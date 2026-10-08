@@ -1,0 +1,212 @@
+{
+  "run": 37697288645,
+  "head": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+  "failedReleaseJob": 113076409139,
+  "redLogLines": [
+    "2026-10-07T23:53:46.7003074Z release-evidence assembly failed closed: upgrade evidence step \"Deploy migration is idempotent (every release re-runs it)\" was not found in job \"Blank DB Provisioning + Deploy Migration\" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs"
+  ],
+  "successfulBlankDatabaseJob": {
+    "id": 113056058936,
+    "run_id": 37697288645,
+    "workflow_name": "CI",
+    "head_branch": "concept2cure-v2",
+    "run_url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/runs/37697288645",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOQVRBi88AAAAaUqqOOA",
+    "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+    "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/jobs/113056058936",
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37697288645/job/113056058936",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-07T22:48:43Z",
+    "started_at": "2026-10-07T22:48:45Z",
+    "completed_at": "2026-10-07T22:50:44Z",
+    "name": "Blank DB Provisioning + Deploy Migration",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-07T22:48:45Z",
+        "completed_at": "2026-10-07T22:48:46Z"
+      },
+      {
+        "name": "Initialize containers",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-07T22:48:46Z",
+        "completed_at": "2026-10-07T22:49:09Z"
+      },
+      {
+        "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-07T22:49:09Z",
+        "completed_at": "2026-10-07T22:49:22Z"
+      },
+      {
+        "name": "Setup Node.js",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-07T22:49:22Z",
+        "completed_at": "2026-10-07T22:49:26Z"
+      },
+      {
+        "name": "Install dependencies",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-07T22:49:26Z",
+        "completed_at": "2026-10-07T22:50:10Z"
+      },
+      {
+        "name": "Install Postgres client",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6,
+        "started_at": "2026-10-07T22:50:10Z",
+        "completed_at": "2026-10-07T22:50:20Z"
+      },
+      {
+        "name": "Assert the database really is blank",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7,
+        "started_at": "2026-10-07T22:50:20Z",
+        "completed_at": "2026-10-07T22:50:21Z"
+      },
+      {
+        "name": "Deploy migration must REFUSE an unprovisioned database",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8,
+        "started_at": "2026-10-07T22:50:21Z",
+        "completed_at": "2026-10-07T22:50:21Z"
+      },
+      {
+        "name": "Provision from scratch",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9,
+        "started_at": "2026-10-07T22:50:21Z",
+        "completed_at": "2026-10-07T22:50:34Z"
+      },
+      {
+        "name": "Deploy migration succeeds on the provisioned database",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10,
+        "started_at": "2026-10-07T22:50:34Z",
+        "completed_at": "2026-10-07T22:50:36Z"
+      },
+      {
+        "name": "RLS coverage after the FIRST deploy (a new database is isolated before any re-run)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11,
+        "started_at": "2026-10-07T22:50:36Z",
+        "completed_at": "2026-10-07T22:50:37Z"
+      },
+      {
+        "name": "Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12,
+        "started_at": "2026-10-07T22:50:37Z",
+        "completed_at": "2026-10-07T22:50:39Z"
+      },
+      {
+        "name": "RLS coverage — every org-keyed table carries the tenant policy",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13,
+        "started_at": "2026-10-07T22:50:39Z",
+        "completed_at": "2026-10-07T22:50:39Z"
+      },
+      {
+        "name": "RLS parent-scope delegates exist (the coverage gate depends on them)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 14,
+        "started_at": "2026-10-07T22:50:39Z",
+        "completed_at": "2026-10-07T22:50:39Z"
+      },
+      {
+        "name": "Verify the readiness contract independently",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 15,
+        "started_at": "2026-10-07T22:50:39Z",
+        "completed_at": "2026-10-07T22:50:39Z"
+      },
+      {
+        "name": "Post-deploy invariants hold on the real deployed database",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 16,
+        "started_at": "2026-10-07T22:50:39Z",
+        "completed_at": "2026-10-07T22:50:40Z"
+      },
+      {
+        "name": "Server SQL resolves against the LIVE provisioned schema (ratchet)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17,
+        "started_at": "2026-10-07T22:50:40Z",
+        "completed_at": "2026-10-07T22:50:40Z"
+      },
+      {
+        "name": "Guardrails — what a tenant purge cannot reach (ratchet)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 18,
+        "started_at": "2026-10-07T22:50:40Z",
+        "completed_at": "2026-10-07T22:50:41Z"
+      },
+      {
+        "name": "Post Setup Node.js",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 34,
+        "started_at": "2026-10-07T22:50:41Z",
+        "completed_at": "2026-10-07T22:50:41Z"
+      },
+      {
+        "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 35,
+        "started_at": "2026-10-07T22:50:41Z",
+        "completed_at": "2026-10-07T22:50:41Z"
+      },
+      {
+        "name": "Stop containers",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 36,
+        "started_at": "2026-10-07T22:50:41Z",
+        "completed_at": "2026-10-07T22:50:41Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 37,
+        "started_at": "2026-10-07T22:50:41Z",
+        "completed_at": "2026-10-07T22:50:41Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/check-runs/113056058936",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000119298,
+    "runner_name": "GitHub Actions 1000119298",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  }
+}

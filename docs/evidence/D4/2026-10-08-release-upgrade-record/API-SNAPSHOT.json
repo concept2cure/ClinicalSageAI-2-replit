@@ -1,0 +1,1228 @@
+{
+  "retrievedAt": "2026-10-08T00:22:43.564Z",
+  "source": "GitHub Actions API record subset; original id/name/status/conclusion/steps preserved",
+  "commit": {
+    "sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+    "tree": "8d592739da06d8ddf0f8a083d4223ef8e1fc4c50"
+  },
+  "runs": {
+    "workflow_runs": [
+      {
+        "id": 37697288222,
+        "name": "C2C Agent — Validate & Audit",
+        "status": "completed",
+        "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047"
+      },
+      {
+        "id": 37697288327,
+        "name": "Tier 5 Browser Smoke",
+        "status": "completed",
+        "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047"
+      },
+      {
+        "id": 37697288188,
+        "name": "Repo Health Baseline Refresh",
+        "status": "completed",
+        "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047"
+      },
+      {
+        "id": 37697288296,
+        "name": "Semgrep",
+        "status": "completed",
+        "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047"
+      },
+      {
+        "id": 37697288207,
+        "name": "CodeQL",
+        "status": "completed",
+        "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047"
+      },
+      {
+        "id": 37697288645,
+        "name": "CI",
+        "status": "in_progress",
+        "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047"
+      }
+    ]
+  },
+  "jobsByRun": {
+    "37697288645": {
+      "jobs": [
+        {
+          "id": 113052022067,
+          "name": "Security Scan",
+          "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-07T22:36:50Z",
+              "completed_at": "2026-10-07T22:36:52Z"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-07T22:36:52Z",
+              "completed_at": "2026-10-07T22:37:04Z"
+            },
+            {
+              "name": "Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-07T22:37:04Z",
+              "completed_at": "2026-10-07T22:37:05Z"
+            },
+            {
+              "name": "Install dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-07T22:37:05Z",
+              "completed_at": "2026-10-07T22:37:51Z"
+            },
+            {
+              "name": "Generate SBOM (CycloneDX)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-07T22:37:51Z",
+              "completed_at": "2026-10-07T22:37:53Z"
+            },
+            {
+              "name": "Upload SBOM artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-07T22:37:53Z",
+              "completed_at": "2026-10-07T22:37:54Z"
+            },
+            {
+              "name": "Run lockfile audit and dependency-risk ledger gate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-07T22:37:54Z",
+              "completed_at": "2026-10-07T22:37:56Z"
+            },
+            {
+              "name": "Prove dependency-risk gate fail-closed behavior",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-07T22:37:56Z",
+              "completed_at": "2026-10-07T22:37:58Z"
+            },
+            {
+              "name": "Prove PPTX image parser is unreachable",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-07T22:37:58Z",
+              "completed_at": "2026-10-07T22:37:58Z"
+            },
+            {
+              "name": "Upload exact npm audit evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-07T22:37:58Z",
+              "completed_at": "2026-10-07T22:37:59Z"
+            },
+            {
+              "name": "Trivy exceptions are attached, owned and dated (with selftests)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-07T22:37:59Z",
+              "completed_at": "2026-10-07T22:37:59Z"
+            },
+            {
+              "name": "Trivy filesystem scan (deps + secrets)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-07T22:37:59Z",
+              "completed_at": "2026-10-07T22:38:34Z"
+            },
+            {
+              "name": "Trivy config scan (Dockerfile/IaC)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-07T22:38:34Z",
+              "completed_at": "2026-10-07T22:38:58Z"
+            },
+            {
+              "name": "Post Trivy config scan (Dockerfile/IaC)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-10-07T22:38:58Z",
+              "completed_at": "2026-10-07T22:38:58Z"
+            },
+            {
+              "name": "Post Trivy filesystem scan (deps + secrets)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-10-07T22:38:58Z",
+              "completed_at": "2026-10-07T22:38:58Z"
+            },
+            {
+              "name": "Post Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-07T22:38:58Z",
+              "completed_at": "2026-10-07T22:38:59Z"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-10-07T22:38:59Z",
+              "completed_at": "2026-10-07T22:38:59Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-10-07T22:38:59Z",
+              "completed_at": "2026-10-07T22:38:59Z"
+            }
+          ]
+        },
+        {
+          "id": 113052022104,
+          "name": "Security Contract Tests",
+          "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-07T22:36:50Z",
+              "completed_at": "2026-10-07T22:36:51Z"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-07T22:36:51Z",
+              "completed_at": "2026-10-07T22:37:04Z"
+            },
+            {
+              "name": "Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-07T22:37:04Z",
+              "completed_at": "2026-10-07T22:37:04Z"
+            },
+            {
+              "name": "Install dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-07T22:37:04Z",
+              "completed_at": "2026-10-07T22:37:32Z"
+            },
+            {
+              "name": "Run security contract tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-07T22:37:32Z",
+              "completed_at": "2026-10-07T22:37:58Z"
+            },
+            {
+              "name": "MCP SDK OAuth credentials stay bound to their issuer",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-07T22:37:58Z",
+              "completed_at": "2026-10-07T22:37:59Z"
+            },
+            {
+              "name": "Post Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-07T22:37:59Z",
+              "completed_at": "2026-10-07T22:37:59Z"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-07T22:37:59Z",
+              "completed_at": "2026-10-07T22:37:59Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-07T22:37:59Z",
+              "completed_at": "2026-10-07T22:37:59Z"
+            }
+          ]
+        },
+        {
+          "id": 113056058936,
+          "name": "Blank DB Provisioning + Deploy Migration",
+          "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-07T22:48:45Z",
+              "completed_at": "2026-10-07T22:48:46Z"
+            },
+            {
+              "name": "Initialize containers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-07T22:48:46Z",
+              "completed_at": "2026-10-07T22:49:09Z"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-07T22:49:09Z",
+              "completed_at": "2026-10-07T22:49:22Z"
+            },
+            {
+              "name": "Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-07T22:49:22Z",
+              "completed_at": "2026-10-07T22:49:26Z"
+            },
+            {
+              "name": "Install dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-07T22:49:26Z",
+              "completed_at": "2026-10-07T22:50:10Z"
+            },
+            {
+              "name": "Install Postgres client",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-07T22:50:10Z",
+              "completed_at": "2026-10-07T22:50:20Z"
+            },
+            {
+              "name": "Assert the database really is blank",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-07T22:50:20Z",
+              "completed_at": "2026-10-07T22:50:21Z"
+            },
+            {
+              "name": "Deploy migration must REFUSE an unprovisioned database",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-07T22:50:21Z",
+              "completed_at": "2026-10-07T22:50:21Z"
+            },
+            {
+              "name": "Provision from scratch",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-07T22:50:21Z",
+              "completed_at": "2026-10-07T22:50:34Z"
+            },
+            {
+              "name": "Deploy migration succeeds on the provisioned database",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-07T22:50:34Z",
+              "completed_at": "2026-10-07T22:50:36Z"
+            },
+            {
+              "name": "RLS coverage after the FIRST deploy (a new database is isolated before any re-run)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-07T22:50:36Z",
+              "completed_at": "2026-10-07T22:50:37Z"
+            },
+            {
+              "name": "Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-07T22:50:37Z",
+              "completed_at": "2026-10-07T22:50:39Z"
+            },
+            {
+              "name": "RLS coverage — every org-keyed table carries the tenant policy",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-07T22:50:39Z",
+              "completed_at": "2026-10-07T22:50:39Z"
+            },
+            {
+              "name": "RLS parent-scope delegates exist (the coverage gate depends on them)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-07T22:50:39Z",
+              "completed_at": "2026-10-07T22:50:39Z"
+            },
+            {
+              "name": "Verify the readiness contract independently",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-07T22:50:39Z",
+              "completed_at": "2026-10-07T22:50:39Z"
+            },
+            {
+              "name": "Post-deploy invariants hold on the real deployed database",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16,
+              "started_at": "2026-10-07T22:50:39Z",
+              "completed_at": "2026-10-07T22:50:40Z"
+            },
+            {
+              "name": "Server SQL resolves against the LIVE provisioned schema (ratchet)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17,
+              "started_at": "2026-10-07T22:50:40Z",
+              "completed_at": "2026-10-07T22:50:40Z"
+            },
+            {
+              "name": "Guardrails — what a tenant purge cannot reach (ratchet)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18,
+              "started_at": "2026-10-07T22:50:40Z",
+              "completed_at": "2026-10-07T22:50:41Z"
+            },
+            {
+              "name": "Post Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 34,
+              "started_at": "2026-10-07T22:50:41Z",
+              "completed_at": "2026-10-07T22:50:41Z"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 35,
+              "started_at": "2026-10-07T22:50:41Z",
+              "completed_at": "2026-10-07T22:50:41Z"
+            },
+            {
+              "name": "Stop containers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 36,
+              "started_at": "2026-10-07T22:50:41Z",
+              "completed_at": "2026-10-07T22:50:41Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 37,
+              "started_at": "2026-10-07T22:50:41Z",
+              "completed_at": "2026-10-07T22:50:41Z"
+            }
+          ]
+        },
+        {
+          "id": 113056059017,
+          "name": "Test",
+          "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-07T22:48:45Z",
+              "completed_at": "2026-10-07T22:48:46Z"
+            },
+            {
+              "name": "Initialize containers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-07T22:48:46Z",
+              "completed_at": "2026-10-07T22:49:13Z"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-07T22:49:13Z",
+              "completed_at": "2026-10-07T22:49:26Z"
+            },
+            {
+              "name": "Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-07T22:49:26Z",
+              "completed_at": "2026-10-07T22:49:26Z"
+            },
+            {
+              "name": "Install dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-07T22:49:26Z",
+              "completed_at": "2026-10-07T22:50:05Z"
+            },
+            {
+              "name": "Install Postgres client + xmllint (eCTD qualification)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-07T22:50:05Z",
+              "completed_at": "2026-10-07T22:50:15Z"
+            },
+            {
+              "name": "Setup Python (document runtime)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-07T22:50:15Z",
+              "completed_at": "2026-10-07T22:50:15Z"
+            },
+            {
+              "name": "Install document runtime (python-docx + lxml)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-07T22:50:15Z",
+              "completed_at": "2026-10-07T22:50:17Z"
+            },
+            {
+              "name": "Apply GCC migrations",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-07T22:50:17Z",
+              "completed_at": "2026-10-07T22:50:20Z"
+            },
+            {
+              "name": "Run tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-07T22:50:20Z",
+              "completed_at": "2026-10-07T23:51:50Z"
+            },
+            {
+              "name": "Upload core test results",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-07T23:51:50Z",
+              "completed_at": "2026-10-07T23:51:51Z"
+            },
+            {
+              "name": "Post Setup Python (document runtime)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-10-07T23:51:51Z",
+              "completed_at": "2026-10-07T23:51:51Z"
+            },
+            {
+              "name": "Post Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-10-07T23:51:51Z",
+              "completed_at": "2026-10-07T23:51:51Z"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-10-07T23:51:51Z",
+              "completed_at": "2026-10-07T23:51:51Z"
+            },
+            {
+              "name": "Stop containers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22,
+              "started_at": "2026-10-07T23:51:51Z",
+              "completed_at": "2026-10-07T23:51:52Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-10-07T23:51:52Z",
+              "completed_at": "2026-10-07T23:51:52Z"
+            }
+          ]
+        },
+        {
+          "id": 113056059075,
+          "name": "Production Boot Smoke (RLS on, non-superuser role)",
+          "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-07T22:48:46Z",
+              "completed_at": "2026-10-07T22:48:48Z"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-07T22:48:48Z",
+              "completed_at": "2026-10-07T22:49:04Z"
+            },
+            {
+              "name": "Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-07T22:49:04Z",
+              "completed_at": "2026-10-07T22:49:08Z"
+            },
+            {
+              "name": "Install dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-07T22:49:08Z",
+              "completed_at": "2026-10-07T22:49:58Z"
+            },
+            {
+              "name": "Install Postgres client",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-07T22:49:58Z",
+              "completed_at": "2026-10-07T22:50:19Z"
+            },
+            {
+              "name": "Start PostgreSQL with TLS",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-07T22:50:19Z",
+              "completed_at": "2026-10-07T22:50:31Z"
+            },
+            {
+              "name": "Provision the schema from scratch (owner connection)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-07T22:50:31Z",
+              "completed_at": "2026-10-07T22:50:47Z"
+            },
+            {
+              "name": "The runtime role must be non-superuser and NOBYPASSRLS",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-07T22:50:47Z",
+              "completed_at": "2026-10-07T22:50:47Z"
+            },
+            {
+              "name": "Build the production bundle",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-07T22:50:47Z",
+              "completed_at": "2026-10-07T22:51:05Z"
+            },
+            {
+              "name": "Server bundle imports only what the image ships (npm ci --omit=dev)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-07T22:51:05Z",
+              "completed_at": "2026-10-07T22:51:08Z"
+            },
+            {
+              "name": "Boot in production mode and require /readyz=200",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-07T22:51:08Z",
+              "completed_at": "2026-10-07T22:51:16Z"
+            },
+            {
+              "name": "Tear down PostgreSQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-07T22:51:16Z",
+              "completed_at": "2026-10-07T22:51:16Z"
+            },
+            {
+              "name": "Post Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-10-07T22:51:16Z",
+              "completed_at": "2026-10-07T22:51:16Z"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-10-07T22:51:16Z",
+              "completed_at": "2026-10-07T22:51:16Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-07T22:51:16Z",
+              "completed_at": "2026-10-07T22:51:16Z"
+            }
+          ]
+        },
+        {
+          "id": 113075989972,
+          "name": "Build",
+          "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-07T23:51:57Z",
+              "completed_at": "2026-10-07T23:51:58Z"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-07T23:51:58Z",
+              "completed_at": "2026-10-07T23:52:14Z"
+            },
+            {
+              "name": "Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-07T23:52:14Z",
+              "completed_at": "2026-10-07T23:52:14Z"
+            },
+            {
+              "name": "Install dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-07T23:52:14Z",
+              "completed_at": "2026-10-07T23:52:56Z"
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-07T23:52:56Z",
+              "completed_at": "2026-10-07T23:53:13Z"
+            },
+            {
+              "name": "Component class coverage (every rendered class has a rule)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-07T23:53:13Z",
+              "completed_at": "2026-10-07T23:53:14Z"
+            },
+            {
+              "name": "Upload build artifacts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-07T23:53:14Z",
+              "completed_at": "2026-10-07T23:53:17Z"
+            },
+            {
+              "name": "Post Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-10-07T23:53:17Z",
+              "completed_at": "2026-10-07T23:53:17Z"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-07T23:53:17Z",
+              "completed_at": "2026-10-07T23:53:17Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-07T23:53:17Z",
+              "completed_at": "2026-10-07T23:53:17Z"
+            }
+          ]
+        }
+      ]
+    },
+    "37697288207": {
+      "jobs": [
+        {
+          "id": 113052020925,
+          "name": "Analyze (CodeQL python)",
+          "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-07T22:36:52Z",
+              "completed_at": "2026-10-07T22:36:54Z"
+            },
+            {
+              "name": "Checkout repository",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-07T22:36:54Z",
+              "completed_at": "2026-10-07T22:37:08Z"
+            },
+            {
+              "name": "Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-07T22:37:08Z",
+              "completed_at": "2026-10-07T22:37:23Z"
+            },
+            {
+              "name": "Autobuild",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-07T22:37:23Z",
+              "completed_at": "2026-10-07T22:37:26Z"
+            },
+            {
+              "name": "Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-07T22:37:26Z",
+              "completed_at": "2026-10-07T22:38:15Z"
+            },
+            {
+              "name": "Post Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-07T22:38:15Z",
+              "completed_at": "2026-10-07T22:38:16Z"
+            },
+            {
+              "name": "Post Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-07T22:38:16Z",
+              "completed_at": "2026-10-07T22:38:17Z"
+            },
+            {
+              "name": "Post Checkout repository",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-07T22:38:17Z",
+              "completed_at": "2026-10-07T22:38:17Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-07T22:38:17Z",
+              "completed_at": "2026-10-07T22:38:17Z"
+            }
+          ]
+        },
+        {
+          "id": 113052021062,
+          "name": "Analyze (CodeQL javascript-typescript)",
+          "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-07T22:36:50Z",
+              "completed_at": "2026-10-07T22:36:52Z"
+            },
+            {
+              "name": "Checkout repository",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-07T22:36:52Z",
+              "completed_at": "2026-10-07T22:37:07Z"
+            },
+            {
+              "name": "Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-07T22:37:07Z",
+              "completed_at": "2026-10-07T22:37:23Z"
+            },
+            {
+              "name": "Autobuild",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-07T22:37:23Z",
+              "completed_at": "2026-10-07T22:37:26Z"
+            },
+            {
+              "name": "Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-07T22:37:26Z",
+              "completed_at": "2026-10-07T22:49:19Z"
+            },
+            {
+              "name": "Post Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-07T22:49:19Z",
+              "completed_at": "2026-10-07T22:49:20Z"
+            },
+            {
+              "name": "Post Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-07T22:49:20Z",
+              "completed_at": "2026-10-07T22:49:20Z"
+            },
+            {
+              "name": "Post Checkout repository",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-07T22:49:20Z",
+              "completed_at": "2026-10-07T22:49:21Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-07T22:49:21Z",
+              "completed_at": "2026-10-07T22:49:21Z"
+            }
+          ]
+        }
+      ]
+    },
+    "37697288296": {
+      "jobs": [
+        {
+          "id": 113052020734,
+          "name": "Analyze (Semgrep)",
+          "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-07T22:36:51Z",
+              "completed_at": "2026-10-07T22:36:52Z"
+            },
+            {
+              "name": "Initialize containers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-07T22:36:52Z",
+              "completed_at": "2026-10-07T22:37:06Z"
+            },
+            {
+              "name": "Checkout repository",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-07T22:37:06Z",
+              "completed_at": "2026-10-07T22:37:32Z"
+            },
+            {
+              "name": "Resolve the baseline (the newest trunk commit whose Semgrep run passed)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-07T22:37:32Z",
+              "completed_at": "2026-10-07T22:37:34Z"
+            },
+            {
+              "name": "Blocking scan — nothing the baseline commit did not already have",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-07T22:37:34Z",
+              "completed_at": "2026-10-07T22:37:43Z"
+            },
+            {
+              "name": "Full scan for the Security tab",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-07T22:37:43Z",
+              "completed_at": "2026-10-07T22:48:40Z"
+            },
+            {
+              "name": "Upload Semgrep SARIF to code scanning",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-07T22:48:40Z",
+              "completed_at": "2026-10-07T22:48:49Z"
+            },
+            {
+              "name": "Upload SARIF artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-07T22:48:49Z",
+              "completed_at": "2026-10-07T22:48:51Z"
+            },
+            {
+              "name": "Post Upload Semgrep SARIF to code scanning",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-10-07T22:48:51Z",
+              "completed_at": "2026-10-07T22:48:52Z"
+            },
+            {
+              "name": "Post Checkout repository",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-10-07T22:48:52Z",
+              "completed_at": "2026-10-07T22:48:52Z"
+            },
+            {
+              "name": "Stop containers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16,
+              "started_at": "2026-10-07T22:48:52Z",
+              "completed_at": "2026-10-07T22:48:52Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17,
+              "started_at": "2026-10-07T22:48:52Z",
+              "completed_at": "2026-10-07T22:48:52Z"
+            }
+          ]
+        }
+      ]
+    },
+    "37697288327": {
+      "jobs": [
+        {
+          "id": 113052020789,
+          "name": "Authenticated app smoke (real browser + DB)",
+          "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-07T22:36:50Z",
+              "completed_at": "2026-10-07T22:36:51Z"
+            },
+            {
+              "name": "Initialize containers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-07T22:36:51Z",
+              "completed_at": "2026-10-07T22:37:18Z"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-07T22:37:18Z",
+              "completed_at": "2026-10-07T22:37:32Z"
+            },
+            {
+              "name": "Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-07T22:37:32Z",
+              "completed_at": "2026-10-07T22:37:32Z"
+            },
+            {
+              "name": "Install dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-07T22:37:32Z",
+              "completed_at": "2026-10-07T22:38:02Z"
+            },
+            {
+              "name": "Install Playwright test runner + Chromium",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-07T22:38:02Z",
+              "completed_at": "2026-10-07T22:38:27Z"
+            },
+            {
+              "name": "Provision the application schema from scratch",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-07T22:38:27Z",
+              "completed_at": "2026-10-07T22:38:38Z"
+            },
+            {
+              "name": "Run the authenticated browser smoke",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-07T22:38:38Z",
+              "completed_at": "2026-10-07T22:38:57Z"
+            },
+            {
+              "name": "Run the WO-06 governed golden journey",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-07T22:38:57Z",
+              "completed_at": "2026-10-07T22:39:16Z"
+            },
+            {
+              "name": "Upload smoke artifacts (traces, screenshots, results)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-07T22:39:16Z",
+              "completed_at": "2026-10-07T22:39:17Z"
+            },
+            {
+              "name": "Post Setup Node.js",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18,
+              "started_at": "2026-10-07T22:39:17Z",
+              "completed_at": "2026-10-07T22:39:17Z"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-10-07T22:39:17Z",
+              "completed_at": "2026-10-07T22:39:18Z"
+            },
+            {
+              "name": "Stop containers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-10-07T22:39:18Z",
+              "completed_at": "2026-10-07T22:39:19Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-10-07T22:39:19Z",
+              "completed_at": "2026-10-07T22:39:19Z"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
