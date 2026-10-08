@@ -531,6 +531,20 @@ export function sessionPermissions(role: string | null | undefined): string[] {
 }
 
 /**
+ * The `roles` a signed-in user carries, from the organisation role. Sign-in
+ * (POST /login, the MFA verify) issues `[role, 'user']`; the session and /me
+ * reads must answer the same, or a reload overwrites the sign-in roles with a
+ * bare `['user']` and the client withholds controls the server admits (a member
+ * or manager could not send a Vault version for review after a refresh).
+ * One definition, so the reads cannot drift from sign-in again.
+ */
+export function sessionRolesOf(role: string | null | undefined): string[] {
+  const base = role || 'user';
+  if (base === 'admin') return ['admin', 'user'];
+  return [...new Set([base, 'user'])];
+}
+
+/**
  * Guard for a route that writes governed regulatory data: the caller must hold
  * a writing role AND a usable numeric organization context, which is attached
  * to `req.resolvedOrganizationId` for the handler.

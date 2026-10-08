@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > shows each version's stage and sign-offs, apart from its filing 1013ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > sends a version nobody started for review, after saying what that means: starts its record, then moves it to In review 917ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > signs the review through the e-signature dialog: meaning, reason and password go to the lifecycle route 2247ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > a refused approval shows the server's reason, in the dialog 1254ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says before signing that the reviewer, and the uploader, do not approve 1926ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says who sent it for review, and a role without authoring rights, may not act 1068ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > names the earlier approved version an approval supersedes 451ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > a dropped connection says the outcome is not known, never that nothing happened 593ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > the list row says the stage beside the filing 51ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > what counts as settled in a folder (VR-13, FD4) > an upload counts only once approved; a confirmed filing is not an approval 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a sign-off carried from Authoring (FD5 (c)) > says it was signed in Authoring, by the printed name the Authoring signature holds 2ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  01:28:14
+   Duration  12.88s (transform 1.97s, setup 209ms, import 2.34s, tests 9.53s, environment 596ms)
+
+exit=0

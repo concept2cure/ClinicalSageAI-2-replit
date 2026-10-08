@@ -1,0 +1,434 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-08T01:33:21.326Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:33:21.327Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-08T01:33:21.327Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-08T01:33:21.803Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > writes exactly one electronic_signatures row, bound to the Vault version, and one chained audit row 162ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > approving writes its own record, bound to the same content, with the approver named 118ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > a document with no source the server can read binds the ledger, and says so 83ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > the signature record refuses UPDATE (control: the §11.70 trigger is in force here) 88ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash: the stored hash is the Vault row's 20ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a document with no readable source 9ms
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > an audit INSERT that fails rolls the transition back
+{
+  "timestamp": "2026-10-08T01:33:35.203Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO audit_logs\n       (id, tenant_id, user_id, action, table_name, record_id,\n        actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,\n        old_values, new_values, ip_address, user_agent)\n     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)\nparams: 3947283f-5bf8-4438-a363-09a4928619ea,1,42,regulated_document.in_review,canonical_document,cebfec09-99f1-46a3-a54c-6d8056e0c111,42,canonical_document:cebfec09-99f1-46a3-a54c-6d8056e0c111,82bb16f88107283b87b30a525f45ab7680aa3e8aab26055de79b615f81f910ad,889e2767d246d5d61c60232ef0d9ccfaa56296196e4bb4ca6dac66515e3517b3,2026-10-08T01:33:35.196Z,,,{\"from\":\"authoring\",\"to\":\"in_review\",\"version\":1,\"contentHash\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\"},,",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails rolls the approval back
+{
+  "timestamp": "2026-10-08T01:33:35.300Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO electronic_signatures (\n       document_id, version_id, signed_target, binding_basis,\n       signature_type, signature_purpose, signature_level,\n       signer_id, signer_name, signer_title, signer_email,\n       authentication_method, authentication_timestamp, second_factor_verified,\n       signature_hash, signature_meaning, signature_manifest,\n       is_valid, verification_status, compliance_statement, legal_disclaimer,\n       ip_address, device_info, signed_at, bound_payload_digest, organization_id\n     ) VALUES (\n       $1, $2, $3, $4,\n       $5, $6, $7,\n       $8, $9, $10, $11,\n       $12, $13, $14,\n       $15, $16, $17,\n       $18, $19, $20, $21,\n       $22, $23, $24, $25, $26\n     ) RETURNING id, signed_at\nparams: ,,canonical_document:6ce45f85-587e-4d5b-975c-9916877dcf9a,vault-document-version-sha256,regulated-document-lifecycle,Checked against the protocol,1,44,Abe Approver,,abe@example.test,password,Thu Oct 08 2026 01:33:35 GMT+0000 (Coordinated Universal Time),false,54c553bb2c57e56b6116019470bd9cb523666555a7a51ef1d2fa68a744e6e003,APPROVED,{\"kind\":\"regulated-document-lifecycle\",\"actionId\":\"act_eacfdaaf45d44649b3e6cdd1a121e1a2\",\"auditId\":\"225a010e-4363-4cd2-979f-d0ee6716bb67\",\"auditSha256Chain\":\"d6436971beb5b7baebcb0c4066aae3a0e22362faf8d08fc57b740687b859644c\",\"target\":\"canonical_document:6ce45f85-587e-4d5b-975c-9916877dcf9a\",\"command\":\"sign\",\"reason\":\"Checked against the protocol\",\"meaning\":\"APPROVED\",\"signerId\":44,\"signerName\":\"Abe Approver\",\"signerEmail\":\"abe@example.test\",\"organizationId\":1,\"signedAt\":\"2026-10-08T01:33:35.289Z\",\"boundPayloadDigest\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\",\"bindingBasis\":\"vault-document-version-sha256\",\"bindingNote\":\"sha256 of Vault version f70cfe9c-4909-48e6-9558-bcbc23b29437 (vault.documents.content_hash), read FOR SHARE in the signing transaction.\",\"canonicalId\":\"6ce45f85-587e-4d5b-975c-9916877dcf9a\",\"title\":\"Clinical Overview\",\"version\":1,\"stage\":\"in_review\"},true,,Regulated-document lifecycle sign-off applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain, in the same transaction as the lifecycle record.,,127.0.0.1,,Thu Oct 08 2026 01:33:35 GMT+0000 (Coordinated Universal Time),f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e,1",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a transition: the trail records the stored one 47ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > refuses a Vault source that is not this organization's, and records nothing 9ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > an audit INSERT that fails rolls the transition back 31ms
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails leaves no review sign-off
+{
+  "timestamp": "2026-10-08T01:33:35.376Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO electronic_signatures (\n       document_id, version_id, signed_target, binding_basis,\n       signature_type, signature_purpose, signature_level,\n       signer_id, signer_name, signer_title, signer_email,\n       authentication_method, authentication_timestamp, second_factor_verified,\n       signature_hash, signature_meaning, signature_manifest,\n       is_valid, verification_status, compliance_statement, legal_disclaimer,\n       ip_address, device_info, signed_at, bound_payload_digest, organization_id\n     ) VALUES (\n       $1, $2, $3, $4,\n       $5, $6, $7,\n       $8, $9, $10, $11,\n       $12, $13, $14,\n       $15, $16, $17,\n       $18, $19, $20, $21,\n       $22, $23, $24, $25, $26\n     ) RETURNING id, signed_at\nparams: ,,canonical_document:c42cda21-bac9-4f2a-9a6d-462af2ddf7aa,vault-document-version-sha256,regulated-document-lifecycle,Checked against the protocol,1,43,Rae Reviewer,,rae@example.test,password,Thu Oct 08 2026 01:33:35 GMT+0000 (Coordinated Universal Time),false,d9c3d3dbdadcf4e260d83d4f08e13742235bdf51bbaafc451af768e3fe5c2cf9,REVIEWED,{\"kind\":\"regulated-document-lifecycle\",\"actionId\":\"act_5e0ec193aaa643cc80407e5a02d7271a\",\"auditId\":\"d29a9f72-de09-4935-a59b-a674e6c8f69d\",\"auditSha256Chain\":\"e2d1c11b8f75f464c9ca85858a3aa3554b8427a8910b7b2d399c602924660e44\",\"target\":\"canonical_document:c42cda21-bac9-4f2a-9a6d-462af2ddf7aa\",\"command\":\"sign\",\"reason\":\"Checked against the protocol\",\"meaning\":\"REVIEWED\",\"signerId\":43,\"signerName\":\"Rae Reviewer\",\"signerEmail\":\"rae@example.test\",\"organizationId\":1,\"signedAt\":\"2026-10-08T01:33:35.366Z\",\"boundPayloadDigest\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\",\"bindingBasis\":\"vault-document-version-sha256\",\"bindingNote\":\"sha256 of Vault version e198f714-0d90-435b-b4c4-cd8d62f432e3 (vault.documents.content_hash), read FOR SHARE in the signing transaction.\",\"canonicalId\":\"c42cda21-bac9-4f2a-9a6d-462af2ddf7aa\",\"title\":\"Clinical Overview\",\"version\":1,\"stage\":\"in_review\"},true,,Regulated-document lifecycle sign-off applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain, in the same transaction as the lifecycle record.,,127.0.0.1,,Thu Oct 08 2026 01:33:35 GMT+0000 (Coordinated Universal Time),f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e,1",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails rolls the approval back 99ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails leaves no review sign-off 75ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot review it: 403 SELF_APPROVAL, before any credential check, and nothing is written 45ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the uploader of the Vault version cannot review it 44ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot approve it after someone else reviewed it 96ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator is recorded, and the record cannot be reassigned 34ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review covers the content it was signed over > after a revision that changed the content, the round-1 review does not satisfy the approval gate 154ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects the backslash open-redirect payloads 2ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects protocol-relative and absolute URLs 1ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects non-strings / empty 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > accepts a legitimate same-origin path (incl. query) 1ms
+stdout | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted)
+{
+  "timestamp": "2026-10-08T01:33:38.891Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:33:38.892Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted)
+{
+  "timestamp": "2026-10-08T01:33:38.893Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted)
+{
+  "timestamp": "2026-10-08T01:33:38.920Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token
+{
+  "timestamp": "2026-10-08T01:33:38.933Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token
+{
+  "timestamp": "2026-10-08T01:33:38.939Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token
+{
+  "timestamp": "2026-10-08T01:33:38.959Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token
+{
+  "timestamp": "2026-10-08T01:33:38.964Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token
+{
+  "timestamp": "2026-10-08T01:33:38.969Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/setup rejects a partial token
+{
+  "timestamp": "2026-10-08T01:33:38.978Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/enable rejects a partial token
+{
+  "timestamp": "2026-10-08T01:33:38.983Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/disable rejects a partial token
+{
+  "timestamp": "2026-10-08T01:33:38.994Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401)
+{
+  "timestamp": "2026-10-08T01:33:38.999Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401)
+{
+  "timestamp": "2026-10-08T01:33:39.004Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401)
+{
+  "timestamp": "2026-10-08T01:33:39.007Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401)
+{
+  "timestamp": "2026-10-08T01:33:39.011Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401)
+{
+  "timestamp": "2026-10-08T01:33:39.018Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401)
+{
+  "timestamp": "2026-10-08T01:33:39.022Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401)
+{
+  "timestamp": "2026-10-08T01:33:39.026Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted) 284ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token 7ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token 9ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token 14ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/setup rejects a partial token 8ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/enable rejects a partial token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/disable rejects a partial token 12ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401) 7ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > a member is told the member role, as sign-in tells them 55ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > a manager is told the manager role, not only "user" 13ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > an admin keeps the admin role (unchanged) 8ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > a viewer is still refused: no authoring role is granted 8ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/me: roles match what sign-in issues > a member is told the member role 6ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/me: roles match what sign-in issues > a viewer gets no authoring role 11ms
+stderr | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+{
+  "timestamp": "2026-10-08T01:33:44.192Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+{
+  "timestamp": "2026-10-08T01:33:44.457Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:33:44.458Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+{
+  "timestamp": "2026-10-08T01:33:44.458Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a member (regulatory-author) creates the record through the runtime db, not a 500 41ms
+ ✓ server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a manager (regulatory-author) reaches the runtime db the same way 6ms
+ ✓ server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a viewer is still refused by the role gate before any store call 12ms
+stdout | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-08T01:33:46.729Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:33:46.731Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-08T01:33:46.731Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-08T01:33:46.823Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > answers a store failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-08T01:33:47.458Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: Failed query: select \"set_b_secret_column\" from \"canonical_documents\"",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > answers a store failure with INTERNAL_ERROR and the request id, never the thrown text 29ms
+ ✓ server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > leaves the no-organization 403 exactly as it was 32ms
+
+ Test Files  5 passed (5)
+      Tests  47 passed (47)
+   Start at  01:33:17
+   Duration  29.94s (transform 6.24s, setup 321ms, import 17.17s, tests 10.22s, environment 1ms)
+
+exit=0
