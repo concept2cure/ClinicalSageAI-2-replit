@@ -206,6 +206,8 @@
     "ci:runtime-ddl:selftest": "node scripts/ci/check-runtime-ddl.selftest.mjs",
     "ci:session-scoped-rls-bypass": "node scripts/ci/check-session-scoped-rls-bypass.mjs",
     "ci:session-scoped-rls-bypass:selftest": "node scripts/ci/check-session-scoped-rls-bypass.selftest.mjs",
+    "ci:sql-interpolation": "node scripts/ci/check-sql-interpolation.mjs",
+    "ci:sql-interpolation:selftest": "node scripts/ci/check-sql-interpolation.selftest.mjs",
     "ci:server-error-leaks": "node scripts/ci/check-server-error-leaks.mjs",
     "ci:server-error-leaks:selftest": "node scripts/ci/check-server-error-leaks.selftest.mjs",
     "ci:server-error-leaks:list": "node scripts/ci/check-server-error-leaks.mjs --list",

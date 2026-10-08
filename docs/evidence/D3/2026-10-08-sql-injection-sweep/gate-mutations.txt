@@ -1,0 +1,12 @@
+== M1 sql.raw not counted
+  ✗ RED — sql.raw in a new service
+  ! KNOWN GAP 1 — SQL text assembled in a variable, then passed to .query(text)
+[ci:sql-interpolation:selftest] FAIL — 1 case(s) did not hold against ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/18f73405-4fbd-5074-ba66-7d0cbd687728/scratchpad/m.mjs.
+== M2 typed .query<T>( not matched
+  ✗ RED — a typed .query<T>( call is counted
+  ! KNOWN GAP 1 — SQL text assembled in a variable, then passed to .query(text)
+[ci:sql-interpolation:selftest] FAIL — 1 case(s) did not hold against ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/18f73405-4fbd-5074-ba66-7d0cbd687728/scratchpad/m.mjs.
+== M3 comments not stripped
+  ✗ quiet — bind parameters, drizzle sql`` (which parameterizes), and the same text in a comment
+  ! KNOWN GAP 1 — SQL text assembled in a variable, then passed to .query(text)
+[ci:sql-interpolation:selftest] FAIL — 1 case(s) did not hold against ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/18f73405-4fbd-5074-ba66-7d0cbd687728/scratchpad/m.mjs.

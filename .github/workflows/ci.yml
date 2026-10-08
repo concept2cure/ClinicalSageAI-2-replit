@@ -154,7 +154,7 @@ jobs:
         # expects the failure, then the safe forms and the baseline semantics.
         # Each was mutation-checked against copies of its gate (2026-10-01,
         # docs/evidence/D6/2026-10-01-gate-selftests/).
-        run: npm run ci:audit-route-mounts:selftest && npm run ci:audit-logs-fixture:selftest && npm run ci:tenant-isolation-justifications:selftest && npm run ci:committed-secrets:selftest && npm run ci:gateway-bypass:selftest && npm run ci:no-dev-auth-in-prod:selftest && npm run ci:org-path-param-guards:selftest && npm run ci:password-hygiene:selftest && npm run ci:purge-coverage:selftest && npm run ci:regulated-delete-audit:selftest && npm run ci:rls-allowlist-sync:selftest && npm run ci:route-ownership-matrix:selftest && npm run ci:server-error-leaks:selftest && npm run ci:session-scoped-rls-bypass:selftest && npm run ci:tenant-blind-models:selftest && npm run ci:tenant-column-types:selftest && npm run ci:tenant-entry-points:selftest && npm run ci:tenant-isolation:selftest && npm run ci:tenant-resolvers:selftest
+        run: npm run ci:audit-route-mounts:selftest && npm run ci:audit-logs-fixture:selftest && npm run ci:tenant-isolation-justifications:selftest && npm run ci:committed-secrets:selftest && npm run ci:gateway-bypass:selftest && npm run ci:no-dev-auth-in-prod:selftest && npm run ci:org-path-param-guards:selftest && npm run ci:password-hygiene:selftest && npm run ci:purge-coverage:selftest && npm run ci:regulated-delete-audit:selftest && npm run ci:rls-allowlist-sync:selftest && npm run ci:route-ownership-matrix:selftest && npm run ci:server-error-leaks:selftest && npm run ci:session-scoped-rls-bypass:selftest && npm run ci:sql-interpolation:selftest && npm run ci:tenant-blind-models:selftest && npm run ci:tenant-column-types:selftest && npm run ci:tenant-entry-points:selftest && npm run ci:tenant-isolation:selftest && npm run ci:tenant-resolvers:selftest
 
       - name: Guardrails — no jsonb operator on a json column
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -569,6 +569,7 @@ jobs:
           npm run ci:reasoning-tier-ga-readiness
           npm run ci:reasoning-tier-uat-evidence
           npm run ci:session-scoped-rls-bypass
+          npm run ci:sql-interpolation
           npm run ci:tenant-resolvers
 
       - name: Security gates that ran only in the pre-push hook
