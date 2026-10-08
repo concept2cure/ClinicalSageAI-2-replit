@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T15:43:43.931Z",
+  "generatedAt": "2026-10-08T15:49:05.203Z",
   "git": {
-    "sha": "27926af0f5654616a923386b9b02ee7f40552d35",
+    "sha": "97ab887d43273dc69f01d5c5b66273ce154a2408",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2581,10 +2581,6 @@
         "lines": 1869
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 1868
-      },
-      {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
       },
@@ -2623,6 +2619,10 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1833
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1829
       },
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
