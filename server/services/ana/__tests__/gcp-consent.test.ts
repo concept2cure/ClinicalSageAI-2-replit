@@ -9,7 +9,8 @@ describe('adviseGcp', () => {
   it('resolves the sponsor domain via alias (rbm) with citation', () => {
     const r = adviseGcp('rbm');
     expect(r.resolved.domain).toBe('sponsor');
-    expect(r.brief).toContain('ICH E6(R2) §5');
+    // 2026-10-08 (D2): E6(R3) superseded E6(R2) on 2025-01-06 (currency fact ich-e6r3-gcp-step4).
+    expect(r.brief).toContain('ICH E6(R3) Annex 1, sponsor');
     expect(r.brief.toLowerCase()).toContain('risk-based');
   });
 
@@ -37,11 +38,16 @@ describe('reviewInformedConsent', () => {
       This research study has a purpose and expected duration of 12 weeks.
       Procedures include blood samples; some are experimental and randomized.
       Risks and side effects are described; expected benefits may help others.
-      Alternative treatments are available. Your records are confidential.
+      Alternative treatments are available. Your records are confidential, and the FDA may inspect them.
       If you suffer an injury, medical treatment and compensation are described.
       Contact the IRB / ethics committee with questions about your rights.
-      Participation is voluntary; you may withdraw at any time with no penalty.
+      Participation is voluntary; you may withdraw at any time with no penalty or loss of benefits.
+      A description of this clinical trial will be available on http://www.ClinicalTrials.gov.
     `;
+    /* 2026-10-08 (D2): restated. This fixture scored 100% on single-word cues
+       without the FDA-inspection note 50.25(a)(5) requires, the "no penalty or
+       loss of benefits" of (a)(8), or the 50.25(c) ClinicalTrials.gov
+       statement; gcp-consent-elements.test.ts pins each. */
     expect(r2(text)).toBe(100);
   });
 

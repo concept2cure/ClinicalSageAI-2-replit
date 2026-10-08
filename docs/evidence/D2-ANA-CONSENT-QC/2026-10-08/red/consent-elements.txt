@@ -1,0 +1,14 @@
+ × server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > checks the ClinicalTrials.gov statement (50.25(c)) as required
+   → expected [ 'purpose', 'procedures', …(6) ] to include 'clinicaltrials_gov'
+ × server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > checks termination by the investigator (b)(2) and the consequences of withdrawing (b)(4)
+   → expected [ 'unforeseeable_risks', …(3) ] to deeply equal ArrayContaining{…}
+ × server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > does not credit confidentiality from the word "records": it looks for FDA inspection of the records
+   → expected [ 'research_statement', …(8) ] to include 'confidentiality'
+ × server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > does not credit the research statement from the word "study" alone
+   → expected [ 'purpose', 'procedures', …(7) ] to include 'research_statement'
+ × server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > reports counts of what the wording shows, not a percentage of compliance
+   → expected '# Informed-consent QC — 20% of requir…' to match /\d+ of \d+ required elements found in…/
+ × server/services/ana/__tests__/gcp-consent-elements.test.ts > the GCP guideline in force > cites ICH E6(R3), not the superseded E6(R2)
+   → expected '[{"resolved":{"domain":null},"domain"…' to match /E6\(R3\)/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed (6)
