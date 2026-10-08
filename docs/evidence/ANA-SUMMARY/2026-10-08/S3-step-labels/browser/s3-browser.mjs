@@ -4,7 +4,7 @@
 // captures the inline turn record at desktop and at 390x844.
 import fs from 'node:fs';
 import path from 'node:path';
-import { chromium, signIn, sleep, BASE, OUT, watchedPage, writeLog } from '../qa/lib.mjs';
+import { chromium, signIn, sleep, BASE, OUT, watchedPage, writeLog } from '../../../../QA-2026-10-08/rate-limits/scripts/lib.mjs';
 
 const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const JM = { email: 'jm.smith@concept2cure.pro', password: process.env.QA_PASSWORD };
@@ -138,4 +138,4 @@ result.phone.after = await page.evaluate(() => ({ scrollWidth: document.document
 fs.writeFileSync(path.join(OUT, 's3-browser.json'), JSON.stringify(result, null, 2));
 writeLog('s3-browser-errors', log);
 await browser.close();
-console.log(JSON.stringify({ turns: result.turns.map((t) => ({ tag: t.tag, steps: t.steps.length })), errors: log.length }, null, 0));
+console.info(JSON.stringify({ turns: result.turns.map((t) => ({ tag: t.tag, steps: t.steps.length })), errors: log.length }, null, 0));

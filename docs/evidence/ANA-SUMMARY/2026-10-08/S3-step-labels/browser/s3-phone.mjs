@@ -3,7 +3,7 @@
 // viewport. A reopened thread also shows what a reload reads (trace rows).
 import fs from 'node:fs';
 import path from 'node:path';
-import { chromium, signIn, sleep, BASE, OUT, watchedPage, writeLog } from '../qa/lib.mjs';
+import { chromium, signIn, sleep, BASE, OUT, watchedPage, writeLog } from '../../../../QA-2026-10-08/rate-limits/scripts/lib.mjs';
 
 const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const JM = { email: 'jm.smith@concept2cure.pro', password: process.env.QA_PASSWORD };
@@ -49,7 +49,7 @@ out.records = await page.evaluate(() =>
 out.overflow = await page.evaluate(() => {
   const vw = document.documentElement.clientWidth;
   const wide = [...document.querySelectorAll('body *')]
-    .filter((el) => el.getBoundingClientRect().right > vw + 1 && getComputedStyle(el).position !== 'fixed')
+    .filter((el) => el.getBoundingClientRect().right > vw + 1 && window.getComputedStyle(el).position !== 'fixed')
     .map((el) => ({ tag: el.tagName.toLowerCase(), cls: String(el.className).slice(0, 80), right: Math.round(el.getBoundingClientRect().right) }));
   return { scrollWidth: document.documentElement.scrollWidth, clientWidth: vw, widest: wide.slice(0, 12), activityWide: wide.filter((w) => /ana-activity/.test(w.cls)).slice(0, 12) };
 });
@@ -63,4 +63,4 @@ for (let i = 0; i < (await lists.count()); i++) {
 fs.writeFileSync(path.join(OUT, 's3-phone.json'), JSON.stringify(out, null, 2));
 writeLog('s3-phone-errors', log);
 await browser.close();
-console.log(JSON.stringify({ records: out.records.length, overflow: { scrollWidth: out.overflow.scrollWidth, clientWidth: out.overflow.clientWidth, activityWide: out.overflow.activityWide.length } }));
+console.info(JSON.stringify({ records: out.records.length, overflow: { scrollWidth: out.overflow.scrollWidth, clientWidth: out.overflow.clientWidth, activityWide: out.overflow.activityWide.length } }));
