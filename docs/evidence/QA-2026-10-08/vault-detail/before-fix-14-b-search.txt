@@ -1,0 +1,147 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+EW
+Concept2Cure.RI
+›
+Vault (DMS)
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+3
+DOCUMENTS
+PROJECT VAULT
+Vault (DMS)
+IND · 21 CFR 312
+9 documents
+7 awaiting confirmation
+Open project
+Inspection readiness
+Clinical study report
+Protocol
+Clinical evaluation report
+Investigator's brochure
+Development safety update report
+Periodic safety update report
+Statistical analysis plan
+Statistical analysis report
+Module 2 · summaries
+Module 3 · quality
+Module 4 · nonclinical
+Module 5 · clinical
+Standard operating procedure
+Report
+Agency correspondence
+Other
+Upload
+Ask AnA to import
+Module 3 (CMC): This program has no PM-spine anchor (projects.regulatory_program_id), so the governed artifact registry cannot be addressed for it. CMC capture, compile and provenance still work; artifacts stay unplaced until the program is anchored.
+ AnA can search your connected repositories (Veeva Vault, SharePoint, OneDrive) in place. Importing from them into the Vault comes in a later release; upload files here meanwhile.
+Search connected sources
+Data room
+Captured 15
+›
+Classified 5
+›
+Filed to vault 3
+10 need review — the classifier would not propose a folder.
+Show 15 sources
+Vault coverage
+Required sections: 1 of 36 have a confirmed document
+Show sections
+Required list from the IND rule pack for fda, version ich-m4-v2.2.
+DOCUMENT STRUCTURE
+Source files · filing cabinet
+0/9
+Unfiled · needs review
+0/0
+Module 1 · Administrative
+0/0
+Module 2 · Summaries
+0/0
+Module 3 · Quality
+0/7
+Module 4 · Nonclinical
+0/0
+Module 5 · Clinical
+0/1
+eCTD sequences
+0/0
+Agency correspondence
+0/1
+Shared · Templates
+0/0
+Vorelinib · KIT-mutant GIST (IND)
+›
+Search "Vorelinib-DS-Specification-J3"
+Search this vault
+Include earlier versions
+All projects
+NAME
+TYPE
+OWNER
+MODIFIED
+STATUS
+Vorelinib-DS-Specification-J3
+Report
+AUTO-FILED · CONFIRM
+AUTO-FILED · CONFIRM
+v1.0
+NOT SENT FOR REVIEW
+Vorelinib-DS-Specification-J3
+Report - Emily Watson - updated just now
+Vorelinib drug substance specification - J3 QA review test
+Review file removal
+SUBMISSION
+Filing
+File into an eCTD sequence. The leaf points at the vault copy, so what is assembled is what is stored here.
+Place into submission…
+DOSSIER FILING
+Folder
+Module 3 · Quality
+Classifier (medium confidence): Uploaded as Module 3 · quality, so Module 3; the name did not identify a section.
+Confirm filing
+Move to…
+Module 1 · Administrative
+Module 2 · Summaries
+Module 3 · Quality
+Module 4 · Nonclinical
+Module 5 · Clinical
+eCTD sequences
+Agency correspondence
+Shared · Templates
+Move
+DETAILS
+Title
+Vorelinib-DS-Specification-J3
+Type
+Report
+Classification
+Internal
+Edit details
+FILE
+Size
+645 B
+SHA-256
+9d053f22b56c27a4…
+VERSIONS
+The versions of this document could not be read. No list is shown because it would be incomplete. Reload the page to try again.
+Upload new version
+REVIEW ANNOTATIONS
+The review annotations could not be read; none are shown rather than an incomplete list. Too many document requests. Please wait.
+Add annotation
+RELATED DOCUMENTS
+Related documents could not be read; none are shown rather than an incomplete list. Too many document requests. Please wait.
+Relate a document
+HISTORY
+This document's history could not be read. Nothing is shown rather than an incomplete history.
+Ask AnA
+Download
+✻
+ANA

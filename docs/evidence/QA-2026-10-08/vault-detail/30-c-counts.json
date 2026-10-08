@@ -1,0 +1,55 @@
+{
+  "records": [
+    {
+      "section": "submissions",
+      "heading": "Submissions 1",
+      "rows": 1
+    },
+    {
+      "section": "sources",
+      "heading": "Data Room sources 17",
+      "rows": 17
+    },
+    {
+      "section": "authoringDocuments",
+      "heading": "Authoring documents 2",
+      "rows": 2
+    },
+    {
+      "section": "vaultDocuments",
+      "heading": "Vault documents 11",
+      "rows": 11
+    },
+    {
+      "section": "studyDesigns",
+      "heading": "Study designs 0",
+      "rows": 0
+    },
+    {
+      "section": "filingDocuments",
+      "heading": "Filing documents 0",
+      "rows": 0
+    }
+  ],
+  "vaultCounts": {
+    "uploadsLaneMeta": "9 uploaded files in this programme",
+    "dataRoomHead": [
+      "Data roomCaptured 15›Classified 5›Filed to vault 310 need review — the classifier would not propose a folder. Show 15 sources",
+      "Data room",
+      "10 need review — the classifier would not propose a folder."
+    ],
+    "folderCounts": [
+      "Source files · filing cabinet 0/9",
+      "Unfiled · needs review 0/0",
+      "Module 1 · Administrative 0/0",
+      "Module 2 · Summaries 0/0",
+      "Module 3 · Quality 0/7",
+      "Module 4 · Nonclinical 0/0",
+      "Module 5 · Clinical 0/1",
+      "eCTD sequences 0/0",
+      "Agency correspondence 0/1",
+      "Shared · Templates 0/0"
+    ],
+    "rowsInDefaultFolder": 9
+  }
+}

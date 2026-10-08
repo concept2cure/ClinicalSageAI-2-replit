@@ -344,6 +344,8 @@ interface HistoryEntry {
   when: string;
   hash: string;
   seq: number | null;
+  /** The reason recorded with the change, when the writer recorded one (21 CFR 11.10(e)). */
+  reason?: string | null;
 }
 interface HistoryShape {
   entries: HistoryEntry[];
@@ -428,6 +430,7 @@ function DocumentHistory({ projectId, documentUuid }: { projectId: string; docum
               </span>
               <span className="vd-ver-m">
                 {e.when || e.at} · {e.actor} · <span className="mono" title={e.hash}>{e.hash.slice(0, 12)}</span>
+                {e.reason ? <span className="vd-ver-lc" data-testid="vault-history-reason">Reason: {e.reason}</span> : null}
               </span>
             </div>
           ))}
@@ -1878,8 +1881,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                     </div>
 
                     {projectId && sel.docId && sel.details ? (
+                      /* Keyed by the document alone. A sibling DocumentHistory below
+                         is keyed `${docId}-${vaultEpoch}`: the same string twice in one
+                         fragment is a duplicate key, and React then leaves the Details
+                         block it mounted for the previous document in the DOM. Keyed
+                         by the epoch too, the block also remounts on every re-read, and
+                         the confirmation of a save is lost in the same render. */
                       <VaultEditDetails
-                        key={`${sel.docId}-${vaultEpoch}`}
+                        key={`details-${sel.docId}`}
                         projectId={projectId}
                         documentId={sel.docId}
                         details={sel.details}
