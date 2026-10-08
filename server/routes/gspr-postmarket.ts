@@ -187,6 +187,11 @@ router.post(
         programId: String(req.params.programId),
         decidedBy,
         decidedAt: new Date(),
+        // A new decision has not been reviewed. Before ledger L195 the only
+        // writer of these two columns was a request body, so a review left
+        // standing from then would be attached to a decision it never saw.
+        reviewedBy: null,
+        reviewedAt: null,
       });
 
       // WO-16C #133. The mapping row is committed by upsertMapping above, and

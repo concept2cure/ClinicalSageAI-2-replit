@@ -73,3 +73,40 @@ npx vitest run --config vitest.config.ts \
   tests/gspr-mapping-actor.test.ts \
   tests/sentinel-finding-resolver.test.ts
 ```
+
+## Follow-up, same day: what the review found
+
+An adversarial review of the first change (`3a8961ca14`) ran three lenses:
+correctness, ways around the fix, and a sweep for the same class elsewhere. A
+skeptic re-checked each finding. These were confirmed in the three routes, and
+are fixed in the follow-up:
+
+1. **A regression in the blocker route.** Every sign-in path puts a STRING
+   subject on `req.user.id`, and the route compared it with a number. So a
+   caller naming their own id got a 422, whether they sent it as a number or a
+   string. The first change's test used a numeric id and could not see this.
+   The route now uses the canonical `authedUserId`, which the GSPR and Sentinel
+   routes already used, and all three tests use string subjects.
+2. **A repeat closure overwrote the original closer and time** (blocker and
+   Sentinel). The closer is now written only on the transition, decided in the
+   UPDATE itself against the row as it stands.
+3. **Free-text blocker status.** Every gate reads `status = 'open'` as live, so
+   `'closed'`, `'Resolved'` or `'done'` cleared a blocker with no closer
+   recorded. The status is now one of the model's three (`open`, `resolved`,
+   `dismissed`), or 422.
+4. **Dismissing cleared the gate and recorded nobody** (blocker and Sentinel).
+   A dismissal now records its closer, as a resolution does.
+5. **A reopen, or a move to `acknowledged`, kept the last closer** beside a state
+   they did not set. Their closer is now cleared.
+6. **GSPR reviews written before the fix stayed attached** to new decisions.
+   Every decision upsert now clears `reviewedBy` and `reviewedAt`.
+
+| Run | Result |
+|---|---|
+| The follow-up's four files against `3a8961ca14` (`review-followup/red/four-files-against-3a8961ca14.txt`) | 16 of 33 fail: the self-id 422s, the overwrite, the dismissal with no closer, the closer kept through a reopen and an acknowledgement, the five free-text statuses, and the review carried over. |
+| The follow-up (`review-followup/green/four-files-after.txt`) | 33 of 33. The blocker test and the Sentinel SQL test run on PGlite, against the table as its migration (blocker) or drizzle-kit (Sentinel) creates it. |
+| Related suites (`review-followup/green/related-suites.txt`) | 44 files and 588 tests pass; 2 files are skipped by design. |
+
+Confirmed and recorded, not fixed here: `PATCH /api/innovation/delta-radar/findings/:id`
+resolves with no actor (`server/routes/innovation-routes.ts`). That route is
+outside the launch catalog.
