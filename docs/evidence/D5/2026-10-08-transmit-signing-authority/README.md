@@ -31,7 +31,7 @@ The board's convention leaves files another lane changed in the last 24 hours to
 | Check | Red | Green |
 |---|---|---|
 | Member, manager, viewer and no membership are refused, with nothing sent and no signature row opened | `red-against-trunk.txt`: 4 fail on trunk | 12/12 in `governed-transmit-signature.test.ts` |
-| The route refuses a member or manager before the credential read | `red-route-ordering.txt`: 2 fail with the route change removed (one password-hash read each) | 44/44 in `tests/mdx-submission-gateway-routes.test.ts` |
+| The route refuses a member or manager before the credential read | `red-route-ordering.txt`: 2 fail against trunk's route (one password-hash read each) | the SEC-1008-1 block in `tests/mdx-submission-gateway-transmit-bundle-guard.test.ts` (that suite already exercises this route; the routes suite is at its line limit) |
 | Every suite on the transmit path (`related-files.txt`, 26 files) | `related-first-run.txt`: 81 tests in 7 files failed closed (500), because their fixtures stated no signer role | `green-related.txt`: 26 files, 446 tests |
 
 The seven fixtures now state, in one commented line each, that their transmitter is an approver. That states an assumption the tests always made. It weakens nothing.
