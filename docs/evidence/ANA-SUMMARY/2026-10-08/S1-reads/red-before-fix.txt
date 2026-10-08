@@ -1,0 +1,1137 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-08T06:49:05.268Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T06:49:05.269Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-08T06:49:05.269Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 73ms
+   → what the model received fits RESULT_BUDGET: expected 7999 to be less than or equal to 5000
+   → the result the model received carries its window: expected undefined to be truthy
+   → the receipt is exactly that window: expected [ { start: +0, end: 30000 } ] to deeply equal []
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt 134ms
+   → read 1 is never head/tail cut: expected '{"ok":true,"documentId":"d1","fileNam…' not to contain 'truncated to fit the model context'
+   → read 1 is delivered whole: expected undefined to be true // Object.is equality
+   → read 1's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+   → read 2 is never head/tail cut: expected '{"ok":true,"documentId":"d2","fileNam…' not to contain 'truncated to fit the model context'
+   → read 2 is delivered whole: expected undefined to be true // Object.is equality
+   → read 2's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+   → read 3 is never head/tail cut: expected '{"ok":true,"documentId":"d3","fileNam…' not to contain 'truncated to fit the model context'
+   → read 3 is delivered whole: expected undefined to be true // Object.is equality
+   → read 3's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+   → read 4 is never head/tail cut: expected '{"ok":true,"documentId":"d4","fileNam…' not to contain 'truncated to fit the model context'
+   → read 4 is delivered whole: expected undefined to be true // Object.is equality
+   → read 4's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+   → read 5 is never head/tail cut: expected '{"ok":true,"documentId":"d5","fileNam…' not to contain 'truncated to fit the model context'
+   → read 5 is past the budget: expected '{"ok":true,"documentId":"d5","fileNam…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+   → read 5 has no receipt: expected [ { start: 2000, end: 20000 } ] to deeply equal []
+   → read 6 is never head/tail cut: expected '{"ok":true,"documentId":"d6","fileNam…' not to contain 'truncated to fit the model context'
+   → read 6 is past the budget: expected '{"ok":true,"documentId":"d6","fileNam…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+   → read 6 has no receipt: expected [ { start: 3000, end: 20000 } ] to deeply equal []
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 3. catalog_project_document refuses after a read whose text never reached the model whole 17ms
+   → {"ok":true,"documentId":"doc-30k","embeddingStatus":"failed","message":"Cataloged. This document is now on durable record — its kind, purpose, summary and key data will be recalled in future sessions. Tell the user what you recorded and where the file is filed."}: expected true to be false // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 4. a sentence planted at 6,000–7,000 of 40,000 characters is in what the model received whenever a receipt covers it 10ms
+   → the planted sentence reached the model: expected '' to be '4.7 PHOTOSTABILITY OF BATCH ZX-9917: …' // Object.is equality
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-08T06:49:12.637Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T06:49:12.639Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-08T06:49:12.639Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 20ms
+   → the serialized result: expected 31570 to be less than or equal to 5000
+   → the model received the result unchanged: expected '{"ok":true,"documentId":"doc-60k","fi…' to be '{"ok":true,"documentId":"doc-60k","fi…' // Object.is equality
+   → the result the model received carries its window: expected undefined to be truthy
+   → the receipt is exactly that window: expected [ { start: +0, end: 30000 } ] to deeply equal []
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt 42ms
+   → read 1 is never head/tail cut: expected '{"ok":true,"documentId":"d1","fileNam…' not to contain 'truncated to fit the model context'
+   → read 1 is delivered whole: expected undefined to be true // Object.is equality
+   → read 1's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+   → read 2 is never head/tail cut: expected '{"ok":true,"documentId":"d2","fileNam…' not to contain 'truncated to fit the model context'
+   → read 2 is delivered whole: expected undefined to be true // Object.is equality
+   → read 2's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+   → read 3 is never head/tail cut: expected '{"ok":true,"documentId":"d3","fileNam…' not to contain 'truncated to fit the model context'
+   → read 3 is delivered whole: expected undefined to be true // Object.is equality
+   → read 3's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+   → read 4 is never head/tail cut: expected '{"ok":true,"documentId":"d4","fileNam…' not to contain 'truncated to fit the model context'
+   → read 4 is delivered whole: expected undefined to be true // Object.is equality
+   → read 4's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+   → read 5 is never head/tail cut: expected '{"ok":true,"documentId":"d5","fileNam…' not to contain 'truncated to fit the model context'
+   → read 5 is past the budget: expected '{"ok":true,"documentId":"d5","fileNam…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+   → read 5 has no receipt: expected [ { start: 2000, end: 20000 } ] to deeply equal []
+   → read 6 is never head/tail cut: expected '{"ok":true,"documentId":"d6","fileNam…' not to contain 'truncated to fit the model context'
+   → read 6 is past the budget: expected '{"ok":true,"documentId":"d6","fileNam…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+   → read 6 has no receipt: expected [ { start: 3000, end: 20000 } ] to deeply equal []
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3. catalog_project_document refuses after a read whose text never reached the model whole 4ms
+   → {"ok":true,"documentId":"doc-30k","embeddingStatus":"failed","message":"Cataloged. This document is now on durable record — its kind, purpose, summary and key data will be recalled in future sessions. Tell the user what you recorded and where the file is filed."}: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3b. control: reads that each continue where the last left off, all delivered whole, let the catalog write through 3ms
+   → several reads, not one: expected 1 to be greater than 1
+ × server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 4. a sentence planted at 6,000–7,000 of a 40,000-character document is in what the model received whenever a receipt covers it 3ms
+   → the planted sentence reached the model: expected '' to be '4.7 PHOTOSTABILITY OF BATCH ZX-9917: …' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received
+AssertionError: what the model received fits RESULT_BUDGET: expected 7999 to be less than or equal to 5000
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:159:89
+    157|     const streamed = events.find(e => e.type === 'tool_result' && e.to…
+    158|     expect.soft(streamed, 'the read ran').toBeTruthy();
+    159|     expect.soft(sent?.length ?? Infinity, 'what the model received fit…
+       |                                                                                         ^
+    160|     expect.soft(window, 'the result the model received carries its win…
+    161|     expect.soft(receiptsFor('doc-60k'), 'the receipt is exactly that w…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received
+AssertionError: the result the model received carries its window: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:160:77
+    158|     expect.soft(streamed, 'the read ran').toBeTruthy();
+    159|     expect.soft(sent?.length ?? Infinity, 'what the model received fit…
+    160|     expect.soft(window, 'the result the model received carries its win…
+       |                                                                             ^
+    161|     expect.soft(receiptsFor('doc-60k'), 'the receipt is exactly that w…
+    162|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received
+AssertionError: the receipt is exactly that window: expected [ { start: +0, end: 30000 } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "end": 30000,
++     "start": 0,
++   },
++ ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:161:79
+    159|     expect.soft(sent?.length ?? Infinity, 'what the model received fit…
+    160|     expect.soft(window, 'the result the model received carries its win…
+    161|     expect.soft(receiptsFor('doc-60k'), 'the receipt is exactly that w…
+       |                                                                               ^
+    162|   });
+    163|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 1 is never head/tail cut: expected '{"ok":true,"documentId":"d1","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d1","fileName":"d1.txt","documentTitle":"Report d1","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":0,"end":20000,"text":"d1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at
++ … [17260 characters truncated to fit the model context] …
++ specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":20000,"complete":true,"uncoveredRanges":[]},"message":"You have now read the entire document. Record what it is with catalog_project_document."}
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:175:69
+    173|     for (const [k, id] of docs.entries()) {
+    174|       const body = sent.get(`rd${k + 1}`) ?? '';
+    175|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    176|       if (k < 4) {
+    177|         const r = parsed(body);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 1 is delivered whole: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:178:64
+    176|       if (k < 4) {
+    177|         const r = parsed(body);
+    178|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    179|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    180|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 1's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+  [
+-   "a delivered window",
++   {
++     "end": 20000,
++     "start": 0,
++   },
+  ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:179:79
+    177|         const r = parsed(body);
+    178|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    179|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    180|       } else {
+    181|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 2 is never head/tail cut: expected '{"ok":true,"documentId":"d2","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d2","fileName":"d2.txt","documentTitle":"Report d2","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":0,"end":20000,"text":"d2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at
++ … [17260 characters truncated to fit the model context] …
++ specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":20000,"complete":true,"uncoveredRanges":[]},"message":"You have now read the entire document. Record what it is with catalog_project_document."}
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:175:69
+    173|     for (const [k, id] of docs.entries()) {
+    174|       const body = sent.get(`rd${k + 1}`) ?? '';
+    175|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    176|       if (k < 4) {
+    177|         const r = parsed(body);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 2 is delivered whole: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:178:64
+    176|       if (k < 4) {
+    177|         const r = parsed(body);
+    178|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    179|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    180|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 2's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+  [
+-   "a delivered window",
++   {
++     "end": 20000,
++     "start": 0,
++   },
+  ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:179:79
+    177|         const r = parsed(body);
+    178|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    179|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    180|       } else {
+    181|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 3 is never head/tail cut: expected '{"ok":true,"documentId":"d3","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d3","fileName":"d3.txt","documentTitle":"Report d3","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":0,"end":20000,"text":"d3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at
++ … [17260 characters truncated to fit the model context] …
++ specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":20000,"complete":true,"uncoveredRanges":[]},"message":"You have now read the entire document. Record what it is with catalog_project_document."}
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:175:69
+    173|     for (const [k, id] of docs.entries()) {
+    174|       const body = sent.get(`rd${k + 1}`) ?? '';
+    175|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    176|       if (k < 4) {
+    177|         const r = parsed(body);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 3 is delivered whole: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:178:64
+    176|       if (k < 4) {
+    177|         const r = parsed(body);
+    178|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    179|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    180|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 3's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+  [
+-   "a delivered window",
++   {
++     "end": 20000,
++     "start": 0,
++   },
+  ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:179:79
+    177|         const r = parsed(body);
+    178|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    179|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    180|       } else {
+    181|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 4 is never head/tail cut: expected '{"ok":true,"documentId":"d4","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d4","fileName":"d4.txt","documentTitle":"Report d4","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":0,"end":20000,"text":"d4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at
++ … [17260 characters truncated to fit the model context] …
++ specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":20000,"complete":true,"uncoveredRanges":[]},"message":"You have now read the entire document. Record what it is with catalog_project_document."}
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:175:69
+    173|     for (const [k, id] of docs.entries()) {
+    174|       const body = sent.get(`rd${k + 1}`) ?? '';
+    175|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    176|       if (k < 4) {
+    177|         const r = parsed(body);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 4 is delivered whole: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:178:64
+    176|       if (k < 4) {
+    177|         const r = parsed(body);
+    178|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    179|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    180|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 4's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+  [
+-   "a delivered window",
++   {
++     "end": 20000,
++     "start": 0,
++   },
+  ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:179:79
+    177|         const r = parsed(body);
+    178|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    179|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    180|       } else {
+    181|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 5 is never head/tail cut: expected '{"ok":true,"documentId":"d5","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d5","fileName":"d5.txt","documentTitle":"Report d5","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":2000,"end":20000,"text":"fication of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification o
++ … [15252 characters truncated to fit the model context] …
++ within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":18000,"complete":false,"uncoveredRanges":[{"start":0,"end":2000}]},"message":"Keep reading — 2000 characters remain. Continue with offset=0. catalog_project_document will refuse until coverage is complete."}
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:175:69
+    173|     for (const [k, id] of docs.entries()) {
+    174|       const body = sent.get(`rd${k + 1}`) ?? '';
+    175|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    176|       if (k < 4) {
+    177|         const r = parsed(body);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 5 is past the budget: expected '{"ok":true,"documentId":"d5","fileNam…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+
+- Expected
++ Received
+
+- {"delivered":false,"reason":"This round returned more than can be read at once.","readAgainFrom":2000}
++ {"ok":true,"documentId":"d5","fileName":"d5.txt","documentTitle":"Report d5","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":2000,"end":20000,"text":"fication of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification o
++ … [15252 characters truncated to fit the model context] …
++ within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":18000,"complete":false,"uncoveredRanges":[{"start":0,"end":2000}]},"message":"Keep reading — 2000 characters remain. Continue with offset=0. catalog_project_document will refuse until coverage is complete."}
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:181:63
+    179|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    180|       } else {
+    181|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+       |                                                               ^
+    182|         expect.soft(receiptsFor(id), `read ${k + 1} has no receipt`).t…
+    183|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 5 has no receipt: expected [ { start: 2000, end: 20000 } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "end": 20000,
++     "start": 2000,
++   },
++ ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:182:70
+    180|       } else {
+    181|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+    182|         expect.soft(receiptsFor(id), `read ${k + 1} has no receipt`).t…
+       |                                                                      ^
+    183|       }
+    184|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 6 is never head/tail cut: expected '{"ok":true,"documentId":"d6","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d6","fileName":"d6.txt","documentTitle":"Report d6","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":3000,"end":20000,"text":"results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at
++ … [14215 characters truncated to fit the model context] …
++ within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":17000,"complete":false,"uncoveredRanges":[{"start":0,"end":3000}]},"message":"Keep reading — 3000 characters remain. Continue with offset=0. catalog_project_document will refuse until coverage is complete."}
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:175:69
+    173|     for (const [k, id] of docs.entries()) {
+    174|       const body = sent.get(`rd${k + 1}`) ?? '';
+    175|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    176|       if (k < 4) {
+    177|         const r = parsed(body);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 6 is past the budget: expected '{"ok":true,"documentId":"d6","fileNam…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+
+- Expected
++ Received
+
+- {"delivered":false,"reason":"This round returned more than can be read at once.","readAgainFrom":3000}
++ {"ok":true,"documentId":"d6","fileName":"d6.txt","documentTitle":"Report d6","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":3000,"end":20000,"text":"results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at
++ … [14215 characters truncated to fit the model context] …
++ within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":17000,"complete":false,"uncoveredRanges":[{"start":0,"end":3000}]},"message":"Keep reading — 3000 characters remain. Continue with offset=0. catalog_project_document will refuse until coverage is complete."}
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:181:63
+    179|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    180|       } else {
+    181|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+       |                                                               ^
+    182|         expect.soft(receiptsFor(id), `read ${k + 1} has no receipt`).t…
+    183|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 6 has no receipt: expected [ { start: 3000, end: 20000 } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "end": 20000,
++     "start": 3000,
++   },
++ ]
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:182:70
+    180|       } else {
+    181|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+    182|         expect.soft(receiptsFor(id), `read ${k + 1} has no receipt`).t…
+       |                                                                      ^
+    183|       }
+    184|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 3. catalog_project_document refuses after a read whose text never reached the model whole
+AssertionError: {"ok":true,"documentId":"doc-30k","embeddingStatus":"failed","message":"Cataloged. This document is now on durable record — its kind, purpose, summary and key data will be recalled in future sessions. Tell the user what you recorded and where the file is filed."}: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:194:55
+    192|
+    193|     const out = await catalog('doc-30k');
+    194|     expect(out.ok, JSON.stringify(out).slice(0, 300)).toBe(false);
+       |                                                       ^
+    195|     expect(out.reason).toMatch(/only \d+ of 30000 characters/);
+    196|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/48]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 4. a sentence planted at 6,000–7,000 of 40,000 characters is in what the model received whenever a receipt covers it
+AssertionError: the planted sentence reached the model: expected '' to be '4.7 PHOTOSTABILITY OF BATCH ZX-9917: …' // Object.is equality
+
+- Expected
++ Received
+
+- 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours.
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:212:91
+    210|     const covering = receiptsFor('doc-40k').filter(s => s.start < 7000…
+    211|     expect(covering.length, 'a receipt covers the planted span (else t…
+    212|     expect(received.slice(6000, 7000).join(''), 'the planted sentence …
+       |                                                                                           ^
+    213|     for (const s of receiptsFor('doc-40k')) {
+    214|       let gaps = 0;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received
+AssertionError: the serialized result: expected 31570 to be less than or equal to 5000
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:136:64
+    134|     const sent = sentThisTurn().get('rd1');
+    135|     const window = parsed(sent)?.window;
+    136|     expect.soft(handlerResult.length, 'the serialized result').toBeLes…
+       |                                                                ^
+    137|     expect.soft(sent, 'the model received the result unchanged').toBe(…
+    138|     expect.soft(window, 'the result the model received carries its win…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received
+AssertionError: the model received the result unchanged: expected '{"ok":true,"documentId":"doc-60k","fi…' to be '{"ok":true,"documentId":"doc-60k","fi…' // Object.is equality
+
+- Expected
++ Received
+
+- {"ok":true,"documentId":"doc-60k","fileName":"doc-60k.txt","documentTitle":"Report doc-60k","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":0,"end":30000,"text":"Stability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-"},"totalChars":60000,"coverage":{"coveredChars":30000,"complete":false,"uncoveredRanges":[{"start":30000,"end":60000}]},"message":"Keep reading — 30000 characters remain. Continue with offset=30000. catalog_project_document will refuse until coverage is complete."}
++ {"ok":true,"documentId":"doc-60k","fileName":"doc-60k.txt","documentTitle":"Report doc-60k","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":0,"end":30000,"text":"Stability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained w
++ … [23630 characters truncated to fit the model context] …
++ results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nStability results at 25C/60RH remained within the \"assay\" specification of 95.0-"},"totalChars":60000,"coverage":{"coveredChars":30000,"complete":false,"uncoveredRanges":[{"start":30000,"end":60000}]},"message":"Keep reading — 30000 characters remain. Continue with offset=30000. catalog_project_document will refuse until coverage is complete."}
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:137:66
+    135|     const window = parsed(sent)?.window;
+    136|     expect.soft(handlerResult.length, 'the serialized result').toBeLes…
+    137|     expect.soft(sent, 'the model received the result unchanged').toBe(…
+       |                                                                  ^
+    138|     expect.soft(window, 'the result the model received carries its win…
+    139|     expect.soft(receiptsFor(DOC), 'the receipt is exactly that window'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received
+AssertionError: the result the model received carries its window: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:138:77
+    136|     expect.soft(handlerResult.length, 'the serialized result').toBeLes…
+    137|     expect.soft(sent, 'the model received the result unchanged').toBe(…
+    138|     expect.soft(window, 'the result the model received carries its win…
+       |                                                                             ^
+    139|     expect.soft(receiptsFor(DOC), 'the receipt is exactly that window'…
+    140|     if (window) expect.soft(window.text.length).toBe(window.end - wind…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received
+AssertionError: the receipt is exactly that window: expected [ { start: +0, end: 30000 } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "end": 30000,
++     "start": 0,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:139:73
+    137|     expect.soft(sent, 'the model received the result unchanged').toBe(…
+    138|     expect.soft(window, 'the result the model received carries its win…
+    139|     expect.soft(receiptsFor(DOC), 'the receipt is exactly that window'…
+       |                                                                         ^
+    140|     if (window) expect.soft(window.text.length).toBe(window.end - wind…
+    141|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 1 is never head/tail cut: expected '{"ok":true,"documentId":"d1","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d1","fileName":"d1.txt","documentTitle":"Report d1","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":0,"end":20000,"text":"d1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at
++ … [17260 characters truncated to fit the model context] …
++ specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd1 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":20000,"complete":true,"uncoveredRanges":[]},"message":"You have now read the entire document. Record what it is with catalog_project_document."}
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:157:69
+    155|     for (const [k, id] of docs.entries()) {
+    156|       const body = sent.get(`rd${k + 1}`) ?? '';
+    157|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    158|       const r = parsed(body);
+    159|       if (k < 4) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 1 is delivered whole: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:160:64
+    158|       const r = parsed(body);
+    159|       if (k < 4) {
+    160|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    161|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    162|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 1's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+  [
+-   "a delivered window",
++   {
++     "end": 20000,
++     "start": 0,
++   },
+  ]
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:161:79
+    159|       if (k < 4) {
+    160|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    161|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    162|       } else {
+    163|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 2 is never head/tail cut: expected '{"ok":true,"documentId":"d2","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d2","fileName":"d2.txt","documentTitle":"Report d2","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":0,"end":20000,"text":"d2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at
++ … [17260 characters truncated to fit the model context] …
++ specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd2 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":20000,"complete":true,"uncoveredRanges":[]},"message":"You have now read the entire document. Record what it is with catalog_project_document."}
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:157:69
+    155|     for (const [k, id] of docs.entries()) {
+    156|       const body = sent.get(`rd${k + 1}`) ?? '';
+    157|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    158|       const r = parsed(body);
+    159|       if (k < 4) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 2 is delivered whole: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:160:64
+    158|       const r = parsed(body);
+    159|       if (k < 4) {
+    160|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    161|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    162|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 2's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+  [
+-   "a delivered window",
++   {
++     "end": 20000,
++     "start": 0,
++   },
+  ]
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:161:79
+    159|       if (k < 4) {
+    160|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    161|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    162|       } else {
+    163|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 3 is never head/tail cut: expected '{"ok":true,"documentId":"d3","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d3","fileName":"d3.txt","documentTitle":"Report d3","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":0,"end":20000,"text":"d3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at
++ … [17260 characters truncated to fit the model context] …
++ specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd3 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":20000,"complete":true,"uncoveredRanges":[]},"message":"You have now read the entire document. Record what it is with catalog_project_document."}
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:157:69
+    155|     for (const [k, id] of docs.entries()) {
+    156|       const body = sent.get(`rd${k + 1}`) ?? '';
+    157|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    158|       const r = parsed(body);
+    159|       if (k < 4) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 3 is delivered whole: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:160:64
+    158|       const r = parsed(body);
+    159|       if (k < 4) {
+    160|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    161|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    162|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 3's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+  [
+-   "a delivered window",
++   {
++     "end": 20000,
++     "start": 0,
++   },
+  ]
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:161:79
+    159|       if (k < 4) {
+    160|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    161|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    162|       } else {
+    163|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 4 is never head/tail cut: expected '{"ok":true,"documentId":"d4","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d4","fileName":"d4.txt","documentTitle":"Report d4","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":0,"end":20000,"text":"d4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at
++ … [17260 characters truncated to fit the model context] …
++ specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd4 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":20000,"complete":true,"uncoveredRanges":[]},"message":"You have now read the entire document. Record what it is with catalog_project_document."}
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:157:69
+    155|     for (const [k, id] of docs.entries()) {
+    156|       const body = sent.get(`rd${k + 1}`) ?? '';
+    157|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    158|       const r = parsed(body);
+    159|       if (k < 4) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 4 is delivered whole: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:160:64
+    158|       const r = parsed(body);
+    159|       if (k < 4) {
+    160|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    161|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    162|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 4's receipt is its window: expected [ { start: +0, end: 20000 } ] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+  [
+-   "a delivered window",
++   {
++     "end": 20000,
++     "start": 0,
++   },
+  ]
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:161:79
+    159|       if (k < 4) {
+    160|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    161|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    162|       } else {
+    163|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 5 is never head/tail cut: expected '{"ok":true,"documentId":"d5","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d5","fileName":"d5.txt","documentTitle":"Report d5","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":2000,"end":20000,"text":"fication of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification o
++ … [15252 characters truncated to fit the model context] …
++ within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":18000,"complete":false,"uncoveredRanges":[{"start":0,"end":2000}]},"message":"Keep reading — 2000 characters remain. Continue with offset=0. catalog_project_document will refuse until coverage is complete."}
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:157:69
+    155|     for (const [k, id] of docs.entries()) {
+    156|       const body = sent.get(`rd${k + 1}`) ?? '';
+    157|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    158|       const r = parsed(body);
+    159|       if (k < 4) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 5 is past the budget: expected '{"ok":true,"documentId":"d5","fileNam…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+
+- Expected
++ Received
+
+- {"delivered":false,"reason":"This round returned more than can be read at once.","readAgainFrom":2000}
++ {"ok":true,"documentId":"d5","fileName":"d5.txt","documentTitle":"Report d5","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":2000,"end":20000,"text":"fication of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification o
++ … [15252 characters truncated to fit the model context] …
++ within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd5 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":18000,"complete":false,"uncoveredRanges":[{"start":0,"end":2000}]},"message":"Keep reading — 2000 characters remain. Continue with offset=0. catalog_project_document will refuse until coverage is complete."}
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:163:63
+    161|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    162|       } else {
+    163|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+       |                                                               ^
+    164|         expect.soft(receiptsFor(id), `read ${k + 1} has no receipt`).t…
+    165|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 5 has no receipt: expected [ { start: 2000, end: 20000 } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "end": 20000,
++     "start": 2000,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:164:70
+    162|       } else {
+    163|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+    164|         expect.soft(receiptsFor(id), `read ${k + 1} has no receipt`).t…
+       |                                                                      ^
+    165|       }
+    166|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 6 is never head/tail cut: expected '{"ok":true,"documentId":"d6","fileNam…' not to contain 'truncated to fit the model context'
+
+- Expected
++ Received
+
+- truncated to fit the model context
++ {"ok":true,"documentId":"d6","fileName":"d6.txt","documentTitle":"Report d6","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":3000,"end":20000,"text":"results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at
++ … [14215 characters truncated to fit the model context] …
++ within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":17000,"complete":false,"uncoveredRanges":[{"start":0,"end":3000}]},"message":"Keep reading — 3000 characters remain. Continue with offset=0. catalog_project_document will refuse until coverage is complete."}
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:157:69
+    155|     for (const [k, id] of docs.entries()) {
+    156|       const body = sent.get(`rd${k + 1}`) ?? '';
+    157|       expect.soft(body, `read ${k + 1} is never head/tail cut`).not.to…
+       |                                                                     ^
+    158|       const r = parsed(body);
+    159|       if (k < 4) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 6 is past the budget: expected '{"ok":true,"documentId":"d6","fileNam…' to be '{"delivered":false,"reason":"This rou…' // Object.is equality
+
+- Expected
++ Received
+
+- {"delivered":false,"reason":"This round returned more than can be read at once.","readAgainFrom":3000}
++ {"ok":true,"documentId":"d6","fileName":"d6.txt","documentTitle":"Report d6","originalFileAvailable":true,"disposition":null,"sourceAvailability":"Original file available.","extractionMethod":"utf8","extractionConfidence":null,"window":{"start":3000,"end":20000,"text":"results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at
++ … [14215 characters truncated to fit the model context] …
++ within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-105.0%.\nd6 results at 25C/60RH remained within the \"assay\" specification of 95.0-1"},"totalChars":20000,"coverage":{"coveredChars":17000,"complete":false,"uncoveredRanges":[{"start":0,"end":3000}]},"message":"Keep reading — 3000 characters remain. Continue with offset=0. catalog_project_document will refuse until coverage is complete."}
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:163:63
+    161|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    162|       } else {
+    163|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+       |                                                               ^
+    164|         expect.soft(receiptsFor(id), `read ${k + 1} has no receipt`).t…
+    165|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt
+AssertionError: read 6 has no receipt: expected [ { start: 3000, end: 20000 } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "end": 20000,
++     "start": 3000,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:164:70
+    162|       } else {
+    163|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+    164|         expect.soft(receiptsFor(id), `read ${k + 1} has no receipt`).t…
+       |                                                                      ^
+    165|       }
+    166|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3. catalog_project_document refuses after a read whose text never reached the model whole
+AssertionError: {"ok":true,"documentId":"doc-30k","embeddingStatus":"failed","message":"Cataloged. This document is now on durable record — its kind, purpose, summary and key data will be recalled in future sessions. Tell the user what you recorded and where the file is filed."}: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:179:55
+    177|
+    178|     const out = await catalog(DOC);
+    179|     expect(out.ok, JSON.stringify(out).slice(0, 300)).toBe(false);
+       |                                                       ^
+    180|     expect(out.refused).toBe(true);
+    181|     expect(out.reason).toMatch(/only \d+ of 30000 characters/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3b. control: reads that each continue where the last left off, all delivered whole, let the catalog write through
+AssertionError: several reads, not one: expected 1 to be greater than 1
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:195:52
+    193|
+    194|     const spans = receiptsFor(DOC);
+    195|     expect(spans.length, 'several reads, not one').toBeGreaterThan(1);
+       |                                                    ^
+    196|     spans.slice(1).forEach((s, k) => expect(s.start, 'each read starts…
+    197|     expect(spans[spans.length - 1].end).toBe(12_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/48]⎯
+
+ FAIL  server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 4. a sentence planted at 6,000–7,000 of a 40,000-character document is in what the model received whenever a receipt covers it
+AssertionError: the planted sentence reached the model: expected '' to be '4.7 PHOTOSTABILITY OF BATCH ZX-9917: …' // Object.is equality
+
+- Expected
++ Received
+
+- 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. 4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours.
+
+ ❯ server/services/ana/__tests__/read-delivery-executor.test.ts:215:91
+    213|     expect(covering.length, 'a receipt covers the planted span (else t…
+    214|     const received = receivedText(DOC);
+    215|     expect(received.slice(6000, 7000).join(''), 'the planted sentence …
+       |                                                                                           ^
+    216|     for (const s of receiptsFor(DOC)) {
+    217|       let gaps = 0;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/48]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed (9)
+   Start at  06:48:59
+   Duration  18.86s (transform 11.47s, setup 173ms, import 17.75s, tests 316ms, environment 0ms)
+

@@ -27,6 +27,7 @@
 
 import type { AnaTool } from '../ai-gateway/types';
 import type { RegisterFn } from './document-tools-shared.js';
+import { RESULT_BUDGET } from './agentic-loop.js';
 import {
   CMC_RECORD,
   citeSource,
@@ -39,8 +40,8 @@ import {
   type CmcRequirement,
 } from '../cmc/knowledge/index.js';
 
-/** The most any one result may weigh, serialized. */
-export const CMC_RESULT_BUDGET = 5000;
+/** The most any one result may weigh, serialized: the one budget (P-24, agentic-loop.ts RESULT_BUDGET). */
+export const CMC_RESULT_BUDGET = RESULT_BUDGET;
 
 const NOT_INDEXED =
   'Not indexed in the platform’s CMC regulatory record. Say so, name what you would need to check, and do not supply ' +

@@ -531,6 +531,17 @@ export async function runAgenticToolLoop(
 }
 
 /**
+ * The most one windowed read may weigh, serialized as its handler returns it
+ * (JSON.stringify, escapes counted). P-24 / ANA-SUMMARY S1: the one read window
+ * for every windowed read (read_project_document, the authoring reads, the
+ * knowledge lookups). A handler shrinks its window to fit rather than let
+ * capToolResultForModel cut it: a cut loses text from the middle with nothing
+ * to say so, and the offset it carries then skips what was cut. Four such
+ * results (20,000) pass a round's budget below untouched.
+ */
+export const RESULT_BUDGET = 5000;
+
+/**
  * Cap an oversized tool result before it is fed back to the model.
  *
  * Tools over real client documents can return very large payloads (a full
@@ -560,6 +571,43 @@ export interface ToolResultBudgetOptions {
   perResultMax?: number;
   /** Floor below which a result's share is never squeezed (default 1500). */
   minPerResult?: number;
+  /**
+   * Results that reach the model whole or not at all, by tool_use_id, with
+   * the offset a re-read starts from: reads whose receipt waits on delivery
+   * (read-receipts.ts). One is never head/tail cut — a cut read would record
+   * text the model never saw. One that does not fit is replaced by
+   * {@link notDeliveredResult}.
+   */
+  wholeOrNothing?: ReadonlyMap<string, { span: { start: number } }>;
+}
+
+/** What the model reads in place of a whole-or-nothing result the round had no room for. */
+export function notDeliveredResult(readAgainFrom: number): string {
+  return JSON.stringify({ delivered: false, reason: 'This round returned more than can be read at once.', readAgainFrom });
+}
+
+/**
+ * Over the round's budget: whole-or-nothing results are placed first, in call
+ * order, each while it fits beside a `minPerResult` floor for every cuttable
+ * result; the cuttable ones then share what is left, as they always have.
+ */
+function placeWholeOrNothing(
+  entries: ToolResultEntry[],
+  capped: ToolResultEntry[],
+  whole: NonNullable<ToolResultBudgetOptions['wholeOrNothing']>,
+  limits: { totalBudget: number; minPerResult: number },
+): ToolResultEntry[] {
+  const cuttable = entries.filter(e => !whole.has(e.tool_use_id)).length;
+  let room = limits.totalBudget - cuttable * limits.minPerResult;
+  const placed = capped.map(e => {
+    const read = whole.get(e.tool_use_id);
+    if (!read) return e;
+    const kept = e.content.length <= room ? e : { ...e, content: notDeliveredResult(read.span.start) };
+    room -= kept.content.length;
+    return kept;
+  });
+  const share = Math.max(limits.minPerResult, Math.floor((room + cuttable * limits.minPerResult) / Math.max(1, cuttable)));
+  return placed.map((e, i) => (whole.has(e.tool_use_id) ? e : { ...e, content: capToolResultForModel(entries[i].content, share) }));
 }
 
 /**
@@ -574,6 +622,10 @@ export interface ToolResultBudgetOptions {
  * the round's results (never below `minPerResult`, so a squeezed result still
  * shows its head and tail).
  *
+ * A result in `wholeOrNothing` is the exception: it is delivered whole or
+ * replaced, never cut (see placeWholeOrNothing). With none, the behaviour
+ * above is unchanged.
+ *
  * Callers that also ground the final answer against a tool-evidence corpus MUST
  * feed the corpus these budgeted strings — the grounding contract is that the
  * corpus contains exactly what the model saw, no more.
@@ -583,16 +635,18 @@ export function budgetToolResultsForModel(
   options: ToolResultBudgetOptions = {},
 ): ToolResultEntry[] {
   const perResultMax = options.perResultMax ?? 8000;
-  const totalBudget = options.totalBudget ?? 24000;
-  const minPerResult = options.minPerResult ?? 1500;
+  const limits = { totalBudget: options.totalBudget ?? 24000, minPerResult: options.minPerResult ?? 1500 };
+  const whole = options.wholeOrNothing ?? new Map<string, { span: { start: number } }>();
   if (entries.length === 0) return entries;
 
-  const capped = entries.map(e => ({ ...e, content: capToolResultForModel(e.content, perResultMax) }));
+  const capped = entries.map(e => {
+    const read = whole.get(e.tool_use_id);
+    if (!read) return { ...e, content: capToolResultForModel(e.content, perResultMax) };
+    return e.content.length <= perResultMax ? e : { ...e, content: notDeliveredResult(read.span.start) };
+  });
   const total = capped.reduce((sum, e) => sum + e.content.length, 0);
-  if (total <= totalBudget) return capped;
-
-  const share = Math.max(minPerResult, Math.floor(totalBudget / entries.length));
-  return entries.map(e => ({ ...e, content: capToolResultForModel(e.content, share) }));
+  if (total <= limits.totalBudget) return capped;
+  return placeWholeOrNothing(entries, capped, whole, limits);
 }
 
 export interface FailedToolCall {

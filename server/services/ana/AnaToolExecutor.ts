@@ -199,6 +199,12 @@ import {
   type LoopStopDirective,
 } from './agentic-loop.js';
 import {
+  readReceiptContext,
+  settleReadReceipts,
+  type DeferredReadReceipts,
+  type ReadReceiptContext,
+} from './read-receipts.js';
+import {
   dispatchLoopCall,
   notifyObserver,
   resolveToolConcurrency,
@@ -351,6 +357,15 @@ export interface ToolContext {
     program: TurnProgram | null;
     pendingProgram?: Promise<TurnProgram | null> | null;
   } | null;
+  /**
+   * The id of the call this handler answers, and the round's read receipts
+   * that wait on delivery (read-receipts.ts, ANA-SUMMARY S1). Set per call by
+   * the two loop hosts (stream.ts and executeAgenticLoop); never from input. A
+   * read registers its receipt here instead of writing it, and the host
+   * writes it only for a result the model is sent unchanged.
+   */
+  toolUseId?: ReadReceiptContext['toolUseId'];
+  readReceipts?: ReadReceiptContext['readReceipts'];
 }
 
 /** A program AnA has opened on the person's screen this turn, as a directive carries it. */
@@ -16027,6 +16042,7 @@ export async function executeAgenticLoop(
     // way the streaming path does. Same helper, so the two surfaces cannot
     // describe the same event differently.
     if (signal?.aborted) return cancelledRoundEntries(calls);
+    const readReceipts: DeferredReadReceipts = new Map();
     const ran = await mapWithConcurrency(
       calls,
       (call): Promise<{ call: ToolCall; result: string; errorMessage?: string }> =>
@@ -16047,12 +16063,8 @@ export async function executeAgenticLoop(
           }
           // The calls in this round came from finalResponse; the governed-write
           // gate in registerToolHandler reads which model that was.
-          return runOneTool(
-            handler,
-            call,
-            { ...(toolContext ?? {}), servingModel: servedModelOf(finalResponse), ...subAgent.toolCtx },
-            signal,
-          );
+          const callContext = { ...(toolContext ?? {}), servingModel: servedModelOf(finalResponse), ...subAgent.toolCtx };
+          return runOneTool(handler, call, { ...callContext, ...readReceiptContext(readReceipts, call.id) }, signal);
         }),
       subAgent.toolConcurrency,
     );
@@ -16066,9 +16078,13 @@ export async function executeAgenticLoop(
     }
     // Budget the whole round before it re-enters the model context (small
     // rounds pass through byte-identical under the classic per-result caps),
-    // and stage the failure-adaptation note for the next model turn.
+    // and stage the failure-adaptation note for the next model turn. A read
+    // goes whole or not at all, and its receipt is written only if it went
+    // whole (read-receipts.ts).
     pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
-    return budgetToolResultsForModel(entries);
+    const budgeted = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
+    await settleReadReceipts(entries, budgeted, readReceipts);
+    return budgeted;
   };
 
   // Feed the latest tool results back and get the model's next turn. On the

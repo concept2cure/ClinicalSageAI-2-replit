@@ -102,6 +102,7 @@ import {
   type ModelTurn,
   type FailedToolCall,
 } from '../../services/ana/agentic-loop.js';
+import { readReceiptContext, settleReadReceipts, type DeferredReadReceipts } from '../../services/ana/read-receipts.js';
 import { buildSteerMessage } from '../../services/ana/operator-channel.js';
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import {
@@ -2244,6 +2245,8 @@ export function mountStreamRoute(router: Router): void {
             [...approvals.values()].some(a => a.why === APPROVAL_TIMEOUT_WHY),
           );
 
+          // Reads' receipts wait here until the round is budgeted (read-receipts.ts).
+          const readReceipts: DeferredReadReceipts = new Map();
           const ran = await mapWithConcurrency(
             calls,
             async toolUse => {
@@ -2311,6 +2314,7 @@ export function mountStreamRoute(router: Router): void {
                       lockedScreens,
                       turnState: driveTurnState,
                       signal: runSignal,
+                      ...readReceiptContext(readReceipts, toolUse.id),
                     }))),
                     abortRace(runSignal),
                   ]);
@@ -2693,8 +2697,10 @@ export function mountStreamRoute(router: Router): void {
           // Budget the whole round's results before they reach the model, so a
           // many-tool round can't bloat every later round's context (deep loops
           // carry all prior results forward). Small rounds pass through under the
-          // classic per-result caps, byte-identical to before.
-          const budgeted = budgetToolResultsForModel(entries);
+          // classic per-result caps, byte-identical to before. A read goes whole
+          // or not at all, and its receipt is written only if it went whole.
+          const budgeted = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
+          await settleReadReceipts(entries, budgeted, readReceipts);
           // What the model will read of each result, where the budget or the
           // drive-budget amendment changed it from what the tool returned.
           turnRecorder?.setSentToModel(budgeted);

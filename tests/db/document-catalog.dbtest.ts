@@ -28,6 +28,7 @@ import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
+import { callToolAsTurn } from './ana-tool-call';
 
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
 
@@ -89,16 +90,10 @@ async function inTenantScope<T>(org: { id: number; uuid: string }, fn: () => Pro
   );
 }
 
-/** The registered tool handlers, resolved through the real executor registry. */
+/** The registered tool handlers, called as AnA's turn calls them (a read counts once delivered; see ana-tool-call.ts). */
 async function callTool(name: string, input: Record<string, unknown>, asOrg?: { id: number; uuid: string }) {
-  const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
-  const handler = getToolHandler(name);
-  if (!handler) throw new Error(`tool ${name} is not registered`);
   const org = asOrg ?? { id: orgId, uuid: orgUuid };
-  const raw = await inTenantScope(org, () =>
-    handler(input, { organizationId: org.id, userId, humanConfirmed: true }),
-  );
-  return JSON.parse(raw);
+  return inTenantScope(org, () => callToolAsTurn(name, input, { organizationId: org.id, userId, humanConfirmed: true }));
 }
 
 async function cleanupProbeRows(): Promise<void> {
@@ -378,7 +373,7 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
       offset: 0,
       max_chars: 1000,
     });
-    // max_chars floor is 1000, which covers this small fixture entirely — so
+    // This small fixture fits one window, which covers it entirely — so
     // force partial coverage the way it happens on real documents: wipe the
     // receipts and record a genuinely partial one.
     expect(first.ok).toBe(true);
