@@ -55,6 +55,7 @@ import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
 import { buildRagGenerationRequest, buildRagSourceText, RAG_EMPTY_CONTEXT_REFUSAL } from './rag-generation-request.js';
 import { fuseHybrid, mergeByMaxScore } from './rag-fusion.js';
+import { anyTermsQuery } from './vault/vault-search.js';
 import {
   hydeRetrieval,
   multiQueryRetrieval,
@@ -209,6 +210,8 @@ export interface RetrievedDocument {
   atomType: string;
   source?: string;
   initialScore: number; // From embedding similarity
+  /** Found by the text index alone: the query could not be embedded (no key, or egress refused). */
+  lexicalOnly?: boolean;
   rerankScore?: number; // From the LLM relevance judge (LLM-as-judge, not a cross-encoder)
   finalScore: number; // Combined score
   /** Freshly checked availability of the captured binary, distinct from retained data. */
@@ -336,6 +339,25 @@ function buildLocator(row: VaultChunkRow): string | undefined {
     return `p.${row.page_number}`;
   }
   return undefined;
+}
+
+/** One vault chunk row as a retrieved passage. */
+function vaultChunkToDoc(row: VaultChunkRow, withEmbedding?: boolean): RetrievedDocument {
+  return {
+    id: row.chunk_id,
+    chunkId: row.chunk_id,
+    documentId: row.document_id,
+    content: row.content || '',
+    title: row.title || 'Untitled',
+    atomType: 'vault_chunk',
+    initialScore: Number(row.similarity),
+    finalScore: Number(row.similarity),
+    pageNumber: row.page_number ?? undefined,
+    sectionTitle: row.section_title,
+    chunkIndex: row.chunk_index ?? undefined,
+    locator: buildLocator(row),
+    embedding: withEmbedding ? parsePgVector(row.embedding) : undefined,
+  };
 }
 
 /** RFC-4122 shape. Guards the `::uuid` casts on the vault retrieval path so a
@@ -1039,6 +1061,78 @@ export class AdvancedRAGPipeline {
     };
   }
 
+  /** The query as a pgvector literal, or null when no embedder will embed it (no key, or egress refused). */
+  private async queryVectorOrNull(query: string): Promise<string | null> {
+    try {
+      const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
+      return `[${queryResult.embedding.join(',')}]`;
+    } catch (error) {
+      console.warn(
+        '[RAG] vault query not embedded; answering from the text index alone:',
+        error instanceof Error ? error.message : String(error),
+      );
+      return null;
+    }
+  }
+
+  /**
+   * The vault's full-text arm over vault.document_chunks.chunk_text (GIN index,
+   * migrations/20260905b_vault_document_chunks.sql). Two uses:
+   *   - the sparse half of hybrid retrieval (keyless false): every term, scores
+   *     left to reciprocal-rank fusion;
+   *   - the whole search when there is no query vector (keyless true): ANY of
+   *     the terms, ranked by ts_rank_cd normalised to 0..1, each hit marked
+   *     lexicalOnly. A chunk written without an embedding is found either way.
+   */
+  private async vaultLexicalArm(
+    client: pg.PoolClient,
+    args: {
+      query: string;
+      limit: number;
+      organizationUuid: string;
+      filters?: QueryFilters;
+      keyless: boolean;
+      needEmbeddings?: boolean;
+    },
+  ): Promise<RetrievedDocument[]> {
+    const withVectors = Boolean(args.needEmbeddings) && !args.keyless;
+    const tsquery = args.keyless ? anyTermsQuery(args.query) : args.query;
+    if (!tsquery.trim()) return [];
+    const params: Array<string | number | Date> = [tsquery, args.limit, args.organizationUuid];
+    const filter = buildDocFilterClause(args.filters, params, VAULT_FILTER_COLUMNS);
+    // tenant-isolation-safe: explicit organization predicate ($3), as the dense arm.
+    const { rows } = await client.query<VaultChunkRow>(
+      `
+      SELECT
+        c.id AS chunk_id,
+        c.document_id AS document_id,
+        COALESCE(d.document_title, d.file_name, '') ||
+          CASE WHEN ${vaultBinaryAvailableSql('d')} THEN ''
+          ELSE ' [original file unavailable; retained extracted data]' END AS title,
+        c.chunk_text AS content,
+        c.page_number AS page_number,
+        c.section_title AS section_title,
+        c.chunk_index AS chunk_index,
+        ${withVectors ? 'c.embedding::text AS embedding,' : ''}
+        ${args.keyless
+          ? "ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1), 32)::float8"
+          : '0::float8'} AS similarity
+      FROM vault.document_chunks c
+      JOIN vault.documents d ON d.id = c.document_id
+      WHERE ${withVectors ? 'c.embedding IS NOT NULL' : 'TRUE'}${filter}
+        AND d.deleted_at IS NULL
+        AND ${vaultDataEligibleSql('d')}
+        AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)
+        AND to_tsvector('english', c.chunk_text) @@ websearch_to_tsquery('english', $1)
+        AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $3::uuid)
+      ORDER BY ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1)) DESC
+      LIMIT $2
+    `,
+      params
+    );
+    return rows.map(row => ({ ...vaultChunkToDoc(row, withVectors), ...(args.keyless ? { lexicalOnly: true } : {}) }));
+  }
+
   private async searchVaultSimilar(
     query: string,
     limit: number,
@@ -1048,9 +1142,6 @@ export class AdvancedRAGPipeline {
     hybrid?: boolean,
     filters?: QueryFilters
   ): Promise<RetrievedDocument[]> {
-    const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
-    const vector = `[${queryResult.embedding.join(',')}]`;
-
     // Metadata pre-filters on the joined documents table. Each arm has its own
     // param array, so each gets its own clause with arm-local placeholders.
     /* REFUSE WITHOUT A TENANT, rather than searching every tenant's vault.
@@ -1079,6 +1170,20 @@ export class AdvancedRAGPipeline {
       return [];
     }
 
+    /* KEYLESS BY DEFAULT. With no embedding provider (no key, or a tenant whose
+       placement policy refuses egress) the query cannot be embedded, and this
+       arm used to throw, so AnA could not search the Vault at all. The text
+       index on chunk_text answers instead (vaultLexicalArm), and every passage
+       found that way says so (`lexicalOnly`), so a caller can state how the
+       search was ranked. An embedding, when there is one, only adds the
+       meaning-based arm. Embedded after the tenant refusal above, so a refused
+       call sends nothing to a provider. */
+    const vector = await this.queryVectorOrNull(query);
+    if (vector === null) {
+      return withTenantContext(this.pool, organizationUuid, client =>
+        this.vaultLexicalArm(client, { query, limit, organizationUuid, filters, keyless: true }));
+    }
+
     const denseParams: Array<string | number | Date> = [vector, threshold, limit, organizationUuid];
     const denseFilter = buildDocFilterClause(filters, denseParams, VAULT_FILTER_COLUMNS);
 
@@ -1086,21 +1191,7 @@ export class AdvancedRAGPipeline {
     // columns take no params, so this doesn't shift the $1..$3 placeholders.
     const embeddingCol = needEmbeddings ? 'c.embedding::text AS embedding,' : '';
 
-    const toDoc = (row: VaultChunkRow): RetrievedDocument => ({
-      id: row.chunk_id,
-      chunkId: row.chunk_id,
-      documentId: row.document_id,
-      content: row.content || '',
-      title: row.title || 'Untitled',
-      atomType: 'vault_chunk',
-      initialScore: Number(row.similarity),
-      finalScore: Number(row.similarity),
-      pageNumber: row.page_number ?? undefined,
-      sectionTitle: row.section_title,
-      chunkIndex: row.chunk_index ?? undefined,
-      locator: buildLocator(row),
-      embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
-    });
+    const toDoc = (row: VaultChunkRow) => vaultChunkToDoc(row, needEmbeddings);
 
     return withTenantContext(this.pool, organizationUuid, async client => {
       /* ── Scope to the tenant FIRST, then rank exactly ──────────────────────
@@ -1128,7 +1219,9 @@ export class AdvancedRAGPipeline {
       // predicate ($4 -> organizations.uuid -> organizations.id ->
       // vault.documents.organization_id). RLS is defence in depth here, not the
       // boundary — see the refusal above for why it could not be relied on.
-      const { rows: denseRows } = await client.query<VaultChunkRow>(
+      let denseRows: VaultChunkRow[];
+      try {
+        ({ rows: denseRows } = await client.query<VaultChunkRow>(
         `
         WITH scoped AS MATERIALIZED (
           SELECT
@@ -1169,49 +1262,24 @@ export class AdvancedRAGPipeline {
         LIMIT $3
       `,
         denseParams
-      );
+      ));
+      } catch (error) {
+        // 42703 / 42883: no embedding column or no vector operator on this
+        // database (no pgvector). The index, not the corpus, is absent.
+        const code = (error as { code?: string })?.code;
+        if (code !== '42703' && code !== '42883') throw error;
+        return this.vaultLexicalArm(client, { query, limit, organizationUuid, filters, keyless: true });
+      }
       const dense = denseRows.map(toDoc);
       if (!hybrid) return dense;
 
-      // Sparse arm: Postgres full-text ranked by ts_rank_cd. websearch_to_tsquery
-      // tolerates arbitrary user text (no tsquery syntax errors), and the
-      // to_tsvector('english', chunk_text) expression matches the GIN index in
-      // performance_indexes.sql so this stays index-backed. A lexical failure
-      // must not break retrieval — fall back to the dense arm alone.
+      // Sparse arm: Postgres full-text over chunk_text (vaultLexicalArm). A
+      // lexical failure must not break retrieval: fall back to the dense arm.
       let lexical: RetrievedDocument[];
-      const lexParams: Array<string | number | Date> = [query, limit, organizationUuid];
-      const lexFilter = buildDocFilterClause(filters, lexParams, VAULT_FILTER_COLUMNS);
       try {
-        // tenant-isolation-safe: same explicit organization predicate as the
-        // dense arm, on this arm's own placeholder ($3).
-        const { rows: lexRows } = await client.query<VaultChunkRow>(
-          `
-          SELECT
-            c.id AS chunk_id,
-            c.document_id AS document_id,
-            COALESCE(d.document_title, d.file_name, '') ||
-              CASE WHEN ${vaultBinaryAvailableSql('d')} THEN ''
-              ELSE ' [original file unavailable; retained extracted data]' END AS title,
-            c.chunk_text AS content,
-            c.page_number AS page_number,
-            c.section_title AS section_title,
-            c.chunk_index AS chunk_index,
-            ${embeddingCol}
-            0::float8 AS similarity
-          FROM vault.document_chunks c
-          JOIN vault.documents d ON d.id = c.document_id
-          WHERE c.embedding IS NOT NULL${lexFilter}
-            AND d.deleted_at IS NULL
-            AND ${vaultDataEligibleSql('d')}
-            AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)
-            AND to_tsvector('english', c.chunk_text) @@ websearch_to_tsquery('english', $1)
-            AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $3::uuid)
-          ORDER BY ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1)) DESC
-          LIMIT $2
-        `,
-          lexParams
-        );
-        lexical = lexRows.map(toDoc);
+        lexical = await this.vaultLexicalArm(client, {
+          query, limit, organizationUuid, filters, keyless: false, needEmbeddings,
+        });
       } catch (error) {
         console.warn('[RAG] vault lexical arm failed; using dense-only retrieval:', error);
         return dense;

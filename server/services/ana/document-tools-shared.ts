@@ -24,7 +24,6 @@ export const CATALOG_GATED_TOOLS: readonly string[] = [
   'catalog_project_document',
   'file_chat_upload_to_vault',
   'place_project_document',
-  'search_document_passages',
 ];
 
 /**
