@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana/__tests__/run-control-poll-backpressure.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-08-ana-orphan-sweep-backpressure/sweep/final-placement-red.json"
+  ],
+  "baseline": "0b8a8c3dfd6166286e085de59e13b1217cb17dee",
+  "production_git_blob": "2567b41d4b096daf53b30b9e7c6fb1860bee7376",
+  "test_git_blob": "ff77bcaa986fe6c907cb1158c7f32df6780408d8",
+  "process_exit": 1,
+  "failed_tests": 7,
+  "passed_tests": 21,
+  "elapsed_seconds": 0.89,
+  "qualified_source_restored": true
+}

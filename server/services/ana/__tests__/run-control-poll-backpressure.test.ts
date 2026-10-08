@@ -7,6 +7,7 @@ import {
   beginRun,
   POLL_FALLBACK_MS,
   releaseLocalRun,
+  reapOrphanedRuns,
   RUN_CONTROL_CHANNEL,
   startRunControlListener,
   stopRunControlListener,
@@ -363,5 +364,153 @@ describe('notification backpressure', () => {
     fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'cancelled' }] });
     await flush();
     expect(run.handle.cancelSignal.aborted).toBe(true);
+  });
+});
+
+const REQUEST_SCOPE: TenantScope = {
+  tenantId: '7',
+  role: 'member',
+  source: 'request',
+  caller: 'test',
+} as TenantScope;
+
+type SweepResult = { rows: never[]; rowCount: number | null };
+
+function pendingSweep() {
+  let resolve!: (result: SweepResult) => void;
+  let reject!: (error: Error) => void;
+  const pending = new Promise<SweepResult>((yes, no) => { resolve = yes; reject = no; });
+  const scopes: Array<TenantScope | undefined> = [];
+  const query = vi.fn((_sql: string, _params: unknown[]) => {
+    scopes.push(getTenantScope());
+    return pending;
+  });
+  return { pool: { query } as unknown as Pool, query, scopes, resolve, reject };
+}
+
+async function flushSweep() {
+  for (let i = 0; i < 8; i++) await Promise.resolve();
+}
+
+describe('overlapping estate-wide sweeps share pending work', () => {
+  it('bounds twenty overlapping calls to one query, shares its count, then sweeps afresh', async () => {
+    const fake = pendingSweep();
+    const calls = Array.from({ length: 20 }, () => reapOrphanedRuns(fake.pool));
+    await flushSweep();
+    const pendingQueries = fake.query.mock.calls.length;
+    fake.resolve({ rows: [], rowCount: 6 });
+    expect(await Promise.all(calls)).toEqual(Array(20).fill(6));
+    expect(pendingQueries).toBe(1);
+    fake.query.mockResolvedValueOnce({ rows: [], rowCount: 2 });
+    expect(await reapOrphanedRuns(fake.pool)).toBe(2);
+    expect(fake.query).toHaveBeenCalledTimes(2);
+  });
+
+  it('shares across tenant callers while the actual query carries system scope', async () => {
+    const fake = pendingSweep();
+    const calls = ['7', '42', '99'].map(tenantId =>
+      runWithTenantScope({ ...REQUEST_SCOPE, tenantId }, () => reapOrphanedRuns(fake.pool)),
+    );
+    await flushSweep();
+    fake.resolve({ rows: [], rowCount: 3 });
+    expect(await Promise.all(calls)).toEqual([3, 3, 3]);
+    expect(fake.scopes).toHaveLength(1);
+    expect(fake.scopes[0]?.tenantId).toBe('0');
+    expect(fake.scopes[0]?.role).toBe('app_super_admin');
+    expect(fake.scopes[0]?.caller).toBe('ana-run-control:reap');
+  });
+
+  it('propagates a shared asynchronous rejection and admits a retry', async () => {
+    const fake = pendingSweep();
+    const settled = Promise.allSettled([
+      reapOrphanedRuns(fake.pool), reapOrphanedRuns(fake.pool), reapOrphanedRuns(fake.pool),
+    ]);
+    await flushSweep();
+    const pendingQueries = fake.query.mock.calls.length;
+    const failure = new Error('sweep database unavailable');
+    fake.reject(failure);
+    const results = await settled;
+    expect(results).toEqual(Array(3).fill({ status: 'rejected', reason: failure }));
+    expect(pendingQueries).toBe(1);
+    fake.query.mockResolvedValueOnce({ rows: [], rowCount: 4 });
+    expect(await reapOrphanedRuns(fake.pool)).toBe(4);
+    expect(fake.query).toHaveBeenCalledTimes(2);
+  });
+
+  it('shares a synchronous query throw and clears admission for retry', async () => {
+    const failure = new Error('synchronous sweep failure');
+    const query = vi.fn((_sql: string, _params: unknown[]): Promise<SweepResult> => { throw failure; });
+    const pool = { query } as unknown as Pool;
+    const results = await Promise.allSettled([reapOrphanedRuns(pool), reapOrphanedRuns(pool)]);
+    expect(results).toEqual(Array(2).fill({ status: 'rejected', reason: failure }));
+    expect(query).toHaveBeenCalledTimes(1);
+    query.mockResolvedValueOnce({ rows: [], rowCount: 1 });
+    expect(await reapOrphanedRuns(pool)).toBe(1);
+    expect(query).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('sweep admission preserves the existing query contract', () => {
+  it('keeps separate database pools independent', async () => {
+    const first = pendingSweep();
+    const second = pendingSweep();
+    const calls = [reapOrphanedRuns(first.pool), reapOrphanedRuns(second.pool)];
+    await flushSweep();
+    first.resolve({ rows: [], rowCount: 2 });
+    second.resolve({ rows: [], rowCount: 7 });
+    expect(await Promise.all(calls)).toEqual([2, 7]);
+    expect(first.query).toHaveBeenCalledTimes(1);
+    expect(second.query).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps distinct effective stale thresholds independent', async () => {
+    const fake = pendingSweep();
+    const calls = [reapOrphanedRuns(fake.pool, 1_000), reapOrphanedRuns(fake.pool, 2_000)];
+    await flushSweep();
+    fake.resolve({ rows: [], rowCount: 1 });
+    await Promise.all(calls);
+    expect(fake.query).toHaveBeenCalledTimes(2);
+    expect(fake.query.mock.calls.map(([, params]) => params)).toEqual([[1], [2]]);
+  });
+
+  it('shares thresholds that round to the same existing SQL parameter', async () => {
+    const fake = pendingSweep();
+    const calls = [reapOrphanedRuns(fake.pool, 1_001), reapOrphanedRuns(fake.pool, 1_499)];
+    await flushSweep();
+    fake.resolve({ rows: [], rowCount: 2 });
+    expect(await Promise.all(calls)).toEqual([2, 2]);
+    expect(fake.query).toHaveBeenCalledTimes(1);
+    expect(fake.query.mock.calls[0][1]).toEqual([1]);
+  });
+
+  it('shares a null row count as zero without retaining a settled result', async () => {
+    const fake = pendingSweep();
+    const calls = [reapOrphanedRuns(fake.pool), reapOrphanedRuns(fake.pool)];
+    await flushSweep();
+    fake.resolve({ rows: [], rowCount: null });
+    expect(await Promise.all(calls)).toEqual([0, 0]);
+    expect(fake.query).toHaveBeenCalledTimes(1);
+    fake.query.mockResolvedValueOnce({ rows: [], rowCount: 5 });
+    expect(await reapOrphanedRuns(fake.pool)).toBe(5);
+  });
+
+  it('registers admission before a query callback can reenter the sweep', async () => {
+    const fake = pendingSweep();
+    const originalQuery = fake.query.getMockImplementation()!;
+    let reentered: Promise<number> | undefined;
+    let entered = false;
+    fake.query.mockImplementation((sql, params) => {
+      if (!entered) {
+        entered = true;
+        reentered = reapOrphanedRuns(fake.pool);
+      }
+      return originalQuery(sql, params);
+    });
+    const outer = reapOrphanedRuns(fake.pool);
+    await flushSweep();
+    fake.resolve({ rows: [], rowCount: 8 });
+    expect(await outer).toBe(8);
+    expect(await reentered).toBe(8);
+    expect(fake.query).toHaveBeenCalledTimes(1);
   });
 });
