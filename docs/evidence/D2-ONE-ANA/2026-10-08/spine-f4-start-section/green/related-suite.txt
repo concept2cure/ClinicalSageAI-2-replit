@@ -1,0 +1,489 @@
+$ npx vitest run <42 files: every test that imports or mocks DocumentWorkbench / DocumentAuthoring / startOutlineSection, plus outlineStartsSection.test.tsx and tests/ui/filing-path-reachability.test.ts>
+(file-level results and summary; console noise from the suites omitted)
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > writes the text into the governed section 68ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > the governed outline now reports the section as written 2ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > a re-save enters the Part 11 ledger ATTRIBUTED to the real actor 42ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > and the working copy still holds the text too 2ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > refuses a content save with no reason, and writes nothing 13ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > still records a real reason verbatim when the save gives one 38ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > refuses a whitespace-only reason as no reason at all 14ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes a chained, sealed row for the save 36ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes exactly ONE chained row per save, not one per ledger 35ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > a freeze — which writes its OWN chained row — still gets exactly one 120ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > takes the whole save down if the chained row cannot be written 38ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections 131ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > records WHY in the version ledger — a mechanism naming itself 1ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > creates a section to rename 26ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a RENAME, naming what moved, and creates NO content revision 21ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > reaches the hash-chained ledger, not only the soft table 1ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a TRACK_CHANGES toggle 21ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > does not audit a metadata PATCH that changes nothing 19ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > creates a section on the bound document 31ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > refuses a code change, and changes nothing 19ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a title-only rename — the code is present but unchanged 15ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break 58ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many 61ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided 61ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent 62ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands 72ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge 65ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > does not invent a section the rule pack does not define 31ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing 72ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the two stores move together or neither does > a filing write that cannot happen takes the authored write down with it 31ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Comments rail closes on Escape and returns focus to its toggle 992ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the History rail closes on Escape and returns focus to its toggle 638ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Sources rail closes on Escape and returns focus to its toggle 484ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Signatures rail closes on Escape and returns focus to its toggle 396ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Audit rail closes on Escape and returns focus to its toggle 403ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Exports rail closes on Escape and returns focus to its toggle 375ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Comments rail has its own labelled close control 494ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the History rail has its own labelled close control 433ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Sources rail has its own labelled close control 400ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Signatures rail has its own labelled close control 392ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Audit rail has its own labelled close control 355ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > the Exports rail has its own labelled close control 378ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-4: every right rail closes from the keyboard > leaves Escape to a text field inside the rail 270ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-5: the ledger verdict is announced > puts an intact verdict in a status region 416ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-5: the ledger verdict is announced > puts a broken verdict in an alert region 518ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-5: the ledger verdict is announced > puts a failed check in an alert region 467ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-6: closing the section rename returns focus to Rename > after Escape 444ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-6: closing the section rename returns focus to Rename > after Cancel 558ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-6: closing the section rename returns focus to Rename > an Escape the rename handled does not also close the AnA rail 383ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GA-6: closing the section rename returns focus to Rename > after a successful rename 538ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GE-P-3: governed acts the server will refuse are disabled with the reason > disables each refused act, states why, and hands the bar its refusals 247ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GE-P-3: governed acts the server will refuse are disabled with the reason > leaves every act enabled when the access is unknown — not returned, or unreadable 279ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx > GE-P-3: governed acts the server will refuse are disabled with the reason > enables an act the server allows 143ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > cancels beforeunload while the canvas is dirty 549ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > does not interfere once the work is saved 377ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > does not interfere on a clean canvas 169ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > holds the switch and names what is at stake 661ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Cancel" leaves the author exactly where they were 527ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Save and continue" records the revision first, then moves 565ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > a refused save keeps the author on the section rather than losing the edit 572ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Leave without saving" writes nothing, and the work comes back on return 1000ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > a clean section switches straight through — no guard on work that is safe 416ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the record is only ever written by a deliberate act > typing and waiting never mints a revision on its own 246ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the record is only ever written by a deliberate act > says the work is on this device only, not merely "unsaved" 229ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > accepting, then leaving without saving, names the recorded decision 943ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > an ordinary text edit with no decision does not claim one was recorded 875ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > saving closes out the count — a LATER unrelated edit does not resurrect the old decision count 1012ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > lists what the section is drafted from 971ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > reports a changed source without rewriting anything 530ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > asks AnA what changed, in the editor’s own pane, rather than redrafting on the spot 587ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > makes no claim about a citation with no recorded checksum 416ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > says a source is gone instead of dropping the citation 390ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > distinguishes a failed read from a section that cites nothing 363ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > renders an honest empty state for a section with no recorded sources 338ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > offers the project data room, and refuses an unreadable document 356ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > posts the chosen source id and reloads the rail 404ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > says so when there is no project data room to pick from 342ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > says the data room could not be read, rather than that it is empty (GE-H-1, 2026-09-28) 477ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > surfaces the server’s refusal instead of reporting success 440ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — re-reading a source > asks the server to re-resolve, and reports what it says 420ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — re-reading a source > reports a refusal from the server verbatim 403ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > loads the document, opens its section, and shows the real server content in the editor 454ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > saves edited content via PATCH and reports that a revision was recorded 701ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > surfaces a failed save honestly and keeps the user’s text (no fabrication) 490ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > moves the open section — server-validated reorder, tree redrawn from the canonical order 602ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > names a section code that is used twice 155ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > says when the stored order differs from the section codes 162ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > says nothing when the document is structurally clean 239ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > claims nothing when the server sent no structure at all 166ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders headings as headings and never shows the hashes 952ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders emphasis as emphasis and never shows the asterisks 586ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders bullet and ordered lists as lists 479ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders inline code and fenced code without showing the backticks 449ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders a pipe table as a table 426ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > builds React nodes — no raw HTML from the model is injected 417ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > leaves the user’s own turn as plain text 503ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > still shows the streaming status phase rather than an invented sentence 580ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > "Draft with AnA" opens the pane and shows the request in it 986ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > an empty section shows BOTH draft controls, and the toolbar one still asks for the section 671ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > the pane composer sends into the same conversation 421ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows real work, evidence, and follow-up actions from AnA 694ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows an honest empty pane rather than pretending a conversation exists 755ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > the audit rail reports each row’s chain verdict > shows the note only on the row whose verdict is intact: false, naming the fields 1008ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > the audit rail reports each row’s chain verdict > describes a comment row by the passage it quoted 572ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > GETs the export with the bearer token and saves the package as a file 676ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > shows the server’s refusal on the rail when the export cannot be recorded (503), and saves nothing 592ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > a person without access to the record is told so — not shown a failed read or an empty trail 338ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > says so when the session is not authenticated (401), rather than nothing 554ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > auditIntegrityNote > speaks only for intact: false on a chained row 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > describeAuditMetadata — comments and bulk decisions recorded whole > describes a comment or reply by its quoted passage, capped at 80 characters 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > describeAuditMetadata — comments and bulk decisions recorded whole > samples the first three texts of a bulk act and claims no omission when none was recorded 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx > the tracked-change decision POST carries the AnA turn record > a single accept sends the turn record of the suggestion that was accepted 1188ms
+ ✓ client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx > the tracked-change decision POST carries the AnA turn record > two adjacent drafts from two turns are two rows, and each decision names its own turn 982ms
+ ✓ client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx > the tracked-change decision POST carries the AnA turn record > "Accept all" sends one bulk act whose every change names its own turn 881ms
+ ✓ client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx > the tracked-change decision POST carries the AnA turn record > a human's change is sent with no turn record at all — never a guessed one 786ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer 900ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > sends every chosen reviewer in one request, and gives each a task 432ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > requires a reviewer and a reason at the server’s floor before anything is sent 294ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > shows a refusal in the server’s words, creates no task, and lets the person send again 269ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > the object gate’s refusal is said as what it means for this act, not as “the authoring object” 283ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check 366ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a success that names another document is not a receipt for this one 285ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task that failed after the request is reported as not created; the request still stands 336ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task whose creation could not be confirmed offers the task list, not a retry 372ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the Tasks rail > the Tasks rail offers Send for review, not a task-only assignment 274ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a task whose answer was lost is unknown, not absent > says the outcome is unknown in the receipt and the toast, never "no task" and never "not created" 51ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a member whose review is pending cannot be chosen; one whose verdict is recorded can be asked again, and is told the verdict stays in the record 59ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a row that comes back with a verdict gets no task, and is never reported as requested 41ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > when no row was reopened, nothing is reported as requested and no task is made 56ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > existing requests that could not be read: no one can be chosen, and reading them again recovers 57ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > a roster that could not be read offers to read it again, and does 48ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the task says where the verdict goes > each reviewer’s task says the verdict is recorded on the Review board and completes the task, not the other way round 25ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > does not offer the document’s author as a reviewer, and says why 14ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > the workbench passes the document’s author, so she is not offered there either 191ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > says the reviewer was given the Reviewer role when the server granted it 37ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > a requester who may not grant access is told, in the server’s words, that no access was granted 52ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > an author refusal from the server is shown in its words and creates no task 23ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > the task create is POST /api/tasks/tasks linked to the document, and the Tasks rail lists it with its state 814ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > Start and Complete go through the tasking path’s own PATCH transition 386ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > a 428 ESIGN_REQUIRED completion opens the §11.50 ceremony on the document, not swallowed and not on the Task board 492ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > a failed task read is an error, never "no tasks" 251ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > tasksForDocument keeps only rows whose recorded origin is this document 1ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — Review tasks, an outcome the server could not confirm > a transition whose COMMIT was lost is reported as unknown, never as unchanged, and the list is re-read 292ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — Review tasks, an outcome the server could not confirm > a gateway error on a transition is an unknown outcome too 314ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 0 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity -1 1ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 1.5 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 9007199254740992 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 1e2 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > reports a lost response as unknown and keeps what was typed for reconciliation 55ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > does not confirm a task receipt for a different document 45ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > resets the reviewers, the reason and the instructions when the document changes 38ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > ignores a delayed answer after changing documents 45ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > workbench reconciles an unconfirmed review assignment > opens the task list after a lost task response and shows the task that actually committed 492ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > known assignment refusal > keeps a confirmed audit rollback distinct from an unknown commit 44ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.insert — AnA’s answer goes in only under the governed-write rule (round 11) > refuses an AnA answer the rule does not admit, or whose models are not given, and changes nothing 398ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.insert — AnA’s answer goes in only under the governed-write rule (round 11) > inserts an AnA answer it admits, and a person’s text is not its business (negative controls) 268ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > redlines the open section when the base hash is the section as loaded 214ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > redlines when the base updated_at is the section as loaded, in either serialization 252ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when the hash AnA read is not the stored content, and changes nothing 228ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when the section was saved after AnA read it, and changes nothing 166ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when either of two bases differs 196ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses no-base when the proposal names no version of the section 187ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses wrong-section when the proposal is for a section that is not open 180ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > passes the editor’s own refusal through, and keeps the existing fields 198ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — text the editor cannot strike > passes unsupported-content through for a quote in inline code, and changes nothing 185ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — after a save > a base read before the save is stale after it, through the old bridge and the new one 371ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — a sealed document > refuses not-editable on a frozen document 190ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — a sealed document > refuses for the seal itself, even where the editor would take the proposal 202ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > <p>Use <code>batch_id</code> here.</p>: a proposal on "batch_id" refuses unsupported-content 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > <p>Use <code>batch_id</code> here.</p>: a proposal on "Use batch_id here." refuses unsupported-content 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > <pre><code>let x = 1;</code></pre><p>Closing.</p>: a proposal on "x = 1" refuses unsupported-content 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > <pre><code>let x = 1;</code></pre><p>Closing.</p>: a proposal on "x = 1" refuses unsupported-content 23ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > a draft over a selection of "batch_id" returns false 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > a draft over a selection of "Use batch_id" returns false 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > the plain text beside the code still takes a proposal 79ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D2 — an edge space is never owned only by the suggestion > a replacement that ends in a space before the document’s own 85ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D2 — an edge space is never owned only by the suggestion > a replacement that ends in a space at its paragraph’s end 112ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D2 — an edge space is never owned only by the suggestion > a replacement that starts with a space after a quote ending in one 71ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D2 — an edge space is never owned only by the suggestion > a replacement that drafted over a selection ends in a space before the document’s own 58ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D2 — an edge space is never owned only by the suggestion > a replacement that keeps an edge space the document does not have 67ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > a struck item goes on accept 77ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > a struck middle item goes on accept 122ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > a list replacing an item becomes sibling items 122ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > so does a numbered one 128ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > so does a list drafted over a selected item 103ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > paragraphs replacing an item stay in it 90ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > refuses structural for a whole item replaced by "## Heading\n\nBody", which a list item cannot be 22ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > refuses structural for a whole item replaced by "| A | B |\n| --- | --- |\n| 1 | 2 |", which a list item cannot be 64ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > refuses structural for a whole item replaced by "- a\n\nAfter the list", which a list item cannot be 19ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D4 — the person’s selection does not grow over AnA’s insertion > a selection of "25 C" keeps exactly its words 44ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D4 — the person’s selection does not grow over AnA’s insertion > a selection of "at 25 C" keeps exactly its words 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D4 — the person’s selection does not grow over AnA’s insertion > a selection of " for use" keeps exactly its words 23ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D4 — the person’s selection does not grow over AnA’s insertion > a caret at the end of the quote stays there, before AnA’s words 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D5 — real text that looks like a reader marker still anchors > a prefix line that is a paragraph’s own text 19ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D5 — real text that looks like a reader marker still anchors > a suffix line that is a paragraph’s own text 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D5 — real text that looks like a reader marker still anchors > still reads a real marker past, and still refuses context that fits neither way 23ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D6 — the documented trailing-paragraph limit > a section ending in a list gains the editor’s empty paragraph on any transaction 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > will not save a governed record without one 1232ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > says what is missing rather than just being inert 681ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > states the requirement in text the field and Save both point to 741ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > carries the stated reason on the save 702ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > does not accept whitespace as a reason 424ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > stays stated across repeated saves of the same section 930ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > refuses a Cmd-S that bypasses the button, and says so 239ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the Document view says the sections are being read, never "no sections yet", while the read is in flight 164ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the masthead never prints "0 sections" over a failed sections read 72ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the tree header never prints "0 documents" over a failed documents read 57ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the History rail says it is reading, never "No prior revisions", while its read is in flight 673ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a rename refused with a 401 changes nothing and never says "Section renamed" 1011ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the filing outline does not call every part "not started" while the sections read has failed 134ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > switching documents clears the previous document’s comment threads instead of leaving them live 645ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a citation removal the server refuses is reported with the server’s reason, not silently dropped 424ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a failed filing-outline read is said in the tree header, not degraded silently to the document list 162ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > switching sections never shows the previous section’s sources under the next section’s header 542ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a thrown error carrying internal text never reaches the user — the fallback sentence does 450ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringCommentThreads.test.tsx > DocumentAuthoring — comment threads > renders the server-nested replies under their thread 913ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringCommentThreads.test.tsx > DocumentAuthoring — comment threads > Reply posts into the thread — parent id and the THREAD's section, then reloads 910ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringCommentThreads.test.tsx > DocumentAuthoring — comment threads > a refused reply is reported and nothing local changes 879ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringCommentThreads.test.tsx > DocumentAuthoring — honest comment states and the resolution record > a failed comments read says the read failed — never "No comments yet" 384ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringCommentThreads.test.tsx > DocumentAuthoring — honest comment states and the resolution record > Resolve captures an optional reason and the thread shows WHO resolved it 744ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer a model not approved for regulatory drafting wrote: disabled, and the reason is on screen 1055ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer whose models the record does not give: disabled, failing closed 651ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer every model of which may write governed content is inserted, naming its turn (negative control) 601ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > a paste of the suggestion it admitted keeps AnA’s name; one from a turn it did not admit is the person’s 680ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > renders the server’s events — actor, role, operation, reason, hashes, section link 935ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > a failed read is a failure to READ — never "no governed acts occurred" 332ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > an empty trail says so honestly, as an empty — not an error 309ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > runs the scan on demand and renders the flags under the server’s own honest framing 633ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > zero flags reads as "passed mechanical checks" — never as compliant 598ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > lists the vault read model the Vault surface renders, under the program name 621ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > searches through the vault search route and shows the total 589ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > Cite in this section inserts a citation node through the editor and records the source link 420ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > a file that is not a data-room source cannot be cited; a reference inserts as text and says it is not a citation 409ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > a failed vault read is an error with a retry, never an empty vault 256ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > with no program open the rail says the document is not filed under a program 203ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > renders the record: title, type, project name and phase, provenance, first section, count, actions 294ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > "Show all" reveals every section, with an honest "Not drafted yet" for an empty one 184ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > a failed read is an error with a retry, never an empty document 64ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > says "Not filed under a program" when the draft carried no program 22ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > "Edit in Authoring" carries the document identity and the return route on the editor channel 25ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > Open full editor mounts DocumentWorkbench for the same docId without navigating; Back collapses and keeps state; Escape collapses 775ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > Escape inside the editor document or a text control belongs to it, not to the canvas 233ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > an ask from inside the workbench lands in the host composer, not a second AnA pane 549ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — accessibility smoke > is a labelled region whose controls have names, and the dialogs it opens are modal and labelled 63ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — a failed program read says so (GE-H-2, 2026-09-28) > after a 500 it does not claim the program is still being read 21ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — a failed program read says so (GE-H-2, 2026-09-28) > after a network failure it does not claim the program is still being read 28ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline starts a section that is not started yet (F4) > clicking an unstarted node in the filing’s copy posts the create with its code, opens the new section and puts the cursor in it 686ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline starts a section that is not started yet (F4) > a refused create shows the server’s words and opens nothing 361ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline starts a section that is not started yet (F4) > a 409 (someone else started it) re-reads, and the node binds to their section 293ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > an approved document says approved, offers no start and posts nothing 210ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > with an AnA draft open (not the filing’s copy), a click posts nothing and names the document that holds the filing 245ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > a module-3 working document that is not the filing’s copy does not take a module-2 node 330ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > when the document list does not say what a document is bound to, nothing is offered 335ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > a section whose code differs only in case is said, not posted into a 409 207ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > while a create runs, its row is busy and a click on another node is answered, not dropped 323ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > consumes the target, clears the channel, and opens the named document + section 664ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > a docId target opens the EXACT document — no search, not the default 241ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > a docId not in scope lands on the default view with an honest miss — never a near-miss open 243ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > shows the honest miss notice and falls back to the default view when nothing matches 223ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > refuses a target scoped to a different program — fail closed, with the reason 170ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > a mount with no pending target behaves exactly as before — default view, no notice 204ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — navigation-directive hand-off (window.C2C_NAV_PARAMS) > a sectionCode from navigate_to opens the named section via the same bounded search 322ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — navigation-directive hand-off (window.C2C_NAV_PARAMS) > an authoringDocType from navigate_to opens the matching document by title 191ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — navigation-directive hand-off (window.C2C_NAV_PARAMS) > an unmatchable authoringDocType lands on the default view with an honest notice 178ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > a reasoned construction says so, and says to check it against the regulation 454ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > an unreviewed transcription is not painted as verified 253ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > a server that sends no provenance renders "basis undeclared", not nothing 278ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > a sign-off whose outline changed since does not read as approved 224ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > a current sign-off names the reviewer on screen 221ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > an unrecognised basis is refused rather than shown to the filer 166ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > two different provenances produce two different statements 408ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DeepResearch — AnA switches tabs, and only tabs > registers under "deep-research"; open-tab drives the real tab state both ways 118ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DeepResearch — AnA switches tabs, and only tabs > refuses to switch tabs under an open credential drawer 52ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > EctdCoauthor — AnA opens documents without ever discarding typing > open-document resolves title/module honestly and drives the same click a person makes 311ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > EctdCoauthor — AnA opens documents without ever discarding typing > REFUSES a switch while the open document holds unsaved edits 159ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DocumentAuthoring — authoring.find opens the real find bar > a directive addressed to "authoring" lands on this surface and opens Ctrl-F pre-seeded 374ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > ArtifactsCenter — Open carries the artifact to the editor > a docx Open stashes authoring.open-document with the artifact name, navigates, and the editor registration receives it 33ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > registers under "quality"; filters switch to their tab and narrow the real panes 177ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > open-change resolves honestly, switches tab, and clears a filter that would hide the row 74ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > open-change is HELD through the register load and applies when it lands 54ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > calls the route with the chosen format and renders the server’s folder, hash and id 532ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > says the Authoring approval carried, naming who reviewed and approved, as the server reported it (FD5 (c)) 311ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > says the approval did not carry, with the server’s reason and what to do next 239ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > claims no approval when the server reported none 244ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > renders the server’s refusal as a refusal, with nothing claimed 243ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > a 2xx without a vault record is not a success 197ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > with no program the dialog says so and offers no submit 188ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text did not reach the filing, with the server’s reason 870ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text was committed to the filing when the server says so 495ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > claims nothing about the filing when the server reported nothing 446ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > "Open in editor" sets the editor target to the document id, then opens the editor 418ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the sign-off button opens the document to sign, not the editor’s list 142ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > a document in another program opens that program first, so the editor can see it 131ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the editor then opens on that document, not on its default first row 439ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > an AI comment’s button is named for what it does: it opens the document, it applies nothing 132ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > baseline file > names only hops from the original six, each once, each with its slice and a reason 3ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > baseline file > every hop in the test has a fixture pair 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > review-tab-to-document: red on the 2026-10-08 dead end 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > review-tab-to-document: green on the shape its slice builds 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > outline-node-to-started-section: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > outline-node-to-started-section: green on the shape its slice builds 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > placed-document-to-sequence: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > placed-document-to-sequence: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > dispatched-sequence-to-transmit: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > dispatched-sequence-to-transmit: green on the shape its slice builds 0ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > respond-to-response-sequence: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > respond-to-response-sequence: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: green when the page hands its open handler down as a prop 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > review-tab-to-document: Project page, Review tab → the document under review, open in the editor 414ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > outline-node-to-started-section: Editor outline, a required section not started in this document → that section, created and open 91ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > placed-document-to-sequence: Place into filing, "Open in Submission Center" (and the market row, once F9 builds it) → the Submission Center, on that sequence 18ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > dispatched-sequence-to-transmit: Submission Center, a dispatched sequence → POST /api/submissions/sequences/:seqId/transmit 287ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > respond-to-response-sequence: Project page, Respond tab → the Submission Center, starting a response sequence 89ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > author-document-row-to-document: Project page, Author tab, a document row → that document, open in the editor 451ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > surfaces citations it could NOT re-read, with the server’s reason 487ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > shows nothing alarming when every citation re-read cleanly 254ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > posts to the document, not the section — the question is document-wide 235ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > a refusal changes nothing and says so 254ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx > recovers a recorded export through the existing history without creating another export 1081ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the 510(k) workspace hands the editor its section > "Open §11 in editor" writes docType + section to the channel and navigates 457ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the 510(k) workspace hands the editor its section > a click with no program in scope still writes the pathway anchor docType 164ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the CER Generator rows hand the editor their section > a section row passes ITS OWN code and label through onOpenEditor 95ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the CER Generator rows hand the editor their section > without an onOpenEditor the affordance is not drawn — no dead buttons 63ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no module outside v2 renders a rail 70ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no route mounts a second application 1ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface navigates out of the shell to reach a kit 2ms
+ ✓ tests/ui/one-shell.test.ts > one shell > the v2 shell root is the only one that lays out a rail column 343ms
+ ✓ tests/ui/one-shell.test.ts > one shell > every device surface the kit can render is one the shell can route to 4ms
+ ✓ tests/ui/one-shell.test.ts > one shell > only the shell and its named-thread surfaces start a conversation 426ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface takes the AnA rail column and still calls the shell onAsk 327ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface bypasses the ownsConversation union with a cast 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > a retrieval OUTAGE is not reported as an empty corpus 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > names the gap when retrieved evidence cannot all carry citations 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > reports a fully attributable draft plainly 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a claimed (410) draft is discarded — a retry of it can only fail 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a LINEAGE_REQUIRED rollback KEEPS the draft — the candidate survived it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > names an unauthenticated session rather than blaming the draft 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > falls back to the server’s sentence, never to a bare code 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > generating does not save anything — the section is untouched until accept 176ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > shows the wait as AnA's live record — what is running and a clock — then removes it 58ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a deployment with no AI provider is refused on the panel: no draft body, no accept, a refusal that stays 36ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a transport failure yields no draft body and says nothing changed 23ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a model draft with no parked candidate says citations are impossible for it 30ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > accepts through the lineage endpoint, sending the draftId and the text actually saved 45ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > names the consequence on the regenerate control once edits exist 28ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > passes a MISSING lineage summary up as absent, never as a summary of zero 49ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > warns while it is still a choice that an edited draft is no longer the model’s words 26ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a consumed (410) draft is cleared, not left behind a button that can only fail 33ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > reports the fail-closed lineage rollback as a rollback, and adopts nothing 34ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > says unsaved editor edits are not part of the draft being accepted 34ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > DocumentAuthoring — the drafting panel is reachable > opens the panel from the editor toolbar, and drafts nothing until asked 360ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > shows the engine’s check of the draft before the accept: what was not found, and the verdict 28ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft the server did not check says so, and never reads as a pass 27ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft whose record was not filed says so, with the server’s reason 52ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > once the author edits the draft, the check says the edits are not checked 26ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — navigate > is a button that stashes the params and navigates to the target 178ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — navigate > opens the program the chip names BEFORE navigating to its screen 19ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — navigate > without the shell navigation it is an inert record, not a dead button 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — surface_action > is a button that re-validates against the registry, then hands the registry copy to the bus 18ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — surface_action > performs nothing when the registry refuses the payload (fail closed) 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — start_demo > is a button only when a demo starter is provided, and starts that demo 21ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — start_demo > falls back to the chip label when the script title is absent 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — start_demo > without a demo starter it stays inert 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChips — anything else is a record > renders a governed/executed action as an inert span with its error state 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > the conversation thread renders AnA’s actions as controls > a navigate chip in a thread turn is a button that navigates 77ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > the conversation thread renders AnA’s actions as controls > a start_demo chip in an ordinary thread turn is a button that starts the demo 55ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > ConversationThread.tsx imports and renders AnaActionChips/AnaActionChip 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > DocumentWorkbench.tsx imports and renders AnaActionChips/AnaActionChip 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > EctdCoauthor.tsx imports and renders AnaActionChips/AnaActionChip 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > RbmSurfaces.tsx imports and renders AnaActionChips/AnaActionChip 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the client walker sees the real tree > found a substantial number of source files 2ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the client walker sees the real tree > includes the surfaces that carried the defect 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_API has no remaining reads anywhere 85ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_SIGNED has no remaining reads anywhere 75ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_AUTHORING has no remaining reads anywhere 75ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_API is not assigned either — it stays a non-thing 73ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_SIGNED is not assigned either — it stays a non-thing 68ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_AUTHORING is not assigned either — it stays a non-thing 73ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated storage notes stay eliminated > c2c_biostat_doc is never written 74ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated storage notes stay eliminated > c2c_biostat_doc is never read either — it stays a non-thing 72ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > the shared handoff POSTs a document and a section 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/Biostatistics.tsx hands off through saveToAuthoring 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/ReportEngine.tsx hands off through saveToAuthoring 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/CmcModule.tsx hands off through saveToAuthoring 2ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/Biostatistics.tsx does not navigate when the handoff failed 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/ReportEngine.tsx does not navigate when the handoff failed 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/CmcModule.tsx does not navigate when the handoff failed 2ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > client/src/concept2cure/v2/surfaces/BatchDraft.tsx reads no ghost channel at all 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > client/src/concept2cure/v2/surfaces/AnaVerbs.tsx reads no ghost channel at all 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > __C2C_DOC_ID is read nowhere, so it needs no fence 72ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/LicensingSurface.tsx goes through dataConnect 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/ReportEngine.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx goes through dataConnect 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/AnaMemory.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > liveMutateOrNull exists and returns null rather than a fixture 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > AnaMemory reports what actually happened instead of always claiming success 0ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSaveLabelNoDoc.test.tsx > DocumentAuthoring — the Save control with nothing open > does not say "Saved" when the organization has no document 147ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSaveLabelNoDoc.test.tsx > DocumentAuthoring — the Save control with nothing open > still says "Saved" once a section is open and unchanged (over-correction guard) 440ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > publishes the selected section on the editor deep-link channel before navigating 141ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > carries the section but NOT an invented family for a dossier the channel cannot name 69ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > leaves no stale target behind for the next, unrelated visit to the editor 94ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > records the refused TEXT, not just an id the document no longer holds 75ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > keeps the whole proposed text, with its hash — accepting strips the mark, so this is the only copy 12ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > still records the decision when no context is supplied 8ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > refuses a verdict that is neither accept nor reject 7ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > records one act, with the changes it covered 11ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > records every change of an "Accept all", whole — no cap, nothing left out 9ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > records the bulk act even when no per-change context is sent 7ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a single accept/reject against a FROZEN document — no row written 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a single accept/reject against an APPROVED document 8ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > still accepts against an ordinary DRAFT document — the fix is not a blanket deny 6ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a bulk accept against a FROZEN document — no rows written 4ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > still accepts a bulk decision against an ordinary DRAFT document 4ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > bulk audit metadata carries what the single route already carries > records sectionId and each change's proposedAt, mirroring the single route 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > bulk audit metadata carries what the single route already carries > omits sectionId when the caller sends none, same as the single route 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an authorId of "ana" is canonicalised — the caller-supplied authorName is IGNORED 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an authorId that is a prototype key ("constructor") is not a machine author 4ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an ordinary human proposer is recorded as unverified, caller-asserted text 4ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an unrecognised authorId (not "ana") is NOT treated as a machine — recorded as its own text 4ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > bounds an unverified proposer name — an audit row is not a place for arbitrary text 4ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > bulk: a machine author is canonicalised per change, mirroring the single route 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > single: another document's section is refused 400 SECTION_NOT_IN_DOCUMENT — no row, no audit event 3ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > the lookup is scoped to this document AND this tenant 4ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > single: a section of this document is recorded, as before 4ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a sectionId that is not a uuid is refused without a query — Postgres would answer 22P02, a 500 3ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > bulk: another document's section is refused — no rows, no audit event 3ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a decision that names no section is recorded, as before 4ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a changeType the editor does not have is not recorded (null, single and bulk) 7ms
+ ✓ client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx > the note > is said under Manual 30ms
+ ✓ client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx > the note > is said under Auto too, in its own words: Auto's time limit and its stop on an unanswered request do not reach a dock 4ms
+ ✓ client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx > the note > says nothing outside the shell 2ms
+ ✓ client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx > each dock mounts it beside its composer > DocumentWorkbench — the editor dock 2ms
+ ✓ client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx > each dock mounts it beside its composer > EctdCoauthor — the co-author composer 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx > each dock mounts it beside its composer > RBM — the study dock composer 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx > each dock mounts it beside its composer > the co-author, rendered, says each policy in its own words 97ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > reports the partition over the length the SERVER read 27ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > IGNORES a caller-supplied length — the denominator is not theirs to set 5ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > scopes the length read to the caller's organization 5ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > 404s for a document that is not this organization's, rather than reporting 0% 4ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > reports the partition for an Authoring section, the table the editor asks about 6ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > scopes an Authoring section's length read by its own tenant column 4ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > refuses a table it cannot locate text in, by name 3ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > requires an organization context 3ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > requires both identifiers 5ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the outline is derived from the filing type > a BLA renders CTD modules with sections nested beneath them 4ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the outline is derived from the filing type > a 510(k) renders lettered parts, not modules 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the outline is derived from the filing type > THE FALSIFICATION — the two filings do not produce the same tree 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the tree walk preserves the pack > orders by path_order regardless of the order rows arrive in 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the tree walk preserves the pack > loses no section — every row appears exactly once 2ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the tree walk preserves the pack > promotes an unresolvable parent to a root rather than dropping the row 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the tree walk preserves the pack > handles an empty pack without throwing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > binding an outline node to the section that holds its text > matches by code 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > binding an outline node to the section that holds its text > returns null for a node with no authored section yet 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > binding an outline node to the section that holds its text > never matches a null code — the worst failure would be opening the wrong text 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the draft indicator is asked of BOTH stores > lights for text authored in THIS editor, which the governed flag cannot see 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the draft indicator is asked of BOTH stores > still lights for text written through the governed path 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the draft indicator is asked of BOTH stores > stays dark when neither store has anything 0ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutline.test.ts > the draft indicator is asked of BOTH stores > does not count whitespace as a draft 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > is stable for the same change — the id must survive a round trip 2ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates two runs by the same author in the same minute 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates an insertion from a deletion of identical text 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates the same text proposed by different authors 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates the same text proposed in different minutes 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > carries its kind in the clear, so a row is legible without a join 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > tolerates a suggestion with no recorded author or timestamp 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > decisionOf > carries the text, because accepting a change destroys it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > decisionOf > records a rejection, which changes no text and is otherwise unrecorded 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > decisionOf > keeps the proposer distinct from the decider 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > notifyResolved > never lets a failing recorder undo the edit the reviewer just made 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > notifyResolved > hands the host a complete decision 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > notifyResolved > is a no-op when no host is listening 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > reads a rejection back as a sentence naming what was refused 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > surfaces the model behind an accepted AI draft, and that it was edited 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > says so when an accepted draft names no generating model 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > leaves unrecognised metadata alone rather than dumping a payload 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — bulk decisions > reads a bulk rejection back with its count and a sample 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — bulk decisions > admits when the stored summary was capped 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — bulk decisions > is null when the row carries no verdict or no count 0ms
+ ✓ client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts > askAnaToDraftPrompt names no stored value (SEC-C-4 class) > leaves a planted program name out of the prompt 3ms
+ ✓ client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts > askAnaToDraftPrompt names no stored value (SEC-C-4 class) > sends the same fixed sentence with a program name or without one 1ms
+ ✓ client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts > askAnaToDraftPrompt names no stored value (SEC-C-4 class) > seeds the new conversation with the fixed sentence only 3ms
+ Test Files  42 passed (42)
+      Tests  484 passed (484)
+   Duration  188.93s (transform 14.44s, setup 3.55s, import 39.76s, tests 115.86s, environment 20.96s)

@@ -1,0 +1,31 @@
+# Trimmed to the result and assertion lines; the rendered-DOM dumps of the full run are omitted.
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > reads the review board scoped to this program, and groups the documents by what they need 5115ms
+   → Unable to find an element with the text: Quality overall summary (2.3). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a document every reviewer approved but nobody has signed is not shown as Approved 5038ms
+   → Unable to find an element with the text: Cover letter. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open document" opens THAT document, by id, in this program 5040ms
+   → Unable to find role="button" and name "Open document: Quality overall summary (2.3)"
+ × client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a failed read is an error with a retry, never an empty list, and the retry reads again 5056ms
+   → Unable to find an element with the text: Couldn’t read this project’s reviews. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > an empty board says so in words 5040ms
+   → Unable to find an element with the text: /Nothing in this project is out for review/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > never says "aren't wired" and never sends the person to the task-board alias 5035ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open the review board" opens the Review surface when it is available, and is not shown when it is not 5049ms
+   → Unable to find role="button" and name `/Open the review board/`
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > reads the review board scoped to this program, and groups the documents by what they need
+TestingLibraryElementError: Unable to find an element with the text: Quality overall summary (2.3). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a document every reviewer approved but nobody has signed is not shown as Approved
+TestingLibraryElementError: Unable to find an element with the text: Cover letter. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open document" opens THAT document, by id, in this program
+TestingLibraryElementError: Unable to find role="button" and name "Open document: Quality overall summary (2.3)"
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a failed read is an error with a retry, never an empty list, and the retry reads again
+TestingLibraryElementError: Unable to find an element with the text: Couldn’t read this project’s reviews. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > an empty board says so in words
+TestingLibraryElementError: Unable to find an element with the text: /Nothing in this project is out for review/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > never says "aren't wired" and never sends the person to the task-board alias
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open the review board" opens the Review surface when it is available, and is not shown when it is not
+TestingLibraryElementError: Unable to find role="button" and name `/Open the review board/`
+ Test Files  1 failed (1)
+      Tests  7 failed (7)

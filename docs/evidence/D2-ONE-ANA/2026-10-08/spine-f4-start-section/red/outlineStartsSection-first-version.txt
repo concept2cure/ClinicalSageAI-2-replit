@@ -1,0 +1,516 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline starts a section that is not started yet (F4) > clicking an unstarted node in the filing’s copy posts the create with its code, opens the new section and puts the cursor in it 545ms
+   → expected null to be '3.5 Clinical summary, required, not s…' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline starts a section that is not started yet (F4) > a refused create shows the server’s words and opens nothing 523ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline starts a section that is not started yet (F4) > a 409 (someone else started it) re-reads, and the node binds to their section 487ms
+ × client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > an approved document says approved, offers no start and posts nothing 288ms
+   → expected 'Clinical summary — not started in thi…' to match /This document is approved, so no sect…/
+ × client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > with an AnA draft open (not the filing’s copy), a click posts nothing and names the document that holds the filing 835ms
+   → expected [ [ 'POST', …(2) ] ] to have a length of +0 but got 1
+ × client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > a module-3 working document that is not the filing’s copy does not take a module-2 node 533ms
+   → expected [ [ 'POST', …(2) ] ] to have a length of +0 but got 1
+ × client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > when the document list does not say what a document is bound to, nothing is offered 258ms
+   → expected 'Clinical summary — not started in thi…' to match /Whether this document is the editing …/
+ × client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > a section whose code differs only in case is said, not posted into a 409 308ms
+   → expected 'General information — not started in …' to match /already has a section coded “3\.2\.s\…/
+ × client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > while a create runs, its row is busy and a click on another node is answered, not dropped 5257ms
+   → expected null to be 'true' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ed"[39m
+        [33mdata-comments[39m=[32m"true"[39m
+        [33mdata-rail[39m=[32m"ana"[39m
+      [36m>[39m
+        [36m<aside[39m
+          [33mclass[39m=[32m"ed-tree"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-h"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-tree-t"[39m
+            [36m>[39m
+              [0mBLA 125000[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-tree-m"[39m
+            [36m>[39m
+              [0mBLA · FDA · 4 sections[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+            [36m>[39m
+              [36m<select[39m
+                [33maria-label[39m=[32m"Filter documents by status"[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"all"[39m
+                [36m>[39m
+                  [0mall[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"draft"[39m
+                [36m>[39m
+                  [0mdraft[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"in_review"[39m
+                [36m>[39m
+                  [0min review[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"approved"[39m
+                [36m>[39m
+                  [0mapproved[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"frozen"[39m
+                [36m>[39m
+                  [0mfrozen[0m
+                [36m</option>[39m
+              [36m</select>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-basis"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-basis-h"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-basis-chip"[39m
+                [33mdata-tone[39m=[32m"err"[39m
+              [36m>[39m
+                [0mBasis undeclared[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-basis-l"[39m
+              [36m>[39m
+                [0moutline basis[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"ed-basis-d"[39m
+            [36m>[39m
+              [0mThis outline does not record what it was built from. Treat nothing in it as verified. Not reviewed by a regulatory professional.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-scroll"[39m
+            [33mstyle[39m=[32m"flex: 0 0 auto; max-height: 46%; border-bottom: 1px solid var(--border);"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 10px; opacity: 0.62;"[39m
+              [33mtitle[39m=[32m"Clinical overview — not started in this document yet. Select to start it."[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m2.5[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+                [33mstyle[39m=[32m"font-weight: 600;"[39m
+              [36m>[39m
+                [0mClinical overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+                [33mtitle[39m=[32m"Required by the rule pack"[39m
+              [36m>[39m
+                [0mrequired[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 10px; opacity: 1;"[39m
+              [33mtitle[39m=[32m"Quality overview — open"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+                [33mstyle[39m=[32m"font-weight: 600;"[39m
+              [36m>[39m
+                [0mQuality overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-dot"[39m
+                [33mdata-s[39m=[32m"ok"[39m
+                [33mtitle[39m=[32m"todo"[39m
+              [36m/>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 10px; opacity: 0.62;"[39m
+              [33mtitle[39m=[32m"General information — not started in this document yet. Select to start it."[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+                [33mstyle[39m=[32m"font-weight: 600;"[39m
+              [36m>[39m
+                [0mGeneral information[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+                [33mtitle[39m=[32m"Required by the rule pack"[39m
+              [36m>[39m
+                [0mrequired[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 10px; opacity: 0.62;"[39m
+              [33mtitle[39m=[32m"Clinical summary — not started in this document yet. Select to start it."[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.5[0m
+              [36m</span>[39m
+              [36m<span[39m...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline starts a section that is not started yet (F4) > clicking an unstarted node in the filing’s copy posts the create with its code, opens the new section and puts the cursor in it
+AssertionError: expected null to be '3.5 Clinical summary, required, not s…' // Object.is equality
+
+- Expected:
+"3.5 Clinical summary, required, not started. Start this section in this document."
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx:139:44
+    137|     const row = await unstartedRow();
+    138|     expect(row.getAttribute('title')).toMatch(/Select to start it/);
+    139|     expect(row.getAttribute('aria-label')).toBe('3.5 Clinical summary,…
+       |                                            ^
+    140|     expect(row.getAttribute('aria-disabled')).toBeNull();
+    141|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > an approved document says approved, offers no start and posts nothing
+AssertionError: expected 'Clinical summary — not started in thi…' to match /This document is approved, so no sect…/
+
+- Expected:
+/This document is approved, so no section can be added\./
+
++ Received:
+"Clinical summary — not started in this document yet. The document is frozen, so no section can be added."
+
+ ❯ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx:189:39
+    187|     render(<DocumentAuthoring {...props()} />);
+    188|     const row = await unstartedRow();
+    189|     expect(row.getAttribute('title')).toMatch(/This document is approv…
+       |                                       ^
+    190|     expect(row.getAttribute('title')).not.toMatch(/start it|frozen/);
+    191|     expect(row.getAttribute('aria-disabled')).toBe('true');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > with an AnA draft open (not the filing’s copy), a click posts nothing and names the document that holds the filing
+AssertionError: expected [ [ 'POST', …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx:213:23
+    211|     // Whatever the click did, it answered; it must not have created a…
+    212|     await screen.findByText(/3\.5 (Clinical summary )?was not started|…
+    213|     expect(creates()).toHaveLength(0);
+       |                       ^
+    214|     await screen.findByText(/3\.5 Clinical summary was not started\. T…
+    215|     expect(row.getAttribute('title')).toMatch(/This outline belongs to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > a module-3 working document that is not the filing’s copy does not take a module-2 node
+AssertionError: expected [ [ 'POST', …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx:228:23
+    226|
+    227|     await screen.findByText(/2\.5 (Clinical overview )?was not started…
+    228|     expect(creates()).toHaveLength(0);
+       |                       ^
+    229|     await screen.findByText(/2\.5 Clinical overview was not started\. …
+    230|     expect(screen.getByText(/Open the document that holds BLA 125000 t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > when the document list does not say what a document is bound to, nothing is offered
+AssertionError: expected 'Clinical summary — not started in thi…' to match /Whether this document is the editing …/
+
+- Expected:
+/Whether this document is the editing copy of BLA 125000 is not known/
+
++ Received:
+"Clinical summary — not started in this document yet. Select to start it."
+
+ ❯ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx:239:39
+    237|     render(<DocumentAuthoring {...props()} />);
+    238|     const row = await unstartedRow();
+    239|     expect(row.getAttribute('title')).toMatch(/Whether this document i…
+       |                                       ^
+    240|
+    241|     fireEvent.click(row);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > a section whose code differs only in case is said, not posted into a 409
+AssertionError: expected 'General information — not started in …' to match /already has a section coded “3\.2\.s\…/
+
+- Expected:
+/already has a section coded “3\.2\.s\.1”\. The filing reads codes exactly/
+
++ Received:
+"General information — not started in this document yet. Select to start it."
+
+ ❯ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx:251:39
+    249|     render(<DocumentAuthoring {...props()} />);
+    250|     const row = await unstartedRow('General information');
+    251|     expect(row.getAttribute('title')).toMatch(/already has a section c…
+       |                                       ^
+    252|
+    253|     fireEvent.click(row);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline offers a start only where the section can be started (F4) > while a create runs, its row is busy and a click on another node is answered, not dropped
+AssertionError: expected null to be 'true' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ed"[39m
+        [33mdata-comments[39m=[32m"true"[39m
+        [33mdata-rail[39m=[32m"ana"[39m
+      [36m>[39m
+        [36m<aside[39m
+          [33mclass[39m=[32m"ed-tree"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-h"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-tree-t"[39m
+            [36m>[39m
+              [0mBLA 125000[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-tree-m"[39m
+            [36m>[39m
+              [0mBLA · FDA · 4 sections[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+            [36m>[39m
+              [36m<select[39m
+                [33maria-label[39m=[32m"Filter documents by status"[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"all"[39m
+                [36m>[39m
+                  [0mall[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"draft"[39m
+                [36m>[39m
+                  [0mdraft[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"in_review"[39m
+                [36m>[39m
+                  [0min review[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"approved"[39m
+                [36m>[39m
+                  [0mapproved[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"frozen"[39m
+                [36m>[39m
+                  [0mfrozen[0m
+                [36m</option>[39m
+              [36m</select>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-basis"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-basis-h"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-basis-chip"[39m
+                [33mdata-tone[39m=[32m"err"[39m
+              [36m>[39m
+                [0mBasis undeclared[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-basis-l"[39m
+              [36m>[39m
+                [0moutline basis[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"ed-basis-d"[39m
+            [36m>[39m
+              [0mThis outline does not record what it was built from. Treat nothing in it as verified. Not reviewed by a regulatory professional.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-scroll"[39m
+            [33mstyle[39m=[32m"flex: 0 0 auto; max-height: 46%; border-bottom: 1px solid var(--border);"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 10px; opacity: 0.62;"[39m
+              [33mtitle[39m=[32m"Clinical overview — not started in this document yet. Select to start it."[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m2.5[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+                [33mstyle[39m=[32m"font-weight: 600;"[39m
+              [36m>[39m
+                [0mClinical overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+                [33mtitle[39m=[32m"Required by the rule pack"[39m
+              [36m>[39m
+                [0mrequired[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 10px; opacity: 1;"[39m
+              [33mtitle[39m=[32m"Quality overview — open"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+                [33mstyle[39m=[32m"font-weight: 600;"[39m
+              [36m>[39m
+                [0mQuality overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-dot"[39m
+                [33mdata-s[39m=[32m"ok"[39m
+                [33mtitle[39m=[32m"todo"[39m
+              [36m/>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 10px; opacity: 0.62;"[39m
+              [33mtitle[39m=[32m"General information — not started in this document yet. Select to start it."[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+                [33mstyle[39m=[32m"font-weight: 600;"[39m
+              [36m>[39m
+                [0mGeneral information[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+                [33mtitle[39m=[32m"Required by the rule pack"[39m
+              [36m>[39m
+                [0mrequired[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 10px; opacity: 0.62;"[39m
+              [33mtitle[39m=[32m"Clinical summary — not started in this document yet. Select to start it."[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.5[0m
+              [36m</span>[39m
+              [36m<span[39m...
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx:266:63
+    264|
+    265|     fireEvent.click(row);
+    266|     await waitFor(() => expect(row.getAttribute('aria-busy')).toBe('tr…
+       |                                                               ^
+    267|     expect(row.getAttribute('aria-label')).toMatch(/Starting this sect…
+    268|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+   Start at  18:08:42
+   Duration  14.35s (transform 3.10s, setup 231ms, import 4.17s, tests 9.05s, environment 687ms)
+

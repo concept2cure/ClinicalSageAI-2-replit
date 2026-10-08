@@ -97,6 +97,7 @@ import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
 
 import { useFilingOutline, findSectionForNode, nodeHasDraft } from '../useFilingOutline';
+import { useStartOutlineSection, unstartedRowProps } from './startOutlineSection';
 import {
   editorTargetDocLabel,
   clearEditorTarget,
@@ -132,6 +133,10 @@ interface AuthDoc {
   section_count: number | string | null;
   /** The author (GET /docs returns it): not offered as the document's reviewer. */
   created_by?: string | number | null;
+  /** The governed filing this is the editing copy of; null when unbound,
+      absent when the list did not say. The outline starts a section only in
+      the filing's copy (startOutlineSection.ts startOffer). */
+  c2c_document_id?: string | null;
 }
 
 /**
@@ -1699,6 +1704,14 @@ export function DocumentWorkbench({
     }
     void loadSections(activeDocId);
   }, [activeDocId, loadSections]);
+
+  /* F4: a click on an outline node with no section here starts it — created
+     through POST /api/authoring/sections, opened, the cursor put in it — but
+     only in the document that is the filing's editing copy. */
+  const startNode = useStartOutlineSection({
+    activeDoc, filing: filing.document, docs, sections, loadSections, requestLeave, fireToast,
+    activeSectionId, docPane: () => docScrollRef.current,
+  });
 
   /* ── Reset editor bookkeeping on section switch ──
      The canonical editor remounts per section (key includes the id) and reads
@@ -3429,6 +3442,9 @@ export function DocumentWorkbench({
               const sectionsUnread = sectionsState !== 'ready';
               const bound = sectionsUnread ? null : findSectionForNode(sections, node.key);
               const isActive = bound != null && bound.id === activeSectionId;
+              // F4: an unstarted node's tooltip, accessible name, disabled and
+              // busy state (spread last, so its title is the one shown).
+              const startProps = bound || sectionsUnread ? null : unstartedRowProps(startNode, node);
               return (
                 <button
                   key={node.key}
@@ -3438,10 +3454,9 @@ export function DocumentWorkbench({
                   title={
                     sectionsUnread
                       ? `${node.label} — this document’s sections have not been read yet`
-                      : bound
-                        ? `${node.label} — open`
-                        : `${node.label} — not started in this document yet`
+                      : `${node.label} — open`
                   }
+                  {...startProps}
                   onClick={() => {
                     if (sectionsUnread) {
                       fireToast(
@@ -3461,10 +3476,9 @@ export function DocumentWorkbench({
                         module: m ? `M${m}` : undefined,
                       });
                     } else {
-                      fireToast(
-                        `${node.key} ${node.label} — no draft yet in this document.`,
-                        'error'
-                      );
+                      // F4: the click starts the section (a person's act),
+                      // or says why it cannot be started in this document.
+                      void startNode(node);
                     }
                   }}
                 >

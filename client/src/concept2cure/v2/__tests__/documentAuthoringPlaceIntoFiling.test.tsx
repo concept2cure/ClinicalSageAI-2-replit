@@ -40,8 +40,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import {
   AuthoringPlaceIntoFiling,
   IDENTITY_STATEMENT,
-  assembleSnapshot,
 } from '../surfaces/AuthoringPlaceIntoFiling';
+import { assembleSnapshot } from '../surfaces/placeIntoFilingCopy';
 
 const SUBS = [
   {
