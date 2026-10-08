@@ -573,6 +573,22 @@ interface SourceRow {
   usage?: { sections: number; documents: number; changedSections: number } | null;
   /** Where a search matched in the text read from the file (ts_headline). Null outside a search. */
   snippet?: string | null;
+  /** What the catalog found the source IS, by rule (S3). Absent on a server that predates it. */
+  catalog?: SourceCatalog | null;
+}
+
+/** The deterministic catalog facts of a source; a null field was not found, never guessed. */
+interface SourceCatalog {
+  studyRef: number | null;
+  trialRegistryIdentifier: string | null;
+  protocolNumber: string | null;
+  documentDate: string | null;
+  dataCutDate: string | null;
+  dataset: {
+    format: string | null;
+    tableCount: number;
+    tables: Array<{ name: string; standard: string | null; domain: string | null; rowCount: number; columnCount: number }>;
+  } | null;
 }
 
 /** One page of the project's Data Room, as GET /:id/sources answers it. */
@@ -693,6 +709,38 @@ function sourcePinTitle(s: SourceRow): string {
   return s.extractionStatus === 'extracted'
     ? 'Use this source as context for AnA'
     : 'This source has no readable text, so it cannot ground a draft';
+}
+
+/**
+ * What the catalog found a source is: protocol, registry id, data cut-off, and
+ * for a table or define.xml its CDISC standard, domain and size. Facts only;
+ * a fact not found is left out, never filled in.
+ */
+function catalogFacts(c: SourceCatalog | null | undefined): string[] {
+  if (!c) return [];
+  const facts: string[] = [];
+  if (c.protocolNumber) facts.push(`Protocol ${c.protocolNumber}`);
+  if (c.trialRegistryIdentifier) facts.push(c.trialRegistryIdentifier);
+  if (c.dataCutDate) facts.push(`data cut-off ${c.dataCutDate}`);
+  else if (c.documentDate) facts.push(`dated ${c.documentDate}`);
+  const t = c.dataset?.tables[0];
+  if (t) {
+    const kind = t.standard ? `${t.standard}${t.domain ? ` ${t.domain}` : ''}` : 'table';
+    facts.push(c.dataset!.format === 'define-xml'
+      ? `define.xml · ${c.dataset!.tableCount} dataset${c.dataset!.tableCount === 1 ? '' : 's'}`
+      : `${kind} · ${t.columnCount} columns · ${t.rowCount} rows`);
+  }
+  return facts;
+}
+
+function SourceCatalogLine({ catalog }: { catalog?: SourceCatalog | null }) {
+  const facts = catalogFacts(catalog);
+  if (facts.length === 0) return null;
+  return (
+    <span className="sec-sub" style={{ display: 'block', fontSize: 11.5 }} data-testid="source-catalog">
+      {facts.join(' · ')}
+    </span>
+  );
 }
 
 /** Where a search matched in the text read from the file; nothing outside a search. */
@@ -957,6 +1005,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                         {size ? ` · ${size}` : ''}
                         {fmtWhen(s.createdAt) ? ` · added ${fmtWhen(s.createdAt)}` : ''}
                       </span>
+                      <SourceCatalogLine catalog={s.catalog} />
                       <SourceSnippet show={searching} text={s.snippet} />
                       {/* Where this source is actually used. Reported from
                           recorded citations; omitted entirely when the server

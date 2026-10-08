@@ -1,0 +1,15 @@
+# tests/db/data-room-catalog-facts.dbtest.ts against HEAD bcc296f8, on a database without 20261008d, PostgreSQL 16
+ × tests/db/data-room-catalog-facts.dbtest.ts > an adopted CSR is described by rule and by its project > inherits the project facts, finds the labelled facts, and names its study
+   → column "study_ref" does not exist
+ × tests/db/data-room-catalog-facts.dbtest.ts > an adopted CSR is described by rule and by its project > the Data Room read carries what the catalog found
+   → expected undefined to match object { studyRef: 1, …(4) }
+ × tests/db/data-room-catalog-facts.dbtest.ts > a study is named only when it is the one study of this project > two studies of the project with the same protocol id: neither is chosen, both are named
+   → column "study_ref" does not exist
+ × tests/db/data-room-catalog-facts.dbtest.ts > a study is named only when it is the one study of this project > the database refuses a capture naming another organization's study
+   → expected '42703' to be '23503' // Object.is equality
+ × tests/db/data-room-catalog-facts.dbtest.ts > a study is named only when it is the one study of this project > deleting the study design detaches its sources and keeps the capture
+   → column "study_ref" does not exist
+ × tests/db/data-room-catalog-facts.dbtest.ts > a tabular capture is profiled, structure only > an SDTM AE CSV reads as SDTM AE with its columns and rows, and no subject value is kept
+   → Cannot read properties of undefined (reading 'dataset')
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed (6)

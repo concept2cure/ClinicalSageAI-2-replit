@@ -27,6 +27,8 @@
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { determineSourceVersion, type SourceVersionDetermination } from './source-version.js';
+import { findTextFacts, matchStudy, readProgramFacts, type ProgramFacts, type TextFacts } from './catalog-facts.js';
+import { profileDataset, type DatasetProfile } from './dataset-profile.js';
 
 const logger = createScopedLogger('data-room-processing');
 
@@ -47,6 +49,50 @@ export interface ExtractedCapture {
 export interface CaptureDescription {
   dossier: Record<string, unknown> | null;
   versionDetermination: SourceVersionDetermination;
+}
+
+/** What the catalog records a capture IS (S3): every value by rule, with where it came from. */
+export interface CatalogFacts {
+  program: ProgramFacts | null;
+  text: TextFacts;
+  study: { studyRef: number | null; candidates: Array<{ id: number; studyId: string; protocolId: string }> };
+  datasetProfile: DatasetProfile | null;
+}
+
+/**
+ * The catalog facts of a capture: the project's own record, the text rules
+ * (catalog-facts.ts), the one study of this project the document names, and
+ * the structure of a tabular file or define.xml (dataset-profile.ts).
+ */
+export async function buildCatalogFacts(
+  exec: Exec,
+  orgId: number,
+  programId: string | null,
+  input: { text: string | null; bytes?: Buffer | null; fileName: string; mimeType: string },
+): Promise<CatalogFacts> {
+  const text = findTextFacts(input.text);
+  const program = programId ? await readProgramFacts(exec, orgId, programId) : null;
+  const study = programId && program ? await matchStudy(exec, orgId, programId, text) : { studyRef: null, candidates: [] };
+  const datasetProfile = input.bytes ? await profileDataset(input.bytes, input.fileName, input.mimeType) : null;
+  return { program, text, study, datasetProfile };
+}
+
+/** The catalog facts as the record keeps them: the evidence for each, and the profile. */
+function factsMetadata(f: CatalogFacts | undefined): Record<string, unknown> {
+  if (!f) return {};
+  return {
+    catalogEvidence: {
+      registryIds: f.text.registryIds,
+      protocolNumber: f.text.protocolNumber,
+      documentDate: f.text.documentDate,
+      dataCutDate: f.text.dataCutDate,
+      study: f.study.candidates.length > 0 ? { matched: f.study.studyRef, candidates: f.study.candidates } : null,
+      inheritedFromProject: f.program ? Object.keys(f.program).filter(k => f.program?.[k as keyof ProgramFacts]) : [],
+      rules: 'catalog-facts v1',
+    },
+    ...(f.text.dataCutDate ? { dataCutDate: f.text.dataCutDate.value } : {}),
+    ...(f.datasetProfile ? { datasetProfile: f.datasetProfile } : {}),
+  };
 }
 
 /** Read the bytes with the platform's extractor. Never throws. */
@@ -94,6 +140,33 @@ export async function describeCapture(
   return { dossier, versionDetermination };
 }
 
+/** extraction_status, extracted_text, char_count, page_count. */
+function textValues(extracted: ExtractedCapture): unknown[] {
+  const text = extracted.text;
+  return [text ? 'extracted' : 'failed', text, text ? text.length : 0, extracted.pageCount];
+}
+
+/** How the capture was read and versioned, merged into its provenance. */
+function processingProvenance(extracted: ExtractedCapture, description: CaptureDescription | undefined, processedBy: string) {
+  return {
+    extractionMethod: extracted.method,
+    extractionWords: extracted.words,
+    ...(extracted.error ? { extractionError: extracted.error } : {}),
+    processedBy,
+    ...(description ? { versionDeclaration: { ...description.versionDetermination.declaration, determinedBy: processedBy } } : {}),
+  };
+}
+
+/** product … study_ref, in the UPDATE's order; null where nothing was found. */
+function factValues(facts: CatalogFacts | undefined): unknown[] {
+  const pf = facts?.program;
+  const v = (x: string | number | null | undefined) => x ?? null;
+  return [
+    v(pf?.product), v(pf?.indication), v(pf?.phase), v(pf?.applicationType), v(pf?.applicationNumber), v(pf?.agency),
+    v(facts?.text.registryIds[0]?.value), v(facts?.text.documentDate?.value), v(facts?.study.studyRef),
+  ];
+}
+
 /**
  * Write what processing found onto the capture: the derived columns only,
  * scoped to the organization. `version` is written only where the capture has
@@ -103,17 +176,9 @@ export async function recordSourceProcessing(
   exec: Exec,
   orgId: number,
   sourceId: number,
-  p: { extracted: ExtractedCapture; description?: CaptureDescription; processedBy: string },
+  p: { extracted: ExtractedCapture; description?: CaptureDescription; facts?: CatalogFacts; processedBy: string },
 ): Promise<boolean> {
-  const { extracted, description } = p;
-  const provenance = {
-    extractionMethod: extracted.method,
-    extractionWords: extracted.words,
-    ...(extracted.error ? { extractionError: extracted.error } : {}),
-    processedBy: p.processedBy,
-    ...(description ? { versionDeclaration: { ...description.versionDetermination.declaration, determinedBy: p.processedBy } } : {}),
-  };
-  const metadata = description?.dossier ? { dossier: description.dossier } : {};
+  const { extracted, description, facts } = p;
   const { rowCount } = await exec.query(
     `UPDATE cre_evidence_sources SET
         extraction_status = $3,
@@ -124,13 +189,17 @@ export async function recordSourceProcessing(
         version = COALESCE(version, $7),
         provenance = COALESCE(provenance, '{}'::jsonb) || $8::jsonb,
         metadata = COALESCE(metadata, '{}'::jsonb) || $9::jsonb,
+        -- What it IS (S3): filled only where empty, never overwritten by a re-read.
+        product = COALESCE(product, $10), indication = COALESCE(indication, $11), phase = COALESCE(phase, $12),
+        application_type = COALESCE(application_type, $13), application_number = COALESCE(application_number, $14),
+        agency = COALESCE(agency, $15), trial_registry_identifier = COALESCE(trial_registry_identifier, $16),
+        document_date = COALESCE(document_date, $17::date), study_ref = COALESCE(study_ref, $18),
         updated_at = NOW()
       WHERE id = $1 AND organization_id = $2 AND source_type = 'client_document' AND deleted_at IS NULL`,
-    [
-      sourceId, orgId, extracted.text ? 'extracted' : 'failed', extracted.text,
-      extracted.text ? extracted.text.length : 0, extracted.pageCount,
-      description?.versionDetermination.version ?? null, JSON.stringify(provenance), JSON.stringify(metadata),
-    ],
+    [sourceId, orgId, ...textValues(extracted), description?.versionDetermination.version ?? null,
+      JSON.stringify(processingProvenance(extracted, description, p.processedBy)),
+      JSON.stringify({ ...(description?.dossier ? { dossier: description.dossier } : {}), ...factsMetadata(facts) }),
+      ...factValues(facts)],
   );
   return (rowCount ?? 0) === 1;
 }
@@ -149,7 +218,8 @@ export async function processCapturedSource(
   try {
     const extracted = await extractCapture(input.bytes, input.mimeType, input.fileName);
     const description = await describeCapture(orgId, input.programId, { fileName: input.fileName, mimeType: input.mimeType, text: extracted.text });
-    const ok = await recordSourceProcessing(pool, orgId, sourceId, { extracted, description, processedBy: input.processedBy });
+    const facts = await buildCatalogFacts(pool, orgId, input.programId, { text: extracted.text, bytes: input.bytes, fileName: input.fileName, mimeType: input.mimeType });
+    const ok = await recordSourceProcessing(pool, orgId, sourceId, { extracted, description, facts, processedBy: input.processedBy });
     return { ok, extracted };
   } catch (err) {
     logger.warn('Data Room capture not processed; left pending for the sweep', {

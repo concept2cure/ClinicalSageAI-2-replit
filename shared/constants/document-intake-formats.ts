@@ -36,7 +36,13 @@ export const CHAT_UPLOAD_EXTENSIONS = DOCUMENT_INTAKE_FORMATS.filter(format => f
 export const VAULT_UPLOAD_EXTENSIONS = DOCUMENT_INTAKE_FORMATS.filter(format => format.vault).map(format => format.extension);
 export const CHAT_UPLOAD_ACCEPT = CHAT_UPLOAD_EXTENSIONS.join(',');
 export const VAULT_UPLOAD_ACCEPT = VAULT_UPLOAD_EXTENSIONS.join(',');
-export const CHAT_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+/**
+ * One cap for a Data Room capture and a Vault upload (2026-10-08, Data Room
+ * catalog S3): a document the Vault admits must be capturable into the
+ * project's Data Room, where most evidence enters. The chat route's multer
+ * limit reads this constant; it was a second, hand-written 25 MB.
+ */
+export const CHAT_UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
 export const VAULT_UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
 
 /** The shared source-text formats; existing non-intake extractor fallbacks remain separate. */

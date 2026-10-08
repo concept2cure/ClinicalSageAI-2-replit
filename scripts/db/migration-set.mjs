@@ -3077,6 +3077,13 @@ export const C2C_MIGRATION_FILES = [
   // docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-08-s2-processed-searchable/.
   'migrations/20261008c_data_room_source_text.sql',
 
+  // ── A capture names its study, of its own organization (2026-10-08) ──
+  // Data Room catalog S3 (D2): study_ref on cre_evidence_sources, a unique
+  // (id, tenant_id) index on cdisc_prm_studies, and a NOT VALID same-org key
+  // ON DELETE SET NULL (study_ref). Each guarded; no DROP; nothing new for the
+  // sweeps to reach. After 20260926b, which keys the study to its program.
+  'migrations/20261008d_cre_source_study_ref.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
