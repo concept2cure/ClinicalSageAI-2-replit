@@ -77,6 +77,21 @@ export function summarizeToolResult(content: string, max = 180): string {
   if (parsed.error) return truncate(`error: ${parsed.error}`, max);
   if (parsed.note && Object.keys(parsed).length <= 2) return truncate(String(parsed.note), max);
 
+  /* A result that names the authoring document a step built keeps the ids
+     whole, first, whatever else the result held. A reopened conversation finds
+     its documents in this summary (ConversationThread authoringDocFromToolResult);
+     the 180-character cut of the raw JSON dropped the id whenever the tool put
+     other fields (its source references) ahead of it, and the reopened
+     conversation then showed no document at all (real-browser capture,
+     docs/evidence/D2-ONE-ANA/2026-10-08/ana-1-canvas-opens/screens/). */
+  if (typeof parsed.authoringDocId === 'string' && parsed.authoringDocId) {
+    const kept: Record<string, string> = { authoringDocId: parsed.authoringDocId };
+    if (typeof parsed.programId === 'string' && parsed.programId) kept.programId = parsed.programId;
+    if (typeof parsed.status === 'string' && parsed.status) kept.status = parsed.status;
+    if (typeof parsed.title === 'string' && parsed.title) kept.title = truncate(parsed.title, 80);
+    return JSON.stringify(kept);
+  }
+
   const bits: string[] = [];
   if (typeof parsed.totalMatches === 'number') {
     bits.push(`${parsed.totalMatches} match${parsed.totalMatches === 1 ? '' : 'es'}`);

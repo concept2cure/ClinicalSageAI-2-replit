@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T01:11:58.688Z",
+  "generatedAt": "2026-10-08T01:48:48.706Z",
   "git": {
-    "sha": "d390f96465ed6d88f02befb966cd5cc7f4614197",
+    "sha": "a8b0dbf87000b9b575638950ba7bcde90e67cc08",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2067,7 +2067,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 335697
+        "bytes": 340315
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2265,7 +2265,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7518
+        "lines": 7608
       },
       {
         "file": "server/statistics-service.ts",
@@ -2684,6 +2684,10 @@
         "lines": 1602
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 1598
+      },
+      {
         "file": "server/routes/mdx-qms.ts",
         "lines": 1589
       },
@@ -2694,10 +2698,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "lines": 1552
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 1541
       },
       {
         "file": "server/services/grdhe/grdheService.ts",

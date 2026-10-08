@@ -2967,6 +2967,8 @@
 .c2c-v2 .ct-composer textarea{flex:1;border:none;background:none;resize:none;font-family:var(--font-sans);font-size:14px;line-height:1.5;color:var(--text-100);padding:7px 2px;max-height:160px;outline:none;}
 .c2c-v2 .ct-comp-send{flex-shrink:0;width:32px;height:32px;border-radius:var(--radius-lg);background:var(--accent-strong);color:var(--accent-on-strong);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .c2c-v2 .ct-comp-send:disabled{background:var(--bg-200);color:var(--text-500);cursor:default;}.c2c-v2 .ct-comp-send svg{width:16px;height:16px;}
+/* During a run the composer steers it (ONE_ANA_ONE_CANVAS.md, slice 4): the button says so in words. */
+.c2c-v2 .ct-comp-steer{width:auto;padding:0 12px;font-size:13px;font-weight:500;white-space:nowrap;}
 /* Attachment chips under the conversation composer. Status is carried by
    colour AND by the text after the middot, never by colour alone — a reviewer
    using a monochrome display must still be able to tell a file that was read

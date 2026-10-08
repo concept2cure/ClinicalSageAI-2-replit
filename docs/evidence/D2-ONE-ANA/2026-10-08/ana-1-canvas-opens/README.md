@@ -41,4 +41,22 @@ It was shown still to guard the re-read: with the settle re-read removed from `C
 
 - **The navigation collapse** below 1600px while a document is open is not part of this commit. It belongs to slice 9, where the shell grid changes.
 - **Live text.** The document appears when the tool has saved it. Watching the text arrive section by section is slice 26.
-- **The real-browser capture** at 1440 and 1280 is filed with the next slice's evidence. It runs the stand-in model harness against the real server and database.
+
+## In a real browser (`screens/`)
+
+Captured against the real server, client and database at `d390f9646`, with a stand-in model labelled "STAND-IN" on screen. The draft tool, its approval card and the stored documents were real. "Open full editor" was never clicked.
+
+| Width | Result |
+|---|---|
+| 1440 | **Pass.** The editor opened on the right 219 ms after "Confirm and run", while AnA was still working (`1440-b-document-appears.png`). It stayed open after the turn ended. |
+| 1280 | **Pass.** It opened on the right after 234 ms. |
+| 1024 | **Pass.** It was offered, not opened: "AnA built <title>", with Open. The notice did not take focus. Open put the editor across the screen, as designed at 1100px and narrower. |
+| Reopened from history | **Pass, but it showed a real defect.** The reopened conversation held no document at all, so nothing could open. The saved step summary had cut the document's id off. Fixed in `../ana-1b-reopened-keeps-document/`. |
+
+Other findings in `screens/README.md`, each assigned to a later slice:
+
+- **Blank pane before the editor loads.** The right side is open but blank for about 0.4 s before the editor appears.
+- **The "AnA is driving" strip overlaps the editor** at 1440 and 1280. Slice 4 removes its typing box.
+- **1280 is cramped.** The navigation collapse is slice 9.
+- **Project home disagrees with the drafted document.** Its "Recent drafts" and "Module completion" read the governed dossier sections, not the authoring document AnA drafted, so they say "no sections". That belongs to the project-page slices (23, 24).
+- **Three typing boxes during a run.** Visible in `1440-b-document-appears.png`: "Steer this run", "Reply to AnA" and "Ask or steer AnA". Slice 4 makes that one.

@@ -347,8 +347,18 @@ async function renderHtmlWithStylePack(htmlBody: string, pack: StylePack): Promi
   );
 }
 
-export async function renderHtmlToPdf(html: string): Promise<Buffer> {
-  const { buffer } = await renderHtmlToPdfTracked(html);
+/**
+ * `pageBanner`: a line printed in the header AND footer of every page, by
+ * whichever engine renders (an authoring working copy's "DRAFT — uncontrolled
+ * copy" statement, docs/design/ONE_ANA_ONE_CANVAS.md §4.5). Absent, the output
+ * is unchanged.
+ */
+export interface PdfRenderOptions {
+  pageBanner?: string;
+}
+
+export async function renderHtmlToPdf(html: string, opts: PdfRenderOptions = {}): Promise<Buffer> {
+  const { buffer } = await renderHtmlToPdfTracked(html, opts);
   return buffer;
 }
 
@@ -357,21 +367,31 @@ export async function renderHtmlToPdf(html: string): Promise<Buffer> {
  * can emit warnings when Puppeteer is unavailable.
  */
 export async function renderHtmlToPdfTracked(
-  html: string
+  html: string,
+  opts: PdfRenderOptions = {},
 ): Promise<{ buffer: Buffer; usedFallback: boolean }> {
   const cluster = await getCluster();
   if (cluster) {
     // puppeteer is an optional transitive dep of puppeteer-cluster and is not
     // installed in this environment, so the Page type is unavailable here.
+    const band = opts.pageBanner
+      ? `<div style="font-size:8px;font-weight:bold;width:100%;text-align:center;font-family:Arial,sans-serif">${escapeHtml(opts.pageBanner)}</div>`
+      : null;
     const buffer: Buffer = await cluster.execute(async ({ page }: { page: any }) => {
       await page.setContent(html, { waitUntil: 'networkidle0' });
-      const pdf = await page.pdf({ format: 'A4', printBackground: true });
+      const pdf = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        ...(band
+          ? { displayHeaderFooter: true, headerTemplate: band, footerTemplate: band, margin: { top: '0.8in', bottom: '0.8in' } }
+          : {}),
+      });
       return Buffer.from(pdf);
     });
     return { buffer, usedFallback: false };
   }
 
-  const buffer = await renderFallbackPdf(html);
+  const buffer = await renderFallbackPdf(html, opts);
   return { buffer, usedFallback: true };
 }
 
@@ -432,11 +452,13 @@ export const FALLBACK_PDF_NOTICE =
 
 /** Exported so the fallback's own guarantees can be tested directly, rather
  *  than only when the ambient environment happens to lack a driver. */
-export function renderFallbackPdf(html: string): Promise<Buffer> {
+export function renderFallbackPdf(html: string, opts: PdfRenderOptions = {}): Promise<Buffer> {
   return new Promise(resolve => {
     const doc = new PDFDocument({
       margins: { top: 72, bottom: 72, left: 72, right: 72 },
       size: 'A4',
+      // Kept so a page banner can be stamped on every page once the text has flowed.
+      bufferPages: Boolean(opts.pageBanner),
     });
     const chunks: Buffer[] = [];
 
@@ -463,6 +485,22 @@ export function renderFallbackPdf(html: string): Promise<Buffer> {
         // An empty line is a paragraph break, not a line of text.
         if (line.trim() === '') doc.moveDown(0.5);
         else doc.text(line, { align: 'left' });
+      }
+    }
+
+    if (opts.pageBanner) {
+      /* In the margins of every page, top and bottom. The bottom margin is
+         lifted while writing so the footer cannot start a new page. */
+      const range = doc.bufferedPageRange();
+      for (let i = range.start; i < range.start + range.count; i++) {
+        doc.switchToPage(i);
+        const { width, height, margins } = doc.page;
+        const bottom = margins.bottom;
+        margins.bottom = 0;
+        doc.font('Helvetica-Bold').fontSize(8);
+        doc.text(opts.pageBanner, 72, 36, { width: width - 144, align: 'center', lineBreak: false });
+        doc.text(opts.pageBanner, 72, height - 48, { width: width - 144, align: 'center', lineBreak: false });
+        margins.bottom = bottom;
       }
     }
 

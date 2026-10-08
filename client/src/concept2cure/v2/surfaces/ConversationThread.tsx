@@ -14,7 +14,7 @@ import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
 import { readShellProject, shellProgramName } from '../shellProject';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
-import { RunControlStrip } from '../AnaWorkSections';
+import { RunControlStrip, steerHelpFor } from '../AnaWorkSections';
 import { useAgentActivity } from '../useAgentActivity';
 import { AnaActivity, activityPropsFor, hasReportableWork, type AnaActivityProps } from '../AnaActivity';
 import { CONTINUE_PROMPT, continueTurnIndex } from '../anaWorkModel';
@@ -1185,7 +1185,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
         if (live?.isStreaming) {
           prefillComposer(seed);
           fireToast(
-            'AnA is still answering, so your question has not been sent. It is in the composer — send it once she has finished.',
+            'AnA is still answering, so your question has not been sent. It is in the composer: steer her with it now, or send it once she has finished.',
             'error',
           );
           return;
@@ -1229,7 +1229,40 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
     if (el && atBottomRef.current) el.scrollTop = el.scrollHeight;
   }, [inflightKey]);
 
+  /* ── One box during a run (docs/design/ONE_ANA_ONE_CANVAS.md, slice 4) ──────
+     While a run that can take a steer is in flight, this composer steers it:
+     the run strip's own "Steer this run…" box is not drawn here, and the drive
+     strip draws none on this screen. Same rules the strip's box kept: under a
+     Manual hold the steer replaces the step shown ("Do this instead"); the
+     text is cleared only once the server accepted it; a refusal says so and
+     keeps the text. A steer is words only: attachments wait for the next turn. */
+  const steering = busy && !!anaChat.runStatus;
+  const manualHold = anaChat.runStatus === 'paused' && anaChat.runHold?.reason === 'manual';
+  const steerHelp = steering && anaChat.runStatus ? steerHelpFor(manualHold, anaChat.turnRunPolicy, anaChat.runStatus) : null;
+  const [steerBusy, setSteerBusy] = useState(false);
+  const [steerRefused, setSteerRefused] = useState(false);
+  const steer = () => {
+    const v = draft.trim();
+    if (!v || steerBusy) return;
+    setSteerBusy(true);
+    setSteerRefused(false);
+    void Promise.resolve(anaChat.interject(v))
+      .then((accepted) => {
+        if (accepted === false) {
+          setSteerRefused(true);
+          return;
+        }
+        setDraft('');
+      })
+      .catch(() => setSteerRefused(true))
+      .finally(() => setSteerBusy(false));
+  };
+
   const send = () => {
+    if (steering) {
+      steer();
+      return;
+    }
     const t = draft.trim();
     // Never send mid-upload: AnA would answer about a document the server has
     // not finished reading. Same rule as the shell composer.
@@ -1396,7 +1429,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
             onPause={anaChat.runStatus ? () => void anaChat.pause() : undefined}
             onResume={anaChat.runStatus ? () => void anaChat.resume() : undefined}
             onStop={() => void anaChat.stop()}
-            onSteer={anaChat.runStatus ? (m) => anaChat.interject(m) : undefined}
+            /* No steer box in the strip here: this screen's composer steers. */
           />
           {/* Announced, never focus-stealing: the person may be typing. */}
           <div className="ct-ready-doc" role="status" aria-live="polite">
@@ -1435,26 +1468,50 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
               >
                 {I.paperclip}
               </button>
-              <textarea ref={draftRef} rows={1} aria-label="Reply to AnA" placeholder="Reply to AnA — ask, request a draft, or type @ to name an app..." value={draft}
+              <textarea ref={draftRef} rows={1}
+                aria-label={steering ? (manualHold ? 'Tell AnA what to do instead' : 'Steer this run') : 'Reply to AnA'}
+                placeholder={steering ? (manualHold ? 'Or tell AnA what to do instead' : 'Steer this run — AnA takes it at her next step') : 'Reply to AnA — ask, request a draft, or type @ to name an app...'}
+                aria-invalid={(steering && steerRefused) || undefined}
+                aria-describedby={steering ? [steerRefused ? 'ct-steer-err' : '', steerHelp ? 'ct-steer-help' : ''].filter(Boolean).join(' ') || undefined : undefined}
+                value={draft}
                 aria-autocomplete="list" aria-controls={mentions.open ? 'ct-mentions' : undefined} aria-expanded={mentions.open}
-                onChange={e => { setDraft(e.target.value); mentions.sync(e.currentTarget); }}
+                onChange={e => { setDraft(e.target.value); mentions.sync(e.currentTarget); if (steerRefused) setSteerRefused(false); }}
                 onSelect={e => mentions.sync(e.currentTarget)}
                 onBlur={() => mentions.close()}
                 onKeyDown={e => { if (mentions.onKeyDown(e)) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
               <AppMentionMenu api={mentions} id="ct-mentions" />
-              <button
-                className="ct-comp-send"
-                aria-label="Send message to AnA"
-                /* Attachments alone are a valid message, and an in-flight
-                   upload blocks send — the old condition looked only at the
-                   textarea, which is why attaching could never have worked
-                   even if the paperclip had opened a picker. */
-                disabled={busy || historyUnavailable || uploadingAttachments.length > 0 || (!draft.trim() && readyAttachments.length === 0)}
-                onClick={send}
-              >
-                {I.arrowUp}
-              </button>
+              {steering ? (
+                <button
+                  className="ct-comp-send ct-comp-steer"
+                  data-testid="ct-steer-send"
+                  disabled={!draft.trim() || steerBusy}
+                  onClick={send}
+                >
+                  {steerBusy ? 'Sending…' : manualHold ? 'Do this instead' : 'Steer'}
+                </button>
+              ) : (
+                <button
+                  className="ct-comp-send"
+                  aria-label="Send message to AnA"
+                  /* Attachments alone are a valid message, and an in-flight
+                     upload blocks send — the old condition looked only at the
+                     textarea, which is why attaching could never have worked
+                     even if the paperclip had opened a picker. */
+                  disabled={busy || historyUnavailable || uploadingAttachments.length > 0 || (!draft.trim() && readyAttachments.length === 0)}
+                  onClick={send}
+                >
+                  {I.arrowUp}
+                </button>
+              )}
             </div>
+            {steering && steerHelp && (
+              <span id="ct-steer-help" className="ana-runctl-help">{steerHelp}</span>
+            )}
+            {steering && steerRefused && (
+              <span id="ct-steer-err" className="ana-runctl-err" role="status">
+                Not sent — AnA did not accept this steer. The text is still here.
+              </span>
+            )}
 
             {/* What was actually attached, and how the server read it. A failed
                 upload stays visible with its reason rather than disappearing

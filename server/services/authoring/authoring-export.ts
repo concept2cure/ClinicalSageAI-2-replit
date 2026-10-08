@@ -63,7 +63,20 @@ export interface RenderExportArgs {
    * decision on ONE read. Read here when absent.
    */
   signatures?: SignatureRow[];
+  /**
+   * Render an uncontrolled working copy (docs/design/ONE_ANA_ONE_CANVAS.md
+   * §4.5, slice 7): `banner` is printed in the header and footer of EVERY page,
+   * and the §11.50(b) signature manifestation is NOT rendered, so a copy of a
+   * draft can never print a signature as covering its content. DOCX and PDF
+   * only. Absent on the controlled export and the vault filing.
+   */
+  workingCopy?: { banner: string };
 }
+
+/** Where a working copy's manifestation would be: said, not omitted silently. */
+export const WORKING_COPY_SIGNATURE_STATEMENT =
+  'Uncontrolled working copy. No electronic signature applies to this copy: signatures are ' +
+  'carried only by a controlled export of a frozen or approved document.';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // §11.50(b) manifestation
@@ -425,9 +438,11 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
   /* The reference list: nothing is emitted when nothing was cited. */
   children.push(...referenceListParagraphs(docxNs, shared.citations));
 
-  /* §11.50(b) manifestation, after the content. */
+  /* §11.50(b) manifestation, after the content. A working copy carries none. */
   children.push(new Paragraph({ text: 'Electronic signatures', heading: HeadingLevel.HEADING_1 }));
-  if (shared.manifest.length === 0) {
+  if (args.workingCopy) {
+    children.push(new Paragraph({ text: WORKING_COPY_SIGNATURE_STATEMENT }));
+  } else if (shared.manifest.length === 0) {
     children.push(new Paragraph({ text: 'No electronic signatures are recorded against this document.' }));
   } else {
     for (const lines of shared.manifest) {
@@ -447,11 +462,21 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
           ),
         }
       : {}),
-    sections: [{ children }],
+    sections: [
+      args.workingCopy
+        ? {
+            /* On every page, top and bottom: a copy that leaves the system
+               says what it is wherever it is read. */
+            headers: { default: new docxNs.Header({ children: [new Paragraph({ children: [new TextRun({ text: args.workingCopy.banner, bold: true })] })] }) },
+            footers: { default: new docxNs.Footer({ children: [new Paragraph({ children: [new TextRun({ text: args.workingCopy.banner, bold: true })] })] }) },
+            children,
+          }
+        : { children },
+    ],
   });
   return {
     content: await Packer.toBuffer(docxDoc),
-    fileName: `${safeFileStem(doc.title)}.docx`,
+    fileName: `${safeFileStem(doc.title)}${args.workingCopy ? '_working_copy' : ''}.docx`,
     contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   };
 }
@@ -499,21 +524,27 @@ async function renderPdf(args: RenderExportArgs, shared: SharedRender): Promise<
         ${pdfSections.join('\n')}
         ${referenceListHtml}
         <h2>Electronic signatures</h2>
-        ${shared.manifest.length === 0
+        ${args.workingCopy
+          ? `<p>${esc(WORKING_COPY_SIGNATURE_STATEMENT)}</p>`
+          : shared.manifest.length === 0
           ? '<p>No electronic signatures are recorded against this document.</p>'
           : shared.manifest
               .map((lines) => `<p>${lines.map(esc).join('<br/>')}</p>`)
               .join('\n')}
         </body></html>`;
   return {
-    content: await renderHtmlToPdf(html),
-    fileName: `${safeFileStem(doc.title)}.pdf`,
+    /* The working-copy banner is stamped by the PDF engine on every page
+       (header and footer), not by CSS: the plain-text fallback that renders
+       where Puppeteer is absent applies no stylesheet. */
+    content: await renderHtmlToPdf(html, args.workingCopy ? { pageBanner: args.workingCopy.banner } : {}),
+    fileName: `${safeFileStem(doc.title)}${args.workingCopy ? '_working_copy' : ''}.pdf`,
     contentType: 'application/pdf',
   };
 }
 
 /** Render one authoring document in one format. Throws on a renderer failure. */
 export async function renderAuthoringExport(args: RenderExportArgs): Promise<RenderedExport> {
+  if (args.workingCopy && args.format === 'xml') throw new Error('A working copy is rendered as DOCX or PDF only');
   await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId);
   const shared = await prepareShared(args);
   const out =

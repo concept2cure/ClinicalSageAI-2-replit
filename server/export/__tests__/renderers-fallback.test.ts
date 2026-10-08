@@ -139,3 +139,38 @@ describe('renderHtmlToPdf fallback — document structure survives', () => {
     else expect(typeof usedFallback).toBe('boolean');
   }, 120_000);
 });
+
+/* docs/design/ONE_ANA_ONE_CANVAS.md §4.5: an authoring working copy says
+   "DRAFT — uncontrolled copy" on EVERY page. This fallback renders every
+   authoring PDF and applies no CSS, so the banner is stamped by the engine. */
+describe('renderFallbackPdf — a page banner on every page', () => {
+  const BANNER = 'DRAFT — uncontrolled copy · not a controlled record · D1 · v3';
+  const LONG = Array.from({ length: 160 }, (_, i) => `<p>Paragraph ${i + 1} of a long working draft.</p>`).join('\n');
+
+  async function pages(pdf: Buffer): Promise<string[]> {
+    const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const doc = await getDocument({ data: new Uint8Array(pdf), useSystemFonts: true }).promise;
+    const out: string[] = [];
+    for (let p = 1; p <= doc.numPages; p++) {
+      const content = await (await doc.getPage(p)).getTextContent();
+      out.push(content.items.map((i: any) => i.str).join(' ').replace(/\s+/g, ' '));
+    }
+    return out;
+  }
+
+  it('prints the banner at the top and bottom of every page of a multi-page document', async () => {
+    const text = await pages(await renderFallbackPdf(LONG, { pageBanner: BANNER }));
+    expect(text.length).toBeGreaterThan(2);
+    for (const [i, page] of text.entries()) {
+      expect(page.split(BANNER).length - 1, `page ${i + 1}`).toBe(2);
+    }
+    // Stamping the banner added no page of its own.
+    const plain = await pages(await renderFallbackPdf(LONG));
+    expect(text.length).toBe(plain.length);
+  });
+
+  it('prints no banner when none is asked for', async () => {
+    const text = await pages(await renderFallbackPdf(LONG));
+    expect(text.join(' ')).not.toContain('uncontrolled copy');
+  });
+});

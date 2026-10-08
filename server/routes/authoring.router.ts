@@ -96,6 +96,7 @@ import {
   readSignaturesForExport,
   anySignatureCovers,
   EXPORT_FORMATS,
+  type ExportFormat,
 } from '../services/authoring/authoring-export';
 import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
 import {
@@ -5925,6 +5926,95 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     res.send(rendered.fileContent);
   } catch (error) {
     sendExportFailure(error, res, recordConfirmed, recordAttempted);
+  }
+});
+
+// POST /api/authoring/docs/:docId/working-copy — an uncontrolled working copy
+// (docs/design/ONE_ANA_ONE_CANVAS.md §4.5, slice 7; a CPO decision under the
+// founder's delegation of 2026-10-07: "I want to be able to pull them down and
+// see them and work with them").
+//
+// A different act from the export above, and it must never pass for it:
+//  - any status: a draft is exactly what a person wants to read away from the
+//    screen, and the export refuses it (409) because it is a filing artifact;
+//  - "DRAFT — uncontrolled copy" in the header and footer of EVERY page, with
+//    the document id, version, status, time and who downloaded it;
+//  - no §11.50(b) signature manifestation, so no copy of a draft can say a
+//    signature covers it;
+//  - DOCX or PDF only; the file name says "working_copy";
+//  - one audited row (WORKING_COPY: format, version, status, the delivered
+//    bytes' SHA-256), committed BEFORE the bytes leave; when it cannot be
+//    written the answer is 503 and nothing is sent;
+//  - no export-history row: the Exports tab lists controlled acts only, and
+//    "changed since last export" is not re-baselined by a working copy.
+// POST, not GET: the CSRF middleware skips GET, and a download that writes an
+// audit row must not be triggerable from another site.
+const WORKING_COPY_FORMATS = ['docx', 'pdf'] as const;
+router.post('/docs/:docId/working-copy', async (req: Request, res: Response) => {
+  try {
+    const { docId } = req.params;
+    const format = String(req.body?.format ?? 'docx');
+    const tenantId = getTenantId(req);
+    const downloadedBy = getActorEmail(req);
+    if (!downloadedBy) return res.status(401).json({ error: 'Authentication required' });
+    if (!(WORKING_COPY_FORMATS as readonly string[]).includes(format)) {
+      return res.status(400).json({ error: 'Invalid format. A working copy is docx or pdf', code: 'WORKING_COPY_FORMAT' });
+    }
+    const docResult = await pool.query(
+      "SELECT id, title, module, status, created_at, version, tenant_id, to_jsonb(authoring_documents)->'provenance' AS provenance, to_jsonb(authoring_documents)->>'client_program_id' AS client_program_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2",
+      [docId, tenantId],
+    );
+    if ((docResult.rowCount ?? 0) === 0) return res.status(404).json({ error: 'Document not found' });
+    const doc = docResult.rows[0];
+    const sectionsResult = await pool.query(
+      'SELECT id, code, title, content, order_index FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+      [docId, tenantId],
+    );
+    const at = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+    const status = String(doc.status ?? 'DRAFT').toUpperCase();
+    const banner =
+      `DRAFT — uncontrolled copy · not a controlled record · ${doc.id} · v${doc.version ?? 1} · ${status} · ` +
+      `downloaded ${at} by ${downloadedBy}`;
+    const rendered = await withSavedDraftSourceReservation(doc, pool, tenantId, (executor) =>
+      renderAuthoringExport({
+        executor,
+        tenantId,
+        doc,
+        sections: sectionsResult.rows,
+        format: format as ExportFormat,
+        workingCopy: { banner },
+      }),
+    );
+    /* Recorded before anything leaves, inside a transaction so a failed write
+       throws (a standalone audit write is best-effort outside production). */
+    try {
+      await inTransaction((client) =>
+        createAuditTrail(req, docId, null, 'WORKING_COPY', null, null, null, {
+          format,
+          version: doc.version ?? null,
+          status,
+          fileName: rendered.fileName,
+          artifactSha256: rendered.artifactSha256,
+          contentSha256: sectionsDigest(sectionsResult.rows),
+          downloadedAt: at,
+        }, client),
+      );
+    } catch (auditError) {
+      console.error('Working copy not recorded:', auditError);
+      return res.status(503).json({
+        error: 'The working copy could not be recorded, so it was not sent',
+        code: 'WORKING_COPY_NOT_RECORDED',
+      });
+    }
+    res.setHeader('Content-Type', rendered.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${rendered.fileName}"`);
+    res.setHeader('X-Artifact-Sha256', rendered.artifactSha256);
+    return res.send(rendered.fileContent);
+  } catch (error) {
+    if (error instanceof SavedDraftSourceError) {
+      return res.status(409).json({ error: 'Saved source references require review', code: error.code, message: error.message });
+    }
+    return serverError(res, logger, 'rendering a working copy', error);
   }
 });
 

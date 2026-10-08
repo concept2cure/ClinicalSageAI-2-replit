@@ -357,7 +357,7 @@ export function RunControlStrip({ streaming, runStatus, runHold, runPolicy, onPa
  * Manual turn is working — that a steer sent now takes the place of her next
  * step (the server's early steer, filed `superseded`). Nothing otherwise.
  */
-function steerHelpFor(manual: boolean, runPolicy: AnaRunPolicy | null | undefined, runStatus: RunControlStatus): string | null {
+export function steerHelpFor(manual: boolean, runPolicy: AnaRunPolicy | null | undefined, runStatus: RunControlStatus): string | null {
   if (manual) return 'The step shown will not run.';
   return runPolicy === 'manual' && runStatus === 'running'
     ? 'Under Manual, a steer sent now replaces her next step unless that step needs your approval; a replaced step does not run.'

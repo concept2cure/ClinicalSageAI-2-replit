@@ -40,7 +40,7 @@ describe('listThreads by program', () => {
   it('lists the org\'s threads bound to the program, newest first, with the first user message as title', async () => {
     query.mockResolvedValue({ rows: [{ id: 'ana-ri_1', title: 'Draft 2.5', created_at: 'x', updated_at: 'y', program_id: PID.toLowerCase() }] });
     const r = res();
-    await listThreads({ query: { program_id: PID, limit: '5' }, tenantId: 7 } as any, r);
+    await listThreads({ query: { program_id: PID, limit: '5' }, tenantId: 7, user: { id: 41 } } as any, r);
     expect(r.statusCode).toBe(200);
     expect(r.body).toEqual({ threads: [expect.objectContaining({ id: 'ana-ri_1', title: 'Draft 2.5' })] });
     const [sql, params] = query.mock.calls[0];
@@ -48,7 +48,8 @@ describe('listThreads by program', () => {
     expect(sql).not.toMatch(/metadata->>'programId'/);
     expect(sql).toMatch(/organization_id = \$1/);
     expect(sql).toMatch(/role = 'user'/);
-    expect(params).toEqual([7, PID.toLowerCase(), 5]);
+    expect(sql).toMatch(/t\.user_id = \$4/);
+    expect(params).toEqual([7, PID.toLowerCase(), 5, 41]);
   });
 
   it('refuses a program id that is not a UUID rather than querying with it', async () => {
@@ -72,8 +73,38 @@ describe('listThreads by program', () => {
     // catches it.
     query.mockImplementation(async () => { throw Object.assign(new Error('boom'), { code: '42P01' }); });
     const r = res();
-    await listThreads({ query: { program_id: PID }, tenantId: 7 } as any, r);
+    await listThreads({ query: { program_id: PID }, tenantId: 7, user: { id: 41 } } as any, r);
     expect(r.statusCode).toBe(503);
     expect(r.body.code).toBe('THREAD_STORE_UNPROVISIONED');
+  });
+});
+
+/* docs/design/ONE_ANA_ONE_CANVAS.md, slice 3. A colleague's conversation
+   cannot be opened (resolveAccessibleThread answers THREAD_FORBIDDEN), yet both
+   lists named it by its first message. They list the caller's own. */
+describe('listThreads lists only the caller\'s own conversations', () => {
+  it('scopes the recents list to the signed-in person', async () => {
+    const r = res();
+    await listThreads({ query: {}, tenantId: 7, user: { id: 41 } } as any, r);
+    const [sql, params] = query.mock.calls[0];
+    expect(sql).toMatch(/t\.organization_id = \$1 AND t\.user_id = \$3/);
+    expect(params).toEqual([7, 10, 41]);
+  });
+
+  it('scopes the project list to the signed-in person', async () => {
+    const r = res();
+    await listThreads({ query: { program_id: PID }, tenantId: 7, user: { id: 41 } } as any, r);
+    const [sql, params] = query.mock.calls[0];
+    expect(sql).toMatch(/t\.user_id = \$4/);
+    expect(params[3]).toBe(41);
+  });
+
+  it('lists nothing for a caller it cannot identify, rather than the organisation\'s', async () => {
+    for (const q of [{}, { program_id: PID }]) {
+      const r = res();
+      await listThreads({ query: q, tenantId: 7 } as any, r);
+      expect(r.body).toEqual({ threads: [] });
+    }
+    expect(query).not.toHaveBeenCalled();
   });
 });

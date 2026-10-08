@@ -27,6 +27,8 @@ function appWith(org: number | null) {
   const app = express();
   app.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) (req as unknown as { tenantId: unknown }).tenantId = org;
+    // A signed-in caller: the lists are the caller's own (ONE_ANA_ONE_CANVAS.md, slice 3).
+    (req as unknown as { user: unknown }).user = { id: 41 };
     next();
   });
   app.get('/api/chat/threads', listThreads);

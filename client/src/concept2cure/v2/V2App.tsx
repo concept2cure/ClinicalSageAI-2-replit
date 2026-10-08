@@ -1354,7 +1354,14 @@ export function V2App() {
         /* Interactivity without surrender: a question or steer typed into the
            strip lands mid-run (the run-control interject) — AnA answers and
            continues driving; the person never has to take over just to speak. */
-        onSteer={(m) => (driveControlsRef.current ? driveControlsRef.current.interject(m) : anaChat.interject(m))}
+        /* Not on the conversation screen: its composer steers the run in
+           flight there, and a second box beside it was a third place to type
+           to AnA on one screen (docs/design/ONE_ANA_ONE_CANVAS.md, slice 4). */
+        onSteer={
+          ownsConversation && !driveControlsRef.current
+            ? undefined
+            : (m) => (driveControlsRef.current ? driveControlsRef.current.interject(m) : anaChat.interject(m))
+        }
       />
     </div>
     </RunPolicyContext.Provider>
