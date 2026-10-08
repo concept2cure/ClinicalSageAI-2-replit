@@ -1,0 +1,106 @@
+# Green: npx vitest run client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx (the slice as it now stands, after the review fixes)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > says so, and offers one way out: a new conversation in the open project
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+stderr | client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > starts a new conversation and asks the same question again in it
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > says so, and offers one way out: a new conversation in the open project 371ms
+stderr | client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > is not offered while AnA is answering
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > starts a new conversation and asks the same question again in it 115ms
+stderr | client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > offers nothing for another refusal
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+stderr | client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > offers nothing for no code
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > is not offered while AnA is answering 98ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > offers nothing for another refusal 68ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > offers nothing for no code 56ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  06:03:26
+   Duration  5.09s (transform 2.59s, setup 199ms, import 3.24s, tests 715ms, environment 700ms)
+

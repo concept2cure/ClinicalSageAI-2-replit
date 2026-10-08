@@ -1,0 +1,1477 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > choosing Working copy (Word) on a draft posts the working-copy route and downloads what the server sent
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy 392ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > Working copy (PDF) asks for a PDF
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a refusal is said in the server’s words, beside the control and in a toast, and nothing downloads
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > choosing Working copy (Word) on a draft posts the working-copy route and downloads what the server sent 113ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > Working copy (PDF) asks for a PDF 78ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a refusal is said in the server’s words, beside the control and in a toast, and nothing downloads 51ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a FROZEN document offers the controlled export, through the export route
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a APPROVED document offers the controlled export, through the export route
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item 104ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a FROZEN document offers the controlled export, through the export route 78ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Export the assembled document as Word"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Export the assembled document as PDF (rendered server-side)"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Export the assembled document as XML"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a approved document offers the controlled export, through the export route
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a APPROVED document offers the controlled export, through the export route 85ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Export the assembled document as Word"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Export the assembled document as PDF (rendered server-side)"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Export the assembled document as XML"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a approved document offers the controlled export, through the export route 79ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > opens on ArrowDown with focus on the first item; the arrows move; Escape closes and returns focus
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > choosing an item closes the menu and returns focus to the button
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open 93ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > opens on ArrowDown with focus on the first item; the arrows move; Escape closes and returns focus 48ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > choosing an item closes the menu and returns focus to the button 57ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ downloadButton client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:70:37
+     68|
+     69| const base = { docId: 'D1', docTitle: 'Clinical Overview', module: 'M2…
+     70| const downloadButton = () => screen.getByRole('button', { name: /^Down…
+       |                                     ^
+     71| const openMenu = () => {
+     72|   if (!screen.queryByRole('menu')) fireEvent.click(downloadButton());
+ ❯ openMenu client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:72:52
+ ❯ item client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:76:3
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:85:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > choosing Working copy (Word) on a draft posts the working-copy route and downloads what the server sent
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ downloadButton client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:70:37
+     68|
+     69| const base = { docId: 'D1', docTitle: 'Clinical Overview', module: 'M2…
+     70| const downloadButton = () => screen.getByRole('button', { name: /^Down…
+       |                                     ^
+     71| const openMenu = () => {
+     72|   if (!screen.queryByRole('menu')) fireEvent.click(downloadButton());
+ ❯ openMenu client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:72:52
+ ❯ item client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:76:3
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:96:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > Working copy (PDF) asks for a PDF
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ downloadButton client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:70:37
+     68|
+     69| const base = { docId: 'D1', docTitle: 'Clinical Overview', module: 'M2…
+     70| const downloadButton = () => screen.getByRole('button', { name: /^Down…
+       |                                     ^
+     71| const openMenu = () => {
+     72|   if (!screen.queryByRole('menu')) fireEvent.click(downloadButton());
+ ❯ openMenu client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:72:52
+ ❯ item client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:76:3
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:107:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a refusal is said in the server’s words, beside the control and in a toast, and nothing downloads
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ downloadButton client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:70:37
+     68|
+     69| const base = { docId: 'D1', docTitle: 'Clinical Overview', module: 'M2…
+     70| const downloadButton = () => screen.getByRole('button', { name: /^Down…
+       |                                     ^
+     71| const openMenu = () => {
+     72|   if (!screen.queryByRole('menu')) fireEvent.click(downloadButton());
+ ❯ openMenu client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:72:52
+ ❯ item client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:76:3
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:121:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ downloadButton client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:70:37
+     68|
+     69| const base = { docId: 'D1', docTitle: 'Clinical Overview', module: 'M2…
+     70| const downloadButton = () => screen.getByRole('button', { name: /^Down…
+       |                                     ^
+     71| const openMenu = () => {
+     72|   if (!screen.queryByRole('menu')) fireEvent.click(downloadButton());
+ ❯ openMenu client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:72:52
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:131:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a FROZEN document offers the controlled export, through the export route
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a APPROVED document offers the controlled export, through the export route
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Export the assembled document as Word"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Export the assembled document as PDF (rendered server-side)"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Export the assembled document as XML"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ downloadButton client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:70:37
+     68|
+     69| const base = { docId: 'D1', docTitle: 'Clinical Overview', module: 'M2…
+     70| const downloadButton = () => screen.getByRole('button', { name: /^Down…
+       |                                     ^
+     71| const openMenu = () => {
+     72|   if (!screen.queryByRole('menu')) fireEvent.click(downloadButton());
+ ❯ openMenu client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:72:52
+ ❯ item client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:76:3
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:145:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a approved document offers the controlled export, through the export route
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ downloadButton client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:70:37
+     68|
+     69| const base = { docId: 'D1', docTitle: 'Clinical Overview', module: 'M2…
+     70| const downloadButton = () => screen.getByRole('button', { name: /^Down…
+       |                                     ^
+     71| const openMenu = () => {
+     72|   if (!screen.queryByRole('menu')) fireEvent.click(downloadButton());
+ ❯ openMenu client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:72:52
+ ❯ item client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:76:3
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:145:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ downloadButton client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:70:37
+     68|
+     69| const base = { docId: 'D1', docTitle: 'Clinical Overview', module: 'M2…
+     70| const downloadButton = () => screen.getByRole('button', { name: /^Down…
+       |                                     ^
+     71| const openMenu = () => {
+     72|   if (!screen.queryByRole('menu')) fireEvent.click(downloadButton());
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:158:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > opens on ArrowDown with focus on the first item; the arrows move; Escape closes and returns focus
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ downloadButton client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:70:37
+     68|
+     69| const base = { docId: 'D1', docTitle: 'Clinical Overview', module: 'M2…
+     70| const downloadButton = () => screen.getByRole('button', { name: /^Down…
+       |                                     ^
+     71| const openMenu = () => {
+     72|   if (!screen.queryByRole('menu')) fireEvent.click(downloadButton());
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:168:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > choosing an item closes the menu and returns focus to the button
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "New section":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+  [36m/>[39m
+
+  Name "Word":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "PDF":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  Name "XML":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"height: 30px;"[39m
+    [33mtitle[39m=[32m"Freeze or approve this document before exporting a filing artifact"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-plus"[39m
+        [33...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ downloadButton client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:70:37
+     68|
+     69| const base = { docId: 'D1', docTitle: 'Clinical Overview', module: 'M2…
+     70| const downloadButton = () => screen.getByRole('button', { name: /^Down…
+       |                                     ^
+     71| const openMenu = () => {
+     72|   if (!screen.queryByRole('menu')) fireEvent.click(downloadButton());
+ ❯ openMenu client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:72:52
+ ❯ item client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:76:3
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:187:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed (11)
+   Start at  05:04:15
+   Duration  3.29s (transform 425ms, setup 270ms, import 527ms, tests 1.19s, environment 920ms)
+

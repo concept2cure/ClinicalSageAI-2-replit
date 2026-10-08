@@ -1,0 +1,184 @@
+# Every test file that imports or mocks a file this slice changed (ConversationThread, DocumentCanvas, DocumentWorkbench, AuthoringCreateExport, CanvasDocumentList, DownloadMenu, useAnaChat, the stylesheets, surfaceViews, V2App), found with grep: 157 files.
+# npx vitest run --maxWorkers=3 <files>, run while other wave-2 slices were editing and testing the same tree.
+
+ Test Files  4 failed | 153 passed (157)
+      Tests  12 failed | 2152 passed (2164)
+
+# Failures, none in this slice's tests:
+ FAIL  client/src/concept2cure/v2/__tests__/appMentions.test.tsx > every composer host is wired to the one hook > Shell.tsx uses useAppMentions and renders AppMentionMenu on its textarea
+ FAIL  client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > mounts the panel for a turn that produced one, each risk bound to its precedent
+ FAIL  client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > offers no export the conversation cannot perform
+ FAIL  client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the steers AnA accepted are under the answer they shaped > shows each accepted steer as the person’s, in order
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a row that comes back with a verdict gets no task, and is never reported as requested
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > is shown with that request and cannot be chosen; the others can
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > when no row was reopened, nothing is reported as requested and no task is made
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a task whose answer was lost is unknown, not absent > says the outcome is unknown in the receipt and the toast, never "no task" and never "not created"
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > a roster that could not be read offers to read it again, and does
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > existing requests that could not be read: no one can be chosen, and reading them again recovers
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the task says where the verdict goes > each reviewer’s task says the verdict is recorded on the Review board, not by completing the task
+ FAIL  client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > workbench reconciles an unconfirmed review assignment > opens the task list after a lost task response and shows the task that actually committed
+
+# - appMentions.test.tsx: reads Shell.tsx, which wave 2A rewrote (2A README, Not done 1).
+# - conversationRailTwins.test.tsx (wave 2A, new): asks ConversationThread for the pre-mortem panel and accepted steers, which 2A lists as not built (2A README, Not done 2).
+# - sendForReview.test.tsx, workbenchAssignReview.test.tsx (wave 2C, files being edited by that slice): failed in the shared run (three of them on the 5s timeout); run alone afterwards, both pass:
+ Test Files  2 passed (2)
+      Tests  34 passed (34)
+
+# Files run:
+client/src/__tests__/errorBoundaryChunkReload.test.tsx
+client/src/__tests__/shellTruthRoutes.test.ts
+client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts
+client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx
+client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-incomplete-trace.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-plan.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-context.test.ts
+client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts
+client/src/concept2cure/components/ana/__tests__/verification-parse.test.ts
+client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx
+client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx
+client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx
+client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx
+client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx
+client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx
+client/src/concept2cure/v2/__tests__/anaActivity.test.tsx
+client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx
+client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx
+client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx
+client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx
+client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx
+client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts
+client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx
+client/src/concept2cure/v2/__tests__/anaMessageWarnings.test.tsx
+client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx
+client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx
+client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx
+client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx
+client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx
+client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx
+client/src/concept2cure/v2/__tests__/appMentions.test.tsx
+client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts
+client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx
+client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts
+client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx
+client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx
+client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx
+client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx
+client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx
+client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx
+client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx
+client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx
+client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx
+client/src/concept2cure/v2/__tests__/clientPortalLive.test.tsx
+client/src/concept2cure/v2/__tests__/cmcPoolability.test.tsx
+client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx
+client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx
+client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx
+client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx
+client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx
+client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx
+client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx
+client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx
+client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx
+client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx
+client/src/concept2cure/v2/__tests__/crlLibrarySurfaceContext.test.tsx
+client/src/concept2cure/v2/__tests__/croPortfolioSurfaceContext.test.tsx
+client/src/concept2cure/v2/__tests__/designControlsPendingStore.test.tsx
+client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx
+client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx
+client/src/concept2cure/v2/__tests__/documentAuthoringCommentThreads.test.tsx
+client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx
+client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx
+client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx
+client/src/concept2cure/v2/__tests__/documentAuthoringSaveLabelNoDoc.test.tsx
+client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx
+client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx
+client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx
+client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx
+client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx
+client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx
+client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx
+client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx
+client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx
+client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx
+client/src/concept2cure/v2/__tests__/engineChoices.test.tsx
+client/src/concept2cure/v2/__tests__/filingOutline.test.ts
+client/src/concept2cure/v2/__tests__/guardsPreserveContent.test.tsx
+client/src/concept2cure/v2/__tests__/homeEngine.test.tsx
+client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx
+client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx
+client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx
+client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx
+client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx
+client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx
+client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx
+client/src/concept2cure/v2/__tests__/insightsProjectScope.test.tsx
+client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx
+client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx
+client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx
+client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx
+client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx
+client/src/concept2cure/v2/__tests__/missionControlSurfaceContext.test.tsx
+client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts
+client/src/concept2cure/v2/__tests__/navTargets.test.tsx
+client/src/concept2cure/v2/__tests__/navigationReachability.test.ts
+client/src/concept2cure/v2/__tests__/ndaCockpitSurfaceContext.test.tsx
+client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx
+client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx
+client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx
+client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx
+client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx
+client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx
+client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx
+client/src/concept2cure/v2/__tests__/registryModel.test.ts
+client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx
+client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+client/src/concept2cure/v2/__tests__/sendForReview.test.tsx
+client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx
+client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx
+client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx
+client/src/concept2cure/v2/__tests__/surfaceContextIds.test.ts
+client/src/concept2cure/v2/__tests__/surfaceContextLoop.test.tsx
+client/src/concept2cure/v2/__tests__/surfaceReachability.test.ts
+client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx
+client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts
+client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx
+client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx
+client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx
+client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx
+client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx
+client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx
+client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx
+client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts
+client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx
+tests/artifact-status-project-scope.test.ts
+tests/ci/no-ghost-globals.contract.test.ts
+tests/schema-contract/authoring-router-columns.contract.test.ts
+tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+tests/ui/ana-rail-phone-drawer.test.ts
+tests/ui/one-shell.test.ts
+tests/ui/shell-kit-lazy.test.ts
+tests/ui/surface-registry-coverage.test.ts

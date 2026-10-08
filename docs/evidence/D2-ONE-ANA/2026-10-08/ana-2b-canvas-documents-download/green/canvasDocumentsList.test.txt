@@ -1,0 +1,34 @@
+# Green: npx vitest run client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx (the slice as it now stands, after the review fixes)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > reopened with no card in the transcript, the right column lists them, read by conversation id 189ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > Open puts the document in the one editor, beside the conversation 551ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a document whose card is in the transcript opens through that card: no second editor 592ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > an open document reaches the list from its bar, "← Documents (2)", and focus lands on the list 433ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > closing a document the list opened hands focus back to its row 469ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > "This project" lists what AnA built in the open project 194ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a row offers "Download working copy", with working copies only, marked as uncontrolled 163ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a failed read is an error with a retry, never an empty list 78ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a document the list opened whose record does not read says so beside the conversation, with a retry 218ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > empty is said in words, and the column stays closed until asked 47ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > at 1100px and narrower it never takes the screen by itself; the header opens it 56ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > closed by the person, it stays closed, and focus returns to the header control 126ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > is read again when an AnA turn ends 51ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > "Back to conversation" shows the conversation, and focus goes to the header's Documents 330ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > Escape does the same 265ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > an ask from the editor lands in the composer, on screen, not behind the list 348ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > beside the conversation (wider than 1100px), closing it still hands focus back to its row in the list 290ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a draft that is not an authoring document keeps the side column on screen; the header still opens the list 72ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a turn still running keeps AnA's progress on screen; the list shows by itself once it ends 54ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > with the side column closed by the person, the list shows by itself even beside a type-B draft 39ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The count beside "Documents" is of the list it opens > after "This project", an open document's "← Documents" counts the project's list 438ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > A document the list opened says its status > a draft opened with no card in the transcript shows "Draft" in the editor's bar 161ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  06:03:10
+   Duration  10.73s (transform 3.31s, setup 283ms, import 4.03s, tests 5.17s, environment 828ms)
+

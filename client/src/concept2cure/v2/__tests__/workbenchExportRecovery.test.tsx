@@ -69,9 +69,14 @@ it('recovers a recorded export through the existing history without creating ano
   };
   render(<DocumentAuthoring {...props} />);
   await screen.findAllByText('Overview');
-  fireEvent.click(screen.getByRole('button', { name: /^Word$/ }));
+  /* The export formats are items of the one Download menu (editor/DownloadMenu.tsx). */
+  const controlledWord = () => {
+    if (!screen.queryByRole('menu')) fireEvent.click(screen.getByRole('button', { name: /^Download/ }));
+    return screen.getByRole('menuitem', { name: 'Controlled export (Word)' });
+  };
+  fireEvent.click(controlledWord());
   const recovery = await screen.findByRole('button', { name: /Check export history/ });
-  expect((screen.getByRole('button', { name: /^Word$/ }) as HTMLButtonElement).disabled).toBe(true);
+  expect(controlledWord().getAttribute('aria-disabled')).toBe('true');
   fireEvent.click(recovery);
   const row = await screen.findByTestId('export-row');
   expect(row.textContent).toContain('nonclinical-overview.docx');
