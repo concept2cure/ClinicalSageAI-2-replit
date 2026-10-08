@@ -280,6 +280,24 @@ the release gates already refuse an unapproved leaf.
 A signature collected for a freeze or transmit that the server then refuses is void. It cannot be reused later when the
 gate clears. Transmit checks a typed application number against the program's recorded one, as the export already does.
 
+### P-24 — AnA works like Claude, and the client sees the Summary of the work
+
+The founder asked for this on 2026-10-08, with screenshots of Claude's per-task Summary. The design is
+`docs/design/ANA_AGENT_WORK_VIEW_2026-10-08.md`, and its decisions are recorded there ("Decisions taken"). In short:
+- `ANA-SUMMARY` is a founder-directed lane that moves no D-row.
+- Order of work:
+  - S1: reads deliver what they record.
+  - S2: connector search defects.
+  - S3: one step label table.
+  - S4: the Summary, live and sealed.
+  - S5: task attribution.
+  - S6: Drive listing and import into the Vault, limited to admin-allowed folders.
+- A turn keeps running when the phone locks. This is designed after S4.
+- The Summary is visible to whoever can read the thread. The full record stays with the asker and administrators.
+- Glyphs are neutral and name their source, with no third-party logos.
+- One 5,000-character read window applies to every windowed read.
+- Round budgets are unchanged.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one
