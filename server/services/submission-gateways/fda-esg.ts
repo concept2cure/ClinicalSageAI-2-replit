@@ -651,6 +651,10 @@ export class FdaEsgGateway implements SubmissionGateway {
     }
   }
 
+  transportUnverified(environment: 'staging' | 'production'): boolean {
+    return this.transportFor(environment) === 'rest';
+  }
+
   async isConfigured(organizationId: number, environment: 'staging' | 'production'): Promise<boolean> {
     try {
       if (resolveFdaEsgTransport(environment) === 'rest') {

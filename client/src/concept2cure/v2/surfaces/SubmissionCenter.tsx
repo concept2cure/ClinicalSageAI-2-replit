@@ -346,7 +346,9 @@ type TransmitAnswer = { transmitted?: boolean; reason?: string; gateway?: string
 function notTransmittedSentence(a: TransmitAnswer, environment: string | undefined): string {
   const sentence = a.reason === 'gateway_not_configured'
     ? `Not transmitted — ${gatewayLabel(a.gateway)} has no ${environment ?? ''} credentials configured for this organization. Nothing was sent; the attempt is recorded.`
-    : `Not transmitted — ${clause(a.reason ?? 'the server did not send it')}. Nothing was sent.`;
+    : a.reason === 'transport_not_verified'
+      ? `Not transmitted — this deployment sends to ${gatewayLabel(a.gateway)} over a transport that has not been verified with the agency. Nothing was sent; the attempt is recorded. An administrator can switch it to the verified transport.`
+      : `Not transmitted — ${clause(a.reason ?? 'the server did not send it')}. Nothing was sent.`;
   return a.signatureVoided ? `${sentence} The signature given for it is now void; a new attempt is signed again.` : sentence;
 }
 

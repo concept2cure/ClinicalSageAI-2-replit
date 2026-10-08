@@ -244,6 +244,29 @@ describe('a transmit signature serves only the transmit it was given for (P-23)'
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Not transmitted — FDA ESG has no staging credentials'));
     expect(screen.getByRole('alert').textContent).toContain('The signature given for it is now void; a new attempt is signed again.');
   });
+
+  it('a transport that is not verified is not reported as missing credentials', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    mockApi((method, url) => {
+      if (method !== 'POST') return undefined;
+      if (url === '/api/submissions/sequences/21/governed-precheck') return ok({ step: 'transmit', cleared: true, refusal: null, transmit: TRANSMIT });
+      if (url === '/api/c2c/actions/sign') return ok({ actionId: 'act_tx3', sha256Chain: 'beef' });
+      if (url === '/api/submissions/sequences/21/transmit') {
+        return ok({ transmitted: false, reason: 'transport_not_verified', gateway: 'esg', dispatchStatus: 'pending' });
+      }
+      return undefined;
+    });
+    await ready();
+    openWorkspace('Dispatch');
+    const transmit = await screen.findByRole('button', { name: /Transmit sequence 0000/ });
+    await waitFor(() => expect((transmit as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(transmit);
+    expect(await screen.findByRole('dialog')).toBeTruthy();
+    await sign();
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('over a transport that has not been verified with the agency'));
+    expect(screen.getByRole('alert').textContent).not.toContain('credentials');
+    expect(screen.getByRole('alert').textContent).toContain('Nothing was sent; the attempt is recorded.');
+  });
 });
 
 describe('the Builder says what the server knows about each leaf', () => {

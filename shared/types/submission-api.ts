@@ -654,7 +654,9 @@ export type GovernedTransitionResponse = EctdSequence;
 // The final step. Requires the sequence to be dispatched + a signatureActionId
 // (from /api/c2c/actions/sign on "ectd-sequence:<seqId>") + a clear dispatch gate.
 // Real transmission only occurs when the org has gateway credentials; otherwise
-// `transmitted` is false with `reason: "gateway_not_configured"`.
+// `transmitted` is false with `reason: "gateway_not_configured"`, or
+// `"transport_not_verified"` when the transport the deployment selects has no
+// verified contract with the agency (FDA ESG in REST mode).
 export interface TransmitRequest {
   signatureActionId: string;
   environment?: 'staging' | 'production';

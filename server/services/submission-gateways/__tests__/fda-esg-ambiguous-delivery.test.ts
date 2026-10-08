@@ -149,7 +149,7 @@ const statusOf = (q: QueryRecord) => q.args[Number(q.sql.match(/status = \$(\d+)
 async function lockStatuses(): Promise<{ query: string[]; index: string[] }> {
   const before = queries.length;
   await findActiveTransmittal({ organizationId: 7, packageId: 99, bundleSha256: 'a'.repeat(64) });
-  const sql = queries.slice(before).find((q) => /SELECT\s+id,\s+status\s+FROM submission_transmittals/i.test(q.sql))!.sql;
+  const sql = queries.slice(before).find((q) => /SELECT\s+id,\s+status(?:,\s+metadata->>'environment' AS environment)?\s+FROM submission_transmittals/i.test(q.sql))!.sql;
   const indexSql = readFileSync(
     new URL('../../../../migrations/20260629_submission_transmittals_active_lock.sql', import.meta.url), 'utf8',
   );

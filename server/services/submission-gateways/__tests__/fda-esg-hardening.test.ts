@@ -101,7 +101,7 @@ vi.mock('../../../db', () => {
       return { rows: [{ transmission_id: '<mdn-msg-id@FDA-CESUB>', status: 'received', ack_received_at: new Date('2026-06-29T12:00:00Z') }], rowCount: 1 };
     }
     // SELECT for findActiveTransmittal (status IN list).
-    if (/SELECT\s+id,\s+status\s+FROM submission_transmittals/i.test(sql)) {
+    if (/SELECT\s+id,\s+status(?:,\s+metadata->>'environment' AS environment)?\s+FROM submission_transmittals/i.test(sql)) {
       return activeTransmittalRow.value
         ? { rows: [activeTransmittalRow.value], rowCount: 1 }
         : { rows: [], rowCount: 0 };
@@ -439,7 +439,7 @@ async function expectDeliveredUnconfirmed(err: any, reason: RegExp): Promise<voi
 
   poolQueries.length = 0;
   await findActiveTransmittal({ organizationId: 7, packageId: 99, bundleSha256: 'a'.repeat(64) });
-  const lockSql = poolQueries.find((q) => /SELECT\s+id,\s+status\s+FROM submission_transmittals/i.test(q.sql))!.sql;
+  const lockSql = poolQueries.find((q) => /SELECT\s+id,\s+status(?:,\s+metadata->>'environment' AS environment)?\s+FROM submission_transmittals/i.test(q.sql))!.sql;
   const lockStatuses = [...lockSql.match(/status IN \(([^)]*)\)/)![1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
   expect(lockStatuses.length).toBeGreaterThan(0);
   expect(lockStatuses).toContain(recordedStatus);
@@ -673,7 +673,7 @@ describe('FIX 7 — findActiveTransmittal lookup', () => {
 
     // The query was tenant-scoped (org id in args).
     const lookup = poolQueries.find(
-      (q) => /SELECT\s+id,\s+status\s+FROM submission_transmittals/i.test(q.sql),
+      (q) => /SELECT\s+id,\s+status(?:,\s+metadata->>'environment' AS environment)?\s+FROM submission_transmittals/i.test(q.sql),
     );
     expect(lookup, 'expected a findActiveTransmittal lookup').toBeDefined();
     expect(lookup!.args).toEqual([7, 99, 'a'.repeat(64)]);
@@ -707,7 +707,7 @@ describe('FIX 7 — findActiveTransmittal lookup', () => {
     expect(found).toBeNull();
     // And no query was even issued.
     const lookup = poolQueries.find(
-      (q) => /SELECT\s+id,\s+status\s+FROM submission_transmittals/i.test(q.sql),
+      (q) => /SELECT\s+id,\s+status(?:,\s+metadata->>'environment' AS environment)?\s+FROM submission_transmittals/i.test(q.sql),
     );
     expect(lookup).toBeUndefined();
   });

@@ -1713,12 +1713,15 @@ export interface TransmitSequenceParams {
 
 export interface TransmitSequenceResult {
   transmitted: boolean;
-  /** Set when not transmitted (e.g. 'gateway_not_configured'). */
+  /** Set when not transmitted (e.g. 'gateway_not_configured', or
+   *  'transport_not_verified' when the selected transport has no verified
+   *  contract). */
   reason?: string;
   /**
    * What happened to the §11.10(e) row for a transmit that was NOT performed.
    *
-   * WO-16C #133. Set ONLY on the `gateway_not_configured` return below, which is
+   * WO-16C #133. Set ONLY on the `gateway_not_configured` /
+   * `transport_not_verified` return below, which is
    * the one audit write in this function that goes through `recordAuditRow`; it
    * was `await auditService.logAction({…})` at statement position, so the
    * `transmitted: false` answer was identical whether or not the attempt was
@@ -2048,6 +2051,9 @@ async function transmitDispatchedSequence(
 
   // Honest: only transmit when the org has credentials for this gateway+env.
   if (!(await gw.isConfigured(ctx.organizationId, environment))) {
+    // A transport with no verified contract (FDA ESG in REST mode) is not a
+    // missing credential, and is not reported as one. 2026-10-08 (W5/D7, HS-4).
+    const reason = gw.transportUnverified?.(environment) ? 'transport_not_verified' : 'gateway_not_configured';
     // Part 11 §11.10(e) for an attempt that changed nothing: no package was
     // assembled, no bytes left the server, and no row was updated, so there is
     // nothing here to revert and the refusal itself is already reported to the
@@ -2061,11 +2067,11 @@ async function transmitDispatchedSequence(
       action: 'ECTD_TRANSMIT_SKIPPED',
       resourceType: 'ectd_sequence',
       resourceId: sequenceId,
-      details: { region: seq.region, gateway: route.gwName, reason: 'gateway_not_configured', environment },
+      details: { region: seq.region, gateway: route.gwName, reason, environment },
     });
     return {
       transmitted: false,
-      reason: 'gateway_not_configured',
+      reason,
       skipAudit,
       region: seq.region,
       gateway: route.gwName,

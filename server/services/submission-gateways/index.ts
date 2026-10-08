@@ -211,6 +211,9 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
     transport: impl.transport,
     isConfigured: (organizationId: number, environment: 'staging' | 'production') =>
       impl.isConfigured(organizationId, environment),
+    ...(impl.transportUnverified
+      ? { transportUnverified: (environment: 'staging' | 'production') => impl.transportUnverified!(environment) }
+      : {}),
     // `async` deliberately: the guard must REJECT rather than throw
     // synchronously, so every caller sees one failure mode from a method whose
     // signature promises a Promise. A sync throw out of an async-shaped API

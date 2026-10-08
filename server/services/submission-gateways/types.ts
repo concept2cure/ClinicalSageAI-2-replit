@@ -372,6 +372,12 @@ export interface SubmissionGateway {
    *  not configured" state. */
   isConfigured(organizationId: number, environment: 'staging' | 'production'): Promise<boolean>;
 
+  /** True when the transport this deployment selects for `environment` has no
+   *  verified wire contract, so isConfigured answers false whatever
+   *  credentials resolve. Lets a caller say "transport not verified" rather
+   *  than "no credentials". 2026-10-08 (W5/D7, sweep HS-4). */
+  transportUnverified?(environment: 'staging' | 'production'): boolean;
+
   /** Transmit the bundle. Real wire-level activity happens here. */
   transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult>;
 

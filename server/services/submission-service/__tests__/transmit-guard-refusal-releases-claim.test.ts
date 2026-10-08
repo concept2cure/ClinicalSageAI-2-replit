@@ -215,12 +215,29 @@ const claimTaken = () =>
   poolCalls.some((c) => /SET dispatch_status = \$3/.test(c.text) && c.params?.[2] === 'transmitting');
 
 describe('a refusal inside the gateway that proves nothing was sent', () => {
-  it('releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError)', async () => {
-    // Real isConfigured and real transmit: REST credentials resolve, so the
-    // claim is taken and the guard passes; transmitViaNextGenRest then refuses
-    // with transmitted === false before any transmittal row exists.
+  it('refuses the FDA NextGen REST transport before the claim, as unverified rather than unconfigured', async () => {
+    // Real isConfigured: REST mode answers false whatever credentials resolve
+    // (2026-10-08, W5/D7, HS-4), so nothing is claimed and the reason names the
+    // transport, not a missing credential.
     Object.assign(bundle, bundles.clean);
     Object.assign(process.env, REST_ENV);
+    const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit');
+    const out = await transmit();
+    expect(out).toMatchObject({ transmitted: false, reason: 'transport_not_verified', gateway: 'esg' });
+    expect(wire).not.toHaveBeenCalled();
+    expect(claimTaken()).toBe(false);
+    expect(poolCalls.some((c) => /INSERT INTO submission_transmittals/.test(c.text))).toBe(false);
+    expect(state.dispatchStatus).toBe('pending');
+  });
+
+  it('releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError)', async () => {
+    // The gateway's own refusal, for a caller that reaches it: isConfigured is
+    // stubbed true, the real transmit runs, the REST credentials resolve and
+    // transmitViaNextGenRest refuses with transmitted === false before any
+    // transmittal row exists.
+    Object.assign(bundle, bundles.clean);
+    Object.assign(process.env, REST_ENV);
+    vi.spyOn(FdaEsgGateway.prototype, 'isConfigured').mockResolvedValue(true);
     const err = await transmit();
     expect(err?.name).toBe('UnverifiedTransportError');
     expect(err?.transmitted).toBe(false);
