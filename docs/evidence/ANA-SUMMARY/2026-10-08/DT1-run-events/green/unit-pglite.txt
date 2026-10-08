@@ -1,0 +1,151 @@
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > the asker: 200, with the run, its rows, its plan and its controls 68ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > an admin: 200, with approval null and cancel-only control 21ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > the asker sees their own pending approval, as the approval_required frame carries it 18ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > a colleague who can read the transcript: 403, with the sentence 19ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > another organisation: 404, even for its admin 13ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > a run with no person: 403 for a member, 200 for an admin 22ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. the listings apply the same rule > the conversation listing: the asker and admins see its runs, a colleague none 46ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the hand-over > a sealed run names its record 21ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 6. a gap is visible > a dropped batch shows as missing seqs in events and as highWater above the last row 32ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 10. nothing excluded leaks > sentinels in every excluded column appear in no payload, for the asker or an admin 40ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > the thread the client named is verified before it is stamped > a colleague's conversation is refused before any row is written 13ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > the thread the client named is verified before it is stamped > another organisation's conversation resolves to nothing: the run carries no thread 14ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > the thread the client named is verified before it is stamped > an unknown id resolves to nothing too (getOrCreateThread will mint one) 8ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > the thread the client named is verified before it is stamped > the caller's own conversation, and one with no owner, are stamped as verified 25ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > one live run per conversation > a second run on a conversation with a live run is refused, naming that run, and writes nothing 14ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > one live run per conversation > once the run ends, the conversation takes the next 17ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > one live run per conversation > a dead process's stale run does not hold the conversation: it is failed as orphaned 22ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > at most three live runs per person > the fourth is refused RUN_LIMIT and writes nothing 11ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > at most three live runs per person > a run that ended, or a stale one, does not count 20ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > at most three live runs per person > is per person and per organisation; a run with no person has no cap 32ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > a new conversation is written onto its run once it exists > stamps the minted thread and the question 10ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > a new conversation is written onto its run once it exists > writes the question onto a run that already carries its verified thread 13ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > a new conversation is written onto its run once it exists > never moves a run onto a conversation another live run holds, nor across organisations 15ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > the shipped migration > adds the six ana_runs columns, and the table, idempotently 18ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 1. the mirror equals the record, until the release > rows equal the sealed timeline with notes resolved; none remain after the release 44ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 1. the mirror equals the record, until the release > a turn that could not be recorded keeps its rows, and still says it was released 14ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 2. the guard > refuses UPDATE and TRUNCATE, for the owner too 16ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 2. the guard > refuses an INSERT once the run has a sealed record 20ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 2. the guard > refuses a plain DELETE as app_service in every state: live, sealed, terminal without a record 42ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 2. the doors > release: only a sealed run, only that run, and never under a legal hold 33ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 2. the doors > expiry: only a terminal run with no record, only past retention, never under a legal hold 49ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 2. the doors > the tenant purge door: platform scope, pending deletion, no legal hold 26ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 2. the doors > every door is SECURITY DEFINER, owned by the purger role, and not executable by PUBLIC 5ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 3. flush, then seal > events emitted just before the end are all in the mirror before the record is inserted 20ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 3. flush, then seal > a close that cannot write marks the gap, and the record is sealed anyway 23ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 4. owner only > a batch from another owner_instance writes zero rows 10ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 4. owner only > a heartbeat from another owner_instance changes zero rows 9ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 5. the cap > 2,050 events give rows 1–1,999 and the marker; 2,001 is refused; the record keeps all 2,050 209ms
+ ✓ server/services/ana/__tests__/run-events.pglite.test.ts > 7. the heartbeat needs no socket > heartbeat_at advances one interval after the run opened, with no request in sight 125ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-events.test.ts > the mirror is the third sink of the one producer > receives exactly the timeline the browser receives, in order 46ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-events.test.ts > flush, then seal, then release > the record is written after the mirror closes, and the mirror is released after it 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-events.test.ts > the SSE keepalive no longer beats the run > a keepalive tick mid-turn calls no heartbeat; the process heartbeat owns it (run-control beatOwnedRuns) 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-events.test.ts > the run row: policy at insert, the verified conversation, the refusals > hands beginRun the run policy and the thread id to verify, and stamps the resolved conversation 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-events.test.ts > the run row: policy at insert, the verified conversation, the refusals > RUN_IN_PROGRESS is a frame before the question is saved, and nothing runs 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-events.test.ts > the run row: policy at insert, the verified conversation, the refusals > RUN_LIMIT is a frame before the question is saved, and nothing runs 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-events.test.ts > the run row: policy at insert, the verified conversation, the refusals > a colleague's conversation opens no run (getOrCreateThread then refuses the turn, as it always has) 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message 1529ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a run-policy turn stores its policy, the steps it did not run and her own holds (S4) 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn the person stopped before any text is saved as a stopped, empty answer 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a stopped turn whose loop reported no reason is still saved as stopped 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn with no text that was not stopped still saves nothing 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a stop that ended the turn in the error path saves what was streamed, as stopped 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and the run policy 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > a Stop that aborts the model call saves the stopped answer before the record is filed 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > decides a cut-off answer from the last call, before anything reads the reason 1ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the shipped migration > applies, and re-applies — every statement is IF NOT EXISTS 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the shipped migration > refuses a status the state machine has never heard of 17ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the shipped migration > refuses a run with no tenant 3ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > opens a run as running, owned by this process 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > finishes a run 8ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > NEVER rewrites a cancelled run as finished 12ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > records a dropped socket as a disconnect, not as a human decision 8ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > pauses and resumes 11ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > writes the control event at the moment of acceptance 11ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > CANCEL IS TERMINAL — pause, resume and steer are all refused afterward 11ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > aborts the local handle on cancel, and not on pause 10ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > a steer accepted while paused also resumes 10ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > refuses an empty steer 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > caps a steer — a redirect, not a new document 11ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > loses a guarded race rather than applying twice 9ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > another organization's run is NOT FOUND, not forbidden 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a colleague's run in the same tenant is forbidden, not hidden 13ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a run with no attributed user is controllable by NOBODY 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a read is scoped to the tenant 8ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > an unknown run is NOT FOUND 3ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > returns what was queued 11ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > empties the queue, so a steer is never applied twice 11ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > two concurrent drains split the queue — neither sees the same steer 9ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > is empty for a run with nothing queued 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > a naive RETURNING drains nothing — the defect this CTE exists for 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is drained with its kind, in arrival order with the steers around it 9ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is NOT written to the control lineage — the person did not type it 9ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > leaves a paused run paused, and waits in the queue for the resume 17ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > still wakes a held checkpoint — which re-reads paused and keeps waiting 15ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is refused on a colleague's run — a report must come from the run's own user 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is NOT FOUND on another organization's run 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is refused on a settled run, and nothing is queued for a round that will never come 8ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is not lost to a Pause pressed between its read and its write 11ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is still refused by a Stop that lands between its read and its write 13ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > refuses an empty report 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > caps a report — one sentence about a move, not a document 8ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > reads an entry queued with no kind as a steer — rows queued before reports existed 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > queues a landing with its move, drained with nothing for the model to read 10ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > is not written to the control lineage, and leaves a paused run paused 9ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > needs a move id that is one, and is held to the same ownership as a report 10ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > a malformed move id on a report is dropped, and the report kept 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > fails a run whose heartbeat went stale, and says it was orphaned 15ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > leaves a run that is still beating alone 8ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > does not resurrect or re-stamp a run that already settled 10ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > a heartbeat carries the round forward 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > moves the run to awaiting_approval and records what is being asked 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a cancelled run cannot be moved into a gate it would never leave 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a second tool cannot open a gate over the first 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a pending approval is scoped to the tenant 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > refuses a decision from another tenant, and leaves the run held 13ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > releases the run when the person decides, and keeps what they decided 9ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > A DECISION CANNOT BE APPLIED TO A DIFFERENT PROPOSAL 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a decision cannot be recorded against a run that is not waiting 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a denial releases the run too — she continues without the tool 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > cancelling while she waits is still allowed 8ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a new request clears the previous decision 8ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > only the asker decides a held run > a colleague in the same org cannot read what the run is holding 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > only the asker decides a held run > A COLLEAGUE WITH THE RIGHT runId AND toolUseId CANNOT APPROVE 10ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > only the asker decides a held run > a colleague cannot decline it either 10ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > only the asker decides a held run > a run with no owner is decided by no person 10ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > only the asker decides a held run > nobody-decided can only ever be a denial — the approval window closing 11ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > only the asker decides a held run > tells a held-for-someone-else run apart from no run, within the org only 10ms
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > pauses a running run and records no control event — nobody pressed pause 24ms
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > a second hold of the same run writes nothing 10ms
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > never revives a cancelled run 15ms
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > the person's resume is theirs: running again, with exactly one event, by the owner 21ms
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > ends a paused run as finished, 'hold_expired', with no control event 16ms
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > writes nothing to a run that is not paused — a resume that landed first wins 11ms
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > a late resume afterwards is refused as TERMINAL 13ms
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > the turn's own endRun afterwards changes nothing 11ms
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > wakes what is waiting on the run in this process, without aborting it 9ms
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun when the write fails > throws the error rather than answering false, which would read as a Continue that landed first 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > the timeline frames equal the record's sealed timeline, notes resolved 118ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > a step's events say only what a row says: a handle, never the tool's name or its id 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a round with prose and tool calls yields exactly one note, before its steps; a round with none yields none 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > no note is staging text: a round with no prose is staged as "(Ran: …)" for the model, never noted 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a summarized thinking block is reasoning, never a note 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a progress-update note ProgressNotes accepts is a note; its placeholder for interrupted work is not 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > decision 3 (A): a thinking turn's tool rounds ask for notes as her words, the closing round does not 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > declined 30ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > no answer 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > authorised, then failed 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 8. stopped after cancel > a turn cancelled mid-round seals its cancelled step events 7ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > reaps under the system scope even when called from inside a tenant request 4ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > does not inherit the caller tenant — the bug this replaces 2ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > scopes the disconnect write to the run own organization 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > aborts the local run even when the row write cannot be made 4ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > request-time reads inherit the caller scope rather than widening it > reads a run under the request own tenant 1ms
+ Test Files  9 passed (9)
+      Tests  149 passed (149)

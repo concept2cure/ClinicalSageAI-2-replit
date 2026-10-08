@@ -72,9 +72,13 @@ describe('the estate-wide sweep is estate-wide', () => {
     // a turn. Inheriting that turn's scope is what reduced the sweep to one org.
     const { pool, scopes } = recordingPool();
     await runWithTenantScope(REQUEST_SCOPE, () => reapOrphanedRuns(pool));
-    expect(scopes).toHaveLength(1);
-    expect(scopes[0]?.tenantId).toBe('0');
-    expect(scopes[0]?.role).toBe('app_super_admin');
+    // The reap, and (AnA detach DT1) the mirror sweep's two finding queries:
+    // every one of them estate-wide, none in the caller's tenant.
+    expect(scopes.length).toBeGreaterThanOrEqual(1);
+    for (const scope of scopes) {
+      expect(scope?.tenantId).toBe('0');
+      expect(scope?.role).toBe('app_super_admin');
+    }
   });
 
   it('does not inherit the caller tenant — the bug this replaces', async () => {

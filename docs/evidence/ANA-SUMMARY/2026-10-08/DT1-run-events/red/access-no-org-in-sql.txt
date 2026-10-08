@@ -1,0 +1,15 @@
+# mutation: access-no-org-in-sql
+# test: server/routes/ana-ri/__tests__/runs-read.pglite.test.ts -t "9."
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > the asker: 200, with the run, its rows, its plan and its controls 173ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > an admin: 200, with approval null and cancel-only control 22ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > the asker sees their own pending approval, as the approval_required frame carries it 20ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > a colleague who can read the transcript: 403, with the sentence 32ms
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > another organisation: 404, even for its admin 33ms
+   → expected 200 to be 404 // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > a run with no person: 403 for a member, 200 for an admin 25ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. the listings apply the same rule > the conversation listing: the asker and admins see its runs, a colleague none 73ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > another organisation: 404, even for its admin
+AssertionError: expected 200 to be 404 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed | 3 skipped (10)

@@ -127,6 +127,7 @@ import { toolEvidence, type EvidenceEntry } from '../../services/ana/answer-grou
 import { checkProposal } from '../../services/ana/proposal-check.js';
 import { buildShortfallNote } from '../../services/ana/tool-outcome.js';
 import { persistStoppedAnswer, runStreamPostProcessing } from './post-processing.js';
+import { sealAfterMirror } from '../../services/ana/run-events.js';
 import {
   callSent,
   canonicalJson,
@@ -240,6 +241,29 @@ const dbPool = {
 const COMMAND_FENCE = /```command\s*\n/;
 
 /** The round's model call, if the round's own text holds a command block (commandBlockProposer). */
+/** What the person reads when beginRun refuses (AnA detach §2.8). Fixed copy; no model writes it. */
+const RUN_REFUSAL_COPY: Readonly<Record<'RUN_IN_PROGRESS' | 'RUN_LIMIT', string>> = {
+  RUN_IN_PROGRESS: 'AnA is still working on the last message in this conversation.',
+  RUN_LIMIT: 'You have three turns running. Stop one, or wait for one to finish.',
+};
+
+/**
+ * The frame for a beginRun refusal (run-control RunRefusedError), or null for
+ * any other failure. Read by name and code rather than `instanceof`, so the
+ * route does not hold a second import of the class for a test double to omit.
+ */
+function runRefusalFrame(err: unknown): { type: 'error'; code: string; error: string; runId?: string } | null {
+  const e = err as { name?: unknown; code?: unknown; runId?: unknown } | null;
+  if (!e || e.name !== 'RunRefusedError') return null;
+  if (e.code !== 'RUN_IN_PROGRESS' && e.code !== 'RUN_LIMIT') return null;
+  return {
+    type: 'error',
+    code: e.code,
+    error: RUN_REFUSAL_COPY[e.code],
+    ...(typeof e.runId === 'string' && e.runId ? { runId: e.runId } : {}),
+  };
+}
+
 function commandRoundOf<T>(roundText: string, served: T): T[] {
   return COMMAND_FENCE.test(roundText) ? [served] : [];
 }
@@ -560,9 +584,6 @@ export function mountStreamRoute(router: Router): void {
     let turnPolicyOf: TurnPolicy | null = null;
     // The tenant the run row was stamped with, for the turn-end read-back.
     let runOrgIdForEvents: number | null = null;
-    // The round the keepalive stamps on each heartbeat. Updated at every
-    // checkpoint so a reaped-and-resumed row still reports where it got to.
-    let heartbeatRound = 0;
     // The retained record of this turn (services/ana/turn-record.ts): filled
     // as each fact becomes known, sealed and written once when the turn ends —
     // answered, stopped or failed — and chained. Undefined until the tenant is
@@ -575,6 +596,9 @@ export function mountStreamRoute(router: Router): void {
         if (!res.writableEnded) res.write(frame);
       },
       recorder: () => turnRecorder,
+      // The run's live mirror (AnA detach DT1): a durable run's handle carries
+      // one; a turn with no run row has nothing to mirror into.
+      mirror: () => runHandle?.events,
     });
     /**
      * The human controls taken during this turn, read back from the run row
@@ -613,13 +637,19 @@ export function mountStreamRoute(router: Router): void {
     const recordStreamed = (chunk: string): void => turnRecorder?.appendStreamed(chunk);
     const recordServed = (round: number, served: { provider: string | null; model: string | null }, sent?: CallSent): void =>
       turnRecorder?.addServed(round, served, sent);
+    // Flush, then seal, then release (AnA detach §3.4): the mirror's guard
+    // refuses an insert once the record exists, so the record is written only
+    // after the mirror is flushed; its rows then leave through the release
+    // door, and released_at is written whatever came of the record.
     const fileTurnRecord = (outcome: TurnOutcome): Promise<TurnRecordStatus> =>
       turnRecorder === undefined
         ? Promise.resolve({ status: 'not_recorded', reason: 'This turn ended before its record was opened.' })
-        : writeTurnRecordSafely(getPool(), turnRecorder, outcome, {
-            ipAddress: req.ip,
-            userAgent: req.get('user-agent') ?? undefined,
-          });
+        : sealAfterMirror(runHandle?.events, () =>
+            writeTurnRecordSafely(getPool(), turnRecorder ?? null, outcome, {
+              ipAddress: req.ip,
+              userAgent: req.get('user-agent') ?? undefined,
+            }),
+          );
     /**
      * Prompt-cache totals for the WHOLE turn, every model call included.
      *
@@ -813,15 +843,12 @@ export function mountStreamRoute(router: Router): void {
         } catch {
           clearInterval(streamKeepalive);
         }
-        // The run's heartbeat rides the keepalive that already exists rather
-        // than a second timer. It has to: the reaper's staleness ceiling
-        // (STALE_AFTER_MS, 5 min) is SHORTER than the pause ceiling
-        // (MAX_PAUSE_MS, 10 min), so a beat taken only at round boundaries left
-        // a paused run — or any single round over five minutes — to be marked
-        // failed/orphaned by another request's sweep while it was still
-        // running. Beating here covers every phase of the turn, including the
-        // final generation after the loop.
-        if (runId && runHandle) void runHandle.heartbeat(heartbeatRound);
+        // The run's heartbeat no longer rides this keepalive (AnA detach DT1,
+        // §2.3): the keepalive is cleared when the socket closes, so a run's
+        // beat depended on a page staying open. One process-wide interval in
+        // run-control.ts (beatOwnedRuns) beats every run this process owns,
+        // at the same 15 s, through every phase of the turn and with or
+        // without a socket. This ping stays for the proxies and touches no row.
       }, STREAM_KEEPALIVE_MS);
       const stopKeepalive = () => clearInterval(streamKeepalive);
       res.on('close', stopKeepalive);
@@ -853,9 +880,11 @@ export function mountStreamRoute(router: Router): void {
             pool: getPool(),
             organizationId: runOrgId,
             userId: runUserId,
+            // Verified inside beginRun before it is stamped (AnA detach §2.8).
             threadId: typeof thread_id === 'string' ? thread_id : null,
             projectId: typeof project_id === 'string' ? project_id : null,
             surface: 'ana-ri-stream',
+            runPolicy: parseRunPolicy(run_policy),
           });
           runId = opened.runId;
           runHandle = opened.handle;
@@ -864,10 +893,23 @@ export function mountStreamRoute(router: Router): void {
           void reapOrphanedRuns(getPool()).catch(() => {});
           res.write(`data: ${JSON.stringify({ type: 'run_started', runId })}\n\n`);
         } catch (err: any) {
+          // A refusal is an answer, not an outage (AnA detach §2.8, D-3): this
+          // conversation already has a live run, or the person has three. Both
+          // come before the question is saved, so nothing of this turn exists
+          // yet to record or roll back.
+          const refusal = runRefusalFrame(err);
+          if (refusal) {
+            res.write(`data: ${JSON.stringify(refusal)}\n\n`);
+            stopKeepalive();
+            res.end();
+            return;
+          }
           // Control is an enhancement; the answer is the product. A run row we
           // could not open costs the person their controls, not their turn —
           // and because no `run_started` is emitted, the strip renders nothing
-          // rather than buttons that would 404.
+          // rather than buttons that would 404. A colleague's conversation
+          // (THREAD_FORBIDDEN) lands here too: no run is opened for it, and
+          // getOrCreateThread below refuses the turn as it always has.
           console.error('[AnA RI Stream] run control unavailable:', err?.message);
         }
       }
@@ -1131,6 +1173,16 @@ export function mountStreamRoute(router: Router): void {
           const userMessageId = await saveMessage(threadId, 'user', message);
           turnRecorder?.setMessageIds({ user: userMessageId });
           stoppedTurnThreadId = threadId;
+          // The verified (or just minted) conversation and the question, on
+          // the run, so another device can find it by thread (§2.8).
+          if (runHandle?.stampThread) {
+            await runHandle
+              .stampThread(threadId, typeof userMessageId === 'number' ? userMessageId : null)
+              .then(ok => {
+                if (!ok) console.warn('[AnA RI Stream] run not stamped with its conversation:', runId);
+              })
+              .catch((err: any) => console.error('[AnA RI Stream] run thread stamp failed:', err?.message));
+          }
         } catch (e: any) {
           /* Matched by code: a conversation bound to another project than the
              one this turn names (chat-thread-helpers getOrCreateThread). */
@@ -3243,7 +3295,6 @@ export function mountStreamRoute(router: Router): void {
                   cancelSignal: runHandle.cancelSignal,
                   cancelled: () => runHandle!.cancelSignal.aborted,
                   heartbeat: (round: number) => {
-                    heartbeatRound = round;
                     void runHandle!.heartbeat(round);
                   },
                   // Steers and screen reports: the drain is atomic and covers

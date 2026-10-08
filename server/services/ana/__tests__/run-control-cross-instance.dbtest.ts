@@ -124,6 +124,12 @@ afterEach(async () => {
     inst.rc._resetLocalRunsForTest();
     await inst.pool.end().catch(() => {});
   }
+  // Each case's runs end with it. beginRun counts a person's live runs and
+  // refuses a fourth (AnA detach D-3), and these cases share one person.
+  await scratch.ownerPool.query(
+    `UPDATE ${scratch.schema}.ana_runs SET status = 'finished', finished_at = now()
+      WHERE status IN ('running','paused','awaiting_approval')`,
+  );
 });
 
 afterAll(async () => {
@@ -249,12 +255,14 @@ describe('run control across two instances: refusal and fallback', () => {
   it('with no LISTEN client, the declared poll fallback still delivers the stop', async () => {
     const a = await bootInstance();
     const b = await bootInstance();
-    // The listener's dedicated connection cannot be opened. Every other query
-    // uses pool.query, which does not go through this patched connect.
+    // The listener's dedicated connection cannot be opened. It is the one
+    // taken in the system scope (startRunControlListener); beginRun's own
+    // transaction takes a connection too, in the request's scope, and is let
+    // through (AnA detach §2.8).
     const realConnect = a.pool.connect.bind(a.pool);
     let refused = false;
     (a.pool as any).connect = (...args: any[]) => {
-      if (!refused) {
+      if (!refused && a.tenant.getTenantScope()?.role === 'app_super_admin') {
         refused = true;
         return Promise.reject(new Error('dbtest: listener connection refused'));
       }

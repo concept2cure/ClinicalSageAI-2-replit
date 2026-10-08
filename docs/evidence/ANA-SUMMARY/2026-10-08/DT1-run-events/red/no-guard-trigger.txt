@@ -1,0 +1,14 @@
+# mutation: no-guard-trigger
+# test: server/services/ana/__tests__/run-events.pglite.test.ts -t "2. the guard"
+ × server/services/ana/__tests__/run-events.pglite.test.ts > 2. the guard > refuses UPDATE and TRUNCATE, for the owner too 163ms
+ × server/services/ana/__tests__/run-events.pglite.test.ts > 2. the guard > refuses an INSERT once the run has a sealed record 60ms
+ × server/services/ana/__tests__/run-events.pglite.test.ts > 2. the guard > refuses a plain DELETE as app_service in every state: live, sealed, terminal without a record 98ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-events.pglite.test.ts > 2. the guard > refuses UPDATE and TRUNCATE, for the owner too
+AssertionError: promise resolved "{ rows: [], fields: [], …(1) }" instead of rejecting
+ FAIL  server/services/ana/__tests__/run-events.pglite.test.ts > 2. the guard > refuses an INSERT once the run has a sealed record
+AssertionError: promise resolved "{ rows: [], fields: [], …(1) }" instead of rejecting
+ FAIL  server/services/ana/__tests__/run-events.pglite.test.ts > 2. the guard > refuses a plain DELETE as app_service in every state: live, sealed, terminal without a record
+AssertionError: promise resolved "{ rows: [], fields: [], …(1) }" instead of rejecting
+ Test Files  1 failed (1)
+      Tests  3 failed | 13 skipped (16)

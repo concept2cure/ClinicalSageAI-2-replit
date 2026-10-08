@@ -75,11 +75,19 @@ function pool(): any {
       const r = await db.query(text, params as any[]);
       return { rows: r.rows as any[], rowCount: (r as any).affectedRows ?? r.rows.length };
     },
-    // The listener opens a dedicated client; PGlite has none, so the service
-    // takes its declared poll fallback. That is the degraded path running.
-    connect: async () => {
-      throw new Error('PGlite has no dedicated client');
-    },
+    // beginRun's locked transaction takes a client: the one PGlite session.
+    // The listener's `on` is refused, so the service still takes its declared
+    // poll fallback. That is the degraded path running.
+    connect: async () => ({
+      query: async (text: string, params?: unknown[]) => {
+        const r = await db.query(text, params as any[]);
+        return { rows: r.rows as any[], rowCount: (r as any).affectedRows ?? r.rows.length };
+      },
+      release: () => undefined,
+      on: () => {
+        throw new Error('PGlite has no notifications');
+      },
+    }),
   };
 }
 
@@ -108,6 +116,9 @@ beforeAll(async () => {
   await db.exec(`
     CREATE TABLE organizations (id integer PRIMARY KEY);
     CREATE TABLE users (id integer PRIMARY KEY);
+    -- beginRun verifies the thread the client named here (AnA detach §2.8). Empty:
+    -- 'thread_1' resolves to no conversation, so these runs carry no thread.
+    CREATE TABLE chat_threads (id text PRIMARY KEY, user_id integer, organization_id integer, title text);
     INSERT INTO organizations (id) VALUES (${ORG}), (${OTHER_ORG});
     INSERT INTO users (id) VALUES (${USER}), (${OTHER_USER});
   `);

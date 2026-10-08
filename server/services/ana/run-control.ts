@@ -96,6 +96,13 @@ import { runWithSystemTenantScope, runWithTenantScope } from '../../db/tenantSto
 import { createScopedLogger } from '../../utils/logger';
 import type { AnswerCheck } from './answer-grounding';
 import {
+  expireOrphanedRunEvents,
+  openRunEventsMirror,
+  releaseSealedRunEvents,
+  RUN_EVENTS_RETENTION_DAYS,
+  type RunEventsMirror,
+} from './run-events.js';
+import {
   canTransitionRunStatus,
   isLiveRunStatus,
   LIVE_RUN_STATUSES,
@@ -164,6 +171,16 @@ export interface RunHandle {
   heartbeat(round: number): Promise<void>;
   /** Present only without a durable run row; a dropped socket can still stop local work. */
   abortLocally?: () => void;
+  /**
+   * The run's live timeline mirror (run-events.ts; AnA detach DT1). Present
+   * only on a durable run: a turn with no row has nothing to mirror into.
+   */
+  events?: RunEventsMirror;
+  /**
+   * Write the conversation and the question onto the run once they are known
+   * (stampRunThread). Present only on a durable run.
+   */
+  stampThread?: (threadId: string, userMessageId: number | null) => Promise<boolean>;
 }
 
 /** This process, for `owner_instance`. */
@@ -173,6 +190,8 @@ interface LocalRun {
   controller: AbortController;
   /** Resolvers waiting on a row change — the pause/approval wait. */
   waiters: Set<() => void>;
+  /** The highest timeline seq emitted, carried by the heartbeat (ana_runs.timeline_seq). */
+  timelineSeq: number;
 }
 
 const localRuns = new Map<string, LocalRun>();
@@ -210,9 +229,72 @@ export interface BeginRunInput {
   pool: Pool;
   organizationId: number;
   userId: number | null;
+  /**
+   * The conversation the CLIENT named. Never stamped as sent: beginRun verifies
+   * it first (verifiedThreadId) and writes the verified id, or null.
+   */
   threadId?: string | null;
   projectId?: string | null;
   surface: string;
+  /** 'manual' | 'auto' | null (row 74), written at insert for a follower to read. */
+  runPolicy?: 'manual' | 'auto' | null;
+}
+
+/** D-3: at most this many live runs per (organisation, person), counted in beginRun's locked transaction. */
+export const MAX_LIVE_RUNS_PER_PERSON = 3;
+
+/** Why beginRun refused to open a run. */
+export type RunRefusalCode = 'RUN_IN_PROGRESS' | 'RUN_LIMIT' | 'THREAD_FORBIDDEN';
+
+/**
+ * beginRun refused, before any row was written (§2.8).
+ *
+ *   RUN_IN_PROGRESS   a live run already holds this conversation; `runId` names it.
+ *   RUN_LIMIT         the person already has MAX_LIVE_RUNS_PER_PERSON live runs.
+ *   THREAD_FORBIDDEN  the conversation the client named is a colleague's. The
+ *                     stream then runs without a durable run, and its own
+ *                     getOrCreateThread refuses the turn as it always has.
+ */
+export class RunRefusedError extends Error {
+  constructor(
+    readonly code: RunRefusalCode,
+    readonly runId?: string,
+  ) {
+    super(code);
+    this.name = 'RunRefusedError';
+  }
+}
+
+/** The person's lock and the conversation's lock: one key shape for every writer that takes them. */
+const personLockKey = (org: number, user: number) => `ana_runs:user:${org}:${user}`;
+const threadLockKey = (org: number, thread: string) => `ana_runs:thread:${org}:${thread}`;
+const LIVE_STATUS_SQL = `('running','paused','awaiting_approval')`;
+
+/**
+ * The conversation the client named, if the caller may use it — the rule of
+ * chat-thread-helpers.ts resolveAccessibleThread, without minting: a thread of
+ * THIS organization, owned by the caller or by nobody. A thread of another
+ * organization resolves to nothing (null), so its existence is not confirmed;
+ * a colleague's is refused. Read on the transaction's own client, inside the
+ * person's lock, so the id that is stamped is the id that was checked.
+ */
+async function verifiedThreadId(
+  client: RunControlQuery,
+  organizationId: number,
+  userId: number | null,
+  threadId: string | null | undefined,
+): Promise<string | null> {
+  if (!threadId) return null;
+  const { rows } = await client.query(
+    `SELECT id, user_id FROM chat_threads WHERE id = $1 AND organization_id = $2`,
+    [threadId, organizationId],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  if (row.user_id !== null && row.user_id !== undefined && (userId === null || Number(row.user_id) !== userId)) {
+    throw new RunRefusedError('THREAD_FORBIDDEN');
+  }
+  return String(row.id);
 }
 
 /**
@@ -224,25 +306,79 @@ export interface BeginRunInput {
  * would 404. Failing closed and visibly beats a nullable tenant column, which
  * is the `ana_deep_investigations` mistake this table deliberately does not
  * repeat.
+ *
+ * ── One transaction, two locks (AnA detach §2.8, D-3) ────────────────────────
+ *   1. The person's advisory lock; count their live runs in the organisation
+ *      and refuse RUN_LIMIT at MAX_LIVE_RUNS_PER_PERSON. A row whose heartbeat
+ *      is past STALE_AFTER_MS is not counted: its process is gone and the
+ *      reaper will fail it, and a crashed deploy must not lock a person out.
+ *   2. The client's thread id, verified (verifiedThreadId) and never stamped as
+ *      sent. Then the conversation's lock; fail that conversation's stale rows
+ *      (notified after commit, as the reaper does); refuse RUN_IN_PROGRESS if a
+ *      live run still holds it.
+ *   3. Insert the run with the verified thread id, or null for a new
+ *      conversation (stampRunThread writes it once the thread is minted).
+ * Locks rather than a partial unique index: such an index would fail to build
+ * on any database already holding two live rows for one thread (RULE 1
+ * replay). The locks need no schema. Both refusals come before the question is
+ * saved, and write nothing.
  */
 export async function beginRun(input: BeginRunInput): Promise<{ runId: string; handle: RunHandle }> {
   const runId = `run_${randomUUID()}`;
-  await input.pool.query(
-    `INSERT INTO ana_runs (id, organization_id, user_id, thread_id, project_id, surface, status, owner_instance)
-     VALUES ($1, $2, $3, $4, $5, $6, 'running', $7)`,
-    [
-      runId,
-      input.organizationId,
-      input.userId,
-      input.threadId ?? null,
-      input.projectId ?? null,
-      input.surface,
-      INSTANCE_ID,
-    ],
-  );
+  const org = input.organizationId;
+  const staleSecs = Math.round(STALE_AFTER_MS / 1000);
+  let reapedOnThread: string[] = [];
 
-  const local: LocalRun = { controller: new AbortController(), waiters: new Set() };
+  const client = await input.pool.connect();
+  try {
+    await client.query('BEGIN');
+    if (input.userId !== null) {
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [personLockKey(org, input.userId)]);
+      const { rows } = await client.query(
+        `SELECT count(*)::int AS n FROM ana_runs
+          WHERE organization_id = $1 AND user_id = $2 AND status IN ${LIVE_STATUS_SQL}
+            AND heartbeat_at >= now() - make_interval(secs => $3)`,
+        [org, input.userId, staleSecs],
+      );
+      if (Number(rows[0]?.n ?? 0) >= MAX_LIVE_RUNS_PER_PERSON) throw new RunRefusedError('RUN_LIMIT');
+    }
+    const threadId = await verifiedThreadId(client, org, input.userId, input.threadId);
+    if (threadId) {
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [threadLockKey(org, threadId)]);
+      const reaped = await client.query(
+        `UPDATE ana_runs
+            SET status = 'failed', stopped_reason = 'orphaned', finished_at = now(), updated_at = now()
+          WHERE organization_id = $1 AND thread_id = $2 AND status IN ${LIVE_STATUS_SQL}
+            AND heartbeat_at < now() - make_interval(secs => $3)
+          RETURNING id`,
+        [org, threadId, staleSecs],
+      );
+      reapedOnThread = reaped.rows.map((r: { id: string }) => r.id);
+      const { rows: holding } = await client.query(
+        `SELECT id FROM ana_runs
+          WHERE organization_id = $1 AND thread_id = $2 AND status IN ${LIVE_STATUS_SQL}
+          ORDER BY created_at DESC LIMIT 1`,
+        [org, threadId],
+      );
+      if (holding[0]) throw new RunRefusedError('RUN_IN_PROGRESS', String(holding[0].id));
+    }
+    await client.query(
+      `INSERT INTO ana_runs (id, organization_id, user_id, thread_id, project_id, surface, status, owner_instance, run_policy)
+       VALUES ($1, $2, $3, $4, $5, $6, 'running', $7, $8)`,
+      [runId, org, input.userId, threadId, input.projectId ?? null, input.surface, INSTANCE_ID, input.runPolicy ?? null],
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+  if (reapedOnThread.length > 0) await notifyRuns(input.pool, reapedOnThread);
+
+  const local: LocalRun = { controller: new AbortController(), waiters: new Set(), timelineSeq: 0 };
   localRuns.set(runId, local);
+  armRunHeartbeat(input.pool);
   void startRunControlListener(input.pool);
 
   const handle: RunHandle = {
@@ -262,17 +398,77 @@ export async function beginRun(input: BeginRunInput): Promise<{ runId: string; h
         timer.unref?.();
         local.waiters.add(finish);
       }),
+    // The checkpoint's beat: the process heartbeat's statement for this one
+    // run, plus the round (§2.3). Owner-guarded like it, so it cannot beat a
+    // row this process no longer owns back to life.
     heartbeat: async (round: number) => {
       await input.pool
-        .query(`UPDATE ana_runs SET heartbeat_at = now(), current_round = $2 WHERE id = $1`, [
-          runId,
-          round,
-        ])
+        .query(
+          `UPDATE ana_runs
+              SET heartbeat_at = now(), current_round = $2, timeline_seq = GREATEST(timeline_seq, $4)
+            WHERE id = $1 AND owner_instance = $3 AND status IN ${LIVE_STATUS_SQL}`,
+          [runId, round, INSTANCE_ID, local.timelineSeq],
+        )
         .catch(err => log.warn(`[ana-run-control] heartbeat failed for ${runId}: ${err?.message}`));
     },
+    events: openRunEventsMirror({
+      pool: input.pool,
+      runId,
+      organizationId: org,
+      ownerInstance: INSTANCE_ID,
+      onSeq: seq => {
+        local.timelineSeq = seq;
+      },
+    }),
+    stampThread: (threadId: string, userMessageId: number | null) =>
+      stampRunThread(input.pool, { runId, organizationId: org, threadId, userMessageId }),
   };
 
   return { runId, handle };
+}
+
+/**
+ * Write a run's conversation and question once the stream knows them (§2.8).
+ *
+ * For a new conversation the run was opened with no thread (the thread is
+ * minted after beginRun, by getOrCreateThread), so without this its row kept
+ * `thread_id` null forever: unlistable by thread for rejoin, and outside the
+ * one-run-per-conversation rule. Under the conversation's lock, and guarded so
+ * the id is written only when the row has none and no other live run holds the
+ * conversation; a row that already carries this thread gets its question.
+ * False when nothing was written (logged by the caller's choice, not here).
+ */
+export async function stampRunThread(
+  pool: Pool,
+  input: { runId: string; organizationId: number; threadId: string; userMessageId: number | null },
+): Promise<boolean> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
+      threadLockKey(input.organizationId, input.threadId),
+    ]);
+    const { rowCount } = await client.query(
+      `UPDATE ana_runs r
+          SET thread_id = $3, user_message_id = $4, updated_at = now()
+        WHERE r.id = $1 AND r.organization_id = $2
+          AND (
+            r.thread_id = $3
+            OR (r.thread_id IS NULL AND NOT EXISTS (
+                  SELECT 1 FROM ana_runs o
+                   WHERE o.organization_id = $2 AND o.thread_id = $3 AND o.id <> $1
+                     AND o.status IN ${LIVE_STATUS_SQL}))
+          )`,
+      [input.runId, input.organizationId, input.threadId, input.userMessageId],
+    );
+    await client.query('COMMIT');
+    return (rowCount ?? 0) > 0;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 /**
@@ -735,28 +931,172 @@ async function notifyAndDrive(pool: RunControlQuery, runId: string, status: RunS
     .catch(err => log.warn(`[ana-run-control] pg_notify failed for ${runId}: ${err?.message}`));
 }
 
+/** Wake each run's owner, wherever it is: one statement, one notification per run. */
+async function notifyRuns(pool: RunControlQuery, runIds: string[]): Promise<void> {
+  if (runIds.length === 0) return;
+  for (const id of runIds) driveLocalRun(id, 'failed');
+  await runWithSystemTenantScope('ana-run-control:notify-reaped', () =>
+    pool.query(`SELECT pg_notify($1, id) FROM unnest($2::text[]) AS id`, [RUN_CONTROL_CHANNEL, runIds]),
+  ).catch(err => log.warn(`[ana-run-control] pg_notify of reaped runs failed: ${err?.message}`));
+}
+
 /**
  * Fail every live run this process no longer heartbeats.
  *
  * A restart leaves rows saying `running` with nobody executing them. Reporting
  * those as live is the lie `check_deep_investigation` already refuses to tell;
  * this is the same refusal for chat runs.
+ *
+ * AnA detach DT1 (§2.4) adds, with the statement and threshold unchanged:
+ *   - each reaped run is notified, so an owner that is alive but partitioned
+ *     learns its row ended (acting on it is DT3's);
+ *   - the mirror sweep (sweepRunEvents), at most once per REAP_SWEEP_MS per
+ *     process: the rows of runs whose record exists go through the release
+ *     door, and those of runs that ended with no record through the expiry
+ *     door once past retention.
+ * Returns how many runs it failed.
  */
 export async function reapOrphanedRuns(pool: Pool, staleAfterMs = STALE_AFTER_MS): Promise<number> {
   // System scope, explicitly. This sweep is estate-wide by design — the runs
   // that most need reaping belong to an instance that is gone — and it is
   // called opportunistically from inside a request, whose tenant scope would
   // silently reduce it to that one org and return a reassuring small number.
-  const { rowCount } = await runWithSystemTenantScope('ana-run-control:reap', () =>
+  const { rows } = await runWithSystemTenantScope('ana-run-control:reap', () =>
     pool.query(
     `UPDATE ana_runs
      SET status = 'failed', stopped_reason = 'orphaned', finished_at = now(), updated_at = now()
      WHERE status IN ('running','paused','awaiting_approval')
-       AND heartbeat_at < now() - make_interval(secs => $1)`,
+       AND heartbeat_at < now() - make_interval(secs => $1)
+     RETURNING id`,
       [Math.round(staleAfterMs / 1000)],
     ),
   );
-  return rowCount ?? 0;
+  const reaped = rows.map((r: { id: string }) => r.id);
+  await notifyRuns(pool, reaped);
+  if (Date.now() - lastEventSweepAt >= REAP_SWEEP_MS) {
+    lastEventSweepAt = Date.now();
+    await sweepRunEvents(pool).catch(err =>
+      log.error(`[ana-run-control] run-event sweep failed: ${err?.message}`),
+    );
+  }
+  return reaped.length;
+}
+
+/** How often, per process, the reaper also sweeps the mirror, and the read routes may reap. */
+export const REAP_SWEEP_MS = 30_000;
+let lastEventSweepAt = 0;
+let lastRouteReapAt = 0;
+
+/**
+ * The reaper as the run read routes call it (§3.7): at most once per
+ * REAP_SWEEP_MS per process, and never failing the read. Returns how many runs
+ * it failed, 0 when throttled.
+ */
+export async function reapOrphanedRunsThrottled(pool: Pool): Promise<number> {
+  if (Date.now() - lastRouteReapAt < REAP_SWEEP_MS) return 0;
+  lastRouteReapAt = Date.now();
+  return reapOrphanedRuns(pool).catch(err => {
+    log.error(`[ana-run-control] reaper (read route) failed: ${err?.message}`);
+    return 0;
+  });
+}
+
+/**
+ * The reaper's mirror pass. Finding the rows is estate-wide (system scope);
+ * each door is then called in the run's own tenant scope, which the release
+ * door requires (run-events.ts). Bounded per pass; the next pass takes the rest.
+ */
+async function sweepRunEvents(pool: Pool): Promise<void> {
+  const { rows: sealed } = await runWithSystemTenantScope('ana-run-control:release-sweep', () =>
+    pool.query(
+      `SELECT DISTINCT e.organization_id, e.run_id
+         FROM ana_run_events e
+        WHERE EXISTS (SELECT 1 FROM ana_turn_records t
+                       WHERE t.organization_id = e.organization_id AND t.run_id = e.run_id)
+        LIMIT 100`,
+    ),
+  );
+  for (const r of sealed) await releaseSealedRunEvents(pool, Number(r.organization_id), String(r.run_id));
+
+  const { rows: expiring } = await runWithSystemTenantScope('ana-run-control:expiry-sweep', () =>
+    pool.query(
+      `SELECT DISTINCT organization_id FROM ana_run_events
+        WHERE written_at < now() - make_interval(days => $1)
+        LIMIT 100`,
+      [RUN_EVENTS_RETENTION_DAYS],
+    ),
+  );
+  for (const r of expiring) await expireOrphanedRunEvents(pool, Number(r.organization_id));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The process heartbeat (AnA detach §2.3)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** One beat per process for every run it owns; today's keepalive interval. */
+export const RUN_HEARTBEAT_MS = 15_000;
+let heartbeatTimer: NodeJS.Timeout | null = null;
+let heartbeatPool: RunControlQuery | null = null;
+
+/**
+ * Arm the process heartbeat. Idempotent; called by every beginRun, idle while
+ * this process owns no run.
+ *
+ * It used to ride the SSE keepalive, which is cleared when the socket closes —
+ * so a run's heartbeat depended on a page staying open. It now depends on the
+ * process alone, which is what the reaper's staleness actually asks about.
+ */
+function armRunHeartbeat(pool: RunControlQuery): void {
+  heartbeatPool = pool;
+  if (heartbeatTimer) return;
+  heartbeatTimer = setInterval(() => {
+    void beatOwnedRuns();
+  }, RUN_HEARTBEAT_MS);
+  heartbeatTimer.unref?.();
+}
+
+/**
+ * Beat every run this process owns, with its timeline high-water mark.
+ *
+ * System scope per firing, never the context that armed the timer (the first
+ * turn after boot's tenant), or RLS would hide every other tenant's run and
+ * they would be reaped while alive. `owner_instance` in SQL: a process can
+ * never beat another's run back to life. Returns the rows it beat.
+ */
+export async function beatOwnedRuns(): Promise<number> {
+  const pool = heartbeatPool;
+  if (!pool || localRuns.size === 0) return 0;
+  const ids = [...localRuns.keys()];
+  const seqs = ids.map(id => localRuns.get(id)?.timelineSeq ?? 0);
+  try {
+    const { rowCount } = await runWithSystemTenantScope('ana-run-control:heartbeat', () =>
+      pool.query(
+        `UPDATE ana_runs AS r
+            SET heartbeat_at = now(), timeline_seq = GREATEST(r.timeline_seq, v.seq)
+           FROM unnest($1::text[], $2::int[]) AS v(id, seq)
+          WHERE r.id = v.id
+            AND r.owner_instance = $3
+            AND r.status IN ${LIVE_STATUS_SQL}`,
+        [ids, seqs, INSTANCE_ID],
+      ),
+    );
+    return rowCount ?? 0;
+  } catch (err: any) {
+    // Logged, never thrown: a missed beat is retried in RUN_HEARTBEAT_MS, and
+    // five minutes of them is what the reaper reads as a dead owner.
+    log.error(`[ana-run-control] process heartbeat failed for ${ids.length} run(s): ${err?.message}`);
+    return 0;
+  }
+}
+
+function stopRunHeartbeat(): void {
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  heartbeatTimer = null;
+}
+
+/** This process's `owner_instance`, for a test that must write as another instance would not. */
+export function runOwnerInstance(): string {
+  return INSTANCE_ID;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -885,6 +1225,7 @@ async function refreshFromRow(pool: Pool, runId: string): Promise<void> {
  * deliver this channel's notifications to whoever borrowed it next.
  */
 export function stopRunControlListener(): void {
+  stopRunHeartbeat();
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = null;
   const client = listenerClient;
@@ -897,6 +1238,9 @@ export function stopRunControlListener(): void {
 export function _resetLocalRunsForTest(): void {
   localRuns.clear();
   stopRunControlListener();
+  heartbeatPool = null;
+  lastEventSweepAt = 0;
+  lastRouteReapAt = 0;
 }
 
 /**

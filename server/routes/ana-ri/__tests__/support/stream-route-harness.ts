@@ -82,6 +82,16 @@ function freshState() {
     drains: [] as QueueEntry[][],
     /** beginRun throws (run control unavailable). */
     beginRunThrows: false,
+    /** What beginRun throws instead of opening a run (a RunRefusedError-shaped refusal). */
+    beginRunError: null as unknown,
+    /** Every input beginRun was called with. */
+    beginRunInputs: [] as Array<Record<string, unknown>>,
+    /** The run's live mirror, when a test supplies one (AnA detach DT1): handed out as handle.events. */
+    mirror: null as null | Record<string, unknown>,
+    /** Each stampThread call: the conversation and question written onto the run. */
+    stamps: [] as Array<{ threadId: string; userMessageId: number | null }>,
+    /** Each handle.heartbeat call. */
+    heartbeats: 0,
     /** requestApproval opens the gate (true) or cannot hold the run (false). */
     approvalOpens: false,
     approvalDecisionsRecorded: 0,
@@ -200,7 +210,14 @@ function runHandle() {
       state.wakes.push(ms);
       state.clockOffset += ms;
     },
-    heartbeat: async () => {},
+    heartbeat: async () => {
+      state.heartbeats++;
+    },
+    stampThread: async (threadId: string, userMessageId: number | null) => {
+      state.stamps.push({ threadId, userMessageId });
+      return true;
+    },
+    ...(state.mirror ? { events: state.mirror } : {}),
   };
 }
 
@@ -214,7 +231,9 @@ function readStatus(): string | null {
 function runControl(real: { readMoveId: unknown }) {
   return {
     readMoveId: real.readMoveId,
-    beginRun: async () => {
+    beginRun: async (input: Record<string, unknown>) => {
+      state.beginRunInputs.push(input);
+      if (state.beginRunError) throw state.beginRunError;
       if (state.beginRunThrows) throw new Error('ana_runs is unavailable');
       return { runId: 'run_test', handle: runHandle() };
     },

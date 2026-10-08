@@ -3097,6 +3097,18 @@ export const C2C_MIGRATION_FILES = [
   // docs/evidence/QA-2026-10-08/intake-readiness/.
   'migrations/20261008e_rendered_leaf_files_required_fields_missing.sql',
 
+  // ── AnA detach DT1: the live turn's timeline mirror (2026-10-08) ─────────
+  // public.ana_run_events: append-only (guard trigger), deleted only through
+  // three SECURITY DEFINER doors owned by the NOLOGIN ana_run_events_purger
+  // role (release after the record is sealed, legal-hold-aware expiry, the
+  // tenant purge). After 20260917 (ana_runs, its FK parent, amended in place
+  // the same day with six columns) and 20260926 (ana_turn_records, which the
+  // guard and the doors read). public + organization_id INTEGER NOT NULL, so
+  // it sits above the final sweeps, which give it its tenant policy. Creates
+  // only; drops nothing. docs/design/ANA_DETACH_2026-10-08.md §3; evidence
+  // docs/evidence/ANA-SUMMARY/2026-10-08/DT1-run-events/.
+  'migrations/20261008f_ana_run_events.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

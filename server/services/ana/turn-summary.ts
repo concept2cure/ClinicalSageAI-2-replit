@@ -54,7 +54,12 @@ function verdictReason(v: TurnRecordVerdict): string | undefined {
   return 'The record could not be verified.';
 }
 
-function controlsOf(raw: unknown[] | null | undefined): TimelineControl[] | null {
+/**
+ * A run's control events as the Summary shows them: the action, round, time
+ * and message, never who took them. Shared with the live run read
+ * (routes/ana-ri/runs.ts), which reads them off the run row.
+ */
+export function controlsOf(raw: unknown[] | null | undefined): TimelineControl[] | null {
   if (!Array.isArray(raw)) return null;
   const out: TimelineControl[] = [];
   for (const c of raw as Array<Record<string, unknown>>) {

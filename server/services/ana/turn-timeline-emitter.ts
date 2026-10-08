@@ -2,10 +2,14 @@
  * The one producer of a turn's Summary timeline (ANA-SUMMARY S4,
  * docs/design/ANA_AGENT_WORK_VIEW_2026-10-08.md §2.1, §2.4, §4 "update_plan").
  *
- * `emitTimeline(event)` does two things and only these: it appends the event
- * to the turn's recorder, and it writes it to the client as a `timeline`
- * frame. So the live Summary and the record's sealed `/4` timeline are the
- * same events (S4 test 1). The stream calls the methods below at the points
+ * `emitTimeline(event)` does three things and only these: it appends the event
+ * to the turn's recorder, enqueues it to the run's live mirror
+ * (public.ana_run_events, run-events.ts; AnA detach DT1), and writes it to the
+ * client as a `timeline` frame. So the live Summary, the mirror a second device
+ * reads, and the record's sealed `/4` timeline are the same events (S4 test 1;
+ * DT1 test 1). The mirror's truncation marker is the mirror's own (run-events.ts
+ * caps at 1,999): nothing here emits it, so the frames and the record never
+ * carry one. The stream calls the methods below at the points
  * where each fact becomes known; the presentation (labels, sources, previews,
  * facts, the status sentence) is step-presentation.ts's, never this module's.
  *
@@ -36,6 +40,7 @@ import { TaskIds, taskChanges, type PlanStep } from '@shared/ana/plan-diff';
 import type { GatewayServerToolUse } from '../ai-gateway/types.js';
 import { presentStep, stepMessage } from './step-presentation.js';
 import { serverToolStepFields } from './server-tool-steps.js';
+import type { RunEventsMirror } from './run-events.js';
 import type { TurnRecorder } from './turn-record.js';
 import { UPDATE_PLAN_TOOL_NAME } from './turn-plan.js';
 
@@ -48,6 +53,8 @@ interface TimelineSink {
   write: (frame: string) => void;
   /** The turn's recorder, once it is open; null for a turn that has none. */
   recorder: () => TurnRecorder | null | undefined;
+  /** The run's live mirror, once the run is open; null for a turn with no durable run. */
+  mirror?: () => Pick<RunEventsMirror, 'enqueue'> | null | undefined;
 }
 
 interface StepCall {
@@ -98,6 +105,7 @@ export class TurnTimeline {
     // Date.now, not new Date(): one clock for `at`, `startedAt` and `ms`.
     const event = { seq: this.seq, at: iso(Date.now()), ...input } as TimelineEvent;
     this.sink.recorder()?.addEvent(event);
+    this.sink.mirror?.()?.enqueue(event);
     this.sink.write(`data: ${JSON.stringify({ type: 'timeline', event })}\n\n`);
     return event;
   }

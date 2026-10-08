@@ -1,0 +1,39 @@
+ ✓ server/services/ana/__tests__/run-events-rls.dbtest.ts > 8. the mirror and the heartbeat under RLS, as the runtime role > 8a. a flush armed in tenant A's turn, fired from a timer tenant B's request created, writes A's rows 338ms
+ ✓ server/services/ana/__tests__/run-events-rls.dbtest.ts > 8. the mirror and the heartbeat under RLS, as the runtime role > 8b. the process heartbeat beats both tenants' runs, though it was armed inside one tenant's request 51ms
+ ✓ server/services/ana/__tests__/run-events-rls.dbtest.ts > 8. the mirror and the heartbeat under RLS, as the runtime role > 8c. the release door deletes in the run's own scope, and refuses from another tenant's 205ms
+ ✓ server/services/ana/__tests__/run-events-rls.dbtest.ts > §2.8 racing posts, on separate connections > two posts racing on one conversation open one run; the other is refused RUN_IN_PROGRESS 55ms
+ ✓ server/services/ana/__tests__/run-events-rls.dbtest.ts > §2.8 racing posts, on separate connections > racing posts by one person open at most three runs; the rest are refused RUN_LIMIT 81ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a stop accepted on instance B aborts the run on instance A, by NOTIFY 298ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a listener on a connection another tenant opened still delivers this tenant's stop 95ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a pause wait on A is woken by a resume accepted on B, not by its timeout 314ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a steer accepted on B is drained exactly once on A 104ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: refusal and fallback > control from another organization is refused on B and never reaches A 334ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: refusal and fallback > with no LISTEN client, the declared poll fallback still delivers the stop 2060ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control lifecycle: shutdown and the reaper > shutdown returns the LISTEN connection, so closing the pool completes 54ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control lifecycle: shutdown and the reaper > the reaper fails a run whose instance stopped heartbeating, across tenants 110ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT (INSERT only where the store's ceiling allows it), and no UPDATE, DELETE or TRUNCATE, on every append-only table present 14ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs 23ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too 53ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 43ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role 10ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row 899ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing 27ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way 71ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails 54ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have 34ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing 35ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason 50ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing 27ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read 29ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export 28ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits 109ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > erases the vault through the route's own connection: the runtime role in the platform scope (VR-07) 110ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way 62ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove 26ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > the runtime role exists, so the privilege check means something 16ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > every baseline entry carries a status and a reason 1ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: a definer function planted in a rolled-back transaction is caught 16ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: the runtime role's grant recipe revokes an unlisted one, and keeps a listed one 21ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > no callable definer function is missing from the reviewed allowlist 3ms
+ Test Files  5 passed (5)
+      Tests  37 passed (37)

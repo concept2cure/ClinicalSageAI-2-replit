@@ -79,6 +79,21 @@ export type EndEvent = EventBase & { kind: 'end'; outcome: TurnEndOutcome; stopp
 
 export type TimelineEvent = NoteEvent | StepEvent | TaskEvent | EndEvent;
 
+/**
+ * The live mirror's cap (AnA detach DT1, docs/design/ANA_DETACH_2026-10-08.md
+ * §3.5): seq 1–1,999 are events, seq 2,000 is this marker, and nothing is
+ * mirrored after it. The recorder is uncapped, so the record keeps every event
+ * and the marker is never part of it — which is why it is a member of the
+ * mirror's union below and not of TimelineEvent, whose consumers (the live
+ * frames, the sealed record, the Summary rows) never meet it.
+ */
+export const MIRROR_EVENT_CAP = 1_999;
+export const MIRROR_TRUNCATED_SEQ = 2_000;
+export type TruncatedEvent = EventBase & { kind: 'truncated' };
+
+/** A row of the live mirror (public.ana_run_events): an event, or the truncation marker. */
+export type MirroredTimelineEvent = TimelineEvent | TruncatedEvent;
+
 /** A text by its hash and length, as the record holds every text. */
 export interface TimelineTextRef {
   sha256: string;

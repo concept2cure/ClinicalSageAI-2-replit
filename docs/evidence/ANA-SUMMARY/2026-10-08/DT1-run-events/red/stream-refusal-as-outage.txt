@@ -1,0 +1,13 @@
+# mutation: stream-refusal-as-outage
+# test: server/routes/ana-ri/__tests__/stream-run-events.test.ts -t "before the question"
+ × server/routes/ana-ri/__tests__/stream-run-events.test.ts > the run row: policy at insert, the verified conversation, the refusals > RUN_IN_PROGRESS is a frame before the question is saved, and nothing runs 50ms
+   → expected [] to deeply equal [ { type: 'error', …(3) } ]
+ × server/routes/ana-ri/__tests__/stream-run-events.test.ts > the run row: policy at insert, the verified conversation, the refusals > RUN_LIMIT is a frame before the question is saved, and nothing runs 10ms
+   → expected [] to deeply equal [ { type: 'error', …(2) } ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-run-events.test.ts > the run row: policy at insert, the verified conversation, the refusals > RUN_IN_PROGRESS is a frame before the question is saved, and nothing runs
+AssertionError: expected [] to deeply equal [ { type: 'error', …(3) } ]
+ FAIL  server/routes/ana-ri/__tests__/stream-run-events.test.ts > the run row: policy at insert, the verified conversation, the refusals > RUN_LIMIT is a frame before the question is saved, and nothing runs
+AssertionError: expected [] to deeply equal [ { type: 'error', …(2) } ]
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 skipped (7)

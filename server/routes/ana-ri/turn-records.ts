@@ -52,21 +52,13 @@ import {
 } from '../../services/ana/turn-record-verify.js';
 import { buildTurnSummary } from '../../services/ana/turn-summary.js';
 import { resolveThreadStore } from '../../services/chat-thread-helpers.js';
+import { readsEveryRecord } from './record-access.js';
 import { extractRequestContext, sendError, sendSuccess } from './shared.js';
 
 export const TURN_RECORD_EXPORT_ACTION = 'ana.turn.exported';
 export const TURN_RECORD_EXPORT_FORMAT = 'ana-turn-record-export/1';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** Org roles that may read every record in their organization. */
-const RECORD_READER_ROLES = new Set(['admin', 'owner']);
-
-/** True when the caller may read any record in their organization. */
-export function readsEveryRecord(user: { role?: unknown; roles?: unknown } | undefined): boolean {
-  const roles: unknown[] = Array.isArray(user?.roles) && user.roles.length > 0 ? user.roles : [user?.role];
-  return roles.some((r) => typeof r === 'string' && RECORD_READER_ROLES.has(r.toLowerCase()));
-}
 
 /** The steps an inspector follows to check an exported package without this server. */
 export const HOW_TO_VERIFY: readonly string[] = [

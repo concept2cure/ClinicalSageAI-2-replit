@@ -113,3 +113,26 @@ export function taskChanges(prev: PlanStep[] | undefined, next: PlanStep[], ids:
   }));
   return [...changes.filter((c) => c.change === 'added'), ...changes.filter((c) => c.change !== 'added')];
 }
+
+/**
+ * The plan a turn's task changes leave, in order — the inverse of
+ * {@link taskChanges}, for a reader that has the Summary's task events but not
+ * the plans that produced them (a device following a run, AnA detach DT1,
+ * docs/design/ANA_DETACH_2026-10-08.md §3.7). Keyed by task id, so a title that
+ * left and came back is the new task it was issued as. A task is listed where
+ * it was first added; `taskChanges` carries no reordering, so neither does this.
+ */
+export function planFromTaskChanges(changes: Iterable<Pick<TaskChange, 'task' | 'change' | 'title'>>): PlanStep[] {
+  const plan = new Map<string, PlanStep>();
+  for (const c of changes) {
+    if (c.change === 'removed') {
+      plan.delete(c.task);
+      continue;
+    }
+    const step = plan.get(c.task) ?? { title: c.title, status: 'pending' as PlanStepStatus };
+    if (c.change === 'started') step.status = 'in_progress';
+    if (c.change === 'completed') step.status = 'completed';
+    plan.set(c.task, step);
+  }
+  return [...plan.values()].map((s) => ({ ...s }));
+}

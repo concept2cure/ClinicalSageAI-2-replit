@@ -59,6 +59,24 @@
 --   to correct today. Should that ever stop being true, the fix is a new index
 --   name here — not a DROP, and not an edit that cannot reach the databases it
 --   is meant for.
+--
+-- AMENDMENT 2026-10-08 (in place, per CLAUDE.md RULE 1; AnA detach slice DT1,
+-- docs/design/ANA_DETACH_2026-10-08.md §3.1, evidence
+-- docs/evidence/ANA-SUMMARY/2026-10-08/DT1-run-events/):
+--   Six columns, each its own ADD COLUMN IF NOT EXISTS at the end of this file
+--   (see the note above on why a column never goes into the CREATE TABLE):
+--     timeline_seq     the run's timeline high-water mark, written by the
+--                      owner's heartbeat and by the mirror's close
+--     user_message_id  the question this run answers (chat_messages.id, an
+--                      INTEGER as ana_turn_records.user_message_id is)
+--     run_policy       'manual' | 'auto' | NULL, written at insert
+--     hold             { reason, next } while a Manual hold or a person's
+--                      pause is open (written from slice DT3)
+--     last_watched_at  the asker's last watching poll (written from DT3)
+--     released_at      when the owner finished trying to record the turn
+--   Additive; nothing is dropped, renamed or narrowed, and no CHECK is added
+--   (an ADD CONSTRAINT would re-validate every row on every deploy).
+--   Companion table: migrations/20261008f_ana_run_events.sql.
 -- =============================================================================
 
 -- One row per in-flight AnA turn.
@@ -130,3 +148,12 @@ CREATE INDEX IF NOT EXISTS idx_ana_runs_live
 -- Runs belonging to one conversation.
 CREATE INDEX IF NOT EXISTS idx_ana_runs_org_thread
   ON ana_runs (organization_id, thread_id);
+
+-- AMENDMENT 2026-10-08 (DT1): see the header. Each column nullable or
+-- defaulted, so the ADD is instant and every existing row stays valid.
+ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS timeline_seq integer NOT NULL DEFAULT 0;
+ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS user_message_id integer;
+ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS run_policy text;
+ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS hold jsonb;
+ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS last_watched_at timestamptz;
+ALTER TABLE ana_runs ADD COLUMN IF NOT EXISTS released_at timestamptz;
