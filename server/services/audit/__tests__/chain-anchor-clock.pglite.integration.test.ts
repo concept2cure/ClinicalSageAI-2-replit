@@ -124,10 +124,10 @@ describe('the archive fixture states verification after the ledger (DP-68)', () 
   });
 
   it.each([
-    ['at the anchor', 'archived_at = $1::timestamptz', () => clock.toISOString()],
-    ['after the verifier', 'archived_at = $1::timestamptz', () => new Date(clock.getTime() + 2).toISOString()],
-    ['cutoff in the hot window', 'cutoff = $1::timestamptz', () => clock.toISOString()],
-    ['insufficient deletion budget', 'row_count = $1', () => 2],
+    ['at the anchor', 'archived_at = $1::timestamptz', (): string | number => clock.toISOString()],
+    ['after the verifier', 'archived_at = $1::timestamptz', (): string | number => new Date(clock.getTime() + 2).toISOString()],
+    ['cutoff in the hot window', 'cutoff = $1::timestamptz', (): string | number => clock.toISOString()],
+    ['insufficient deletion budget', 'row_count = $1', (): string | number => 2],
   ] as const)('unchanged verifier refuses a ledger %s', async (_label, assignment, value) => {
     await native();
     await alterLedger(assignment, [value()]);
