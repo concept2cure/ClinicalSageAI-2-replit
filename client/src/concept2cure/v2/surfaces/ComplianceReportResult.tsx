@@ -18,6 +18,7 @@ import {
   fileBase, parseExport, pastAsOfNote, runErrorOf, runUrl, statementOf,
   type RunResult,
 } from './complianceReportsModel';
+import { JWT_SECRET_FALLBACK_KEY_ID } from '@shared/constants/audit-export-key';
 
 const muted: React.CSSProperties = { fontSize: 12, color: 'var(--text-400)' };
 const TONE_COLOR: Record<Tone, string> = {
@@ -95,10 +96,30 @@ function ManifestStrip({ manifest, titles }: { manifest: Record<string, unknown>
       {item('Generated', f.generatedAt ?? '—')}
       {item('Rows', rows.length ? rows.join(' · ') : '—')}
       {item('SHA-256', f.dataHash ? <span className="mono" title={f.dataHash}>{`${f.dataHash.slice(0, 12)}…`}</span> : '—')}
-      {item('Signing key', <span className="mono">{f.signingKeyId ?? '—'}</span>)}
+      {item('Signing key', (
+        <span data-testid="cr-signing-key">
+          <span className="mono">{f.signingKeyId ?? '—'}</span>
+          {f.signingKeyId === JWT_SECRET_FALLBACK_KEY_ID && <span> (development fallback, not a dedicated key)</span>}
+        </span>
+      ))}
       {item('Export', <span className="mono">{f.exportId ?? '—'}</span>)}
     </dl>
   );
+}
+
+/**
+ * Which key made the seal, in the words that are true for it. A manifest that
+ * names the JWT-secret fallback was sealed with the session-signing secret
+ * because no dedicated audit export key is configured; production refuses that
+ * posture (auditExportKeyPosture.ts). It was called "a platform-held key" like
+ * any other (QA 2026-10-08, j8). Key handling is unchanged; only the sentence.
+ */
+function sealKeyPhrase(keyId: string | null | undefined): string {
+  if (keyId === JWT_SECRET_FALLBACK_KEY_ID) {
+    return `under the development fallback key (${keyId}): no dedicated audit export key is configured on this deployment, ` +
+      'so the seal was made with the session-signing secret. A production deployment refuses to seal this way.';
+  }
+  return `under a platform-held key (${keyId ?? 'not named'}).`;
 }
 
 /**
@@ -124,7 +145,7 @@ function SealPanel({ manifest, verification }: { manifest: Record<string, unknow
     <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10 }}>
       <h3 style={{ fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>What the seal means</h3>
       <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-300)', lineHeight: 1.5 }}>
-        {`Sealed by the platform with ${algorithm} under a platform-held key (${f.signingKeyId ?? 'not named'}). ` +
+        {`Sealed by the platform with ${algorithm} ${sealKeyPhrase(f.signingKeyId)} ` +
           `Recorded on the audit trail as export ${f.exportId ?? 'not named'}. ` +
           `Run by ${who} at ${f.generatedAt ?? 'a time the manifest does not state'}. ` +
           'The seal is the platform’s tamper-evidence: it shows the data has not changed since it was produced. ' +

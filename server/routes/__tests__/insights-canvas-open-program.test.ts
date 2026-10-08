@@ -29,6 +29,7 @@ vi.mock('../../services/report-os/entitlement-map', async (importOriginal) => ({
 vi.mock('../../services/report-os/segment', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/report-os/segment')>()),
   deriveOrgSegments: h.segments,
+  deriveProjectSegments: async () => null,
 }));
 vi.mock('../../services/report-os/portfolio/fetch', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/report-os/portfolio/fetch')>()),
@@ -90,9 +91,13 @@ describe('GET /overview?programId= — the open program leads', () => {
     expect(h.anchor).not.toHaveBeenCalled();
   });
 
-  it('with no program open the flagship still leads, as before', async () => {
+  /* QA 2026-10-08 (j8, "Reporting scope is fixed to project 1"): the flagship
+     no longer stands in for an open program that was never chosen. With none
+     open there is no lead, and the canvas asks which program
+     (insights-canvas-catalog.test.ts pins the program list it offers). */
+  it('with no program open no program leads — the flagship does not stand in', async () => {
     const res = await overview();
-    expect(res.body.data.leadProgram).toMatchObject({ projectId: 1, label: 'C2C-001' });
+    expect(res.body.data.leadProgram).toBeNull();
     expect(res.body.data.openProgram).toBeNull();
     expect(h.anchor).not.toHaveBeenCalled();
   });

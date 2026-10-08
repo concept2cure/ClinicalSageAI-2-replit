@@ -12,7 +12,8 @@
  *                         segment(s) and annotated with the org's entitlement
  *                         verdict — the SAME pure helpers the
  *                         /api/report-os/taxonomy catalog uses
- *   - leadProgram       → the org's flagship program's REAL governed readiness,
+ *   - leadProgram       → the OPEN program's REAL governed readiness (none when
+ *                         no program is open: the canvas asks which one),
  *                         derived from the SAME orchestrator the /runs path uses
  *                         (computeInitialRun, via fetchOrgPortfolioSummary)
  *   - portfolio         → the cross-program board rollup, ENTERPRISE-gated
@@ -54,9 +55,11 @@ import { GLOBAL_REPORT_TYPE_SEED } from '../services/report-os/taxonomy-global';
 import { PREDICTION_REPORT_TYPES } from '../services/report-os/prediction/report-types';
 import {
   deriveOrgSegments,
+  deriveProjectSegments,
   filterTypesForSegment,
   type ReportSegment,
 } from '../services/report-os/segment';
+import { reportEngineFor } from '../services/report-os/report-engine';
 import {
   requireReportEntitlement,
   decideReportEntitlement,
@@ -93,6 +96,13 @@ interface CanvasReportType {
   entitled: boolean;
   feature: FeatureKey;
   requiredTier: Tier;
+  /**
+   * Whether an engine computes this type over a program (project scope), so
+   * the canvas can run it (report-engine.ts). A type that is not runnable is
+   * shown as not computed in this release, never run as the readiness digest
+   * under its title (QA 2026-10-08, j8).
+   */
+  runnable: boolean;
 }
 
 interface CanvasLeadProgram {
@@ -105,7 +115,8 @@ interface CanvasLeadProgram {
   indication: string | null;
   /** Real governed readiness (0-100) from computeInitialRun; never originated here. */
   readiness: number | null;
-  confidence: number;
+  /** A measured confidence, or null: the readiness run measures none. */
+  confidence: number | null;
   status: ProgramMemberInsight['status'];
   riskLevel: RiskLevel;
   criticalBlockerCount: number;
@@ -126,7 +137,7 @@ interface CanvasPortfolioProgram {
   label: string;
   indication: string | null;
   readiness: number | null;
-  confidence: number;
+  confidence: number | null;
   status: ProgramMemberInsight['status'];
   riskLevel: RiskLevel;
   criticalBlockerCount: number;
@@ -135,7 +146,7 @@ interface CanvasPortfolioProgram {
 interface CanvasPortfolioSummary {
   programCount: number;
   avgReadiness: number | null;
-  avgConfidence: number;
+  avgConfidence: number | null;
   worstRisk: RiskLevel;
   readyCount: number;
   partialCount: number;
@@ -160,20 +171,36 @@ interface CanvasPortfolio {
  *                     over it — and the canvas has no lead;
  *   not-in-portfolio  its row is not among the programs the portfolio computed
  *                     (archived, a sub-project, or past the rollup cap).
- * Null when no program was named: the organisation's flagship leads.
+ * Null when no program was named: there is no lead, and the canvas offers
+ * `programs` to pick from.
  */
 interface CanvasOpenProgram {
   programId: string;
   state: 'lead' | 'unanchored' | 'not-in-portfolio';
 }
 
+/** A program the canvas can be opened on: one with a project record to compute over. */
+interface CanvasProgramChoice {
+  programId: string;
+  code: string | null;
+  label: string;
+}
+
 interface CanvasOverview {
   organizationId: number;
   tier: Tier;
+  /** The segments the catalog was filtered to: the lead program's, else the organisation's. */
   segments: ReportSegment[];
   reportTypes: CanvasReportType[];
   leadProgram: CanvasLeadProgram | null;
   openProgram: CanvasOpenProgram | null;
+  /**
+   * The organisation's programs a report can run over, for the canvas's
+   * program picker. Names only, so on every plan (the rollup stays gated).
+   * With no program open there is no lead: the person picks one (QA
+   * 2026-10-08, j8: the canvas led with the lowest project id, project 1).
+   */
+  programs: CanvasProgramChoice[];
   portfolio: CanvasPortfolio;
 }
 
@@ -184,26 +211,6 @@ const LOCKED_PORTFOLIO_DECISION: ReportEntitlementDecision = {
   requiredTier: 'enterprise',
   tier: 'standard',
 };
-
-/**
- * PURE: pick the flagship program to lead the canvas opener with — the highest
- * governed readiness, ties broken to the fewest critical blockers then lowest
- * projectId (stable). Ranks the scores computeInitialRun already produced; it
- * does not recompute or originate any readiness value.
- */
-function pickFlagship(members: ProgramMemberInsight[]): ProgramMemberInsight | null {
-  if (members.length === 0) return null;
-  const sorted = [...members].sort((a, b) => {
-    const ar = a.readinessScore ?? -1;
-    const br = b.readinessScore ?? -1;
-    if (br !== ar) return br - ar;
-    if (a.criticalBlockerCount !== b.criticalBlockerCount) {
-      return a.criticalBlockerCount - b.criticalBlockerCount;
-    }
-    return a.projectId - b.projectId;
-  });
-  return sorted[0] ?? null;
-}
 
 /** PURE: single-program lead context. filing/agency/pdufa are unsourced → null. */
 function toLeadProgram(insight: ProgramMemberInsight): CanvasLeadProgram {
@@ -267,7 +274,12 @@ function openProgramParam(raw: unknown): string | null | false {
  * resolved on the server (strict — a lookup that could not complete throws to
  * the route's 500, never "no record"), led only when the portfolio computed it;
  * otherwise no lead and `openProgram` says why. Never the flagship in its place.
- * With none open: the flagship, as before.
+ *
+ * With none open there is no lead, and the canvas asks which program (QA
+ * 2026-10-08, j8). The flagship stood in: the highest readiness, which with no
+ * readiness computed anywhere fell to the lowest project id — project 1, a
+ * legacy record no program anchors — so every report and digest ran over a
+ * program the person had not chosen.
  */
 async function pickLead(
   organizationId: number,
@@ -275,10 +287,7 @@ async function pickLead(
   summary: { attentionRanked: ProgramMemberInsight[] } | null,
 ): Promise<{ leadProgram: CanvasLeadProgram | null; openProgram: CanvasOpenProgram | null }> {
   const members = summary?.attentionRanked ?? [];
-  if (!programId) {
-    const flagship = pickFlagship(members);
-    return { leadProgram: flagship ? toLeadProgram(flagship) : null, openProgram: null };
-  }
+  if (!programId) return { leadProgram: null, openProgram: null };
   const anchored = await resolveProgramProjectAnchor(db, {
     programId,
     orgId: organizationId,
@@ -292,6 +301,50 @@ async function pickLead(
   };
 }
 
+/**
+ * PURE: the report catalog for the segments the lead program's recorded product
+ * type gives (its anchored regulatory program; the org's derived segments when
+ * there is no lead). The org's union offered a device-only 510(k) matrix for a
+ * biologic IND because the organisation also holds device programs (QA
+ * 2026-10-08, j8). Each type carries the org's entitlement verdict and whether
+ * an engine computes it over a program (`runnable`, report-engine.ts).
+ */
+function catalogFor(segments: ReportSegment[], persona: string | null, tier: Tier): CanvasReportType[] {
+  return filterTypesForSegment(ALL_REPORT_TYPES, segments, persona).map((t) => {
+    const decision = decideReportEntitlement(t.typeId, t.family, tier);
+    return {
+      typeId: t.typeId,
+      label: t.label,
+      family: t.family,
+      allowedScopes: t.allowedScopes,
+      allowedClientSegments: t.allowedClientSegments,
+      truthfulnessRules: t.truthfulnessRules,
+      entitled: decision.entitled,
+      feature: decision.feature,
+      requiredTier: decision.requiredTier,
+      runnable: reportEngineFor(t.typeId, 'project') != null,
+    };
+  });
+}
+
+/** The lead program's segments (its recorded product type); the organisation's when there is no lead or none is recorded. */
+async function leadSegments(
+  organizationId: number,
+  leadProgram: CanvasLeadProgram | null,
+  orgSegments: ReportSegment[],
+): Promise<ReportSegment[]> {
+  if (!leadProgram) return orgSegments;
+  return (await deriveProjectSegments(organizationId, leadProgram.projectId)) ?? orgSegments;
+}
+
+/** PURE: the programs a person can open the canvas on — anchored ones, by name (every plan). */
+function programChoices(summary: { attentionRanked: ProgramMemberInsight[] } | null): CanvasProgramChoice[] {
+  return (summary?.attentionRanked ?? [])
+    .filter((m): m is ProgramMemberInsight & { programId: string } => typeof m.programId === 'string' && m.programId !== '')
+    .map((m) => ({ programId: m.programId, code: m.code ?? null, label: m.name }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 export default function createInsightsCanvasRoutes(): Router {
   const router = Router();
 
@@ -299,11 +352,11 @@ export default function createInsightsCanvasRoutes(): Router {
    * GET /api/insights-canvas/overview
    *
    * The Insights (AnA Reporting Canvas) bootstrap: the org's tier + segments,
-   * the entitlement-annotated governed report catalog, the flagship program's
+   * the entitlement-annotated governed report catalog, the open program's
    * real governed readiness, and the (enterprise-gated) cross-program board
    * rollup. Optional `?persona=` intersects the catalog on allowedPersonas.
    * Optional `?programId=` (a regulatory_programs UUID) names the program the
-   * shell has open: it leads instead of the flagship, or `openProgram` says why
+   * shell has open: it leads, or `openProgram` says why
    * it cannot.
    */
   router.get('/overview', async (req: Request, res: Response) => {
@@ -358,31 +411,14 @@ export default function createInsightsCanvasRoutes(): Router {
       }
       const summary = portfolioResult.value;
 
-      // Report catalog: filter the seed to the org's segment(s), annotate each
-      // with the org's entitlement verdict (pure). Identical to /taxonomy.
-      const reportTypes: CanvasReportType[] = filterTypesForSegment(
-        ALL_REPORT_TYPES,
-        segments,
-        persona,
-      ).map((t) => {
-        const decision = decideReportEntitlement(t.typeId, t.family, tier);
-        return {
-          typeId: t.typeId,
-          label: t.label,
-          family: t.family,
-          allowedScopes: t.allowedScopes,
-          allowedClientSegments: t.allowedClientSegments,
-          truthfulnessRules: t.truthfulnessRules,
-          entitled: decision.entitled,
-          feature: decision.feature,
-          requiredTier: decision.requiredTier,
-        };
-      });
-
       // Lead program — a single program's OWN governed readiness, a base
       // capability shown on every tier (not the enterprise rollup): the open
-      // program when one is named, the flagship otherwise (pickLead).
+      // program when one is named; none otherwise (pickLead).
       const { leadProgram, openProgram } = await pickLead(organizationId, programId, summary);
+
+      const catalogSegments = await leadSegments(organizationId, leadProgram, segments);
+      const reportTypes = catalogFor(catalogSegments, persona, tier);
+      const programs = programChoices(summary);
 
       // Cross-program board rollup — the ENTERPRISE portfolio_rollup capability.
       // Populated only when entitled; otherwise an honest lock (null), mirroring
@@ -411,10 +447,11 @@ export default function createInsightsCanvasRoutes(): Router {
       const data: CanvasOverview = {
         organizationId,
         tier,
-        segments,
+        segments: catalogSegments,
         reportTypes,
         leadProgram,
         openProgram,
+        programs,
         portfolio,
       };
 

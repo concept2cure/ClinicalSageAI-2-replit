@@ -12,6 +12,7 @@
  */
 
 import { computeInitialRun } from '../orchestrator';
+import { computeDomainRun, reportEngineFor, reportTypeNotComputedMessage } from '../report-engine';
 import { renderReport, gapsWereEvaluated, type RenderInput } from '../render/render';
 import { evaluateTruthfulness, type TruthfulnessRules } from '../truthfulness';
 import { REPORT_TYPE_SEED } from '../taxonomy';
@@ -29,7 +30,8 @@ export function isKnownReportType(typeId: string): boolean {
 
 export interface GovernedRenderResult {
   rendered: ReturnType<typeof renderReport>;
-  confidence: number;
+  /** A measured confidence, or null when the engine measures none (report-engine.ts). */
+  confidence: number | null;
   blockers: string[];
   criticalBlockerCount: number;
 }
@@ -46,11 +48,20 @@ export async function renderGovernedReport(
   const def = SEED_BY_ID.get(params.typeId);
   if (!def) throw new Error(`Unknown report type: ${params.typeId}`);
   if (isPredictionFamily(def.family)) throw new Error(PREDICTION_NOT_A_RUN);
+  /* Only a type an engine computes is rendered (report-engine.ts). The live
+     render passed the type id as a registry id the orchestrator never reads,
+     so every type came back as the readiness digest under its own title
+     (QA 2026-10-08, j8). A document-scoped lineage trace is a stored run's
+     document, not a live render. */
+  const engine = reportEngineFor(params.typeId, params.scopeType);
+  if (engine == null || engine === 'lineage') throw new Error(reportTypeNotComputedMessage(def.label));
 
-  const computed = await computeInitialRun(organizationId, params.scopeType, params.scopeId, {
-    explicitRegistryId: params.typeId,
-    explicitSubmissionType: params.submissionType,
-  });
+  const computed =
+    engine === 'domain'
+      ? await computeDomainRun(params.typeId, organizationId, params.scopeType, params.scopeId)
+      : await computeInitialRun(organizationId, params.scopeType, params.scopeId, {
+          explicitSubmissionType: params.submissionType,
+        });
 
   const rules = (def.truthfulnessRules ?? {}) as TruthfulnessRules;
   const truthfulness = evaluateTruthfulness(

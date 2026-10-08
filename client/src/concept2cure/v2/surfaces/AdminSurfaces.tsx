@@ -699,15 +699,22 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
             <div className="txw-row">
               <div className="txw-row-l">
                 Multi-factor authentication
-                <small>TOTP via an authenticator app, enrolled by each member.</small>
+                {/* QA 2026-10-08 (j9): this said "enrolled by each member", but no
+                    screen starts an authenticator enrolment, so it said what sign-in
+                    does instead (routes/auth.ts POST /login). */}
+                <small>
+                  Sign-in asks for an emailed code, or for an authenticator app on an account that
+                  already has one.
+                </small>
               </div>
               <div
                 className="txw-row-r"
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
               >
                 <span className="txw-help">
-                  {I.info} Set per user, not per organization. Sign-in enforcement follows each
-                  member's own enrolment, so there is nothing for an administrator to switch here.
+                  {I.info} Set per user, not per organization, so there is nothing for an
+                  administrator to switch here. Enrolling an authenticator app is not offered in
+                  this product yet.
                 </span>
               </div>
             </div>
@@ -1059,7 +1066,7 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
   // Real hash-chained ledger. useLiveRows unwraps the { success, data } envelope,
   // returns a fresh [] while loading / on error (rendered directly, so no seed
   // loop), and sets `error` only on a genuine fetch failure.
-  const { rows: entries, loading, error, meta } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
+  const { rows: entries, loading, error, status: readStatus, meta } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
 
   const log = entries.filter(
     (e) =>
@@ -1223,6 +1230,15 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
         <div role="status" className="scaf-note" style={{ padding: '18px 10px', maxWidth: 680 }}>
           Loading audit trail…
         </div>
+      ) : error && readStatus === 403 ? (
+        /* A refusal is not an outage (QA 2026-10-08, j8): a member was told the
+           ledger "didn't respond" and to retry, when the server had refused the
+           read for the member's role. The server's own sentence says who reads it. */
+        <EmptyState
+          icon={I.lock}
+          title="The audit trail is not available to your role"
+          hint={error}
+        />
       ) : error ? (
         <EmptyState
           tone="error"

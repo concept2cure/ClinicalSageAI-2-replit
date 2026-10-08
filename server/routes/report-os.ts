@@ -64,7 +64,19 @@ import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 import { GOVERNED_REVOCATION_SIGNATURE_TYPE, isSignatureWithdrawn } from '../services/part11/signature-persistence';
 import { requireGovernedReason } from './governed-reason';
-import { projectsInOrg, submissionInProject, workspaceIsOrganisations, WORKSPACE_NOT_IN_ORGANIZATION } from '../services/report-os/ownership';
+import { projectInOrg, projectScopeLabel, projectsInOrg, submissionInProject, workspaceIsOrganisations, WORKSPACE_NOT_IN_ORGANIZATION } from '../services/report-os/ownership';
+import {
+  REPORT_TYPE_NOT_APPLICABLE,
+  REPORT_TYPE_NOT_COMPUTED,
+  computeDomainRun,
+  reportEngineFor,
+  reportTypeApplies,
+  reportTypeNotApplicableMessage,
+  reportTypeNotComputedMessage,
+} from '../services/report-os/report-engine';
+import { deriveScopeSegments } from '../services/report-os/segment';
+import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
+import { looksLikeProgramUuid } from '../lib/project-id';
 import { PREDICTION_NOT_A_RUN, isPredictionFamily } from '../services/report-os/prediction/report-types';
 import { REPORT_FINALIZE_ROLES } from '@shared/constants/permissions';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
@@ -101,14 +113,29 @@ const createProgramSnapshotSchema = z.object({
   snapshotReason: z.string().optional(),
 });
 
-const createRunSchema = z.object({
-  clientWorkspaceId: z.number().int().positive().optional(),
-  scopeType: z.enum(reportScopeEnum),
-  scopeId: z.string().min(1),
-  reportTypeId: z.string().min(1),
-  registryId: z.string().max(80).optional(),
-  submissionType: z.string().max(80).optional(),
-});
+/*
+ * A project-scoped run may name its scope by the PROGRAM the shell has open
+ * (`programId`, a regulatory_programs UUID) instead of a projects row id: the
+ * server resolves the program's anchored project with the same strict resolver
+ * the canvas overview uses, so the run is computed over the program the person
+ * is working in, never over a project id the client carried from elsewhere
+ * (QA 2026-10-08, j8: every report ran over project 1).
+ */
+const createRunSchema = z
+  .object({
+    clientWorkspaceId: z.number().int().positive().optional(),
+    scopeType: z.enum(reportScopeEnum),
+    scopeId: z.string().min(1).optional(),
+    programId: z
+      .string()
+      .refine((v) => looksLikeProgramUuid(v), { message: 'programId must be a program id' })
+      .optional(),
+    reportTypeId: z.string().min(1),
+    registryId: z.string().max(80).optional(),
+    submissionType: z.string().max(80).optional(),
+  })
+  .refine((b) => b.scopeId != null || b.programId != null, { message: 'scopeId or programId is required' })
+  .refine((b) => b.programId == null || b.scopeType === 'project', { message: 'programId names a project scope' });
 
 const listRunsSchema = z.object({
   scopeType: z.string().optional(),
@@ -402,7 +429,7 @@ function refuseUnrecorded(res: Response, code: string, message: string, data?: R
 }
 
 /** POST /runs' chain row: the run exists, as computed. */
-function runCreatedEvent(run: typeof reportRuns.$inferSelect, computed: { confidence: number; blockers: string[] }): ReportAuditEvent {
+function runCreatedEvent(run: typeof reportRuns.$inferSelect, computed: { confidence: number | null; blockers: string[] }): ReportAuditEvent {
   return {
     organizationId: run.organizationId,
     action: 'report_os.run_created',
@@ -436,7 +463,7 @@ type NewDependency = Omit<typeof reportRunDependencies.$inferInsert, 'runId'>;
 async function createRunOnChain(
   req: Request,
   rows: { run: NewRun; snapshot: NewSnapshot; dependencies: NewDependency[] },
-  computed: { confidence: number; blockers: string[] },
+  computed: { confidence: number | null; blockers: string[] },
 ): Promise<{ run: typeof reportRuns.$inferSelect; snapshot: typeof reportSnapshots.$inferSelect } | 'not-recorded'> {
   let recording = false;
   try {
@@ -1401,10 +1428,34 @@ router.post('/runs', async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { clientWorkspaceId, scopeType, scopeId, reportTypeId, registryId, submissionType } =
+    const { clientWorkspaceId, scopeType, programId, reportTypeId, registryId, submissionType } =
       parsed.data;
     const requestedBy = getUserId(req);
     if (!(await workspaceIsOrganisations(orgId, clientWorkspaceId))) return res.status(403).json(WORKSPACE_NOT_IN_ORGANIZATION);
+
+    let scopeId = parsed.data.scopeId ?? '';
+    if (programId) {
+      // Strict: a lookup that could not complete throws to the 500 below; it is never "no record".
+      const anchored = await resolveProgramProjectAnchor(db, {
+        programId: programId.toLowerCase(),
+        orgId,
+        context: 'report-os-run',
+        strict: true,
+      });
+      if (anchored == null) {
+        return res.status(409).json({
+          error: 'This program has no project record, so no report runs over it yet. Nothing was run.',
+          code: 'PROGRAM_NOT_ANCHORED',
+        });
+      }
+      if (parsed.data.scopeId != null && parsed.data.scopeId !== String(anchored)) {
+        return res.status(400).json({
+          error: 'scopeId does not name the program’s project record.',
+          code: 'SCOPE_PROGRAM_MISMATCH',
+        });
+      }
+      scopeId = String(anchored);
+    }
 
     const type = await db
       .select()
@@ -1428,18 +1479,40 @@ router.post('/runs', async (req: Request, res: Response) => {
     // its membership query below requires the group to be this org's. The
     // canvas sent a project id under it until L189 was closed on 2026-10-01;
     // it now sends project scope.)
+    let scopeLabel: string | null = null;
     if (scopeType === 'project') {
-      const projectId = Number(scopeId);
-      const owned = Number.isSafeInteger(projectId)
-        ? await projectsInOrg(orgId, [projectId])
-        : new Set<number>();
-      if (owned.size === 0) return res.status(404).json({ error: 'Project not found' });
+      const project = await projectInOrg(orgId, Number(scopeId));
+      if (!project) return res.status(404).json({ error: 'Project not found' });
+      scopeLabel = projectScopeLabel(project);
     }
 
     // A prediction is never computed by the generic run: it would be the
     // readiness run under a prediction title (reporting review 2026-10-01).
     if (isPredictionFamily(type[0].family)) {
       return res.status(422).json({ error: PREDICTION_NOT_A_RUN, code: 'PREDICTION_NOT_A_RUN' });
+    }
+
+    // Nor is any other type no engine computes (report-engine.ts): it was the
+    // readiness digest under that type's title (QA 2026-10-08, j8).
+    const engine = reportEngineFor(reportTypeId, scopeType);
+    if (engine == null) {
+      return res.status(422).json({
+        error: reportTypeNotComputedMessage(type[0].label ?? reportTypeId),
+        code: REPORT_TYPE_NOT_COMPUTED,
+      });
+    }
+
+    // A type runs only for a program of a product type it applies to: the
+    // 510(k) equivalence matrix ran over a biologic IND (QA 2026-10-08, j8).
+    if (scopeType === 'project') {
+      const segments = await deriveScopeSegments(orgId, Number(scopeId));
+      const allowed = (type[0].allowedClientSegments as string[] | null) ?? [];
+      if (!reportTypeApplies({ allowedClientSegments: allowed }, segments)) {
+        return res.status(422).json({
+          error: reportTypeNotApplicableMessage(type[0].label ?? reportTypeId, allowed, segments),
+          code: REPORT_TYPE_NOT_APPLICABLE,
+        });
+      }
     }
 
     // Entitlement gate: refuse to generate a report above the org's tier —
@@ -1473,25 +1546,17 @@ router.post('/runs', async (req: Request, res: Response) => {
       programProjectIds = memberships.map(m => m.projectId);
     }
 
-    const computed = await computeInitialRun(orgId, scopeType, scopeId, {
-      programProjectIds,
-      explicitRegistryId: registryId,
-      explicitSubmissionType: submissionType,
-    });
-
-    // Research-compliance / sponsored-programs domain providers: compute the real
-    // report summary from the domain tables and merge it into the run.
-    try {
-      const { computeDomainReport } = await import('../services/report-os/research-compliance-report-providers.js');
-      const domain = await computeDomainReport(reportTypeId, orgId);
-      if (domain) {
-        Object.assign(computed.summary, { domain: domain.summary });
-        computed.providers.push(domain.provider);
-        if (domain.provider.status === 'missing' && domain.provider.blocker) computed.blockers.push(domain.provider.blocker);
-      }
-    } catch {
-      // Domain provider is best-effort; the generic report run stands on its own.
-    }
+    // A register is its own provider's run and nothing of the readiness digest;
+    // a failure to compute it is a failed run, never the digest in its place.
+    const computed =
+      engine === 'domain'
+        ? await computeDomainRun(reportTypeId, orgId, scopeType, scopeId)
+        : await computeInitialRun(orgId, scopeType, scopeId, {
+            programProjectIds,
+            explicitRegistryId: registryId,
+            explicitSubmissionType: submissionType,
+          });
+    if (scopeLabel) computed.summary.scopeLabel = scopeLabel;
 
     // Document-scoped evidence-trace: source the report body from the EXISTING
     // per-document lineage dossier (versions/decisions/provenance/reasoning/
@@ -1499,9 +1564,11 @@ router.post('/runs', async (req: Request, res: Response) => {
     // derive confidence from lineage completeness. Reuses the whole run/seal/
     // render/finalize pipeline unchanged; the generic project-scope providers do
     // not apply to a single artifact, so their (spurious) blockers are dropped
-    // for this type. Best-effort — falls back to the generic run if unavailable.
+    // for this type. It fell back to the generic run when the dossier was
+    // unavailable — the readiness digest under the trace's title, the defect
+    // report-engine.ts closes (QA 2026-10-08, j8) — so no dossier is now no run.
     let lineageRendered: RenderedReport | undefined;
-    if (reportTypeId === 'provenance.evidence_trace_report' && scopeType === 'document') {
+    if (engine === 'lineage') {
       try {
         const [{ buildDocumentLineageDossier }, { dossierToRenderedReport, computeLineageConfidence }] =
           await Promise.all([
@@ -1520,8 +1587,16 @@ router.post('/runs', async (req: Request, res: Response) => {
             status: 'partial',
           });
         }
-      } catch {
-        // Dossier unavailable → generic run stands.
+      } catch (err) {
+        logger.warn('lineage dossier unavailable for evidence trace run', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
+      if (!lineageRendered) {
+        return res.status(422).json({
+          error: 'No lineage record was found for this document, so its evidence trace was not run.',
+          code: REPORT_TYPE_NOT_COMPUTED,
+        });
       }
     }
 
@@ -1752,13 +1827,17 @@ function buildRenderedFromRun(
   const criticalBlockers =
     storedCritical ?? (rules.forbidFinalIfMissingCritical ? blockers : []);
   /* A final run renders as final: it read back as 'partial' (or 'draft')
-     after its seal (reporting review 2026-10-01). */
+     after its seal (reporting review 2026-10-01). Only a finalized run: one
+     computed with no blocker is stored 'completed', and read as a request for
+     final it showed "Status: final" unsigned and unsealed, with Finalize not
+     offered (QA 2026-10-08, j8 after-check — a register with data has no
+     blocker). Finalize asks for final itself (forceRequestStatus). */
   const requestedStatus: ReportRunStatus =
-    forceRequestStatus ?? (run.status === 'completed' || run.status === 'final' ? 'final' : 'partial');
+    forceRequestStatus ?? (run.status === 'final' ? 'final' : 'partial');
   const truthfulness = evaluateTruthfulness(
     {
       requestedStatus,
-      confidence: run.confidence ?? 0,
+      confidence: run.confidence ?? null,
       blockers,
       criticalBlockers,
       gapsSection: gapsWereEvaluated(summary),
@@ -1782,7 +1861,6 @@ function buildRenderedFromRun(
         scopeType: run.scopeType,
         scopeId: run.scopeId,
         providers,
-        confidence: run.confidence ?? 0,
         blockers,
         summary,
         status: truthfulness.allowedStatus,

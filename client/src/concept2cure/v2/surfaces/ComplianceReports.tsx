@@ -123,7 +123,11 @@ export function ComplianceReports(_props: SurfaceViewProps) {
     if (!selected || !catalog) return;
     const p = periodProblem(selected.period, period);
     setProblem(p);
-    if (!p) void run.run(selected, period, catalog.readersNotice);
+    /* A refused period leaves no earlier result on screen (QA 2026-10-08, j8):
+       the alert sat beside a run for another period, which read as the answer
+       to the request just refused. */
+    if (p) run.reset();
+    else void run.run(selected, period, catalog.readersNotice);
   };
 
   const { running, error, result } = run;
@@ -213,7 +217,12 @@ function ReportDetail({ report, canRun, readersNotice, period, onPeriod, onRun, 
       <div className="pj-card" style={{ marginBottom: 14 }}>
         <div style={muted}>{report.sections.length > 0 ? `Sections: ${report.sections.map((s) => s.title).join(', ')}.` : ''}</div>
         <div style={muted}>{periodRule(report)}</div>
-        {canRun && <PeriodForm report={report} period={period} onPeriod={onPeriod} onRun={onRun} running={run.running} />}
+        {canRun
+          ? <PeriodForm report={report} period={period} onPeriod={onPeriod} onRun={onRun} running={run.running} />
+          /* A reader the catalog is open to, who may not run it, is told so
+             where the run form would be (QA 2026-10-08, j8): the selected
+             pane was silent, and only the banner above the cards said why. */
+          : <div role="note" data-testid="cr-detail-readers" style={{ ...noticeStyle, margin: '10px 0 0' }}>{readersNotice}</div>}
         {problem && <div role="alert" style={{ ...noticeStyle, margin: '10px 0 0', color: 'var(--error)' }}>{problem}</div>}
         {!run.result && <NotRecorded items={report.notRecorded} />}
       </div>

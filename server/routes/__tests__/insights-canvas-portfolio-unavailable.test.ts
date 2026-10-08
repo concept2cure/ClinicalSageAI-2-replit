@@ -16,7 +16,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), segments: vi.fn() }));
+const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), segments: vi.fn(), anchor: vi.fn() }));
 
 vi.mock('../../db', () => ({ db: {}, pool: {}, getPool: () => ({}), getDb: () => ({}), query: vi.fn(), transaction: vi.fn() }));
 vi.mock('../../utils/authedOrgId', async (importOriginal) => ({
@@ -30,7 +30,9 @@ vi.mock('../../services/report-os/entitlement-map', async (importOriginal) => ({
 vi.mock('../../services/report-os/segment', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/report-os/segment')>()),
   deriveOrgSegments: h.segments,
+  deriveProjectSegments: async () => null,
 }));
+vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: h.anchor }));
 vi.mock('../../services/report-os/portfolio/fetch', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/report-os/portfolio/fetch')>()),
   fetchOrgPortfolioSummary: h.summary,
@@ -40,7 +42,10 @@ import createInsightsCanvasRoutes from '../insights-canvas-routes';
 
 const app = express();
 app.use('/api/insights-canvas', createInsightsCanvasRoutes());
-const overview = () => request(app).get('/api/insights-canvas/overview');
+const overview = (q = '') => request(app).get('/api/insights-canvas/overview' + q);
+/* The canvas leads with the program the shell has open (QA 2026-10-08, j8: with
+   none open it no longer stands the flagship in). */
+const OPEN = '?programId=d979e567-4622-46f1-8cb7-8bf434227f25';
 
 const PROGRAM = {
   projectId: 12, name: 'ABC-101', code: 'ABC-101', indication: null, readinessScore: 64, confidence: 70,
@@ -51,6 +56,7 @@ beforeEach(() => {
   h.gate.mockReset().mockResolvedValue({ entitled: false, feature: 'portfolio_rollup', requiredTier: 'enterprise', tier: 'standard' });
   h.segments.mockReset().mockResolvedValue(['pharma']);
   h.summary.mockReset();
+  h.anchor.mockReset().mockResolvedValue(12);
 });
 
 describe('GET /overview and the portfolio read', () => {
@@ -75,9 +81,9 @@ describe('GET /overview and the portfolio read', () => {
     expect(res.body.data.reportTypes.length).toBeGreaterThan(0);
   });
 
-  it('answers 200 with the flagship program when there are programs', async () => {
+  it('answers 200 with the open program when there are programs', async () => {
     h.summary.mockResolvedValue({ memberCount: 1, attentionRanked: [PROGRAM], truncated: false });
-    const res = await overview();
+    const res = await overview(OPEN);
     expect(res.status).toBe(200);
     expect(res.body.data.leadProgram).toMatchObject({ projectId: 12, readiness: 64 });
   });
@@ -88,7 +94,7 @@ describe('GET /overview and the portfolio read', () => {
      equalled the project id. */
   it('names the lead program as the project its readiness was computed for', async () => {
     h.summary.mockResolvedValue({ memberCount: 1, attentionRanked: [PROGRAM], truncated: false });
-    const res = await overview();
+    const res = await overview(OPEN);
     expect(res.body.data.leadProgram).toMatchObject({ scope: 'project', scopeId: '12', projectId: 12 });
   });
 });

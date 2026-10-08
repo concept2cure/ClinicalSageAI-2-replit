@@ -1,0 +1,50 @@
+# GREEN: the 7 new test files on the fixed tree.
+
+✓ server/routes/__tests__/report-os-run-engine.test.ts > a type no engine computes > is refused 422 and nothing is computed or written 28ms
+✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > runs from its own provider, not the readiness orchestrator 31ms
+✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > is refused for a program whose product type it does not apply to 6ms
+✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > resolves the program through the strict anchor resolver and runs over its project 27ms
+✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a program with no project record: 409, nothing computed 14ms
+✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a scope id that is not the program’s project 4ms
+✓ server/routes/__tests__/report-os-run-engine.test.ts > the run names its scope > stores the project’s name for the renderer, not only its row id 17ms
+✓ server/routes/__tests__/report-os-run-engine.test.ts > a run computed with no blocker > renders below final until it is finalized 7ms
+✓ client/src/concept2cure/v2/__tests__/complianceReportsHonestStates.test.tsx > an inverted period > clears the previous result when the refusal is shown 975ms
+✓ client/src/concept2cure/v2/__tests__/complianceReportsHonestStates.test.tsx > a member who may read the catalog but not run it > is told in the selected report pane who runs it 125ms
+✓ client/src/concept2cure/v2/__tests__/complianceReportsHonestStates.test.tsx > a member who may read the catalog but not run it > shows no such note to someone who can run the report 83ms
+✓ client/src/concept2cure/v2/__tests__/complianceReportsHonestStates.test.tsx > the seal statement > names a dedicated key as the platform-held key it is 143ms
+✓ client/src/concept2cure/v2/__tests__/complianceReportsHonestStates.test.tsx > the seal statement > says a development-fallback seal is one, never "a platform-held key" 130ms
+✓ client/src/concept2cure/v2/__tests__/complianceReportsHonestStates.test.tsx > the audit trail refused to a member > says who reads the trail, not that the ledger did not respond 15ms
+✓ client/src/concept2cure/v2/__tests__/complianceReportsHonestStates.test.tsx > the audit trail refused to a member > keeps the outage copy for a read that failed 11ms
+✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > is a pack tile that says it is not computed, with no run 80ms
+✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > is said to be not computed when asked for, and nothing is run under its name 30ms
+✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 2 — a request about controlled documents > is sent to Audit & compliance reports and runs nothing 261ms
+✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 2 — a request about controlled documents > still runs the controlled substances ledger when that is what is asked for 59ms
+✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 3 — the program the report runs over > names the open program on the run, not a project id 38ms
+✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 3 — the program the report runs over > with no program open, asks which program, and opening one leads the canvas with it 38ms
+✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 5 — the catalog follows the program’s product type > offers a biologic program no 510(k) prompt, and runs no 510(k) report when asked 86ms
+✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 6 — the report names its scope > shows the program’s name, not "project — 11" 47ms
+✓ server/routes/__tests__/insights-canvas-catalog.test.ts > with no program open > leads with no program — not project 1 — and lists the programs to open 15ms
+✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers no device-only report for a biologic program 5ms
+✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers it for a device program 3ms
+✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > marks the digest and the registers runnable, and the rest not 2ms
+✓ server/services/report-os/render/__tests__/render-one-readiness.test.ts > renderReport — readiness > states that readiness was not computed, and prints no confidence 2ms
+✓ server/services/report-os/render/__tests__/render-one-readiness.test.ts > renderReport — readiness > states the evaluated readiness when the evaluator ran 1ms
+✓ server/services/report-os/render/__tests__/render-one-readiness.test.ts > renderReport — scope > names the scope by the label the run stored, not by its row id 1ms
+✓ server/services/report-os/render/__tests__/render-one-readiness.test.ts > renderReport — a register > draws its own counts, says they are the organisation’s, and states no readiness 1ms
+✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > says readiness was not computed for a project with no registry context, even with approved artifacts 4ms
+✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > reports no confidence: nothing in the run measures one 1ms
+✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > says readiness is not computed for a scope it is not evaluated over 0ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > routes the Executive Readiness Digest to the readiness engine 1ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > routes every research-compliance register to its domain provider 1ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > runs the evidence trace over one document only 0ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for ema.rmp_psur_signal_alignment, so it is not run 0ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for compliance.audit_assurance_pack, so it is not run 0ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for ema.maa_readiness_assessment, so it is not run 0ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for china_nmpa.ctd_module_gap_analysis, so it is not run 0ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for usa_fda.estar_510k_equivalence_matrix, so it is not run 0ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for usa_fda.pma_submission_readiness, so it is not run 0ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportTypeApplies > refuses a device-only type for a biologic program 0ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportTypeApplies > allows it for a device program, and a universal type for any 0ms
+✓ server/services/report-os/__tests__/report-engine.test.ts > reportTypeApplies > does not refuse on an unknown product type 0ms
+Test Files  7 passed (7)
+Tests  46 passed (46)
