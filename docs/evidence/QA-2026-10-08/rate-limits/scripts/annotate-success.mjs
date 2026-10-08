@@ -1,6 +1,6 @@
 // After a successful annotation post, is the success text shown in the panel?
 // Prints the whole panel's status text and whether the success sentence is present.
-import { chromium, signIn, SEED_USER, BASE, sleep } from '../qa/lib.mjs';
+import { chromium, signIn, SEED_USER, BASE, sleep } from './lib.mjs';
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 const ctx = await signIn(browser, SEED_USER);
 const page = await ctx.newPage();

@@ -4,7 +4,7 @@
 // posts to a missing id, so the route writes nothing.
 //
 //   RL_OUT, APP_URL, SERVER_LOG as in repro.mjs
-import { chromium, signIn, SEED_USER, BASE, sleep } from '../qa/lib.mjs';
+import { chromium, signIn, SEED_USER, BASE, sleep } from './lib.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 

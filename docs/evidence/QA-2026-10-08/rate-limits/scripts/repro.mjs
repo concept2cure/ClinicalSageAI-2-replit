@@ -4,7 +4,7 @@
 //   RL_OUT   evidence folder (JSON + text written here)
 //   RL_PHASE "vault" (open N documents) | "dataroom" (drop 15 files) | "both"
 //   RL_DOCS  how many Vault documents to open (default 8)
-import { chromium, signIn, SEED_USER, BASE, sleep } from '../qa/lib.mjs';
+import { chromium, signIn, SEED_USER, BASE, sleep } from './lib.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
