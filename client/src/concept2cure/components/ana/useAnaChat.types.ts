@@ -753,6 +753,15 @@ export interface AnaSendOptions {
    * without it sends the host's, never an earlier turn's.
    */
   authoringContext?: AuthoringContextPack | null;
+  /**
+   * The screen a question was asked from, for THIS turn only: its published
+   * surface context and its id (docs/design/ONE_ANA_ONE_CANVAS.md, slice 8).
+   * Every ask now lands in the one conversation, whose own screen context is
+   * the conversation's, so the origin screen's travels with the turn it asked.
+   * Each wins over the hook's `moduleContext` / `screenName`.
+   */
+  moduleContext?: Record<string, unknown> | null;
+  screenName?: string | null;
 }
 
 /** Control status of an in-flight AnA run (null when no run is active). */

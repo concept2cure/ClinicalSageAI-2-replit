@@ -1098,14 +1098,14 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         project_context: projectContext,
         document_context: documentContext,
         authoring_context: authoringContextOut,
-        module_context: options.moduleContext ?? undefined,
+        module_context: (sendOpts?.moduleContext ?? options.moduleContext) ?? undefined,
         context: {
-          screen: options.screenName,
+          screen: sendOpts?.screenName ?? options.screenName,
           project: options.projectName,
           projectId: options.projectId,
           productType: submissionTypeForContext,
           userRole: options.userRole,
-          screenName: options.screenName,
+          screenName: sendOpts?.screenName ?? options.screenName,
           // Surface artifact + section identity in the legacy context block too,
           // so any handler that still reads `body.context.*` keeps working.
           activeProject: options.projectName ?? undefined,

@@ -207,21 +207,57 @@ describe('a seeded conversation carries its files', () => {
 });
 
 describe('⌘K on a surface that keeps the rail', () => {
-  it('opens the rail and streams there', async () => {
+  /* docs/design/ONE_ANA_ONE_CANVAS.md, slice 8: every ask lands in the one
+     conversation. ⌘K's typed question used to open the rail and stream there;
+     it now goes to the conversation and is sent there, and the turn still
+     names the screen it was asked from. */
+  it('goes to the conversation and sends there, naming the screen it was asked from', async () => {
     renderShellAt('crl-library');
     await waitFor(() => expect(document.querySelector('.shell')).not.toBeNull());
 
     await askThroughPalette('summarise this letter');
 
-    // Here the rail IS drawn, so opening it is the right answer and persisting
-    // that is not a leak — the user is looking at what they opened.
-    await waitFor(() => expect(storedPrefs().anaOpen).toBe(true));
+    await waitFor(() => expect(window.location.pathname).toBe(locationForSurface('conversation-thread')));
     await waitFor(() => expect(streamTurns()).toContainEqual({
       message: 'summarise this letter',
       screen: 'crl-library',
     }));
-    expect(window.location.pathname).toBe(locationForSurface('crl-library'));
-    expect((window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO).toBeUndefined();
+    // Nothing opened or persisted a rail on the way.
+    expect(storedPrefs().anaOpen).not.toBe(true);
+    // The question went once.
+    expect(streamTurns().filter((t) => t.message === 'summarise this letter')).toHaveLength(1);
+  });
+});
+
+describe('an "Ask AnA" button on a work screen', () => {
+  /* docs/design/ONE_ANA_ONE_CANVAS.md, slice 8. It used to send straight into
+     the right rail. It now hands the question to the one conversation: in its
+     composer, not sent, with the screen it came from as a chip and a way back. */
+  it('lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named', async () => {
+    renderShellAt('vault');
+    const button = await screen.findByRole('button', { name: 'Search connected sources' });
+    fireEvent.click(button);
+
+    await waitFor(() => expect(window.location.pathname).toBe(locationForSurface('conversation-thread')));
+    const composer = (await screen.findByLabelText('Reply to AnA')) as HTMLTextAreaElement;
+    await waitFor(() => expect(composer.value).toBe('Search my connected repositories for documents relevant to this project.'));
+    expect(screen.getByTestId('ct-ask-origin').textContent).toMatch(/From Vault/);
+    expect(streamTurns()).toEqual([]);
+    expect(storedPrefs().anaOpen).not.toBe(true);
+
+    fireEvent.keyDown(composer, { key: 'Enter' });
+    await waitFor(() => expect(streamTurns()).toContainEqual({
+      message: 'Search my connected repositories for documents relevant to this project.',
+      screen: 'vault',
+    }));
+  });
+
+  it('"Back to" returns to the screen it was asked from', async () => {
+    renderShellAt('vault');
+    fireEvent.click(await screen.findByRole('button', { name: 'Search connected sources' }));
+    await waitFor(() => expect(window.location.pathname).toBe(locationForSurface('conversation-thread')));
+    fireEvent.click(await screen.findByRole('button', { name: /^Back to Vault/ }));
+    await waitFor(() => expect(window.location.pathname).toBe(locationForSurface('vault')));
   });
 });
 

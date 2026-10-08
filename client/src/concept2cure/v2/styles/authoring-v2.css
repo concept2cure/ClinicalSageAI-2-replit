@@ -1655,6 +1655,25 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  /* Where a handed-over question was asked (ONE_ANA_ONE_CANVAS.md, slice 8). */
+  .ct-ask-origin {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto 8px;
+    width: 100%;
+    max-width: 760px;
+    font-size: 13px;
+    color: var(--text-200);
+  }
+  .ct-ask-origin-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px 2px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
   .ct-ready-doc-x {
     border: 0;
     background: none;

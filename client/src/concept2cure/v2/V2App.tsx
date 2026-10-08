@@ -1048,6 +1048,29 @@ export function V2App() {
      nothing visible here, and your question waiting for you, opened, on the
      next surface that does draw one. The question goes to the surface that
      shows it instead. */
+  /* ── Every ask lands in the one conversation (ONE_ANA_ONE_CANVAS.md, slice 8) ──
+     An "Ask AnA" on a work screen used to send straight into the right rail, a
+     second place to talk to AnA beside the conversation. It now hands the
+     question to the conversation, in its composer, with the screen it came
+     from (its id, its name, and the context it had published) as a chip and a
+     way back; nothing is sent until the person presses Enter there. It
+     continues the conversation in progress. ⌘K's typed question is the
+     person's own words, already sent once: it is sent on arrival (`now`). */
+  const handOffToConversation = (text: string, now: boolean) => {
+    try {
+      (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = {
+        id: 'current',
+        seed: null,
+        prefill: text,
+        sendOnArrival: now,
+        origin: { surfaceId: activeId, label: ctxSurface.label, moduleContext: anaModuleContext ?? null },
+      };
+    } catch {
+      /* non-fatal: the conversation opens without the question */
+    }
+    setConvoEpoch((n) => n + 1);
+    nav('conversation-thread');
+  };
   const ask = (text: string, files?: SentAttachment[]) => {
     const clean = text.trim();
     if (!clean) return;
@@ -1055,6 +1078,22 @@ export function V2App() {
       startShellConversation(clean, files);
       return;
     }
+    handOffToConversation(clean, false);
+  };
+  const askNow = (text: string) => {
+    const clean = text.trim();
+    if (!clean) return;
+    if (ownsConversation) {
+      startShellConversation(clean);
+      return;
+    }
+    handOffToConversation(clean, true);
+  };
+  /* The rail's own composer still sends into the shell's chat, where the rail
+     shows it, until the rail goes (slice 9). */
+  const railSend = (text: string, files?: SentAttachment[]) => {
+    const clean = text.trim();
+    if (!clean) return;
     if (!prefs.anaOpen) set('anaOpen', true);
     if (anaChat.isLoadingThread || anaChat.threadLoadError) return;
     void anaChat.send(clean, files);
@@ -1260,7 +1299,7 @@ export function V2App() {
           mode={prefs.anaMode}
           setMode={(m) => set('anaMode', m)}
           messages={railMessages}
-          onSend={ask}
+          onSend={railSend}
           onAct={onAct}
           welcome={welcome}
           onDismissWelcome={() => set('welcomeDismissed', true)}
@@ -1314,7 +1353,7 @@ export function V2App() {
         open={cmdkOpen}
         onClose={() => setCmdkOpen(false)}
         onNav={nav}
-        onAsk={ask}
+        onAsk={askNow}
         onAct={(id) => {
           onAct(id);
           setCmdkOpen(false);
