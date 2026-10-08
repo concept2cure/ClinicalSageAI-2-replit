@@ -19,6 +19,8 @@ import {
 } from '../services/coauthor/coauthor-audit.js';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { requireRole } from '../middleware/auth';
+import { requireGovernedReason } from './governed-reason.js';
 
 const logger = createScopedLogger('coauthor');
 
@@ -176,7 +178,18 @@ router.get('/documents/:id', authMiddleware, async (req: any, res: Response) => 
   }
 });
 
-router.post('/documents', authMiddleware, async (req: any, res: Response) => {
+/* A sourced snapshot is a filing copy: the one copy every leaf that places its
+   document points at, taken or re-taken from the source. It is written by the
+   role the leaf write asks for (submissions.ts, PUT .../leaves:
+   regulatory-author) and only for a stated reason (design review 2026-10-08,
+   Part 11 lens: a viewer could re-take a filing copy, and its ledger reason was
+   a sentence the code composed). A document with no source is the co-author
+   app's own create, not this write, and is left as it was. */
+const FILING_COPY_ROLE = 'regulatory-author';
+const requireAuthorForFilingCopy = (req: any, res: Response, next: () => void) =>
+  req.body?.sourceAuthoringDocId != null ? requireRole(FILING_COPY_ROLE)(req, res, next) : next();
+
+router.post('/documents', authMiddleware, requireAuthorForFilingCopy, async (req: any, res: Response) => {
   try {
     const organizationId = resolveOrganizationId(req);
     if (!organizationId) {
@@ -226,7 +239,15 @@ router.post('/documents', authMiddleware, async (req: any, res: Response) => {
       });
     }
     if (sourceAuthoringDocId) {
+      const stated = requireGovernedReason(req.body?.changeReason);
+      if (!stated.ok) {
+        return res.status(400).json({
+          error: 'REASON_REQUIRED',
+          message: `${stated.error} Taking a filing copy records why, on the copy's audit trail. Nothing was taken or re-taken.`,
+        });
+      }
       const outcome = await takeAuthoringSnapshot({
+        reason: stated.reason,
         organizationId,
         sourceAuthoringDocId,
         moduleNumber: moduleNumber || null,

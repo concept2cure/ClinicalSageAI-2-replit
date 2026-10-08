@@ -106,7 +106,7 @@ async function catalogAs(role: string) {
       handler(
         {
           document_id: documentId,
-          document_kind: 'Certificate of Analysis',
+          document_kind: 'cert',
           purpose: 'Release evidence for one clinical batch.',
           summary: 'CoA for batch 23-104: assay 99.2 % of label claim.',
           key_data: { batch: '23-104', assay_pct: 99.2 },

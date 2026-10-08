@@ -12,7 +12,7 @@ const log = createScopedLogger('huggingface');
 
 /** Human-readable regulatory authority context for compliance prompts. */
 const REGION_CONTEXT: Record<string, string> = {
-  FDA: 'United States FDA (21 CFR Parts 50/56/312, ICH E6(R2) GCP, FDORA 2022 diversity requirements)',
+  FDA: 'United States FDA (21 CFR Parts 50/56/312, ICH E6(R3) GCP, FDORA 2022 diversity requirements)',
   EMA: 'European Medicines Agency / EU Clinical Trials Regulation 536/2014, GDPR, EudraCT/CTIS',
   PMDA: 'Japan PMDA (J-GCP, ICH E5 ethnic-factor considerations, PMDA safety reporting)',
   NMPA: 'China NMPA (Drug Administration Law, Human Genetic Resources regulations)',
@@ -124,7 +124,7 @@ export class HuggingFaceService {
             break;
           default:
             enhancedAnalysis.regulatory_notes =
-              'Protocol should comply with ICH E6(R2) Good Clinical Practice guidelines.';
+              'Protocol should comply with ICH E6(R3) Good Clinical Practice guidelines.';
         }
       }
 

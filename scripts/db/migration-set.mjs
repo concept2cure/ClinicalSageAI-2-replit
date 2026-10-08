@@ -3084,6 +3084,13 @@ export const C2C_MIGRATION_FILES = [
   // sweeps to reach. After 20260926b, which keys the study to its program.
   'migrations/20261008d_cre_source_study_ref.sql',
 
+  // ── AnA's catalog record is a suggestion a person confirms (2026-10-08) ──
+  // Data Room catalog S4 (D5): catalog_state, the proposer (agent, model,
+  // thread, turn) and the person's confirmation or correction on
+  // vault.document_catalog, with a CHECK added only when absent. ADD COLUMN
+  // IF NOT EXISTS; no DROP; no row rewritten. After 20260905_document_catalog.
+  'migrations/20261008e_document_catalog_attribution.sql',
+
   // ── The readiness digest's registry context, on the project record ───────
   // (2026-10-08, QA second walk j8). Adds registryId / submissionType keys to
   // projects.metadata where the program's own organisation's record holds

@@ -1,0 +1,4 @@
+# npx vitest run client/src/concept2cure/v2 tests/ui shared   (final tree, 2026-10-08)
+ Test Files  528 passed (528)
+      Tests  5642 passed (5642)
+   Duration  1480.57s (transform 32.98s, setup 41.07s, import 171.58s, tests 909.75s, environment 259.66s)

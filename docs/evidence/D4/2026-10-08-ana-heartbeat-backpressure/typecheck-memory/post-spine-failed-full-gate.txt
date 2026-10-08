@@ -1,0 +1,279 @@
+Source checkpoint: d83f814954c640a5a0b9c9ac16d17ac4202abcf5
+Remote base: f55213b52e759323ba406f7a53e32b07c012ddee
+Unchanged full .husky/pre-push; Node 22; TYPECHECK_HEAP_MB=6656
+🔒 Pre-push: Running eCTD contract enforcement gates...
+   Validating eCTD stubs bundle against schema (AJV)...
+(node:12) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+   ✅ eCTD bundle validation passed.
+   Validating risk code contracts...
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+OK: Generated risk code types are up to date.
+   ✅ Risk code validation passed.
+   Validating migration apply-order invariants...
+(node:64) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:77) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:migration-set-order] OK — 366 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+   ✅ Migration apply-order passed.
+   Validating DROPs are replay-safe...
+(node:85) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:98) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:migration-drop-safety] OK — 366 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+   ✅ Replay-safe DROPs passed.
+   Validating new migrations are on a deploy path...
+(node:106) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:119) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:migration-deploy-path] OK — 112 baselined file(s) on no deploy path, none new.
+   ✅ Deploy-path check passed.
+   Validating queried columns are reachable...
+(node:127) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:140) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+   ✅ Column reachability passed.
+   Validating server code runs no DDL on the runtime connection...
+(node:148) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:161) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:runtime-ddl] 84 DDL statement(s) in 14 runtime server file(s); 14 baselined
+[ci:runtime-ddl] ✅ no new runtime DDL.
+   ✅ No runtime DDL.
+   Validating jsonb operators are not applied to json columns...
+(node:169) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:182) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:json-operator-types] 961 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3082 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+   ✅ No jsonb operator on a json column.
+   Validating the migration manifest tracks db/migrations...
+(node:190) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:203) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Manifest is in sync.
+   ✅ Migration manifest in sync.
+   Validating no new unscoped Drizzle query on tenant data...
+(node:211) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:224) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:drizzle-tenant-scope] OK — 110 site(s), all baselined; 17 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 17 fix(es).
+   ✅ Drizzle tenant scope passed.
+   Validating every v2 className is defined in a stylesheet...
+(node:232) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:245) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+   ✅ v2 class names passed.
+   Validating every raw client fetch() sends the bearer token...
+(node:253) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:266) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ ci:unauthenticated-fetch — 71 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+   ✅ Client fetch() authentication passed.
+   Validating no new session-scoped RLS bypass...
+(node:274) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:287) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+   ✅ No new session-scoped RLS bypass.
+   Validating ledger integrity (row ids, evidence paths)...
+   ✅ Ledger integrity passed.
+   Validating module catalog copy...
+(node:303) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:316) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:catalog-copy] OK — 119 catalog description(s) across 3 migration(s) read as product copy.
+   ✅ Catalog copy passed.
+   Checking for fixture fallback in client surfaces...
+(node:324) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:337) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:fixture-fallback] `live ?? FIXTURE` and `live?.length ? live : FIXTURE` in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+   ✅ No ungated fixture fallback.
+   Checking for mock data in production routes...
+(node:345) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:358) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+   ✅ No mock data in production routes.
+   Checking for manufactured signer identity...
+(node:366) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:379) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+   ✅ Fabricated-identity check passed.
+   Checking that every program-ownership check is the one check...
+(node:389) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:402) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[self-test] OK — 10 copies found, 6 reads passed.
+(node:410) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:423) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+   ✅ One program-ownership check.
+   Checking for a discarded Part 11 audit-write outcome...
+(node:433) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:446) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+check-discarded-audit-write: no new occurrences. 112 baselined across 50 file(s).
+  5 baselined file(s) now below their count — run --write-baseline to shrink it.
+   ✅ No discarded audit-write outcome.
+   Checking that the client address has one source...
+(node:456) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:469) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+   ✅ One source for the client address.
+   Checking that every sign ledger row comes from a signature ceremony...
+(node:477) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:490) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.
+   ✅ Every new sign ledger row has its ceremony.
+   Checking that every upload site is bounded, filtered and byte-checked...
+(node:500) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:513) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 19 file(s) build uploads.
+   ✅ Every upload site is guarded, or baselined with a reason.
+   Checking .trivyignore hygiene (expiry, owner, reason; no tree-wide resource ignores)...
+(node:521) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:534) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /workspace/scratch/bd36ee581acd/concept2cure/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+   ✅ .trivyignore entries are bounded and owned.
+   Checking that no 5xx body carries the caught error's text...
+(node:542) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:555) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+   ✅ No 5xx body carries the caught error's text.
+   Checking that pushed imports resolve to tracked files...
+(node:563) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:576) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:untracked-imports] OK — every relative import in 2 file(s) resolves to a tracked file.
+   ✅ Pushed imports all resolve to tracked files.
+   Checking for ESLint errors in the pushed files...
+(node:588) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:601) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:pushed-lint-errors] OK — no ESLint errors in 2 changed file(s) against origin/concept2cure-v2.
+   ✅ No ESLint errors in the pushed files.
+   Checking that the pushed files gained no ESLint warnings...
+(node:637) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:650) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:661) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:eslint-warning-ratchet] --since f55213b52e759323ba406f7a53e32b07c012ddee (f55213b52) -- 2 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since f55213b52e759323ba406f7a53e32b07c012ddee.
+   ✅ The pushed files gained no ESLint warnings.
+   Typechecking (only if this push can change a type)...
+(node:717) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:730) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:pushed-typecheck] 2 type-relevant file(s) changed against origin/concept2cure-v2: server/services/ana/__tests__/run-control-tenant-scope.test.ts, server/services/ana/run-control.ts
+(node:741) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] FAIL — tsc did not complete.
+  exit status : 134
+  heap cap    : 6656 MB (override with TYPECHECK_HEAP_MB)
+  The error count below is NOT trustworthy — the compiler died before finishing.
+  Last 40 lines of output:
+    (node:749) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+    (Use `node --trace-warnings ...` to show where the warning was created)
+
+    <--- Last few GCs --->
+
+    [762:0x2e04c000]   164642 ms: Mark-Compact 6561.6 (6700.8) -> 6547.7 (6702.8) MB, pooled: 0 MB, 2402.05 / 0.00 ms  (average mu = 0.064, current mu = 0.020) allocation failure; scavenge might not succeed
+    [762:0x2e04c000]   167969 ms: Mark-Compact 6563.5 (6702.8) -> 6549.7 (6704.8) MB, pooled: 0 MB, 3276.96 / 0.00 ms  (average mu = 0.036, current mu = 0.015) allocation failure; scavenge might not succeed
+
+
+    <--- JS stacktrace --->
+
+    FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+    ----- Native stack trace -----
+
+     1: 0xe46bbe node::OOMErrorHandler(char const*, v8::OOMDetails const&) [node]
+     2: 0x1245390 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+     3: 0x1245667 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+     4: 0x1474575  [node]
+     5: 0x14745a3  [node]
+     6: 0x148d67a  [node]
+     7: 0x1490848  [node]
+     8: 0x1cf93d1  [node]
+    Aborted
+
+
+  If this host cannot supply the heap, the gate has NOT run — do not
+  report the diff as typechecked. Options, in order of soundness:
+    1. Run it on a host with the memory, or in CI.
+    2. Raise/lower the cap: TYPECHECK_HEAP_MB=<mb> npm run ci:typecheck:no-regression
+    3. Scoped, NOT equivalent: npx tsc --noEmit --skipLibCheck <changed files>
+       — catches within-file errors only; blind to callers. A narrow
+       tsconfig include is not a substitute either: it double-loads the
+       global .d.ts augmentations and invents errors in untouched files.
+
+🚫 ERROR: The typecheck gate failed.
+   This is the check CI would fail on — after the push had already landed.
+   Fix the errors above and re-push.
+
+
+Hook process exit: 1

@@ -119,9 +119,9 @@ const PROTOCOL_SECTIONS: SectionDefinition[] = ICH_M11_PROTOCOL_SECTIONS.map((s)
   guidance: `${ICH_M11_PROTOCOL_BASIS.ref}. ${s.purpose}`,
 }));
 
-/** Investigator's Brochure — ICH E6(R2) §7 structure. */
+/** Investigator's Brochure — ICH E6(R3) Appendix A structure. */
 const IB_SECTIONS: SectionDefinition[] = [
-  { code: '1', title: 'Title Page', module: 5, required: true, contentType: 'narrative', guidance: 'ICH E6(R2) §7' },
+  { code: '1', title: 'Title Page', module: 5, required: true, contentType: 'narrative', guidance: 'ICH E6(R3) Appendix A' },
   { code: '2', title: 'Confidentiality Statement', module: 5, required: false, contentType: 'narrative' },
   { code: '3', title: 'Table of Contents', module: 5, required: true, contentType: 'list' },
   { code: '4', title: 'Summary', module: 5, required: true, contentType: 'narrative' },

@@ -104,7 +104,8 @@ describe('RegistryPicker offers what the market verdict offers', () => {
     await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
     fireEvent.change(screen.getByRole('textbox', { name: /search filing types/i }), { target: { value: 'Notified Body' } });
     const section = screen.getByTestId('rpk-not-offered');
-    await waitFor(() => expect(within(section).getAllByText(/Refused at creation: /).length).toBeGreaterThan(0));
+    // Wording amended 2026-10-08 (filing-spine design review): "Not supported" or "Not offered", never "Refused at creation".
+    await waitFor(() => expect(within(section).getAllByText(/^(Not supported|Not offered): /).length).toBeGreaterThan(0));
   });
 
   it('the chosen filing states its offer as text', async () => {

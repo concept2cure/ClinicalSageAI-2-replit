@@ -44,6 +44,7 @@
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { ProjectDocumentPage } from '../vault/document-catalog.service.js';
 import {
+  anaToolProvenance,
   CHAT_UPLOAD_ID,
   requireCatalog,
   requireDocumentAccess,
@@ -307,7 +308,9 @@ type Catalog = NonNullable<LoadedDocument['catalog']>;
 function comprehensionOf(catalog: Catalog) {
   if (catalog.status !== 'cataloged') return undefined;
   const { documentKind, purpose, summary, catalogedAt } = catalog;
-  return { documentKind, purpose, summary, keyData: catalog.keyData ?? null, catalogedAt };
+  // Whose it is (S4): her own unconfirmed suggestion, or a person's decision.
+  const state = catalog.state ?? 'suggested';
+  return { documentKind, purpose, summary, keyData: catalog.keyData ?? null, catalogedAt, state };
 }
 
 /** Below this much text a window gives the comprehension record's room back to the document. */
@@ -446,6 +449,29 @@ function parseCatalogInput(input: Record<string, unknown>): CatalogInput | { err
   return { documentId, documentKind, purpose, summary, keyData };
 }
 
+/** Who wrote the description, from the tool context (S4): the record names it. */
+function catalogProposer(ctx: ToolContext | undefined, orgId: number, purpose: string) {
+  return {
+    actorKind: 'agent:ana' as const,
+    model: ctx?.servingModel?.model ?? ctx?.model ?? null,
+    threadId: ctx?.threadId ?? null,
+    turnId: ctx?.turnId ?? null,
+    audit: anaToolProvenance(ctx, orgId, purpose, 'catalog_project_document'),
+  };
+}
+
+function catalogRefusal(result: Awaited<ReturnType<CatalogService['completeCatalog']>>): string {
+  return JSON.stringify({
+    ok: false,
+    refused: true,
+    reason: result.refusal,
+    uncoveredRanges: result.coverage?.uncovered.slice(0, 10),
+    // A key_data refusal names every value the text does not state, by path,
+    // so the correction is to those values and nothing else.
+    ...(result.unverifiedKeyData ? { unverifiedKeyData: result.unverifiedKeyData } : {}),
+  });
+}
+
 async function handleCatalogProjectDocument(
   input: Record<string, unknown>,
   ctx?: ToolContext,
@@ -478,28 +504,22 @@ async function handleCatalogProjectDocument(
   const result = await svc.completeCatalog({
     ...parsed,
     organizationId: orgId,
+    // The person on whose behalf she acts; `proposer` says who wrote it (S4).
     userId: ctx?.userId ?? null,
+    proposer: catalogProposer(ctx, orgId, parsed.purpose),
   });
-  if (!result.ok) {
-    return JSON.stringify({
-      ok: false,
-      refused: true,
-      reason: result.refusal,
-      uncoveredRanges: result.coverage?.uncovered.slice(0, 10),
-      // A key_data refusal names every value the text does not state, by path,
-      // so the correction is to those values and nothing else.
-      ...(result.unverifiedKeyData ? { unverifiedKeyData: result.unverifiedKeyData } : {}),
-    });
-  }
+  if (!result.ok) return catalogRefusal(result);
   return JSON.stringify({
     ok: true,
     documentId: parsed.documentId,
     embeddingStatus: result.embeddingStatus,
+    catalogState: 'suggested',
     message:
-      `Cataloged. This document is now on durable record — its kind, purpose, summary and key data will be ` +
-      `recalled in future sessions${
-        result.embeddingStatus === 'embedded' ? ' and are semantically searchable' : ''
-      }. Tell the user what you recorded and where the file is filed.`,
+      `Recorded as a suggestion, not yet confirmed by a person. Kind, purpose, summary and key data are ` +
+      `attributed to AnA and this turn, and future sessions recall them as unconfirmed.${
+        result.embeddingStatus === 'embedded' ? ' They are semantically searchable.' : ''
+      } Tell the user what you recorded and where the file is filed, and that a person confirms or corrects ` +
+      `the record in the Vault (the document's Catalog record panel).`,
   });
 }
 

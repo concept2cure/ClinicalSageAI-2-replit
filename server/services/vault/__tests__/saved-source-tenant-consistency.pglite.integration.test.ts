@@ -22,7 +22,7 @@ const sourceExecutor: Queryable = {
 beforeAll(async () => {
   db = await createJourneyDb({
     prereqSql: PREREQ + VAULT_DDL,
-    migrations: ['migrations/20260905_document_catalog.sql', 'migrations/20261006_document_data_dispositions.sql'],
+    migrations: ['migrations/20260905_document_catalog.sql', 'migrations/20261008e_document_catalog_attribution.sql', 'migrations/20261006_document_data_dispositions.sql'],
   });
 });
 afterAll(async () => { try { assertNoSchemaGaps(db); } finally { await db?.close(); } });

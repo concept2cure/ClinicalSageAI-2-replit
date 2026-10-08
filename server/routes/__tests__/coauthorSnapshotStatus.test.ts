@@ -106,6 +106,10 @@ vi.mock('../../middleware/auth.js', () => ({
     req.user = { id: 5, userId: 5, organizationId: 1, email: 'a@example.test' };
     next();
   },
+  /* A filing copy asks for regulatory-author (2026-10-08, filing-spine design
+     review). This suite is about the status a copy carries; the role is held
+     by coauthorSnapshotFromSource.test.ts, against the real middleware. */
+  requireRole: () => (_r: any, _s: any, n: any) => n(),
   authenticateToken: (_r: any, _s: any, n: any) => n(),
   requireAuth: (_r: any, _s: any, n: any) => n(),
 }));
@@ -127,8 +131,9 @@ const app = express();
 app.use(express.json());
 app.use('/api/coauthor', coauthorRoutes);
 
+// The stated reason a filing copy now requires (2026-10-08, filing-spine design review).
 const place = (body: Record<string, unknown>) =>
-  request(app).post('/api/coauthor/documents').send({ title: 'M2.5 Clinical Overview', ...body });
+  request(app).post('/api/coauthor/documents').send({ title: 'M2.5 Clinical Overview', changeReason: 'Placing this document into the filing', ...body });
 
 const lastInsert = () => state.inserted[state.inserted.length - 1];
 // authoring_documents ids are uuids; the alias map refuses anything else (L10).

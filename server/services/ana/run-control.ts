@@ -298,6 +298,60 @@ async function verifiedThreadId(
 }
 
 /**
+ * The checkpoint's beat (DT1 §2.3), one write in flight per run: keepalive and
+ * round boundaries can overlap on a slow pool, so the newest round is carried
+ * forward rather than every intermediate one queued.
+ */
+function boundedRunHeartbeat(pool: RunControlQuery, runId: string, local: LocalRun): (round: number) => Promise<void> {
+  // Keepalive and round boundaries can overlap on a slow pool. Admit one
+  // write, then carry the newest requested beat forward without queuing every
+  // intermediate round. This is pending work only; the row still owns status.
+  let pendingHeartbeat: Promise<void> | null = null;
+  let latestHeartbeatRound = 0;
+  let heartbeatDirty = false;
+
+  return (round: number) => {
+    if (localRuns.get(runId) !== local) return Promise.resolve();
+    latestHeartbeatRound = round;
+    if (pendingHeartbeat) {
+      heartbeatDirty = true;
+      return pendingHeartbeat;
+    }
+    heartbeatDirty = false;
+    // Register before invoking the pool, including synchronous reentry.
+    pendingHeartbeat = Promise.resolve().then(async () => {
+      let roundToWrite = round;
+      try {
+        while (localRuns.get(runId) === local) {
+          try {
+            // The process heartbeat's statement for this one run, plus the
+            // round and the timeline high-water mark (DT1 §2.3).
+            // Owner-guarded like it, so it cannot beat a row this process no
+            // longer owns back to life.
+            await pool.query(
+              `UPDATE ana_runs
+                  SET heartbeat_at = now(), current_round = $2, timeline_seq = GREATEST(timeline_seq, $4)
+                WHERE id = $1 AND owner_instance = $3 AND status IN ${LIVE_STATUS_SQL}`,
+              [runId, roundToWrite, INSTANCE_ID, local.timelineSeq],
+            );
+          } catch (err: any) {
+            log.warn(`[ana-run-control] heartbeat failed for ${runId}: ${err?.message}`);
+          }
+          if (!heartbeatDirty) break;
+          roundToWrite = latestHeartbeatRound;
+          heartbeatDirty = false;
+        }
+      } finally {
+        // Clear admission in the same continuation as the final queue check.
+        // A call at settlement must open fresh work, never join a drained beat.
+        pendingHeartbeat = null;
+      }
+    });
+    return pendingHeartbeat;
+  };
+}
+
+/**
  * Open a run and return its process-local handle.
  *
  * `organizationId` is required and the column is NOT NULL. A caller that cannot
@@ -398,19 +452,7 @@ export async function beginRun(input: BeginRunInput): Promise<{ runId: string; h
         timer.unref?.();
         local.waiters.add(finish);
       }),
-    // The checkpoint's beat: the process heartbeat's statement for this one
-    // run, plus the round (§2.3). Owner-guarded like it, so it cannot beat a
-    // row this process no longer owns back to life.
-    heartbeat: async (round: number) => {
-      await input.pool
-        .query(
-          `UPDATE ana_runs
-              SET heartbeat_at = now(), current_round = $2, timeline_seq = GREATEST(timeline_seq, $4)
-            WHERE id = $1 AND owner_instance = $3 AND status IN ${LIVE_STATUS_SQL}`,
-          [runId, round, INSTANCE_ID, local.timelineSeq],
-        )
-        .catch(err => log.warn(`[ana-run-control] heartbeat failed for ${runId}: ${err?.message}`));
-    },
+    heartbeat: boundedRunHeartbeat(input.pool, runId, local),
     events: openRunEventsMirror({
       pool: input.pool,
       runId,

@@ -124,7 +124,7 @@ const BUILTIN_DNT_PATTERNS: readonly DntPattern[] = [
     pattern:
       /\b\d{1,3}\s*CFR(?:\s+(?:Part|Subpart|§+))?\s*\d+(?:\.\d+)?(?:\s*\([a-z0-9]+\))*(?![A-Za-z0-9])/gi,
   },
-  // ICH guideline codes: E6(R2), Q8(R2), M4, S7B, E2B(R3) … letter + number +
+  // ICH guideline codes: E6(R3), Q8(R2), M4, S7B, E2B(R3) … letter + number +
   // optional (R<n>) revision.
   {
     category: 'regulatory_citation',

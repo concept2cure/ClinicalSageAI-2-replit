@@ -1,0 +1,373 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-08T17:56:03.157Z","pid":21534,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T17:56:03.158Z","pid":21534,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T17:56:03.158Z","pid":21534,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn
+[database] Database connection successful { timestamp: '2026-10-08T17:56:05.387Z', poolSize: 1 }
+
+stdout | tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn
+[database] Database connection successful
+
+stdout | tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1467ms org=258 user=- caller=embedding-provider req=a2429175-18b7-45f6-8389-235517480fe3
+
+stderr | tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn
+{
+  "timestamp": "2026-10-08T17:56:13.355Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "6f998e32-ae9b-4c28-9966-7f44972b1c1e",
+    "err": "Connection error."
+  }
+}
+
+ × tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn 13236ms
+   → expected undefined to be 'suggested' // Object.is equality
+ × tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > has a chained audit row naming the agent, model and turn 9ms
+   → Cannot read properties of undefined (reading 'action')
+stderr | tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > the Vault read shows it as a suggestion by AnA and its model
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > the Vault read shows it as a suggestion by AnA and its model 784ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > session recall labels it as her unconfirmed suggestion 22ms
+   → expected undefined to be 'suggested' // Object.is equality
+ × tests/db/document-catalog-governed.dbtest.ts > the kind is the Vault vocabulary > refuses a kind outside it and writes nothing 18ms
+   → column "catalog_state" does not exist
+stdout | tests/db/document-catalog-governed.dbtest.ts > a person confirms
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1247ms org=258 user=- caller=embedding-provider req=ea915ea0-cfae-4e01-9b31-d74e4685c410
+
+stderr | tests/db/document-catalog-governed.dbtest.ts > a person confirms
+{
+  "timestamp": "2026-10-08T17:56:15.504Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "137fc1b5-ea0f-41ed-9194-8df696721336",
+    "err": "Connection error."
+  }
+}
+
+ × tests/db/document-catalog-governed.dbtest.ts > a person confirms > a viewer cannot, and the record is untouched 2ms
+   → column "catalog_state" does not exist
+ × tests/db/document-catalog-governed.dbtest.ts > a person confirms > a member confirms it as written, audited with the proposer 27ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/document-catalog-governed.dbtest.ts > a person confirms > only once 11ms
+   → expected 404 to be 409 // Object.is equality
+stdout | tests/db/document-catalog-governed.dbtest.ts > a person confirms > AnA cannot replace a record a person confirmed
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1393ms org=258 user=- caller=embedding-provider req=d42aea8d-abf4-4aac-bff2-dc4b11d8e2b7
+
+stderr | tests/db/document-catalog-governed.dbtest.ts > a person confirms > AnA cannot replace a record a person confirmed
+{
+  "timestamp": "2026-10-08T17:56:16.978Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "137fc1b5-ea0f-41ed-9194-8df696721336",
+    "err": "Connection error."
+  }
+}
+
+ × tests/db/document-catalog-governed.dbtest.ts > a person confirms > AnA cannot replace a record a person confirmed 1434ms
+   → {"ok":true,"documentId":"137fc1b5-ea0f-41ed-9194-8df696721336","embeddingStatus":"failed","message":"Cataloged. This document is now on durable record — its kind, purpose, summary and key data will be recalled in future sessions. Tell the user what you recorded and where the file is filed."}: expected undefined to be true // Object.is equality
+ × tests/db/document-catalog-governed.dbtest.ts > a person confirms > recall says a person confirmed it 5ms
+   → expected '- **CoA** (unfiled — needs review): c…' to contain '(confirmed by a person)'
+stdout | tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1325ms org=258 user=- caller=embedding-provider req=28791def-59d7-4ac6-8282-904ad1c65156
+
+stderr | tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason
+{
+  "timestamp": "2026-10-08T17:56:18.371Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "61702a80-9da6-424d-a1fd-3da121a4ee9f",
+    "err": "Connection error."
+  }
+}
+
+ × tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > without a reason, nothing changes 2ms
+   → column "catalog_state" does not exist
+ × tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > a kind outside the vocabulary is refused 15ms
+   → expected 404 to be 422 // Object.is equality
+ × tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > with a reason, the correction is recorded and audited with it 9ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > the database refuses a 'corrected' record without a reason 3ms
+   → expected '42703' to be '23514' // Object.is equality
+ × tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > new bytes clear the description and its decision 28ms
+   → column "catalog_state" does not exist
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn
+AssertionError: expected undefined to be 'suggested' // Object.is equality
+
+- Expected:
+"suggested"
+
++ Received:
+undefined
+
+ ❯ tests/db/document-catalog-governed.dbtest.ts:175:30
+    173|     const out = await anaCatalogs(documentId);
+    174|     expect(out.ok, JSON.stringify(out)).toBe(true);
+    175|     expect(out.catalogState).toBe('suggested');
+       |                              ^
+    176|     expect(await catalogRow(documentId)).toMatchObject({
+    177|       catalog_state: 'suggested', document_kind: 'cert', proposed_by: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > has a chained audit row naming the agent, model and turn
+TypeError: Cannot read properties of undefined (reading 'action')
+ ❯ tests/db/document-catalog-governed.dbtest.ts:184:16
+    182|   it('has a chained audit row naming the agent, model and turn', async…
+    183|     const [row] = await auditRows(documentId);
+    184|     expect(row.action).toBe('vault.document.catalog_suggest');
+       |                ^
+    185|     expect(row.details).toMatchObject({
+    186|       actorKind: 'agent:ana', tool: 'catalog_project_document', model:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > the Vault read shows it as a suggestion by AnA and its model
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/document-catalog-governed.dbtest.ts:193:50
+    191|   it('the Vault read shows it as a suggestion by AnA and its model', a…
+    192|     const res = await request(await vaultApp('viewer')).get(`/api/c2c/…
+    193|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    194|     expect(res.body.data).toMatchObject({ state: 'suggested', proposed…
+    195|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > session recall labels it as her unconfirmed suggestion
+AssertionError: expected undefined to be 'suggested' // Object.is equality
+
+- Expected:
+"suggested"
+
++ Received:
+undefined
+
+ ❯ tests/db/document-catalog-governed.dbtest.ts:206:32
+    204|     );
+    205|     const file = digest.files.find(f => f.catalogStatus === 'cataloged…
+    206|     expect(file?.catalogState).toBe('suggested');
+       |                                ^
+    207|     expect(formatVaultFileLine(file!)).toContain('your suggestion, not…
+    208|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > the kind is the Vault vocabulary > refuses a kind outside it and writes nothing
+error: column "catalog_state" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ catalogRow tests/db/document-catalog-governed.dbtest.ts:123:4
+    121|
+    122| const catalogRow = async (documentId: string) =>
+    123|   (await owner.query(
+       |    ^
+    124|     `SELECT catalog_state, document_kind, purpose, summary, proposed_b…
+    125|             proposed_turn_id, confirmed_by, confirmed_at, correction_r…
+ ❯ tests/db/document-catalog-governed.dbtest.ts:214:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 190, severity: 'ERROR', code: '42703', detail: undefined, hint: 'Perhaps you meant to reference the column "document_catalog.catalog_status".', position: '8', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > a person confirms > a viewer cannot, and the record is untouched
+error: column "catalog_state" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ catalogRow tests/db/document-catalog-governed.dbtest.ts:123:4
+    121|
+    122| const catalogRow = async (documentId: string) =>
+    123|   (await owner.query(
+       |    ^
+    124|     `SELECT catalog_state, document_kind, purpose, summary, proposed_b…
+    125|             proposed_turn_id, confirmed_by, confirmed_at, correction_r…
+ ❯ tests/db/document-catalog-governed.dbtest.ts:231:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 190, severity: 'ERROR', code: '42703', detail: undefined, hint: 'Perhaps you meant to reference the column "document_catalog.catalog_status".', position: '8', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > a person confirms > a member confirms it as written, audited with the proposer
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/document-catalog-governed.dbtest.ts:239:50
+    237|   it('a member confirms it as written, audited with the proposer', asy…
+    238|     const res = await post('member', documentId, 'confirm');
+    239|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    240|     expect(await catalogRow(documentId)).toMatchObject({ catalog_state…
+    241|     const confirm = (await auditRows(documentId)).find(r => r.action =…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > a person confirms > only once
+AssertionError: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ tests/db/document-catalog-governed.dbtest.ts:247:24
+    245|   it('only once', async () => {
+    246|     const res = await post('member', documentId, 'confirm');
+    247|     expect(res.status).toBe(409);
+       |                        ^
+    248|   });
+    249|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > a person confirms > AnA cannot replace a record a person confirmed
+AssertionError: {"ok":true,"documentId":"137fc1b5-ea0f-41ed-9194-8df696721336","embeddingStatus":"failed","message":"Cataloged. This document is now on durable record — its kind, purpose, summary and key data will be recalled in future sessions. Tell the user what you recorded and where the file is filed."}: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/db/document-catalog-governed.dbtest.ts:252:46
+    250|   it('AnA cannot replace a record a person confirmed', async () => {
+    251|     const out = await anaCatalogs(documentId, 'report');
+    252|     expect(out.refused, JSON.stringify(out)).toBe(true);
+       |                                              ^
+    253|     expect(out.reason).toMatch(/A person confirmed this document's cat…
+    254|     expect((await catalogRow(documentId)).document_kind).toBe('cert');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > a person confirms > recall says a person confirmed it
+AssertionError: expected '- **CoA** (unfiled — needs review): c…' to contain '(confirmed by a person)'
+
+Expected: "(confirmed by a person)"
+Received: "- **CoA** (unfiled — needs review): cert"
+
+ ❯ tests/db/document-catalog-governed.dbtest.ts:260:8
+    258|     const { formatVaultFileLine } = await import('../../server/service…
+    259|     expect(formatVaultFileLine({ fileName: 'coa.txt', documentTitle: '…
+    260|       .toContain('(confirmed by a person)');
+       |        ^
+    261|   });
+    262| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > without a reason, nothing changes
+error: column "catalog_state" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ catalogRow tests/db/document-catalog-governed.dbtest.ts:123:4
+    121|
+    122| const catalogRow = async (documentId: string) =>
+    123|   (await owner.query(
+       |    ^
+    124|     `SELECT catalog_state, document_kind, purpose, summary, proposed_b…
+    125|             proposed_turn_id, confirmed_by, confirmed_at, correction_r…
+ ❯ tests/db/document-catalog-governed.dbtest.ts:272:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 190, severity: 'ERROR', code: '42703', detail: undefined, hint: 'Perhaps you meant to reference the column "document_catalog.catalog_status".', position: '8', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > a kind outside the vocabulary is refused
+AssertionError: expected 404 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 404
+
+ ❯ tests/db/document-catalog-governed.dbtest.ts:281:24
+    279|   it('a kind outside the vocabulary is refused', async () => {
+    280|     const res = await post('member', documentId, 'correct', { document…
+    281|     expect(res.status).toBe(422);
+       |                        ^
+    282|     expect(res.body.error).toBe('INVALID_DOCUMENT_KIND');
+    283|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > with a reason, the correction is recorded and audited with it
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/document-catalog-governed.dbtest.ts:288:50
+    286|     const reason = 'A CoA is filed with its batch record in this progr…
+    287|     const res = await post('member', documentId, 'correct', { document…
+    288|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    289|     expect(await catalogRow(documentId)).toMatchObject({
+    290|       catalog_state: 'corrected', document_kind: 'batch_record', corre…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > the database refuses a 'corrected' record without a reason
+AssertionError: expected '42703' to be '23514' // Object.is equality
+
+Expected: "23514"
+Received: "42703"
+
+ ❯ tests/db/document-catalog-governed.dbtest.ts:302:17
+    300|       `UPDATE vault.document_catalog SET correction_reason = NULL WHER…
+    301|     ).then(() => 'ok', (e: { code?: string }) => e.code);
+    302|     expect(err).toBe('23514');
+       |                 ^
+    303|   });
+    304|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > new bytes clear the description and its decision
+error: column "catalog_state" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ catalogRow tests/db/document-catalog-governed.dbtest.ts:123:4
+    121|
+    122| const catalogRow = async (documentId: string) =>
+    123|   (await owner.query(
+       |    ^
+    124|     `SELECT catalog_state, document_kind, purpose, summary, proposed_b…
+    125|             proposed_turn_id, confirmed_by, confirmed_at, correction_r…
+ ❯ tests/db/document-catalog-governed.dbtest.ts:311:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 190, severity: 'ERROR', code: '42703', detail: undefined, hint: 'Perhaps you meant to reference the column "document_catalog.catalog_status".', position: '8', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed (15)
+   Start at  17:55:59
+   Duration  19.15s (transform 8.84s, setup 115ms, import 253ms, tests 18.37s, environment 0ms)
+

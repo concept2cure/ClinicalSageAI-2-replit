@@ -4,7 +4,7 @@
  * Ported VERBATIM from concept2cure-v2:
  *   server/services/etmf/tmf-completeness.ts
  *     - TMF_REFERENCE_MODEL (DIA TMF Reference Model v3.x -- 11 zones,
- *       ICH E6(R2) section 8 essential documents; exact codes/names/essential)
+ *       ICH E6(R3) Appendix C essential records; exact codes/names/essential)
  *     - assessTmfCompleteness({ providedArtifacts, scope }) -> result
  *   server/routes/etmf.routes.ts (mounted /api/etmf):
  *     GET  /reference-model

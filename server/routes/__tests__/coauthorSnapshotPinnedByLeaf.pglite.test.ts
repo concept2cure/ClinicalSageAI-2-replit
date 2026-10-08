@@ -129,7 +129,10 @@ const editSection = (docId: string, code: string, content: string) =>
   q('UPDATE authoring_sections SET content = $3 WHERE doc_id = $1 AND code = $2', [docId, code, content]);
 
 const place = (sourceAuthoringDocId: string) =>
-  request(app).post('/api/coauthor/documents').send({ title: 'Clinical Overview', moduleNumber: '2.5', sourceAuthoringDocId });
+  // The stated reason a filing copy requires (62821670f, merged 2026-10-08).
+  request(app).post('/api/coauthor/documents').send({
+    title: 'Clinical Overview', moduleNumber: '2.5', sourceAuthoringDocId, changeReason: 'Placing this document into the filing',
+  });
 
 async function sequence(status = 'draft'): Promise<number> {
   const [sub] = await q<{ id: number }>(

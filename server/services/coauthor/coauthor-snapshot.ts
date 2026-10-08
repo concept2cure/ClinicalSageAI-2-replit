@@ -456,8 +456,10 @@ export async function takeAuthoringSnapshot(args: {
   createdBy: string | null;
   /** Who is placing it; recorded when an existing copy is re-taken. */
   actor: CoauthorAuditActor;
+  /** The person's stated reason, validated by the route (governed-reason.ts). */
+  reason: string;
 }): Promise<SnapshotOutcome> {
-  const { organizationId, moduleNumber, templateId, createdBy, actor } = args;
+  const { organizationId, moduleNumber, templateId, createdBy, actor, reason } = args;
   const sourceId = String(args.sourceAuthoringDocId);
 
   const src = await pool.query<{ status: string | null }>(
@@ -491,9 +493,10 @@ export async function takeAuthoringSnapshot(args: {
         documentId: id,
         eventType: 'coauthor_document.retaken',
         actor,
-        reason: before
-          ? 'filing copy re-taken from its source authoring document'
-          : 'deleted filing copy re-created from its source authoring document',
+        /* The person's stated reason (2026-10-08, filing-spine design review,
+           Part 11 lens). These were sentences the code composed; what the
+           system did is in the fields below (recreated, before, after). */
+        reason,
         metadata: {
           sourceAuthoringDocId: sourceId,
           recreated: before === null,

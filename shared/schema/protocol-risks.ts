@@ -4,7 +4,7 @@
  * Per-protocol risk assessment that complements the authoring layer: a register
  * of risks scored on a likelihood × impact matrix, with mitigations and a residual
  * score, soft-linked to a protocol document. Risk scoring is deterministic
- * (protocol-risks-logic.ts). Grounded in ICH E6(R2) §5.0 (quality risk management)
+ * (protocol-risks-logic.ts). Grounded in ICH E6(R3) Annex 1 §3.10.1 (risk management)
  * and ISO 14971 risk-assessment principles. Conventions match the platform;
  * status/type columns are CHECK-constrained. Mutations are governed + audited.
  *

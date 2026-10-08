@@ -96,49 +96,56 @@ beforeEach(() => { apiRequest.mockReset(); copyWritten.value = undefined; });
 afterEach(() => cleanup());
 
 describe('Place into filing states what the filing copy is (F17)', () => {
-  it('a draft document: "Filed as draft. Freeze will refuse it until you re-place it after approval."', async () => {
+  /* Amended 2026-10-08 (filing-spine design review): the line said "Filed as
+     draft" before anything was filed, and "carries its approval signature" from
+     the loaded status alone, with the seal unread. It is a forecast now, and the
+     approved case says the server verifies the seal. */
+  it('a draft document: the copy will be a draft, which freeze refuses', async () => {
     mockApi('draft', []);
     renderDialog('DRAFT');
     await openAndTarget();
-    expect(copyLine()).toContain('Filed as draft. Freeze will refuse it until you re-place it after approval.');
+    expect(copyLine()).toContain('Will be filed as a draft. Freeze refuses it until you re-place the document after approval.');
   });
 
   it('a document in review is filed as a draft too', async () => {
     mockApi('draft', []);
     renderDialog('IN_REVIEW');
     await openAndTarget();
-    expect(copyLine()).toContain('Filed as draft.');
+    expect(copyLine()).toContain('Will be filed as a draft.');
   });
 
   it('a frozen, unsigned document is filed as finalized, which freeze also refuses', async () => {
     mockApi('finalized', []);
     renderDialog('FROZEN');
     await openAndTarget();
-    expect(copyLine()).toMatch(/Filed as finalized, not approved\. Freeze will refuse it until you re-place it after approval\./);
+    expect(copyLine()).toMatch(/Will be filed as finalized, not approved\. Freeze refuses it until you re-place the document after approval\./);
   });
 
   it('an approved document: filed as approved, with no refusal', async () => {
     mockApi('approved', []);
     renderDialog('APPROVED');
     await openAndTarget();
-    expect(copyLine()).toContain('Filed as approved');
-    expect(copyLine()).not.toMatch(/refuse/);
+    expect(copyLine()).toContain('Will be filed as approved once the server verifies its approval seal.');
+    expect(copyLine()).not.toMatch(/refuse|carries its approval signature/);
   });
 
   it('an unknown state claims neither: it states the rule', async () => {
     mockApi(undefined, []);
     renderDialog(null);
     await openAndTarget();
-    expect(copyLine()).not.toMatch(/Filed as (draft|approved|finalized)/);
+    expect(copyLine()).not.toMatch(/filed as (a draft|approved|finalized)/i);
     expect(copyLine()).toMatch(/only an approved copy/i);
   });
 
   it("after placing, the server's copy status is stated, and a draft copy carries the refusal", async () => {
-    mockApi('draft', [{}]);
+    const calls = mockApi('draft', [{}]);
     renderDialog('DRAFT');
     await openAndTarget();
     fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
     await waitFor(() => expect(document.body.textContent).toContain('server-confirmed (leaf #77'));
+    // Taking the filing copy states the placement's reason: the server now
+    // requires one on that write (2026-10-08, filing-spine design review).
+    expect((calls.find((c) => c.method === 'POST')!.body as { changeReason?: string }).changeReason).toBe(REASON);
     expect(document.body.textContent).toMatch(/The filing copy is a draft\. Freeze will refuse it until you re-place it after approval\./);
   });
 
@@ -158,6 +165,9 @@ describe('Place into filing states what the filing copy is (F17)', () => {
     expect(document.body.textContent).not.toMatch(/Freeze will refuse/);
     expect(screen.queryByRole('button', { name: 'Re-place approved version' })).toBeNull();
     expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(1);
+    // The promotion is the re-take's write, and it carries the person's reason
+    // (62821670f: POST /api/coauthor/documents requires changeReason).
+    expect((calls.find((c) => c.method === 'POST')!.body as { changeReason?: string }).changeReason).toBe(REASON);
   });
 
   it('already placed with a draft copy: no re-place is offered, and the refusal is stated', async () => {
@@ -168,5 +178,28 @@ describe('Place into filing states what the filing copy is (F17)', () => {
     await waitFor(() => expect(document.body.textContent).toContain('Already placed'));
     expect(screen.queryByRole('button', { name: 'Re-place approved version' })).toBeNull();
     expect(document.body.textContent).toMatch(/The filing copy is a draft\./);
+  });
+});
+
+/* Design review 2026-10-08 (Part 11 lens): the canvas card rendered the dialog
+   without docStatus or sectionCodes, so on that path the copy-status line fell
+   to its unknown-state rule and the whole-document code guard did nothing.
+   Every caller passes both. */
+describe('every caller of the Place into filing dialog says what the document is', () => {
+  it('passes docStatus and sectionCodes wherever the dialog is rendered', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const root = path.resolve(__dirname, '..');
+    const walk = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory() ? (e.name === '__tests__' ? [] : walk(path.join(dir, e.name))) : /\.tsx$/.test(e.name) ? [path.join(dir, e.name)] : []);
+    const uses = walk(root).flatMap((f) => {
+      const src = fs.readFileSync(f, 'utf8');
+      return [...src.matchAll(/<AuthoringPlaceIntoFiling\b([\s\S]*?)\/>/g)].map((m) => ({ file: path.relative(root, f), props: m[1] }));
+    });
+    expect(uses.length).toBeGreaterThanOrEqual(2);
+    for (const u of uses) {
+      expect(u.props, `${u.file}: docStatus`).toMatch(/\bdocStatus=/);
+      expect(u.props, `${u.file}: sectionCodes`).toMatch(/\bsectionCodes=/);
+    }
   });
 });

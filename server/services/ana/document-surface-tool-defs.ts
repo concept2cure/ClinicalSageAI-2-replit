@@ -203,7 +203,7 @@ export const COMPARE_VAULT_VERSIONS: AnaTool = {
 export const SEED_TMF: AnaTool = {
   name: 'seed_tmf',
   description:
-    "Populate a Trial Master File with the expected-document skeleton from the TMF Reference Model catalog (ICH E6(R2) §8 essential documents). Idempotent — artifacts already present are skipped, so it can fill gaps in an in-progress TMF. Scope 'essential' seeds only essential documents; 'all' (default) seeds the full catalog. GOVERNED: reason required, audited, tenant-scoped. Use get_tmf_view afterwards to see the seeded index.",
+    "Populate a Trial Master File with the expected-document skeleton from the TMF Reference Model catalog (ICH E6(R3) Appendix C essential records). Idempotent — artifacts already present are skipped, so it can fill gaps in an in-progress TMF. Scope 'essential' seeds only essential documents; 'all' (default) seeds the full catalog. GOVERNED: reason required, audited, tenant-scoped. Use get_tmf_view afterwards to see the seeded index.",
   input_schema: {
     type: 'object',
     properties: {

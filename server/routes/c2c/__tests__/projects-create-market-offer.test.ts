@@ -124,11 +124,12 @@ const BEFORE_SQL: Array<{ name: string; send: Record<string, unknown>; reason: R
     send: { programType: 'jnda', primaryAgency: 'PMDA', submissionTypeId: 'jp_mkt_approval' },
     reason: /^PMDA requires eCTD v4\.0 for new applications/,
   },
-  { name: 'an agency nothing maps (Swissmedic)', send: { programType: 'nda', primaryAgency: 'Swissmedic' }, reason: /^Refused at creation: / },
+  { name: 'an agency nothing maps (Swissmedic)', send: { programType: 'nda', primaryAgency: 'Swissmedic' }, reason: /^Not supported: the platform has no filing outline or channel for / }, // wording amended 2026-10-08 (design review)
   {
     name: 'a drug application at a Notified Body',
     send: { programType: 'nda', primaryAgency: 'EU / Notified Body' },
-    reason: /^Refused at creation: A Notified Body assesses EU MDR and IVDR technical documentation/,
+    // Wording amended 2026-10-08 (filing-spine design review): the agency's limit reads "Not offered".
+    reason: /^Not offered: A Notified Body assesses EU MDR and IVDR technical documentation/,
   },
 ];
 

@@ -89,7 +89,7 @@ const DOCUMENT_TYPES: DocumentTypeStandard[] = [
     id: 'protocol',
     label: 'Clinical Study Protocol',
     segment: 'drug',
-    governingStandards: ['ICH E6(R2) GCP', 'ICH E8(R1)', 'ICH E9 (statistics)', 'SPIRIT 2013'],
+    governingStandards: ['ICH E6(R3) GCP', 'ICH E8(R1)', 'ICH E9 (statistics)', 'SPIRIT 2013'],
     purpose: 'Define the scientific design, conduct, and analysis of a clinical study so it is reproducible and ethically sound.',
     defaultAudience: 'regulator',
     structure: [
@@ -132,7 +132,7 @@ const DOCUMENT_TYPES: DocumentTypeStandard[] = [
     id: 'ib',
     label: "Investigator's Brochure (IB)",
     segment: 'drug',
-    governingStandards: ['ICH E6(R2) §7'],
+    governingStandards: ['ICH E6(R3) Appendix A'],
     purpose: 'Give investigators the clinical and nonclinical data relevant to safe study conduct and benefit–risk.',
     defaultAudience: 'clinician',
     structure: ['Summary', 'Physical/chemical/pharmaceutical properties', 'Nonclinical studies (PK/tox/pharmacology)', 'Effects in humans (PK, safety, efficacy)', 'Summary of data & guidance for the investigator', 'Reference safety information (RSI)'],

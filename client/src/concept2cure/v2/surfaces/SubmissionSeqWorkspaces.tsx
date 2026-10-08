@@ -968,7 +968,12 @@ const VAL_SEV: Record<string, ToneMap> = {
 };
 
 // POST /:id/validation/explain → explainValidation (submission-ai-service).
+// The model's prose, each row bound to a validator finding by index: the rule,
+// severity and leaf are the validator's, copied by the server. There is no
+// verdict in it: the reply used to carry the model's own `blocking`, printed
+// here as "Blocking." (Rule 2; filing-spine design review 2026-10-08).
 interface ExplainRow {
+  index: number;
   ruleId: string | null;
   severity: string;
   leaf: string | null;
@@ -976,10 +981,12 @@ interface ExplainRow {
   fix: string;
 }
 interface ExplainResponse {
-  explained: ExplainRow[];
-  summary: string;
-  blocking: boolean;
+  narrative: { source: 'model'; label: string; promptVersion: string; summary: string; explained: ExplainRow[] } | null;
+  narrativeUnavailable: { code: string; message: string } | null;
 }
+const isExplainResponse = (d: unknown): d is ExplainResponse =>
+  !!d && typeof d === 'object' && 'narrative' in d &&
+  ((d as ExplainResponse).narrative === null || Array.isArray((d as ExplainResponse).narrative?.explained));
 
 export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow }) {
   const path = `/api/submissions/sequences/${seq.id}/dispatch-readiness`;
@@ -1015,7 +1022,7 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
         })),
       },
     );
-    if (r.data && Array.isArray(r.data.explained)) setExplain({ phase: 'done', data: r.data });
+    if (isExplainResponse(r.data)) setExplain({ phase: 'done', data: r.data });
     else setExplain({ phase: 'error', error: r.error ?? 'unexpected response shape' });
   };
 
@@ -1111,14 +1118,18 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
                 above stand on their own.
               </div>
             )}
-            {explain.phase === 'done' && explain.data && (
-              <div className="sc-mt">
-                <div className="scaf-note sc-mb">
-                  {explain.data.blocking ? 'Blocking. ' : ''}
-                  {explain.data.summary}
-                </div>
+            {explain.phase === 'done' && explain.data && !explain.data.narrative && (
+              <div className="sc-verdict sc-mt" role="status">
+                No model explanation: {explain.data.narrativeUnavailable?.message ?? 'the model returned none.'} The
+                findings above are the validator&apos;s and stand on their own.
+              </div>
+            )}
+            {explain.phase === 'done' && explain.data?.narrative && (
+              <div className="sc-verdict sc-mt" role="note">
+                <span className="sp-row-s">{explain.data.narrative.label}</span>
+                {explain.data.narrative.summary && <p>{explain.data.narrative.summary}</p>}
                 <div className="sp-list">
-                  {explain.data.explained.map((e, i) => (
+                  {explain.data.narrative.explained.map((e, i) => (
                     <div key={i} className="sp-row">
                       <Chip map={VAL_SEV} k={e.severity} />
                       <span className="sp-row-b">
@@ -1132,7 +1143,7 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
                           ) : null}
                         </span>
                         <span className="sp-row-s">{e.cause}</span>
-                        <span className="sp-row-s">Fix: {e.fix}</span>
+                        {e.fix && <span className="sp-row-s">Fix: {e.fix}</span>}
                       </span>
                     </div>
                   ))}

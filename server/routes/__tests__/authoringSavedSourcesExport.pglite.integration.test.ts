@@ -2,6 +2,8 @@
  * current-version/disposition SQL, XML renderer and export-history SQL. Auth
  * membership and audit persistence are explicit seams; no audit-HMAC/RLS PQ. */
 import { createHash, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
@@ -64,6 +66,10 @@ beforeAll(async () => {
       ADD COLUMN page_count integer, ADD COLUMN document_kind text, ADD COLUMN purpose text,
       ADD COLUMN summary text, ADD COLUMN cataloged_at timestamptz;
   `);
+  // The catalog's attribution columns (Data Room S4, 88ab56f67), which the
+  // Vault document read now selects: the real migration, as the other PGlite
+  // harnesses apply it.
+  await harness.pg.exec(readFileSync(path.resolve(__dirname, '../../../migrations/20261008e_document_catalog_attribution.sql'), 'utf8'));
   const query = async (sql: string, params?: unknown[]) => {
     h.sql.push(sql);
     // Isolated mutation proof of the actual old projection. The shared route

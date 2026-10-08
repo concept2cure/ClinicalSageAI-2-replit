@@ -51,13 +51,13 @@ import type { PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger.js';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
-  filingTypesForView,
   foldersForView,
   VAULT_FOLDER_PRESETS,
   VAULT_VIEWS,
   VAULT_DOC_KINDS,
   type VaultViewId,
   vaultIngestTypeLabel,
+  vaultSpineLabel,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
 import {
@@ -421,17 +421,6 @@ function normalizeStatus(raw: string | null | undefined, hasContent: boolean): s
     case 'todo':     return 'not_started';
     default:         return hasContent ? 'draft' : 'not_started';
   }
-}
-
-/** Spine label = the view's primary filing framework + its governing refs
- *  (same basis the shipped client `vaultStructureToSpine` converter uses). */
-function vaultViewLabel(view: VaultViewId): string {
-  const filings = filingTypesForView(view);
-  const primary = filings[0];
-  if (!primary) return view;
-  const refs = (primary as { regulatoryRefs?: string[] }).regulatoryRefs;
-  const suffix = refs && refs.length ? ` · ${refs.join(' · ')}` : '';
-  return `${primary.label}${suffix}`;
 }
 
 /** Bytes → '3.4 MB' (real size only; null → em dash, never invented). */
@@ -1483,7 +1472,7 @@ export default function createProjectVaultRoutes(): Router {
       });
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
-        spine: vaultViewLabel(view),
+        spine: vaultSpineLabel(view, project.program_type),
         standard: view,
         documentCount:
           documentCounts.authored + (documentCounts.cmcArtifacts ?? 0) + (documentCounts.uploads ?? 0),
@@ -2118,6 +2107,64 @@ export default function createProjectVaultRoutes(): Router {
       return res.status(500).json({ success: false, error: 'The details could not be saved. Nothing was changed.' });
     }
   });
+
+  /* ── The catalog record: AnA's suggestion, a person's decision (S4, D5) ──
+     What AnA recorded about the current version (kind, purpose, summary, key
+     data), who proposed it (model, turn) and whether a person confirmed or
+     corrected it. The writer (document-catalog-governance.service.ts) checks
+     the role, the reason, the vocabulary and program ownership, and commits
+     each decision with one chained audit row; these routes only carry it. */
+  router.get('/:id/documents/:documentId/catalog', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const { readCatalogRecord } = await import('../../services/vault/document-catalog-governance.service.js');
+      const record = await readCatalogRecord({
+        programId: String(req.params.id ?? ''), documentId: String(req.params.documentId ?? ''), organizationId: orgId,
+      });
+      if (!record) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      return res.json({ success: true, data: record });
+    } catch (err) {
+      logger.error('vault catalog record read failed', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'CATALOG_UNAVAILABLE',
+        message: "This document's catalog record could not be read. Nothing is shown rather than a record that may be wrong." });
+    }
+  });
+
+  const reviewCatalog = (action: 'confirm' | 'correct') => async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const text = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    try {
+      const { reviewCatalogRecord } = await import('../../services/vault/document-catalog-governance.service.js');
+      const outcome = await reviewCatalogRecord({
+        programId: String(req.params.id ?? ''),
+        documentId: String(req.params.documentId ?? ''),
+        organizationId: orgId,
+        // From the session only; the service refuses a request with none.
+        userId: governedActorId(req),
+        action,
+        expectedContentHash: text(body.contentHash),
+        expectedRevision: text(body.revision),
+        documentKind: text(body.documentKind),
+        purpose: text(body.purpose),
+        summary: text(body.summary),
+        reason: body.reason,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, state: outcome.state, changes: outcome.changes });
+    } catch (err) {
+      logger.error(`vault catalog ${action} failed`, { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'CATALOG_NOT_SAVED', message: 'The catalog record could not be saved. Nothing was changed.' });
+    }
+  };
+  router.post('/:id/documents/:documentId/catalog/confirm', requireEditorAccess, reviewCatalog('confirm'));
+  router.post('/:id/documents/:documentId/catalog/correct', requireEditorAccess, reviewCatalog('correct'));
 
   /* ── Document relationships (plan critique 15, D2) ─────────────────────
      One version names the documents that support it, that it references or

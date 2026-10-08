@@ -175,12 +175,14 @@ export function ownSectionRefusal(canonical: string | null, sectionCodes: Readon
 export function copyStatusLine(docStatus: string | null | undefined): string {
   if (docStatus == null || String(docStatus).trim() === '') {
     return 'The filing copy takes this document’s state when it is placed, and keeps it. ' +
-      'Freeze, dispatch and transmit release only an approved copy.';
+      'Freeze, dispatch and transmit accept only an approved copy.';
   }
+  /* A forecast from the status as loaded: nothing is filed yet, and only the
+     server reads the approval seal (it refuses an unsealed or altered source). */
   const copy = snapshotStatusFor(docStatus);
-  if (copy === 'approved') return 'Filed as approved: this document carries its approval signature.';
-  if (copy === 'finalized') return 'Filed as finalized, not approved. Freeze will refuse it until you re-place it after approval.';
-  return 'Filed as draft. Freeze will refuse it until you re-place it after approval.';
+  if (copy === 'approved') return 'Will be filed as approved once the server verifies its approval seal.';
+  if (copy === 'finalized') return 'Will be filed as finalized, not approved. Freeze refuses it until you re-place the document after approval.';
+  return 'Will be filed as a draft. Freeze refuses it until you re-place the document after approval.';
 }
 
 /** The server's copy status after placing, as a sentence; empty when it is
@@ -310,7 +312,7 @@ function AuthoringPlaceIntoFilingForDocument({
     setVerdict(null);
     setPlacement(null);
     try {
-      const copy = await takeFilingCopy(docId, docTitle, sectionCode, current);
+      const copy = await takeFilingCopy(docId, docTitle, sectionCode, reason.trim(), current);
       if (!copy || !current()) return;
       if (!copy.ok) {
         setNeedsReconciliation(copy.unconfirmed);
@@ -468,7 +470,16 @@ function AuthoringPlaceIntoFilingForDocument({
               <PlacementReasonField value={reason} onChange={setReason} idPrefix="apf" disabled={placing} />
               </fieldset>
 
-              <div className="de-desc" data-testid="apf-copy-status">{copyStatusLine(docStatus)}</div>
+              {/* Until placement; after it, the verdict states the server's copy status. */}
+              {!placement && (
+                <div
+                  id="apf-copy-status"
+                  className={String(docStatus ?? '').trim() !== '' && snapshotStatusFor(docStatus) !== 'approved' ? 'de-gov' : 'de-desc'}
+                  data-testid="apf-copy-status"
+                >
+                  {copyStatusLine(docStatus)}
+                </div>
+              )}
 
               {dirty && (
                 <div className="de-err" role="status">
@@ -585,7 +596,7 @@ const FILING_COPY_PINNED = 'FILING_COPY_PINNED';
 
 /** Read saved content and request the existing governed snapshot. A context
  * switch after the read stops the next write; an already-sent write may commit. */
-async function takeFilingCopy(docId: string, docTitle: string, sectionCode: string, current: () => boolean): Promise<CopyResult | null> {
+async function takeFilingCopy(docId: string, docTitle: string, sectionCode: string, changeReason: string, current: () => boolean): Promise<CopyResult | null> {
   const read = await liveGetOrNull<{ sections?: SavedSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
   if (!current()) return null;
   if (read.error || !read.data) return {
@@ -602,7 +613,7 @@ async function takeFilingCopy(docId: string, docTitle: string, sectionCode: stri
     verdict: { tone: 'err', text: 'This document has no saved section content yet — there is nothing to file. Nothing was created.' },
   };
   const snap: SnapshotReply = await mutateVerbatim('POST', '/api/coauthor/documents', {
-    title: docTitle, moduleNumber: sectionCode, content: assembleSnapshot(saved), sourceAuthoringDocId: docId,
+    title: docTitle, moduleNumber: sectionCode, content: assembleSnapshot(saved), sourceAuthoringDocId: docId, changeReason,
   });
   if (!current()) return null;
   return copyReceipt(snap, docId) ?? snapshotFailure(snap);

@@ -1010,7 +1010,7 @@ export function SubmissionCenter({
         `Submission Center, "${SUBMISSION_WORKSPACES.find((w) => w.id === ws)?.label ?? ws}" workspace: ` +
         portfolioCountLine +
         (sub
-          ? `, "${sub.title}" selected — a ${regL(sub.primaryRegion)} ${appL(sub.applicationType)} at the ` +
+          ? `, "${sub.title}" selected — ${appL(sub.applicationType)} · ${regL(sub.primaryRegion)}, at the ` +
             `${sub.lifecycleStage} stage, ${seqLine}` +
             (seq ? `, working sequence ${seq.sequenceNumber} (${seq.status})` : '')
           : ', none selected'),
@@ -1108,8 +1108,7 @@ export function SubmissionCenter({
           <div className="sp-eyebrow">Submission</div>
           <h1 className="sp-title">Submission center</h1>
           <p className="sp-state">
-            Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2
-            / v4.0, eSTAR, MDR/IVDR. Seven workspaces scaffolded from the submission contract.
+            Plan, build, validate and dispatch each market&apos;s eCTD v3.2.2 sequences.
           </p>
         </div>
         {list.length > 0 && (
@@ -1144,8 +1143,10 @@ export function SubmissionCenter({
           headline={
             <>
               {sub.title}
-              {sub.productName ? ` (${sub.productName})` : ''} — a {regL(sub.primaryRegion)}{' '}
-              {appL(sub.applicationType)} at the <b>{sub.lifecycleStage}</b> stage.
+              {/* No article: "a FDA", "a EU" read wrong, and an initialism's
+                  article depends on how it is said (design review 2026-10-08). */}
+              {sub.productName ? ` (${sub.productName})` : ''} — {appL(sub.applicationType)} · {regL(sub.primaryRegion)}, at
+              the <b>{sub.lifecycleStage}</b> stage.
             </>
           }
           body={
@@ -1359,7 +1360,10 @@ export function SubmissionCenter({
               <EmptyState
                 icon={I.fileText}
                 title="No device filings tracked yet"
-                hint="Start tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
+                hint={available('device-510k')
+                  ? "Start tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
+                  /* The surface it names is not in this release (F16: no dead ends). */
+                  : 'Device filings are tracked from the 510(k) workbench, which is not part of this release.'}
               />
             ) : (
               <table className="ub-inv">

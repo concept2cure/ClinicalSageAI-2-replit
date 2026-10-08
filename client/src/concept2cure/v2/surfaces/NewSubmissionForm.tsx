@@ -5,8 +5,9 @@
  * The form opened on IND · FDA · Biotech for every project, a hard-coded
  * default, so an EMA MAA project's new submission started as a US IND. Now:
  *   - with a project open, the application type and region are the project's
- *     own (`program_type`, `primary_agency`, read from its record), and the
- *     client type is the open workspace's;
+ *     own (`program_type`, `primary_agency`, read from its record), the
+ *     client type follows its recorded product type, and each defaulted field
+ *     says where its value came from;
  *   - when that market already exists on the project, no region is
  *     preselected: a second submission in the same market is a choice;
  *   - a value the form does not offer is not guessed, and a record that could
@@ -15,8 +16,8 @@
  *   - each region option carries what the platform can carry for that market,
  *     for the application type chosen, in the server's words (F19).
  *
- * The form waits for the project's record and its submissions before it
- * opens, because its defaults are fixed when it mounts.
+ * The drawer opens at once and says it is reading; its fields appear, from
+ * their defaults, once the project's record and its submissions have settled.
  */
 import React from 'react';
 import { canonicalRegionOf } from '@shared/regulatory/region-identity';
@@ -48,9 +49,26 @@ export function scAppTypeFor(programType: string | null | undefined): string {
 }
 
 const WS_CLIENT_TYPE: Record<string, string> = { Pharma: 'pharma', Biotech: 'biotech', MDX: 'mdx' };
-const PRODUCT_CLIENT_TYPE: Record<string, string> = { device: 'mdx', ivd: 'ivd' };
+/* regulatory_programs.product_type, a recorded fact about the product. The
+   filing type's bucket is not: it files every IND under Biotech, a small
+   molecule's included (design review 2026-10-08, honest-state lens). */
+const PRODUCT_CLIENT_TYPE: Record<string, string> = {
+  drug: 'pharma', biologic: 'biotech', device: 'mdx', samd: 'mdx', ivd: 'ivd', cdx: 'ivd',
+};
 
-export interface NewSubmissionDefaults { applicationType: string; primaryRegion: string; clientType: string }
+/** The client type the project's product is; else the open workspace's; else none. */
+function clientTypeFor(project: ProjectFiling, workspace: string | null | undefined): string {
+  return PRODUCT_CLIENT_TYPE[String(project.product_type ?? '').trim().toLowerCase()] ?? WS_CLIENT_TYPE[workspace ?? ''] ?? '';
+}
+
+export interface NewSubmissionDefaults {
+  applicationType: string;
+  primaryRegion: string;
+  clientType: string;
+  /** Why the project's region is not preselected: its market already exists, or
+   *  the project's submissions could not be read. */
+  regionWithheld?: 'exists' | 'unread' | null;
+}
 
 /** The form's starting values, from the project's record and its submissions. */
 export function newSubmissionDefaults(
@@ -66,16 +84,25 @@ export function newSubmissionDefaults(
   const marketExists = !!region && existing.some(
     (s) => s.primaryRegion === region && String(s.applicationType).toLowerCase() === (applicationType || String(project.program_type ?? '').toLowerCase()),
   );
-  const clientType = WS_CLIENT_TYPE[workspace ?? ''] ?? PRODUCT_CLIENT_TYPE[String(project.product_type ?? '').toLowerCase()] ?? '';
-  return { applicationType, primaryRegion: marketExists || existingUnread ? '' : region, clientType };
+  const regionWithheld = !region ? null : existingUnread ? 'unread' : marketExists ? 'exists' : null;
+  return { applicationType, primaryRegion: regionWithheld ? '' : region, clientType: clientTypeFor(project, workspace), regionWithheld };
 }
 
 /** What the region field says about its options, from the state of the read. */
 function regionDescFor(appType: string, loading: boolean, failed: boolean, markets: number | null): string {
-  if (!appType) return 'Choose an application type to see what the platform can carry for each region.';
-  if (loading || (markets === null && !failed)) return 'Checking what the platform can carry for each region…';
-  if (failed || !markets) return 'What the platform can carry for each region could not be read.';
-  return 'Each region says what the platform can carry for that market and application type.';
+  if (!appType) return 'Choose an application type to see platform support for each region.';
+  if (loading || (markets === null && !failed)) return 'Checking platform support for each region…';
+  if (failed || !markets) {
+    return 'Platform support for each region could not be read. A region can still be chosen; close and reopen this form to check again.';
+  }
+  return 'Each region states platform support for that market and application type.';
+}
+
+/** Why the project's own region is not preselected, when it is not. */
+function withheldNote(defaults: NewSubmissionDefaults): string {
+  if (defaults.regionWithheld !== 'exists') return '';
+  const type = SC_APPTYPES.find((a) => a.v === defaults.applicationType)?.l ?? 'This application type';
+  return `${type} in the project's region already exists on this project, so no region is preselected. `;
 }
 
 /** Why a default is missing, said inside the drawer. */
@@ -103,6 +130,8 @@ function submissionFields(
       // the non-US applications (MAA, CTA) a global team opens as a second market.
       options: SC_APPTYPES.map((a) => ({ value: a.v, label: a.l })),
       default: defaults.applicationType, required: true,
+      // A default is said to be one, so it is not read as a choice already made.
+      ...(defaults.applicationType ? { desc: "From this project's record." } : {}),
     },
     {
       key: 'primaryRegion', label: 'Primary region', type: 'select',
@@ -113,7 +142,8 @@ function submissionFields(
       // Full width: the option carries the market's statement (F19), and its
       // last clause ("no channel") is the part a half-width select would clip.
       default: defaults.primaryRegion, required: true,
-      desc: regionDesc,
+      desc: (defaults.primaryRegion ? "From this project's record. " : withheldNote(defaults)) + regionDesc,
+      descLive: true,
     },
     {
       key: 'clientType', label: 'Client type', type: 'select',
@@ -123,16 +153,18 @@ function submissionFields(
         { value: 'mdx', label: 'Medical device' },
         { value: 'ivd', label: 'IVD' },
       ],
-      default: defaults.clientType, required: true, half: true,
+      default: defaults.clientType, required: true,
+      ...(defaults.clientType ? { desc: "From this project's product type." } : {}),
     },
     /* With a project open the submission is that project's: it is named
-       here, read-only, and there is no picker. */
+       here, read-only, and there is no picker. Full width, as is the client
+       type above: as a half pair they sat on a broken :nth-of-type gap. */
     openProjectName
-      ? { key: 'project', label: 'Project', type: 'text', half: true, derive: () => openProjectName }
+      ? { key: 'project', label: 'Project', type: 'text', derive: () => openProjectName }
       : {
-          key: 'projectId', label: 'Programme', type: 'select',
+          key: 'projectId', label: 'Project', type: 'select',
           options: programmes.map((p) => ({ value: p.id, label: [p.code, p.title].filter(Boolean).join(' · ') || p.id })),
-          required: true, half: true,
+          required: true,
         },
   ];
 }
@@ -193,15 +225,14 @@ export function NewSubmissionForm({
   const appType = chosenType ?? filing.defaults.applicationType;
   const { summaryFor, regionDesc } = useRegionStatements(appType);
 
-  /* The defaults are fixed when the form mounts, so it opens once both reads
-     have settled. After that it stays mounted: a later re-read cannot take
-     away what has been typed. */
+  /* The drawer opens at once, busy, inside the dialog (design review
+     2026-10-08: a placeholder in the page moved the page twice and was never
+     announced). Its fields take their defaults once both reads have settled;
+     after that a later re-read cannot take away what has been typed. */
   const settledOnce = React.useRef(false);
   if (filing.settled && (!openProgramId || submissionsSettled)) settledOnce.current = true;
-  if (!settledOnce.current) {
-    return <div role="status" aria-busy="true" className="scaf-note">Reading the open project…</div>;
-  }
-  const notice = noticeFor(filing.unread, submissionsUnread);
+  const busy = settledOnce.current ? undefined : "Loading the project's filing…";
+  const notice = busy ? undefined : noticeFor(filing.unread, submissionsUnread);
 
   const fields = submissionFields(filing.defaults, summaryFor, regionDesc, openProjectName, programmes);
 
@@ -210,10 +241,11 @@ export function NewSubmissionForm({
       config={{
         eyebrow: 'Submission',
         title: 'Create a submission',
-        sub: 'The canonical submission record. Its sequences, validation profile and regional Module 1 are derived from the type and agency chosen here.',
+        sub: 'One submission is one application type in one region. Its sequences are created inside it.',
         submitLabel: creating ? 'Creating…' : 'Create submission',
         fields,
         notice,
+        busy,
       }}
       onCancel={onCancel}
       onSubmit={onSubmit}
