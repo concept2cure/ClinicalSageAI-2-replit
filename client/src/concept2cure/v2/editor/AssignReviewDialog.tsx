@@ -1,5 +1,16 @@
 /**
- * Assign review — create a review task linked to the open document.
+ * Assign review — request the review of the open document, and create the
+ * review task that carries it.
+ *
+ * QA 2026-10-08 (browser walk j4-authoring): this dialog created a task and
+ * nothing else. The review store the Review board reads (authoring_reviews)
+ * never heard of the request, the reviewer was granted nothing on the document
+ * (so could neither comment nor sign the review), and the author could name
+ * herself. The governed act is now POST /api/authoring/documents/:id/request-
+ * review, sent FIRST: it refuses the author, records the request on the Review
+ * board, and — when the requester may manage the document's access — grants
+ * the reviewer the Reviewer role. The task below is the reviewer's to-do,
+ * created only after the request is confirmed. The author is not offered.
  *
  * POST /api/tasks/tasks (taskManagement.routes.ts), the canonical task write
  * path — see ReviewTasksPanel.tsx for why that one. The task carries:
@@ -39,6 +50,9 @@ export interface AssignReviewDialogProps {
   docTitle: string;
   programId: string | null;
   sectionCode: string | null;
+  /** The document's author (authoring_documents.created_by): not offered as its
+   *  reviewer. The server refuses the author either way (REVIEWER_IS_AUTHOR). */
+  authorId?: string | null;
   onClose: () => void;
   onCreated: (task: { taskId: string; assigneeName: string | null }) => void;
   fireToast: FireToast;
@@ -190,15 +204,132 @@ async function createReviewTask(body: Record<string, unknown>): Promise<AssignOu
   }
 }
 
+/** What POST /api/authoring/documents/:id/request-review answers, as much as this dialog reads. */
+type ReviewRequestEnvelope = {
+  success?: boolean;
+  reviews?: Array<{ reviewer_id?: string | number | null }>;
+  grants?: Array<{ reviewerId?: string; granted?: boolean; reason?: string }>;
+} | null;
+
+/** The review request was recorded for this reviewer (and whether access came with it), or it was not. */
+type RequestOutcome =
+  | { ok: true; granted: boolean; grantNote: string | null }
+  | { ok: false; message: string; unconfirmed: boolean };
+
+/**
+ * Request the review on the authoring review store — the act the Review board
+ * reads and the server judges (the author is refused; the reviewer is granted
+ * the Reviewer role when the requester may manage the document's access).
+ * Nothing counts as requested without the server's row for this reviewer.
+ */
+async function requestReview(docId: string, reviewer: { id: string; name: string | null }): Promise<RequestOutcome> {
+  try {
+    const res = await apiRequest('POST', `/api/authoring/documents/${encodeURIComponent(docId)}/request-review`, {
+      reviewers: [{ id: reviewer.id, ...(reviewer.name ? { name: reviewer.name } : {}) }],
+    });
+    const json = (await res.json().catch(() => null)) as ReviewRequestEnvelope;
+    return res.ok ? confirmedRequest(json, reviewer.id) : unacceptedRequest(res.status, json);
+  } catch (e) {
+    return failedRequest(e);
+  }
+}
+
+/** A 2xx is a request only with the server's row for this reviewer; with it, what access came with it. */
+function confirmedRequest(json: ReviewRequestEnvelope, reviewerId: string): RequestOutcome {
+  const recorded = Array.isArray(json?.reviews) && json!.reviews!.some((r) => String(r?.reviewer_id ?? '') === reviewerId);
+  if (!json?.success || !recorded) {
+    return { ok: false, unconfirmed: true, message: 'The response did not confirm the review request for this reviewer. Reload the task list before retrying.' };
+  }
+  const grant = (json.grants ?? []).find((g) => String(g?.reviewerId ?? '') === reviewerId);
+  const granted = grant?.granted === true;
+  return { ok: true, granted, grantNote: !granted && typeof grant?.reason === 'string' ? grant.reason : null };
+}
+
+/** The non-2xx apiRequest returns rather than throws (a 401), or any other it hands back. */
+function unacceptedRequest(status: number, json: ReviewRequestEnvelope): RequestOutcome {
+  if (status === 401) return { ok: false, unconfirmed: false, message: 'Not requested — your session isn’t authenticated. Sign in and retry.' };
+  return { ok: false, unconfirmed: status >= 500, message: 'The review request was not confirmed — ' + (serverMessage(json) ?? `the server returned HTTP ${status}`) + '. Nothing was assigned.' };
+}
+
+/** A thrown refusal is a refusal (the author named as reviewer is a 409); anything else is an unknown outcome. */
+function failedRequest(e: unknown): RequestOutcome {
+  if (e instanceof ApiRequestError && (e.code === 'AUDIT_WRITE_FAILED' || [400, 401, 403, 409, 422].includes(e.status))) {
+    return { ok: false, unconfirmed: false, message: 'The review request was refused — ' + redactInternals(e.message, 'the request was not accepted') };
+  }
+  return {
+    ok: false,
+    unconfirmed: true,
+    message: 'The review request outcome is unknown — ' + redactInternals(e instanceof Error ? e.message : '', 'no confirmed response was received') + '. Reload the task list before retrying.',
+  };
+}
+
+/** What one Assign review did: a superseded attempt, a failure to show, or a task to confirm. */
+type AssignmentResult =
+  | { kind: 'stale' }
+  | { kind: 'failed'; message: string; unconfirmed: boolean }
+  | { kind: 'done'; taskId: string; assigneeName: string | null; toast: string };
+
+/**
+ * The two writes of one Assign review, in order: the review request (the
+ * governed act — a refusal stops here, before any task), then the reviewer's
+ * task. `current` says whether the dialog still wants the answer.
+ */
+async function runAssignment(
+  form: Parameters<typeof buildReviewTaskBody>[0],
+  chosenName: string | null,
+  current: () => boolean,
+): Promise<AssignmentResult> {
+  const requested = await requestReview(form.docId, { id: form.assignee, name: chosenName });
+  if (!current()) return { kind: 'stale' };
+  if (!requested.ok) return { kind: 'failed', message: requested.message, unconfirmed: requested.unconfirmed };
+  const outcome = await createReviewTask(buildReviewTaskBody(form));
+  if (!current()) return { kind: 'stale' };
+  if (!outcome.ok) {
+    return {
+      kind: 'failed',
+      unconfirmed: outcome.unconfirmed,
+      message: `The review was requested — it is on the Review board for ${chosenName ?? 'the reviewer'}.` +
+        grantSentence(chosenName, requested) + ' ' + outcome.message,
+    };
+  }
+  const assigneeName = outcome.assigneeName ?? chosenName;
+  return {
+    kind: 'done',
+    taskId: outcome.taskId,
+    assigneeName,
+    toast: `Review requested and task ${outcome.taskId} assigned${assigneeName ? ` to ${assigneeName}` : ''} — linked to “${form.docTitle}” on the Review board and the task ledger.` +
+      grantSentence(assigneeName, requested),
+  };
+}
+
+/**
+ * The roster a reviewer is chosen from. A different person reviews (the rule
+ * the Vault states and the server enforces): the author is not offered.
+ */
+function useReviewerRoster(authorId: string | null | undefined) {
+  const { roster: everyone, rosterState } = useAssigneeRoster();
+  const author = String(authorId ?? '').trim();
+  const roster = author ? everyone.filter(a => a.id !== author) : everyone;
+  return { roster, rosterState, authorWithheld: author !== '' && roster.length !== everyone.length };
+}
+
+/** What the confirmation says about the reviewer's access to the document. */
+function grantSentence(name: string | null, requested: Extract<RequestOutcome, { ok: true }>): string {
+  if (requested.granted) return ` ${name ?? 'The reviewer'} has the Reviewer role on this document.`;
+  return requested.grantNote ? ` ${requested.grantNote}` : '';
+}
+
 /**
  * The reviewer field. Its own component because a roster that could not be read
  * is reported in place of the control, never as an empty list of people.
  */
-function ReviewerSelect({ roster, rosterState, value, onChange }: {
+function ReviewerSelect({ roster, rosterState, value, onChange, authorWithheld }: {
   roster: Assignee[];
   rosterState: RosterState;
   value: string;
   onChange: (id: string) => void;
+  /** The document's author was left out of the roster: said, not silent. */
+  authorWithheld?: boolean;
 }) {
   const placeholder = rosterState === 'loading'
     ? 'Reading the roster…'
@@ -224,6 +355,9 @@ function ReviewerSelect({ roster, rosterState, value, onChange }: {
             <option key={a.id} value={a.id}>{a.label ?? a.name}</option>
           ))}
         </select>
+      )}
+      {authorWithheld && (
+        <div className="de-desc" data-testid="ar-author-note">The document’s author is not offered: a different person reviews it.</div>
       )}
     </div>
   );
@@ -255,7 +389,7 @@ function ReviewInstructionsField({ value, onChange, sectionCode }: {
   );
 }
 
-function AssignReviewDialogForSource({ docId, docTitle, programId, sectionCode, onClose, onCreated, fireToast, onCheckTasks }: AssignReviewDialogProps) {
+function AssignReviewDialogForSource({ docId, docTitle, programId, sectionCode, authorId, onClose, onCreated, fireToast, onCheckTasks }: AssignReviewDialogProps) {
   const [saving, setSaving] = useState(false);
   const generation = useRef(0);
   const pendingWrite = useRef(false);
@@ -263,7 +397,7 @@ function AssignReviewDialogForSource({ docId, docTitle, programId, sectionCode, 
   const ref = useDialog(() => {
     if (!saving) onClose();
   });
-  const { roster, rosterState } = useAssigneeRoster();
+  const { roster, rosterState, authorWithheld } = useReviewerRoster(authorId);
   const [assignee, setAssignee] = useState('');
   const [due, setDue] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
@@ -281,18 +415,19 @@ function AssignReviewDialogForSource({ docId, docTitle, programId, sectionCode, 
     setError(null);
     try {
       const chosen = roster.find(a => a.id === assignee) ?? null;
-      const outcome = await createReviewTask(
-        buildReviewTaskBody({ docId, docTitle, programId, sectionCode, assignee, due, priority, instructions }),
+      const result = await runAssignment(
+        { docId, docTitle, programId, sectionCode, assignee, due, priority, instructions },
+        chosen?.name ?? null,
+        () => seq === generation.current,
       );
-      if (seq !== generation.current) return;
-      if (!outcome.ok) {
-        setError(outcome.message);
-        setNeedsReconciliation(outcome.unconfirmed);
+      if (result.kind === 'stale') return;
+      if (result.kind === 'failed') {
+        setError(result.message);
+        setNeedsReconciliation(result.unconfirmed);
         return;
       }
-      const assigneeName = outcome.assigneeName ?? chosen?.name ?? null;
-      fireToast(`Review task ${outcome.taskId} assigned${assigneeName ? ` to ${assigneeName}` : ''} — linked to “${docTitle}” on the task ledger.`);
-      onCreated({ taskId: outcome.taskId, assigneeName });
+      fireToast(result.toast);
+      onCreated({ taskId: result.taskId, assigneeName: result.assigneeName });
       onClose();
     } catch (e) {
       if (seq === generation.current) { setError(unreachableMessage(e)); setNeedsReconciliation(true); }
@@ -314,14 +449,14 @@ function AssignReviewDialogForSource({ docId, docTitle, programId, sectionCode, 
           <div>
             <div className="de-h-eye">Tasking</div>
             <div className="de-h-t" id="ar-title">Assign review</div>
-            <div className="de-h-s">Creates a review task linked to “{docTitle}” on the organization’s task ledger.</div>
+            <div className="de-h-s">Requests the review of “{docTitle}” — it appears on the Review board — and creates the reviewer’s task on the organization’s task ledger.</div>
           </div>
           <button className="de-x" onClick={onClose} aria-label="Close" disabled={saving}>
             {I.close}
           </button>
         </div>
         <div className="de-body">
-          <ReviewerSelect roster={roster} rosterState={rosterState} value={assignee} onChange={setAssignee} />
+          <ReviewerSelect roster={roster} rosterState={rosterState} value={assignee} onChange={setAssignee} authorWithheld={authorWithheld} />
           <div className="de-field half">
             <label className="de-label" htmlFor="ar-due">Due date</label>
             <input id="ar-due" className="c2c-input" type="date" value={due} onChange={e => setDue(e.target.value)} data-testid="ar-due" />
@@ -338,7 +473,7 @@ function AssignReviewDialogForSource({ docId, docTitle, programId, sectionCode, 
           <div className="de-gov">
             <span className="ico">{I.lock}</span>
             <span className="de-gov-t">
-              The task is written to the task ledger with its origin recorded as this document. The create is audited and an assignment notification is requested; completing an approval-gated task requires a §11.50 e-signature on the Task board.
+              The review request is recorded on the document and audited. When you own the document (or are an administrator), the reviewer is granted the Reviewer role on it, which lets them comment and sign the review. The task is written to the task ledger with its origin recorded as this document; completing an approval-gated task requires a §11.50 e-signature on the Task board.
             </span>
           </div>
           {needsReconciliation && <button className="de-btn ghost" onClick={onCheckTasks ?? onClose}>Check existing review tasks</button>}

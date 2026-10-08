@@ -189,7 +189,31 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
 
     // Auto-assign if not specified
     let assigneeId = validatedData.assigneeId;
-    let assigneeName = null;
+    let assigneeName: string | null = null;
+    /* A NAMED assignee is someone in this organization, recorded with who
+       assigned the task and when (QA 2026-10-08, j4: the review task Assign
+       review creates was stored with assignee_name, assigned_by and assigned_at
+       all NULL — "ASSIGNED BY --" in the drawer — and any integer was accepted
+       as the assignee). Resolved before anything is written; a non-member is
+       refused. */
+    let assignment: { assignedBy: number; assignedAt: Date } | null = null;
+    if (assigneeId) {
+      const [member] = await storage.db
+        .select({ id: users.id, name: users.name, email: users.email })
+        .from(users)
+        .innerJoin(organizationUsers, eq(organizationUsers.userId, users.id))
+        .where(and(eq(users.id, assigneeId), eq(organizationUsers.organizationId, organizationId)))
+        .limit(1);
+      if (!member) {
+        return res.status(400).json({
+          success: false,
+          code: 'ASSIGNEE_NOT_MEMBER',
+          error: 'The assignee is not a member of this organization. Nothing was created.',
+        });
+      }
+      assigneeName = member.name || (member.email ? String(member.email).split('@')[0] : null);
+      assignment = { assignedBy: actorUserId, assignedAt: new Date() };
+    }
 
     if (!assigneeId) {
       const optimalAssignee = await getOptimalAssignee(organizationId, validatedData);
@@ -213,6 +237,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
           dueDate: dueDate ? new Date(dueDate) : undefined,
           assigneeId,
           assigneeName,
+          ...(assignment ?? {}),
           status: validatedData.status ?? 'pending',
           progress: 0,
           completionPercentage: 0,

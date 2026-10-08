@@ -49,6 +49,8 @@ const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json
 
 /** The task ledger as the mock server holds it. */
 let ledger: Array<Record<string, unknown>> = [];
+/** The review requests the mock server received, in order. */
+let requests: Array<{ url: string; body?: Record<string, unknown> }> = [];
 let patch: (taskId: string, body: Record<string, unknown>) => Response;
 
 function mockApi() {
@@ -62,6 +64,12 @@ function mockApi() {
       return ok({ sections: [{ id: SEC, doc_id: DOC, code: '2.5.1', title: 'Rationale', content: '<p>The product rationale.</p>', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });
     }
     if (url === '/api/task-management/assignees') return ok({ success: true, data: [{ id: '42', name: 'OQ Signer' }, { id: '1', name: 'Jon Smith' }], total: 2 });
+    // The review request (QA 2026-10-08, j4): recorded for the named reviewer, with the Reviewer grant.
+    if (method === 'POST' && url.endsWith('/request-review')) {
+      requests.push({ url, body });
+      const id = String((body?.reviewers as Array<{ id: string }>)?.[0]?.id ?? '');
+      return ok({ success: true, reviews: [{ reviewer_id: id, review_status: 'pending' }], grants: [{ reviewerId: id, granted: true, permissionId: 'p-1' }] });
+    }
     if (method === 'POST' && url === '/api/tasks/tasks') {
       const row = { id: ledger.length + 1, taskId: `TASK-1758-${ledger.length + 1}`, organizationId: 2, status: body?.status ?? 'pending', assigneeName: body?.assigneeId === 42 ? 'OQ Signer' : null, createdAt: '2026-09-21T18:00:00Z', ...body };
       ledger.push(row);
@@ -82,6 +90,7 @@ const props = () => ({ surface: { id: 'document-authoring', label: 'Authoring' }
 beforeEach(() => {
   (window as any).C2C_PROJECT = { id: PID, title: 'C2C-101' };
   ledger = [];
+  requests = [];
   patch = (taskId, body) => {
     const row = ledger.find(r => r.taskId === taskId);
     if (row) row.status = body.status;
@@ -318,5 +327,50 @@ describe('known assignment refusal', () => {
     expect(screen.queryByRole('button', { name: 'Check existing review tasks' })).toBeNull();
     expect((screen.getByTestId('ar-submit') as HTMLButtonElement).disabled).toBe(false);
     expect(p.onCreated).not.toHaveBeenCalled(); expect(p.fireToast).not.toHaveBeenCalled();
+  });
+});
+
+
+/* QA 2026-10-08 (browser walk j4-authoring, docs/evidence/QA-2026-10-08/authoring/).
+   Assign review created a task and nothing else: the Review board never saw
+   the request, the reviewer was granted nothing on the document, and the author
+   could assign the review to herself. */
+describe('Assign review requests the review, before the task, and never from the author', () => {
+  it('requests the review on the document first, then creates the task, and says the reviewer was given the Reviewer role', async () => {
+    const p = dialogProps();
+    render(<AssignReviewDialog {...p} />); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
+    await waitFor(() => expect(p.onCreated).toHaveBeenCalled());
+    const posts = apiRequest.mock.calls.filter(c => c[0] === 'POST').map(c => c[1]);
+    expect(posts).toEqual([`/api/authoring/documents/${DOC}/request-review`, '/api/tasks/tasks']);
+    expect(requests[0].body).toEqual({ reviewers: [{ id: '42', name: 'OQ Signer' }] });
+    expect(p.fireToast).toHaveBeenCalledWith(expect.stringMatching(/Review requested.*Reviewer role on this document/));
+  });
+
+  it('does not offer the document’s author as its reviewer, and says why', async () => {
+    render(<AssignReviewDialog {...dialogProps()} authorId="1" />);
+    await screen.findByRole('option', { name: 'OQ Signer' });
+    expect(screen.queryByRole('option', { name: 'Jon Smith' })).toBeNull();
+    expect(screen.getByTestId('ar-author-note').textContent).toMatch(/a different person reviews/);
+  });
+
+  it('an author refusal from the server creates no task', async () => {
+    const p = dialogProps(); const original = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method, url, body) => method === 'POST' && String(url).endsWith('/request-review')
+      ? Promise.reject(new ApiRequestError('The author of a document cannot review it. Choose someone else as the reviewer. Nothing was requested.', 409, {}, 'REVIEWER_IS_AUTHOR'))
+      : original(method, url, body));
+    render(<AssignReviewDialog {...p} />); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
+    expect((await screen.findByRole('alert')).textContent).toMatch(/refused.*author of a document cannot review it/i);
+    expect(apiRequest.mock.calls.filter(c => c[0] === 'POST' && c[1] === '/api/tasks/tasks')).toHaveLength(0);
+    expect(p.onCreated).not.toHaveBeenCalled();
+  });
+
+  it('a requester who may not grant access is told the reviewer was given none', async () => {
+    const p = dialogProps(); const original = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method, url, body) => method === 'POST' && String(url).endsWith('/request-review')
+      ? Promise.resolve(ok({ success: true, reviews: [{ reviewer_id: '42' }], grants: [{ reviewerId: '42', granted: false, reason: 'No review access was granted: only the document’s owner or an administrator grants access to it.' }] }))
+      : original(method, url, body));
+    render(<AssignReviewDialog {...p} />); await readyAssignment(); fireEvent.click(screen.getByTestId('ar-submit'));
+    await waitFor(() => expect(p.onCreated).toHaveBeenCalled());
+    expect(p.fireToast).toHaveBeenCalledWith(expect.stringMatching(/No review access was granted/));
   });
 });

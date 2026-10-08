@@ -44,6 +44,28 @@ function actionFromPath(path: string): AuthoringPermissionAction {
   return 'edit';
 }
 
+/**
+ * POST /docs/:id/e-sign carrying the REVIEWER meaning: the review signature.
+ *
+ * QA 2026-10-08 (browser walk j4-authoring): every /e-sign was an approval, so
+ * the REVIEWER role on a document (view, comment, review) could not apply the
+ * review signature — and the Vault carries an Authoring approval only after a
+ * review signature by a different person (authoring-approval-carryover.ts). A
+ * review signature approves and freezes nothing (the route flips status only
+ * for APPROVER), so it is the 'review' act: REVIEWER, APPROVER or OWNER. Every
+ * other meaning, and every freeze, stays 'approve'. The §11.10(g) signing-role
+ * check on the route still applies to all of them.
+ */
+function isReviewSignature(req: Request, path: string): boolean {
+  if (!/^\/docs\/[^/]+\/e-sign$/i.test(path)) return false;
+  return String((req.body as { meaning?: unknown } | undefined)?.meaning ?? '') === 'REVIEWER';
+}
+
+/** The action a /docs/:id/… request is judged as: its path's, except the review signature. */
+function documentAction(req: Request, path: string): AuthoringPermissionAction {
+  return isReviewSignature(req, path) ? 'review' : actionFromPath(path);
+}
+
 async function resolveCommentScope(
   tenantId: number,
   commentId: string,
@@ -179,7 +201,7 @@ function targetForRequest(req: Request, tenantId: number, path: string): ObjectT
   if (docMatch) {
     const docId = docMatch[1];
     return {
-      action: actionFromPath(path),
+      action: documentAction(req, path),
       resolve: () => resolveAuthoringDocumentScope(pool, tenantId, docId),
     };
   }

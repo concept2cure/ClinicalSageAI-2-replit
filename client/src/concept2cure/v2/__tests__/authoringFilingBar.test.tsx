@@ -332,7 +332,7 @@ describe('AuthoringFilingBar — the server’s refusal, before the dialog', () 
   const FREEZE_NO = 'Freezing needs an Owner or Approver grant on this document. Your grants on it: Reviewer.';
   const SIGN_NO = 'Applying an electronic signature needs a signing role in this organization (admin, approver, reviewer). Your role: member.';
 
-  function renderWith(props: { freezeRefusal?: string | null; esignRefusal?: string | null }) {
+  function renderWith(props: { freezeRefusal?: string | null; esignRefusal?: string | null; reviewOnly?: boolean }) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
@@ -353,6 +353,19 @@ describe('AuthoringFilingBar — the server’s refusal, before the dialog', () 
     expect(screen.getByText(SIGN_NO)).toBeTruthy();
     fireEvent.click(freeze);
     expect(screen.queryByTestId('form-title')).toBeNull();
+  });
+
+  /* QA 2026-10-08 (j4): the reviewer a review was assigned to holds a Reviewer
+     grant, which permits the review signature only. The bar offers exactly that. */
+  it('a Reviewer grant signs the review: E-sign is offered with the Review meaning alone', async () => {
+    renderWith({ freezeRefusal: FREEZE_NO, esignRefusal: null, reviewOnly: true });
+    const sign = screen.getByRole('button', { name: /E-sign/ }) as HTMLButtonElement;
+    expect(sign.disabled).toBe(false);
+    fireEvent.click(sign);
+    const dialog = await screen.findByRole('dialog');
+    const offered = within(dialog).getAllByRole('radio').map((r) => (r.textContent ?? '').replace(/You .*/, '').trim());
+    expect(offered).toEqual(['Review']);
+    expect(dialog.textContent).toMatch(/permits the review signature/);
   });
 
   it('leaves both enabled when the permission is unknown', () => {

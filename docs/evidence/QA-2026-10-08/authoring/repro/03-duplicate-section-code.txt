@@ -1,0 +1,2 @@
+POST /api/authoring/sections {doc_id: de153e03-…, code: "2.5.1", title: "Dup"} on :5078 (pre-fix server), as emily.watson
+500 {"success":false,"error":{"code":"LINEAGE_REQUIRED","message":"The section was not created: its data lineage could not be recorded. Saving content without provenance is not permitted."}}

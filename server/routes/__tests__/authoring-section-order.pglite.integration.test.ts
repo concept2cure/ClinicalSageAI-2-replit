@@ -25,32 +25,36 @@ import { PGlite } from '@electric-sql/pglite';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { sectionInsertIndex } from '../../../shared/regulatory/section-code';
+import { sectionInsertSlot } from '../../../shared/regulatory/section-code';
 
 let pg: PGlite;
 const TENANT = 4242;
 const DOC = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
 /** The router's read of the current order, verbatim. */
-const ORDER_SQL = `SELECT id, code FROM authoring_sections
+const ORDER_SQL = `SELECT id, code, order_index FROM authoring_sections
    WHERE doc_id = $1 AND tenant_id = $2
    ORDER BY order_index, created_at
    FOR UPDATE`;
 
-/** The router's shift statement, verbatim. */
+/** The router's shift statement, verbatim. QA 2026-10-08 (j4): the rows to move
+ *  are named by id and the new index is a STORED index (sectionInsertSlot), not
+ *  a list position — the real createSection is exercised against PGlite, with
+ *  template-spaced indexes, in services/authoring/__tests__/create-section-placement.pglite.test.ts. */
 const SHIFT_SQL = `UPDATE authoring_sections SET order_index = order_index + 1
-   WHERE doc_id = $1 AND tenant_id = $2 AND order_index >= $3`;
+   WHERE doc_id = $1 AND tenant_id = $2 AND id = ANY($3::uuid[])`;
 
 /** What POST /sections does now: resolve a position, shift, insert. */
 async function createSection(code: string, explicitIndex?: number) {
   let orderIndex = explicitIndex;
   if (orderIndex === undefined) {
-    const existing = await pg.query<{ code: string }>(ORDER_SQL, [DOC, TENANT]);
-    orderIndex = sectionInsertIndex(
-      existing.rows.map((r) => String(r.code ?? '')),
+    const existing = await pg.query<{ id: string; code: string; order_index: number }>(ORDER_SQL, [DOC, TENANT]);
+    const slot = sectionInsertSlot(
+      existing.rows.map((r) => ({ id: String(r.id), code: String(r.code ?? ''), orderIndex: Number(r.order_index ?? 0) })),
       code,
     );
-    await pg.query(SHIFT_SQL, [DOC, TENANT, orderIndex]);
+    orderIndex = slot.orderIndex;
+    if (slot.shiftIds.length > 0) await pg.query(SHIFT_SQL, [DOC, TENANT, slot.shiftIds]);
   }
   await pg.query(
     `INSERT INTO authoring_sections
@@ -109,8 +113,9 @@ describe('this file exercises the router\u2019s own statements', () => {
      The statements live in services/authoring/authoring-documents.ts
      createSection since POST /sections moved there (WM, 2026-09-21); the router
      calls it. Same statements, same file check, new home. */
+  // QA 2026-10-08 (j4): the placement step moved to section-placement.ts, which createSection calls.
   const ROUTER = readFileSync(
-    path.resolve(__dirname, '../../services/authoring/authoring-documents.ts'),
+    path.resolve(__dirname, '../../services/authoring/section-placement.ts'),
     'utf8',
   );
   const normalise = (sql: string) => sql.replace(/\s+/g, ' ').trim();
@@ -124,7 +129,7 @@ describe('this file exercises the router\u2019s own statements', () => {
   });
 
   it('still resolves the position with the shared comparator', () => {
-    expect(ROUTER).toContain('sectionInsertIndex(codes, String(code))');
+    expect(ROUTER).toContain('sectionInsertSlot(');
   });
 });
 

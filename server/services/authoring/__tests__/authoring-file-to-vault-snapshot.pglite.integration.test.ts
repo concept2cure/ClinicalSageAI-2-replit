@@ -16,7 +16,11 @@ const h = vi.hoisted(() => ({ sql: [] as string[], ingest: vi.fn(), trail: vi.fn
 vi.mock('../../vault/vault-ingest.service', () => ({ ingestVaultDocument: h.ingest }));
 vi.mock('../../vault/vault-placement.service', () => ({ placeVaultDocument: vi.fn() }));
 vi.mock('../../vault/vault-filing.service', () => ({ resolveVaultView: vi.fn(), isFolderInView: vi.fn(), folderLabel: vi.fn() }));
-vi.mock('../../../export/renderers', () => ({ renderHtmlToPdf: h.pdf }));
+vi.mock('../../../export/renderers', () => ({
+  renderHtmlToPdf: h.pdf,
+  // The export renders through the tracked form (QA 2026-10-08, j4); same stub.
+  renderHtmlToPdfTracked: async (html: string) => ({ buffer: await h.pdf(html), usedFallback: false }),
+}));
 vi.mock('../../auditService', () => ({ writeChainedAuditRow: h.chain }));
 vi.mock('../authoring-evidence', async importOriginal => {
   const actual = await importOriginal<typeof import('../authoring-evidence')>();

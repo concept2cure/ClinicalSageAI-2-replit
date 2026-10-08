@@ -309,6 +309,8 @@ describe('C7 — every dependency edge a batch creates is ledgered with task.lin
 describe('single task creation receipt', () => {
   it('reports a lost create COMMIT as unknown and sends no assignment notification', async () => {
     h.failCommit = 1;
+    // The assignee is a member (QA 2026-10-08: a named assignee is resolved among the members first).
+    h.selects = [[{ id: 42, name: 'OQ Signer', email: 'oq@example.test' }]];
     const res = await request(makeApp()).post(`${BASE}/tasks`).send({ title: 'Review IND overview', moduleType: 'Authoring', assigneeId: 42 });
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('OUTCOME_UNKNOWN');

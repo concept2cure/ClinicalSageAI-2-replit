@@ -72,6 +72,7 @@ import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
 import type { FireToast } from '../toast';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
+import { normalizeCtdCode } from '@shared/regulatory/section-code';
 
 /* ── Server row shapes (only the columns this dialog reads) ── */
 
@@ -122,11 +123,57 @@ export function assembleSnapshot(sections: SavedSection[]): string {
     .trim();
 }
 
+/**
+ * The document's own CTD code: the deepest code every one of its sections sits
+ * under (a one-section document's is that section's code). Null when its
+ * sections share no code below a bare module, or it has none.
+ *
+ * Why the dialog needs it (QA 2026-10-08, j4): placement files the WHOLE saved
+ * document as one leaf — the server takes the copy's text from the source
+ * (services/coauthor/coauthor-snapshot.ts, "a source's copy IS the source") —
+ * and the dialog prefilled the OPEN section's code. A Clinical Overview placed
+ * at 2.5.1 filed 2.5.2 … 2.5.8 inside the 2.5.1 leaf.
+ */
+export function documentFilingCode(sectionCodes: ReadonlyArray<string | null | undefined>): string | null {
+  const codes = sectionCodes.map((c) => normalizeCtdCode(c)).filter((c): c is string => c !== null);
+  if (codes.length === 0 || codes.length !== sectionCodes.length) return null;
+  let common = codes[0].split('.');
+  for (const code of codes.slice(1)) {
+    const segs = code.split('.');
+    let i = 0;
+    while (i < common.length && i < segs.length && common[i] === segs[i]) i += 1;
+    common = common.slice(0, i);
+  }
+  return common.length >= 2 ? common.join('.') : null;
+}
+
+/**
+ * Why a code cannot take this document, or null: it names one of the
+ * document's own sections while the document holds others, so the leaf would
+ * carry every other section under that one heading.
+ */
+export function ownSectionRefusal(canonical: string | null, sectionCodes: ReadonlyArray<string | null | undefined> | undefined): string | null {
+  if (!canonical || !sectionCodes || sectionCodes.length < 2) return null;
+  const own = documentFilingCode(sectionCodes);
+  if (canonical === own) return null;
+  if (!sectionCodes.some((c) => normalizeCtdCode(c) === canonical)) return null;
+  return (
+    `${canonical} is one section of this document. Placement files the whole saved document ` +
+    `(${sectionCodes.length} sections) as one leaf, so it is filed at the document’s own code` +
+    (own ? `, ${own}.` : ' — a code that covers all of its sections.')
+  );
+}
+
 export interface AuthoringPlaceIntoFilingProps {
   docId: string;
   docTitle: string;
-  /** The active section's code — the section-code prefill (editable). */
+  /** The active section's code — the section-code prefill (editable) when the
+   *  document's own code cannot be derived from `sectionCodes`. */
   activeSectionCode: string | null;
+  /** The codes of the document's sections, in order. When given, the dialog
+   *  prefills the document's own code (documentFilingCode), states that the
+   *  whole document is filed, and refuses one of its own section codes. */
+  sectionCodes?: ReadonlyArray<string | null>;
   /** Unsaved changes in the open section: placement snapshots SAVED content
    *  only, so a dirty editor refuses with the reason rather than filing a
    *  document that silently omits what is on screen. */
@@ -148,11 +195,14 @@ function AuthoringPlaceIntoFilingForDocument({
   docId,
   docTitle,
   activeSectionCode,
+  sectionCodes,
   dirty,
   onNav,
   fireToast,
 }: AuthoringPlaceIntoFilingProps) {
   const [open, setOpen] = React.useState(false);
+  /* The code a whole-document leaf is filed at, when the sections give one. */
+  const ownCode = sectionCodes ? documentFilingCode(sectionCodes) : null;
   /* `enabled` is the open flag: the panel is inline below rather than its own
      component, and a hook cannot be called conditionally. Guarded on `placing`
      so Escape cannot dismiss the dialog mid-write, matching the backdrop. */
@@ -182,7 +232,7 @@ function AuthoringPlaceIntoFilingForDocument({
     setVerdict(null);
     setPlacement(null);
     setNeedsReconciliation(false);
-    setSection(activeSectionCode ?? '');
+    setSection(ownCode ?? activeSectionCode ?? '');
     setOp('new');
     target.load();
   };
@@ -194,7 +244,11 @@ function AuthoringPlaceIntoFilingForDocument({
      discovered after a filing snapshot had already been created for it, and
      before the write boundary was closed it produced a package with a
      top-level folder no eCTD layout defines. */
-  const sectionJudged = judgeSectionCode(section);
+  const codeJudged = judgeSectionCode(section);
+  const ownSection = ownSectionRefusal(codeJudged.canonical, sectionCodes);
+  const sectionJudged = ownSection
+    ? { ...codeJudged, placeable: false, note: { tone: 'err' as const, text: ownSection } }
+    : codeJudged;
   const sectionIsPlaceable = sectionJudged.placeable;
   const sectionNote = sectionJudged.note;
 
@@ -252,6 +306,18 @@ function AuthoringPlaceIntoFilingForDocument({
       }
       const sequenceLabel = `${filing.seq.sequenceNumber} · ${filing.seq.type}`;
       setPlacement({ leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId });
+      /* The server answers a repeat placement of the same document at the same
+         section with the leaf that already holds it, and writes nothing
+         (QA 2026-10-08: 2.5.1 was placed twice as two live leaves). Said as
+         what it is — not as a placement, and not as an unrecorded one. */
+      if (put.data.unchanged) {
+        const text =
+          `Already placed: leaf #${put.data.id} at ${put.data.sectionCode} in sequence ${sequenceLabel} holds this document ` +
+          `(${documentSourceLabel('coauthor_documents', snapshotId)}). Nothing was written.`;
+        setVerdict({ tone: 'ok', text });
+        fireToast(`Already placed — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber} holds this document. Nothing was written.`);
+        return;
+      }
       const auditWarning = placementAuditWarning(put.data);
       setVerdict({
         tone: auditWarning ? 'err' : 'ok',
@@ -321,7 +387,12 @@ function AuthoringPlaceIntoFilingForDocument({
                 <label className="de-label" htmlFor="apf-section">
                   Section code<span className="req">*</span>
                 </label>
-                <div className="de-desc">Prefilled from the open section; edit to file elsewhere.</div>
+                <div className="de-desc">
+                  {sectionCodes && sectionCodes.length > 0
+                    ? `Files the whole saved document (${sectionCodes.length} section${sectionCodes.length === 1 ? '' : 's'}) as one leaf` +
+                      (ownCode ? `, at the document’s own code ${ownCode}.` : '.') + ' Edit to file elsewhere.'
+                    : 'Prefilled from the open section; edit to file elsewhere.'}
+                </div>
                 <input
                   id="apf-section"
                   className="c2c-input"

@@ -148,6 +148,27 @@ describe('serverMessage — the shared primitive the surfaces call', () => {
     );
   });
 
+  /* QA 2026-10-08 (j4): the server's 500 says "Quote the reference below if you
+     contact support" and sends the reference as `correlationId` beside it. Every
+     surface that renders serverMessage showed the sentence and no reference. */
+  it('shows the reference a "quote the reference below" message points at', () => {
+    const body = {
+      error: 'INTERNAL_ERROR',
+      message:
+        'Something went wrong while handling the document lifecycle request. The problem has been logged. ' +
+        'Quote the reference below if you contact support.',
+      correlationId: '884e43a1-258e-45a6-8d55-8bcb519f7258',
+    };
+    const shown = serverMessage(body) ?? '';
+    expect(shown).toContain('Quote the reference below');
+    expect(shown).toContain('Reference: 884e43a1-258e-45a6-8d55-8bcb519f7258');
+    expect(extractApiError(body, 500).message).toContain('Reference: 884e43a1-258e-45a6-8d55-8bcb519f7258');
+    // A message that points at no reference is shown as sent.
+    expect(serverMessage({ message: 'The store is not ready.', correlationId: 'abc123' })).toBe('The store is not ready.');
+    // A reference that is not an id is not printed.
+    expect(serverMessage({ ...body, correlationId: 'select * from users' })).not.toContain('select');
+  });
+
   it('lets a caller keep its own domain fallback', () => {
     // The idiom every migrated surface now uses.
     const body = { error: 'FORBIDDEN' };

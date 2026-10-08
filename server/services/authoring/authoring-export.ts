@@ -44,7 +44,17 @@ export interface RenderedExport {
   contentType: string;
   /** §11.10(b): a hash of the DELIVERED ARTIFACT BYTES. */
   artifactSha256: string;
+  /**
+   * How the file was rendered. 'plain-text-fallback' is a PDF made without
+   * the document styling (no PDF engine in this deployment; the file's first
+   * page says so). QA 2026-10-08 (j4): the export reported success and the
+   * export record said nothing, so the person filing it was not told.
+   */
+  rendering: ExportRendering;
 }
+
+/** 'formatted' for every DOCX and XML, and for a PDF the PDF engine rendered. */
+export type ExportRendering = 'formatted' | 'plain-text-fallback';
 
 export interface RenderExportArgs {
   executor: Queryable;
@@ -485,11 +495,15 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
 // PDF
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function renderPdf(args: RenderExportArgs, shared: SharedRender): Promise<{ content: Buffer; fileName: string; contentType: string }> {
+async function renderPdf(
+  args: RenderExportArgs,
+  shared: SharedRender,
+): Promise<{ content: Buffer; fileName: string; contentType: string; rendering: ExportRendering }> {
   const { doc } = args;
   // Real PDF via the platform's HTML→PDF renderer (the same engine the
-  // template render path uses).
-  const { renderHtmlToPdf } = await import('../../export/renderers');
+  // template render path uses). Tracked, so a plain-text fallback is reported
+  // on the export record and to the person exporting, not only on page one.
+  const { renderHtmlToPdfTracked } = await import('../../export/renderers');
   const { blocksToHtml, renderReferenceListHtml, escapeHtml: esc, PRINT_STYLES } =
     await import('../../export/authoring-blocks-to-html.js');
   /* Section content parsed to typed runs and re-emitted as a WHITELISTED
@@ -532,13 +546,18 @@ async function renderPdf(args: RenderExportArgs, shared: SharedRender): Promise<
               .map((lines) => `<p>${lines.map(esc).join('<br/>')}</p>`)
               .join('\n')}
         </body></html>`;
+  /* The working-copy banner is stamped by the PDF engine on every page
+     (header and footer), not by CSS: the plain-text fallback that renders
+     where Puppeteer is absent applies no stylesheet. */
+  const { buffer, usedFallback } = await renderHtmlToPdfTracked(
+    html,
+    args.workingCopy ? { pageBanner: args.workingCopy.banner } : {},
+  );
   return {
-    /* The working-copy banner is stamped by the PDF engine on every page
-       (header and footer), not by CSS: the plain-text fallback that renders
-       where Puppeteer is absent applies no stylesheet. */
-    content: await renderHtmlToPdf(html, args.workingCopy ? { pageBanner: args.workingCopy.banner } : {}),
+    content: buffer,
     fileName: `${safeFileStem(doc.title)}${args.workingCopy ? '_working_copy' : ''}.pdf`,
     contentType: 'application/pdf',
+    rendering: usedFallback ? 'plain-text-fallback' : 'formatted',
   };
 }
 
@@ -547,7 +566,7 @@ export async function renderAuthoringExport(args: RenderExportArgs): Promise<Ren
   if (args.workingCopy && args.format === 'xml') throw new Error('A working copy is rendered as DOCX or PDF only');
   await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId);
   const shared = await prepareShared(args);
-  const out =
+  const out: { content: Buffer; fileName: string; contentType: string; rendering?: ExportRendering } =
     args.format === 'xml'
       ? renderXml(args, shared, await Promise.all(args.sections.map((s) => xmlSectionContent(s.content))))
       : args.format === 'docx'
@@ -558,6 +577,7 @@ export async function renderAuthoringExport(args: RenderExportArgs): Promise<Ren
     fileName: out.fileName,
     contentType: out.contentType,
     artifactSha256: crypto.createHash('sha256').update(out.content).digest('hex'),
+    rendering: out.rendering ?? 'formatted',
   };
 }
 

@@ -29,7 +29,7 @@ import {
 import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
 import { grantAuthoringPermission } from './authoring-permissions';
 import { describeRefusedFigures, refusedFigures, refusedKind } from './authoring-html-sanitizer';
-import { sectionInsertIndex } from '../../../shared/regulatory/section-code';
+import { isSectionCodeConflict, placeNewSection, sectionCodeExists } from './section-placement';
 import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
 import {
   bindingColumnState,
@@ -645,28 +645,15 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
   let result: { rows: any[] };
   try {
     await client.query('BEGIN');
-    /* Where the new section goes. Relative, not absolute: a document someone
-       has deliberately reordered keeps that order. Locked FOR UPDATE because two
-       concurrent creates reading the same order would otherwise both compute
-       the same index and land on top of each other. */
-    let orderIndex = requestedOrderIndex;
-    if (orderIndex === undefined) {
-      const existing = await client.query(
-        `SELECT id, code FROM authoring_sections
-          WHERE doc_id = $1 AND tenant_id = $2
-          ORDER BY order_index, created_at
-          FOR UPDATE`,
-        [doc_id, tenantId],
-      );
-      const codes = existing.rows.map((r: { code: string }) => String(r.code ?? ''));
-      orderIndex = sectionInsertIndex(codes, String(code));
-      // Everything at or after the insertion point moves down by one.
-      await client.query(
-        `UPDATE authoring_sections SET order_index = order_index + 1
-          WHERE doc_id = $1 AND tenant_id = $2 AND order_index >= $3`,
-        [doc_id, tenantId, orderIndex],
-      );
+    /* Where the new section goes (relative: a document someone has reordered
+       keeps that order), and whether its code is already taken — refused as a
+       conflict before anything moves (QA 2026-10-08, j4; section-placement.ts). */
+    const placed = await placeNewSection(client, { docId: doc_id, tenantId, code: String(code), requestedOrderIndex });
+    if (placed.kind === 'duplicate') {
+      await client.query('ROLLBACK');
+      return sectionCodeExists(String(code));
     }
+    const orderIndex = placed.orderIndex;
 
     result = await client.query(
       `INSERT INTO authoring_sections
@@ -685,6 +672,9 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
+    // A concurrent create of the same code passes the check above and loses at
+    // the unique index: still a conflict, not a lineage failure.
+    if (isSectionCodeConflict(err)) return sectionCodeExists(String(code));
     logger.error('Section create refused — content and lineage rolled back together', {
       sectionId,
       tenantId,

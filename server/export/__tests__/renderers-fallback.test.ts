@@ -77,6 +77,25 @@ describe('renderHtmlToPdf fallback — document structure survives', () => {
     expect(text).not.toContain('color:red');
   }, 60_000);
 
+  it('prints no markup from a whole HTML document, and no garbage rule under the notice (QA 2026-10-08, j4)', async () => {
+    /* The authoring PDF export hands this renderer a complete document —
+       doctype, head, stylesheet — and the walk's file read
+       "% % % … %" (the box-drawing rule, which the standard PDF font cannot
+       encode) and then the literal "<!doctype html>" before the title. */
+    const whole =
+      '<!doctype html><html><head><meta charset="utf-8"><title>T</title>' +
+      '<style>body { font-family: Georgia; } h2 { font-size: 14pt; }</style></head>' +
+      '<body><h1>2.5 Clinical Overview</h1><h2>2.5.1 — Rationale</h2><p>Body text.</p></body></html>';
+    const text = await extractText(await renderFallbackPdf(whole));
+    expect(text).not.toMatch(/doctype/i);
+    expect(text).not.toContain('<');
+    expect(text).not.toContain('font-family');
+    expect(text).not.toMatch(/%\s*%\s*%/);
+    // The notice is followed directly by the document.
+    const afterNotice = text.slice(text.indexOf('formatted document.') + 'formatted document.'.length).trim();
+    expect(afterNotice.startsWith('2.5 Clinical Overview')).toBe(true);
+  }, 60_000);
+
   it('renders a placeholder rather than an empty page for empty input', async () => {
     expect(await extractText(await renderFallbackPdf(''))).toContain(
       'Document content not available',
