@@ -103,6 +103,9 @@ const fakeClient = {
   release: vi.fn(),
 };
 
+// The transmitter holds a signing role (approver); only such a role may
+// transmit to an agency (SEC-1008-1, governed-transmit-checks.ts).
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'approver' }));
 vi.mock('../../../db', () => ({
   pool: {
     query: (sql: string, args?: unknown[]) => queryImpl(sql, args ?? []),

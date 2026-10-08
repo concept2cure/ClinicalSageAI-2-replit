@@ -49,7 +49,8 @@ describe('listThreads by program', () => {
     expect(sql).toMatch(/organization_id = \$1/);
     expect(sql).toMatch(/role = 'user'/);
     expect(sql).toMatch(/t\.user_id = \$4/);
-    expect(params).toEqual([7, PID.toLowerCase(), 5, 41]);
+    // The fifth parameter is the page offset (e04b568f, QA 2026-10-08); none asked, so 0.
+    expect(params).toEqual([7, PID.toLowerCase(), 5, 41, 0]);
   });
 
   it('refuses a program id that is not a UUID rather than querying with it', async () => {

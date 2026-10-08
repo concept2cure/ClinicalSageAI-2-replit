@@ -403,16 +403,17 @@ async function admitVaultDocument(
     logger.warn('Vault ingest text extraction failed (non-fatal)', { err: extractErr?.message });
   }
 
-  // Catalog participation is a tenant-scoped rollout; resolved before the
-  // transaction (FeatureToggleService reads its own connection).
-  const { isDocumentCatalogEnabled, recordExtractionOutcome, buildExtractionOutcome } =
+  /* The catalog's extraction tier and the passage index are deterministic and
+     need no key, so every ingest records and builds them (D2, 2026-10-08:
+     "Vault search should not depend on … any key"). The one per-tenant choice
+     left is whether passages are also EMBEDDED, which sends their text to the
+     embedding provider: 'ana.vault_chunking'. Resolved before the transaction
+     (FeatureToggleService reads its own connection). */
+  const { recordExtractionOutcome, buildExtractionOutcome } =
     await import('./document-catalog.service.js');
-  const catalogEnabled = await isDocumentCatalogEnabled(orgId);
-  // Passage chunking rides on the catalog (its outcome ledger lives there).
   const { isVaultChunkingEnabled, chunkDocumentForIngest } =
     await import('./document-chunking.service.js');
-  const chunkingEnabled =
-    catalogEnabled && (await isVaultChunkingEnabled(orgId));
+  const embedPassages = await isVaultChunkingEnabled(orgId);
 
   /* ── Dossier filing ──────────────────────────────────────────────────────
      Every ingested document gets a PLACEMENT against the program's vault
@@ -633,24 +634,22 @@ async function admitVaultDocument(
     }
 
     /* The catalog's extraction tier, in the SAME transaction as the document
-       row: when cataloging is on, a document cannot enter the corpus with
-       its extraction outcome unrecorded. An extraction failure is written AS
+       row: a document cannot enter the corpus with its extraction outcome
+       unrecorded. An extraction failure is written AS
        a failure with its reason — the state this catalog exists to make
        visible — and a re-upload with new bytes voids any prior comprehension
        (the service handles that in its upsert). */
-    if (catalogEnabled) {
-      await recordExtractionOutcome(client, {
-        documentId: String(doc.id),
-        contentHash,
-        outcome: buildExtractionOutcome({
-          text: extractedText,
-          method: extractionMethod,
-          confidence: extractionConfidence,
-          error: extractionError,
-        }),
-        pageCount,
-      });
-    }
+    await recordExtractionOutcome(client, {
+      documentId: String(doc.id),
+      contentHash,
+      outcome: buildExtractionOutcome({
+        text: extractedText,
+        method: extractionMethod,
+        confidence: extractionConfidence,
+        error: extractionError,
+      }),
+      pageCount,
+    });
 
     /* The Part 11 record of the ingestion. `writeChainedAuditRow`, not
        `auditService.logAction` — logAction runs on its own connection and
@@ -713,9 +712,9 @@ async function admitVaultDocument(
        admission must not hinge on it) and awaited (the ledger row must be
        truthful by the time the response reports the ingest). A failure is
        recorded as chunk_failed with its reason, never thrown. */
-    if (chunkingEnabled && extractedText) {
+    if (extractedText) {
       const textForChunks: string = extractedText;
-      await chunkDocumentForIngest(String(doc.id), orgId, textForChunks, pageSpans);
+      await chunkDocumentForIngest(String(doc.id), orgId, textForChunks, pageSpans, { embed: embedPassages });
     }
 
     logger.info('Vault document ingested', {

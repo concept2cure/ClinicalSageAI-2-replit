@@ -40,7 +40,8 @@ export type GovernedTransmitRefusalCode =
   | 'ACTIVE_TRANSMITTAL'
   | 'SIGNER_IS_AUTHOR'
   | 'AUTHORSHIP_NOT_A_RELEASE'
-  | 'SIGNER_INDEPENDENCE_UNRESOLVED';
+  | 'SIGNER_INDEPENDENCE_UNRESOLVED'
+  | 'ESIGNATURE_NO_AUTHORITY';
 
 /** A refusal the caller should surface verbatim to the operator. */
 export class GovernedTransmitRefusal extends Error {
@@ -195,6 +196,33 @@ export async function assertNoActiveTransmittal(input: GovernedTransmitInput, bu
     409,
     { transmittalId: active.id, status: active.status },
   );
+}
+
+/**
+ * Signing authority (21 CFR 11.10(g)): a transmission to an agency is signed,
+ * so only a role the signing policy authorizes may make it. Before 2026-10-08
+ * (weekly review, SEC-1008-1) the gateway route admitted any role that may
+ * write (member and manager included) and the AnA transmit path the same, so
+ * an irreversible send to FDA or EMA went out under a signature the policy says
+ * that person may not give, and an electronic_signatures row then recorded it.
+ *
+ * The role is the server's reading of this organization's membership
+ * (resolveSignerOrgRole), never the request's, judged by the one policy every
+ * signing route uses (isSigningAuthorized). Asked first, before credentials and
+ * before any byte is read, so an unauthorized caller spends no password attempt
+ * and learns nothing about the package.
+ */
+export async function assertTransmitterHasSigningAuthority(organizationId: number, userId: number): Promise<void> {
+  const { resolveSignerOrgRole } = await import('../part11/resolve-signer-role');
+  const { isSigningAuthorized } = await import('../part11/signing-authority');
+  if (!isSigningAuthorized(await resolveSignerOrgRole(userId, organizationId))) {
+    throw new GovernedTransmitRefusal(
+      'ESIGNATURE_NO_AUTHORITY',
+      'Your role does not permit signing a transmission to the agency (21 CFR Part 11 §11.10(g)). ' +
+        'A colleague with signing rights must transmit it. Nothing was transmitted.',
+      403,
+    );
+  }
 }
 
 /**

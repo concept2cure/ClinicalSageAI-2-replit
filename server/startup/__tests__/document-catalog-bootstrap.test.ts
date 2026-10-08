@@ -78,7 +78,7 @@ describe('describeCatalogToggles', () => {
     expect(viaToggle).toContain('ON (feature toggle)');
   });
 
-  it('says passage search has no index when the catalog is on but chunking is not', () => {
+  it('says passages are searched by text, and nothing embedded, when the catalog is on but chunking is not', () => {
     // The half-on state is the confusing one: the tools work, and
     // search_document_passages truthfully finds nothing because nothing was
     // ever indexed. Saying so at boot is cheaper than diagnosing it later.
@@ -86,8 +86,9 @@ describe('describeCatalogToggles', () => {
       catalog: { enabled: true, source: 'toggle' },
       chunking: { enabled: false, source: 'off' },
     });
-    expect(out).toContain('passage search has no index');
-    expect(out).toContain('says so rather than returning nothing');
+    // Keyless passage search (2026-10-08): the index exists; chunking off means no embedding.
+    expect(out).toContain('searched by text');
+    expect(out).toContain('none is sent for embedding');
   });
 
   it('confirms the whole surface when both are on', () => {

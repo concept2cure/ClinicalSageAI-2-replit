@@ -16,8 +16,9 @@ Also in this folder: [`VERDICTS.md`](VERDICTS.md), every skeptic's return verbat
 (probe output, the requirement and its confidence, scope, smallest fix, blast
 radius); [`PLANS.md`](PLANS.md), the two planning passes the open work was
 built from (F19's agency-rejection action; F04, F05, F07, F08); and
-[`METHOD.md`](METHOD.md), the verifier and the still-owed lenses as runnable
-scripts.
+[`METHOD.md`](METHOD.md), the verifier and the lens scripts; and
+[`LENSES.md`](LENSES.md), the validation-parity and honest-state lenses' findings
+(HS-1–HS-8, VP-1–VP-7) and F20, with every skeptic's verdict, run 2026-10-08.
 
 ## How the sweep ran
 
@@ -53,7 +54,22 @@ both finders, and every verifier, were cut off by account usage limits
 | F17 | transmit | medium | The uploaded archive has no sequence folder: `index.xml` sits at the zip root and the payload is always `ectd.zip`. | **partially confirmed** 2026-10-01 (medium): no sequence folder; `ectd.zip` is not a defect |
 | F18 | transmit | low | Bundles over 1 GiB go to an SFTP path built from caller-typed sequence and application number, and a bare deposit is recorded as filed. | **partially confirmed** 2026-10-01 (low); **fixed** (identifier rule, descriptor-authoritative metadata) |
 | F19 | transmit + lifecycle | critical | A sequence is recorded FILED on the ESG's MDN (Ack1) or a bare SFTP deposit, and nothing un-files it when FDA rejects it at Ack3 or it is rolled back; a second bundle with the same sequence number also reports "recorded". | **partially confirmed** 2026-10-01 (high); **fixed** — one bundle per filed sequence, and a governed action records an agency technical rejection; Ack3 ingestion remains procurement-blocked |
-| F20 | m1-regional | medium | The us-regional 3.3 admin block never carries `<form form-type="fdaft…">`; Form FDA 1571 ships only as an `m1-1-forms` leaf, sequence 0000 included (raised by the F13 skeptic). | unverified |
+| F20 | m1-regional | medium | The us-regional 3.3 admin block never carries `<form form-type="fdaft…">`; Form FDA 1571 ships only as an `m1-1-forms` leaf, sequence 0000 included (raised by the F13 skeptic). | **confirmed** 2026-10-08 (high) — see LENSES.md |
+| HS-1 | honest state | high | The transmit success toast drops `filedSequenceWarning`: a filed-history write that failed, had no usable manifest, or conflicted (two bundles under one number) reads as a clean success. | **confirmed** 2026-10-08 — see LENSES.md |
+| HS-2 | honest state | medium | The pre-transmit gate's failed checks and its "NOT an FDA-conformant Module 1 backbone" warning are returned and never shown; the assemble response carries no conformance verdict. | **confirmed** 2026-10-08 — see LENSES.md |
+| HS-3 | honest state | medium | A pre-transmit gate refusal renders as "Structural gate refused · 0 findings · … assemble again": the blockers arrive as strings and are dropped. | **confirmed** 2026-10-08 — see LENSES.md |
+| HS-4 | honest state | low | With the REST transport, FDA ESG reads "configured" and every transmit ends in a bare 500 INTERNAL_ERROR. | **confirmed** 2026-10-08 — see LENSES.md |
+| HS-5 | honest state | medium | A bundle the agency may hold (delivered, unconfirmed) is announced "Transmit failed", and the log is not reloaded, so the row holding the lock is invisible. | **confirmed** 2026-10-08 — see LENSES.md |
+| HS-6 | honest state | medium | The active-transmittal refusal drops "the agency may already hold it" and advises a rollback that leads to sending the same sequence again. | **confirmed** 2026-10-08 — see LENSES.md |
+| HS-7 | honest state | low | A clean assembly's warnings (cover letter missing, placeholder on file, empty section) are reduced to a count, with no way to see them. | **confirmed** 2026-10-08 — see LENSES.md |
+| HS-8 | honest state | low | The transmittal log silently truncates at 100 rows, and the header and AnA report the truncated count. | **confirmed** 2026-10-08 — see LENSES.md |
+| VP-1 | validation parity | high | An IND sequence 0000 with no Form FDA 1571 assembles with 0 errors and clears the production guard. | **confirmed** 2026-10-08 — see LENSES.md |
+| VP-2 | validation parity | high | The 1571 rule is met by any PDF at 1.1; on this spine that is always a rendering of an artifact's text, never FDA's fillable form. | **confirmed** 2026-10-08 — see LENSES.md |
+| VP-3 | validation parity | medium | Plain leaves ship as PDF 1.3 whenever PDF/A conversion does not run; nothing checks the version, and the PDF check says "the agency accepts plain PDF 1.4–1.7". | **confirmed** 2026-10-08 — see LENSES.md |
+| VP-4 | validation parity | medium | `validateEctdPackage` claims "the eCTD checksum contract" but checks neither the root `index-md5.txt` nor the leaf checksums. | **confirmed** 2026-10-08 — see LENSES.md |
+| VP-5 | validation parity | low | The rule corpus says orphan files, DTD validity, leaf titles and STFs are "enforced here"; nothing in the repo checks them. | **partially confirmed** 2026-10-08 — see LENSES.md |
+| VP-6 | validation parity | low | FDA's gateway limit is 4 GB here while the repo's own records say ESG is required up to 10 GB; 4–10 GB sequences are sent to physical media. | **confirmed** 2026-10-08 — see LENSES.md |
+| VP-7 | validation parity | low | File-name checks cover the base name only and more loosely than the product's own spec; folder names and path length are never checked. | **partially confirmed** 2026-10-08 — see LENSES.md |
 
 ## Verification round 1 — 2026-10-01 (F10, F11, F12, F14, F19)
 

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T13:54:16.766Z",
+  "generatedAt": "2026-10-08T15:43:43.931Z",
   "git": {
-    "sha": "c0669d8886a5975938e074834599798d7b3eabf8",
+    "sha": "27926af0f5654616a923386b9b02ee7f40552d35",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 217,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 54,
+    "largeFilesByBytes": 55,
     "largeFilesByLines": 113
   },
   "findings": {
@@ -2052,7 +2052,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1129904
+        "bytes": 1131789
       },
       {
         "file": "shared/schema.ts",
@@ -2144,7 +2144,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 134929
+        "bytes": 134983
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2265,12 +2265,16 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "bytes": 100434
+      },
+      {
+        "file": "server/routes/submissions.ts",
+        "bytes": 100153
       }
     ],
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21768
+        "lines": 21791
       },
       {
         "file": "shared/schema.ts",
@@ -2373,12 +2377,12 @@
         "lines": 2992
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2877
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2878
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2876
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2877
       },
       {
         "file": "server/routes/auth.ts",
@@ -2526,7 +2530,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2003
+        "lines": 2006
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2561,6 +2565,10 @@
         "lines": 1898
       },
       {
+        "file": "server/routes/submissions.ts",
+        "lines": 1898
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
         "lines": 1888
       },
@@ -2577,10 +2585,6 @@
         "lines": 1868
       },
       {
-        "file": "server/routes/submissions.ts",
-        "lines": 1866
-      },
-      {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
       },
@@ -2595,6 +2599,10 @@
       {
         "file": "server/routes/ivdr-routes.ts",
         "lines": 1855
+      },
+      {
+        "file": "server/services/advancedRAGPipeline.ts",
+        "lines": 1854
       },
       {
         "file": "server/services/ana/citation-engine.ts",
@@ -2643,10 +2651,6 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1787
-      },
-      {
-        "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1786
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -2727,7 +2731,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 416,
-      "largeByBytes": 41,
+      "largeByBytes": 42,
       "largeByLines": 86
     },
     {
