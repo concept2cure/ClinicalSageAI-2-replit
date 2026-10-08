@@ -1283,12 +1283,20 @@ router.patch('/blockers/:blockerId', requireEditorAccess, async (req: Request, r
   try {
     const orgId = getOrgId(req);
     const { status, nextAction, resolvedById } = req.body;
+    // Who resolved a blocker is the session's user (ledger L195). The body's
+    // resolvedById used to win, so an editor could record a resolution in a
+    // colleague's name. A body naming anyone else is refused, not ignored, so a
+    // caller never believes it recorded an attribution it did not.
+    const userId = getUserId(req);
+    if (resolvedById !== undefined && resolvedById !== null && Number(resolvedById) !== userId) {
+      return res.status(422).json({ error: 'resolvedById is the signed-in user; it cannot name anyone else' });
+    }
     const updates: any = { updatedAt: new Date() };
     if (status) updates.status = status;
     if (nextAction !== undefined) updates.nextAction = nextAction;
     if (status === 'resolved') {
       updates.resolvedAt = new Date();
-      updates.resolvedById = resolvedById || getUserId(req);
+      updates.resolvedById = userId;
     }
 
     const [updated] = await db
