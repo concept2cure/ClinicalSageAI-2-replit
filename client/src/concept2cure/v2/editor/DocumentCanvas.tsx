@@ -83,6 +83,9 @@ interface DocRow extends Pick<AuthDoc, 'created_by'> {
   updated_at: string | null;
   section_count: number | string | null;
   provenance?: unknown;
+  /* The filing this document is the editing copy of, or null (F4: the
+     outline offers a start only in the filing's copy). */
+  c2c_document_id?: string | null;
 }
 
 interface SectionRow {
@@ -407,7 +410,7 @@ export function DocumentCanvas({
   };
 
   const docsForWorkbench: AuthDoc[] = doc
-    ? [{ id: doc.id, title: doc.title, module: doc.module, product_code: doc.product_code, status: doc.status, updated_at: doc.updated_at, section_count: doc.section_count }]
+    ? [{ id: doc.id, title: doc.title, module: doc.module, product_code: doc.product_code, status: doc.status, updated_at: doc.updated_at, section_count: doc.section_count, c2c_document_id: doc.c2c_document_id }]
     : [];
 
   const reloadDoc = useCallback(async () => {

@@ -7,11 +7,6 @@
       "reason": "The Review tab shows \"Review tasks aren't wired to this workspace yet\" and sends the person to the scrapped task-board alias (ProjectHome.tsx review stage). No control opens a document."
     },
     {
-      "id": "outline-node-to-started-section",
-      "slice": "F4",
-      "reason": "Clicking a required section that is not started in this document only toasts \"no draft yet in this document\" (DocumentWorkbench.tsx outline). Nothing posts to /api/authoring/sections."
-    },
-    {
       "id": "placed-document-to-sequence",
       "slice": "F10",
       "reason": "After placing a document, \"Open in Submission Center\" calls onNav('submission-center') with nothing (AuthoringPlaceIntoFiling.tsx), and the Submission Center reads no nav params, so the person lands on the submission list."
