@@ -41,7 +41,7 @@
 
 **Slices.** Four, DT1–DT4. The server change and its client ship together in DT3.
 
-**Prerequisite (P-A).** Approval authority is fixed separately (§2.7). DT2 does not start until it has landed.
+**Prerequisite (P-A).** Approval authority is fixed separately (§2.7). Landed in 8a3c1a4f5: only the asker decides, 403 `NOT_RUN_OWNER` otherwise.
 
 ---
 
@@ -573,7 +573,7 @@ A request on a non-owner never needs the owner. The cross-instance test (`server
 
 Each slice runs red first, and files `docs/evidence/ANA-SUMMARY/<date>/DT<n>-<name>/` with the red output, the green output and the browser captures named below.
 
-**Prerequisite P-A** (approval authority, §2.7) lands before DT2.
+**Prerequisite P-A** (approval authority, §2.7) landed in 8a3c1a4f5.
 
 ### DT1: the event mirror, its door and its reads (nothing on screen changes)
 
