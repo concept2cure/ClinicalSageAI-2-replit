@@ -395,6 +395,10 @@ export function describeFilingRefusal(status: number, code: string | null): stri
   if (code === 'REAUTH_TOTP_REQUIRED') {
     return 'Your account has an authenticator enrolled — enter its current code to sign. Nothing was filed and nothing was signed.';
   }
+  if (code === 'REAUTH_AUTHENTICATOR_REQUIRED') {
+    // In production a signer with no authenticator is refused (ADR-0014 P1-2b).
+    return 'Enrol an authenticator in Account to sign. Nothing was filed and nothing was signed.';
+  }
   if (code === 'REAUTH_MFA_STATE_UNKNOWN') {
     return 'Your second factor could not be checked, so the signature was refused. Nothing was filed and nothing was signed.';
   }

@@ -146,6 +146,15 @@ describe('the two signed acts carry the signature, and say plainly when it was r
     await expect(finalizeProtocol(12, SIGN)).rejects.toThrow(/password was not accepted\. Nothing was signed\./);
   });
 
+  it('a signer with no authenticator where one is required is told so, not that the password was wrong (ADR-0014 P1-2b)', async () => {
+    apiRequest.mockResolvedValue({
+      ok: false, status: 401,
+      json: async () => ({ error: { code: 'REAUTH_AUTHENTICATOR_REQUIRED', message: 'Enrol an authenticator in Account to sign. Nothing was signed.' } }),
+    } as Response);
+    const refused = await finalizeProtocol(12, SIGN).catch((e: Error) => e);
+    expect((refused as Error).message).toBe("Couldn't finalize the protocol — Enrol an authenticator in Account to sign. Nothing was signed.");
+  });
+
   it('a refused finalize names the act and carries the server\u2019s reason', async () => {
     throws(new ApiRequestError('Cannot finalize — Section 6 is not complete.', 409, {}, 'INVALID_STATE'));
     await expect(finalizeProtocol(12, SIGN)).rejects.toThrow(/finalize the protocol — Cannot finalize — Section 6 is not complete\. Nothing was written\./);

@@ -91,15 +91,6 @@ const verifyMfaSchema = z.object({
   partialToken: z.string().min(1),
 });
 
-const mfaEnableSchema = z.object({
-  code: mfaCodeSchema,
-});
-
-const mfaDisableSchema = z.object({
-  password: z.string().min(1).max(1024),
-  code: mfaCodeSchema,
-});
-
 const selectOrganizationSchema = z.object({
   // Accept the numeric org id as number or numeric string (callers send a
   // string today); reject anything non-numeric. Membership is still verified
@@ -144,36 +135,6 @@ const enterpriseAuthLimiter = rateLimit({
     },
   },
 });
-
-/**
- * Helper: extract and verify JWT from Authorization header. A signed-out
- * session (AUTH-03) is no identity, the same as a bad token.
- */
-async function extractJwtUser(
-  req: Request
-): Promise<{ userId: string; email: string; organizationId?: string } | null> {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.replace('Bearer ', '');
-  if (!token) return null;
-  try {
-    const decoded = (await verifyLiveToken(token)) as {
-      userId: string;
-      email: string;
-      organizationId?: string;
-      type?: string;
-      role?: string | null;
-      mfaPending?: boolean;
-    };
-    // SECURITY: reject non-access token classes (mfa-partial / mfa_challenge /
-    // refresh). Pre-MFA tokens are signed with the same secret as access tokens,
-    // so a password-only session must not be treated as a full identity for
-    // access-privileged actions (MFA setup/enable/disable).
-    if (requireAccessTokenReason(decoded)) return null;
-    return decoded;
-  } catch {
-    return null;
-  }
-}
 
 /** Helper: look up user's actual role in an organization */
 /**
@@ -743,131 +704,13 @@ router.post('/verify-mfa', enterpriseAuthLimiter, signInLimits.secondFactor, asy
   }
 });
 
-/**
- * POST /mfa/setup
- * Generate MFA secret and QR code for initial setup.
- * SECURITY: Requires valid JWT — userId derived from token, not request body.
+/*
+ * Authenticator enrolment is not served here. This router had its own
+ * POST /mfa/setup, /mfa/enable and /mfa/disable, a second implementation of
+ * POST /api/auth/mfa/{setup,enable,disable} (routes/auth.ts) that no client,
+ * script or test harness called. They were removed on 2026-10-08 (P-25
+ * follow-up): one implementation, the one the account panel uses.
  */
-router.post('/mfa/setup', async (req: Request, res: Response) => {
-  try {
-    const decoded = await extractJwtUser(req);
-    if (!decoded) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
-
-    res.json({
-      success: true,
-      qrCodeDataUrl: result.qrCodeDataUrl,
-      secret: result.secret,
-      otpauthUrl: result.otpauthUrl,
-    });
-  } catch (error) {
-    // Refused by mfaService.generateSecret while a factor is enrolled (F-26);
-    // the enterprise router answered that refusal with this 500.
-    if (error instanceof mfaService.MfaAlreadyEnabledError) {
-      return res.status(409).json({ error: 'MFA_ALREADY_ENABLED', message: error.message });
-    }
-    console.error('[Enterprise Auth] mfa/setup error:', error);
-    res.status(500).json({ error: 'Failed to setup MFA' });
-  }
-});
-
-/**
- * POST /mfa/enable
- * Enable MFA after user verifies their first TOTP code.
- * SECURITY: Requires valid JWT — userId derived from token.
- */
-router.post('/mfa/enable', async (req: Request, res: Response) => {
-  try {
-    const decoded = await extractJwtUser(req);
-    if (!decoded) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const parsed = mfaEnableSchema.safeParse(req.body);
-    if (!parsed.success) {
-      console.warn('[Enterprise Auth] mfa/enable validation failed:', {
-        issues: parsed.error.errors.map(e => ({ path: e.path.join('.'), message: e.message })),
-      });
-      return res.status(400).json({ error: 'Verification code is required' });
-    }
-    const { code } = parsed.data;
-
-    const result = await mfaService.enableMfa(parseInt(decoded.userId), code);
-
-    if (!result.success) {
-      return res.status(400).json({
-        error: 'INVALID_CODE',
-        message: 'Invalid verification code. MFA not enabled. Each code works once; if you just used it, wait for the next.',
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'MFA enabled successfully',
-      backupCodes: result.backupCodes || [],
-    });
-  } catch (error) {
-    console.error('[Enterprise Auth] mfa/enable error:', error);
-    res.status(500).json({ error: 'Failed to enable MFA' });
-  }
-});
-
-/**
- * POST /mfa/disable
- * Disable MFA (requires JWT + password re-authentication).
- * SECURITY: Requires valid JWT — userId derived from token.
- */
-router.post('/mfa/disable', async (req: Request, res: Response) => {
-  try {
-    const decoded = await extractJwtUser(req);
-    if (!decoded) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const parsed = mfaDisableSchema.safeParse(req.body);
-    if (!parsed.success) {
-      const hasPasswordIssue = parsed.error.errors.some(e => e.path[0] === 'password');
-      const message = hasPasswordIssue
-        ? 'Password is required to disable MFA'
-        : 'Current MFA verification code is required to disable MFA';
-      return res.status(400).json({ error: message });
-    }
-    const { password, code } = parsed.data;
-
-    // Re-authenticate before disabling MFA
-    const userResult = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, parseInt(decoded.userId)))
-      .limit(1);
-
-    if (!userResult.length) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const bcrypt = await import('bcryptjs');
-    const valid = await bcrypt.compare(password, userResult[0].passwordHash || '');
-    if (!valid) {
-      return res.status(401).json({ error: 'Invalid password' });
-    }
-
-    const disabled = await mfaService.disableMfa(parseInt(decoded.userId), code);
-    if (!disabled) {
-      return res.status(400).json({
-        error: 'INVALID_CODE',
-        message: 'Unable to disable MFA with the current verification state.',
-      });
-    }
-
-    res.json({ success: true, message: 'MFA disabled' });
-  } catch (error) {
-    console.error('[Enterprise Auth] mfa/disable error:', error);
-    res.status(500).json({ error: 'Failed to disable MFA' });
-  }
-});
 
 /**
  * POST /electronic-signature — REMOVED (Gone).

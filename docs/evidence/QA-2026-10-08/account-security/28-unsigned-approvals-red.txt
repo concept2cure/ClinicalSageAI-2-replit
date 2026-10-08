@@ -1,0 +1,12 @@
+# (5) RED — POST /api/biostat/sap/:id/sign and POST /api/approval-workflows/:id/approve are still served
+# biostatPlatform.ts, collaborative-sap-service.ts, approval-workflow.ts unchanged
+$ npx vitest run tests/biostat-sap-sign-route-removed.test.ts server/routes/__tests__/approval-workflow.contract.test.ts
+ × server/routes/__tests__/approval-workflow.contract.test.ts > start → status; no approval without a signature (P-25 follow-up) > POST /:id/approve is not a route: 404, and nothing is approved 28ms
+ × tests/biostat-sap-sign-route-removed.test.ts > a SAP version is not signed by a route that verifies no signer > POST /api/biostat/sap/:sapVersionId/sign is not a route: 404 60ms
+ × tests/biostat-sap-sign-route-removed.test.ts > a SAP version is not signed by a route that verifies no signer > the SAP service has no signVersion to call 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"success":true,"data":{"version":{"id":7,"status":"approved"},"signature":{"signatureId":"sig-from-the-body","signerName":"Anyone","signerTitle":"Statistician","signerEmail":"anyone@example.invalid","meaning":"approval","timestamp":"2026-10-08
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected 200 to be 404 // Object.is equality
+ Test Files  2 failed (2)
+      Tests  3 failed | 19 passed (22)

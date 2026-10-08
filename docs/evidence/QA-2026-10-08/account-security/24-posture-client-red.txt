@@ -1,0 +1,17 @@
+# (1) RED, client — the e-sign dialog asks for a password from a signer who cannot sign; the panel does not warn before removal
+# EsignModal.tsx, AccountPanel.tsx, authService.tsx (AuthUser) unchanged
+$ npx vitest run client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx client/src/concept2cure/v2/__tests__/accountPanel.test.tsx
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > where signing needs an authenticator, removal warns that it stops signing (P-25 follow-up) 48ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > where signing does not need one, removal carries no such warning 75ms
+ × client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx > EsignModal reads the signing posture the server states > required and not enrolled: says to enrol, asks for no password, and signs nothing 5077ms
+ × client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx > EsignModal reads the signing posture the server states > required and enrolled: the signing form, as before 5029ms
+ × client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx > EsignModal reads the signing posture the server states > not required: the signing form, as before 5031ms
+ × client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx > EsignModal reads the signing posture the server states > the posture could not be read: the signing form, and the server decides at signing 5020ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an element with the text: Removing it stops you signing.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+TestingLibraryElementError: Unable to find an element with the text: Enrol an authenticator in Account to sign.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+AssertionError: expected +0 to be 1 // Object.is equality
+AssertionError: expected +0 to be 1 // Object.is equality
+AssertionError: expected +0 to be 1 // Object.is equality
+ Test Files  2 failed (2)
+      Tests  5 failed | 14 passed (19)

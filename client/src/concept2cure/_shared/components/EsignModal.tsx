@@ -20,6 +20,14 @@
  * A verify or sign failure surfaces inline via role="alert" — no fabricated
  * success.
  *
+ * Signing posture (P-25 follow-up, 2026-10-08): when it opens, the dialog asks
+ * the server (GET /api/v1/auth/session → `user.signing`) whether this signer
+ * needs an authenticator and has one. Where one is required and none is
+ * enrolled, it says "Enrol an authenticator in Account to sign." and asks for
+ * nothing: the server would refuse the signature after the password
+ * (ADR-0014 P1-2b, reverifySigner). When the posture cannot be read, the dialog
+ * is as before and the server's refusal stands.
+ *
  * Accessibility (WCAG 2.2 AA): role="dialog" aria-modal, labelled by the
  * title, focus trapped inside, focus returned to the trigger on close, Esc
  * closes (when not committing), every input labelled, errors announced.
@@ -29,6 +37,7 @@
 
 import * as React from 'react';
 import { useEsignature, type EsigMeaning } from '../../hooks/useEsignature';
+import { useSigningPosture } from '../signingPosture';
 import { ESIGN_MEANINGS } from '../esignMeanings';
 import { GovernedTimestamp } from './GovernedTimestamp';
 import './EsignModal.css';
@@ -201,6 +210,9 @@ export function EsignModal({
   // so up front with `requireMfa`; when it does not know, the server does.
   const [mfaEnrolled, setMfaEnrolled] = React.useState(false);
   const needCode = requireMfa || mfaEnrolled;
+  // The server's statement, read each time the dialog opens; null until it answers.
+  const posture = useSigningPosture(open);
+  const mustEnrol = posture?.authenticatorRequired === true && !posture.authenticatorEnrolled;
   const [phase, setPhase] = React.useState<'form' | 'committing' | 'signed'>('form');
   const [manifest, setManifest] = React.useState<EsigSignedManifest | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -235,6 +247,12 @@ export function EsignModal({
     }
     return undefined;
   }, [open, initialMeaning]);
+
+  // In the enrol-first state the reason field is gone; focus stays in the dialog.
+  const enrolCloseRef = React.useRef<HTMLButtonElement>(null);
+  React.useEffect(() => {
+    if (open && mustEnrol) enrolCloseRef.current?.focus();
+  }, [open, mustEnrol]);
 
   // Restore focus to the trigger when closing.
   React.useEffect(() => {
@@ -407,6 +425,42 @@ export function EsignModal({
               </button>
             </div>
           </div>
+        ) : mustEnrol ? (
+          <>
+            <div className="es-head">
+              <span className="es-head-ico">
+                <IconPen />
+              </span>
+              <div>
+                <div className="es-head-title" id={titleId}>
+                  Electronic signature
+                </div>
+                <div className="es-head-sub">21 CFR Part 11 {'·'} {'§'}11.200</div>
+              </div>
+              <button className="es-close" type="button" onClick={handleClose} aria-label="Cancel signing">
+                <IconClose />
+              </button>
+            </div>
+
+            <div className="es-target">
+              <span className="es-target-lbl">You are signing</span>
+              <div className="es-target-name">{target}</div>
+              {targetMeta ? <div className="es-target-meta">{targetMeta}</div> : null}
+            </div>
+
+            <div className="es-error" role="alert">
+              <span className="es-error-ico">
+                <IconAlert />
+              </span>
+              Enrol an authenticator in Account to sign.
+            </div>
+
+            <div className="es-foot">
+              <button ref={enrolCloseRef} className="es-btn-secondary" type="button" onClick={handleClose}>
+                Close
+              </button>
+            </div>
+          </>
         ) : (
           <>
             <div className="es-head">

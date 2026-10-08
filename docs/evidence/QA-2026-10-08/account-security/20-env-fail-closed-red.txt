@@ -1,0 +1,8 @@
+# (6) RED — the authenticator rule relaxes on staging, blank, unrecognised and unset NODE_ENV
+# reverify-signer.ts still reads isProductionEnv (NODE_ENV=production only)
+$ npx vitest run server/services/part11/__tests__/reverify-signer.test.ts
+ × server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > fails closed: staging, a blank or unrecognised NODE_ENV, and an unset one all enforce it (as the bundle guard does) 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: NODE_ENV="staging": expected { ok: true, …(2) } to match object { ok: false, status: 403, …(1) }
+ Test Files  1 failed (1)
+      Tests  1 failed | 32 passed (33)

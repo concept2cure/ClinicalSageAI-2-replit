@@ -23,6 +23,9 @@ const h = vi.hoisted(() => ({
   dispositionFail: null as unknown,
   authors: [11] as number[],
   role: 'member',
+  /** The signer's role on the membership row (resolveSignerOrgRole); the token's is `role`. */
+  memberRole: 'approver' as string | null,
+  memberRoleFail: null as unknown,
 }));
 
 const client = {
@@ -52,6 +55,16 @@ vi.mock('../../services/protocol-development-metrics', () => ({
 }));
 vi.mock('../../services/protocol-reviews-metrics', () => ({
   recordReviewerAssigned: vi.fn(), recordReviewComment: vi.fn(), recordReviewDisposition: vi.fn(),
+}));
+
+// §11.10(g): the ceremony reads the signer's role from the membership row and
+// applies the platform's one signing policy before the password.
+const resolveSignerOrgRole = vi.fn(async () => {
+  if (h.memberRoleFail) throw h.memberRoleFail;
+  return h.memberRole;
+});
+vi.mock('../../services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: (...a: unknown[]) => resolveSignerOrgRole(...(a as [])),
 }));
 
 const verifyReauth = vi.fn(async () => h.reauth);
@@ -140,6 +153,8 @@ beforeEach(() => {
   h.dispositionFail = null;
   h.authors = [11];
   h.role = 'member';
+  h.memberRole = 'approver';
+  h.memberRoleFail = null;
   vi.clearAllMocks();
 });
 
@@ -182,6 +197,17 @@ describe('POST /documents/:id/finalize is a real electronic signature: refused b
     const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
     expect(r.status).toBe(403);
     expect(verifyReauth).not.toHaveBeenCalled();
+    expect(h.log).toEqual([]);
+  });
+
+  it('a signer with no authenticator where one is required (production, ADR-0014 P1-2b) is told to enrol one, and nothing is written', async () => {
+    h.reauth = { ok: false, error: 'REAUTH_AUTHENTICATOR_REQUIRED' };
+    const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
+    expect(r.status).toBe(401);
+    expect(r.body.error).toEqual({
+      code: 'REAUTH_AUTHENTICATOR_REQUIRED',
+      message: 'Enrol an authenticator in Account to sign. Nothing was signed.',
+    });
     expect(h.log).toEqual([]);
   });
 
@@ -337,6 +363,57 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
   it('refuses authorship as a review meaning', async () => {
     const r = await disposition({ disposition: 'approve', reason: REASON, meaning: 'authorship', reauth: REAUTH });
     expect(r.status).toBe(400);
+    expect(h.log).toEqual([]);
+  });
+});
+
+/* QA 2026-10-08 (QMS fixer, cf950eeb9): the protocol signing ceremony checked
+   no signing authority. The route admits writers, so a member's password made
+   a protocol finalization or a review disposition an electronic signature,
+   while every other signing route refused the same role (P-18: admin, approver,
+   reviewer). The ceremony now applies the one policy (isSigningAuthorized) to
+   the membership row's role, before the password, as the canonical sign route
+   does (routes/c2c/actions.ts signingAuthorityRefusal). */
+describe('the protocol signing ceremony checks signing authority before the password (§11.10(g))', () => {
+  it('a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written', async () => {
+    h.memberRole = 'member';
+    const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
+    expect(r.status).toBe(403);
+    expect(r.body.error).toEqual({
+      code: 'ESIGNATURE_NO_AUTHORITY',
+      message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
+    });
+    expect(resolveSignerOrgRole).toHaveBeenCalledWith(11, 2);
+    expect(verifyReauth).not.toHaveBeenCalled();
+    expect(finalizeProtocolTx).not.toHaveBeenCalled();
+    expect(h.log).toEqual([]);
+  });
+
+  it('the role is the membership row’s, not the token’s', async () => {
+    h.role = 'admin';
+    h.memberRole = 'member';
+    expect((await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH })).status).toBe(403);
+    h.role = 'member';
+    h.memberRole = 'reviewer';
+    expect((await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH })).status).toBe(201);
+  });
+
+  it('a member cannot sign a review disposition either', async () => {
+    h.memberRole = 'member';
+    const r = await disposition({ disposition: 'approve', reason: REASON, meaning: 'review', reauth: REAUTH });
+    expect(r.status).toBe(403);
+    expect(r.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(verifyReauth).not.toHaveBeenCalled();
+    expect(setDispositionTx).not.toHaveBeenCalled();
+  });
+
+  it('an unreadable membership signs nothing and says it could not be checked', async () => {
+    h.memberRoleFail = new Error('organization_users unreadable: secret-detail');
+    const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
+    expect(r.status).toBe(503);
+    expect(r.body.error.code).toBe('SIGNING_AUTHORITY_UNVERIFIED');
+    expect(JSON.stringify(r.body)).not.toContain('secret-detail');
+    expect(verifyReauth).not.toHaveBeenCalled();
     expect(h.log).toEqual([]);
   });
 });

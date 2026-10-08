@@ -312,8 +312,8 @@ describe('input validation (400)', () => {
   });
 });
 
-describe('happy path: start → approve → status', () => {
-  it('starts a workflow, advances on first approval, completes on the last, and reports status', async () => {
+describe('start → status; no approval without a signature (P-25 follow-up)', () => {
+  it('starts a workflow, moves the document to review, and reports status', async () => {
     // Build a template with two steps via the create-template route (real path).
     const create = await authed().post('/api/approval-workflows/templates').send({
       name: 'Release flow',
@@ -332,48 +332,38 @@ describe('happy path: start → approve → status', () => {
     );
     const documentId = doc.rows[0].id;
 
-    // start
     const start = await authed().post('/api/approval-workflows/start').send({ documentId, templateId });
     expect(start.status).toBe(201);
     expect(start.body.success).toBe(true);
     expect(typeof start.body.workflowId).toBe('number');
     expect(start.body.approvalIds).toHaveLength(2);
-    const { workflowId, approvalIds } = start.body;
+    const { workflowId } = start.body;
 
-    // document moved to in_review
-    const afterStart = await pglite.query<{ status: string }>(
-      `SELECT status FROM unified_documents WHERE id = $1`,
-      [documentId],
-    );
+    const afterStart = await pglite.query<{ status: string }>(`SELECT status FROM unified_documents WHERE id = $1`, [documentId]);
     expect(afterStart.rows[0].status).toBe('in_review');
 
-    // approve step 1 → workflow advances
-    const approve1 = await authed().post(`/api/approval-workflows/${approvalIds[0]}/approve`).send({ comments: 'looks good' });
-    expect(approve1.status).toBe(200);
-    expect(approve1.body.workflowAdvanced).toBe(true);
-    expect(approve1.body.workflowCompleted).toBe(false);
-    expect(approve1.body.nextStep).toBe(2);
-
-    // approve step 2 → workflow completes
-    const approve2 = await authed().post(`/api/approval-workflows/${approvalIds[1]}/approve`).send({});
-    expect(approve2.status).toBe(200);
-    expect(approve2.body.workflowCompleted).toBe(true);
-    expect(approve2.body.message).toMatch(/completed/i);
-
-    // document is now approved
-    const afterDone = await pglite.query<{ status: string }>(
-      `SELECT status FROM unified_documents WHERE id = $1`,
-      [documentId],
-    );
-    expect(afterDone.rows[0].status).toBe('approved');
-
-    // status route reflects the completed workflow + ordered approvals + history
     const status = await authed().get(`/api/approval-workflows/${workflowId}/status`);
     expect(status.status).toBe(200);
-    expect(status.body.workflow.status).toBe('completed');
+    expect(status.body.workflow.status).toBe('active');
     expect(status.body.workflow.totalSteps).toBe(2);
-    expect(status.body.workflow.approvals.every((a: any) => a.status === 'approved')).toBe(true);
-    expect(status.body.workflow.history.length).toBeGreaterThanOrEqual(2);
+    expect(status.body.workflow.approvals.every((a: any) => a.status === 'pending')).toBe(true);
+  });
+
+  /* POST /:id/approve marked a step approved, and on the last step the document
+     'approved', from a session alone: no re-verification, no electronic
+     signature, no meaning. Nothing called it (its client hook had no caller since
+     the Communication Center's Approvals surface was deleted in 2895218b8), and
+     the launch-scope API gate refused it. Removed 2026-10-08; a document is
+     approved through a signing ceremony (services/part11/reverify-signer.ts). */
+  it('POST /:id/approve is not a route: 404, and nothing is approved', async () => {
+    const { workflowId, approvalIds, documentId } = await seedTwoStepWorkflow();
+    const res = await authed().post(`/api/approval-workflows/${approvalIds[0]}/approve`).send({ comments: 'looks good' });
+    expect(res.status).toBe(404);
+    const status = await authed().get(`/api/approval-workflows/${workflowId}/status`);
+    expect(status.body.workflow.status).toBe('active');
+    expect(status.body.workflow.approvals.every((a: any) => a.status === 'pending')).toBe(true);
+    const docNow = await pglite.query<{ status: string }>(`SELECT status FROM unified_documents WHERE id = $1`, [documentId]);
+    expect(docNow.rows[0].status).not.toBe('approved');
   });
 
   it('GET /:workflowId/status → 404 for an unknown workflow', async () => {
@@ -382,10 +372,10 @@ describe('happy path: start → approve → status', () => {
     expect(res.body.error).toMatch(/not found/i);
   });
 
-  it('POST /:id/approve → 400 when the performer is not an assigned approver', async () => {
+  it('POST /:id/reject → 400 when the performer is not an assigned approver', async () => {
     const { approvalIds } = await seedTwoStepWorkflow();
     auth.current = { userId: 'someone-else', organizationId: String(ORG) };
-    const res = await authed().post(`/api/approval-workflows/${approvalIds[0]}/approve`).send({});
+    const res = await authed().post(`/api/approval-workflows/${approvalIds[0]}/reject`).send({ comments: 'Missing safety data' });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/not assigned/i);
   });

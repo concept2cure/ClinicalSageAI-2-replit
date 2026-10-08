@@ -85,6 +85,11 @@ function refusal(what: string, status: number, code: string | undefined, message
   if (status === 401 && code?.startsWith('REAUTH_TOTP')) {
     return new Error(`Couldn't ${what} — the authenticator code was ${code === 'REAUTH_TOTP_REQUIRED' ? 'required and not given' : 'not accepted'}. Nothing was signed.`);
   }
+  // In production a signer with no authenticator is refused after the password
+  // verified (ADR-0014 P1-2b): the server's sentence says what to do.
+  if (status === 401 && code === 'REAUTH_AUTHENTICATOR_REQUIRED') {
+    return new Error(`Couldn't ${what} — ${message}`);
+  }
   if (status === 401 && code?.startsWith('REAUTH')) {
     return new Error(`Couldn't ${what} — the password was not accepted. Nothing was signed.`);
   }

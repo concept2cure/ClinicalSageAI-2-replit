@@ -43,12 +43,19 @@ export interface AuthUser {
   roles: string[];
   permissions: string[];
   organizationId: string;
-  organizationName: string;
+  /** The organisation's recorded name, or null when the session names none (GET /session, P-25). */
+  organizationName: string | null;
   lastLoginAt?: Date;
   mfaEnabled: boolean;
   mfaMethods: MfaMethod[];
   passwordExpiresAt?: Date;
   mustChangePassword: boolean;
+  /**
+   * Whether this account needs an authenticator to sign, and has one, as the
+   * server states it (GET /session, P-25 follow-up). Absent on a user stored
+   * before the server said so.
+   */
+  signing?: { authenticatorRequired: boolean; authenticatorEnrolled: boolean };
   profileImageUrl?: string;
 }
 
@@ -1008,18 +1015,6 @@ export class AuthService {
     this.rememberSessionPolicy(result.data.session);
     this.events.emit('user_updated', { user: this.user });
     return { success: true, data: this.user };
-  }
-
-  async updateProfile(
-    updates: Partial<Pick<AuthUser, 'firstName' | 'lastName'>>
-  ): Promise<AuthResult<AuthUser>> {
-    const result = await this.api.patch<AuthUser>(`${this.baseUrl}/profile`, updates);
-    if (result.success && result.data) {
-      this.user = result.data;
-      this.storeUser();
-      this.events.emit('user_updated', { user: result.data });
-    }
-    return result;
   }
 
   setToken(

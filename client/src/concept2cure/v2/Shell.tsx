@@ -531,8 +531,10 @@ export function TopBar({
   onAsk?: (text: string) => void;
 }) {
   const tenant = useTenant();
-  const orgName = tenant?.currentOrganization?.name ?? 'Organization';
-  const orgMark = orgName
+  // The organisation's name, or none: an unknown organisation is not labelled
+  // "Organization" (P-25, 2026-10-08).
+  const orgName: string | null = tenant?.currentOrganization?.name?.trim() || null;
+  const orgMark = (orgName ?? '')
     .split(/\s+/)
     .map((w: string) => w[0])
     .join('')
@@ -562,10 +564,12 @@ export function TopBar({
           "switcher lands with the auth flow phase" (launch sweep finding 131).
           A session's token carries one organisation; there is no switch to
           offer until the server has one. */}
-      <div className="tb-org" title={orgName}>
-        <span className="tb-org-mark" aria-hidden="true">{orgMark}</span>
-        <span className="tb-org-name">{orgName}</span>
-      </div>
+      {orgName && (
+        <div className="tb-org" title={orgName}>
+          <span className="tb-org-mark" aria-hidden="true">{orgMark}</span>
+          <span className="tb-org-name">{orgName}</span>
+        </div>
+      )}
       <button type="button" className="tb-cmdk" onClick={onPalette} aria-label="Search, jump, or run a command" title="Search, jump, or run a command (⌘K)">
         <span className="ico">{I.search}</span>
         <span className="lbl">Search, jump, or run a command</span>

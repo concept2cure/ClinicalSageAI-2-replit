@@ -1,0 +1,11 @@
+# Item 3 RED (enterprise doors) — the same tests with signInLimits.authenticatorChange taken off /api/auth/enterprise/mfa/enable and /disable
+$ npx vitest run server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts
+ × server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > enterprise /mfa/enable and /mfa/disable: wrong codes count per account (P-25) > /mfa/enable: the eleventh wrong code for one account is refused 429, each from a new address 145ms
+ × server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > enterprise /mfa/enable and /mfa/disable: wrong codes count per account (P-25) > /mfa/disable: the eleventh wrong code for one account is refused 429 58ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > enterprise /mfa/enable and /mfa/disable: wrong codes count per account (P-25) > /mfa/enable: the eleventh wrong code for one account is refused 429, each from a new address
+AssertionError: expected 200 to be 429 // Object.is equality
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > enterprise /mfa/enable and /mfa/disable: wrong codes count per account (P-25) > /mfa/disable: the eleventh wrong code for one account is refused 429
+AssertionError: expected 200 to be 429 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)

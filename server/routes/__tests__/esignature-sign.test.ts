@@ -29,7 +29,7 @@
  *   - §11.10(g) signing-authority (role gate);
  *   - §11.200 password re-verification.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import bcrypt from 'bcryptjs';
@@ -264,6 +264,41 @@ describe('POST /api/esignature/sign — input + authority guards', () => {
     const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/mfaToken/i);
+  });
+});
+
+/* ADR-0014 P1-2b, enforced from P-25 (2026-10-08): in production a signer
+   with no authenticator is refused by the ceremony (reverifySigner), before
+   the signature transaction is opened. */
+describe('POST /api/esignature/sign — in production an authenticator is required (ADR-0014 P1-2b)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('refuses a signer with no authenticator (403), in the decided words, and writes nothing', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    hoisted.isMfaEnabled.mockResolvedValue(false);
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: 'Enrol an authenticator in Account to sign. Nothing was signed.', code: 'AUTHENTICATOR_REQUIRED' });
+    expect(hoisted.clientQuery, 'no signature transaction was opened').not.toHaveBeenCalled();
+    expect(hoisted.writeChainedAuditRow).not.toHaveBeenCalled();
+  });
+
+  it('a signer with an authenticator goes on to the code check', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    hoisted.isMfaEnabled.mockResolvedValue(true);
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('MFA_TOKEN_REQUIRED');
+    expect(hoisted.clientQuery).not.toHaveBeenCalled();
+  });
+
+  it('control: outside production the password alone still signs', async () => {
+    vi.stubEnv('NODE_ENV', 'test');
+    hoisted.isMfaEnabled.mockResolvedValue(false);
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
+    expect(res.status).toBe(201);
   });
 });
 

@@ -432,8 +432,31 @@ function NewKey({ setup }: { setup: MfaSetup }) {
   );
 }
 
-function AuthenticatorSection(props: { enrolled: boolean; reread: () => Promise<void>; rereadError: AuthError | null }) {
-  const { enrolled, reread, rereadError } = props;
+/** Removal asks for a current code; where signing needs the app, it says what removal costs first. */
+function RemoveForm({ m, signingNeedsIt }: { m: ReturnType<typeof useAuthenticator>; signingNeedsIt: boolean }) {
+  return (
+    <>
+      {signingNeedsIt && <Note icon={I.lock} text="Removing it stops you signing." />}
+      <CodeForm
+        label="Current code from the app"
+        desc="The 6-digit code the app shows now. A recovery code is not accepted here."
+        submitLabel="Remove"
+        busyLabel="Removing…"
+        m={m}
+        onSubmit={m.confirmRemove}
+      />
+    </>
+  );
+}
+
+function AuthenticatorSection(props: {
+  enrolled: boolean;
+  /** The server says signing needs an authenticator here (GET /session `signing`). */
+  signingNeedsIt: boolean;
+  reread: () => Promise<void>;
+  rereadError: AuthError | null;
+}) {
+  const { enrolled, signingNeedsIt, reread, rereadError } = props;
   const m = useAuthenticator(reread);
   const idle = !m.setup && !m.removing;
   return (
@@ -460,9 +483,7 @@ function AuthenticatorSection(props: { enrolled: boolean; reread: () => Promise<
           <NewKey setup={m.setup} />
         </CodeForm>
       )}
-      {m.removing && (
-        <CodeForm label="Current code from the app" desc="The 6-digit code the app shows now. A recovery code is not accepted here." submitLabel="Remove" busyLabel="Removing…" m={m} onSubmit={m.confirmRemove} />
-      )}
+      {m.removing && <RemoveForm m={m} signingNeedsIt={signingNeedsIt} />}
       {idle && !rereadError && m.refusal && <Refusal lines={m.refusal} />}
       {idle && !rereadError && (
         <div className="de-field">
@@ -496,7 +517,12 @@ function AccountBody({ account }: { account: ReturnType<typeof useAccountRead> }
       <div className="acct-sep" />
       <PasswordSection />
       <div className="acct-sep" />
-      <AuthenticatorSection enrolled={read.user.mfaEnabled === true} reread={reread} rereadError={rereadError} />
+      <AuthenticatorSection
+        enrolled={read.user.mfaEnabled === true}
+        signingNeedsIt={read.user.signing?.authenticatorRequired === true}
+        reread={reread}
+        rereadError={rereadError}
+      />
     </>
   );
 }

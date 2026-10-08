@@ -20,19 +20,6 @@ export interface SapDiffEntry {
   after?: unknown;
 }
 
-/** Electronic-signature payload compliant with 21 CFR Part 11 */
-export interface SignatureData {
-  signatureId: string;
-  signerName: string;
-  signerTitle: string;
-  signerEmail: string;
-  meaning: 'authorship' | 'review' | 'approval';
-  timestamp: string; // ISO-8601
-  method: 'password' | 'mfa' | 'certificate';
-  /** Base-64 encoded signature image, if available */
-  signatureImage?: string;
-}
-
 // ── Service ────────────────────────────────────────────────────────────
 
 export class CollaborativeSapService {
@@ -375,76 +362,6 @@ export class CollaborativeSapService {
     return {
       amendment,
       newVersion,
-    };
-  }
-
-  // ── 6. signVersion ────────────────────────────────────────────────
-
-  /**
-   * Attach a 21 CFR Part 11 compliant electronic signature to a SAP version.
-   * This updates the version status to 'approved'.
-   */
-  async signVersion(
-    sapVersionId: number,
-    signatureData: SignatureData,
-    organizationId: number,
-    userId: number
-  ) {
-    const database = this.getDb();
-
-    // Verify version exists and is not already signed
-    const [version] = await database
-      .select()
-      .from(sapVersions)
-      .where(
-        and(
-          eq(sapVersions.id, sapVersionId),
-          eq(sapVersions.organizationId, organizationId)
-        )
-      );
-
-    if (!version) {
-      throw new Error(`SAP version ${sapVersionId} not found`);
-    }
-
-    if (version.signatureId) {
-      throw new Error(
-        `SAP version ${sapVersionId} has already been signed (signature: ${version.signatureId})`
-      );
-    }
-
-    // Validate required Part 11 fields
-    if (
-      !signatureData.signatureId ||
-      !signatureData.signerName ||
-      !signatureData.meaning ||
-      !signatureData.timestamp ||
-      !signatureData.method
-    ) {
-      throw new Error(
-        '21 CFR Part 11 compliance requires signatureId, signerName, meaning, timestamp, and method'
-      );
-    }
-
-    const [updated] = await database
-      .update(sapVersions)
-      .set({
-        signatureId: signatureData.signatureId,
-        approvedBy: userId,
-        approvedAt: new Date(signatureData.timestamp),
-        status: 'approved',
-      })
-      .where(
-        and(
-          eq(sapVersions.id, sapVersionId),
-          eq(sapVersions.organizationId, organizationId)
-        )
-      )
-      .returning();
-
-    return {
-      version: updated,
-      signature: signatureData,
     };
   }
 

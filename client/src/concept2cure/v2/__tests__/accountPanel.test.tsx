@@ -177,6 +177,14 @@ describe('profile', () => {
     for (const label of ['Name', 'E-mail', 'Organisation', 'Role']) expect(field(dialog, label).readOnly).toBe(true);
   });
 
+  it('a session with no organisation says so, and names none (P-25)', async () => {
+    // GET /session answers null when the token names no organisation or its record is missing.
+    routes.set(`GET ${SESSION}`, () => json(200, sessionBody({ organizationName: null })));
+    const { dialog } = await openPanel();
+    expect(field(dialog, 'Organisation').value).toBe('None on this session');
+    expect(within(dialog).queryByDisplayValue(/Concept2Cure|Organization/)).toBeNull();
+  });
+
   it('a failed account read is an error with a way to retry, never an empty panel', async () => {
     let fail = true;
     routes.set(`GET ${SESSION}`, () =>
@@ -369,5 +377,27 @@ describe('authenticator app', () => {
     await waitFor(() => expect(within(dialog).getByText(/^Not set up\./)).toBeTruthy());
     expect(within(dialog).getByText(/Authenticator removed/)).toBeTruthy();
     expect(within(dialog).getByRole('button', { name: 'Set up authenticator app' })).toBeTruthy();
+  });
+});
+
+describe('authenticator app: what removal costs where signing needs it (P-25 follow-up)', () => {
+  it('where signing needs an authenticator, removal warns that it stops signing (P-25 follow-up)', async () => {
+    routes.set(`GET ${SESSION}`, () =>
+      json(200, sessionBody({ mfaEnabled: true, signing: { authenticatorRequired: true, authenticatorEnrolled: true } })),
+    );
+    const { dialog } = await openPanel();
+    expect(within(dialog).queryByText('Removing it stops you signing.')).toBeNull();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove authenticator' }));
+    expect(within(dialog).getByText('Removing it stops you signing.')).toBeTruthy();
+  });
+
+  it('where signing does not need one, removal carries no such warning', async () => {
+    routes.set(`GET ${SESSION}`, () =>
+      json(200, sessionBody({ mfaEnabled: true, signing: { authenticatorRequired: false, authenticatorEnrolled: true } })),
+    );
+    const { dialog } = await openPanel();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove authenticator' }));
+    expect(field(dialog, 'Current code from the app')).toBeTruthy();
+    expect(within(dialog).queryByText('Removing it stops you signing.')).toBeNull();
   });
 });

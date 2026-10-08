@@ -12,9 +12,14 @@
  * the canonical `POST /api/c2c/actions/sign` runs:
  *
  *   1. the declared §11.50 meaning is one this act can carry
- *   2. authority (§11.10(g)): the route admits writers only, and the permission
- *      gate the canonical path runs when GOVERNANCE_RBAC_ENFORCE is on runs
- *      here too
+ *   2. authority (§11.10(g)): the signer's role on the membership row
+ *      (resolveSignerOrgRole) must carry signing authority under the platform's
+ *      one policy (isSigningAuthorized: admin, approver, reviewer; P-18), as the
+ *      canonical route checks it (signingAuthorityRefusal), before the password.
+ *      Until 2026-10-08 (QA, cf950eeb9) the route's writer gate was the only
+ *      one here, so a member's password made a protocol signature. The
+ *      permission gate the canonical path runs when GOVERNANCE_RBAC_ENFORCE is
+ *      on runs here too
  *   3. §11.200 re-authentication (verifyReauth: the password, and the second
  *      factor whenever the signer has one enrolled), before anything is written
  *   4. BEGIN, then the meaning checked against authorship on that client,
@@ -44,6 +49,9 @@ import {
 } from '../governance/separation-of-duties';
 import { can } from '../governance/permissions';
 import { persistGovernedSignSignature } from './signature-persistence';
+import { resolveSignerOrgRole } from './resolve-signer-role';
+import { isSigningAuthorized } from './signing-authority';
+import { AUTHENTICATOR_REQUIRED_MESSAGE } from './reverify-signer';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import { clientIpOf, type HasClientIp } from '../../utils/client-ip';
 
@@ -96,6 +104,8 @@ const REAUTH_MESSAGE: Record<string, string> = {
   REAUTH_TOTP_REQUIRED: 'Your account has an authenticator enrolled: enter its current code to sign. Nothing was signed.',
   REAUTH_TOTP_INVALID: 'The authenticator code was not accepted. Nothing was signed.',
   REAUTH_MFA_STATE_UNKNOWN: 'Your second factor could not be checked, so the signature was refused. Try again. Nothing was signed.',
+  // In production, a signer with no authenticator (ADR-0014 P1-2b): the ceremony's own words.
+  REAUTH_AUTHENTICATOR_REQUIRED: AUTHENTICATOR_REQUIRED_MESSAGE,
   // The account's own refusals (VSR-001 F-27, F-28). Without them a locked
   // signer was told to re-enter a password that would not be compared.
   REAUTH_ACCOUNT_LOCKED: 'The account is locked after repeated failed attempts. Try again later. Nothing was signed.',
@@ -114,6 +124,34 @@ function asReauth(raw: unknown): { password?: string; totp?: string } | undefine
 
 const SOD_UNVERIFIED_MESSAGE =
   'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.';
+
+/**
+ * Step 2 (§11.10(g)): identity is not authority. The signer's organization role
+ * is read from the membership row, never the token or the body, and held to the
+ * platform's one signing policy before any credential is compared, so this
+ * ceremony is not a password oracle for a role that may not sign. A lookup that
+ * cannot run signs nothing; its cause is logged, never shown.
+ */
+async function assertSigningAuthority(userId: number, orgId: number): Promise<void> {
+  let role: string | null;
+  try {
+    role = await resolveSignerOrgRole(userId, orgId);
+  } catch (err) {
+    console.error('[governed-signature] signer role lookup failed:', err instanceof Error ? err.message : err);
+    throw new GovernedSignatureRefusal(
+      503,
+      'SIGNING_AUTHORITY_UNVERIFIED',
+      'Your signing authority could not be checked, so nothing was signed. Try again; if this continues, contact your administrator.',
+    );
+  }
+  if (!isSigningAuthorized(role)) {
+    throw new GovernedSignatureRefusal(
+      403,
+      'ESIGNATURE_NO_AUTHORITY',
+      'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
+    );
+  }
+}
 
 async function checkMeaningAgainstAuthorship(
   client: PoolClient,
@@ -162,6 +200,8 @@ export async function signGovernedAct(input: GovernedSignatureInput): Promise<Re
       `This signature can mean ${input.allowedMeanings.join(', ')}; "${input.meaning}" is not one of them. Nothing was signed.`,
     );
   }
+
+  await assertSigningAuthority(userId, orgId);
 
   // The canonical sign path's permission gate, dark-launched the same way
   // (routes/c2c/actions.ts makeHandler): off until validated on real role data.

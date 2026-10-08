@@ -213,7 +213,9 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
     return;
   }
   if (!verified.ok) {
-    res.status(verified.status).json({ error: { code: verified.code, message: `${verified.error} Nothing was signed.` } });
+    // Some refusals already say it (AUTHENTICATOR_REQUIRED); it is said once.
+    const message = verified.error.endsWith('Nothing was signed.') ? verified.error : `${verified.error} Nothing was signed.`;
+    res.status(verified.status).json({ error: { code: verified.code, message } });
     return;
   }
 

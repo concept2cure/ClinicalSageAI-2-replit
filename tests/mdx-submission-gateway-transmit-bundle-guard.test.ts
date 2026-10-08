@@ -70,14 +70,16 @@ vi.mock('bcryptjs', () => ({
 }));
 vi.mock('../server/services/mfaService', () => ({
   verifyToken: vi.fn().mockResolvedValue(true),
-  // The operator has no second factor enrolled. verifyReauth asks (the canonical
-  // §11.200 rule: the code is required whenever one is enrolled) and refuses when
-  // the answer cannot be read, so the fixture has to state it.
-  isMfaEnabled: vi.fn().mockResolvedValue(false),
+  // The operator has an authenticator enrolled, and the body carries its code.
+  // These cases run under NODE_ENV='production', where a signer with none is
+  // refused before anything is read (ADR-0014 P1-2b, from P-25 on 2026-10-08),
+  // so "fully re-authenticated" means password and code. verifyReauth refuses
+  // when the enrolment cannot be read, so the fixture has to state it.
+  isMfaEnabled: vi.fn().mockResolvedValue(true),
 }));
 
 // §11.50: a transmit is signed under a meaning the signer declares; the body carries it.
-const REAUTH = { reason: 'governed transmit reason', meaning: 'release', reauth: { password: 'pw-123456' } };
+const REAUTH = { reason: 'governed transmit reason', meaning: 'release', reauth: { password: 'pw-123456', totp: '123456' } };
 
 const { transmitFn, statusFn, ackFn, isConfigFn, configStatusFn } = vi.hoisted(() => ({
   transmitFn:     vi.fn(),

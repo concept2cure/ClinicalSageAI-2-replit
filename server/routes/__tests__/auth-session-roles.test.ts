@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 
 // vi.hoisted to set env vars before any module load (see authSurfaceSecurity.test.ts).
 vi.hoisted(() => {
@@ -80,9 +80,9 @@ const ORG = 1;
 const USER_ID = 4;
 const SECRET = process.env.JWT_SECRET as string;
 
-function accessTokenFor(): string {
+function accessTokenFor(claims: { organizationId?: string } = { organizationId: String(ORG) }): string {
   return jwt.sign(
-    { userId: String(USER_ID), email: 'emily.watson@concept2cure.pro', organizationId: String(ORG), role: 'member', type: 'access', sid: 'sid-roles-test', sst: Math.floor(Date.now() / 1000), idl: 900 },
+    { userId: String(USER_ID), email: 'emily.watson@concept2cure.pro', ...claims, role: 'member', type: 'access', sid: 'sid-roles-test', sst: Math.floor(Date.now() / 1000), idl: 900 },
     SECRET,
     { expiresIn: '5m' },
   );
@@ -149,5 +149,103 @@ describe('GET /api/v1/auth/me: roles match what sign-in issues', () => {
     const res = await request(app).get('/api/v1/auth/me').set(bearer());
     expect(res.status).toBe(200);
     expect(res.body.roles.some((r: string) => AUTHOR_ROLES.includes(r))).toBe(false);
+  });
+});
+
+/**
+ * P-25 (2026-10-08): the session names the organisation its record names, or
+ * none. GET /session answered "Concept2Cure", and /me "Organization", whenever
+ * the token named no organisation or its row was missing, and the account panel
+ * printed that as the person's organisation (CLAUDE.md: fail closed, never
+ * fabricate).
+ */
+describe('the session names no organisation it cannot read (P-25)', () => {
+  const PLACEHOLDERS = ['Concept2Cure', 'Organization'];
+
+  it('GET /session: a token that names no organisation is told none', async () => {
+    seed('member');
+    const res = await request(app).get('/api/v1/auth/session').set({ Authorization: `Bearer ${accessTokenFor({})}` });
+    expect(res.status).toBe(200);
+    expect(res.body.user.organizationName).toBeNull();
+  });
+
+  it('GET /session: an organisation whose record is missing is not named', async () => {
+    seed('member');
+    rows.organizations = [];
+    const res = await request(app).get('/api/v1/auth/session').set(bearer());
+    expect(res.status).toBe(200);
+    expect(res.body.user.organizationName).toBeNull();
+    expect(PLACEHOLDERS).not.toContain(res.body.user.organizationName);
+  });
+
+  it('GET /session: a blank recorded name is no name', async () => {
+    seed('member');
+    rows.organizations = [{ id: ORG, name: '   ' }];
+    const res = await request(app).get('/api/v1/auth/session').set(bearer());
+    expect(res.body.user.organizationName).toBeNull();
+  });
+
+  it('GET /session: control, the recorded name is answered as it is', async () => {
+    seed('member');
+    const res = await request(app).get('/api/v1/auth/session').set(bearer());
+    expect(res.body.user.organizationName).toBe('Concept2Cure Therapeutics');
+  });
+
+  it('GET /me: an organisation whose record is missing is not named either', async () => {
+    seed('member');
+    rows.organizations = [];
+    const res = await request(app).get('/api/v1/auth/me').set(bearer());
+    expect(res.status).toBe(200);
+    expect(res.body.organizationName).toBeNull();
+  });
+});
+
+/**
+ * The signing posture (P-25 follow-up, 2026-10-08): the server says whether
+ * this account needs an authenticator to sign and whether it has one, from the
+ * rule the signing ceremony applies (signerNeedsAuthenticator) and the
+ * enrolment it reads (users.mfa_enabled), so a person learns before typing a
+ * password.
+ */
+describe('the session states the signing posture', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+  const enrol = (mfaEnabled: boolean) => {
+    rows.users = rows.users.map((u) => ({ ...u, mfaEnabled, mfaMethod: mfaEnabled ? 'totp' : 'email' }));
+  };
+
+  it('GET /session, production, no authenticator: required and not enrolled', async () => {
+    seed('member');
+    enrol(false);
+    vi.stubEnv('NODE_ENV', 'production');
+    const res = await request(app).get('/api/v1/auth/session').set(bearer());
+    expect(res.status).toBe(200);
+    expect(res.body.user.signing).toEqual({ authenticatorRequired: true, authenticatorEnrolled: false });
+  });
+
+  it('GET /session, production, an authenticator: required and enrolled', async () => {
+    seed('member');
+    enrol(true);
+    vi.stubEnv('NODE_ENV', 'production');
+    const res = await request(app).get('/api/v1/auth/session').set(bearer());
+    expect(res.body.user.signing).toEqual({ authenticatorRequired: true, authenticatorEnrolled: true });
+  });
+
+  it('GET /session, a declared test environment: not required', async () => {
+    seed('member');
+    enrol(false);
+    vi.stubEnv('NODE_ENV', 'test');
+    const res = await request(app).get('/api/v1/auth/session').set(bearer());
+    expect(res.body.user.signing).toEqual({ authenticatorRequired: false, authenticatorEnrolled: false });
+  });
+
+  it('GET /me carries the same posture', async () => {
+    seed('member');
+    enrol(false);
+    vi.stubEnv('NODE_ENV', 'staging');
+    const res = await request(app).get('/api/v1/auth/me').set(bearer());
+    expect(res.status).toBe(200);
+    expect(res.body.signing).toEqual({ authenticatorRequired: true, authenticatorEnrolled: false });
   });
 });
