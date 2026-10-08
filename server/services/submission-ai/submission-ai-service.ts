@@ -224,11 +224,91 @@ export async function generateSubmissionPlan(input: SubmissionPlanInput, ctx: Ai
 }
 
 export interface ValidationExplainInput {
-  findings: Array<{ ruleId?: string; severity: string; message: string; leaf?: string }>;
+  /** The deterministic validator's findings. `rule_id` is AnA's tool spelling of `ruleId`. */
+  findings: Array<{ ruleId?: string; rule_id?: string; severity: string; message: string; leaf?: string }>;
   region: string;
 }
-export function explainValidation<T = unknown>(input: ValidationExplainInput, ctx: AiTaskCtx): Promise<T> {
-  return runJsonTask<T>('validation-explain', 'document_analysis', input, ctx, { maxTokens: 4000 });
+export const VALIDATION_EXPLAIN_PROMPT_VERSION = 'v1.1';
+
+export const VALIDATION_EXPLAIN_NARRATIVE_LABEL =
+  "Model narrative — advisory only. The findings and their severities are the deterministic validator's; the model " +
+  'explains each one in plain language, changes none, and decides nothing about dispatch.';
+
+/** The model's explanation of one given finding. The finding's rule, severity and
+ *  leaf are copied from the validator's finding at `index`, never from the model. */
+export interface ValidationExplainRow {
+  index: number;
+  ruleId: string | null;
+  severity: string;
+  leaf: string | null;
+  cause: string;
+  fix: string;
+}
+
+export interface ValidationExplainResult {
+  /** null when no provider is configured or the model call failed; the findings are unaffected. */
+  narrative: {
+    source: 'model';
+    label: string;
+    promptVersion: string;
+    summary: string;
+    explained: ValidationExplainRow[];
+  } | null;
+  narrativeUnavailable: { code: string; message: string } | null;
+}
+
+/**
+ * Validation explain (spec §6.6) under CLAUDE.md Rule 2: the findings are the
+ * deterministic validator's, and the model only explains them.
+ *
+ * Until 2026-10-08 this returned the model's JSON as it came: prompt v1.0 asked
+ * the model to decide `blocking` and to echo each finding's ruleId, severity and
+ * leaf, and the Validation tab printed "Blocking." and a severity chip from that
+ * reply with no model label (filing-spine design review, open item 2). Now each
+ * finding is numbered, the model returns prose keyed to those numbers (prompt
+ * v1.1), and only that prose is taken: a row for a number not given, a second
+ * row for the same finding, and any verdict, severity or rule the model states
+ * are dropped. The findings stand when the model is unavailable.
+ */
+export async function explainValidation(input: ValidationExplainInput, ctx: AiTaskCtx): Promise<ValidationExplainResult> {
+  const findings = input.findings.map((f, index) => ({
+    index,
+    ruleId: f.ruleId ?? f.rule_id ?? null,
+    severity: f.severity,
+    message: f.message,
+    leaf: f.leaf ?? null,
+  }));
+  try {
+    const reply = await runJsonTask<Record<string, unknown>>(
+      'validation-explain',
+      'document_analysis',
+      { region: input.region, findings },
+      ctx,
+      { maxTokens: 4000, version: VALIDATION_EXPLAIN_PROMPT_VERSION },
+    );
+    const text = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+    const seen = new Set<number>();
+    const explained = asList(reply.explained, (r): ValidationExplainRow | null => {
+      const finding = typeof r.index === 'number' && Number.isInteger(r.index) ? findings[r.index] : undefined;
+      if (!finding || seen.has(finding.index) || !text(r.cause)) return null;
+      seen.add(finding.index);
+      return { index: finding.index, ruleId: finding.ruleId, severity: finding.severity, leaf: finding.leaf, cause: text(r.cause), fix: text(r.fix) };
+    }).sort((x, y) => x.index - y.index);
+    return {
+      narrative: {
+        source: 'model',
+        label: VALIDATION_EXPLAIN_NARRATIVE_LABEL,
+        promptVersion: `validation-explain@${VALIDATION_EXPLAIN_PROMPT_VERSION}`,
+        summary: text(reply.summary),
+        explained,
+      },
+      narrativeUnavailable: null,
+    };
+  } catch (err) {
+    const code = err instanceof SubmissionAiError ? err.code : 'PROVIDER_UNAVAILABLE';
+    const message = err instanceof Error ? err.message : String(err);
+    return { narrative: null, narrativeUnavailable: { code, message } };
+  }
 }
 
 export interface DispatchQcInput {
