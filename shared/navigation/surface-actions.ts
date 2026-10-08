@@ -430,7 +430,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'submissions',
     label: 'Switch the submission workspace',
     description:
-      'In the Submission Center, switch between its workspaces. The builder, validation, shadow-review, cross-region, and dispatch workspaces need a submission (and sequence) selected first — select one before switching there. Refused while an e-signature dialog is open or a lifecycle transition is in flight.',
+      'In the Submission Center, switch between its workspaces. The builder, validation, shadow-review and dispatch workspaces need a submission (and sequence) selected first — select one before switching there. Refused while an e-signature dialog is open or a lifecycle transition is in flight.',
     params: [
       {
         name: 'workspace',
@@ -443,7 +443,6 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
           'sequences',
           'validation',
           'shadow-review',
-          'cross-region',
           'dispatch',
         ],
       },

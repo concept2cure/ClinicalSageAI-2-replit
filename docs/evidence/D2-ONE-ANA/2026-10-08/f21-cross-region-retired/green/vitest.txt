@@ -1,0 +1,60 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/cross-region-retired.test.ts
+{
+  "timestamp": "2026-10-08T16:44:23.212Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T16:44:23.213Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/cross-region-retired.test.ts
+{
+  "timestamp": "2026-10-08T16:44:23.213Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/cross-region-retired.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/cross-region-retired.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/cross-region-retired.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > AnA has no cross_region_gap_analysis: no handler, not offered, not registered, not in scope 6ms
+ ✓ server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > the Submission Center has no Cross-region workspace, and AnA cannot open one 2ms
+stderr | server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > the server has no cross-region route, no computeCrossRegionGap and no cross-region-gap prompt
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > the server has no cross-region route, no computeCrossRegionGap and no cross-region-gap prompt
+{
+  "timestamp": "2026-10-08T16:44:27.889Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > the server has no cross-region route, no computeCrossRegionGap and no cross-region-gap prompt 144ms
+ ✓ server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > no client source renders "No Module 1 deltas reported" or posts to the cross-region route 38ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  16:44:18
+   Duration  9.49s (transform 6.27s, setup 104ms, import 8.86s, tests 197ms, environment 0ms)
+

@@ -81,11 +81,11 @@ run against a real DB with the operator, not be fabricated blind.
    `/api/submissions` and the AnA tools against real data; the legacy→core data
    migration (§3).
 2. **UI** — all seven workspaces (Planner, Builder, Sequences, Validation, Shadow
-   Review, Cross-Region, Dispatch). Nothing is built; the API + data now exist to
+   Review, Dispatch; Cross-Region was retired 2026-10-08, FILING_SPINE.md F21). Nothing is built; the API + data now exist to
    render against. Claude Design owns this (design-system non-negotiables apply).
 3. **Remaining AI tasks** — `submission-plan`, `section-generation` (streaming),
    `provenance-trace`, `consistency-check`, `validation-explain`,
-   `cross-region-gap`, `dispatch-qc` (only classify/extract/shadow-review exist).
+   `dispatch-qc` (only classify/extract/shadow-review exist; `cross-region-gap` was retired 2026-10-08).
 4. **Truth Engine** — `consistency_findings` + cross-document consistency.
 5. **A real `resolveFile`** for `package-from-core` (materialize document content
    to disk) + wire `packageSequenceFromCore` to a route/AnA tool.
@@ -97,7 +97,7 @@ The **backbone is now one coherent system**: a single canonical data model, a
 service + REST API, ingestion, the real deterministic eCTD engine driven from the
 core, Shadow Review, and AnA control — all typechecked and unit-tested, with the
 Part 11 governance rails intact. Against the full Definition of Done (plan →
-assemble → validate → shadow-review → cross-region → publish → dispatch, with a
+assemble → validate → shadow-review → publish → dispatch, with a
 UI, every legacy model converged, runtime-proven), this is the **spine and the
 moat**, not the finished product. The remaining work is concentrated in §4 — most
 of it requires a database and a browser, which this container does not have.

@@ -1,4 +1,92 @@
-/**
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/cross-region-retired.test.ts
+{
+  "timestamp": "2026-10-08T15:44:40.929Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T15:44:40.930Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/cross-region-retired.test.ts
+{
+  "timestamp": "2026-10-08T15:44:40.930Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/cross-region-retired.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/cross-region-retired.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/cross-region-retired.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > AnA has no cross_region_gap_analysis: no handler, not offered, not registered, not in scope 7ms
+   → expected [AsyncFunction instrumented] to be undefined
+ × server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > the Submission Center has no Cross-region workspace, and AnA cannot open one 4ms
+   → expected [ 'portfolio', 'planner', …(6) ] to not include 'cross-region'
+ × server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > the server has no cross-region route, no computeCrossRegionGap and no cross-region-gap prompt 3ms
+   → expected '/**\n * Canonical submission core API…' not to match /['"]\/:id\/cross-region['"]/:id\
+ × server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > no client source renders "No Module 1 deltas reported" or posts to the cross-region route 58ms
+   → expected [ …(2) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > AnA has no cross_region_gap_analysis: no handler, not offered, not registered, not in scope
+AssertionError: expected [AsyncFunction instrumented] to be undefined
+
+- Expected:
+undefined
+
++ Received:
+[Function instrumented]
+
+ ❯ server/services/ana/__tests__/cross-region-retired.test.ts:48:34
+     46| describe('the Cross-region model verdict is retired', () => {
+     47|   it('AnA has no cross_region_gap_analysis: no handler, not offered, n…
+     48|     expect(getToolHandler(TOOL)).toBeUndefined();
+       |                                  ^
+     49|     expect(ALL_ANA_TOOLS.map((t) => t.name)).not.toContain(TOOL);
+     50|     const register = JSON.parse(fs.readFileSync(path.resolve(__dirname…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > the Submission Center has no Cross-region workspace, and AnA cannot open one
+AssertionError: expected [ 'portfolio', 'planner', …(6) ] to not include 'cross-region'
+ ❯ server/services/ana/__tests__/cross-region-retired.test.ts:59:56
+     57|
+     58|   it('the Submission Center has no Cross-region workspace, and AnA can…
+     59|     expect(SUBMISSION_WORKSPACES.map((w) => w.id)).not.toContain('cros…
+       |                                                        ^
+     60|     const r = resolveSurfaceAction('submissions.set-workspace', { work…
+     61|     expect(r.ok).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > the server has no cross-region route, no computeCrossRegionGap and no cross-region-gap prompt
+AssertionError: expected '/**\n * Canonical submission core API…' not to match /['"]\/:id\/cross-region['"]/:id\
+
+- Expected:
+/['"]\/:id\/cross-region['"]/
+
++ Received:
+"/**
  * Canonical submission core API (spec §8.3)
  *
  * The REST surface for the canonical core — the API the Phase-2 Builder and
@@ -47,6 +135,7 @@ import { assessPathwayReadiness, PATHWAYS, type Pathway } from '../services/path
 import {
   generateSubmissionPlan,
   explainValidation,
+  computeCrossRegionGap,
   runDispatchQc,
 } from '../services/submission-ai/submission-ai-service';
 import {
@@ -104,7 +193,7 @@ function fail(res: Response, err: unknown): void {
 
   /* The support handle: `auditLog` (middleware/enterprise-security.ts) sets it
      before any route runs and echoes it as `X-Request-Id`, which is the
-     "Reference <id>" the user reads off the error banner. Logging it is what
+     \"Reference <id>\" the user reads off the error banner. Logging it is what
      makes a reported failure findable. */
   const header = res.getHeader('X-Request-Id');
   const correlationId = typeof header === 'string' && header ? header : null;
@@ -118,8 +207,8 @@ function fail(res: Response, err: unknown): void {
      scripts/db/migration-set.mjs. On a database that never got it,
      `listSubmissions`' first statement raises 42P01.
 
-     Reported as 500 INTERNAL that read as "the product is broken", when the
-     true state is "this environment is not fully set up" — a different problem,
+     Reported as 500 INTERNAL that read as \"the product is broken\", when the
+     true state is \"this environment is not fully set up\" — a different problem,
      with a different owner and a different fix. Every other router in this
      repository already answers 503 PENDING_STORE for exactly this (see
      `pendingStore` in routes/c2c/projects.ts, whose envelope this mirrors), and
@@ -133,7 +222,7 @@ function fail(res: Response, err: unknown): void {
     logger.error('Submission store not provisioned — request failed closed', {
       correlationId,
       code,
-      store: /relation "([^"]+)" does not exist/i.exec(raw)?.[1] ?? null,
+      store: /relation \"([^\"]+)\" does not exist/i.exec(raw)?.[1] ?? null,
     });
     res.status(503).json({
       error: {
@@ -182,7 +271,7 @@ const createSubmissionSchema = z.object({
 });
 const createSequenceSchema = z.object({
   region: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
-  sequenceNumber: z.string().regex(/^\d{4}$/, 'sequenceNumber must be 4 digits, e.g. "0000".'),
+  sequenceNumber: z.string().regex(/^\\d{4}$/, 'sequenceNumber must be 4 digits, e.g. \"0000\".'),
   type: z.enum(['original', 'amendment', 'response', 'variation', 'annual', 'withdrawal']).optional(),
 });
 const transitionSchema = z.object({
@@ -279,6 +368,7 @@ router.get('/capabilities', limiter, requireRole(AUTHOR), async (req, res) => {
         sequences: true,
         validation: true,
         'shadow-review': true,
+        'cross-region': true,
         dispatch: true,
       },
       // Capability flags (not workspaces). The assemble/publish BYTES are now
@@ -381,7 +471,7 @@ router.get('/market-specs/:specId', limiter, requireRole(AUTHOR), async (req, re
   try {
     const { getMarketSpec } = await import('../services/market-specs/market-submission-specs.js');
     const spec = getMarketSpec(String(req.params.specId));
-    if (!spec) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No market spec "${req.params.specId}".` } });
+    if (!spec) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No market spec \"${req.params.specId}\".` } });
     res.json(spec);
   } catch (err) {
     fail(res, err);
@@ -409,7 +499,7 @@ router.post('/market-specs/:specId/validate', limiter, requireRole(AUTHOR), asyn
   try {
     const { getMarketSpec } = await import('../services/market-specs/market-submission-specs.js');
     const spec = getMarketSpec(String(req.params.specId));
-    if (!spec) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No market spec "${req.params.specId}".` } });
+    if (!spec) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No market spec \"${req.params.specId}\".` } });
     const { validateLeavesAgainstMarketSpec } = await import('../services/market-specs/market-formatting-validator.js');
     res.json(validateLeavesAgainstMarketSpec(spec, parsed.data.leaves));
   } catch (err) {
@@ -443,7 +533,7 @@ router.get('/document-templates/:templateId', limiter, requireRole(AUTHOR), asyn
   try {
     const { getDocumentTemplate } = await import('../services/market-specs/document-template-library.js');
     const t = getDocumentTemplate(String(req.params.templateId));
-    if (!t) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No document template "${req.params.templateId}".` } });
+    if (!t) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No document template \"${req.params.templateId}\".` } });
     res.json(t);
   } catch (err) {
     fail(res, err);
@@ -471,7 +561,7 @@ router.get('/requirements/:type', limiter, requireRole(AUTHOR), async (req, res)
   try {
     const { getRequirements } = await import('../services/market-specs/submission-requirements.js');
     const r = getRequirements(String(req.params.type));
-    if (!r) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No requirements for "${req.params.type}".` } });
+    if (!r) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No requirements for \"${req.params.type}\".` } });
     res.json(r);
   } catch (err) {
     fail(res, err);
@@ -490,7 +580,7 @@ router.post('/requirements/:type/assess', limiter, requireRole(AUTHOR), async (r
   try {
     const { assessRequirements } = await import('../services/market-specs/submission-requirements.js');
     const a = assessRequirements(String(req.params.type), parsed.data);
-    if (!a) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No requirements for "${req.params.type}".` } });
+    if (!a) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No requirements for \"${req.params.type}\".` } });
     res.json(a);
   } catch (err) {
     fail(res, err);
@@ -522,7 +612,7 @@ router.post('/designations/:id/assess', limiter, requireRole(AUTHOR), async (req
   try {
     const { assessEligibility } = await import('../services/market-specs/pathway-eligibility.js');
     const a = assessEligibility(String(req.params.id), parsed.data.answers);
-    if (!a) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No designation "${req.params.id}".` } });
+    if (!a) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No designation \"${req.params.id}\".` } });
     res.json(a);
   } catch (err) {
     fail(res, err);
@@ -766,7 +856,7 @@ router.get('/device/timeline', limiter, requireRole(AUTHOR), async (req, res) =>
   try {
     const { getTimeline } = await import('../services/market-specs/regulatory-timelines.js');
     const t = getTimeline(pathway);
-    if (!t) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No timeline for pathway "${pathway}".` } });
+    if (!t) return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No timeline for pathway \"${pathway}\".` } });
     res.json(t);
   } catch (err) { fail(res, err); }
 });
@@ -990,9 +1080,9 @@ router.post('/sequences/:seqId/transition', limiter, requireRole(AUTHOR), async 
 // Each leaf carries `sourceDocument`: what the leaf's document pointer resolves
 // to in this organization, from the SAME resolver the dispatch-readiness
 // assessment (and so the freeze / dispatch gate) uses. The Builder used to
-// decide "linked" on the client from `documentId != null`, which is null for
+// decide \"linked\" on the client from `documentId != null`, which is null for
 // every vault leaf (uuid-keyed) — six leaves the platform had just filed read
-// "Source document: unlinked" (MDX demo pack, 2026-09-21, finding F5). The
+// \"Source document: unlinked\" (MDX demo pack, 2026-09-21, finding F5). The
 // resolution is computed here, once, so the column and the gate cannot
 // disagree.
 router.get('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req, res) => {
@@ -1121,6 +1211,28 @@ router.post('/:id/validation/explain', limiter, requireRole(AUTHOR), async (req,
   }
 });
 
+// ── Cross-region gap (AI) ────────────────────────────────────────────────────
+const crossRegionSchema = z.object({
+  sourceRegion: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
+  targetRegions: z.array(z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'])).min(1),
+  applicationType: z.string().min(1).max(64),
+  sectionsPresent: z.array(z.string()).optional(),
+});
+router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const parsed = crossRegionSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    await getSubmission(id, ctx);
+    res.json(await computeCrossRegionGap(parsed.data, { ...ctx, submissionId: id }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // ── Dispatch QC (deterministic verdict + optional model narrative; does NOT transmit)
 // VSR-001 F-9: the verdict is computed by the platform's deterministic gates and
 // the model, when configured, only narrates under `narrative` (null without a
@@ -1166,7 +1278,7 @@ router.get('/:id/provenance', limiter, requireRole(AUTHOR), async (req, res) => 
   const id = idParam(req.params.id);
   if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
   const section = Array.isArray(req.query.section) ? String(req.query.section[0]) : typeof req.query.section === 'string' ? req.query.section : '';
-  if (!section) return res.status(400).json({ error: { code: 'VALIDATION', message: 'query param "section" is required.' } });
+  if (!section) return res.status(400).json({ error: { code: 'VALIDATION', message: 'query param \"section\" is required.' } });
   try {
     res.json(await traceProvenance({ submissionId: id, targetSectionCode: section }, ctx));
   } catch (err) {
@@ -1195,7 +1307,7 @@ router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) =
     const { findings, notCompared, auditTrail } = await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx);
     setAuditRowHeaders(res, auditTrail);
     // How many of the claim's figures got no verdict: an empty array is
-    // "nothing compared" as often as "no conflict".
+    // \"nothing compared\" as often as \"no conflict\".
     res.setHeader('X-Consistency-Not-Compared', String(notCompared.length));
     res.json(findings);
   } catch (err) {
@@ -1280,7 +1392,7 @@ router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, 
   });
   const send = (event: string, data: unknown) => {
     if (closed) return;
-    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    res.write(`event: ${event}\\ndata: ${JSON.stringify(data)}\\n\\n`);
   };
   try {
     const result = await generateSection({ submissionId: id, ...parsed.data }, ctx, (text) => send('chunk', { text }));
@@ -1714,7 +1826,7 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
     });
   } catch (err) {
     // A refused assembly is a refusal, not an outage. It carries no `code`, so
-    // fail() answered it 500 "Request failed." and dropped the ECTD_ASSEMBLE_BLOCKED
+    // fail() answered it 500 \"Request failed.\" and dropped the ECTD_ASSEMBLE_BLOCKED
     // row's outcome, which IS the record that the refusal happened.
     if (err instanceof assembly.EctdAssemblyBlockedError) {
       return res.status(422).json({
@@ -1763,7 +1875,7 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
 
 // ── Governed freeze / dispatch (the SUBMIT step) ──────────────────────────────
 // Each requires a Part 11 e-signature: first POST /api/c2c/actions/sign with
-// target "ectd-sequence:<seqId>" (re-auth + separation-of-duties + ledger), then
+// target \"ectd-sequence:<seqId>\" (re-auth + separation-of-duties + ledger), then
 // pass the returned actionId here. The service applies BOTH gates atomically —
 // the e-signature AND the deterministic dispatch gate — so a sequence cannot be
 // frozen or dispatched while the gate blocks. Neither transmits.
@@ -1838,7 +1950,7 @@ router.post('/sequences/:seqId/dispatch', limiter, requireRole(AUTHOR), async (r
 // Requires the sequence to be dispatched, a Part 11 e-signature on the sequence
 // target, and a clear dispatch gate. Real transmission only happens when the org
 // has gateway credentials for the chosen environment; otherwise the response
-// reports `transmitted: false, reason: "gateway_not_configured"` honestly.
+// reports `transmitted: false, reason: \"gateway_not_configured\"` honestly.
 const transmitSchema = z.object({
   signatureActionId: z.string().min(1).max(128),
   environment: z.enum(['staging', 'production']).optional(),
@@ -1871,3 +1983,43 @@ router.post('/sequences/:seqId/transmit', limiter, requireRole(AUTHOR), async (r
 });
 
 export default router;
+"
+
+ ❯ server/services/ana/__tests__/cross-region-retired.test.ts:66:24
+     64|   it('the server has no cross-region route, no computeCrossRegionGap a…
+     65|     const routes = fs.readFileSync(path.join(REPO, 'server/routes/subm…
+     66|     expect(routes).not.toMatch(/['"]\/:id\/cross-region['"]/);
+       |                        ^
+     67|     const ai = await import('../../submission-ai/submission-ai-service…
+     68|     expect((ai as Record<string, unknown>).computeCrossRegionGap).toBe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ana/__tests__/cross-region-retired.test.ts > the Cross-region model verdict is retired > no client source renders "No Module 1 deltas reported" or posts to the cross-region route
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
++   "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
++ ]
+
+ ❯ server/services/ana/__tests__/cross-region-retired.test.ts:78:58
+     76|       return /No Module 1 deltas reported/.test(src) || /\/cross-regio…
+     77|     });
+     78|     expect(offenders.map((f) => path.relative(REPO, f))).toEqual([]);
+       |                                                          ^
+     79|   });
+     80| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  15:44:35
+   Duration  10.17s (transform 6.68s, setup 128ms, import 9.54s, tests 82ms, environment 0ms)
+

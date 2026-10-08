@@ -636,7 +636,6 @@
    "create_qms_document",
    "critique_document",
    "critique_draft",
-   "cross_region_gap_analysis",
    "define_estimand",
    "derive_ctq_factors",
    "describe_capabilities",

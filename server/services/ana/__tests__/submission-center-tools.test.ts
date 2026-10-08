@@ -37,7 +37,6 @@ const SUBMISSION_TOOLS = [
   'run_shadow_review',
   'plan_submission',
   'explain_validation_findings',
-  'cross_region_gap_analysis',
   'dispatch_qc_check',
   'trace_provenance',
   'check_consistency',
@@ -288,11 +287,6 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('explain_validation_findings')!;
     const out = JSON.parse(await handler({ region: 'fda', findings: [{ severity: 'error', message: 'x' }] }, { humanConfirmed: true } as ToolContext));
     expect(out.error).toMatch(/tenant context/);
-  });
-  it('cross_region_gap_analysis validates required inputs', async () => {
-    const handler = getToolHandler('cross_region_gap_analysis')!;
-    const out = JSON.parse(await handler({ source_region: 'fda' }, { organizationId: 1, userId: 2, humanConfirmed: true } as ToolContext));
-    expect(out.error).toMatch(/target_regions|application_type/);
   });
   it('dispatch_qc_check refuses without org/user context', async () => {
     const handler = getToolHandler('dispatch_qc_check')!;
