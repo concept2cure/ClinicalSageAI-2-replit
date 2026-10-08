@@ -46,7 +46,15 @@ import { shellProgramId, useShellProject } from '../shellProject';
 import { versionsPath, isVersionsShape, type VersionsShape } from './VaultVersions';
 import { stageLabel } from './VaultLifecycle';
 import {
+  type Occupancy,
+  type SequenceLeafRow,
+  isLeafList,
+  occupancyOf,
+  OccupancyNotice,
+} from './VaultPlaceOccupancy';
+import {
   useFilingTarget,
+  type SubmissionRow,
   FilingTargetFields,
   judgeSectionCode,
   vocabularyForApplicationType,
@@ -96,40 +104,6 @@ type Verdict = { kind: 'error' | 'ok'; message: string } | null;
 
 type Judged = ReturnType<typeof judgeSectionCode>;
 
-/** A leaf of the sequence, as GET …/leaves returns it: only what the occupancy check reads. */
-interface SequenceLeafRow {
-  id: number;
-  sectionCode: string;
-  lifecycleOp: string;
-  documentTable: string | null;
-  documentUuid: string | null;
-  title: string;
-  deletedAt?: string | null;
-}
-
-const isLeafList = (value: unknown): value is SequenceLeafRow[] => Array.isArray(value);
-
-/** What the chosen section of the chosen sequence already holds. */
-type Occupancy =
-  | { kind: 'unknown' }
-  | { kind: 'failed' }
-  | { kind: 'none' }
-  | { kind: 'others'; leaves: SequenceLeafRow[] }
-  | { kind: 'same'; leaf: SequenceLeafRow };
-
-/* The section is compared the way the server compares it for the one-leaf rule
-   (case- and space-insensitively). Any live leaf in the section counts; if one of
-   them names this document, the placement is about that leaf and nothing else. */
-function sectionOccupancy(leaves: SequenceLeafRow[], sectionCode: string, documentUuid: string): Occupancy {
-  const want = sectionCode.trim().toLowerCase();
-  const live = leaves.filter((l) => !l.deletedAt && l.sectionCode.trim().toLowerCase() === want);
-  const same = live.find((l) => l.documentTable === 'vault_documents' && l.documentUuid === documentUuid);
-  if (same) return { kind: 'same', leaf: same };
-  return live.length > 0 ? { kind: 'others', leaves: live } : { kind: 'none' };
-}
-
-const opLabel = (op: string): string => SC_LIFECYCLE_OPS[op]?.l ?? op;
-
 /** Why the file button is disabled, in the words of what is missing. */
 function placeBlockedReason(
   hasSequence: boolean,
@@ -146,46 +120,6 @@ function placeBlockedReason(
   }
   if (alreadyPlaced) return 'This document is already placed at this section of this sequence';
   return reasonOk ? undefined : PLACEMENT_REASON_REQUIRED;
-}
-
-/* What the section already holds, said before the click. Another document in the
-   section is allowed (a section may hold several leaves, and the readiness check
-   reports a second New leaf for confirmation), so that is a note. The same
-   document is not offered again: placing it changes nothing, or it asks for a
-   different operation the leaf does not have. */
-function OccupancyNotice({ occupancy, section, sequenceNumber, op }: {
-  occupancy: Occupancy;
-  section: string;
-  sequenceNumber: string | undefined;
-  op: string;
-}) {
-  const seqNo = sequenceNumber ?? 'this sequence';
-  if (occupancy.kind === 'failed') {
-    return (
-      <div className="de-err" role="status">
-        {`The leaves of ${seqNo} could not be read, so whether section ${section} already holds this document is not shown. The server files a document once per section.`}
-      </div>
-    );
-  }
-  if (occupancy.kind === 'others') {
-    const { leaves } = occupancy;
-    const listed = leaves.map((l) => `“${l.title}” (${opLabel(l.lifecycleOp)})`).join('; ');
-    const count = leaves.length === 1 ? '1 leaf' : `${leaves.length} leaves`;
-    return (
-      <div className="de-desc" role="status">
-        {`Section ${section} already holds ${count} in sequence ${seqNo}: ${listed}.` +
-          (op === 'new' ? ' Placing this document as New adds a second New leaf to the section; the readiness check reports that for confirmation.' : '')}
-      </div>
-    );
-  }
-  if (occupancy.kind === 'same') {
-    const existing = opLabel(occupancy.leaf.lifecycleOp);
-    const text = occupancy.leaf.lifecycleOp === op
-      ? `This document is already placed at ${section} in sequence ${seqNo} as ${existing}. Placing it again would change nothing, so Place is unavailable.`
-      : `This document is already placed at ${section} in sequence ${seqNo} as ${existing}. To place it as ${opLabel(op)}, remove that leaf first.`;
-    return <div className="de-err" role="status">{text}</div>;
-  }
-  return null;
 }
 
 /* Offering to file a non-PDF promised an assembly that cannot happen: the
@@ -395,6 +329,58 @@ function FilingRecovery({ placed, uncertain, onNav, onClose }: {
   </div>;
 }
 
+/* ── The dialog's decisions, as named functions. ─────────────────────────────
+   The component reads each one rather than branching inline. Each helper is a
+   restatement of the condition it replaces, in the same order, so the dialog
+   behaves as it did. */
+
+/** A file that is not a PDF is refused before anything loads (see NotPdfNotice). */
+function isNotPdf(mimeType: string | null | undefined): boolean {
+  return mimeType !== undefined && mimeType !== PDF;
+}
+
+/** The chosen sequence's leaves are read only once there is a sequence and a file that can be filed. */
+function leavesPathFor(seq: { id: number } | null, notPdf: boolean): string | null {
+  return seq && !notPdf ? `/api/submissions/sequences/${seq.id}/leaves` : null;
+}
+
+/** The submission the picker has chosen, if it is still among the loaded rows. */
+function chosenSubmission(rows: SubmissionRow[], subId: number | null): SubmissionRow | null {
+  return rows.find((r) => r.id === subId) ?? null;
+}
+
+/** Placement is blocked for a non-PDF, while one is in flight, once one stood, while its outcome is uncertain, and when the document already holds the section. */
+function placementBlocked(state: {
+  notPdf: boolean;
+  placing: boolean;
+  placed: boolean;
+  needsReconciliation: boolean;
+  alreadyPlaced: boolean;
+}): boolean {
+  return state.notPdf || state.placing || state.placed || state.needsReconciliation || state.alreadyPlaced;
+}
+
+/** The fields are inert while a placement is in flight, once it stood, and while its outcome is uncertain. */
+function fieldsDisabled(placing: boolean, needsReconciliation: boolean, placed: boolean): boolean {
+  return placing || needsReconciliation || placed;
+}
+
+/** The occupancy note, under the section field, for a section the packager can file at. */
+function OccupancyBlock({ show, occupancy, section, sequenceNumber, op }: {
+  show: boolean;
+  occupancy: Occupancy;
+  section: string | null;
+  sequenceNumber: string | undefined;
+  op: string;
+}) {
+  if (!show || !section) return null;
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <OccupancyNotice occupancy={occupancy} section={section} sequenceNumber={sequenceNumber} op={op} />
+    </div>
+  );
+}
+
 function VaultPlaceIntoSubmissionForDocument({
   documentUuid,
   documentTitle,
@@ -406,13 +392,13 @@ function VaultPlaceIntoSubmissionForDocument({
   filing,
 }: VaultPlaceIntoSubmissionProps) {
   // Refused here, before anything loads (see NotPdfNotice).
-  const notPdf = mimeType !== undefined && mimeType !== PDF;
+  const notPdf = isNotPdf(mimeType);
   const [verdict, setVerdict] = React.useState<Verdict>(null);
   const target = useFilingTarget(() => setVerdict(null), projectId);
   const { seq } = target;
   const stage = useVersionStage(projectId, documentUuid, !notPdf);
   // The leaves of the chosen sequence: read to say what the section already holds.
-  const leavesPath = seq && !notPdf ? `/api/submissions/sequences/${seq.id}/leaves` : null;
+  const leavesPath = leavesPathFor(seq, notPdf);
   const leavesRead = useLiveData<SequenceLeafRow[]>(leavesPath, [leavesPath], isLeafList);
 
   const confirmedSection = confirmedSectionOf(filing);
@@ -490,24 +476,20 @@ function VaultPlaceIntoSubmissionForDocument({
      here it read "resolves to a canonical code AND a folder", which looks
      equivalent and is not — a bare module resolves to a folder too, so that
      version happily filed a document at a container. */
-  const submission = target.subs.rows.find((r) => r.id === target.subId) ?? null;
+  const submission = chosenSubmission(target.subs.rows, target.subId);
   const vocabulary = vocabularyForApplicationType(submission?.applicationType);
   const judged = judgeSectionCode(section, vocabulary);
   const sectionUsable = judged.placeable;
 
   const reasonOk = placementReasonOk(reason);
-  const occupancy: Occupancy = !leavesPath || !sectionUsable || judged.canonical == null
-    ? { kind: 'unknown' }
-    : leavesRead.error
-      ? { kind: 'failed' }
-      : leavesRead.loading || !leavesRead.data
-        ? { kind: 'unknown' }
-        : sectionOccupancy(leavesRead.data, judged.canonical, documentUuid);
+  const occupancy = occupancyOf({
+    leavesPath, leaves: leavesRead, sectionUsable, canonical: judged.canonical, documentUuid,
+  });
   const alreadyPlaced = occupancy.kind === 'same';
   const canPlace = placementAllowed(
     seq,
     sectionUsable && reasonOk,
-    notPdf || placing || Boolean(placed) || needsReconciliation || alreadyPlaced,
+    placementBlocked({ notPdf, placing, placed: Boolean(placed), needsReconciliation, alreadyPlaced }),
   );
 
   const place = async () => {
@@ -590,7 +572,7 @@ function VaultPlaceIntoSubmissionForDocument({
             <NotPdfNotice mimeType={mimeType} />
           ) : (
             <>
-              <fieldset disabled={placing || needsReconciliation || Boolean(placed)} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+              <fieldset disabled={fieldsDisabled(placing, needsReconciliation, Boolean(placed))} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
                 <FilingTargetFields target={target} idPrefix="vpf" />
                 <SectionFields
                   section={section}
@@ -602,11 +584,13 @@ function VaultPlaceIntoSubmissionForDocument({
                   confirmedSection={confirmedSection}
                   filing={filing}
                 />
-                {sectionUsable && judged.canonical && (
-                  <div style={{ marginBottom: 12 }}>
-                    <OccupancyNotice occupancy={occupancy} section={judged.canonical} sequenceNumber={seq?.sequenceNumber} op={op} />
-                  </div>
-                )}
+                <OccupancyBlock
+                  show={sectionUsable}
+                  occupancy={occupancy}
+                  section={judged.canonical}
+                  sequenceNumber={seq?.sequenceNumber}
+                  op={op}
+                />
                 <PlacementReasonField value={reason} onChange={setReason} idPrefix="vpf" />
               </fieldset>
             </>
