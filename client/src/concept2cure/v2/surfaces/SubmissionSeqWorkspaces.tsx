@@ -1991,7 +1991,7 @@ export function DispatchWorkspace({
               <div className="cm-pushbar sc-mt">
                 <button
                   type="button"
-                  className="btn ghost"
+                  className="sc-trans-b"
                   onClick={() => { stashNavParamsForTarget('ectd-compile', { sequenceId: String(seq.id) }); onNav('ectd-compile'); }}
                 >
                   Validate and compile this sequence {I.right}

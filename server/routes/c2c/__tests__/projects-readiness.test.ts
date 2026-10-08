@@ -172,6 +172,21 @@ describe('GET /api/c2c/projects/:id — the same readiness the list reports', ()
     queryMock.mockResolvedValueOnce(detailRow()).mockResolvedValueOnce({ rows: [] });
     const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
     expect(res.body.readiness).toBeNull();
+    expect(res.body.readinessAsOf).toBeNull();
+  });
+
+  /* Filing-spine design review, open item 9 (2026-10-08): the figure is
+     measured on each read and a project page stays open for hours, so the read
+     says when it measured. No figure, no time. */
+  it('says when the figure was measured', async () => {
+    queryMock
+      .mockResolvedValueOnce(detailRow())
+      .mockResolvedValueOnce({ rows: [{ project_id: P1, readiness: 62 }] });
+    const before = Date.now();
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    const at = Date.parse(res.body.readinessAsOf);
+    expect(at).toBeGreaterThanOrEqual(before - 1000);
+    expect(at).toBeLessThanOrEqual(Date.now());
   });
 
   it('a failed readiness read is null — not assessed — never the stored 0', async () => {
@@ -181,6 +196,7 @@ describe('GET /api/c2c/projects/:id — the same readiness the list reports', ()
     const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
     expect(res.status).toBe(200);
     expect(res.body.readiness).toBeNull();
+    expect(res.body.readinessAsOf).toBeNull();
   });
 
   it('scopes the aggregate to this program and the caller org', async () => {

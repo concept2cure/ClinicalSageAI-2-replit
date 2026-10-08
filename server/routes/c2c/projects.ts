@@ -566,14 +566,19 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
  * while the card beside it showed the real share. `progress_percent` is left
  * out of the projection: a column nothing maintains is not offered to a reader.
  * Null when the aggregate could not be read: not assessed, never 0.
+ * `readinessAsOf` is when this read measured it, null with no figure.
  */
 async function readProgramDetail(id: string, orgId: number): Promise<Record<string, unknown> | null> {
   const { rows } = await pool.query(PROGRAM_DETAIL_SQL, [id, orgId]);
   if (!rows.length) return null;
   const measured = await readinessByProject([id], orgId);
+  const readiness = measured?.get(id) ?? null;
   return {
     ...serializeProgramDetail(rows[0] as Record<string, unknown>),
-    readiness: measured?.get(id) ?? null,
+    readiness,
+    // When it was measured: on this read, and a project page stays open for
+    // hours. No figure, no time (filing-spine design review, open item 9).
+    readinessAsOf: readiness === null ? null : new Date().toISOString(),
   };
 }
 

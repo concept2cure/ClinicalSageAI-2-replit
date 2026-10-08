@@ -106,6 +106,10 @@ Each fix has a test that fails on the code before it, saved under `docs/evidence
   - The design lens proposed full width. The design-system lens proposed fixing the global rule.
   - This change does the local fix and lists the global one as open, because 332 fields use the rule and a change there needs a visual pass across all of them.
 - **Who chooses the client type.** My first fix for a project opened from a link used the filing type's workstream. The honest-state lens, reading that working tree, showed it files a small-molecule IND under Biotech. The recorded product type replaced it, as item 14.
+- **BuilderSources: a note with links, or a note with doors** (added 2026-10-08, after F14).
+  - The design lens wanted BuilderSources' button bar folded into one line with two links (open item 10).
+  - The design-system auditor, run on F14, named `sc-trans-b` in a `cm-pushbar` as the door pattern for every secondary action on the sequence workspaces, with BuilderSources as its precedent. F14's "Validate and compile this sequence" door was moved onto it.
+  - BuilderSources keeps its doors: inline links would make it the one exception on these tabs.
 
 ## Open: not fixed here, with the reason
 
@@ -126,8 +130,9 @@ Each fix has a test that fails on the code before it, saved under `docs/evidence
    - The Builder shows no leaf history (who placed it, when, what it replaced).
    - "Place into filing" is offered to every role, and the refusal arrives as a 403. **Fixed after the review**: the document read carries the server's placement gate and the trigger names the refusal before the dialog (`…/filing-spine-review-followups/`, item 3). Creation attribution and leaf history remain open.
    - All of this predates the spine.
+   - **What it needs** (checked 2026-10-08): `submissions` and `submission_leaves` record `created_by` as a user id only, so attribution needs the person's name joined on the submissions and leaves reads. "What it replaced" is in the `LEAF_*` audit rows, and no route reads a resource's audit rows back. That is a slice of its own: a history read, not a fix to this review's screens.
 4. **The global half-field rule.** `.de-field.half:nth-of-type(odd)` (`journey-v2.css:472`) counts every div in the drawer body. `AuthoringCreateExport.tsx` has the same latent mispairing. A sibling-independent rule (flex-wrap with `gap`) wants a visual pass across all 332 uses.
-5. **Selector-shadowing baseline.** `scripts/ci/css-selector-shadowing-baseline.json` still lists `.pj-convo` and `.pj-convo-t`, which no longer shadow. The file says it is edited downward by a human only, so the two lines are left for one to delete.
+5. **Selector-shadowing baseline.** `scripts/ci/css-selector-shadowing-baseline.json` still lists `.pj-convo` and `.pj-convo-t`, which no longer shadow, and `.ana-composer` (found by the F14 audit, not this review's). The file says it is edited downward by a human only, so the three lines are left for one to delete.
 6. **`offered:false` is enforced nowhere.** A UK IND can still be created. Refusing it at the picker and at `POST /api/submissions` is F22 territory (picker refusals). It waits on the founder's answer to `WORKFLOW_DECISION_2026-10-08.md`.
 7. **Vocabulary not taken this round:**
    - "no channel" → "no transmit channel";
@@ -139,10 +144,11 @@ Each fix has a test that fails on the code before it, saved under `docs/evidence
 
    The summary strings also label 12 options at once and are pinned in three test files. They are worth one pass together with F22's picker.
 8. **Fixed after the review** (`…/filing-spine-review-followups/`, item 4): the project-scoped submissions read has a shape guard (`isRowsWith`). As raised: a non-list 200 read as "no submissions", so a region could be preselected as if the market did not exist.
-9. **No as-of time.** The readiness card shows none, and the market-support reply's `asOf` is dropped.
+9. **Fixed after the review** (`…/filing-spine-review-followups/`, item 6): the Dossier readiness card says when the server measured the figure, and PMDA's line names the date it is true from. As raised: **No as-of time.** The readiness card shows none, and the market-support reply's `asOf` is dropped.
 10. **Hierarchy notes:**
     - BuilderSources is an accent note plus a button bar, where a line with two links would do.
-    - The Respond tab's coming-later line sits in a card, while Submit's is bare.
+    - The Respond tab's coming-later line sits in a card, while Submit's is bare. **Fixed after the review** (item 7): it sits under the card, as Submit's does.
+    - BuilderSources keeps its doors; see "Where the lenses disagreed".
     - The Vault header's "Open project" shows with no project open. **Fixed after the review** (item 5): it shows only with a project open.
 11. **Motion advisory.** The global `--ease` token is in-out, not ease-out. It is global and not this change's.
 

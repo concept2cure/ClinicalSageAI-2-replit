@@ -80,6 +80,16 @@ describe('project home — Dossier readiness', () => {
     expect((seen.ctx?.facts as { program?: { progressPercent?: unknown } }).program?.progressPercent).toBe(62);
   });
 
+  /* Filing-spine design review, open item 9 (2026-10-08): the figure is
+     measured when the page reads it, and the card said nothing of when. */
+  it('states when the server measured the figure', async () => {
+    const at = '2026-10-08T21:14:00.000Z';
+    mockProgram(program({ readiness: 62, readinessAsOf: at }));
+    render(<ProjectHome {...props()} />);
+    const card = await readinessCard();
+    expect(card.textContent).toContain(`Measured ${new Date(at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}.`);
+  });
+
   it('a program with no approved sections reads 0%, the same as its card', async () => {
     mockProgram(program({ readiness: 0 }));
     render(<ProjectHome {...props()} />);
@@ -95,6 +105,7 @@ describe('project home — Dossier readiness', () => {
     const card = await readinessCard();
     expect(card.textContent).toMatch(/not measured/i);
     expect(card.textContent).not.toMatch(/\d+%/);
+    expect(card.textContent).not.toMatch(/Measured/);
     expect(seen.ctx?.summary).toContain('dossier readiness not measured');
     expect(seen.ctx?.summary).not.toMatch(/\d+% complete|readiness \d+%/);
   });

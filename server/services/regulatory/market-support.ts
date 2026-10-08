@@ -470,15 +470,17 @@ function deviceStatement(
   };
 }
 
-/** PMDA takes only eCTD v4.0 for new applications from the dated fact's effective date. */
-function pmdaNewApplicationsBlocked(code: CanonicalRegion, asOf: string): boolean {
-  if (code !== 'JP') return false;
+/** The date from which PMDA takes only eCTD v4.0 for new applications, when
+ *  that dated fact is in force on `asOf`; null otherwise. The line names it:
+ *  a statement true only from a date says the date (2026-10-08). */
+function pmdaV4RequiredFrom(code: CanonicalRegion, asOf: string): string | null {
+  if (code !== 'JP') return null;
   const fact = pmdaEctdV4Fact(asOf);
-  return !!fact && fact.status === 'in_force' && asOf >= fact.effectiveDate;
+  return fact && fact.status === 'in_force' && asOf >= fact.effectiveDate ? fact.effectiveDate : null;
 }
 
-function lineFor(outline: MarketSupport['outline'], ch: JudgedChannel, pmdaBlocked: boolean): string {
-  if (pmdaBlocked) return 'New applications blocked: eCTD v4.0 required';
+function lineFor(outline: MarketSupport['outline'], ch: JudgedChannel, pmdaFrom: string | null): string {
+  if (pmdaFrom) return `New applications blocked: eCTD v4.0 required from ${pmdaFrom}`;
   if (outline.state === 'outline') return channelLine(ch);
   return `No outline; ${NO_CHANNEL_STATES.has(ch.state) ? 'no channel' : channelLine(ch)}`;
 }
@@ -502,7 +504,8 @@ export function marketSupport(input: MarketInput, packs: ActiveRulePacks, asOf: 
   const regionProfile = getSubmissionRegionProfile(PROFILE_KEY[identity.code] ?? identity.code.toLowerCase()) != null;
   const entry = registryEntryFor(base.agency ?? identity.agency, applicationType);
   const ch = channelSupportFor(entry);
-  const pmdaBlocked = pmdaNewApplicationsBlocked(identity.code, asOf);
+  const pmdaFrom = pmdaV4RequiredFrom(identity.code, asOf);
+  const pmdaBlocked = pmdaFrom !== null;
   const continuing = input.continuingLifecycle === true;
   const shared = { ...base, module1: { state: shape, detail: MODULE1_DETAIL[shape] }, regionProfile, channel: { state: ch.state, detail: ch.detail } };
 
@@ -529,7 +532,7 @@ export function marketSupport(input: MarketInput, packs: ActiveRulePacks, asOf: 
     ...shared,
     outline,
     summary: summaryFor(outline, shape, ch),
-    line: lineFor(outline, ch, pmdaBlocked),
+    line: lineFor(outline, ch, pmdaFrom),
     buildable: outline.state === 'outline' && shape === 'structured',
     offered: true,
   };

@@ -72,6 +72,29 @@ Launch row **D2**. These were open items 1 and 2 of `.design/filing-spine/DESIGN
 
 The header's "Open project" led to Project home's "No project selected", beside the empty state's own "Go to Projects". It shows only when a project is open.
 
+## 6. A figure with no time, and a dated line with no date (review open item 9)
+
+**What was wrong**
+- Dossier readiness on Project home is measured on each read (`readinessByProject`, `server/routes/c2c/projects.ts`). A project page stays open for hours, and the card said nothing about when the figure was measured.
+- PMDA's market line read "New applications blocked: eCTD v4.0 required". It is true only from the dated registry fact's effective date (`pmda-ectd-v4-mandatory`), and the reply's `asOf` was dropped on the way to the screen.
+
+**What changed**
+- The project detail read returns `readinessAsOf`: when this read measured the figure, and null with no figure.
+- The card prints "Measured <date, time>." under the ring (`dossierReadinessAsOf`, `dossierReadiness.ts`), and nothing when there is no figure.
+- PMDA's line names its date: "…eCTD v4.0 required from 2026-04-01", from the fact where the block is decided (`pmdaV4RequiredFrom`, `market-support.ts`). It is the only date-dependent statement in the reply, so the `asOf` needs printing nowhere else.
+- `market-support.test.ts` pinned the old line. It is amended in place with a dated note, and FILING_SPINE §3's table cell is updated.
+- `projects-detail-taxonomy.test.ts` pins the create's body, which comes from the same detail read. It now carries `readinessAsOf: null`, since a new program has no figure. Amended with a dated note.
+
+## 7. Respond's coming-later line sat in its card, Submit's did not (review open item 10)
+
+`StagePanel` (`ProjectHome.tsx`) put the line inside the stage's tool card. It now sits under the card, bare, as Submit's does. `projectHomeLaunchScope.test.tsx` holds both stages to that.
+
+BuilderSources, the other half of item 10, keeps its doors. The design-system auditor named `sc-trans-b` in a `cm-pushbar` the door pattern for every secondary action on the sequence workspaces (`.design/filing-spine/DESIGN_REVIEW.md`, "Where the lenses disagreed").
+
+## 8. F14's door on the Dispatch tab took the tab's door pattern
+
+The design-system auditor, run on F14's files, found its "Validate and compile this sequence" button was `btn ghost`. Every neighbour on the tab is `sc-trans-b`. It is now `sc-trans-b`. No gate sees this; the auditor's report is the evidence, and the gates it ran all pass.
+
 ## Red, then green
 
 | File | Before the fix |
@@ -84,6 +107,8 @@ The header's "Open project" led to Project home's "No project selected", beside 
 | `red/place-gate-client-red.txt` | 3 of 11 fail. The gate was not parsed. The trigger was enabled with a refusal. The canvas passed no `refusal`. |
 | `red/shape-red.txt` | 1 of 15 fails. `fda` was preselected over a reply with no list. |
 | `red/vault-header-red.txt` | 1 of 7 fails. "Open project" was offered with no project open. |
+| `red/as-of-red.txt` | 5 of 43 fail. The detail read had no `readinessAsOf` (three cases), the card stated no time, and PMDA's line named no date. |
+| `red/respond-line-red.txt` | 1 of 4 fails. Respond's coming-later line was inside its card. |
 
 Results are in `green/`.
 
