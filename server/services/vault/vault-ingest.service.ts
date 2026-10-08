@@ -591,9 +591,7 @@ async function admitVaultDocument(
       [
         args.programId,
         documentCode,
-        // A new version is the same document as its head: its title too, not the
-        // title of the upload that adds it (a data-room file carries a derived one).
-        checkIn ? (checkIn.head.document_title ?? args.documentTitle) : args.documentTitle,
+        args.documentTitle,
         // A new version is the same kind of document as its head.
         checkIn?.head.document_type ?? args.documentType,
         version,

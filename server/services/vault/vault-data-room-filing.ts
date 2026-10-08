@@ -164,10 +164,31 @@ function sourceRefusal(input: DataRoomFileInput, id: number, src: SourceUpload |
   return null;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The title of the document a captured file is added to as a new version. The
+ * file's own title is derived from its name, so a check-in keeps the document's
+ * title instead (QA-2026-10-08). Null when that document is not in this program
+ * and organization; the ingest then refuses the check-in, naming no document.
+ */
+async function headTitle(programId: string, organizationId: number, documentId: string): Promise<string | null> {
+  if (!UUID_RE.test(documentId)) return null;
+  const { rows } = await pool.query(
+    `SELECT document_title FROM vault.documents
+      WHERE id = $1::uuid AND program_id = $2::uuid AND organization_id = $3 AND deleted_at IS NULL`,
+    [documentId, programId, organizationId],
+  );
+  return (rows[0]?.document_title as string | null | undefined) ?? null;
+}
+
 /** File one source that is not yet in the Vault. Never throws. */
 async function fileOne(input: DataRoomFileInput, src: SourceUpload, supersedesDocumentId?: string): Promise<DataRoomFileItem> {
   try {
-    const title = (src.title ?? '').replace(/\.[^.]+$/, '').trim() || `Source ${src.id}`;
+    const derivedTitle = (src.title ?? '').replace(/\.[^.]+$/, '').trim() || `Source ${src.id}`;
+    const title = supersedesDocumentId
+      ? (await headTitle(input.programId, input.organizationId, supersedesDocumentId)) ?? derivedTitle
+      : derivedTitle;
     const result = await fileUploadIntoVault({
       organizationId: input.organizationId,
       userId: input.userId,

@@ -33,8 +33,6 @@ export interface CheckInQueryable {
 export interface CheckInHead {
   id: string;
   document_code: string;
-  /** The document's own title: a new version keeps it, not the title of the upload that adds it. */
-  document_title: string | null;
   document_type: string | null;
   version: string;
   folder_id: string | null;
@@ -84,7 +82,7 @@ export async function planCheckIn(
   if (!UUID_RE.test(p.headId)) return notFound;
 
   const { rows } = await q.query(
-    `SELECT d.id::text AS id, d.document_code, d.document_title, d.document_type, d.version, d.folder_id, d.evidence_kind, d.ctd_section,
+    `SELECT d.id::text AS id, d.document_code, d.document_type, d.version, d.folder_id, d.evidence_kind, d.ctd_section,
             d.placement_status, d.placement_confidence, d.placement_rationale, d.placed_by,
             d.classification, d.retention_policy
        FROM vault.documents d

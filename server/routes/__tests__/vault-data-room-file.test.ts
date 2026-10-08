@@ -17,6 +17,8 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
+/** The title of the document a data-room file is checked in to (its head), not the file's derived title. */
+const HEAD_TITLE = 'Stability protocol';
 
 const { query } = vi.hoisted(() => ({ query: vi.fn() }));
 vi.mock('../../db.js', () => ({ pool: { query, connect: vi.fn() } }));
@@ -59,9 +61,10 @@ const post = (role: string, sourceIds: number[]) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
-  query.mockImplementation(async (sql: string) =>
-    /FROM regulatory_programs WHERE id = \$1/.test(String(sql)) ? { rows: [{ id: PROGRAM }] } : { rows: [] },
-  );
+  query.mockImplementation(async (sql: string) => {
+    if (/SELECT document_title FROM vault\.documents/.test(String(sql))) return { rows: [{ document_title: HEAD_TITLE }] };
+    return /FROM regulatory_programs WHERE id = \$1/.test(String(sql)) ? { rows: [{ id: PROGRAM }] } : { rows: [] };
+  });
   readSourceUploads.mockResolvedValue([source(1), source(2)]);
 });
 
@@ -115,6 +118,17 @@ describe('a revised file is offered as the next version of the document it is na
       .send({ sourceIds: [1, 2], newVersionOf: { '1': HEAD } });
     expect(res.status).toBe(200);
     expect(fileUploadIntoVault.mock.calls.map(([a]) => a.supersedesDocumentId)).toEqual([HEAD, undefined]);
+  });
+
+  it('a file checked in as a new version keeps its document’s title; a new document keeps the one derived from its name', async () => {
+    fileUploadIntoVault.mockResolvedValueOnce(filed('doc-1')).mockResolvedValueOnce(filed('doc-2'));
+    await request(app('admin'))
+      .post(`/api/c2c/project-vault/${PROGRAM}/data-room/file`)
+      .send({ sourceIds: [1, 2], newVersionOf: { '1': HEAD } });
+    const [checkIn, newDocument] = fileUploadIntoVault.mock.calls.map(([a]) => a);
+    // source(1) is titled "Report 1.pdf": a check-in takes the head's title, a new document the derived one.
+    expect(checkIn).toMatchObject({ supersedesDocumentId: HEAD, documentTitle: HEAD_TITLE });
+    expect(newDocument).toMatchObject({ supersedesDocumentId: undefined, documentTitle: 'Report 2' });
   });
 
   it('a refused conflict says which current version it can be added to', async () => {

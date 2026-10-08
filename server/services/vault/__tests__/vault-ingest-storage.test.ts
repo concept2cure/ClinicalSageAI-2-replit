@@ -388,7 +388,7 @@ describe('a different file at an occupied code is refused with the document it c
   });
 });
 
-describe('a check-in keeps the document it adds to: its code, title and filing (QA-2026-10-08)', () => {
+describe('a check-in keeps the document it adds to: its code and filing, and records the title it is given (QA-2026-10-08)', () => {
   const HEAD = '66666666-6666-4666-8666-666666666666';
   const headRow = {
     id: HEAD, document_code: 'Protocol-Stability.pdf', document_title: 'Stability protocol STB-0042',
@@ -399,7 +399,7 @@ describe('a check-in keeps the document it adds to: its code, title and filing (
   // planCheckIn reads the head on the pool, then again locked on the transaction client.
   const isHead = (sql: string) => /d\.id::text AS id, d\.document_code/.test(sql);
 
-  it('the new version takes the head\'s code and title, not the title the data room derived from the file name', async () => {
+  it('the new version takes the head\'s code, and records the title it is given, so a retitled version shows the change', async () => {
     query.mockImplementation(async (sql: string) => {
       if (isHead(String(sql))) return { rows: [headRow], rowCount: 1 };
       if (/FROM vault\.documents/.test(String(sql))) return { rows: [], rowCount: 0 };
@@ -416,12 +416,12 @@ describe('a check-in keeps the document it adds to: its code, title and filing (
       release: vi.fn(),
     });
 
-    await ingestVaultDocument(args({ supersedesDocumentId: HEAD, documentCode: undefined, version: undefined, documentTitle: 'Protocol-Stability' }));
+    await ingestVaultDocument(args({ supersedesDocumentId: HEAD, documentCode: undefined, version: undefined, documentTitle: 'Stability protocol, revised' }));
 
     const insert = calls.find(c => /INSERT INTO vault\.documents/.test(c.sql));
     expect(insert, 'no INSERT reached the database').toBeDefined();
-    expect(insert!.params[1]).toBe('Protocol-Stability.pdf'); // document_code
-    expect(insert!.params[2]).toBe('Stability protocol STB-0042'); // document_title
+    expect(insert!.params[1]).toBe('Protocol-Stability.pdf'); // document_code, the head's
+    expect(insert!.params[2]).toBe('Stability protocol, revised'); // document_title, as given
     expect(insert!.params[4]).toBe('2.0'); // version, assigned by the server
   });
 });

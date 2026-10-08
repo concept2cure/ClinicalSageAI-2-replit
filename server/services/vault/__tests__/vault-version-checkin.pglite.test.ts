@@ -30,7 +30,7 @@ beforeAll(async () => {
     CREATE SCHEMA vault;
     CREATE TABLE vault.documents (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      program_id UUID NOT NULL, organization_id INTEGER, document_code TEXT, document_title TEXT, document_type TEXT, version TEXT,
+      program_id UUID NOT NULL, organization_id INTEGER, document_code TEXT, document_type TEXT, version TEXT,
       content_hash CHARACTER(64) NOT NULL, supersedes_id UUID, deleted_at TIMESTAMPTZ,
       folder_id TEXT, evidence_kind TEXT, ctd_section TEXT, placement_status TEXT NOT NULL DEFAULT 'unfiled',
       placement_confidence TEXT, placement_rationale TEXT, placed_by INTEGER,
