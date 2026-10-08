@@ -36,6 +36,14 @@ export async function listThreads(req: Request, res: Response) {
     const programId = req.query.program_id as string | undefined;
     const limit = Math.min(parseInt((req.query.limit as string) || '10', 10), 50);
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    /* A conversation belongs to the person who started it: opening a
+       colleague's answers THREAD_FORBIDDEN (resolveAccessibleThread). Both
+       chat_threads lists were scoped to the organisation only, so each named a
+       colleague's conversation by its first message, a line the reader could
+       never open (docs/design/ONE_ANA_ONE_CANVAS.md, slice 3). They list the
+       caller's own. A thread with no recorded owner is not listed: it can still
+       be opened by its id, as before. No identified caller, no list. */
+    const me = (req as any).user?.id ?? (req as any).userId ?? null;
 
     let query: string;
     let params: unknown[];
@@ -51,16 +59,17 @@ export async function listThreads(req: Request, res: Response) {
       if (!program) {
         return res.status(400).json({ error: 'program_id must be a UUID', code: 'THREAD_PROGRAM_INVALID' });
       }
+      if (me === null) return res.json({ threads: [] });
       const result = await pool.query(
         `SELECT t.id, t.created_at, t.updated_at, t.program_id,
           (SELECT content FROM chat_messages
             WHERE thread_id = t.id AND role = 'user'
             ORDER BY created_at ASC LIMIT 1) AS title
         FROM chat_threads t
-        WHERE t.organization_id = $1 AND t.program_id = $2
+        WHERE t.organization_id = $1 AND t.program_id = $2 AND t.user_id = $4
         ORDER BY COALESCE(t.updated_at, t.created_at) DESC
         LIMIT $3`,
-        [orgId, program, limit]
+        [orgId, program, limit, me]
       );
       return res.json({ threads: result.rows });
     }
@@ -85,7 +94,7 @@ export async function listThreads(req: Request, res: Response) {
     } else {
       // Org scope is required for the global recents list — without it
       // we'd leak threads across tenants.
-      if (!orgId) {
+      if (!orgId || me === null) {
         return res.json({ threads: [] });
       }
       // Derive title from the first user message so the recents list shows
@@ -96,11 +105,11 @@ export async function listThreads(req: Request, res: Response) {
             WHERE thread_id = t.id AND role = 'user'
             ORDER BY created_at ASC LIMIT 1) AS title
         FROM chat_threads t
-        WHERE t.organization_id = $1
+        WHERE t.organization_id = $1 AND t.user_id = $3
         ORDER BY t.updated_at DESC
         LIMIT $2
       `;
-      params = [orgId, limit];
+      params = [orgId, limit, me];
     }
 
     const result = await pool.query(query, params);
