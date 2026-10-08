@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T03:48:46.580Z",
+  "generatedAt": "2026-10-08T05:22:46.141Z",
   "git": {
-    "sha": "c77a594b087f8b2f5205cdf4ff6a0d47ec54f1c7",
+    "sha": "519c6acd5854b185e5dd5cbc4d3c077caed52b53",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2095,7 +2095,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 172620
+        "bytes": 173480
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2317,7 +2317,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3401
+        "lines": 3415
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2480,6 +2480,10 @@
         "lines": 2050
       },
       {
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 2045
+      },
+      {
         "file": "server/routes/c2c/projects.ts",
         "lines": 2033
       },
@@ -2506,10 +2510,6 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
-      },
-      {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1980
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
