@@ -17,6 +17,12 @@
  * word) or one of this module's fixed words for what the server sent; no row
  * counts a note, and the counts in the header are timelineHeader's.
  *
+ * A task row (S5) carries the steps the server attributed to the task (each
+ * step's `task`, fixed at dispatch) and, once AnA marks it completed, what
+ * those steps came to: "No steps recorded for this task", or "Marked complete
+ * by AnA · none of its 2 steps succeeded". The server never completes a task
+ * (turn-plan.ts), so the fact is about her claim, counted from the events.
+ *
  * Pure: no React, no I/O.
  *
  * @module client/src/concept2cure/v2/turnSummaryRows
@@ -28,6 +34,7 @@ import { PLAN_TOOL } from '../components/ana/anaProgress';
 import { STEP_SOURCES, formatStepDuration, unknownStepLabel, type StepFact, type StepSource } from '@shared/ana/step-verbs';
 import {
   orderTimeline,
+  stepDidNotComplete,
   stepStates,
   type StepState,
   type TaskEvent,
@@ -115,10 +122,23 @@ export interface StepRow {
 export type SummaryRow =
   | { kind: 'note'; key: string; text: string }
   | StepRow
-  | { kind: 'task'; key: string; verb: string; title: string; list: AnaPlanStep[] }
+  | TaskRow
   | { kind: 'control'; key: string; text: string; message?: string }
   | { kind: 'end'; key: string; text: string; reason: string | null; continuable: boolean }
   | { kind: 'working'; key: string };
+
+/** A task's row: the change, the plan as it stood then, the task's steps, and (completed) what they came to. */
+export interface TaskRow {
+  kind: 'task';
+  key: string;
+  verb: string;
+  title: string;
+  list: AnaPlanStep[];
+  /** The steps the server attributed to this task, across the turn. */
+  steps: StepRow[];
+  /** Completed only: "No steps recorded for this task", or that none of its steps succeeded. */
+  fact?: string;
+}
 
 /** Said of a step a sealed timeline announced and never finished (§2.6). */
 export const NEVER_FINISHED = 'Did not finish. No result was recorded.';
@@ -180,6 +200,56 @@ function planAt(events: readonly TimelineEvent[], seq: number): AnaPlanStep[] {
   return list;
 }
 
+/** Said of a task AnA marked completed that no step served (§2.7). */
+export const NO_TASK_STEPS = 'No steps recorded for this task';
+
+/**
+ * What the steps that served a task before AnA marked it completed came to
+ * (§2.7): nothing to say when one succeeded; that none did, when n ≥ 1; that
+ * there were none, when n = 0.
+ */
+export function completedTaskFact(served: readonly StepState[]): string | undefined {
+  const n = served.length;
+  if (n === 0) return NO_TASK_STEPS;
+  if (!served.every(stepDidNotComplete)) return undefined;
+  return n === 1 ? 'Marked complete by AnA · its 1 step did not succeed' : `Marked complete by AnA · none of its ${n} steps succeeded`;
+}
+
+/** Each task's steps, by task id, in the order they first appeared. */
+function stepsByTask(states: Iterable<StepState>): Map<string, StepState[]> {
+  const out = new Map<string, StepState[]>();
+  for (const s of states) {
+    const task = s.first.task;
+    if (!task) continue;
+    const list = out.get(task) ?? [];
+    list.push(s);
+    out.set(task, list);
+  }
+  return out;
+}
+
+/** What a turn's rows are built from, besides the item itself. */
+interface RowContext {
+  events: readonly TimelineEvent[];
+  states: Map<string, StepState>;
+  byTask: Map<string, StepState[]>;
+  opts: SummaryRowOptions;
+}
+
+function taskRow(e: TaskEvent, ctx: RowContext): TaskRow {
+  const served = ctx.byTask.get(e.task) ?? [];
+  const fact = e.change === 'completed' ? completedTaskFact(served.filter((s) => s.first.seq < e.seq)) : undefined;
+  return {
+    kind: 'task',
+    key: `t-${e.seq}`,
+    verb: TASK_VERBS[e.change],
+    title: e.title,
+    list: planAt(ctx.events, e.seq),
+    steps: served.map((s) => stepRow(s, ctx.opts.live)),
+    ...(fact ? { fact } : {}),
+  };
+}
+
 const CONTROL_WORDS: Record<string, string> = {
   pause: 'You paused AnA',
   resume: 'You resumed AnA',
@@ -218,20 +288,20 @@ function endRow(outcome: string, reason: string | null, key: string): SummaryRow
   };
 }
 
-function itemRow(item: ReturnType<typeof orderTimeline>[number], events: readonly TimelineEvent[], states: Map<string, StepState>, opts: SummaryRowOptions): SummaryRow | null {
+function itemRow(item: ReturnType<typeof orderTimeline>[number], ctx: RowContext): SummaryRow | null {
   if (item.kind === 'control') {
     const c: TimelineControl = item.control;
     return { kind: 'control', key: `c-${c.at}-${c.action}`, text: CONTROL_WORDS[c.action] ?? 'You took a control', ...(c.message ? { message: c.message } : {}) };
   }
   const e = item.event;
   if (e.kind === 'note') return { kind: 'note', key: `n-${e.seq}`, text: e.text.trim() };
-  if (e.kind === 'task') return { kind: 'task', key: `t-${e.seq}`, verb: TASK_VERBS[e.change], title: e.title, list: planAt(events, e.seq) };
+  if (e.kind === 'task') return taskRow(e, ctx);
   if (e.kind === 'end') return endRow(e.outcome, e.stoppedReason, `e-${e.seq}`);
-  const s = states.get(e.step);
+  const s = ctx.states.get(e.step);
   // One row per step, where it first appeared. Her plan updates are the task
   // rows; a plan update that did not go through stays a row, never folded away.
   if (!s || s.first.seq !== e.seq) return null;
-  const row = stepRow(s, opts.live);
+  const row = stepRow(s, ctx.opts.live);
   return row.source === 'plan' && row.status === 'success' ? null : row;
 }
 
@@ -242,9 +312,10 @@ export function summaryRows(
   opts: SummaryRowOptions,
 ): SummaryRow[] {
   const states = new Map(stepStates(events).map((s) => [s.step, s]));
+  const ctx: RowContext = { events, states, byTask: stepsByTask(states.values()), opts };
   const rows: SummaryRow[] = [];
   for (const item of orderTimeline(events, controls)) {
-    const row = itemRow(item, events, states, opts);
+    const row = itemRow(item, ctx);
     if (row) rows.push(row);
   }
   const ended = rows.some((r) => r.kind === 'end');
@@ -280,9 +351,11 @@ function traceItemRow(it: Item): SummaryRow {
       verb: it.persisted ? 'Plan ·' : 'Planned',
       title: `${n} ${n === 1 ? 'task' : 'tasks'}`,
       list: it.steps.map((title) => ({ title, status: 'pending' })),
+      steps: [],
     };
   }
-  return { kind: 'task', key: `ta-${it.seq}`, verb: it.kind === 'added' ? 'Added task' : TASK_VERBS[it.change], title: it.title, list: [] };
+  // A trace attributes no step to a task, so it claims nothing about them.
+  return { kind: 'task', key: `ta-${it.seq}`, verb: it.kind === 'added' ? 'Added task' : TASK_VERBS[it.change], title: it.title, list: [], steps: [] };
 }
 
 /** A turn without events: its trace, labelled, with no durations claimed (§2.7). */

@@ -37,7 +37,7 @@ import { statusGlyph, StepFactList } from './AnaWorkSections';
 import { sourceGlyph } from './anaSourceGlyphs';
 import { useDialog } from './useDialog';
 import { useNow } from './useNow';
-import { footerState, summaryRows, traceRows, type StepRow, type SummaryRow } from './turnSummaryRows';
+import { footerState, summaryRows, traceRows, type StepRow, type SummaryRow, type TaskRow } from './turnSummaryRows';
 
 /* ── The record's Summary, read once per record ───────────────────────────── */
 
@@ -115,6 +115,36 @@ function StepSummaryRow({ row }: { row: StepRow }) {
   );
 }
 
+/** A task opened: the plan as it stood at that moment, then the steps that served the task (S5). */
+function TaskDetail({ row }: { row: TaskRow }) {
+  if (row.list.length === 0 && row.steps.length === 0) return null;
+  return (
+    <>
+      {row.list.length > 0 && (
+        <ol className="ana-activity-plan">
+          {row.list.map((t) => (
+            <li key={t.title}>{t.title}{t.status === 'completed' ? ' · completed' : t.status === 'in_progress' ? ' · in progress' : ''}</li>
+          ))}
+        </ol>
+      )}
+      {row.steps.length > 0 && (
+        <>
+          <p className="ana-summary-task-steps-title">Steps for this task</p>
+          <ol className="ana-summary-task-steps">
+            {row.steps.map((st) => (
+              <li key={st.key} className={`is-${st.status}`}>
+                <span className="ana-summary-task-step">{st.label}</span>
+                <span className="ana-summary-task-step-sub">{st.sub}</span>
+                {st.message ? <span className="ana-summary-task-step-msg">{st.message}</span> : null}
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+    </>
+  );
+}
+
 function SummaryRowView({ row, checked, onContinue, now, startedAt }: { row: SummaryRow; checked: boolean; onContinue?: () => void; now: number; startedAt?: number }) {
   switch (row.kind) {
     case 'note':
@@ -137,7 +167,8 @@ function SummaryRowView({ row, checked, onContinue, now, startedAt }: { row: Sum
           glyph={I.list}
           verb={row.verb}
           object={row.title}
-          detail={row.list.length > 0 ? <ol className="ana-activity-plan">{row.list.map((t) => <li key={t.title}>{t.title}{t.status === 'completed' ? ' · completed' : t.status === 'in_progress' ? ' · in progress' : ''}</li>)}</ol> : undefined}
+          note={row.fact}
+          detail={row.list.length > 0 || row.steps.length > 0 ? <TaskDetail row={row} /> : undefined}
         />
       );
     case 'control':

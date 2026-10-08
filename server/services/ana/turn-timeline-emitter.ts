@@ -16,7 +16,10 @@
  *              "(Ran: …)" staging and never reasoning (§2.4).
  *   step       announced → awaiting_approval → finished, under a per-turn
  *              handle ("s1"), never the tool-use id. `startedAt` is handler
- *              dispatch, so `ms` excludes the wait for a person.
+ *              dispatch, so `ms` excludes the wait for a person. `task` (S5)
+ *              is the one task in progress when the step first appears —
+ *              before its round dispatches, so a plan change in the same
+ *              round, whose result lands after dispatch, does not move it.
  *   task       each change between successive validated plans, with the
  *              server's task id (shared/ana/plan-diff.ts).
  *   end        the turn's outcome and why it stopped.
@@ -34,6 +37,7 @@ import type { GatewayServerToolUse } from '../ai-gateway/types.js';
 import { presentStep, stepMessage } from './step-presentation.js';
 import { serverToolStepFields } from './server-tool-steps.js';
 import type { TurnRecorder } from './turn-record.js';
+import { UPDATE_PLAN_TOOL_NAME } from './turn-plan.js';
 
 type WithoutStamp<T> = T extends unknown ? Omit<T, 'seq' | 'at'> : never;
 /** An event before the emitter numbers and times it. */
@@ -78,6 +82,8 @@ export class TurnTimeline {
   private seq = 0;
   private lastRound = 0;
   private readonly handles = new Map<string, string>();
+  /** Each step's task, fixed when the step first appears (S5). */
+  private readonly taskOf = new Map<string, string | null>();
   private readonly shown = new Map<string, Shown>();
   private pendingNote = '';
   private plan: PlanStep[] = [];
@@ -127,8 +133,21 @@ export class TurnTimeline {
       this.pendingNote = '';
       this.emitTimeline({ kind: 'note', round, text });
     }
-    // `task` is S5's attribution; until then no step claims one.
-    return this.emitTimeline({ kind: 'step', round, step: this.handleFor(call.id), task: null, ...fields }) as StepEvent;
+    const step = this.handleFor(call.id);
+    if (!this.taskOf.has(step)) this.taskOf.set(step, this.taskInProgress(call.name));
+    return this.emitTimeline({ kind: 'step', round, step, task: this.taskOf.get(step) ?? null, ...fields }) as StepEvent;
+  }
+
+  /**
+   * The task a step dispatched now serves (S5, design §2.1): the one task in
+   * progress. With none, or with several, the step cannot be said to serve
+   * one, so it serves none. A plan update is bookkeeping about the tasks, not
+   * work on one, so it never does.
+   */
+  private taskInProgress(tool: string): string | null {
+    if (tool === UPDATE_PLAN_TOOL_NAME) return null;
+    const open = this.plan.filter((s) => s.status === 'in_progress');
+    return open.length === 1 ? this.tasks.idFor(open[0].title) : null;
   }
 
   /** A step the round is about to run, as its `tool_use` frame shows it. */
@@ -160,6 +179,7 @@ export class TurnTimeline {
     });
     return {
       handle: e.step,
+      taskId: e.task,
       startedAt: iso(f.startedAt),
       endedAt: e.at,
       heldBack: f.heldBack,
@@ -183,7 +203,7 @@ export class TurnTimeline {
       usedModel: false,
       facts: p.facts,
     });
-    return { handle: e.step, endedAt: e.at, heldBack: false, ...(message ? { message } : {}), usedModel: false };
+    return { handle: e.step, taskId: e.task, endedAt: e.at, heldBack: false, ...(message ? { message } : {}), usedModel: false };
   }
 
   /** A step a model provider ran inside its own call (web search, web fetch): over when it is reported. */

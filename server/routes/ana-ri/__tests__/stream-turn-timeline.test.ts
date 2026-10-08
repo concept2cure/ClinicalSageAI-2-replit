@@ -119,12 +119,12 @@ describe('1. the same data live and sealed', () => {
     // A note is sealed as a reference to its text, never the text itself.
     const sealedNote = record.body.timeline.find((e: { kind: string }) => e.kind === 'note');
     expect(sealedNote.text).toEqual({ sha256: expect.stringMatching(/^[0-9a-f]{64}$/), chars: 'I will look in the Vault first.'.length });
-    // Tasks carry the server's ids, with Added, Started and Completed.
+    // Tasks carry the server's ids, with Added, Started and Completed; a plan's new tasks are added first (S5).
     const tasks = live.filter(e => e.kind === 'task').map(e => (e.kind === 'task' ? [e.task, e.change, e.title] : []));
     expect(tasks).toEqual([
       ['t1', 'added', 'Find the reports'],
-      ['t1', 'started', 'Find the reports'],
       ['t2', 'added', 'Read them'],
+      ['t1', 'started', 'Find the reports'],
       ['t1', 'completed', 'Find the reports'],
       ['t2', 'completed', 'Read them'],
     ]);

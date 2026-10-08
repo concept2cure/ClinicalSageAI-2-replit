@@ -1,0 +1,25 @@
+# M4-no-steps-reads-as-failure: client/src/concept2cure/v2/turnSummaryRows.ts
+--- /tmp/s5-mut.bak	2026-10-08 15:35:40.400761251 +0000
++++ client/src/concept2cure/v2/turnSummaryRows.ts	2026-10-08 15:35:40.403339135 +0000
+@@ -210,7 +210,7 @@
+  */
+ export function completedTaskFact(served: readonly StepState[]): string | undefined {
+   const n = served.length;
+-  if (n === 0) return NO_TASK_STEPS;
++  
+   if (!served.every(stepDidNotComplete)) return undefined;
+   return n === 1 ? 'Marked complete by AnA · its 1 step did not succeed' : `Marked complete by AnA · none of its ${n} steps succeeded`;
+ }
+
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a task completed while both of its steps failed carries "none of its 2 steps succeeded" 2ms
+ × client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with no steps carries "No steps recorded for this task", not the failure fact 9ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with one step that failed and one that succeeded carries neither 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > Added and Started rows carry no fact 1ms
+ × client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > the fact is visible on the row, without opening it 77ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > lists the plan as it stood at that moment, and the steps attributed to the task 232ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > each task row lists only the steps attributed to that task 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Marked complete by AnA · none of its …' to be 'No steps recorded for this task' // Object.is equality
+AssertionError: expected 'Completed Read themMarked complete by…' to contain 'No steps recorded for this task'
+      Tests  2 failed | 5 passed (7)
+restored: md5 OK

@@ -94,7 +94,8 @@ describe('1. (client half) the same rows live and from the record', () => {
       'Searched the Vault 2.4s Vault · shelf life',
       'Added task Find the reports',
       'Started Find the reports',
-      'Completed Find the reports',
+      // The search was dispatched before the plan existed, so no step served the task (S5).
+      'Completed Find the reports No steps recorded for this task',
       'Answered.',
     ]);
     // The header counts steps and sources from the server's events; the note is not counted.

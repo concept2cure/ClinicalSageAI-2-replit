@@ -98,11 +98,18 @@ export class TaskIds {
   }
 }
 
-/** The changes from `prev` to `next` with their task ids, issuing and releasing ids as the plan changes. */
+/**
+ * The changes from `prev` to `next` with their task ids, issuing and releasing
+ * ids as the plan changes. A plan's new tasks come first, then its starts,
+ * completions and removals, each in the plan's order (S5): the Summary reads
+ * "Added task" for every new task before "Started" for any of them, as a
+ * person reads a list being set out before the work on it begins.
+ */
 export function taskChanges(prev: PlanStep[] | undefined, next: PlanStep[], ids: TaskIds): TaskChange[] {
-  return diffPlan(prev, next, 0).map((c) => ({
+  const changes = diffPlan(prev, next, 0).map((c) => ({
     task: c.kind === 'removed' ? ids.release(c.title) : ids.idFor(c.title),
     change: c.kind,
     title: c.title,
   }));
+  return [...changes.filter((c) => c.change === 'added'), ...changes.filter((c) => c.change !== 'added')];
 }

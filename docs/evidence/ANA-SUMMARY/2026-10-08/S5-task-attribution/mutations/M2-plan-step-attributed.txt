@@ -1,0 +1,20 @@
+# M2-plan-step-attributed: server/services/ana/turn-timeline-emitter.ts
+--- /tmp/s5-mut.bak	2026-10-08 15:35:18.760518976 +0000
++++ server/services/ana/turn-timeline-emitter.ts	2026-10-08 15:35:18.763802452 +0000
+@@ -145,7 +145,7 @@
+    * work on one, so it never does.
+    */
+   private taskInProgress(tool: string): string | null {
+-    if (tool === UPDATE_PLAN_TOOL_NAME) return null;
++    
+     const open = this.plan.filter((s) => s.status === 'in_progress');
+     return open.length === 1 ? this.tasks.idFor(open[0].title) : null;
+   }
+
+ × server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > the single in-progress task's id; null with two in progress; null for update_plan, always 63ms
+ ✓ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > before any plan, a step serves no task 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 3. task ids across five update_plan calls > hold for each task while it is in the plan; a title removed and added again is a new task 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: tu_p2: expected Set{ 't1' } to deeply equal Set{ null }
+      Tests  1 failed | 2 passed (3)
+restored: md5 OK

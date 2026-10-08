@@ -51,7 +51,10 @@ export type StepEvent = EventBase & {
   phase: StepPhase;
   /** Opaque per-turn handle ("s7"); never the tool-use id. */
   step: string;
-  /** The task the step served (S5); null until then. */
+  /**
+   * The task the step served (S5): the id of the one task in progress when it
+   * was dispatched. Null with none or several in progress, and for update_plan.
+   */
   task: string | null;
   source: SourceKey;
   /** The doing form while announced or awaiting; the done form once it succeeded. */
@@ -304,12 +307,14 @@ export interface StepRecordLink {
   message?: string;
   /** The step's generation capture saw a model call; null when unknown. */
   usedModel?: boolean | null;
+  /** The task the step served (S5), as its timeline events say; null for none. */
+  taskId?: string | null;
 }
 
 /** What the timeline emitter reports when a step ends (the tool-use id is the stream's own). */
 export type StepRecordTimes = Omit<StepRecordLink, 'toolUseId'>;
 
-const LINK_FIELDS = ['toolUseId', 'handle', 'startedAt', 'endedAt', 'heldBack', 'message', 'usedModel'] as const;
+const LINK_FIELDS = ['toolUseId', 'handle', 'startedAt', 'endedAt', 'heldBack', 'message', 'usedModel', 'taskId'] as const;
 
 /** Only the link fields a step reported: nothing is written as unknown-by-default. */
 export function stepRecordLink(s: StepRecordLink): StepRecordLink {
