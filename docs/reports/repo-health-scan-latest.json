@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T19:32:29.516Z",
+  "generatedAt": "2026-10-08T20:16:34.700Z",
   "git": {
-    "sha": "457e993d505dfbf0fc034cb0f54495c981525eda",
+    "sha": "5d45de89a17653c43c894ea57c41277c04c257fe",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2064,7 +2064,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 371843
+        "bytes": 371963
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2072,7 +2072,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 276184
+        "bytes": 277641
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2251,10 +2251,6 @@
         "bytes": 107675
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 105331
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "bytes": 101626
       },
@@ -2269,6 +2265,10 @@
       {
         "file": "server/routes/knowledge-base.ts",
         "bytes": 101005
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "bytes": 100838
       }
     ],
     "largeFilesByLines": [
@@ -2282,7 +2282,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8229
+        "lines": 8231
       },
       {
         "file": "server/statistics-service.ts",
@@ -2290,7 +2290,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5884
+        "lines": 5905
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2473,10 +2473,6 @@
         "lines": 2155
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2128
-      },
-      {
         "file": "server/services/precedent-engine.ts",
         "lines": 2097
       },
@@ -2509,6 +2505,10 @@
         "lines": 2050
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2044
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "lines": 2042
       },
@@ -2537,16 +2537,16 @@
         "lines": 2002
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "lines": 1974
+      },
+      {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1973
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "lines": 1971
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 1969
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
@@ -2609,6 +2609,10 @@
         "lines": 1849
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1846
+      },
+      {
         "file": "server/routes/c2c/ai-editing.ts",
         "lines": 1840
       },
@@ -2619,10 +2623,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1833
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 1831
       },
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
