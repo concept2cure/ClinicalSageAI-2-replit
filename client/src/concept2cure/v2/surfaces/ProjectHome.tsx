@@ -12,6 +12,8 @@ import { updateShellProject } from '../shellProject';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
+import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
+import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import '../styles/project-home-v2.css';
@@ -211,6 +213,35 @@ function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string
 function useSurfaceAvailable(): (id: string) => boolean {
   const { verdictFor } = useNavEntitlements();
   return (id: string) => !isLaunchScopeLocked(verdictFor(id));
+}
+
+/* ════ Evidence: the project's files ════════════════════════════════════════
+   ONE_ANA_ONE_CANVAS.md slice 23. The Evidence stage said "The document vault
+   opens in its own workspace" and showed nothing, so a person on their
+   project had to leave it to see its files. It now shows them, through the
+   one files panel the editor already uses beside a document: the same read of
+   GET /api/c2c/project-vault/:id, the same search, the same audited download
+   and PDF viewer, and the same honest states (a failed read is an error with a
+   retry, not an empty vault). Filing, uploads and version history stay in the
+   Vault, which the header opens. */
+function ProjectEvidence({ pid, name, onNav, available }: {
+  pid: string; name: string | null; onNav: (id: string) => void; available: (id: string) => boolean;
+}) {
+  const [toast, fireToast] = useToast();
+  return (
+    <section className="pj-sec pj-evidence" aria-labelledby="pj-evidence-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-evidence-h">Project files</h2>
+        {available('vault') && (
+          <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('vault')}>
+            Open in Vault {I.right}
+          </button>
+        )}
+      </div>
+      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} />
+      <C2CToast msg={toast} />
+    </section>
+  );
 }
 
 function StagePanel({ stage, onNav, available }: { stage: string; onNav: (id: string) => void; available: (id: string) => boolean }) {
@@ -1554,19 +1585,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
         />
       ) : (
         <>
-          {/* Evidence — the vault tree read-model (/api/c2c/project-vault/:id) is
-              shaped for the dedicated Vault surface, not this panel's contract.
-              Honest empty rather than a fabricated file tree. */}
-          {stage === 'evidence' && (
-            <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Evidence &amp; vault</h2></div>
-              <EmptyState
-                icon={I.folder}
-                title="The document vault opens in its own workspace"
-                hint="This project's governed documents, folder tree and version history live in the Vault surface, which renders the real document/section store."
-              />
-            </section>
-          )}
+          {stage === 'evidence' && pid && <ProjectEvidence pid={pid} name={title} onNav={onNav} available={available} />}
 
           {/* Submit — submissions are owned by the Submission Center surface. */}
           {stage === 'submit' && (

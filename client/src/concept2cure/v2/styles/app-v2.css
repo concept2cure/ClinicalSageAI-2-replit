@@ -1071,6 +1071,10 @@
 .c2c-v2 .pj-sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px;}
 .c2c-v2 .pj-sec-h h2{font-size:13.5px;font-weight:600;color:var(--text-100);margin:0;}
 .c2c-v2 .pj-sec-h .sec-sub{font-size:11px;color:var(--text-400);}
+/* The project's files on the Evidence stage (slice 23): the editor's files
+   panel, bounded so a large vault scrolls inside the section, not the page. */
+.c2c-v2 .pj-evidence .pf-search{padding:0 0 10px;border-bottom:none;}
+.c2c-v2 .pj-evidence .pf-list{max-height:480px;border:1px solid var(--border);border-radius:var(--radius-md);}
 .c2c-v2 .pj-convo{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:10px 6px;border-bottom:1px solid var(--border);}
 .c2c-v2 .pj-convo:last-child{border-bottom:none;}
 .c2c-v2 .pj-convo:hover{background:var(--bg-050);border-radius:var(--radius-lg);}
