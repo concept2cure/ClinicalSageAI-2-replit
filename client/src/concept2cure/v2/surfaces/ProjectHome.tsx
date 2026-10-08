@@ -920,37 +920,44 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
    show it. The one remaining message is the standing intro — framing, not a
    reply, and it says nothing about what has been done. */
 
-function ConversationComposer({ productName, onNav }: { productName: string; onNav: (id: string) => void }) {
+function StartConversation({ productName, onNav }: { productName: string; onNav: (id: string) => void }) {
   const [draft, setDraft] = useState('');
 
-  const intro =
-    "I'm your co-author on " + productName + ", bound to this project's governed dossier. " +
-    "Ask me to draft, reconcile, or review a section and I'll open the full thread with " +
-    'every step grounded to its source.';
-
-  const openThread = () => {
-    window.C2C_CONVO = { id: 'new', seed: draft.trim() || '' };
+  /* docs/design/ONE_ANA_ONE_CANVAS.md §2.3: a project's page starts a
+     conversation in the project, as Claude's project page does. It is not a
+     conversation of its own. It drew one: a header "AnA · co-author", an
+     "Open full thread" link and a message in AnA's voice that no model wrote,
+     a second place on the page that looked like talking to AnA. Now it says
+     what it does, and a question typed here starts a new conversation in
+     this project, where AnA answers it. */
+  const start = () => {
+    const text = draft.trim();
+    if (!text) return;
+    window.C2C_CONVO = { id: 'new', seed: text };
     onNav('conversation-thread');
   };
 
   return (
-    <div className="pj-convo">
-      <div className="pj-convo-h">
-        <span className="pj-convo-mark">{I.sparkles}</span>
-        <div className="pj-convo-id"><span className="pj-convo-t">AnA · co-author</span><span className="pj-convo-ctx">{productName} · governed dossier</span></div>
-        <button className="pj-convo-open" onClick={openThread}>Open full thread {I.arrowRight}</button>
-      </div>
-      <div className="pj-convo-scroll">
-        <div className="pj-msg ana"><span className="pj-msg-av">{I.sparkles}</span><div className="pj-msg-b">{intro}</div></div>
+    <section className="pj-convo" aria-labelledby="pj-start-h">
+      <div className="pj-start-h">
+        <h2 id="pj-start-h">Start a conversation in {productName}</h2>
+        <span className="sec-sub">AnA works with this project&apos;s sources, documents and submissions.</span>
       </div>
       <div className="pj-composer">
-        <textarea rows={2} aria-label="Message AnA about this project" placeholder={'Message AnA about ' + productName + '…'} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); openThread(); } }} />
+        <textarea
+          rows={2}
+          aria-labelledby="pj-start-h"
+          placeholder={'Ask AnA to draft, reconcile or review…'}
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); start(); } }}
+        />
         <div className="pj-composer-row">
           <span className="sp" />
-          <button className="pj-comp-send" aria-label="Send message to AnA" disabled={!draft.trim()} onClick={openThread}>{I.arrowUp}</button>
+          <button className="pj-comp-send" aria-label="Start the conversation" disabled={!draft.trim()} onClick={start}>{I.arrowUp}</button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -1616,7 +1623,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
           {stage === 'lifecycle' && <StagePanel stage="lifecycle" onNav={onNav} available={available} />}
 
           {stage === 'author' && (<>
-            <ConversationComposer productName={productName} onNav={onNav} />
+            <StartConversation productName={productName} onNav={onNav} />
 
             <AuthorWorkspace
               seg={seg}

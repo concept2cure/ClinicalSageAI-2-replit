@@ -1,0 +1,8 @@
+ × client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > names what it does and speaks in no voice but the page's 226ms
+   → a message bubble nobody sent: expected <div class="pj-msg ana">…(2)</div> to be null
+ × client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > a question typed here starts a new conversation in the project, carrying the words 5154ms
+   → Unable to find role="textbox" and name `/Start a conversation in/`
+ × client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > Enter with an empty box goes nowhere 5099ms
+   → Unable to find role="textbox" and name `/Start a conversation in/`
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed (3)

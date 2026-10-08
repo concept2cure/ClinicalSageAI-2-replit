@@ -1,0 +1,13 @@
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > names what it does and speaks in no voice but the page's 430ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > a question typed here starts a new conversation in the project, carrying the words 793ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > Enter with an empty box goes nowhere 111ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > lists the program's threads from the program-scoped read and resumes one on click 325ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > shows an honest empty when the program has no threads, and a failure as a failure 373ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > the composer leads the main column and the readiness ring sits in the aside 131ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond stage offers no locked tool, and says when it has none 163ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Lifecycle stage offers no locked tool, and says when it has none 72ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Plan stage offers no locked tool, and says when it has none 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's documents, not the locked dossier map 63ms
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
