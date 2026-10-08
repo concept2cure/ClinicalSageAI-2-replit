@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T07:17:48.733Z",
+  "generatedAt": "2026-10-08T08:04:12.226Z",
   "git": {
-    "sha": "b0b1694aa00ee991b6792edab530f9fa59f1df93",
+    "sha": "ebc3076e4315a857736ba445dff6205acce58d43",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2052,7 +2052,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1128818
+        "bytes": 1128947
       },
       {
         "file": "shared/schema.ts",
@@ -2096,7 +2096,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 181687
+        "bytes": 181959
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2258,7 +2258,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21749
+        "lines": 21752
       },
       {
         "file": "shared/schema.ts",
@@ -2310,7 +2310,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3592
+        "lines": 3596
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
