@@ -447,14 +447,16 @@ export const BRIDGE_STAMP_PREFIX = 'Biostatistics bridge —';
 export function computationToPlanPatch(
   input: StatisticalInput,
   result: ComputationResult,
-  provenance?: { engine: string; version: string; inputsSha256?: string },
+  /** runId: the stored run (stats_computation_runs, S5b) this N was computed by. */
+  provenance?: { engine: string; version: string; inputsSha256?: string; runId?: number },
 ): Partial<StatisticalPlan> {
   const plannedSampleSize = result.adjustedTotal ?? result.sampleSize.total;
   // The stamp always opens with the same words so `applyPlanPatch` can
   // recognise and supersede an earlier bridge stamp without touching the
   // design's own evidence (a prior trial, a TPP, a guidance).
+  const run = provenance?.runId != null ? `, stored run #${provenance.runId}` : '';
   const label = provenance
-    ? `${BRIDGE_STAMP_PREFIX} ${provenance.engine} ${provenance.version} — ${result.method}`
+    ? `${BRIDGE_STAMP_PREFIX} ${provenance.engine} ${provenance.version} — ${result.method}${run}`
     : `${BRIDGE_STAMP_PREFIX} ${result.method}`;
   return {
     alpha: input.alpha,

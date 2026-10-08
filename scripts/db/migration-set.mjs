@@ -3091,6 +3091,14 @@ export const C2C_MIGRATION_FILES = [
   // IF NOT EXISTS; no DROP; no row rewritten. After 20260905_document_catalog.
   'migrations/20261008e_document_catalog_attribution.sql',
 
+  // ── A computed figure names its stored, reproducible run (2026-10-08) ──
+  // Data Room catalog S5b (D2): public.stats_computation_runs (inputs, outputs,
+  // their SHA-256, engine, version, seed), organization_id INTEGER NOT NULL for
+  // the sweeps below, and same-organization keys to the project and the study
+  // design ON DELETE SET NULL of their own column. IF NOT EXISTS; no DROP.
+  // After 20261008d, whose cdisc_prm_studies (id, tenant_id) index it keys to.
+  'migrations/20261008f_stats_computation_runs.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

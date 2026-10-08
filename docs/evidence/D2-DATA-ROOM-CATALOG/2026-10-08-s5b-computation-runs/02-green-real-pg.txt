@@ -1,0 +1,24 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-08T20:21:46.025Z","pid":16322,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T20:21:46.026Z","pid":16322,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T20:21:46.026Z","pid":16322,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > stores the run in the apply, keyed to this design and project
+[database] Database connection successful
+
+stderr | tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > stores the run in the apply, keyed to this design and project
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > stores the run in the apply, keyed to this design and project 1081ms
+ ✓ tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the design, the governed action and the SAP name the run 27ms
+ ✓ tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the stored inputs recompute to the stored outputs 3ms
+ ✓ tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > a changed output is caught, not trusted 6ms
+ ✓ tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > another organization's run is not found 1ms
+ ✓ tests/db/stats-computation-run.dbtest.ts > applying a computed sample size stores the run that produced it > the database refuses a run naming another organization's design 3ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  20:21:43
+   Duration  3.50s (transform 1.77s, setup 85ms, import 43ms, tests 3.06s, environment 0ms)
+
