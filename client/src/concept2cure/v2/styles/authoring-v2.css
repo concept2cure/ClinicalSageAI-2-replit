@@ -1628,6 +1628,42 @@
     font-size: 12px;
     color: var(--text-300);
   }
+  /* A document AnA built while another is open beside the conversation, or
+     at a width with no room beside it: offered here, never forced open
+     (docs/design/ONE_ANA_ONE_CANVAS.md, slice 1). Empty, it takes no space. */
+  .ct-ready-doc:empty {
+    display: none;
+  }
+  .ct-ready-doc {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto 8px;
+    width: 100%;
+    max-width: 760px;
+    padding: 6px 8px 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-100);
+    font-size: 13px;
+    color: var(--text-200);
+  }
+  .ct-ready-doc-t {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ct-ready-doc-x {
+    border: 0;
+    background: none;
+    color: var(--text-300);
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
   @media (max-width: 1100px) {
     .ct-main[data-canvas-open] > .ct-conv {
       display: none;

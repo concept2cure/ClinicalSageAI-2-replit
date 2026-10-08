@@ -998,6 +998,47 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
     return opened && !t.authoringDoc ? { ...t, authoringDoc: opened } : t;
   });
   const busy = anaChat.isStreaming;
+
+  /* ── The document opens on the right while AnA builds it ───────────────────
+     docs/design/ONE_ANA_ONE_CANVAS.md, slice 1 (founder, 2026-10-07: "I want to
+     have a canvas on the right-hand side, and I want to see the documents being
+     built"). The moment a turn being written names an authoring document, the
+     editor opens beside the conversation in the existing pane; nothing waits
+     for "Open full editor". Only a turn streamed while this screen is open
+     does this: a conversation reopened from history opens nothing by itself.
+     Each document opens by itself once; after the person closes it, it stays
+     closed. It never takes the pane from a document the person has open, and
+     never hides the conversation at 1100px or narrower (the editor would take
+     the whole screen there): in both cases a notice offers it instead. */
+  const streamedIdsRef = useRef<Set<string>>(new Set());
+  const autoOpenedRef = useRef<Set<string>>(new Set());
+  const [readyDoc, setReadyDoc] = useState<{ docId: string; title: string } | null>(null);
+  const lastMsg = anaChat.messages[anaChat.messages.length - 1];
+  if (busy && lastMsg && lastMsg.role !== 'user') streamedIdsRef.current.add(lastMsg.id);
+  const liveDoc = (() => {
+    for (let i = turns.length - 1; i >= 0; i--) {
+      const m = anaChat.messages[i];
+      const doc = turns[i].authoringDoc;
+      if (m && doc && streamedIdsRef.current.has(m.id) && !autoOpenedRef.current.has(doc.docId)) return doc;
+    }
+    return null;
+  })();
+  useEffect(() => {
+    if (!liveDoc) return;
+    autoOpenedRef.current.add(liveDoc.docId);
+    const narrow = typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 1100px)').matches;
+    if (narrow || (expandedDocId !== null && expandedDocId !== liveDoc.docId)) {
+      setReadyDoc({ docId: liveDoc.docId, title: liveDoc.title || 'The document' });
+      return;
+    }
+    setReadyDoc(null);
+    setExpandedDocId(liveDoc.docId);
+  }, [liveDoc, expandedDocId]);
+  const openReadyDoc = () => {
+    if (!readyDoc) return;
+    setExpandedDocId(readyDoc.docId);
+    setReadyDoc(null);
+  };
   const historyFailed = loadErr || !!anaChat.threadLoadError;
   const historyUnavailable = anaChat.isLoadingThread || historyFailed;
   /* The one turn Continue may be offered on: the latest, settled, with nothing
@@ -1357,6 +1398,22 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
             onStop={() => void anaChat.stop()}
             onSteer={anaChat.runStatus ? (m) => anaChat.interject(m) : undefined}
           />
+          {/* Announced, never focus-stealing: the person may be typing. */}
+          <div className="ct-ready-doc" role="status" aria-live="polite">
+            {readyDoc && (
+              <>
+                <span className="ct-ready-doc-t">
+                  AnA built <b>{readyDoc.title}</b>
+                </span>
+                <button type="button" className="btn ghost" data-testid="ct-ready-doc-open" onClick={openReadyDoc}>
+                  Open
+                </button>
+                <button type="button" className="ct-ready-doc-x" aria-label="Dismiss" onClick={() => setReadyDoc(null)}>
+                  {'×'}
+                </button>
+              </>
+            )}
+          </div>
           <div className="ct-composer-wrap">
             <div className="ct-composer">
               <input
