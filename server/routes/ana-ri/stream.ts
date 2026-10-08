@@ -3011,6 +3011,7 @@ export function mountStreamRoute(router: Router): void {
             runId && runHandle && runHold
               ? {
                   hold: runHold,
+                  cancelSignal: runHandle.cancelSignal,
                   cancelled: () => runHandle!.cancelSignal.aborted,
                   heartbeat: (round: number) => {
                     heartbeatRound = round;

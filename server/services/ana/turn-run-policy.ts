@@ -79,6 +79,8 @@ const ANSWERED: ReadonlySet<RunStatus | null> = new Set<RunStatus | null>(['runn
 /** The turn's run row, as the checkpoint uses it. Absent when the turn has none. */
 export interface TurnPolicyRun {
   hold: RunHold;
+  /** The existing handle's signal releases a hold even while a status read waits. */
+  cancelSignal?: AbortSignal;
   /** The run's cancel signal has fired (a person's Stop, or a dropped client). */
   cancelled(): boolean;
   heartbeat(round: number): void;
@@ -215,11 +217,12 @@ export class TurnPolicy {
     pending: readonly ToolCall[],
   ): Promise<'continue' | 'abort'> {
     const announce: RunHoldAnnounce | undefined = this.opts.runPolicy ? { reason: 'person' } : undefined;
-    const held = await run.hold.hold(round, announce);
+    const held = await run.hold.hold(round, announce, run.cancelSignal);
     if (held === 'expired') return this.expired(w, round, pending, null);
+    if (run.cancelled() || held === 'cancelled') return this.cancelled(w, round);
     // Steers and screen reports: drained atomically, so neither applies twice.
     const steers = await run.drainSteers();
-    if (run.cancelled() || held === 'cancelled') return this.cancelled(w, round);
+    if (run.cancelled()) return this.cancelled(w, round);
     /* `interjected` is announced AFTER the cancel check, not beside the drain.
        The client renders it as "You steered AnA:" on the turn; emitted at
        drain time it could say so and be followed at once by an abort — the
@@ -245,7 +248,7 @@ export class TurnPolicy {
     const placed = await this.placeHold(run);
     if (placed === 'cancelled') return this.cancelled(w, round);
     if (placed === 'unavailable') return this.failClosed(w, round, step.pending);
-    const outcome = await run.hold.hold(round, { reason: 'manual', next: step.next });
+    const outcome = await run.hold.hold(round, { reason: 'manual', next: step.next }, run.cancelSignal);
     return this.settleHold(step, outcome);
   }
 
@@ -277,8 +280,9 @@ export class TurnPolicy {
     if (outcome === 'expired') return this.expired(w, round, pending, next);
     // Never run a held step for a client that is gone.
     if (outcome === 'disconnected') return this.endedAtHold(step, 'disconnected');
-    const steers = await run.drainSteers();
     if (run.cancelled() || outcome === 'cancelled') return this.endedAtHold(step, 'stopped');
+    const steers = await run.drainSteers();
+    if (run.cancelled()) return this.endedAtHold(step, 'stopped');
     const status = await run.status().catch(() => undefined);
     if (status === 'cancelled') return this.endedAtHold(step, 'stopped');
     if (status === undefined || !ANSWERED.has(status)) return this.failClosed(w, round, pending);
