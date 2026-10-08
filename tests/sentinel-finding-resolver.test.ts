@@ -32,7 +32,8 @@ import sentinelRouter from '../server/routes/sentinel-routes';
 const CALLER = 31;
 const SOMEONE_ELSE = 4242;
 
-function makeApp(user: Record<string, unknown> = { id: CALLER, organizationId: 99 }) {
+// The session as admitLiveSession attaches it: the subject is a string.
+function makeApp(user: Record<string, unknown> = { id: String(CALLER), userId: String(CALLER), organizationId: '99' }) {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
@@ -67,10 +68,24 @@ describe('a Sentinel finding is resolved by the session user (L195)', () => {
     expect(state.calls).toEqual([['f-1', 99, 'resolved', CALLER]]);
   });
 
-  it('resolving with no user id on the session is refused, not recorded as nobody', async () => {
-    const res = await patch({ status: 'resolved' }, { organizationId: 99 });
+  it.each(['resolved', 'dismissed'])('closing (%s) with no user id on the session is refused, not recorded as nobody', async (status) => {
+    const res = await patch({ status }, { organizationId: '99' });
     expect(state.calls).toEqual([]);
     expect(res.status).toBe(401);
+  });
+
+  it('dismissing records the caller as its closer', async () => {
+    const res = await patch({ status: 'dismissed' });
+    expect(res.status).toBe(200);
+    expect(state.calls).toEqual([['f-1', 99, 'dismissed', CALLER]]);
+  });
+
+  it.each([
+    ['as a number', CALLER],
+  ])('a body naming the caller themself (%s) is accepted', async (_label, own) => {
+    const res = await patch({ status: 'resolved', resolvedById: own });
+    expect(res.status).toBe(200);
+    expect(state.calls).toEqual([['f-1', 99, 'resolved', CALLER]]);
   });
 
   it('acknowledging is unchanged and needs no resolver', async () => {
