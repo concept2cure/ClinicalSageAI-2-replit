@@ -1250,7 +1250,7 @@ export function V2App() {
           <SurfaceBoundary resetKey={bodyKey}>
             {/* A deep link to a surface outside the launch scope renders the
                 honest panel, from the same verdict the rail and catalog read. */}
-            <LaunchScopeGate surfaceId={activeId} surface={ctxSurface}>
+            <LaunchScopeGate surfaceId={activeId} surface={ctxSurface} onNav={nav}>
               {body}
             </LaunchScopeGate>
           </SurfaceBoundary>

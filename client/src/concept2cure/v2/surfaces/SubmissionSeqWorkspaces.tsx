@@ -38,6 +38,7 @@ import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { PlacementReasonField, placementReasonOk } from './filingTarget';
 import { downloadBlob } from '../download';
 import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
+import { useSurfaceAvailable } from '../surfaceAvailable';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -495,8 +496,8 @@ function AddLeafForm({ seq, onDone }: { seq: SeqRow; onDone: (n: Notice, effect:
         </div>
       ) : docRows.length === 0 ? (
         <div className="scaf-note">
-          No Co-Author documents in this organization yet — author one in the eCTD Co-Author
-          first, then place it here as a leaf.
+          No Co-Author documents in this organization. Place a document from the
+          editor or the Vault instead (below).
         </div>
       ) : (
         <div className="sc-leafform">
@@ -635,7 +636,41 @@ function RemoveLeafControl({
   );
 }
 
-export function BuilderWorkspace({ seq, onSequenceChanged }: { seq: SeqRow; onSequenceChanged?: () => void }) {
+/** Where a leaf's document comes from (FILING_SPINE.md F16). The Builder
+ *  pointed at the eCTD Co-Author, which is locked and scrapped; documents
+ *  reach a sequence from where they are written or stored. Each door is offered
+ *  only where its surface can be opened. */
+function BuilderSources({ onNav }: { onNav?: (id: string) => void }) {
+  const available = useSurfaceAvailable();
+  return (
+    <div className="scaf-note sc-mt" data-testid="sc-builder-sources">
+      Documents reach this sequence from where they are kept: an authored
+      document&apos;s Place into filing, in the editor, or a file&apos;s Place into
+      submission, in the Vault. Copying a leaf from another market&apos;s sequence
+      comes later.
+      {onNav && (available('document-authoring') || available('vault')) && (
+        <div className="cm-pushbar sc-mt">
+          {available('document-authoring') && (
+            <button type="button" className="sc-trans-b" onClick={() => onNav('document-authoring')}>
+              Open documents
+            </button>
+          )}
+          {available('vault') && (
+            <button type="button" className="sc-trans-b" onClick={() => onNav('vault')}>
+              Open the Vault
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function BuilderWorkspace({ seq, onSequenceChanged, onNav }: {
+  seq: SeqRow; onSequenceChanged?: () => void;
+  /** Shell navigation, for the doors to where documents are placed from. */
+  onNav?: (id: string) => void;
+}) {
   const [bump, setBump] = React.useState(0);
   const leavesPath = `/api/submissions/sequences/${seq.id}/leaves`;
   /* The module header promises a wrong-shaped 200 reaches the error branch;
@@ -717,7 +752,10 @@ export function BuilderWorkspace({ seq, onSequenceChanged }: { seq: SeqRow; onSe
             its leaves are immutable and cannot be added to or changed.
           </div>
         ) : !leaves.loading && !leaves.error ? (
-          <AddLeafForm seq={seq} onDone={afterWrite} />
+          <>
+            <AddLeafForm seq={seq} onDone={afterWrite} />
+            <BuilderSources onNav={onNav} />
+          </>
         ) : null}
       </div>
     </div>

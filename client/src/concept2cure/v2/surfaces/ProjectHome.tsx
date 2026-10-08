@@ -5,8 +5,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
-import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
-import { flagAllowsSurface } from '../clinicalRegulatoryGraphFlag';
+import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
@@ -214,16 +213,6 @@ function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string
       })}
     </div>
   );
-}
-
-/** Whether a surface can be opened in this release. Unknown (verdicts not yet
-    read, or unreadable) counts as available, the rule the rail uses: a lock is a
-    claim about the customer's release and is never invented. A surface whose
-    feature flag keeps its API unmounted is not available either — the rail's
-    rule too (flagAllowsSurface); the CRL library tile opened a 404 here. */
-function useSurfaceAvailable(): (id: string) => boolean {
-  const { verdictFor } = useNavEntitlements();
-  return (id: string) => flagAllowsSurface(id) && !isLaunchScopeLocked(verdictFor(id));
 }
 
 /* ════ Evidence: the project's files ════════════════════════════════════════

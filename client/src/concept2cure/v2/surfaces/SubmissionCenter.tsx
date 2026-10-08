@@ -83,6 +83,7 @@ import '../styles/submission-v2.css';
 import { C2CForm } from '../C2CForm';
 import { gatewayLabel } from '../gatewayLabels';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
+import { useSurfaceAvailable } from '../surfaceAvailable';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -437,6 +438,7 @@ export function SubmissionCenter({
 }) {
   const [ws, setWs] = React.useState('portfolio');
   const [selSub, setSelSub] = React.useState<number | null>(null);
+  const available = useSurfaceAvailable();
   // The signer sees their own identity in the e-signature dialog (§11.50): the
   // name the platform will print on the signature, not a generic "You".
   const authUser = useAuthUser();
@@ -1433,14 +1435,19 @@ export function SubmissionCenter({
                       <td>{f.fdaTrackingNumber ?? '—'}</td>
                       <td>{reviewClock(f)}</td>
                       <td>
-                        <button
-                          type="button"
-                          className="sc-trans-b"
-                          title="Open the 510(k) surface — the device filing workspace"
-                          onClick={() => onNav && onNav('device-510k')}
-                        >
-                          {I.right} Open 510(k) surface
-                        </button>
+                        {/* Offered only where the 510(k) surface can be opened:
+                            outside this release it led to the locked panel
+                            (FILING_SPINE.md F16). */}
+                        {available('device-510k') && (
+                          <button
+                            type="button"
+                            className="sc-trans-b"
+                            title="Open the 510(k) surface — the device filing workspace"
+                            onClick={() => onNav && onNav('device-510k')}
+                          >
+                            {I.right} Open 510(k) surface
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -1676,7 +1683,7 @@ export function SubmissionCenter({
           {!seqs.loading && !seqs.error && seq && (
             <>
               {ws === 'builder' && (
-                <BuilderWorkspace key={seq.id} seq={seq} onSequenceChanged={() => setSeqBump((b) => b + 1)} />
+                <BuilderWorkspace key={seq.id} seq={seq} onSequenceChanged={() => setSeqBump((b) => b + 1)} onNav={onNav} />
               )}
               {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'shadow-review' && <ShadowReviewWorkspace key={seq.id} seq={seq} />}
