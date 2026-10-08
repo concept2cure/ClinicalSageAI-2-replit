@@ -1,0 +1,12 @@
+{
+  "local_qualification_checkpoint": "7386ce34cf624d54eed2a9e21246646d3a84f3ba",
+  "reproduction_base": "c7a0405d9a1a6da9a7eecb54cbee8870e1dfb333",
+  "publication_base": "7eb3695b36b5e403ad94f9fc88e093174b2c4687",
+  "git_blob_sha1": {
+    "server/services/ana/run-hold.ts": "216a77896df5f09981e1d786b0fd2dcbd291a146",
+    "server/services/ana/turn-run-policy.ts": "38e6786c3b520779bd9aefc1f1e62d3a9d8fef4c",
+    "server/routes/ana-ri/stream.ts": "dfc3626564d2f82f2e39f00afec360f089cceb21",
+    "server/services/ana/__tests__/run-hold-cancellation.test.ts": "07db49e2fcdce54da3828e511db143214f4cab3c",
+    "server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts": "d513f8683f562eabcc12fa8c48951f1aab5671d3"
+  }
+}

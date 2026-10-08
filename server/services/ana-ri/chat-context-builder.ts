@@ -418,6 +418,17 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   const accessibleThreadPromise = thread_id
     ? resolveAccessibleThread(thread_id, numericOrgId, userId).catch(() => null)
     : Promise.resolve(null);
+  // Start recall behind the same access check while independent route context
+  // loads. Attach the fallback now to contain an early rejection, and keep
+  // awaiting the result below before constructing the model's prompt.
+  const memoryContextPromise = accessibleThreadPromise.then(accessible => buildMemoryContextForChat({
+    threadId: accessible?.id ?? '',
+    organizationId: numericOrgId ?? undefined,
+    projectId: projectId != null ? Number(projectId) : undefined,
+    query: message,
+    limitPerLayer: 4,
+    maxChars: 3500,
+  })).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null }));
 
   const prefetchedContext = await prefetchRouteIntelligenceContext({
     projectId,
@@ -469,14 +480,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   // Intelligence prefix + memory + enrichment (parallel)
   const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
     intelligencePrefixPromise,
-    accessibleThreadPromise.then(accessible => buildMemoryContextForChat({
-      threadId: accessible?.id ?? '',
-      organizationId: numericOrgId ?? undefined,
-      projectId: projectId != null ? Number(projectId) : undefined,
-      query: message,
-      limitPerLayer: 4,
-      maxChars: 3500,
-    })).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null })),
+    memoryContextPromise,
     enrichContextForChat({
       message,
       projectId,

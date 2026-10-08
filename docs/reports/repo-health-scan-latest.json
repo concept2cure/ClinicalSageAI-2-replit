@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T02:43:04.377Z",
+  "generatedAt": "2026-10-08T06:05:23.110Z",
   "git": {
-    "sha": "790b07dc91020e40853f2d7f4cba2539321d947a",
+    "sha": "661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2051,7 +2051,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1128614
+        "bytes": 1128818
       },
       {
         "file": "shared/schema.ts",
@@ -2083,7 +2083,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 219878
+        "bytes": 220093
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2095,7 +2095,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 172352
+        "bytes": 173536
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2257,7 +2257,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21746
+        "lines": 21749
       },
       {
         "file": "shared/schema.ts",
@@ -2289,7 +2289,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 5073
+        "lines": 5078
       },
       {
         "file": "server/storage.ts",
@@ -2317,7 +2317,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3397
+        "lines": 3416
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2480,6 +2480,10 @@
         "lines": 2050
       },
       {
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 2045
+      },
+      {
         "file": "server/routes/c2c/projects.ts",
         "lines": 2033
       },
@@ -2506,10 +2510,6 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
-      },
-      {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1980
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",

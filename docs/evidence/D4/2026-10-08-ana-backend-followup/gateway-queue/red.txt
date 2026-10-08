@@ -1,0 +1,229 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > rejects an already aborted signal without spending a free permit 7ms
+   → expected undefined to be Error: run stopped // Object.is equality
+ × server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > settles a queued abort while the current caller still holds its permit 2ms
+   → cancel waited for the occupied permit: expected false to be true // Object.is equality
+ × server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > checks cancellation between permit handoff and the callback microtask 1ms
+   → expected undefined to be Error: stopped during handoff // Object.is equality
+ × server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > removes canceled waiters and admits live callers in FIFO order at the same cap 1ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > does not release an active callback early when its signal is aborted 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > releases a callback that throws and serves the next caller 1ms
+ × server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore abort listener lifetime > removes a queued listener on cancellation 1ms
+   → expected "addEventListener" to be called 1 times, but got 0 times
+ × server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore abort listener lifetime > removes the queued listener when a live waiter receives its permit 1ms
+   → expected "addEventListener" to be called 1 times, but got 0 times
+(node:36) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+{
+  "timestamp": "2026-10-08T05:32:10.757Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:32:10.759Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+{
+  "timestamp": "2026-10-08T05:32:10.759Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=test:active req=94de9f58-774e-4650-ad63-33c4c3081ad9
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+{
+  "timestamp": "2026-10-08T05:32:10.943Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=test:canceled req=f0ffe12e-a7aa-4399-9c69-71e29f53942b
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:36) AuditWarning: AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:36) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=test:active req=2c84e014-8315-413f-858c-1f6ca6a43a7a
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=test:canceled req=40bd8312-04eb-48a2-856a-029dfd5457f5
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+ × server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch 77ms
+   → cancel waited for an unrelated active call: expected false to be true // Object.is equality
+(node:36) AuditWarning: AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:36) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ × server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch 54ms
+   → cancel waited for an unrelated active call: expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > rejects an already aborted signal without spending a free permit
+AssertionError: expected undefined to be Error: run stopped // Object.is equality
+
+- Expected:
+Error {
+  "message": "run stopped",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ai-gateway/__tests__/concurrency-abort.test.ts:32:34
+     30|     const canceled = observe(limiter.run(canceledWork, controller.sign…
+     31|     await canceled.done;
+     32|     expect(canceled.state.error).toBe(reason);
+       |                                  ^
+     33|     expect(canceledWork).not.toHaveBeenCalled();
+     34|     await expect(limiter.run(async () => 'live')).resolves.toBe('live'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > settles a queued abort while the current caller still holds its permit
+AssertionError: cancel waited for the occupied permit: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ai-gateway/__tests__/concurrency-abort.test.ts:50:79
+     48|     try {
+     49|       await checkpoint();
+     50|       expect(canceled.state.settled, 'cancel waited for the occupied p…
+       |                                                                               ^
+     51|       expect(canceled.state.error).toBe(reason);
+     52|       expect(canceledWork).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > checks cancellation between permit handoff and the callback microtask
+AssertionError: expected undefined to be Error: stopped during handoff // Object.is equality
+
+- Expected:
+Error {
+  "message": "stopped during handoff",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ai-gateway/__tests__/concurrency-abort.test.ts:76:34
+     74|     held.resolve();
+     75|     await Promise.all([first, canceled.done, aborted]);
+     76|     expect(canceled.state.error).toBe(reason);
+       |                                  ^
+     77|     expect(canceledWork).not.toHaveBeenCalled();
+     78|     await expect(limiter.run(async () => 'next')).resolves.toBe('next'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > removes canceled waiters and admits live callers in FIFO order at the same cap
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ai-gateway/__tests__/concurrency-abort.test.ts:110:36
+    108|     try {
+    109|       await checkpoint();
+    110|       expect(second.state.settled).toBe(true);
+       |                                    ^
+    111|       expect(fourth.state.settled).toBe(true);
+    112|       held.resolve();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore abort listener lifetime > removes a queued listener on cancellation
+AssertionError: expected "addEventListener" to be called 1 times, but got 0 times
+ ❯ server/services/ai-gateway/__tests__/concurrency-abort.test.ts:172:21
+    170|     try {
+    171|       await checkpoint();
+    172|       expect(added).toHaveBeenCalledTimes(1);
+       |                     ^
+    173|       const [event, listener] = added.mock.calls[0];
+    174|       expect(event).toBe('abort');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore abort listener lifetime > removes the queued listener when a live waiter receives its permit
+AssertionError: expected "addEventListener" to be called 1 times, but got 0 times
+ ❯ server/services/ai-gateway/__tests__/concurrency-abort.test.ts:196:19
+    194|     held.resolve();
+    195|     await Promise.all([first, next]);
+    196|     expect(added).toHaveBeenCalledTimes(1);
+       |                   ^
+    197|     const [event, listener] = added.mock.calls[0];
+    198|     expect(event).toBe('abort');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+ FAIL  server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+AssertionError: cancel waited for an unrelated active call: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts:102:84
+    100|       controller.abort(reasonKind === 'custom abort reason' ? new Erro…
+    101|       await new Promise<void>(resolve => setImmediate(resolve));
+    102|       expect(canceled.state.settled, 'cancel waited for an unrelated a…
+       |                                                                                    ^
+    103|       expect(canceled.state.error).toBeInstanceOf(GatewayAbortedError);
+    104|       expect(canceled.state.error).toMatchObject({ phase: 'pre_call' }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  8 failed | 2 passed (10)
+   Start at  13:32:08
+   Duration  2.13s (transform 828ms, setup 84ms, import 1.48s, tests 150ms, environment 0ms)

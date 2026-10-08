@@ -1954,8 +1954,13 @@ export class AIGateway {
     // for every provider invocation (primary + fallback paths), so wrapping it
     // here caps outbound concurrency without touching the retry / circuit-
     // breaker / timeout logic, which all run inside the provider executors.
+    // Waiting for capacity must stop too, without ever starting a provider.
+    let dispatchStarted = false;
     const response = await this.outboundLimiter
-      .run(() => this.dispatchProvider(modelConfig, governed.request, requestId, startTime))
+      .run(() => {
+        dispatchStarted = true;
+        return this.dispatchProvider(modelConfig, governed.request, requestId, startTime);
+      }, request.signal)
       .catch((error: unknown) => {
         /* A cancel that lands WHILE the call is in flight is still a cancel.
 
@@ -1976,7 +1981,7 @@ export class AIGateway {
            retry loop, so the retry loop and both route() catches all see the
            terminal type they already honour. */
         if (request.signal?.aborted && !(error instanceof GatewayAbortedError)) {
-          throw new GatewayAbortedError('in_flight');
+          throw new GatewayAbortedError(dispatchStarted ? 'in_flight' : 'pre_call');
         }
         throw error;
       });

@@ -1,0 +1,74 @@
+{
+  "baselineCommit": "185b6f089d58f4bb9f1cead26d9aef9a403f4576",
+  "renderer": "client/src/concept2cure/components/ana/renderSafeMarkdown.ts",
+  "runtime": "v22.23.3",
+  "measuredAt": "2026-10-08T03:08:58.921Z",
+  "workload": {
+    "displayedHistoryAnswers": 80,
+    "distinctStreamingPrefixes": 600,
+    "totalRenderCalls": 48680,
+    "repetitions": 3,
+    "cacheLimitBeforeAndAfter": 200,
+    "libraries": "real marked and DOMPurify under jsdom"
+  },
+  "before": {
+    "parserCalls": 1000,
+    "sanitizerCalls": 1000,
+    "medianElapsedMs": 7108.047205999999
+  },
+  "after": {
+    "parserCalls": 680,
+    "sanitizerCalls": 680,
+    "medianElapsedMs": 3365.9762219999993
+  },
+  "avoidedParserAndSanitizerCalls": 320,
+  "parserAndSanitizerReductionPercent": 32,
+  "medianElapsedReductionPercent": 52.64555616402304,
+  "allOutputIdentical": true,
+  "maliciousHistorySanitized": true,
+  "limitation": "A local synchronous renderer microbenchmark, not end-to-end model latency or browser frame-rate evidence. Wall-clock measurements vary with host load; operation counts are deterministic.",
+  "runs": [
+    {
+      "name": "before",
+      "repetition": 0,
+      "parserCalls": 1000,
+      "sanitizerCalls": 1000,
+      "elapsedMs": 3082.0243450000003
+    },
+    {
+      "name": "after",
+      "repetition": 0,
+      "parserCalls": 680,
+      "sanitizerCalls": 680,
+      "elapsedMs": 2960.9976269999997
+    },
+    {
+      "name": "after",
+      "repetition": 1,
+      "parserCalls": 680,
+      "sanitizerCalls": 680,
+      "elapsedMs": 3365.9762219999993
+    },
+    {
+      "name": "before",
+      "repetition": 1,
+      "parserCalls": 1000,
+      "sanitizerCalls": 1000,
+      "elapsedMs": 7108.047205999999
+    },
+    {
+      "name": "before",
+      "repetition": 2,
+      "parserCalls": 1000,
+      "sanitizerCalls": 1000,
+      "elapsedMs": 21670.289862999998
+    },
+    {
+      "name": "after",
+      "repetition": 2,
+      "parserCalls": 680,
+      "sanitizerCalls": 680,
+      "elapsedMs": 10226.433294000002
+    }
+  ]
+}

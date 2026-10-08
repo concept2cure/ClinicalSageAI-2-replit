@@ -1,0 +1,9 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "process_exit": 0,
+  "elapsed_seconds": 18.335
+}

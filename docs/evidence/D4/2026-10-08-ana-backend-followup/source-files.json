@@ -1,0 +1,41 @@
+{
+  "validated_local_checkpoint": "6b90c6cfa3bb7bd0db678618ab500862a2e64584",
+  "files": [
+    {
+      "path": "server/services/ai-gateway/concurrency.ts",
+      "git_blob_sha": "c1969849000f664fa6af95767303d15f526109eb",
+      "sha256": "afa41229884a7f965a91a46f8a44d69fd6ac8d8377f3c38d9c5bb09e3d4ebf93",
+      "bytes": 2336
+    },
+    {
+      "path": "server/services/ai-gateway/gateway.ts",
+      "git_blob_sha": "45568b5f2ae04d1284c7c4b4f8ef678a1ed63d2a",
+      "sha256": "a26650b12092cf4ee7ad8ad37a25c629dd0a1422a5dbc5c3d9af99b28f86a9ad",
+      "bytes": 220093
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "git_blob_sha": "f4387667ca04ec523195f5a76cc3e09ce45aa5b5",
+      "sha256": "fb13cc9964b70a3d7bd30f79ff036a77c33b35d45f6e3bde20fbd91dcfae44ea",
+      "bytes": 1128818
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/concurrency-abort.test.ts",
+      "git_blob_sha": "dda846f1fc4a4baeccef22b8e56c02e436ef128e",
+      "sha256": "86abf8f8f83fdcfe4bb946c000b5b37fd10c855430b1433404e1be975c816eaa",
+      "bytes": 8705
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts",
+      "git_blob_sha": "d946f0c992f8c3318f089ab1f14c830517aefb8d",
+      "sha256": "84de5b65551c8f356147fc778f6ee3b05e0509a27bb0d0416fcdbe81a8003a44",
+      "bytes": 5586
+    },
+    {
+      "path": "server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts",
+      "git_blob_sha": "46e28cc4c44ed5bc048b094e8b89a67756edaf9b",
+      "sha256": "232822bfc1697a0cbb851bd15468f12b3ab3861f155e81f95e4eaeab288cc509",
+      "bytes": 5822
+    }
+  ]
+}
