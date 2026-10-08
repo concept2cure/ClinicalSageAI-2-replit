@@ -1,0 +1,81 @@
+### npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit=0
+### npm run ci:untracked-imports
+[ci:untracked-imports] OK — every relative import in 80 file(s) resolves to a tracked file.
+exit=0
+### npm run ci:migration-set-order
+[ci:migration-set-order] OK — 367 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit=0
+### npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 367 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+### npm run ci:migration-drop-safety:selftest
+  ✓ NARROWED — a guard that exists only in a comment does not count
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+exit=0
+### node scripts/ci/check-untracked-imports.mjs --all
+# Reads the working tree, not the push range. It names this change's three NEW modules
+# (program-registry-context, attached-form-check, task-project) because they are not in git yet:
+# this change is uncommitted by instruction. They must be committed with their importers.
+# Every other line is a pre-existing gap in files this change does not touch.
+
+[ci:untracked-imports] FAIL — 24 import(s) resolve to a file that is on disk but NOT in git:
+  client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:100  →  ./outlineReadState
+  server/__tests__/security/auth-invalid-expired-jwt.test.ts:22  →  ../../middleware/
+  server/routes/510k-estar-routes.ts:26  →  ../services/part11/signing-authority-gate
+  server/routes/ana-features.ts:37  →  ../services/part11/signing-authority-gate
+  server/routes/ana-ri/governed-esignature.ts:28  →  ../../services/part11/signing-authority-gate.js
+  server/routes/authoring.router.ts:34  →  ../services/c2c/filing-section-target.js
+  server/routes/c2c/artifacts.ts:61  →  ../../services/part11/signing-authority-gate
+  server/routes/c2c/projects.ts:52  →  ../../services/c2c/program-registry-context.js
+  server/routes/ectd-compile.ts:53  →  ../services/ectd/package-identity
+  server/routes/ectd-export.ts:32  →  ../services/ectd/package-identity
+  server/routes/financial-disclosures.ts:48  →  ../services/part11/signing-authority-gate
+  server/routes/ind-forms.routes.ts:63  →  ../services/ind-forms/attached-form-check
+  server/routes/mdx-submission-gateway.ts:50  →  ../services/part11/signing-authority-gate
+  server/routes/taskManagement.routes.ts:47  →  ../services/tasking/task-project
+  server/services/c2c/commit-section-to-filing.ts:63  →  ../../../shared/regulatory/filing-section-key.js
+  server/services/c2c/commit-section-to-filing.ts:64  →  ./filing-section-target.js
+  server/services/coauthor/coauthor-snapshot.ts:104  →  ./filing-copy-pins.js
+  server/services/ectd/__tests__/export-application-identity.pglite.test.ts:36  →  ../package-identity
+  server/services/ectd/assemble-from-core.ts:31  →  ./package-identity
+  server/services/part11/governed-signature-ceremony.ts:52  →  ./signing-authority-gate
+  server/services/submission-service/submission-service.ts:57  →  ../ectd/package-identity
+  server/services/tasking/task-signoff.ts:30  →  ../part11/signing-authority-gate
+  tests/golden-journeys/submission-export-package.journey.test.ts:54  →  ../../server/services/ectd/package-identity
+  tests/unit/ectd-export-routes.test.ts:547  →  ../../server/services/ectd/package-identity
+
+  This builds for you and for nobody else. The usual cause is a .gitignore
+  pattern matching a source directory — check `git check-ignore -v <path>`,
+  and anchor the pattern with a leading slash if it names a root directory.
+
+  Also 14 import(s) resolve to nothing at all:
+  db/migrations/_consolidated/0001_tenant_isolation.ts:6  →  ../server/db/tenantRls
+  db/migrations/_consolidated/0001_tenant_isolation.ts:72  →  ../server/db
+  db/migrations/_consolidated/0002_add_org_id_column.ts:158  →  ../server/db
+  db/migrations/_consolidated/0002_add_organization_id.ts:113  →  ../server/db
+  db/migrations/_consolidated/0003_setup_user_roles.ts:144  →  ../server/db
+  db/migrations/_consolidated/0004_add_tenant_indexes.ts:148  →  ../server/db
+  scripts/backfill-document-aliases.mjs:31  →  ../server/db/index.ts
+  scripts/create_cer_approvals_table.js:7  →  ../server/db/index.js
+  scripts/optimized-start.js:5  →  ./optimize-performance.js
+  scripts/run_migrations.js:6  →  ../server/migrations/runMigrations
+  scripts/setup-protection.js:17  →  ./ai-agent-protection.js
+  scripts/setup-protection.js:100  →  ./development-best-practices-audit.js
+  server/scripts/verify-api-routes.js:29  →  ../routes/advisor.js
+  tests/unit/validate-ich-structure.js:4  →  ../server/utils/validateZip.js
+
+### node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression
+  route files touching the DB : 270
+  using requestDb(req)        : 43
+  still on the shared pool    : 227 (migration backlog)
+    JWT boundary auto-scoped  : 225
+    explicit pre-tenant scope : 2
+    unclassified              : 0
+[ci:requestdb-coverage] 1 route(s) migrated off the shared pool — re-run with --write-baseline to ratchet the backlog down.
+[ci:requestdb-coverage] OK — no new shared-pool routes (227 current, 228 baseline)

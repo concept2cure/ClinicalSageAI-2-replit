@@ -1,0 +1,13 @@
+ × server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > refuses an IND whose product type nobody stated, naming the choice, before any SQL 36ms
+ × server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > refuses a device class for an IND 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > records the stated class, and the spine carries the matching client type 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > records no indication when none was stated 4ms
+ × server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the project record carries its registry context > writes the registry entry the filing type the person chose names 6ms
+ × server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the project record carries its registry context > with no registry choice sent, an unambiguous filing type and agency name the entry 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 500 to be 400 // Object.is equality
+AssertionError: expected 500 to be 400 // Object.is equality
+AssertionError: expected null to match object { registryId: 'US_IND', …(1) }
+AssertionError: expected null to match object { registryId: 'US_NDA' }
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)

@@ -3068,6 +3068,35 @@ export const C2C_MIGRATION_FILES = [
   // must reach. Evidence docs/evidence/QA-2026-10-08/ind-reporting-3/.
   'migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql',
 
+  // ── The readiness digest's registry context, on the project record ───────
+  // (2026-10-08, QA second walk j8). Adds registryId / submissionType keys to
+  // projects.metadata where the program's own organisation's record holds
+  // none: the program's recorded wizard choice, else the entry its filing type
+  // and agency fix (PROGRAM_TYPE_REGISTRY, server/services/c2c/program-
+  // registry-context.ts). After 20261008, whose anchor rows it completes in
+  // the same deploy. UPDATE … WHERE no context; never overwrites, creates no
+  // table, drops nothing. Evidence docs/evidence/QA-2026-10-08/intake-readiness/.
+  'migrations/20261008c_projects_registry_context.sql',
+
+  // ── A review task raised on an authoring document is on its project ──────
+  // (2026-10-08, QA second walk j1). Sets unified_tasks.project_id where NULL
+  // for tasks whose source is an authoring document, to that document's
+  // program's project record in the same organisation (lowest id, as
+  // readProgramAnchorRow reads it) — the rule POST /api/tasks/tasks now applies
+  // (services/tasking/task-project.ts). After 20261008, whose anchors it reads.
+  // UPDATE … WHERE project_id IS NULL; creates nothing, drops nothing.
+  // Evidence docs/evidence/QA-2026-10-08/intake-readiness/.
+  'migrations/20261008d_unified_tasks_authoring_review_project.sql',
+
+  // ── An attached Module 1 form records the forms engine's check ───────────
+  // (2026-10-08, QA second walk j7). rendered_leaf_files.required_fields_missing
+  // text[]: '{}' complete, non-empty attached-not-complete, NULL never checked
+  // (never complete). The IND checklist counts a sponsor-attached form only on
+  // '{}'. ADD COLUMN IF NOT EXISTS; no backfill (earlier attachments were never
+  // checked); drops nothing. After 20260903 (the table). Evidence
+  // docs/evidence/QA-2026-10-08/intake-readiness/.
+  'migrations/20261008e_rendered_leaf_files_required_fields_missing.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

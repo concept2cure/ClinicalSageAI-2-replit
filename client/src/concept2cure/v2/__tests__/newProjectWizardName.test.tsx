@@ -106,6 +106,9 @@ describe('New Project wizard — the review is what is saved', () => {
     toConfigure();
     fireEvent.change(nameInput(), { target: { value: name } });
     fireEvent.change(productInput(), { target: { value: product } });
+    // An IND's drug / biologic class is stated before Continue (P-21; see
+    // newProjectWizardRegulatedChoices.test.tsx).
+    fireEvent.change(screen.getByRole('combobox', { name: /product type/i }), { target: { value: 'drug' } });
     fireEvent.click(continueBtn());
     const shown = { name: reviewValue('Project name'), product: reviewValue('Product') };
     fireEvent.click(await screen.findByRole('button', { name: /create project/i }));

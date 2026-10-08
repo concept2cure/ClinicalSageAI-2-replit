@@ -323,6 +323,8 @@ CREATE TABLE IF NOT EXISTS rendered_leaf_files (
   file_name         TEXT NOT NULL,
   rendered_from     TEXT NOT NULL,
   section_code      TEXT,
+  -- migrations/20261008e: the forms engine's check of a sponsor-attached form.
+  required_fields_missing TEXT[],
   created_by        INTEGER,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );

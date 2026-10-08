@@ -627,12 +627,13 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
   it('shows a form already filed in each sequence, with the digest of the bytes the sponsor signed', async () => {
     mockProgramListing({
       placements: [
-        { formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceId: 61, sequenceNumber: '0000', fileName: 'form-fda-1571.pdf', sha256: 'abcdef0123456789'.repeat(4), byteSize: 2048 },
-        { formId: 'FDA_1571', leafId: 14, sectionCode: 'm1.1', sequenceId: 62, sequenceNumber: '0001', fileName: 'form-fda-1571.pdf', sha256: '0123456789abcdef'.repeat(4), byteSize: 2048 },
+        { formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceId: 61, sequenceNumber: '0000', fileName: 'form-fda-1571.pdf', sha256: 'abcdef0123456789'.repeat(4), byteSize: 2048, requiredFieldsMissing: [] },
+        { formId: 'FDA_1571', leafId: 14, sectionCode: 'm1.1', sequenceId: 62, sequenceNumber: '0001', fileName: 'form-fda-1571.pdf', sha256: '0123456789abcdef'.repeat(4), byteSize: 2048, requiredFieldsMissing: [] },
       ],
     } as never);
     render(<IndFormsPanel note={vi.fn()} />);
-    expect(await screen.findByText('completed form filed')).toBeTruthy();
+    // One verdict per placement: both were checked complete.
+    expect(await screen.findAllByText('completed form filed')).toHaveLength(2);
     expect(screen.getByText(/m1\.1 · sequence 0000 · 2 KB · SHA-256 abcdef012345…/)).toBeTruthy();
     expect(screen.getByText(/m1\.1 · sequence 0001 · 2 KB · SHA-256 0123456789ab…/)).toBeTruthy();
     // A form already filed in the CHOSEN sequence offers replacement there,

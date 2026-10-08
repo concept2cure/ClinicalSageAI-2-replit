@@ -1,0 +1,25 @@
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > is a labelled region, not a modal dialog 233ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > closes on Escape and hands focus into the view on open 28ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > offers a named way back to the portfolio 146ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > states the current step in text, not only in colour 6ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the human sentence and never the enum token 506ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > offers a retry that re-runs the create 434ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the correlation id as the support handle 263ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > renders nothing internal even if an internal string reaches it 273ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > does not render a browser-native fetch message 296ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — created but not scaffolded > is a polite status with no retry, because the project exists 280ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > offers no therapeutic area and no pre-chosen indication: the indication is an empty text field 666ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends no indication when none was typed, and the review says it is not stated 245ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends exactly the indication the person typed 367ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > starts on "Not stated — choose" and offers only drug and biologic 178ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > cannot continue until the product type is chosen 240ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > records the class that was chosen, and the review shows it 213ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — a filing type that fixes the class asks nothing > an NDA is recorded as a drug with no product-type question 209ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 637ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 299ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 205ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 316ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 405ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 268ms
+ Test Files  3 passed (3)
+      Tests  23 passed (23)

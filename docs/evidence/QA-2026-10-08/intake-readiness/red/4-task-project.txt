@@ -1,0 +1,14 @@
+ × server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a review raised on an authoring document: its program’s project record 15ms
+ × server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > only within the caller’s organisation 5ms
+ × server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > nothing for a document with no program, an unanchored program, another source kind or a malformed id 2ms
+ × server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > is on the applier, before the tenant sweeps, and drops nothing 2ms
+ × server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the walk’s task 19 is recorded on TOLV’s project; nothing else moves 1ms
+ × server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > Rule 1: a second deploy changes nothing 4ms
+ × server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project 1174ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+Error: Cannot find module '/server/services/tasking/task-project' imported from /home/user/ClinicalSageAI-2-replit/server/services/tasking/__tests__/task-project.pglite.test.ts
+Error: Cannot find module '/server/services/tasking/task-project' imported from /home/user/ClinicalSageAI-2-replit/server/services/tasking/__tests__/task-project.pglite.test.ts
+Error: Cannot find module '/server/services/tasking/task-project' imported from /home/user/ClinicalSageAI-2-replit/server/services/tasking/__tests__/task-project.pglite.test.ts
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261008d_unified_tasks_authoring_review_project.sql'
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261008d_unified_tasks_authoring_review_project.sql'
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261008d_unified_tasks_authoring_review_project.sql'

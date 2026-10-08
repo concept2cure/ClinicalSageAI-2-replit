@@ -300,6 +300,14 @@ export const renderedLeafFiles = pgTable(
     renderedFrom: text('rendered_from').notNull(),
     /** The CTD section the bytes were rendered for, when known. */
     sectionCode: text('section_code'),
+    /**
+     * The forms engine's check of a sponsor-attached Module 1 form: the
+     * required fields it found missing when the file was attached. `[]` =
+     * checked, complete; non-empty = an attachment, not a completion; NULL = no
+     * check recorded (a server render, or an attachment from before the check)
+     * and never complete. migrations/20261008e (QA 2026-10-08, j7).
+     */
+    requiredFieldsMissing: text('required_fields_missing').array(),
     createdBy: integer('created_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },

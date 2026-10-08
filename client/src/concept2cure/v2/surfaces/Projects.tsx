@@ -6,6 +6,9 @@ import { useDialog } from '../useDialog';
 import {
   productTypeForFilingType,
   workstreamForFilingType,
+  MEDICINAL_PRODUCT_TYPES,
+  PRODUCT_TYPES,
+  type ProductType,
 } from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
@@ -67,36 +70,22 @@ const SEG2WS: Record<string, string> = {
   diagnostics: 'MDX', cro: 'CRO', health: 'Biotech',
 };
 
-/**
- * UI segment → the product class the lane implies.
- *
- * This map used to be sent to the server AS `productType`, which is how a
- * 510(k) came to be recorded as a biologic: the wizard opens on the Pharma &
- * Biotech tab by default, `SEG2PRODUCT['biotech']` is `'biologic'`, and that
- * value was submitted explicitly — overriding the server's own correct
- * derivation from the filing type. The review step rendered what it sent:
- * `510K · biologic`.
- *
- * The product class now comes from the FILING TYPE
- * (`productTypeForFilingType`, shared with the server so the two cannot drift).
- * The lane survives only as a REFINEMENT within the device family — a 510(k)
- * started from the Diagnostics lane is an IVD 510(k) — which is a real signal
- * and the only one available at creation time. It can no longer make a device
- * filing medicinal.
- */
-const SEG2PRODUCT: Record<string, string> = {
-  biotech: 'biologic', pharma: 'drug', medtech: 'device',
-  diagnostics: 'ivd', cro: 'drug', health: 'biologic',
-};
+/* The product class comes from the FILING TYPE (`productTypeForFilingType`,
+   shared with the server so the two cannot drift); the lane only refines within
+   the device family (a 510(k) from the Diagnostics lane is an IVD 510(k)).
 
-/**
- * The product class this wizard will persist: the filing type decides, the lane
- * refines within the device family, and the lane's own default applies only to
- * a filing type the shared vocabulary cannot classify.
- */
-function productTypeForSelection(programType: string, uiSeg: string): string {
-  return productTypeForFilingType(programType, uiSeg) ?? SEG2PRODUCT[uiSeg] ?? 'drug';
-}
+   Where the filing type does not fix the class — an IND, CTA, MAA, J-NDA or
+   DMF covers drugs and biologics alike — the person states it (P-21). A lane
+   map (`SEG2PRODUCT`) used to fill it in: the Pharma & Biotech tab made a
+   510(k) a biologic, and once that was closed the Biotech tab still made every
+   IND a biologic, an inhaled small molecule included (QA 2026-10-08, second
+   walk, j1/j7). The map is gone; nothing fills a class nobody chose. */
+
+/** The medicinal classes a person can state, labelled from the one vocabulary. */
+const STATED_CLASS_CHOICES = PRODUCT_TYPES.filter((t) => MEDICINAL_PRODUCT_TYPES.includes(t.value));
+
+/** The prompt a regulated select shows until the person states a value (P-21). */
+const NOT_STATED = 'Not stated — choose';
 
 // UI segment → human label, for the wizard's "Tailored for …" banner.
 /* Registry tab → UI segment, so the banner can follow a tab change. Only the
@@ -111,34 +100,6 @@ const SEG_LABELS: Record<string, string> = {
   biotech: 'Biotech', pharma: 'Pharma', medtech: 'Medical Devices',
   diagnostics: 'Diagnostics & IVD', cro: 'CRO / Services', health: 'Digital Health',
 };
-
-/* ── Therapeutic areas — the create form's indication axis (self-contained) ── */
-const TA_GROUPS: { id: string; label: string }[] = [
-  { id: 'onc', label: 'Oncology' },
-  { id: 'neuro', label: 'Neurology & Neuromuscular' },
-  { id: 'immuno', label: 'Immunology & Inflammation' },
-  { id: 'cardio', label: 'Cardiovascular & Metabolic' },
-  { id: 'id', label: 'Infectious Disease & Vaccines' },
-  { id: 'rare', label: 'Rare & Genetic Disease' },
-  { id: 'resp', label: 'Respiratory' },
-  { id: 'other', label: 'Other' },
-];
-const TA_LIST: { id: string; label: string; group: string }[] = [
-  { id: 'onc_solid', label: 'Solid tumors', group: 'onc' },
-  { id: 'onc_heme', label: 'Hematologic malignancies', group: 'onc' },
-  { id: 'onc_general', label: 'Oncology (general)', group: 'onc' },
-  { id: 'neuro_cns', label: 'CNS / neurodegeneration', group: 'neuro' },
-  { id: 'neuro_nmj', label: 'Neuromuscular', group: 'neuro' },
-  { id: 'immuno_rheum', label: 'Rheumatology / autoimmune', group: 'immuno' },
-  { id: 'immuno_derm', label: 'Dermatology / inflammation', group: 'immuno' },
-  { id: 'cardio_hf', label: 'Heart failure / cardiology', group: 'cardio' },
-  { id: 'cardio_metab', label: 'Metabolic / endocrine', group: 'cardio' },
-  { id: 'id_vaccine', label: 'Vaccines', group: 'id' },
-  { id: 'id_amr', label: 'Anti-infectives', group: 'id' },
-  { id: 'rare_genetic', label: 'Rare genetic disease', group: 'rare' },
-  { id: 'resp_obstructive', label: 'COPD / asthma', group: 'resp' },
-  { id: 'other_unspec', label: 'Other / not specified', group: 'other' },
-];
 
 /** Map a chosen registry template + segment → a canonical program_type the
  *  backend accepts (server VALID_PROGRAM_TYPES) and WS_CASE buckets. */
@@ -235,11 +196,19 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   const [tpl, setTpl] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [product, setProduct] = useState('');
-  const [ta, setTa] = useState('onc_general');
-  /* The device taxonomy. Step 2 offered a therapeutic-area dropdown and nothing
-     else — an oncology / vaccines list, defaulting to "Oncology (general)",
-     shown to someone filing a peak flow meter. These are the fields a device
-     reviewer opens the file to find. */
+  /* The indication, as the person states it, or nothing (P-21). Step 2 used to
+     offer a therapeutic-area dropdown that started on "Oncology (general)",
+     and its label was saved as the program's indication — the value Form 1571
+     carries. "QA-W2 Tolvexa · idiopathic pulmonary fibrosis" was recorded with
+     the indication "COPD / asthma" (QA 2026-10-08, second walk, j1/j7). A
+     therapeutic area is not an indication; the dropdown is gone and nothing
+     else reads it. */
+  const [indication, setIndication] = useState('');
+  /* The drug / biologic class, for a filing type that does not fix it. Starts
+     unstated; Continue waits for it. */
+  const [statedClass, setStatedClass] = useState<ProductType | ''>('');
+  /* The device taxonomy. These are the fields a device reviewer opens the file
+     to find. */
   const [productCode, setProductCode] = useState('');
   const [regulationNumber, setRegulationNumber] = useState('');
   const [deviceClass, setDeviceClass] = useState('');
@@ -288,11 +257,16 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   const selTpl: SelTpl | null = ctx
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
     : null;
-  /* From the FILING TYPE, not the lane: a 510(k) picked from any tab is a
-     device filing, and a pharma filing picked from the device tab is not. */
-  const isDeviceFiling = usesDeviceClassification(
-    productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg),
-  );
+  const programType = programTypeFor(selTpl, uiSeg);
+  /* The class the FILING TYPE fixes, or null when it does not, in which case
+     the person states it. From the filing type, not the lane: a 510(k) picked
+     from any tab is a device filing, and a pharma filing picked from the device
+     tab is not. */
+  const fixedClass = productTypeForFilingType(programType, uiSeg);
+  const asksClass = fixedClass === null;
+  const recordedClass: string | null = fixedClass ?? (statedClass || null);
+  const isDeviceFiling = usesDeviceClassification(fixedClass);
+  const savedIndication = indication.trim();
 
   /* The name and product exactly as they will be saved — the review prints
      these and the create call sends these, so the two cannot disagree. The
@@ -304,23 +278,26 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
      review says so. */
   const savedName = name.trim();
   const savedProduct = product.trim() || savedName;
+  /* Configure is complete when the name is given and, where the filing type
+     leaves it open, the class is chosen. */
+  const configured = savedName !== '' && recordedClass !== null;
 
   // Persist a real regulatory program (POST /api/c2c/projects → regulatory_programs)
   // then navigate into it using the id the store assigns. On failure we surface
   // the error instead of pretending the project was created.
   const doCreate = async () => {
-    if (!savedName) return;
+    if (!configured || recordedClass === null) return;
     setCreating(true);
     setOutcome(null);
-    const taLabel = TA_LIST.find(t => t.id === ta)?.label ?? null;
     const body = {
       name: savedName,
       productName: savedProduct,
-      programType: programTypeFor(selTpl, uiSeg),
-      productType: productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg),
+      programType,
+      productType: recordedClass,
       primaryAgency: selTpl?.agency || 'FDA',
       submissionTypeId: selTpl?.id,
-      indication: isDeviceFiling ? (intendedUse || undefined) : taLabel,
+      // Only what was stated: a blank indication sends none (P-21).
+      indication: isDeviceFiling ? (intendedUse || undefined) : (savedIndication || undefined),
       ...(isDeviceFiling
         ? {
             deviceClassification: {
@@ -413,9 +390,6 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
       setCreating(false);
     }
   };
-
-  const taGroups = TA_GROUPS;
-  const taList = TA_LIST;
 
   return (
     /* ── Full canvas, not a modal ────────────────────────────────────────────
@@ -574,15 +548,37 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                   </label>
                 ) : (
                   <label className="npw-field">
-                    <span className="npw-field-l">Therapeutic area</span>
-                    <select className="c2c-input" value={ta} onChange={e => setTa(e.target.value)}>
-                      {taGroups.map(g => {
-                        const items = taList.filter(t => t.group === g.id);
-                        return items.length
-                          ? <optgroup key={g.id} label={g.label}>{items.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</optgroup>
-                          : null;
-                      })}
+                    <span className="npw-field-l">Indication</span>
+                    <input
+                      className="c2c-input"
+                      value={indication}
+                      onChange={e => setIndication(e.target.value)}
+                      placeholder="e.g. idiopathic pulmonary fibrosis"
+                      aria-describedby="npw-indication-help"
+                    />
+                    <span className="npw-field-help" id="npw-indication-help">
+                      The disease or condition, as Form 1571 will state it. Leave it blank if it is not settled yet.
+                    </span>
+                  </label>
+                )}
+
+                {asksClass && (
+                  <label className="npw-field">
+                    <span className="npw-field-l">Product type</span>
+                    <select
+                      className="c2c-input"
+                      value={statedClass}
+                      onChange={e => setStatedClass(e.target.value as ProductType | '')}
+                      required
+                      aria-required="true"
+                      aria-describedby="npw-class-help"
+                    >
+                      <option value="">{NOT_STATED}</option>
+                      {STATED_CLASS_CHOICES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
+                    <span className="npw-field-help" id="npw-class-help">
+                      Required. A {programType.toUpperCase()} covers drugs and biologics; the program records which.
+                    </span>
                   </label>
                 )}
 
@@ -735,10 +731,12 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     {!product.trim() && <span style={{ color: 'var(--text-300)' }}> (same as the project name)</span>}
                   </dd>
                 </div>
-                <div className="npw-review-row">
-                  <dt>Therapeutic area</dt>
-                  <dd>{taList.find(t => t.id === ta)?.label || ta}</dd>
-                </div>
+                {!isDeviceFiling && (
+                  <div className="npw-review-row">
+                    <dt>Indication</dt>
+                    <dd>{savedIndication || 'Not stated'}</dd>
+                  </div>
+                )}
                 <div className="npw-review-row">
                   <dt>Target date</dt>
                   <dd>{target || 'Not set'}</dd>
@@ -754,11 +752,11 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     for a device filing — and then stored it. */}
                 <div className="npw-review-row">
                   <dt>Workstream</dt>
-                  <dd>{workstreamForFilingType(programTypeFor(selTpl, uiSeg)) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
+                  <dd>{workstreamForFilingType(programType) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
                 </div>
                 <div className="npw-review-row">
                   <dt>Recorded as</dt>
-                  <dd>{programTypeFor(selTpl, uiSeg).toUpperCase().replace(/_/g, ' ')} · {productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg)}</dd>
+                  <dd>{programType.toUpperCase().replace(/_/g, ' ')} · {recordedClass ?? 'not stated'}</dd>
                 </div>
                 {/* Only what was actually entered. A device row that reads
                     "Not recorded" is the truth about the programme; filling it
@@ -878,14 +876,14 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
             <button
               type="button"
               className="btn primary"
-              disabled={(step === 0 && !tpl) || (step === 1 && !savedName)}
+              disabled={(step === 0 && !tpl) || (step === 1 && !configured)}
               onClick={() => setStep(s => s + 1)}
             >
               Continue
             </button>
           )}
           {step === 2 && (
-            <button type="button" className="btn primary" disabled={creating || !savedName} onClick={doCreate}>
+            <button type="button" className="btn primary" disabled={creating || !configured} onClick={doCreate}>
               {creating ? 'Creating project…' : <>{I.plus} Create project</>}
             </button>
           )}

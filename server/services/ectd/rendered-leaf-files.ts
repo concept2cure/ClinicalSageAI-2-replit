@@ -56,6 +56,12 @@ export interface StoreRenderedLeafFileInput {
   renderedFrom: RenderedLeafSourceKind;
   /** The CTD section the bytes were rendered for (e.g. 'm1.13'), when known. */
   sectionCode?: string | null;
+  /**
+   * For a sponsor-attached form: the required fields the forms engine found
+   * missing (attached-form-check.ts). `[]` is the only value the IND checklist
+   * counts as complete. Omitted for a server render: no check is recorded.
+   */
+  requiredFieldsMissing?: string[];
 }
 
 export interface StoredRenderedLeafFile {
@@ -114,6 +120,7 @@ export async function storeRenderedLeafFile(
         fileName: input.fileName,
         renderedFrom: input.renderedFrom,
         sectionCode: input.sectionCode ?? null,
+        ...(input.requiredFieldsMissing ? { requiredFieldsMissing: input.requiredFieldsMissing } : {}),
         createdBy: input.userId ?? null,
       })
       .returning({ id: renderedLeafFiles.id });

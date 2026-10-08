@@ -30,7 +30,7 @@ CREATE TABLE organizations (id serial PRIMARY KEY, name text);
 CREATE TABLE submissions (id serial PRIMARY KEY, organization_id int, program_id uuid, title text, product_name text, application_type text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
 CREATE TABLE ectd_sequences (id serial PRIMARY KEY, organization_id int, submission_id int, sequence_number text NOT NULL DEFAULT '0000', deleted_at timestamptz);
 CREATE TABLE submission_leaves (id serial PRIMARY KEY, organization_id int, sequence_id int, section_code text, lifecycle_op text NOT NULL DEFAULT 'new', document_table text, document_id int, document_uuid uuid, document_type text, deleted_at timestamptz);
-CREATE TABLE rendered_leaf_files (id serial PRIMARY KEY, organization_id int, rendered_from text, file_name text, sha256 text, section_code text);
+CREATE TABLE rendered_leaf_files (id serial PRIMARY KEY, organization_id int, rendered_from text, file_name text, sha256 text, section_code text, required_fields_missing text[]);
 CREATE TABLE coauthor_documents (id serial PRIMARY KEY, organization_id int, module_number text, status text, module_name text);
 CREATE TABLE regulatory_programs (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int, name text, code text, program_type text, product_name text, target_submission_date timestamptz, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
 `;
@@ -230,11 +230,14 @@ describe('assembleOrgIndChecklists — targetReceiptDate (regulatory_programs)',
    status alone; once the signed official form is placed, that is the complete
    form, and the chip must say so from the placed leaf — never from a fixture. */
 describe('assembleOrgIndChecklists — sponsor-completed official form leaves', () => {
-  async function placeUploadedForm(org: number, seqId: number, documentType: string, sectionCode = 'm1.1'): Promise<number> {
+  /** `missing`: the recorded check — [] complete, a list not, null never checked (20261008e). */
+  async function placeUploadedForm(
+    org: number, seqId: number, documentType: string, sectionCode = 'm1.1', missing: string[] | null = [],
+  ): Promise<number> {
     const f = await pglite.query(
-      `INSERT INTO rendered_leaf_files (organization_id, rendered_from, file_name, sha256, section_code)
-       VALUES ($1, 'ind_form_sponsor_upload', 'form-fda-3674-signed.pdf', 'abc', $2) RETURNING id`,
-      [org, sectionCode],
+      `INSERT INTO rendered_leaf_files (organization_id, rendered_from, file_name, sha256, section_code, required_fields_missing)
+       VALUES ($1, 'ind_form_sponsor_upload', 'form-fda-3674-signed.pdf', 'abc', $2, $3) RETURNING id`,
+      [org, sectionCode, missing],
     );
     const fileId = (f.rows[0] as { id: number }).id;
     await pglite.query(
@@ -271,6 +274,19 @@ describe('assembleOrgIndChecklists — sponsor-completed official form leaves', 
        VALUES ($1, $2, 'm1.1', 'rendered_leaf_files', $3, 'form_3674')`,
       [ORG, seqId, (f.rows[0] as { id: number }).id],
     );
+    const [ind] = (await assembleOrgIndChecklists(ORG)) as any[];
+    expect(ind.forms.find((x: any) => x.id === 'FDA_3674').done).toBe(false);
+  });
+
+  // QA 2026-10-08 (j7): an attachment completes its form only when its recorded forms-engine check found nothing missing.
+  it('an attached form whose recorded check found required fields missing is not complete', async () => {
+    await placeUploadedForm(ORG, await sequenceOf(await seedIND(ORG)), 'form_3674', 'm1.1', ['certification_selected']);
+    const [ind] = (await assembleOrgIndChecklists(ORG)) as any[];
+    expect(ind.forms.find((x: any) => x.id === 'FDA_3674').done).toBe(false);
+  });
+
+  it('an attached form with no check recorded (a server render, or attached before the check) is not complete', async () => {
+    await placeUploadedForm(ORG, await sequenceOf(await seedIND(ORG)), 'form_3674', 'm1.1', null);
     const [ind] = (await assembleOrgIndChecklists(ORG)) as any[];
     expect(ind.forms.find((x: any) => x.id === 'FDA_3674').done).toBe(false);
   });
@@ -522,7 +538,7 @@ describe('IND checklist lifecycle refusals and retained form history', () => {
     const sub = await seedIND(ORG, { withLeaves: false });
     const original = await sequence(sub, '0000');
     const file = await pglite.query<{ id: number }>(
-      `INSERT INTO rendered_leaf_files (organization_id,file_name) VALUES ($1,'signed-1571.pdf') RETURNING id`, [ORG],
+      `INSERT INTO rendered_leaf_files (organization_id,file_name,required_fields_missing) VALUES ($1,'signed-1571.pdf','{}') RETURNING id`, [ORG],
     );
     await pglite.query(
       `INSERT INTO submission_leaves (organization_id,sequence_id,section_code,document_table,document_id,document_type) VALUES ($1,$2,'m1.1','rendered_leaf_files',$3,'form_1571')`,

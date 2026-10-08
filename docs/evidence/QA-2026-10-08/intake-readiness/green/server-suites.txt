@@ -1,0 +1,4 @@
+ × server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against 14ms
+ × server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences 6ms
+ Test Files  1 failed | 359 passed (360)
+      Tests  2 failed | 4269 passed (4271)

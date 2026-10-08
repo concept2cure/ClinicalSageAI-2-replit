@@ -1,0 +1,30 @@
+# ESLint warnings/errors per changed file: HEAD content (git show HEAD:<file> | eslint --stdin) vs the working tree.
+# Columns: file  HEAD-warnings HEAD-errors  NOW-warnings NOW-errors   ('new' = not in HEAD)
+client/src/concept2cure/v2/surfaces/Projects.tsx 7 0 7 0
+client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx 3 0 3 0
+client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx new new 0 0
+client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx 0 0 0 0
+client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx 1 0 1 0
+client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx new new 0 0
+shared/constants/domain/product-types.ts 0 0 0 0
+shared/constants/domain/__tests__/product-types.test.ts 0 0 0 0
+shared/schema/submissions.ts 0 0 0 0
+server/routes/c2c/projects.ts 5 0 5 0
+server/routes/c2c/project-intake.ts 0 0 0 0
+server/routes/c2c/__tests__/projects-create-stated-facts.test.ts new new 0 0
+server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts new new 0 0
+server/services/c2c/program-registry-context.ts new new 0 0
+server/services/c2c/program-project-anchor.ts 1 0 1 0
+server/routes/taskManagement.routes.ts 9 0 9 0
+server/services/tasking/task-project.ts new new 0 0
+server/services/tasking/__tests__/task-project.pglite.test.ts new new 0 0
+server/routes/__tests__/task-management-source-project.test.ts new new 0 0
+server/routes/ind-forms.routes.ts 8 0 8 0
+server/services/ind-forms/attached-form-check.ts new new 0 0
+server/services/ectd/rendered-leaf-files.ts 0 0 0 0
+server/services/ind-lifecycle/ind-checklist-view-assembler.ts 0 0 0 0
+server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts 0 0 0 0
+server/routes/__tests__/ind-forms.contract.integration.test.ts 2 0 2 0
+server/db/pglite-harness.ts 1 0 1 0
+tests/schema-contract/projects-registry-context-backfill.pglite.test.ts new new 0 0
+scripts/db/migration-set.mjs 0 0 0 0
