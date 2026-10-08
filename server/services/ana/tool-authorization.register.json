@@ -2626,16 +2626,6 @@
     "source": "authoring"
    }
   },
-  "cross_region_gap_analysis": {
-   "class": "read",
-   "writes": "none",
-   "site": "AnaToolExecutor.ts:9270",
-   "present": {
-    "verb": "compare",
-    "object": "what another region needs",
-    "source": "knowledge"
-   }
-  },
   "define_estimand": {
    "class": "read",
    "writes": "none",
