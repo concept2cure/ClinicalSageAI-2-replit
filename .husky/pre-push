@@ -308,6 +308,21 @@ if ! npm run --silent ci:session-scoped-rls-bypass 2>&1; then
   exit 1
 fi
 echo "   ✅ No new session-scoped RLS bypass."
+
+# Cheap, no database. RLS here cannot contain injected SQL (the tenant id is a
+# settable session variable, docs/security/C2C_TENANT_ISOLATION_PROOF.md §0), so
+# a value interpolated into SQL text is cross-tenant critical. Ratchet: no file
+# gains an interpolation; scripts/ci/sql-interpolation-baseline.json only shrinks.
+echo "   Validating no new value interpolated into SQL text..."
+if ! npm run --silent ci:sql-interpolation 2>&1; then
+  echo ""
+  echo "🚫 ERROR: SQL interpolation check FAILED."
+  echo "   Pass the value as a bind parameter (\$1, or drizzle sql\`...\`, which"
+  echo "   parameterizes). An identifier comes from a fixed allowlist in code."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No new value interpolated into SQL text."
 echo "   Validating ledger integrity (row ids, evidence paths)..."
 if ! node scripts/ops/ledger-check.mjs >/dev/null 2>&1; then
   echo ""

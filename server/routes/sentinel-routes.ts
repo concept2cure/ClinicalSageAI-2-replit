@@ -110,15 +110,16 @@ router.patch('/findings/:findingId', async (req: Request, res: Response) => {
     const { organizationId } = tenantContext;
 
     const data = updateFindingSchema.parse(req.body);
-    // Who resolved a finding is the session's user (ledger L195). The body's
-    // resolvedById used to be stored as given, and an absent one stored no
-    // resolver at all. A body naming anyone else is refused, not ignored.
+    // Who closed a finding (resolved or dismissed) is the session's user
+    // (ledger L195). The body's resolvedById used to be stored as given, and an
+    // absent one stored no resolver at all. A body naming anyone else is
+    // refused, not ignored.
     const userId = authedUserId(req);
     if (data.resolvedById !== undefined && data.resolvedById !== userId) {
       return res.status(422).json({ error: 'resolvedById is the signed-in user; it cannot name anyone else' });
     }
-    if (data.status === 'resolved' && userId === null) {
-      return res.status(401).json({ error: 'Authentication required to resolve a finding' });
+    if ((data.status === 'resolved' || data.status === 'dismissed') && userId === null) {
+      return res.status(401).json({ error: 'Authentication required to close a finding' });
     }
     const scheduler = getSentinelScheduler(pool);
     const sentinel = scheduler.getSentinel();

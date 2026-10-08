@@ -1,0 +1,80 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts
+{
+  "timestamp": "2026-10-08T16:38:09.714Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts > createSequence refuses an FDA variation > refuses type variation on an FDA submission, with the reason, and writes nothing 14ms
+   → promise resolved "{ id: 9, type: 'variation', …(1) }" instead of rejecting
+ × server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts > createSequence refuses an FDA variation > refuses it when only the submission is FDA, whatever region the caller names 2ms
+   → promise resolved "{ id: 9, type: 'variation', …(1) }" instead of rejecting
+ ✓ server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts > createSequence refuses an FDA variation > still creates an EU variation, and an FDA amendment 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts > createSequence refuses an FDA variation > refuses type variation on an FDA submission, with the reason, and writes nothing
+AssertionError: promise resolved "{ id: 9, type: 'variation', …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "ok": true,
++   },
++   "id": 9,
++   "type": "variation",
+  }
+
+ ❯ server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts:27:125
+     25|
+     26|   it('refuses type variation on an FDA submission, with the reason, an…
+     27|     await expect(createSequence({ submissionId: 1, region: 'fda', sequ…
+       |                                                                                                                             ^
+     28|       .rejects.toMatchObject({ code: 'VALIDATION', message: expect.str…
+     29|     expect(h.insert).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts > createSequence refuses an FDA variation > refuses it when only the submission is FDA, whatever region the caller names
+AssertionError: promise resolved "{ id: 9, type: 'variation', …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "ok": true,
++   },
++   "id": 9,
++   "type": "variation",
+  }
+
+ ❯ server/services/submission-service/__tests__/create-sequence-fda-variation.test.ts:33:124
+     31|
+     32|   it('refuses it when only the submission is FDA, whatever region the …
+     33|     await expect(createSequence({ submissionId: 1, region: 'eu', seque…
+       |                                                                                                                            ^
+     34|       .rejects.toBeInstanceOf(SubmissionError);
+     35|     expect(h.insert).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  16:38:07
+   Duration  3.88s (transform 2.30s, setup 100ms, import 3.42s, tests 23ms, environment 0ms)
+

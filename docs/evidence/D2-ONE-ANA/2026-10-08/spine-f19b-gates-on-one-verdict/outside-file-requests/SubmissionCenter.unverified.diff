@@ -1,0 +1,50 @@
+--- a/client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx
++++ b/client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx
+@@ -300,6 +300,13 @@
+ /** Follow-up sequence types: the server's createSequence enum, less 'original' (that is 0000). */
+ const FOLLOW_UP_SEQ_TYPES = ['amendment', 'response', 'annual', 'variation', 'withdrawal'] as const;
+ 
++/** The types offered for this submission's region. FDA has no 'variation': createSequence refuses it
++ *  (market-support.ts sequenceTypeRefusal, F19b), so it is not offered for an FDA submission. */
++function followUpTypesFor(region: string | null | undefined): string[] {
++  const fda = ['fda', 'us'].includes(String(region ?? '').trim().toLowerCase());
++  return FOLLOW_UP_SEQ_TYPES.filter((t) => !(fda && t === 'variation'));
++}
++
+ /** The next sequence number in the submission's own region — numbering restarts per region. */
+ function nextSequenceNumber(sub: SubRow, rows: SeqRow[]): string {
+   const taken = rows
+@@ -316,16 +323,20 @@
+   type: string;
+   onType: (t: string) => void;
+   busy: boolean;
+-  onStart: (sequenceNumber: string) => void;
++  onStart: (sequenceNumber: string, type: string) => void;
+ }) {
+   const next = nextSequenceNumber(sub, rows);
++  // The type shown is the type sent: a choice made on another submission whose
++  // list held it (an EU 'variation') falls back to this region's first type.
++  const offered = followUpTypesFor(sub.primaryRegion);
++  const shown = offered.includes(type) ? type : offered[0];
+   return (
+     <div className="cm-pushbar sc-mt">
+-      <select className="sc-subpick" aria-label={`Type of sequence ${next}`} value={type} disabled={busy}
++      <select className="sc-subpick" aria-label={`Type of sequence ${next}`} value={shown} disabled={busy}
+         onChange={(e) => onType(e.target.value)}>
+-        {FOLLOW_UP_SEQ_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
++        {offered.map((t) => <option key={t} value={t}>{t}</option>)}
+       </select>
+-      <button type="button" className="sp-primary sc-btn" disabled={busy} onClick={() => onStart(next)}>
++      <button type="button" className="sp-primary sc-btn" disabled={busy} onClick={() => onStart(next, shown)}>
+         {I.sparkles} {busy ? 'Creating…' : `Start sequence ${next}`}
+       </button>
+     </div>
+@@ -1784,7 +1795,7 @@
+                   type={nextSeqType}
+                   onType={setNextSeqType}
+                   busy={creatingSeq}
+-                  onStart={(n) => void startSequence(sub, n, nextSeqType)}
++                  onStart={(n, t) => void startSequence(sub, n, t)}
+                 />
+               </>
+             )}
