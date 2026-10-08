@@ -1,0 +1,24 @@
+ ✓ server/services/ana/__tests__/review-sop-requirements-tool.test.ts > review_sop_requirements > is defined and deterministic
+ ✓ server/services/ana/__tests__/review-sop-requirements-tool.test.ts > review_sop_requirements > reports each requirement of a drug complaint SOP as addressed, with its sentence, or not found
+ ✓ server/services/ana/__tests__/review-sop-requirements-tool.test.ts > review_sop_requirements > refuses a topic or product type it does not model, rather than guessing
+ ✓ server/services/ana/__tests__/review-sop-requirements-tool.test.ts > review_sop_requirements > with no text, reviews nothing and says so
+ ✓ tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > a device CAPA SOP cites the QMSR and ISO 13485:2016 §8.5.2, and no part of 21 CFR 210/211
+ ✓ tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > a drug CAPA SOP cites 21 CFR 211.192 and ICH Q10 §3.2.2
+ ✓ tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > a biologic deviation SOP names the biological product deviation report (21 CFR 600.14)
+ ✓ tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > every clause the SOP relies on is listed with its basis, and an unread one says so
+ ✓ tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > complaint handling and management review are topics
+ ✓ tests/services/sop-expertise.test.ts > a device manufacturer’s SOP cites the device quality system in force, not drug CGMP > with no product type it does not guess one: it says which it assumed
+ ✓ tests/services/sop-expertise.test.ts > the record itself > every element of every topic and product carries a well-formed basis
+ ✓ tests/services/sop-expertise.test.ts > the record itself > before the QMSR took effect, a device SOP is cited to the QSR section then in force
+ ✓ tests/services/sop-expertise.test.ts > AnA reviews a client’s SOP against what its topic requires > names each requirement as addressed, with the sentence that addresses it, or as not found
+ ✓ tests/services/sop-expertise.test.ts > AnA reviews a client’s SOP against what its topic requires > says what "not found" means: the check found no wording for it, not that the SOP is deficient
+ ✓ tests/services/sop-expertise.test.ts > AnA reviews a client’s SOP against what its topic requires > an empty SOP addresses nothing and is not reported as reviewed clean
+ ✓ tests/services/sop-expertise.test.ts > what the SOP question flow tells clients is the regulation in force > names no removed QSR section as a requirement for devices
+ ✓ tests/services/sop-expertise.test.ts > what the SOP question flow tells clients is the regulation in force > cites only ICH Q10 sections that exist, and change management as §3.2.3
+ ✓ tests/services/sop-expertise.test.ts > what the SOP question flow tells clients is the regulation in force > does not cite EU GMP Annex 15 for training
+ ✓ tests/services/sop-generator.test.ts > SOP generator > produces the canonical GxP section skeleton
+ ✓ tests/services/sop-generator.test.ts > SOP generator > fills a real starter procedure for a known process
+ ✓ tests/services/sop-generator.test.ts > SOP generator > is region-aware: references differ by region
+ ✓ tests/services/sop-generator.test.ts > SOP generator > supports a multi-region SOP (FDA + EMA + PMDA)
+ ✓ tests/services/sop-generator.test.ts > SOP generator > defaults to FDA and handles a generic topic
+      Tests  23 passed (23)

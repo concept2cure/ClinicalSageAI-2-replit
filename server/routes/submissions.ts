@@ -320,6 +320,38 @@ router.get('/validation-rules', limiter, requireRole(AUTHOR), async (req, res) =
   }
 });
 
+// ── What the platform can carry for a market (FILING_SPINE.md F19) ──────────
+// One statement per (application type, market), composed by
+// services/regulatory/market-support.ts from the rule pack, the regional
+// backbone, the region profile and the channel with its adapter's refusal. No
+// model writes any of it. `?applicationType=` is required; `?market=` (an
+// agency, a region code or a submission region) narrows to one market, and
+// without it every region the platform names is returned.
+// Registered before '/:id' so the literal path is not shadowed.
+router.get('/market-support', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const first = (v: unknown) => String(Array.isArray(v) ? v[0] : v ?? '').trim();
+  const applicationType = first(req.query.applicationType);
+  const market = first(req.query.market);
+  if (!applicationType || applicationType.length > 64 || market.length > 64) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'applicationType is required (at most 64 characters); market, when given, is at most 64.' } });
+  }
+  try {
+    const [{ readMarketSupport }, { REGION_IDENTITY }, { pool }] = await Promise.all([
+      import('../services/regulatory/market-support.js'),
+      import('../../shared/regulatory/region-identity.js'),
+      import('../db.js'),
+    ]);
+    const markets = market ? [market] : Object.keys(REGION_IDENTITY);
+    const asOf = new Date().toISOString().slice(0, 10);
+    const out = await readMarketSupport(pool, markets.map((m) => ({ applicationType, market: m })), asOf);
+    res.json({ applicationType, asOf, markets: out });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // ── Market submission specifications (per-market governance + formatting) ─────
 // The consolidated, per-market-per-format datasheet: formatting requirements, the
 // governance (e-signature basis, sequencing, lifecycle), language/translation,

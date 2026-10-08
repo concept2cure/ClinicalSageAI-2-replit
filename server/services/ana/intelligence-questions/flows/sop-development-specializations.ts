@@ -217,7 +217,7 @@ export function createSopSpecializationNodes(): QuestionNode[] {
       question:
         'This SOP supports medical device operations. Let\'s capture the device-specific regulatory requirements.',
       guidance:
-        'Medical device SOPs must comply with 21 CFR 820 (QSR), ISO 13485, and EU MDR where applicable. Design control procedures (21 CFR 820.30) are particularly scrutinized during FDA inspections. Post-market surveillance obligations differ significantly between the US and EU frameworks.',
+        'Medical device SOPs must comply with 21 CFR 820 (the QMSR, in force since 2026-02-02, which incorporates ISO 13485:2016) and EU MDR where applicable. Design control procedures (ISO 13485:2016 §7.3; formerly 21 CFR 820.30) are particularly scrutinized during FDA inspections. Post-market surveillance obligations differ significantly between the US and EU frameworks.',
       provideExpertFeedback: true,
       fields: [
         {
@@ -250,7 +250,7 @@ export function createSopSpecializationNodes(): QuestionNode[] {
           label: 'Design History File (DHF) Required',
           type: 'yes_no',
           required: true,
-          helpText: 'Is a Design History File maintained per 21 CFR 820.30?',
+          helpText: 'Are design and development files maintained per ISO 13485:2016 §7.3.10 under the QMSR (formerly the Design History File, 21 CFR 820.30(j))?',
         },
         {
           id: 'risk_management_file',
