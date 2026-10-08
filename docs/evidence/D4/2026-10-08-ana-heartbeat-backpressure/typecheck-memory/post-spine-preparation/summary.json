@@ -1,0 +1,883 @@
+[
+  {
+    "version": "5.6.3",
+    "mode": "seed",
+    "rootCount": 7003,
+    "sourceCount": 12062,
+    "skippedDuringNativeInvalidation": 225,
+    "pendingBefore": 12002,
+    "pendingAfter": 12002,
+    "checkedCount": 0,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 5368,
+    "heapMb": 5123,
+    "gcEvents": [],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7003,
+    "sourceCount": 12062,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 12002,
+    "pendingAfter": 9719,
+    "checkedCount": 2283,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 6469,
+    "heapMb": 6013,
+    "gcEvents": [
+      {
+        "checkedCount": 2283,
+        "rssBeforeMb": 6470,
+        "rssAfterMb": 6456,
+        "heapBeforeMb": 6054,
+        "heapAfterMb": 5978
+      }
+    ],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7003,
+    "sourceCount": 12062,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 9719,
+    "pendingAfter": 7569,
+    "checkedCount": 2150,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 6213,
+    "heapMb": 5809,
+    "gcEvents": [
+      {
+        "checkedCount": 250,
+        "rssBeforeMb": 6278,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5970,
+        "heapAfterMb": 5606
+      },
+      {
+        "checkedCount": 300,
+        "rssBeforeMb": 6222,
+        "rssAfterMb": 6191,
+        "heapBeforeMb": 5734,
+        "heapAfterMb": 5624
+      },
+      {
+        "checkedCount": 350,
+        "rssBeforeMb": 6218,
+        "rssAfterMb": 6191,
+        "heapBeforeMb": 5738,
+        "heapAfterMb": 5631
+      },
+      {
+        "checkedCount": 400,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5744,
+        "heapAfterMb": 5638
+      },
+      {
+        "checkedCount": 450,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6192,
+        "heapBeforeMb": 5743,
+        "heapAfterMb": 5638
+      },
+      {
+        "checkedCount": 500,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6192,
+        "heapBeforeMb": 5743,
+        "heapAfterMb": 5638
+      },
+      {
+        "checkedCount": 550,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6192,
+        "heapBeforeMb": 5744,
+        "heapAfterMb": 5638
+      },
+      {
+        "checkedCount": 600,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6192,
+        "heapBeforeMb": 5743,
+        "heapAfterMb": 5638
+      },
+      {
+        "checkedCount": 650,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6192,
+        "heapBeforeMb": 5743,
+        "heapAfterMb": 5638
+      },
+      {
+        "checkedCount": 700,
+        "rssBeforeMb": 6220,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5752,
+        "heapAfterMb": 5645
+      },
+      {
+        "checkedCount": 750,
+        "rssBeforeMb": 6220,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5754,
+        "heapAfterMb": 5648
+      },
+      {
+        "checkedCount": 800,
+        "rssBeforeMb": 6220,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5753,
+        "heapAfterMb": 5648
+      },
+      {
+        "checkedCount": 850,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5753,
+        "heapAfterMb": 5648
+      },
+      {
+        "checkedCount": 900,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5753,
+        "heapAfterMb": 5648
+      },
+      {
+        "checkedCount": 950,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5753,
+        "heapAfterMb": 5648
+      },
+      {
+        "checkedCount": 1000,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5753,
+        "heapAfterMb": 5648
+      },
+      {
+        "checkedCount": 1050,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5753,
+        "heapAfterMb": 5648
+      },
+      {
+        "checkedCount": 1100,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5753,
+        "heapAfterMb": 5648
+      },
+      {
+        "checkedCount": 1150,
+        "rssBeforeMb": 6220,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5753,
+        "heapAfterMb": 5648
+      },
+      {
+        "checkedCount": 1200,
+        "rssBeforeMb": 6224,
+        "rssAfterMb": 6195,
+        "heapBeforeMb": 5796,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1250,
+        "rssBeforeMb": 6222,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5786,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1300,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5786,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1350,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5786,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1400,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5786,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1450,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5786,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1500,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5786,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1550,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5786,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1600,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5786,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1650,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5786,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1700,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5786,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1750,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5786,
+        "heapAfterMb": 5681
+      },
+      {
+        "checkedCount": 1800,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6195,
+        "heapBeforeMb": 5788,
+        "heapAfterMb": 5682
+      },
+      {
+        "checkedCount": 1850,
+        "rssBeforeMb": 6222,
+        "rssAfterMb": 6196,
+        "heapBeforeMb": 5803,
+        "heapAfterMb": 5696
+      },
+      {
+        "checkedCount": 1900,
+        "rssBeforeMb": 6225,
+        "rssAfterMb": 6198,
+        "heapBeforeMb": 5868,
+        "heapAfterMb": 5752
+      },
+      {
+        "checkedCount": 1950,
+        "rssBeforeMb": 6224,
+        "rssAfterMb": 6197,
+        "heapBeforeMb": 5858,
+        "heapAfterMb": 5753
+      },
+      {
+        "checkedCount": 2000,
+        "rssBeforeMb": 6223,
+        "rssAfterMb": 6197,
+        "heapBeforeMb": 5857,
+        "heapAfterMb": 5753
+      },
+      {
+        "checkedCount": 2050,
+        "rssBeforeMb": 6223,
+        "rssAfterMb": 6197,
+        "heapBeforeMb": 5859,
+        "heapAfterMb": 5754
+      },
+      {
+        "checkedCount": 2057,
+        "rssBeforeMb": 6216,
+        "rssAfterMb": 6198,
+        "heapBeforeMb": 5832,
+        "heapAfterMb": 5757
+      },
+      {
+        "checkedCount": 2100,
+        "rssBeforeMb": 6225,
+        "rssAfterMb": 6199,
+        "heapBeforeMb": 5866,
+        "heapAfterMb": 5761
+      },
+      {
+        "checkedCount": 2133,
+        "rssBeforeMb": 6215,
+        "rssAfterMb": 6200,
+        "heapBeforeMb": 5842,
+        "heapAfterMb": 5769
+      },
+      {
+        "checkedCount": 2150,
+        "rssBeforeMb": 6227,
+        "rssAfterMb": 6200,
+        "heapBeforeMb": 5881,
+        "heapAfterMb": 5775
+      }
+    ],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7003,
+    "sourceCount": 12062,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 7569,
+    "pendingAfter": 7372,
+    "checkedCount": 197,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 6241,
+    "heapMb": 5811,
+    "gcEvents": [
+      {
+        "checkedCount": 197,
+        "rssBeforeMb": 6267,
+        "rssAfterMb": 6228,
+        "heapBeforeMb": 5979,
+        "heapAfterMb": 5777
+      }
+    ],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7003,
+    "sourceCount": 12062,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 7372,
+    "pendingAfter": 5322,
+    "checkedCount": 2050,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 6224,
+    "heapMb": 5874,
+    "gcEvents": [
+      {
+        "checkedCount": 500,
+        "rssBeforeMb": 6246,
+        "rssAfterMb": 6157,
+        "heapBeforeMb": 5963,
+        "heapAfterMb": 5602
+      },
+      {
+        "checkedCount": 700,
+        "rssBeforeMb": 6227,
+        "rssAfterMb": 6158,
+        "heapBeforeMb": 5918,
+        "heapAfterMb": 5602
+      },
+      {
+        "checkedCount": 900,
+        "rssBeforeMb": 6226,
+        "rssAfterMb": 6158,
+        "heapBeforeMb": 5918,
+        "heapAfterMb": 5602
+      },
+      {
+        "checkedCount": 1100,
+        "rssBeforeMb": 6226,
+        "rssAfterMb": 6158,
+        "heapBeforeMb": 5918,
+        "heapAfterMb": 5602
+      },
+      {
+        "checkedCount": 1300,
+        "rssBeforeMb": 6226,
+        "rssAfterMb": 6158,
+        "heapBeforeMb": 5918,
+        "heapAfterMb": 5602
+      },
+      {
+        "checkedCount": 1461,
+        "rssBeforeMb": 6215,
+        "rssAfterMb": 6160,
+        "heapBeforeMb": 5891,
+        "heapAfterMb": 5608
+      },
+      {
+        "checkedCount": 1600,
+        "rssBeforeMb": 6218,
+        "rssAfterMb": 6162,
+        "heapBeforeMb": 5879,
+        "heapAfterMb": 5630
+      },
+      {
+        "checkedCount": 1737,
+        "rssBeforeMb": 6238,
+        "rssAfterMb": 6179,
+        "heapBeforeMb": 5930,
+        "heapAfterMb": 5698
+      },
+      {
+        "checkedCount": 1800,
+        "rssBeforeMb": 6226,
+        "rssAfterMb": 6181,
+        "heapBeforeMb": 5900,
+        "heapAfterMb": 5720
+      },
+      {
+        "checkedCount": 1869,
+        "rssBeforeMb": 6214,
+        "rssAfterMb": 6185,
+        "heapBeforeMb": 5899,
+        "heapAfterMb": 5755
+      },
+      {
+        "checkedCount": 1900,
+        "rssBeforeMb": 6213,
+        "rssAfterMb": 6186,
+        "heapBeforeMb": 5885,
+        "heapAfterMb": 5778
+      },
+      {
+        "checkedCount": 1950,
+        "rssBeforeMb": 6213,
+        "rssAfterMb": 6186,
+        "heapBeforeMb": 5896,
+        "heapAfterMb": 5790
+      },
+      {
+        "checkedCount": 2000,
+        "rssBeforeMb": 6217,
+        "rssAfterMb": 6189,
+        "heapBeforeMb": 5926,
+        "heapAfterMb": 5818
+      },
+      {
+        "checkedCount": 2050,
+        "rssBeforeMb": 6240,
+        "rssAfterMb": 6208,
+        "heapBeforeMb": 5951,
+        "heapAfterMb": 5840
+      }
+    ],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7003,
+    "sourceCount": 12062,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 5322,
+    "pendingAfter": 4408,
+    "checkedCount": 914,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 6219,
+    "heapMb": 5755,
+    "gcEvents": [
+      {
+        "checkedCount": 750,
+        "rssBeforeMb": 6279,
+        "rssAfterMb": 6180,
+        "heapBeforeMb": 5992,
+        "heapAfterMb": 5553
+      },
+      {
+        "checkedCount": 800,
+        "rssBeforeMb": 6214,
+        "rssAfterMb": 6184,
+        "heapBeforeMb": 5699,
+        "heapAfterMb": 5586
+      },
+      {
+        "checkedCount": 856,
+        "rssBeforeMb": 6214,
+        "rssAfterMb": 6185,
+        "heapBeforeMb": 5772,
+        "heapAfterMb": 5624
+      },
+      {
+        "checkedCount": 900,
+        "rssBeforeMb": 6218,
+        "rssAfterMb": 6189,
+        "heapBeforeMb": 5797,
+        "heapAfterMb": 5676
+      },
+      {
+        "checkedCount": 914,
+        "rssBeforeMb": 6234,
+        "rssAfterMb": 6206,
+        "heapBeforeMb": 5814,
+        "heapAfterMb": 5721
+      }
+    ],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7003,
+    "sourceCount": 12062,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 4408,
+    "pendingAfter": 3808,
+    "checkedCount": 600,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 6216,
+    "heapMb": 5812,
+    "gcEvents": [
+      {
+        "checkedCount": 350,
+        "rssBeforeMb": 6239,
+        "rssAfterMb": 6154,
+        "heapBeforeMb": 5949,
+        "heapAfterMb": 5612
+      },
+      {
+        "checkedCount": 422,
+        "rssBeforeMb": 6214,
+        "rssAfterMb": 6172,
+        "heapBeforeMb": 5842,
+        "heapAfterMb": 5683
+      },
+      {
+        "checkedCount": 500,
+        "rssBeforeMb": 6216,
+        "rssAfterMb": 6175,
+        "heapBeforeMb": 5923,
+        "heapAfterMb": 5743
+      },
+      {
+        "checkedCount": 600,
+        "rssBeforeMb": 6248,
+        "rssAfterMb": 6203,
+        "heapBeforeMb": 5959,
+        "heapAfterMb": 5778
+      }
+    ],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7003,
+    "sourceCount": 12062,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 3808,
+    "pendingAfter": 3338,
+    "checkedCount": 470,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 6213,
+    "heapMb": 5713,
+    "gcEvents": [
+      {
+        "checkedCount": 400,
+        "rssBeforeMb": 6288,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 6008,
+        "heapAfterMb": 5658
+      },
+      {
+        "checkedCount": 450,
+        "rssBeforeMb": 6226,
+        "rssAfterMb": 6199,
+        "heapBeforeMb": 5775,
+        "heapAfterMb": 5668
+      },
+      {
+        "checkedCount": 470,
+        "rssBeforeMb": 6214,
+        "rssAfterMb": 6200,
+        "heapBeforeMb": 5751,
+        "heapAfterMb": 5679
+      }
+    ],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7003,
+    "sourceCount": 12062,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 3338,
+    "pendingAfter": 1638,
+    "checkedCount": 1700,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 6229,
+    "heapMb": 5877,
+    "gcEvents": [
+      {
+        "checkedCount": 500,
+        "rssBeforeMb": 6285,
+        "rssAfterMb": 6168,
+        "heapBeforeMb": 5989,
+        "heapAfterMb": 5477
+      },
+      {
+        "checkedCount": 600,
+        "rssBeforeMb": 6215,
+        "rssAfterMb": 6169,
+        "heapBeforeMb": 5695,
+        "heapAfterMb": 5512
+      },
+      {
+        "checkedCount": 716,
+        "rssBeforeMb": 6214,
+        "rssAfterMb": 6172,
+        "heapBeforeMb": 5756,
+        "heapAfterMb": 5540
+      },
+      {
+        "checkedCount": 800,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6175,
+        "heapBeforeMb": 5746,
+        "heapAfterMb": 5563
+      },
+      {
+        "checkedCount": 900,
+        "rssBeforeMb": 6218,
+        "rssAfterMb": 6177,
+        "heapBeforeMb": 5761,
+        "heapAfterMb": 5581
+      },
+      {
+        "checkedCount": 1000,
+        "rssBeforeMb": 6218,
+        "rssAfterMb": 6177,
+        "heapBeforeMb": 5781,
+        "heapAfterMb": 5602
+      },
+      {
+        "checkedCount": 1100,
+        "rssBeforeMb": 6218,
+        "rssAfterMb": 6177,
+        "heapBeforeMb": 5823,
+        "heapAfterMb": 5642
+      },
+      {
+        "checkedCount": 1191,
+        "rssBeforeMb": 6214,
+        "rssAfterMb": 6180,
+        "heapBeforeMb": 5830,
+        "heapAfterMb": 5677
+      },
+      {
+        "checkedCount": 1250,
+        "rssBeforeMb": 6223,
+        "rssAfterMb": 6181,
+        "heapBeforeMb": 5877,
+        "heapAfterMb": 5699
+      },
+      {
+        "checkedCount": 1350,
+        "rssBeforeMb": 6224,
+        "rssAfterMb": 6183,
+        "heapBeforeMb": 5911,
+        "heapAfterMb": 5732
+      },
+      {
+        "checkedCount": 1450,
+        "rssBeforeMb": 6234,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5945,
+        "heapAfterMb": 5766
+      },
+      {
+        "checkedCount": 1500,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5891,
+        "heapAfterMb": 5785
+      },
+      {
+        "checkedCount": 1550,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6194,
+        "heapBeforeMb": 5902,
+        "heapAfterMb": 5795
+      },
+      {
+        "checkedCount": 1600,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6195,
+        "heapBeforeMb": 5920,
+        "heapAfterMb": 5813
+      },
+      {
+        "checkedCount": 1650,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6195,
+        "heapBeforeMb": 5929,
+        "heapAfterMb": 5823
+      },
+      {
+        "checkedCount": 1700,
+        "rssBeforeMb": 6240,
+        "rssAfterMb": 6213,
+        "heapBeforeMb": 5950,
+        "heapAfterMb": 5843
+      }
+    ],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7003,
+    "sourceCount": 12062,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 1638,
+    "pendingAfter": 488,
+    "checkedCount": 1150,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 6247,
+    "heapMb": 5894,
+    "gcEvents": [
+      {
+        "checkedCount": 442,
+        "rssBeforeMb": 6269,
+        "rssAfterMb": 6176,
+        "heapBeforeMb": 5977,
+        "heapAfterMb": 5542
+      },
+      {
+        "checkedCount": 500,
+        "rssBeforeMb": 6221,
+        "rssAfterMb": 6180,
+        "heapBeforeMb": 5739,
+        "heapAfterMb": 5562
+      },
+      {
+        "checkedCount": 578,
+        "rssBeforeMb": 6214,
+        "rssAfterMb": 6186,
+        "heapBeforeMb": 5742,
+        "heapAfterMb": 5599
+      },
+      {
+        "checkedCount": 623,
+        "rssBeforeMb": 6214,
+        "rssAfterMb": 6185,
+        "heapBeforeMb": 5760,
+        "heapAfterMb": 5618
+      },
+      {
+        "checkedCount": 650,
+        "rssBeforeMb": 6218,
+        "rssAfterMb": 6188,
+        "heapBeforeMb": 5743,
+        "heapAfterMb": 5633
+      },
+      {
+        "checkedCount": 700,
+        "rssBeforeMb": 6215,
+        "rssAfterMb": 6188,
+        "heapBeforeMb": 5758,
+        "heapAfterMb": 5651
+      },
+      {
+        "checkedCount": 750,
+        "rssBeforeMb": 6217,
+        "rssAfterMb": 6190,
+        "heapBeforeMb": 5781,
+        "heapAfterMb": 5675
+      },
+      {
+        "checkedCount": 800,
+        "rssBeforeMb": 6217,
+        "rssAfterMb": 6190,
+        "heapBeforeMb": 5799,
+        "heapAfterMb": 5693
+      },
+      {
+        "checkedCount": 850,
+        "rssBeforeMb": 6219,
+        "rssAfterMb": 6191,
+        "heapBeforeMb": 5827,
+        "heapAfterMb": 5719
+      },
+      {
+        "checkedCount": 900,
+        "rssBeforeMb": 6222,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5850,
+        "heapAfterMb": 5741
+      },
+      {
+        "checkedCount": 950,
+        "rssBeforeMb": 6220,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5866,
+        "heapAfterMb": 5760
+      },
+      {
+        "checkedCount": 1000,
+        "rssBeforeMb": 6220,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5880,
+        "heapAfterMb": 5775
+      },
+      {
+        "checkedCount": 1050,
+        "rssBeforeMb": 6220,
+        "rssAfterMb": 6193,
+        "heapBeforeMb": 5904,
+        "heapAfterMb": 5797
+      },
+      {
+        "checkedCount": 1057,
+        "rssBeforeMb": 6214,
+        "rssAfterMb": 6195,
+        "heapBeforeMb": 5876,
+        "heapAfterMb": 5801
+      },
+      {
+        "checkedCount": 1100,
+        "rssBeforeMb": 6224,
+        "rssAfterMb": 6197,
+        "heapBeforeMb": 5930,
+        "heapAfterMb": 5824
+      },
+      {
+        "checkedCount": 1150,
+        "rssBeforeMb": 6261,
+        "rssAfterMb": 6234,
+        "heapBeforeMb": 5967,
+        "heapAfterMb": 5860
+      }
+    ],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7003,
+    "sourceCount": 12062,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 488,
+    "pendingAfter": 0,
+    "checkedCount": 488,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 6197,
+    "heapMb": 5908,
+    "gcEvents": [],
+    "diagnostics": []
+  }
+]

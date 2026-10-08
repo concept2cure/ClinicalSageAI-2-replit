@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/ana/__tests__/run-control-tenant-scope.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=docs/evidence/D4/2026-10-08-ana-heartbeat-backpressure/heartbeat/green.json"
+  ],
+  "process_exit": 0,
+  "elapsed_seconds": 0.88,
+  "tests": 15,
+  "passed": 15,
+  "failed": 0,
+  "source_blob": "4aaa8031ba2f3308f38728dea6d5e3b1074ee85b",
+  "test_blob": "830b5ce61ad1ecbae1ad92e9c9223f50a0d35408"
+}
