@@ -33,12 +33,17 @@ import { vaultDocKindLabel } from '../../../shared/constants/domain/vault-taxono
 export type CatalogState = 'suggested' | 'confirmed' | 'corrected';
 
 /**
- * The record's state as every reader must see it. A description written
- * before 20261008e has no state; it was AnA's (completeCatalog's only caller
- * is her tool), so it reads as a suggestion, with its proposer not recorded.
+ * The record's state as every reader must see it, from the row's raw columns.
+ * A description written before 20261008e has no state; it was AnA's
+ * (completeCatalog's only caller is her tool), so it reads as a suggestion,
+ * with its proposer not recorded. Derived here rather than in SQL text, so no
+ * query interpolates a fragment (ci:sql-interpolation).
  */
-export function catalogStateSql(alias: string): string {
-  return `COALESCE(${alias}.catalog_state, CASE WHEN ${alias}.document_kind IS NOT NULL THEN 'suggested' END)`;
+export function catalogStateOf(row: { catalog_state?: unknown; document_kind?: unknown } | null | undefined): CatalogState | null {
+  if (!row) return null;
+  const state = row.catalog_state;
+  if (state === 'suggested' || state === 'confirmed' || state === 'corrected') return state;
+  return row.document_kind ? 'suggested' : null;
 }
 
 /** Who proposed a description: the agent, its model, and the turn, from the tool context. */
@@ -58,6 +63,24 @@ const VERSION_CHANGED =
   'This document has a newer version than the one you read. Read the current version, then catalog it. Nothing was saved.';
 
 type Client = import('pg').PoolClient;
+
+const SUGGEST = `UPDATE vault.document_catalog SET
+       catalog_status = 'cataloged', document_kind = $1, purpose = $2, summary = $3,
+       key_data = $4::jsonb, embedding_status = $5, cataloged_by = $6, cataloged_at = NOW(),
+       catalog_state = 'suggested', proposed_by = $9, proposed_model = $10,
+       proposed_thread_id = $11, proposed_turn_id = $12,
+       confirmed_by = NULL, confirmed_at = NULL, correction_reason = NULL,
+       updated_at = NOW()
+     WHERE document_id = $7 AND content_hash = $8`;
+/** The same write with the vector, where the column exists (pgvector). */
+const SUGGEST_WITH_VECTOR = `UPDATE vault.document_catalog SET
+       catalog_status = 'cataloged', document_kind = $1, purpose = $2, summary = $3,
+       key_data = $4::jsonb, embedding_status = $5, cataloged_by = $6, cataloged_at = NOW(),
+       catalog_state = 'suggested', proposed_by = $9, proposed_model = $10,
+       proposed_thread_id = $11, proposed_turn_id = $12,
+       confirmed_by = NULL, confirmed_at = NULL, correction_reason = NULL,
+       updated_at = NOW(), embedding = $13::vector
+     WHERE document_id = $7 AND content_hash = $8`;
 
 // ─── AnA's suggestion ──────────────────────────────────────────────────────────
 
@@ -89,15 +112,7 @@ async function updateSuggestion(client: Client, s: CatalogSuggestion): Promise<'
     s.documentId, s.contentHash, s.proposer?.actorKind ?? null, s.proposer?.model ?? null,
     s.proposer?.threadId ?? null, s.proposer?.turnId ?? null,
   ];
-  const sql = (withVector: boolean) =>
-    `UPDATE vault.document_catalog SET
-       catalog_status = 'cataloged', document_kind = $1, purpose = $2, summary = $3,
-       key_data = $4::jsonb, embedding_status = $5, cataloged_by = $6, cataloged_at = NOW(),
-       catalog_state = 'suggested', proposed_by = $9, proposed_model = $10,
-       proposed_thread_id = $11, proposed_turn_id = $12,
-       confirmed_by = NULL, confirmed_at = NULL, correction_reason = NULL,
-       updated_at = NOW()${withVector ? ', embedding = $13::vector' : ''}
-     WHERE document_id = $7 AND content_hash = $8`;
+  const sql = (withVector: boolean) => (withVector ? SUGGEST_WITH_VECTOR : SUGGEST);
   if (s.embeddingLiteral) {
     // A savepoint: a missing vector column must not abort the transaction.
     await client.query('SAVEPOINT catalog_vector');
@@ -157,13 +172,13 @@ export async function writeCatalogSuggestion(s: CatalogSuggestion): Promise<Sugg
   try {
     await client.query('BEGIN');
     const found = await client.query(
-      `SELECT ${catalogStateSql('c')} AS state, c.document_kind, c.purpose, c.summary, c.confirmed_at
+      `SELECT c.catalog_state, c.document_kind, c.purpose, c.summary, c.confirmed_at
          FROM vault.document_catalog c
         WHERE c.document_id = $1 AND c.content_hash = $2
         FOR UPDATE`,
       [s.documentId, s.contentHash],
     );
-    const before = found.rows[0];
+    const before = found.rows[0] ? { ...found.rows[0], state: catalogStateOf(found.rows[0]) } : undefined;
     const refusal = !before ? VERSION_CHANGED : personDecided(before);
     if (refusal) {
       await client.query('ROLLBACK');
@@ -300,7 +315,7 @@ async function lockRecord(client: Client, args: ReviewCatalogArgs): Promise<Revi
     return refuse(409, 'CONFLICT', 'This document has a newer version than the one shown. Reload the Vault and review the current record. Nothing was saved.');
   }
   const rec = await client.query(
-    `SELECT ${catalogStateSql('c')} AS state, c.document_kind, c.purpose, c.summary,
+    `SELECT c.catalog_state, c.document_kind, c.purpose, c.summary,
             c.proposed_by, c.proposed_model, c.proposed_turn_id, c.key_data, c.updated_at::text AS revision
        FROM vault.document_catalog c
       WHERE c.document_id = $1 AND c.content_hash = $2
@@ -314,7 +329,7 @@ async function lockRecord(client: Client, args: ReviewCatalogArgs): Promise<Revi
     return refuse(409, 'CHANGED_SINCE_SHOWN',
       'The record changed after it was shown to you. Reload it and review the current text. Nothing was saved.');
   }
-  return { document_title: doc.rows[0].document_title, content_hash: contentHash, ...rec.rows[0] } as ReviewRow;
+  return { document_title: doc.rows[0].document_title, content_hash: contentHash, ...rec.rows[0], state: catalogStateOf(rec.rows[0]) } as ReviewRow;
 }
 
 function describeReview(state: 'confirmed' | 'corrected', changes: Array<{ field: keyof CatalogFields; from: string | null; to: string }>): string {
@@ -432,7 +447,7 @@ function toRecordView(r: Record<string, any>): CatalogRecordView {
     contentHash: String(r.content_hash),
     revision: r.revision ?? null,
     canWrite: vaultWriteRefusal() === null,
-    state: r.state ?? null,
+    state: catalogStateOf(r),
     documentKind: r.document_kind ?? null,
     documentKindLabel: r.document_kind ? vaultDocKindLabel(r.document_kind) : null,
     purpose: r.purpose ?? null,
@@ -456,7 +471,7 @@ export async function readCatalogRecord(args: {
 }): Promise<CatalogRecordView | null> {
   if (!UUID_RE.test(args.programId) || !UUID_RE.test(args.documentId)) return null;
   const { rows } = await pool.query(
-    `SELECT d.content_hash, c.catalog_status, ${catalogStateSql('c')} AS state,
+    `SELECT d.content_hash, c.catalog_status, c.catalog_state,
             c.document_kind, c.purpose, c.summary, c.key_data, c.proposed_by, c.proposed_model,
             c.cataloged_at, c.confirmed_by, u.name AS confirmed_by_name, c.confirmed_at, c.correction_reason,
             c.updated_at::text AS revision

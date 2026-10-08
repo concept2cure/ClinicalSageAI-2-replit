@@ -25,7 +25,7 @@ import { catalogableDocument } from './document-catalog-eligibility.js';
 import { supersededSql } from './vault-version-family.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { FeatureToggleService } from '../featureToggleService.js';
-import { catalogStateSql, writeCatalogSuggestion, type CatalogProposer } from './document-catalog-governance.service.js';
+import { catalogStateOf, writeCatalogSuggestion, type CatalogProposer } from './document-catalog-governance.service.js';
 import { filingVocabularyRefusal } from './vault-filing.service.js';
 import {
   computeCoverage,
@@ -203,7 +203,7 @@ export async function loadDocumentForOrg(
             c.catalog_status, c.content_hash AS catalog_content_hash, c.extraction_method, c.extraction_confidence,
             c.extraction_error, c.char_count, c.word_count, c.page_count,
             c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at,
-            ${catalogStateSql('c')} AS catalog_state, c.proposed_model
+            c.catalog_state, c.proposed_model
        FROM vault.documents d
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
       WHERE d.id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}${currentClause}
@@ -245,7 +245,7 @@ export async function loadDocumentForOrg(
           summary: r.summary,
           keyData: r.key_data,
           catalogedAt: r.cataloged_at ? String(r.cataloged_at) : null,
-          state: r.catalog_state ?? null,
+          state: catalogStateOf(r),
           proposedModel: r.proposed_model ?? null,
         }
       : null,
@@ -481,7 +481,7 @@ export async function listProjectDocuments(
             ${vaultDispositionChoiceSql('d')} AS disposition,
             ${vaultBinaryAvailableSql('d')} AS original_file_available,
             c.catalog_status, c.document_kind, c.purpose, c.extraction_error, c.char_count,
-            ${catalogStateSql('c')} AS catalog_state,
+            c.catalog_state,
             COUNT(*) OVER () AS scope_total,
             COUNT(*) FILTER (
               WHERE c.catalog_status IS NULL OR c.catalog_status = 'extracted'
@@ -517,7 +517,7 @@ export async function listProjectDocuments(
     catalogStatus: (r.catalog_status ?? 'uncataloged') as CatalogStatus | 'uncataloged',
     documentKind: r.document_kind,
     purpose: r.purpose,
-    catalogState: r.catalog_state ?? null,
+    catalogState: catalogStateOf(r),
     extractionError: r.extraction_error,
     charCount: r.char_count,
     createdAt: String(r.created_at),

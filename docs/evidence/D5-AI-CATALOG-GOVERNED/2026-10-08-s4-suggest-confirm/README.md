@@ -28,7 +28,7 @@ every later read then served that text as fact. The write had five gaps:
   The `document_catalog_state_chk` CHECK requires a confirmed record to name who and
   when, and a corrected record to also carry its reason. Every statement is guarded, the
   file has no DROP, and no row is rewritten. A description written before this change
-  reads as `suggested` with its proposer "not recorded" (`catalogStateSql`).
+  reads as `suggested` with its proposer "not recorded" (`catalogStateOf`).
 - `server/services/vault/document-catalog-governance.service.ts` is the one writer for
   both sides:
   - **AnA's suggestion (`writeCatalogSuggestion`):** writes the agent, model, thread and

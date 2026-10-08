@@ -32,7 +32,7 @@
 --     it as written; 'corrected' when a person changed it, with a reason.
 --     A row described before this file has a description and a NULL state;
 --     every reader treats that as 'suggested' with its proposer not recorded
---     (document-catalog-review.service.ts catalogStateSql). Nothing is
+--     (document-catalog-governance.service.ts catalogStateOf). Nothing is
 --     back-filled: the proposer of those rows was never recorded, and this
 --     file does not invent one.
 --   * proposed_by ('agent:ana'), proposed_model, proposed_thread_id,
