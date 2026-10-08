@@ -18,6 +18,9 @@ import { useProjectThreads } from './projectThreads';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
 import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
+import type { ReviewItem } from '../fixtures/review-data';
+import { reviewStanding, type ReviewStandingGroup } from './reviewStanding';
+import { openReviewDocument } from './Review';
 import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
@@ -1181,6 +1184,7 @@ const WORK_STATUS_TONE: Record<string, string> = { done: 'tone-ok', blocked: 'to
 const WORK_SHOWN = 10;
 
 function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: string; onNav: (id: string) => void }) {
+  const available = useSurfaceAvailable();
   const ident = pid ? encodeURIComponent(pid) : null;
   const state = useLiveData<WorkViewRow>(
     ident ? `/api/concept2cure/projects/${ident}/unified-work` : null,
@@ -1252,9 +1256,155 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
           }}
         />
       )}
-      <div style={{ marginTop: 8 }}>
-        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
+      {/* The board these rows live on, by its own id. This sent people to
+          the `task-board` alias, which the project no longer names
+          (FILING_SPINE.md §5, F7); `tasks` is the surface the alias resolved
+          to, so the door opens the same board. Shown only when that board is
+          in this release. */}
+      {available('tasks') && (
+        <div style={{ marginTop: 8 }}>
+          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('tasks')}>Open task board {I.right}</button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ════ Review: this filing's reviews ═══════════════════════════════════════
+   FILING_SPINE.md F7, §6 row 3. The Review tab listed the program's tasks and
+   sent people to the `task-board` alias; nothing on it named a document. It
+   now reads the review board for this program
+   (GET /api/review/board?scope=all&programId=<uuid>,
+   server/routes/review-board-routes.ts — the route filters by program), the
+   same read model the Review surface shows, and groups the documents by what
+   they need from the person. A row opens THAT document through the Review
+   surface's own `openReviewDocument` (editor target by id and program).
+   Verdicts and signatures stay where they are recorded: the review board and
+   the editor. A failed read is an error with a retry, never an empty list. */
+
+/** The queue cap asked of the board. The route takes at most 100. */
+const PROJECT_REVIEWS_LIMIT = 100;
+
+function projectReviewsUrl(pid: string): string {
+  return `/api/review/board?scope=all&programId=${encodeURIComponent(pid)}&limit=${PROJECT_REVIEWS_LIMIT}`;
+}
+
+/** GET /api/review/board → data (the part this tab reads). */
+interface ProjectReviewBoard { queue: ReviewItem[] }
+
+type ReviewGroupId = 'mine' | ReviewStandingGroup;
+const REVIEW_GROUPS: Array<{ id: ReviewGroupId; title: string }> = [
+  { id: 'mine', title: 'Waiting on you' },
+  { id: 'in-review', title: 'In review' },
+  { id: 'changes', title: 'Changes requested' },
+  { id: 'declined', title: 'Declined' },
+  { id: 'sign-off', title: 'Reviewers approved, awaiting sign-off' },
+  { id: 'approved', title: 'Approved' },
+];
+
+/** What the document needs from the person first; otherwise where it stands. */
+function reviewGroupOf(r: ReviewItem): ReviewGroupId {
+  if (r.awaitingMyReview || r.atMySignOff) return 'mine';
+  return reviewStanding(r).group;
+}
+
+function reviewOwnership(r: ReviewItem): string | null {
+  if (r.awaitingMyReview) return 'Awaiting your review';
+  if (r.atMySignOff) return 'At your sign-off';
+  if (r.requestedByMe) return 'Requested by you';
+  return null;
+}
+
+function ProjectReviewRow({ item, onOpen }: { item: ReviewItem; onOpen: (item: ReviewItem) => void }) {
+  const who = [item.reviewer, item.role].filter(Boolean).join(' · ');
+  const ownership = reviewOwnership(item);
+  const standing = reviewStanding(item);
+  return (
+    <li className="cdl-row" data-doc-id={item.id} data-testid="pj-review-row">
+      <div className="cdl-row-main">
+        <span className="cdl-row-t">{item.doc}</span>
+        <span className="cdl-row-meta">
+          <span className="cdl-pill" data-status={standing.tone}>{standing.words}</span>
+          {ownership && <span>{ownership}</span>}
+          {who && <span>{who}</span>}
+          {item.comments > 0 && <span>{item.comments === 1 ? '1 open comment' : `${item.comments} open comments`}</span>}
+        </span>
       </div>
+      <div className="cdl-row-actions">
+        <button type="button" className="btn primary" onClick={() => onOpen(item)} aria-label={`Open document: ${item.doc}`}>
+          {I.penLine} Open document
+        </button>
+      </div>
+    </li>
+  );
+}
+
+function ProjectReviewsBody({ state, onRetry, onOpen }: {
+  state: DataState<ProjectReviewBoard>; onRetry: () => void; onOpen: (item: ReviewItem) => void;
+}) {
+  if (state.loading) return <div role="status" aria-busy="true" className="cdl-note">Reading this project’s reviews…</div>;
+  if (state.error || !state.data) {
+    return (
+      <ErrorState
+        title="Couldn’t read this project’s reviews"
+        message={`${state.error ?? 'The review board could not be read.'} This is a failed read, not an empty list.`}
+        retry={onRetry}
+        testId="pj-reviews-error"
+      />
+    );
+  }
+  const queue = state.data.queue ?? [];
+  if (queue.length === 0) {
+    return (
+      <p className="cdl-empty" data-testid="pj-reviews-empty">
+        Nothing in this project is out for review. Send a document for review from the editor, and it is listed here.
+      </p>
+    );
+  }
+  return (
+    <>
+      {REVIEW_GROUPS.map((g) => {
+        const rows = queue.filter((r) => reviewGroupOf(r) === g.id);
+        if (rows.length === 0) return null;
+        return (
+          <div key={g.id} className="pj-rv-group">
+            <h3 className="pj-rv-h">{g.title} <span className="pj-rv-n">{rows.length}</span></h3>
+            <ul className="cdl-list" aria-label={g.title}>
+              {rows.map((r) => <ProjectReviewRow key={r.id} item={r} onOpen={onOpen} />)}
+            </ul>
+          </div>
+        );
+      })}
+      {queue.length >= PROJECT_REVIEWS_LIMIT && (
+        <p className="cdl-note">This list stops at {PROJECT_REVIEWS_LIMIT} documents, so there may be more.</p>
+      )}
+    </>
+  );
+}
+
+function ProjectReviews({ pid, onNav, available }: {
+  pid: string; onNav: (id: string) => void; available: (id: string) => boolean;
+}) {
+  const [epoch, setEpoch] = useState(0);
+  const url = projectReviewsUrl(pid);
+  const state = useLiveData<ProjectReviewBoard>(url, [url, epoch], hasKeys<ProjectReviewBoard>('queue'));
+  const openDocument = (item: ReviewItem) => openReviewDocument(item, onNav);
+  return (
+    <section className="pj-sec" aria-labelledby="pj-reviews-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-reviews-h">Reviews</h2>
+        <span className="sec-sub">documents in this project sent for review</span>
+        {/* The full board, which starts on the open program (Review.tsx,
+            onlyProgram). Not offered when it is not in this release. */}
+        {available('review') && (
+          <span className="pj-sec-acts">
+            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('review')}>
+              Open the review board {I.right}
+            </button>
+          </span>
+        )}
+      </div>
+      <ProjectReviewsBody state={state} onRetry={() => setEpoch((e) => e + 1)} onOpen={openDocument} />
     </section>
   );
 }
@@ -2087,9 +2237,15 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
             </div>
           )}
 
-          {/* Review — the program's tasks and approvals, from the unified work
+          {/* Review — this filing's reviews, each opening its document (F7),
+              then the program's tasks and approvals from the unified work
               view, asked by the program UUID (see ProjectWorkPanel). */}
-          {stage === 'review' && <ProjectWorkPanel pid={pid} title="Review & approvals" onNav={onNav} />}
+          {stage === 'review' && (
+            <div className="pj-stagebody">
+              {pid && <ProjectReviews pid={pid} onNav={onNav} available={available} />}
+              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} />
+            </div>
+          )}
 
           {stage === 'respond' && <StagePanel stage="respond" onNav={onNav} available={available} />}
 

@@ -443,3 +443,8 @@
    section figure is not read as that document's progress. */
 .c2c-v2 .pj-lmodrow{display:flex;flex-direction:column;gap:0;}
 .c2c-v2 .pj-lmod-doc{font-size:11px;color:var(--text-400);padding:0 2px 6px;}
+/* Review tab: this filing's reviews, grouped by what they need from the
+   person (FILING_SPINE.md F7). The rows are the canvas list's own rows. */
+.c2c-v2 .pj-rv-group + .pj-rv-group{margin-top:14px;}
+.c2c-v2 .pj-rv-h{margin:0 0 6px;font-size:12px;font-weight:600;color:var(--text-200);}
+.c2c-v2 .pj-rv-n{font-weight:400;color:var(--text-400);}

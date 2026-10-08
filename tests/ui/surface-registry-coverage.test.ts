@@ -80,9 +80,9 @@ const SURFACE_VIEWS_PATH = 'client/src/concept2cure/v2/surfaceViews.ts';
  * becomes a real id and this test will require a registry entry for it.
  */
 const ALIAS_ONLY_IDS: Record<string, string> = {
-  // DEEP_LINK_ALIASES['task-board'] === 'tasks'. Old bookmarks and
-  // ProjectHome's "Open task board" button both route here; both land on the
-  // registered `tasks` surface (label "Tasks & collaboration"). The
+  // DEEP_LINK_ALIASES['task-board'] === 'tasks'. Old bookmarks route here
+  // and land on the registered `tasks` surface (ProjectHome's door calls
+  // 'tasks' directly since FILING_SPINE F7; label "Tasks & collaboration"). The
   // SURFACE_VIEWS row is a legacy no-op — `tasks` maps to the same TaskBoard
   // component — and is kept only so the alias table and the view map cannot
   // disagree about what the id renders.

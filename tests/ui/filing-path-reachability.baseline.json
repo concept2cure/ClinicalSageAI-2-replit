@@ -2,11 +2,6 @@
   "_comment": "Hops on the filing path that are still red, from docs/design/FILING_SPINE.md F0. This list may only shrink: the slice that turns a hop green removes its entry in the same change, and tests/ui/filing-path-reachability.test.ts fails until it does. Only the six hops found red on 2026-10-08 may appear here.",
   "hops": [
     {
-      "id": "review-tab-to-document",
-      "slice": "F7",
-      "reason": "The Review tab shows \"Review tasks aren't wired to this workspace yet\" and sends the person to the scrapped task-board alias (ProjectHome.tsx review stage). No control opens a document."
-    },
-    {
       "id": "placed-document-to-sequence",
       "slice": "F10",
       "reason": "After placing a document, \"Open in Submission Center\" calls onNav('submission-center') with nothing (AuthoringPlaceIntoFiling.tsx), and the Submission Center reads no nav params, so the person lands on the submission list."

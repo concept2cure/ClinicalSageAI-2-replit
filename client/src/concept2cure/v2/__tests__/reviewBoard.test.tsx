@@ -164,6 +164,29 @@ describe('Review board — real data', () => {
   });
 });
 
+/* FILING_SPINE F7: the queue's pill said the raw verdict code ("approved",
+   "changes-requested"). "approved" there is the reviewers' verdict while the
+   document is still IN_REVIEW and its sign-off chain is pending — so the pill
+   read "approved" on a document nobody had signed. The pill now says where the
+   document stands, by the same rule as the project's Review tab
+   (surfaces/reviewStanding.ts). */
+describe('Review board — the queue pill says where the document stands', () => {
+  const row = (over: Record<string, unknown>) => ({ ...BOARD.queue[0], ...over });
+  it.each([
+    [{ docStatus: 'IN_REVIEW', state: 'approved' }, 'Reviewers approved, sign-off pending'],
+    [{ docStatus: 'APPROVED', state: 'approved' }, 'Approved'],
+    [{ docStatus: 'IN_REVIEW', state: 'changes-requested' }, 'Changes requested'],
+    [{ docStatus: 'IN_REVIEW', state: 'rejected' }, 'Declined'],
+    [{ docStatus: 'IN_REVIEW', state: 'in-review' }, 'In review'],
+  ])('%o reads "%s", never the raw code', async (over, words) => {
+    apiRequest.mockImplementation(async () => ok({ ...BOARD, queue: [row(over)] }));
+    render(<Review {...props()} />);
+    await screen.findAllByText('Clinical Overview §2.5');
+    const pill = document.querySelector('.lrow .lrow-top .rd-chip');
+    expect(pill?.textContent).toBe(words);
+  });
+});
+
 /* QA 2026-10-08 (j1, "Project screens show other programs' documents"): with
    BX-256 open, Review & approval listed BX-204's device items. The board was
    read org-wide by default and the program filter started OFF, so the screen

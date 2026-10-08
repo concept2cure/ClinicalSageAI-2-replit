@@ -42,11 +42,11 @@ import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { useDialog } from '../useDialog';
 import type { ReviewItem, ReviewComment, ReviewWorkflow } from '../fixtures/review-data';
-import { STATUS_TONE } from '../fixtures/review-data';
 import { assessmentStateFor, hasAnswer } from '../assessmentState';
 import { publishShellProject, readShellProject } from '../shellProject';
 import { setEditorTarget } from '../editorTarget';
 import { ReviewThreadsPane } from './ReviewThreads';
+import { reviewStanding, REVIEW_STANDING_PILL_TONE } from './reviewStanding';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
@@ -809,7 +809,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
             <button key={r.id} className="lrow" data-on={sel === r.id || undefined} onClick={() => selectRow(r.id)}>
               <div className="lrow-top">
                 <span className="mono">{r.prog ?? r.module ?? ''}</span>
-                <Pill tone={STATUS_TONE[r.state] || 'warn'}>{r.state}</Pill>
+                <Pill tone={REVIEW_STANDING_PILL_TONE[reviewStanding(r).group]}>{reviewStanding(r).words}</Pill>
               </div>
               <div className="lrow-title">{r.doc}</div>
               <div className="lrow-meta"><span>{r.reviewer}{r.role ? ' · ' + r.role : ''}</span></div>
