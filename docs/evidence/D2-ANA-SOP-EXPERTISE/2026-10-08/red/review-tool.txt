@@ -1,0 +1,10 @@
+ × server/services/ana/__tests__/review-sop-requirements-tool.test.ts > review_sop_requirements > is defined and deterministic
+   → expected [ 'list_fda_forms', …(790) ] to include 'review_sop_requirements'
+ × server/services/ana/__tests__/review-sop-requirements-tool.test.ts > review_sop_requirements > reports each requirement of a drug complaint SOP as addressed, with its sentence, or not found
+   → getToolHandler(...) is not a function
+ × server/services/ana/__tests__/review-sop-requirements-tool.test.ts > review_sop_requirements > refuses a topic or product type it does not model, rather than guessing
+   → getToolHandler(...) is not a function
+ × server/services/ana/__tests__/review-sop-requirements-tool.test.ts > review_sop_requirements > with no text, reviews nothing and says so
+   → getToolHandler(...) is not a function
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)

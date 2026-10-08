@@ -919,6 +919,7 @@
    "review_protocol_timeline",
    "review_schedule_of_events_health",
    "review_soa_matrix",
+   "review_sop_requirements",
    "review_spirit_conformance",
    "review_trial_schema",
    "review_who_ictrp_record",
