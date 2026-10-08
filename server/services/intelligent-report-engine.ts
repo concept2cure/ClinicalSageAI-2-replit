@@ -207,7 +207,7 @@ const REGULATORY_FRAMEWORKS: Record<
       },
       {
         code: 'EMA/GCP/206830',
-        title: 'ICH E6(R2) GCP Guideline',
+        title: 'ICH E6(R3) GCP Guideline',
         applicableDomains: ['clinical_study'],
       },
       {

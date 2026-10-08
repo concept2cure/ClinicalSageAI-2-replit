@@ -1,0 +1,18 @@
+# The same three tests on the fixed routes.
+
+ ✓ tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > a body naming another resolver is refused, and nothing is written
+ ✓ tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > resolving with no resolver in the body records the caller, not nobody
+ ✓ tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > resolving with no user id on the session is refused, not recorded as nobody
+ ✓ tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > acknowledging is unchanged and needs no resolver
+ ✓ tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets decidedBy is refused, and nothing is stored
+ ✓ tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets decidedAt is refused, and nothing is stored
+ ✓ tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets reviewedBy is refused, and nothing is stored
+ ✓ tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets reviewedAt is refused, and nothing is stored
+ ✓ tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > the stored row carries only decision fields, a server decider and a server time
+ ✓ tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > with no user on the request nothing is stored under 'system'
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is resolved by the session user (L195) > a body naming another resolver is refused, and nothing is written
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is resolved by the session user (L195) > resolving with no resolver in the body records the caller
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is resolved by the session user (L195) > a body naming the caller themself is accepted, and records the caller
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is resolved by the session user (L195) > a status change that is not a resolution records no resolver
+ Test Files  3 passed (3)
+      Tests  14 passed (14)

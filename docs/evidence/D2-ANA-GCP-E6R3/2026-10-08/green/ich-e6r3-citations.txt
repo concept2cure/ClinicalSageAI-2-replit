@@ -1,0 +1,69 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/ich-e6r3-citations.test.ts > the record > has the 11 principles and Annex 1 §1–§4 with the appendices 4ms
+ ✓ tests/regulatory/ich-e6r3-citations.test.ts > the record > maps R2 sections to where R3 put them, by the most specific prefix 1ms
+ ✓ tests/regulatory/ich-e6r3-citations.test.ts > the record > every citation is a well-formed recall basis, labelled as unread 2ms
+ ✓ tests/regulatory/ich-e6r3-citations.test.ts > the gate catches what it exists to catch > an R2 citation in force, in either form, is a hit; a qualified one is not 1ms
+ ✓ tests/regulatory/ich-e6r3-citations.test.ts > what the platform serves > never cites E6(R2) as the guideline in force 110ms
+ ✓ tests/regulatory/ich-e6r3-citations.test.ts > what the platform serves > every E6(R3) citation that names a section names one that exists 65ms
+stdout | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+{
+  "timestamp": "2026-10-08T18:27:59.567Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T18:27:59.570Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+{
+  "timestamp": "2026-10-08T18:27:59.570Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+{
+  "timestamp": "2026-10-08T18:27:59.947Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > assessComplianceFrameworks: a framework nothing evaluates is never reported as met > marks the two frameworks no check evaluates NOT_ASSESSED, in every chain state 3ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > assessComplianceFrameworks: a framework nothing evaluates is never reported as met > follows the chain verifier for the three the chain actually supports 2ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > assessComplianceFrameworks: a framework nothing evaluates is never reported as met > agrees with the compliance report on that router, framework for framework 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > CSV never prints the five names as an unqualified compliance claim 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > XML attaches a status to every framework element and to the chain line 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > JSON carries objects a machine reader cannot mistake for a conformance list 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > a verified chain still does not promote the two nothing evaluates 0ms
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  18:27:55
+   Duration  4.51s (transform 1.68s, setup 160ms, import 3.43s, tests 204ms, environment 1ms)
+

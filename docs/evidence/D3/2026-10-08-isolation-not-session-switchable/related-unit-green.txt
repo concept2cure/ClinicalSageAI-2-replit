@@ -1,0 +1,34 @@
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > org membership → tenant scope → app.current_org_id > carries the uuid the membership lookup resolved 1373ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > org membership → tenant scope → app.current_org_id > carries the empty string when the lookup resolves no uuid 1ms
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewe
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer se
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_re
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_reques
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/s
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no sc
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > no token → 401 and the handler never runs (no scope) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no scope)
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > no token → 401 and the handler never runs (no scope) 0ms
+stdout | server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 9 → 403 TENANT_MISMAT
+stderr | server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 9 → 403 TENANT_MISMAT
+stderr | server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 9 → 403 TENANT_MISMAT
+ ✓ server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 9 → 403 TENANT_MISMATCH, 
+ ✓ server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 7 → the handler runs, wit
+ ✓ server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > no token + x-organization-id: 9 → the boundary answers 401 A
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IRB create submission: viewer → 403, before the handler 37ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IRB status: viewer → 403, before the handler 11ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IRB add site: viewer → 403, before the handler 5ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IACUC create protocol: viewer → 403, before the handler 4ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IACUC status: viewer → 403, before the handler 5ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IBC create registration: viewer → 403, before the handler 4ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IBC add agent: viewer → 403, before the handler 3ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > RIM create product: viewer → 403, before the handler 3ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > RIM registrations: viewer → 403, before the handler 7ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > BLA assessment that saves: viewer → 403, before the handler 4ms
+ ✓ server/db/__tests__/governed-pattern-under-scope.test.ts > governed() pattern vs RLS fail-closed > runs the full connect→BEGIN→set_config→COMMIT sequence once a scope is open 2ms
+ ↓ server/db/__tests__/poolInstrumentation.integration.test.ts > pool-instrumentation tenant-scope primitive — integration > scope tenant 1 → sees only tenant-1 rows (vars applied automatically)
+ ↓ server/db/__tests__/poolInstrumentation.integration.test.ts > pool-instrumentation tenant-scope primitive — integration > scope tenant 2 → sees only tenant-2 rows
+ ↓ server/db/__tests__/poolInstrumentation.integration.test.ts > pool-instrumentation tenant-scope primitive — integration > super-admin scope → sees all rows
+ Test Files  85 passed | 1 skipped (86)
+      Tests  958 passed | 8 skipped (966)

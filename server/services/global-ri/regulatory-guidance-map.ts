@@ -28,9 +28,9 @@ interface GuidanceEntry {
 const GUIDANCE_MAP: Record<string, GuidanceEntry> = {
   // ── Efficacy / clinical ──────────────────────────────────────────────────
   clinical_study_report: { ich: ['E3'], regulations: ['ICH E3'], description: 'Structure and content of a clinical study report.' },
-  protocol: { ich: ['E6', 'E8', 'E9', 'M11'], regulations: ['ICH E6(R2) §6'], description: 'Clinical trial protocol design and content.' },
-  investigators_brochure: { ich: ['E6'], regulations: ['ICH E6(R2) §7'], description: "Investigator's Brochure content." },
-  good_clinical_practice: { ich: ['E6', 'E8'], regulations: ['ICH E6(R2)', '21 CFR 50/56/312'], description: 'Good Clinical Practice and general clinical considerations.' },
+  protocol: { ich: ['E6', 'E8', 'E9', 'M11'], regulations: ['ICH E6(R3) Appendix B'], description: 'Clinical trial protocol design and content.' },
+  investigators_brochure: { ich: ['E6'], regulations: ['ICH E6(R3) Appendix A'], description: "Investigator's Brochure content." },
+  good_clinical_practice: { ich: ['E6', 'E8'], regulations: ['ICH E6(R3)', '21 CFR 50/56/312'], description: 'Good Clinical Practice and general clinical considerations.' },
   statistical_analysis: { ich: ['E9'], regulations: ['ICH E9 (+E9(R1) estimands)'], description: 'Statistical principles for clinical trials.' },
   dose_response: { ich: ['E4'], regulations: ['ICH E4'], description: 'Dose-response information to support registration.' },
   control_group: { ich: ['E10'], regulations: ['ICH E10'], description: 'Choice of control group in clinical trials.' },

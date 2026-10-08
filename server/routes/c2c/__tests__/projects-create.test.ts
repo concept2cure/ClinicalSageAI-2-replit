@@ -267,26 +267,27 @@ describe('POST /api/c2c/projects', () => {
     expect(release).toHaveBeenCalled();
   });
 
-  it('surfaces a scaffold skip in the 201 body instead of failing or hiding it', async () => {
+  // 2026-10-08 (F19b): a scaffold that finds no outline no longer creates the
+  // project with an empty Vault. The filing is not offered (WORKFLOW_DECISION
+  // §4 Q2), with the market verdict's reason, and the creation is rolled back.
+  // projects-create-market-offer.test.ts covers each refused market.
+  it('a scaffold that finds no outline refuses the filing (422 FILING_NOT_OFFERED) and rolls the creation back', async () => {
     scaffold.mockResolvedValueOnce({
       documentId: null, sectionCount: 0,
-      skipped: 'UNMAPPED_PROGRAM_TYPE',
-      detail: "No document class is defined for program type 'ivd'.",
+      skipped: 'NO_RULE_PACK',
+      detail: "No rule pack defines 'nda' for 'fda' (or any fallback).",
     });
     query
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] })
-      .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
-      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]) // anchor (P-19)
-      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [shapedRow()] });
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT
+      .mockResolvedValueOnce({ rows: [] });                                           // ROLLBACK
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
-    // The project is still legitimately created — only the document is skipped.
-    expect(res.status).toBe(201);
-    expect(res.body.meta.scaffoldSkipped).toBe('UNMAPPED_PROGRAM_TYPE');
-    expect(res.body.meta.scaffoldDetail).toContain('ivd');
-    expect(res.body.meta.documentId).toBeNull();
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('FILING_NOT_OFFERED');
+    expect(res.body.message).toMatch(/^FDA has no governed NDA outline here/);
+    const order = sqlCalls();
+    expect(order).toContain('ROLLBACK');
+    expect(order).not.toContain('COMMIT');
   });
 
   it('reports the scaffolded document and section count on success', async () => {

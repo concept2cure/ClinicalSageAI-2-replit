@@ -422,6 +422,44 @@ const cases = [
     expectNotIn: [`${LOGBOOK}:`],
   },
 
+  // ── RED: writers of the isolation switches, any form (D3, 2026-10-08) ───────
+  {
+    name: 'RED — runtime code turns enforcement off with a transaction-local set_config (invisible to the session-scoped check)',
+    files: {
+      'server/services/reports/cross-tenant-rollup.ts':
+        "export async function rollup(c: any) {\n  await c.query('BEGIN');\n" +
+        "  await c.query(\"SELECT set_" + "config('app.rls" + "_enforce', 'off', true)\");\n  return c.query('SELECT * FROM regulatory_programs');\n}\n",
+    },
+    expectExit: 1,
+    expectIn: ['server/services/reports/cross-tenant-rollup.ts: 1 write(s) of an isolation switch', 'not an allowed writer'],
+  },
+  {
+    name: 'RED — a new route uses SET LOCAL of the bypass flag (allowed only in innovation-routes guardQuery)',
+    files: {
+      'server/routes/vault-admin-routes.ts':
+        "export async function sweep(c: any) {\n  await c.query('BEGIN');\n  await c.query(\"SET LOCAL app.bypass" + "_rls = 'true'\");\n}\n",
+    },
+    expectExit: 1,
+    expectIn: ['server/routes/vault-admin-routes.ts: 1 write(s) of an isolation switch'],
+  },
+  {
+    name: 'RED — the one allowed writer grows past its allowance',
+    files: {
+      'server/db/sessionScope.ts': Array.from({ length: 6 }, (_, i) => `const t${i} = "set_` + `config('app.is` + `_admin', '', false)";`).join('\n') + '\n',
+    },
+    expectExit: 1,
+    expectIn: ['server/db/sessionScope.ts: 6 write(s) of an isolation switch, allowed 5'],
+  },
+  {
+    name: 'quiet — a test file under __tests__ and a *.test.ts file may set the switches (negative controls)',
+    files: {
+      'server/services/x/__tests__/negative-control.ts': "await c.query(\"SELECT set_" + "config('app.rls" + "_enforce', 'off', false)\");\n",
+      'server/db/rls-negative.test.ts': "await c.query(\"SET LOCAL app.is" + "_admin = 'true'\");\n",
+    },
+    expectExit: 0,
+    expectIn: ['OK'],
+  },
+
   // ── quiet ────────────────────────────────────────────────────────────────
   {
     name: "quiet — today's shape: baselined services at their exact counts, every path through releaseWithoutBypass, beside the helper's own client.release()",

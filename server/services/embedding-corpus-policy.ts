@@ -16,7 +16,7 @@
  * gate scripts/ci/check-embedding-runtime-canonicality.mjs prevents new
  * direct callers from bypassing the runtime.
  *
- * @compliance ICH E6(R2) data integrity — the same query against the same
+ * @compliance ICH E6(R3) Annex 1 §4 (data governance) — the same query against the same
  *             corpus yields a reproducible result set.
  *
  * ── THE MODEL ACTUALLY WRITTEN, PER LANE (P1-54 round 2, 2026-10-01) ─────────

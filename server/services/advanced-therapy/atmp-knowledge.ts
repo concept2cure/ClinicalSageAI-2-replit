@@ -1705,7 +1705,7 @@ export function selectATMPPathway(params: PathwaySelectionParams): PathwaySelect
   if (params.targetJurisdictions.length > 1) {
     globalStrategy.push(
       'Multi-jurisdictional development: align CMC, nonclinical, and clinical strategies to satisfy requirements across all target jurisdictions simultaneously',
-      'Harmonized clinical protocol: ICH E6(R2) GCP compliance accepted by FDA, EMA, and PMDA',
+      'Harmonized clinical protocol: ICH E6(R3) GCP compliance accepted by FDA, EMA, and PMDA',
       'CMC harmonization: ICH Q-series guidelines (Q5A, Q5B, Q5C, Q5D, Q5E) provide common framework for biologics',
       'Regulatory interaction strategy: schedule pre-IND (FDA), scientific advice (EMA), and PMDA consultation in sequence to incorporate feedback iteratively',
     );

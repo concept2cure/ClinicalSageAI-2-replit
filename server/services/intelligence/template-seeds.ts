@@ -134,7 +134,7 @@ const SEED_TEMPLATES: SeedTemplate[] = [
     agency: 'cross_agency',
     documentType: 'protocol',
     submissionType: null,
-    sourceReference: 'ICH E6(R2)',
+    sourceReference: 'ICH E6(R3) Appendix B',
     sections: PROTOCOL_OUTLINE_ICH_E6,
   },
   {
@@ -143,7 +143,7 @@ const SEED_TEMPLATES: SeedTemplate[] = [
     agency: 'cross_agency',
     documentType: 'ib',
     submissionType: null,
-    sourceReference: 'ICH E6(R2) §7',
+    sourceReference: 'ICH E6(R3) Appendix A',
     sections: IB_OUTLINE,
   },
 

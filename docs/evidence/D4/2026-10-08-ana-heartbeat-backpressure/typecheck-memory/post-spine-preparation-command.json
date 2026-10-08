@@ -1,0 +1,13 @@
+{
+  "qualification_base": "f55213b52e759323ba406f7a53e32b07c012ddee",
+  "reason": "Full unchanged gate exhausted heap after canonical spine/tenant merge. Repeat compiler-owned native preparation; no typecheck verdict until final unchanged gate completes.",
+  "helper_git_blob": "9866391314b83ebb762720141b584f350ecdace2",
+  "command": [
+    "python",
+    "/workspace/scratch/03341391a627/prepare-heartbeat-compiler-cache.py",
+    "post-spine-preparation"
+  ],
+  "heap_mb": 6656,
+  "soft_rss_mb": 6200,
+  "max_files_per_process": 3000
+}

@@ -183,9 +183,10 @@ rewritten above, so the record shows what was claimed.
    correction.
 2. **"Nothing else can break" was wrong: every install from blank exited 1.**
    `install-fresh.mjs` ends with the same coverage gate, and only
-   `deploy-migrate` applied the child scope. So from `2ddbfb6a` the installer
-   named 80 tables and withheld "install complete", and from `d46d5251` it
-   named 83. This lane checked against a database it had already provisioned,
+   `deploy-migrate` applied the child scope. So from `2ddbfb6a` on, the
+   installer withheld "install complete". It named 80 tables at `5066e9862`
+   (after L201 and L202) and 83 at `d46d5251`; those are the two measurements
+   (`../../W2/2026-09-24-install-child-scope/README.md`). This lane checked against a database it had already provisioned,
    and did not rebuild one from blank after the change. The W2 lane found it
    and fixed it in `ed87e3aa` (ledger L205): the installer applies the uuid
    half of the final sweep pair, then the child scope.

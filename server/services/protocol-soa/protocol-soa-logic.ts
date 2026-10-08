@@ -2,13 +2,13 @@
  * Protocol Schedule-of-Assessments deterministic logic (Capability C2C-21)
  *
  * Pure, DB-free, LLM-free: build the assessments × visits matrix from rows/columns/
- * cells, and validate it for common SoA defects. Grounded in ICH E6(R2) / ICH M11
+ * cells, and validate it for common SoA defects. Grounded in ICH E6(R3) Appendix B / ICH M11
  * (the protocol must specify the schedule of assessments).
  *
  * @module server/services/protocol-soa/protocol-soa-logic
  */
 
-export const ICH_M11_SOA = 'ICH M11 / ICH E6(R2) — schedule of activities (assessments by visit)';
+export const ICH_M11_SOA = 'ICH M11 / ICH E6(R3) Appendix B — schedule of activities (assessments by visit)';
 
 export interface SoaAssessment { id: number; name: string; category?: string; orderIndex?: number }
 export interface SoaVisit { id: number; visitName: string; timepoint?: string | null; orderIndex?: number }

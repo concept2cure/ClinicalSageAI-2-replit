@@ -24,7 +24,7 @@
  *
  * @module MultiAgentCouncilService
  * @version 3.1.0
- * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5, OWASP LLM Top 10
+ * @compliance FDA 21 CFR Part 11, ICH E6(R3), GAMP 5, OWASP LLM Top 10
  */
 
 import { Pool } from 'pg';

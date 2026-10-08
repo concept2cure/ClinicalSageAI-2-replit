@@ -1063,7 +1063,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "21 CFR 312.40 (General requirements for use of an investigational new drug in a clinical investigation)",
       "FDA Guidance for Industry: Content and Format of Investigational New Drug Applications (INDs) for Phase 1 Studies of Drugs, Including Well-Characterized, Therapeutic, Biotechnology-Derived Products (1995)",
       "ICH M4 / M4Q / M4S / M4E (Common Technical Document)",
-      "ICH E6(R2) Good Clinical Practice",
+      "ICH E6(R3) Good Clinical Practice",
       "ICH M3(R2) Nonclinical Safety Studies for the Conduct of Human Clinical Trials"
     ],
     "components": [
@@ -1189,8 +1189,8 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "title": "Investigator's Brochure",
         "required": true,
         "contentType": "mixed",
-        "guidance": "Compilation of clinical and nonclinical data relevant to the study of the drug in humans, per 21 CFR 312.23(a)(5) and ICH E6(R2) §7.",
-        "authoringGuidance": "The Investigator's Brochure equips investigators and IRBs to make a benefit-risk judgment and to manage subjects safely, so it must present the physicochemical, pharmacological, toxicological, pharmacokinetic, and any clinical data in an objective, balanced way that supports the proposed protocol. Reviewers and IRBs use the IB to confirm that the reference safety information, starting dose, dose-escalation rationale, and monitoring are justified by the actual nonclinical and (if any) clinical findings. Under ICH E6(R2) the IB must be reviewed at least annually and updated as significant new information emerges, and its summary of data and guidance for the investigator section should translate the data into practical safety guidance. An acceptable IB is data-driven, internally consistent with the protocol and CMC/pharm-tox sections, clearly identifies the expected adverse reactions that define seriousness/expectedness for safety reporting, and avoids overstating efficacy.",
+        "guidance": "Compilation of clinical and nonclinical data relevant to the study of the drug in humans, per 21 CFR 312.23(a)(5) and ICH E6(R3) Appendix A (Investigator's Brochure).",
+        "authoringGuidance": "The Investigator's Brochure equips investigators and IRBs to make a benefit-risk judgment and to manage subjects safely, so it must present the physicochemical, pharmacological, toxicological, pharmacokinetic, and any clinical data in an objective, balanced way that supports the proposed protocol. Reviewers and IRBs use the IB to confirm that the reference safety information, starting dose, dose-escalation rationale, and monitoring are justified by the actual nonclinical and (if any) clinical findings. Under ICH E6(R3) Appendix A the IB must be reviewed at least annually and updated as significant new information emerges, and its summary of data and guidance for the investigator section should translate the data into practical safety guidance. An acceptable IB is data-driven, internally consistent with the protocol and CMC/pharm-tox sections, clearly identifies the expected adverse reactions that define seriousness/expectedness for safety reporting, and avoids overstating efficacy.",
         "keyContentElements": [
           "Title page, confidentiality statement, and edition/date with version control",
           "Table of contents and summary",
@@ -1203,14 +1203,14 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Marketing experience and any regulatory withdrawals, if applicable",
           "References/bibliography supporting the data presented"
         ],
-        "generationPrompt": "Draft an Investigator's Brochure for {{PRODUCT_NAME}} ({{SPONSOR}}) supporting {{PHASE}} investigation in {{INDICATION}}, structured per ICH E6(R2) §7: physicochemical/pharmaceutical properties, nonclinical pharmacology, PK, and toxicology, any human experience, and a Summary of Data and Guidance for the Investigator including the reference safety information. Describe where each data set belongs and what a complete section contains; do not fabricate study results or product facts."
+        "generationPrompt": "Draft an Investigator's Brochure for {{PRODUCT_NAME}} ({{SPONSOR}}) supporting {{PHASE}} investigation in {{INDICATION}}, structured per ICH E6(R3) Appendix A: physicochemical/pharmaceutical properties, nonclinical pharmacology, PK, and toxicology, any human experience, and a Summary of Data and Guidance for the Investigator including the reference safety information. Describe where each data set belongs and what a complete section contains; do not fabricate study results or product facts."
       },
       {
         "code": "PROTOCOL",
         "title": "Clinical Protocol(s)",
         "required": true,
         "contentType": "mixed",
-        "guidance": "Full protocol for each planned study, per 21 CFR 312.23(a)(6) and ICH E6(R2), placed in CTD Module 5.3.5.",
+        "guidance": "Full protocol for each planned study, per 21 CFR 312.23(a)(6) and ICH E6(R3) Appendix B, placed in CTD Module 5.3.5.",
         "authoringGuidance": "The protocol is the scientific and operational contract for the study and is the section FDA scrutinizes most for subject safety: it must state objectives, design, subject selection criteria, dosing and dose-modification rules, and the safety monitoring and stopping rules in enough detail for a reviewer to judge whether risks are minimized. For a first-in-human protocol the starting dose justification (e.g., MABEL or NOAEL-based with safety factor per FDA's 2005 estimating-maximum-safe-starting-dose guidance), the dose-escalation scheme, and stopping/pausing criteria receive particular attention. Phase 1 protocols may be less detailed on efficacy but must be complete on eligibility, dosing, monitoring, and adverse-event management; the protocol must align with the IB reference safety information and the informed consent. An acceptable protocol is internally consistent, has unambiguous safety governance (DSMB/SRC where appropriate), defined endpoints, and a schedule of assessments that operationalizes every safety commitment.",
         "keyContentElements": [
           "Protocol title, number, version/date, and phase",
@@ -1224,7 +1224,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Statistical considerations and sample size rationale",
           "Names of all investigators and clinical facilities where known (or commitment to provide)"
         ],
-        "generationPrompt": "Write the clinical protocol for {{SPONSOR}}'s {{PHASE}} study of {{PRODUCT_NAME}} in {{INDICATION}}, following ICH E6(R2): objectives/endpoints, design, eligibility, dosing with starting-dose and escalation justification, schedule of assessments, adverse-event and safety monitoring plan with stopping rules, and statistical considerations. Describe required content and where data belong; do not invent results. Ensure alignment with the IB reference safety information."
+        "generationPrompt": "Write the clinical protocol for {{SPONSOR}}'s {{PHASE}} study of {{PRODUCT_NAME}} in {{INDICATION}}, following ICH E6(R3) Appendix B: objectives/endpoints, design, eligibility, dosing with starting-dose and escalation justification, schedule of assessments, adverse-event and safety monitoring plan with stopping rules, and statistical considerations. Describe required content and where data belong; do not invent results. Ensure alignment with the IB reference safety information."
       },
       {
         "code": "PREV-HUMAN-EXP",
@@ -1282,7 +1282,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "21 CFR 312.30(a) (New protocol)",
       "21 CFR 312.30(b) (Changes in a protocol)",
       "21 CFR 312.30(c) (New investigator)",
-      "ICH E6(R2) Good Clinical Practice"
+      "ICH E6(R3) Good Clinical Practice"
     ],
     "components": [
       {
@@ -1339,7 +1339,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Cross-reference to updated IB, informed consent, or safety information as needed",
           "Protocol version number and date"
         ],
-        "generationPrompt": "Prepare the protocol-amendment content for {{SPONSOR}}'s {{PRODUCT_NAME}} study in {{INDICATION}} at {{PHASE}}: either a full new protocol per ICH E6(R2)/21 CFR 312.23(a)(6), or a redlined description of the change to an existing protocol per 21 CFR 312.30(b) with rationale and an assessment of any new or increased subject risk. State IRB approval status and cross-reference updated IB/consent. Do not fabricate data."
+        "generationPrompt": "Prepare the protocol-amendment content for {{SPONSOR}}'s {{PRODUCT_NAME}} study in {{INDICATION}} at {{PHASE}}: either a full new protocol per ICH E6(R3) Appendix B/21 CFR 312.23(a)(6), or a redlined description of the change to an existing protocol per 21 CFR 312.30(b) with rationale and an assessment of any new or increased subject risk. State IRB approval status and cross-reference updated IB/consent. Do not fabricate data."
       },
       {
         "code": "SUPPORTING-INFO",

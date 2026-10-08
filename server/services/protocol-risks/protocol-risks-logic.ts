@@ -3,14 +3,14 @@
  *
  * Pure, DB-free, LLM-free: the likelihood × impact scoring matrix, the qualitative
  * risk level, and the register summary (counts by level, residual exposure). The
- * 5×5 matrix follows standard quality-risk-management practice (ICH E6(R2) §5.0,
+ * 5×5 matrix follows standard quality-risk-management practice (ICH E6(R3) Annex 1 §3.10.1,
  * ISO 14971): score = likelihood-rank × impact-rank (1–25), mapped to
  * low / medium / high / extreme bands.
  *
  * @module server/services/protocol-risks/protocol-risks-logic
  */
 
-export const ICH_E6_QRM = 'ICH E6(R2) §5.0 — quality risk management';
+export const ICH_E6_QRM = 'ICH E6(R3) Annex 1 §3.10.1 — quality risk management';
 
 export type RiskLikelihood = 'rare' | 'unlikely' | 'possible' | 'likely' | 'almost_certain';
 export type RiskImpact = 'negligible' | 'minor' | 'moderate' | 'major' | 'severe';

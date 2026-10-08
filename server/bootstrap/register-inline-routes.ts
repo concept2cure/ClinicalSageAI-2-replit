@@ -597,7 +597,7 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Protocol development routes:', error);
   }
 
-  // Protocol risk register — likelihood × impact risk assessment (ICH E6(R2) §5.0 / ISO 14971).
+  // Protocol risk register — likelihood × impact risk assessment (ICH E6(R3) Annex 1 §3.10.1 / ISO 14971).
   try {
     const protocolRisksModule = await import('../routes/protocol-risks');
     app.use('/api/protocol-risks', authMiddleware, protocolRisksModule.default);

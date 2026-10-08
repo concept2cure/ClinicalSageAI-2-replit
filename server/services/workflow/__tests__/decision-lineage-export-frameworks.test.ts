@@ -3,7 +3,7 @@
  * five named regulatory frameworks that nothing evaluates.
  *
  * `getLineageGraph` stamped `metadata.complianceFrameworks` with a five-element
- * string literal — FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2) GCP, PMDA ERES
+ * string literal — FDA 21 CFR Part 11, EU Annex 11, ICH E6(R3) GCP, PMDA ERES
  * Guidelines, GAMP 5 — computed from nothing and conditioned on nothing, while
  * every other field in the same object came from a real query. All three export
  * formats then printed it into the file a customer downloads for an audit
@@ -28,7 +28,7 @@ import {
   type LineageGraph,
 } from '../DecisionLineageService';
 
-const NEVER_ASSESSED = ['ICH E6(R2) GCP', 'GAMP 5'];
+const NEVER_ASSESSED = ['ICH E6(R3) GCP', 'GAMP 5'];
 const CHAIN_DEPENDENT = ['FDA 21 CFR Part 11', 'EU Annex 11', 'PMDA ERES Guidelines'];
 
 function graphWith(chainVerification: LineageGraph['metadata']['chainVerification']): LineageGraph {
@@ -95,7 +95,7 @@ describe('assessComplianceFrameworks: a framework nothing evaluates is never rep
     expect(graphWith('verified').metadata.complianceFrameworks.map(f => f.framework)).toEqual([
       'FDA 21 CFR Part 11',
       'EU Annex 11',
-      'ICH E6(R2) GCP',
+      'ICH E6(R3) GCP',
       'PMDA ERES Guidelines',
       'GAMP 5',
     ]);
@@ -106,8 +106,8 @@ describe('decision-lineage exports: the downloaded file carries the status, not 
   it('CSV never prints the five names as an unqualified compliance claim', () => {
     const csv = exporter.exportCSV(graphWith('unverifiable')).data;
 
-    expect(csv).not.toContain('# Compliance: FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2) GCP');
-    expect(csv).toContain('ICH E6(R2) GCP = NOT_ASSESSED');
+    expect(csv).not.toContain('# Compliance: FDA 21 CFR Part 11, EU Annex 11, ICH E6(R3) GCP');
+    expect(csv).toContain('ICH E6(R3) GCP = NOT_ASSESSED');
     expect(csv).toContain('FDA 21 CFR Part 11 = UNVERIFIABLE');
   });
 

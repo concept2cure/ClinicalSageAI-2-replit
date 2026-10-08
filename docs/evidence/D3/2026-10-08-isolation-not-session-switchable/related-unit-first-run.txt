@@ -1,0 +1,16 @@
+ × server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > carries the organisation uuid when the request has one 9ms
+ × server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > falls back to the uuid on tenantContext when req.user has none 1ms
+ × server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > writes the EMPTY STRING when neither carries one — the FORCE precondition 1ms
+ × server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > sets all three session vars on one acquisition, not lazily per read 3ms
+ × server/middleware/__tests__/tenant-scope-org-guc.test.ts > org membership → tenant scope → app.current_org_id > carries the uuid the membership lookup resolved 704ms
+ × server/middleware/__tests__/tenant-scope-org-guc.test.ts > org membership → tenant scope → app.current_org_id > carries the empty string when the lookup resolves no uuid 1ms
+ × server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts > request-path callers that already hold a scope keep today's behaviour > same session set_config sequence, callback sees the requested scope, am
+ × server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > release() clears session vars and returns the client to the pool 7ms
+ × server/db/__tests__/withTenantConnection.test.ts > withTenantConnection > sets app.current_tenant_id, app.current_org_id, and app.current_user_role before the callback runs 5ms
+ × server/db/__tests__/withTenantConnection.test.ts > withTenantConnection > clears the session vars and releases the client even when the callback throws 5ms
+ × server/db/__tests__/withTenantConnection.test.ts > withTenantConnection > evicts when tenant session setup fails partway through 3ms
+ × server/db/__tests__/withTenantConnection.test.ts > withTenantConnection > evicts when tenant session cleanup fails 2ms
+ × server/db/__tests__/withTenantConnection.test.ts > withTenantConnection > passes role="app_super_admin" through to the session var (cross-tenant scan path) 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  4 failed | 81 passed | 1 skipped (86)
+      Tests  13 failed | 945 passed | 8 skipped (966)

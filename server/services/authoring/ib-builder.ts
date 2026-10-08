@@ -2,7 +2,7 @@
  * @fileoverview Investigator's Brochure (IB) Authoring Engine
  * @module server/services/authoring/ib-builder
  *
- * Generates a complete ICH E6(R2) §7 Investigator's Brochure with AI-powered
+ * Generates a complete ICH E6(R3) Appendix A Investigator's Brochure with AI-powered
  * section drafting. Pulls source content from the nonclinical summaries
  * (M2.4 Nonclinical Overview / M2.6 Written & Tabulated Summaries), the clinical
  * summaries (M2.5 Clinical Overview / M2.7 Clinical Summary), and a structured
@@ -29,7 +29,7 @@
  *   loaders' study shape (`NonclinicalStudyInput`) so the IB consumes the same
  *   upstream artefacts the CTD composers produce. No existing files are edited.
  *
- * @compliance ICH E6(R2) §7; ICH M4S(R2); ICH M4E(R2).
+ * @compliance ICH E6(R3) Appendix A (Investigator's Brochure); ICH M4S(R2); ICH M4E(R2).
  */
 
 import type { M2Summary } from '../m2-summary-builders.js';
@@ -46,7 +46,7 @@ try {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// IB SECTION STRUCTURE (ICH E6(R2) §7 / IB guidance)
+// IB SECTION STRUCTURE (ICH E6(R3) Appendix A / IB guidance)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface IBSection {
@@ -193,7 +193,7 @@ export interface IBBuildJob {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Build a full Investigator's Brochure. Drafts each ICH E6(R2) §7 section via
+ * Build a full Investigator's Brochure. Drafts each ICH E6(R3) Appendix A section via
  * the unified AI gateway (falling back to templates), returns each section's
  * content with a deterministic `{ status, gaps }` verdict, and rolls up an
  * overall completeness score.
@@ -373,7 +373,7 @@ async function draftSectionWithAI(section: IBSection, request: IBBuildRequest): 
   const p = request.product;
   const sourceContext = buildSourceContext(section, request);
 
-  const systemPrompt = `You are an expert medical writer drafting an Investigator's Brochure (IB) compliant with ICH E6(R2) Section 7.
+  const systemPrompt = `You are an expert medical writer drafting an Investigator's Brochure (IB) compliant with ICH E6(R3) Appendix A (Investigator's Brochure).
 You are drafting one section of the IB for an investigational product.
 
 Product:
@@ -394,7 +394,7 @@ insert an explicit placeholder like [DATA TO BE INSERTED]. Do NOT use markdown �
         { role: 'system', content: systemPrompt },
         {
           role: 'user',
-          content: `Draft IB Section ${section.number}: ${section.title}\n\nSection scope: ${section.description}\n\nSOURCE DATA:\n${sourceContext || '[No structured source data supplied for this section.]'}\n\nWrite a complete, submission-ready draft for this section per ICH E6(R2) §7.`,
+          content: `Draft IB Section ${section.number}: ${section.title}\n\nSection scope: ${section.description}\n\nSOURCE DATA:\n${sourceContext || '[No structured source data supplied for this section.]'}\n\nWrite a complete, submission-ready draft for this section per ICH E6(R3) Appendix A.`,
         },
       ],
       {

@@ -57,9 +57,9 @@ describe('what an assessment indicates', () => {
     expect(x.basis).toMatch(/still reported to the sponsor/);
   });
 
-  it('every deviation is documented, explained and reported to the sponsor (ICH E6(R2) 4.5.3)', () => {
+  it('every deviation is documented, explained and reported to the sponsor (ICH E6(R3) Annex 1 §2.5)', () => {
     for (const x of [r({}), r({ severity: 'critical' }), r({ severity: null, affectsSafety: null })]) {
-      expect(x.obligations.join(' ')).toMatch(/Document and explain the deviation, and report it to the sponsor \(ICH E6\(R2\) 4\.5\.3\)/);
+      expect(x.obligations.join(' ')).toMatch(/Document and explain the deviation, and report it to the sponsor \(ICH E6\(R3\) Annex 1 §2\.5\)/);
     }
   });
 });
