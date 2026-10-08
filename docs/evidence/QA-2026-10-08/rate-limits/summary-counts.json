@@ -1,0 +1,186 @@
+{
+  "before": {
+    "docGetsTotal": 56,
+    "docGetsByStatus": {
+      "200": 20,
+      "429": 36
+    },
+    "uploadsByStatus": {
+      "200": 10,
+      "429": 5
+    },
+    "opens": [
+      {
+        "open": 1,
+        "title": "Open filing cabinet",
+        "docGets": 0,
+        "statuses": {}
+      },
+      {
+        "open": 2,
+        "title": "Protocol-Stability",
+        "docGets": 0,
+        "statuses": {}
+      },
+      {
+        "open": 3,
+        "title": "Vorelinib DS Stability Protocol STB-0042",
+        "docGets": 8,
+        "statuses": {
+          "200": 8
+        }
+      },
+      {
+        "open": 4,
+        "title": "Vorelinib-Stability-Protocol-STB-0042",
+        "docGets": 8,
+        "statuses": {
+          "200": 4,
+          "429": 4
+        }
+      },
+      {
+        "open": 5,
+        "title": "Vorelinib-Batch-Analysis-DS",
+        "docGets": 8,
+        "statuses": {
+          "429": 8
+        }
+      },
+      {
+        "open": 6,
+        "title": "Vorelinib-DS-Specification-J3",
+        "docGets": 8,
+        "statuses": {
+          "429": 8
+        }
+      },
+      {
+        "open": 7,
+        "title": "Vorelinib-DS-Specification-J3-r2",
+        "docGets": 8,
+        "statuses": {
+          "429": 8
+        }
+      },
+      {
+        "open": 8,
+        "title": "Vorelinib-Investigator-Brochure-Ed3",
+        "docGets": 8,
+        "statuses": {
+          "429": 8
+        }
+      }
+    ],
+    "annotateSequence": [
+      "POST 201 annotations",
+      "GET 200 …",
+      "GET 200 annotations",
+      "GET 200 …",
+      "GET 429 relationships",
+      "GET 429 history",
+      "GET 429 relationships",
+      "GET 429 history",
+      "GET 200 versions",
+      "GET 429 versions",
+      "GET 200 annotations",
+      "GET 429 annotations"
+    ],
+    "sendBudgetSpent": 429,
+    "sendAfterReset": 500,
+    "sendAfterResetMsg": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Something went wrong wh"
+  },
+  "after": {
+    "docGetsTotal": 64,
+    "docGetsByStatus": {
+      "200": 64
+    },
+    "uploadsByStatus": {
+      "200": 15
+    },
+    "opens": [
+      {
+        "open": 1,
+        "title": "Open filing cabinet",
+        "docGets": 0,
+        "statuses": {}
+      },
+      {
+        "open": 2,
+        "title": "Protocol-Stability",
+        "docGets": 0,
+        "statuses": {}
+      },
+      {
+        "open": 3,
+        "title": "Vorelinib DS Stability Protocol STB-0042",
+        "docGets": 8,
+        "statuses": {
+          "200": 8
+        }
+      },
+      {
+        "open": 4,
+        "title": "Vorelinib-Stability-Protocol-STB-0042",
+        "docGets": 8,
+        "statuses": {
+          "200": 8
+        }
+      },
+      {
+        "open": 5,
+        "title": "Vorelinib-Batch-Analysis-DS",
+        "docGets": 8,
+        "statuses": {
+          "200": 8
+        }
+      },
+      {
+        "open": 6,
+        "title": "Vorelinib-DS-Specification-J3",
+        "docGets": 16,
+        "statuses": {
+          "200": 16
+        }
+      },
+      {
+        "open": 7,
+        "title": "Vorelinib-DS-Specification-J3-r2",
+        "docGets": 8,
+        "statuses": {
+          "200": 8
+        }
+      },
+      {
+        "open": 8,
+        "title": "Vorelinib-Investigator-Brochure-Ed3",
+        "docGets": 8,
+        "statuses": {
+          "200": 8
+        }
+      }
+    ],
+    "annotateSequence": [
+      "POST 201 annotations",
+      "GET 200 history",
+      "GET 200 versions",
+      "GET 200 annotations",
+      "GET 200 …",
+      "GET 200 history",
+      "GET 200 annotations",
+      "GET 200 relationships",
+      "GET 200 versions",
+      "GET 200 relationships",
+      "GET 200 history",
+      "GET 200 annotations",
+      "GET 200 versions",
+      "GET 200 history",
+      "GET 200 annotations",
+      "GET 200 versions",
+      "GET 200 annotations"
+    ],
+    "sendBudgetSpent": 404,
+    "sendAfterReset": 401,
+    "sendAfterResetMsg": "{\"error\":\"This session has ended. Sign in again.\",\"code\":\"SE"
+  }
+}

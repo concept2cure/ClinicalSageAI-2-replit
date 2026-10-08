@@ -1,0 +1,33 @@
+// After a successful annotation post, is the success text shown in the panel?
+// Prints the whole panel's status text and whether the success sentence is present.
+import { chromium, signIn, SEED_USER, BASE, sleep } from '../qa/lib.mjs';
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const ctx = await signIn(browser, SEED_USER);
+const page = await ctx.newPage();
+const posts = [];
+page.on('response', (r) => { if (/project-vault\/[^/]+\/documents\/[^/]+\/annotations/.test(r.url()) && r.request().method() === 'POST') posts.push(r.status()); });
+await page.goto(`${BASE}/concept2cure/projects`, { waitUntil: 'networkidle' }).catch(() => {});
+await sleep(1500);
+await page.getByText('Vorelinib', { exact: false }).first().click();
+await sleep(4000);
+await page.getByText('Vault (DMS)', { exact: true }).first().click();
+await page.waitForSelector('.vd-wrap', { timeout: 30000 });
+await sleep(2500);
+await page.getByTestId('vault-uploads-lane').getByRole('button', { name: 'Vorelinib DS Stability Protocol STB-0042', exact: false }).first().click();
+await sleep(3000);
+const panel = page.getByTestId('vault-annotations');
+await panel.getByTestId('vault-annotations-open').click();
+await page.getByTestId('vault-annotations-kind').selectOption('comment');
+await page.getByTestId('vault-annotations-body').fill('QA success-text probe, comment after a single open.');
+await sleep(300);
+await page.getByTestId('vault-annotations-post').click();
+await sleep(4000);
+const full = await panel.innerText();
+const statuses = await panel.getByRole('status').allInnerTexts();
+const alerts = await panel.getByRole('alert').allInnerTexts();
+console.log('POST statuses:', JSON.stringify(posts));
+console.log('role=status texts:', JSON.stringify(statuses));
+console.log('role=alert texts:', JSON.stringify(alerts));
+console.log('success sentence present in panel:', /Annotation posted/.test(full));
+console.log('panel still in add form:', (await page.getByTestId('vault-annotations-add').count()) > 0);
+await browser.close();

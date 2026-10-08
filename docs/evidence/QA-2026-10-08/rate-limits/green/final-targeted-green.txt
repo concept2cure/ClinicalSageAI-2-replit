@@ -1,0 +1,57 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a document open is not refused by the document read limit > a user who opens eight documents in a minute is not refused a read 105ms
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a document open is not refused by the document read limit > a posted annotation and the list read that follows it are both accepted after several opens 39ms
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a document open is not refused by the document read limit > metadata reads keep a per-user ceiling: the 601st in a minute is refused 980ms
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > document downloads and document writes keep the 20-a-minute ceiling > the 21st download in a minute is refused 26ms
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > document downloads and document writes keep the 20-a-minute ceiling > a document write (Send for review) shares the 20-a-minute ceiling and the 21st is refused 32ms
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a Data room drop is not refused for a normal batch of files > a batch of fifteen files dropped at once by one user is not refused 32ms
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a Data room drop is not refused for a normal batch of files > a flood of uploads by one user is still refused: the 61st in a minute is 134ms
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > the bucket each path is counted in > vault metadata reads are api reads; vault downloads, text and writes stay documents 1ms
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > the bucket each path is counted in > chat uploads are upload reads 2ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > platform numbers: api and concept2cure carry an authenticated ceiling above the per-IP one, and a per-IP guard above that 6ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > no credential: the per-IP bucket trips at exactly the per-IP ceiling 84ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > bearer credential: not tripped at the per-IP ceiling, tripped at the credential ceiling 28ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > two credentials behind one address have their own buckets; anonymous traffic from it keeps its own 36ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > rotating credentials from one address is bounded by the per-IP credentialed guard 33ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > a verified identity wins over the credential: two tokens for one user share the user bucket 25ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > the headers name the ceiling that applied 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentOpenReads.test.tsx > opening one Vault document > reads each panel endpoint once, not once per panel mount 135ms
+ ✓ server/middleware/__tests__/redisRateLimiter-counts-once.test.ts > a request is one request to a limiter, whatever router answers it > counts one per request when the third router of three answers it 40ms
+ ✓ server/middleware/__tests__/redisRateLimiter-counts-once.test.ts > a request is one request to a limiter, whatever router answers it > refuses the request after the limit, not after the limit divided by the router's position 19ms
+ ✓ server/middleware/__tests__/redisRateLimiter-counts-once.test.ts > a request is one request to a limiter, whatever router answers it > two limiters are two policies: each still counts the request once 7ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > FILE_LIMITS.maxUploadBytes is 100 MB 2ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > RATE_LIMITS (Redis limiter) > auth is env-dependent (prod strict, dev relaxed) 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > RATE_LIMITS (Redis limiter) > api is 100 requests / minute 1ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > RATE_LIMITS (Redis limiter) > ai is 30 requests / minute and exempts admin roles 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > RATE_LIMITS (Redis limiter) > documents is 20 requests / minute 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > RATE_LIMITS (Redis limiter) > concept2cure is 100 requests / minute 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > RATE_LIMITS (Redis limiter) > validation is 10 requests / minute 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > RATE_LIMITS (Redis limiter) > upload is 10 requests / minute 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > RATE_LIMIT_FAIL_CLOSED_CATEGORIES is [auth, documents] 1ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > LEGACY_RATE_LIMITS (in-memory limiter) > auth is 30 requests / 15 minutes 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > LEGACY_RATE_LIMITS (in-memory limiter) > api is 60 requests / minute 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > LEGACY_RATE_LIMITS (in-memory limiter) > validation is 10 requests / minute 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > LEGACY_RATE_LIMITS (in-memory limiter) > ai is 20 requests / minute 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > RATE_LIMIT_STORE sizes and interval are preserved 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits config values > REDIS tuning defaults are preserved 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits immutability > all exported config objects are frozen 0ms
+ ✓ tests/config/platform-limits.test.ts > platform-limits immutability > mutating a frozen config throws in strict mode 1ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ai-assistance/generate-section → ai 2ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ai-gateway/complete → ai 0ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ana/chat → ai 0ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ana-ri/command → ai 1ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/claude/models → ai 0ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/cortex/query → ai 0ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ai/claims → ai 0ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > the other buckets are unchanged 0ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > an AnA request that reaches no model is ordinary API traffic, not AI 1ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > what can reach a model under /api/ana-ri stays AI, and the other prefixes are unchanged 0ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > a segment that merely contains the letters is not the bucket (no substring matches) 0ms
+
+ Test Files  6 passed (6)
+      Tests  48 passed (48)
+   Start at  01:30:18
+   Duration  9.22s (transform 1.45s, setup 706ms, import 2.98s, tests 1.82s, environment 1.01s)
+
