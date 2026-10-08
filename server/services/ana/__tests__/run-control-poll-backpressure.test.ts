@@ -217,3 +217,151 @@ describe('obsolete listener lifecycle', () => {
     expect(run.handle.cancelSignal.aborted).toBe(false);
   });
 });
+
+async function listening() {
+    const active = fakeClient();
+    const fake = fakePool(vi.fn(async () => active.client));
+    await startRunControlListener(fake.pool);
+    const run = await open(fake.pool);
+    const notify = (runId = run.runId, channel = RUN_CONTROL_CHANNEL) => {
+      active.callbacks.get('notification')!({ channel, payload: runId });
+    };
+    return { active, fake, run, notify };
+}
+
+describe('notification backpressure', () => {
+  it('coalesces notification bursts while each admitted read is pending', async () => {
+    const { fake, run, notify } = await listening();
+    for (let i = 0; i < 100; i++) notify();
+    expect(fake.reads).toHaveLength(1);
+    fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'running' }] });
+    await flush();
+    expect(fake.reads).toHaveLength(2);
+    for (let i = 0; i < 100; i++) notify();
+    expect(fake.reads).toHaveLength(2);
+    fake.reads[1].resolve({ rows: [{ id: run.runId, status: 'running' }] });
+    await flush();
+    expect(fake.reads).toHaveLength(3);
+    fake.reads[2].resolve({ rows: [{ id: run.runId, status: 'cancelled' }] });
+    await flush();
+    expect(run.handle.cancelSignal.aborted).toBe(true);
+    expect(fake.reads).toHaveLength(3);
+  });
+
+  it('does not lose Stop notified while an older running snapshot is pending', async () => {
+    const { fake, run, notify } = await listening();
+    notify();
+    notify();
+    expect(fake.reads).toHaveLength(1);
+    fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'running' }] });
+    await flush();
+    expect(fake.reads).toHaveLength(2);
+    expect(run.handle.cancelSignal.aborted).toBe(false);
+    fake.reads[1].resolve({ rows: [{ id: run.runId, status: 'cancelled' }] });
+    await flush();
+    expect(run.handle.cancelSignal.aborted).toBe(true);
+  });
+
+  it('lets another run deliver cancellation while the first run read stays pending', async () => {
+    const { fake, notify } = await listening();
+    const second = await open(fake.pool, 42);
+    notify();
+    notify();
+    notify(second.runId);
+    expect(fake.reads).toHaveLength(2);
+    fake.reads[1].resolve({ rows: [{ id: second.runId, status: 'cancelled' }] });
+    await flush();
+    expect(second.handle.cancelSignal.aborted).toBe(true);
+    expect(fake.reads).toHaveLength(2);
+  });
+
+  it('logs rejection and drains the pending successor without stranding admission', async () => {
+    const { fake, run, notify } = await listening();
+    notify();
+    notify();
+    expect(fake.reads).toHaveLength(1);
+    fake.reads[0].reject(new Error('notification database unavailable'));
+    await flush();
+    expect(logs.error).toHaveBeenCalledWith(expect.stringContaining('notify refresh failed for'));
+    expect(logs.error).toHaveBeenCalledWith(expect.stringContaining('notification database unavailable'));
+    expect(fake.reads).toHaveLength(2);
+    fake.reads[1].resolve({ rows: [{ id: run.runId, status: 'cancelled' }] });
+    await flush();
+    expect(run.handle.cancelSignal.aborted).toBe(true);
+  });
+
+});
+
+describe('notification backpressure', () => {
+  it('discards a queued successor after its local run has been released', async () => {
+    const { fake, run, notify } = await listening();
+    notify();
+    notify();
+    releaseLocalRun(run.runId);
+    fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'cancelled' }] });
+    await flush();
+    expect(fake.reads).toHaveLength(1);
+    expect(run.handle.cancelSignal.aborted).toBe(false);
+  });
+
+  it('isolates pending results and queued work across listener stop and restart', async () => {
+    const old = await listening();
+    old.notify();
+    old.notify();
+    stopRunControlListener();
+    const active = fakeClient();
+    const current = fakePool(vi.fn(async () => active.client));
+    await startRunControlListener(current.pool);
+    active.callbacks.get('notification')!({ channel: RUN_CONTROL_CHANNEL, payload: old.run.runId });
+    expect(current.reads).toHaveLength(1);
+    old.fake.reads[0].resolve({ rows: [{ id: old.run.runId, status: 'cancelled' }] });
+    await flush();
+    expect(old.fake.reads).toHaveLength(1);
+    expect(old.run.handle.cancelSignal.aborted).toBe(false);
+    current.reads[0].resolve({ rows: [{ id: old.run.runId, status: 'cancelled' }] });
+    await flush();
+    expect(old.run.handle.cancelSignal.aborted).toBe(true);
+  });
+
+  it('runs admitted and successor reads in actual system scope across tenant requests', async () => {
+    const { fake, run, notify } = await listening();
+    const second = await open(fake.pool, 42);
+    const scope = { tenantId: '7', role: 'member', source: 'request', caller: 'notify-test' } as TenantScope;
+    runWithTenantScope(scope, () => { notify(); notify(); notify(second.runId); });
+    expect(fake.reads).toHaveLength(2);
+    fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'running' }] });
+    await flush();
+    expect(fake.reads).toHaveLength(3);
+    expect(fake.scopes).toHaveLength(3);
+    for (const observed of fake.scopes) {
+      expect(observed?.tenantId).toBe('0');
+      expect(observed?.role).toBe('app_super_admin');
+    }
+    fake.reads[1].resolve({ rows: [{ id: second.runId, status: 'cancelled' }] });
+    fake.reads[2].resolve({ rows: [{ id: run.runId, status: 'cancelled' }] });
+    await flush();
+    expect(run.handle.cancelSignal.aborted).toBe(true);
+    expect(second.handle.cancelSignal.aborted).toBe(true);
+  });
+
+  it('ignores unrelated channels, missing payloads and runs owned elsewhere', async () => {
+    const { active, fake, notify } = await listening();
+    notify('run_elsewhere');
+    notify(undefined, 'another_channel');
+    active.callbacks.get('notification')!({ channel: RUN_CONTROL_CHANNEL });
+    expect(fake.reads).toHaveLength(0);
+  });
+
+  it('logs synchronous query failure and admits the next notification', async () => {
+    const { fake, run, notify } = await listening();
+    fake.failNextSelect(new Error('synchronous notification failure'));
+    notify();
+    await flush();
+    expect(logs.error).toHaveBeenCalledWith(expect.stringContaining('synchronous notification failure'));
+    notify();
+    expect(fake.reads).toHaveLength(1);
+    fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'cancelled' }] });
+    await flush();
+    expect(run.handle.cancelSignal.aborted).toBe(true);
+  });
+});
