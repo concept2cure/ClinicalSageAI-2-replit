@@ -1597,8 +1597,8 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
       <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
         Entries are append-only, hash-chained (SHA-256), and timestamped. Each entry's hash
         incorporates the previous entry's hash, creating a verifiable chain. Any modification to a
-        historical entry breaks the chain. Export produces a signed PDF carrying the full
-        verification manifest, in the form Part 11 record retention expects.
+        historical entry breaks the chain. Export downloads the entries as a signed JSON bundle:
+        the data, a verification manifest and an HMAC-SHA256 signature over both.
       </div>
         </React.Fragment>
       )}
@@ -2361,9 +2361,24 @@ interface ArtifactRow {
   when: string;
   ver: string;
   sig: boolean;
+  /** The version the active signature covers; null when it cannot be resolved. */
+  sigVersion?: number | null;
+  /** True when the signature covers an earlier version than the current one;
+   *  null when that cannot be told (the server never guesses). */
+  sigStale?: boolean | null;
   reviewed: boolean;
   sourceCount: number;
   prog: string;
+}
+
+/** What one artifact's signature says about its CURRENT version. The gallery
+    showed the e-signed shield whenever any active signature existed, so a
+    version edited after signing read as signed. */
+function signatureState(a: Pick<ArtifactRow, 'sig' | 'sigStale' | 'sigVersion'>): 'none' | 'current' | 'stale' | 'unknown' {
+  if (!a.sig) return 'none';
+  if (a.sigStale === true) return 'stale';
+  if (a.sigStale === false) return 'current';
+  return 'unknown';
 }
 
 /* CSV cell: quote always, double any embedded quote. Artifact names carry
@@ -2452,21 +2467,25 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         availableActions: ['Retry the artifact gallery read'],
       };
     }
-    const signed = rows.filter((a) => a.sig).length;
+    const signed = rows.filter((a) => signatureState(a) === 'current').length;
+    const stale = rows.filter((a) => signatureState(a) === 'stale').length;
     const programs = [...new Set(rows.map((a) => a.prog).filter(Boolean))];
     return {
       summary:
         `Artifacts Center: ${rows.length} artifact(s) across ${programs.length} program(s), ` +
-        `${signed} carrying a Part 11 e-signature.`,
+        `${signed} with a Part 11 e-signature on the current version` +
+        (stale ? `, ${stale} signed on an earlier version only (the current version is not signed)` : '') +
+        '.',
       facts: {
         totalArtifacts: rows.length,
         eSignedArtifacts: signed,
+        signedOnEarlierVersionOnly: stale,
         programs,
         // Enough to name an artifact back to the user, not the whole gallery.
         artifacts: rows.slice(0, 15).map((a) => ({
           id: a.id, name: a.name, kind: a.kind, format: a.fmt,
           version: a.ver, program: a.prog, model: a.model,
-          updated: a.when, eSigned: a.sig,
+          updated: a.when, eSigned: signatureState(a) === 'current', signature: signatureState(a),
         })),
       },
       availableActions: [
@@ -2524,7 +2543,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
       ['Size', (r) => r.size],
       ['Model', (r) => r.model ?? ''],
       ['Version', (r) => r.ver],
-      ['Signed', (r) => (r.sig ? 'yes' : 'no')],
+      ['Signed', (r) => ({ none: 'no', current: 'yes', stale: `earlier version only (v${r.sigVersion})`, unknown: 'yes, version not determined' })[signatureState(r)]],
       ['Program', (r) => r.prog],
       ['Updated', (r) => r.when],
     ];
@@ -2633,13 +2652,30 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
               <div style={{ color: 'var(--text-400)' }}>{a.model ?? '—'}</div>
               <div style={{ color: 'var(--text-400)' }}>{a.when}</div>
               <div>
-                {a.sig ? (
-                  <span className="esig" role="img" aria-label="E-signed (21 CFR Part 11)" title="E-signed (21 CFR Part 11)">
-                    {I.shieldCheck}
-                  </span>
-                ) : (
-                  <span style={{ color: 'var(--text-500)' }}>--</span>
-                )}
+                {(() => {
+                  const st = signatureState(a);
+                  if (st === 'current')
+                    return (
+                      <span className="esig" role="img" aria-label="E-signed (21 CFR Part 11)" title="E-signed (21 CFR Part 11)">
+                        {I.shieldCheck}
+                      </span>
+                    );
+                  /* Said in words as well as tone: the signature does not
+                     cover what is on file now. */
+                  if (st === 'stale')
+                    return (
+                      <span className="rd-chip tone-warn" title={`The signature covers v${a.sigVersion}; the current version (${a.ver}) is not signed.`}>
+                        {I.alertTriangle} Signed v{a.sigVersion} only
+                      </span>
+                    );
+                  if (st === 'unknown')
+                    return (
+                      <span className="rd-chip tone-idle" title="Signed, but the version the signature covers could not be determined.">
+                        Signed · version unknown
+                      </span>
+                    );
+                  return <span style={{ color: 'var(--text-500)' }}>--</span>;
+                })()}
               </div>
               <div className="art-acts">
                 {/* The non-docx branch used to run

@@ -1,0 +1,126 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-10-08T00:50:46.450Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-10-08T00:50:46.597Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T00:50:46.598Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-10-08T00:50:46.598Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > returns { data } rows shaped to the portfolio display contract
+{
+  "timestamp": "2026-10-08T00:50:48.276Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > reports hasMore and trims the extra probe row off the page
+{
+  "timestamp": "2026-10-08T00:50:48.295Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > selects only columns that exist on regulatory_programs
+{
+  "timestamp": "2026-10-08T00:50:48.306Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > 403 without org context 22ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > returns { data } rows shaped to the portfolio display contract 7ms
+ × server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > carries the target filing date as a date, so days to filing can be counted 8ms
+   → expected 'SELECT p.id::text                    …' to match /to_char\(p\.target_submission_date, '…/
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > clamps ?limit to its maximum and never issues an unbounded read 4ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > reports hasMore and trims the extra probe row off the page 5ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > fails closed to an empty envelope when the store is not provisioned 3ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > 404s a non-uuid id instead of 500ing on the uuid cast 3ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > selects only columns that exist on regulatory_programs 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > carries the target filing date as a date, so days to filing can be counted
+AssertionError: expected 'SELECT p.id::text                    …' to match /to_char\(p\.target_submission_date, '…/
+
+- Expected:
+/to_char\(p\.target_submission_date, 'YYYY-MM-DD'\)\s+AS due_date/
+
++ Received:
+"SELECT p.id::text                                            AS id,
+              p.name                                                AS title,
+              CASE
+         WHEN lower(p.program_type) IN ('510k','de_novo','pma','hde','ide','device','ivd','cer','mdr','ivdr') THEN 'MDX'
+         WHEN lower(p.program_type) IN ('ind','bla','biologic') THEN 'Biotech'
+         WHEN lower(p.program_type) IN ('nda','maa','jnda','anda','cta') THEN 'Pharma'
+         ELSE initcap(replace(p.program_type, '_', ' '))
+       END                                            AS ws,
+              COALESCE(p.code, '—')                                 AS code,
+              initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
+              COALESCE(p.progress_percent, 0)                       AS readiness,
+              p.status                                              AS status,
+              COALESCE(u.name, u.email, '—')                        AS lead,
+              NULL::text                                            AS blocker,
+              COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
+              'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
+         FROM regulatory_programs p
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
+        WHERE p.organization_id = $1 AND p.deleted_at IS NULL
+          AND ($4::boolean OR p.status <> 'archived')
+        ORDER BY p.updated_at DESC
+        LIMIT $2 OFFSET $3"
+
+ ❯ server/routes/c2c/__tests__/projects-list.test.ts:58:17
+     56|     await request(appWith(7)).get('/api/c2c/projects');
+     57|     const [sql] = query.mock.calls[0] as [string, unknown[]];
+     58|     expect(sql).toMatch(/to_char\(p\.target_submission_date, 'YYYY-MM-…
+       |                 ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  00:50:44
+   Duration  3.89s (transform 2.18s, setup 78ms, import 3.44s, tests 64ms, environment 0ms)
+

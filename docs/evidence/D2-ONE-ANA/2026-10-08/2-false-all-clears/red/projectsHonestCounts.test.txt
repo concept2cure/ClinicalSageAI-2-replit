@@ -1,0 +1,1396 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > no card claims "No open blockers" when no blocker was looked for 93ms
+   → Found multiple elements with the text: /No open blockers/
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"pj-card-ok"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-check"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mfocusable[39m=[32m"false"[39m
+    [33mheight[39m=[32m"1em"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"1.75"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"1em"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0m No open blockers[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"pj-card-ok"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-check"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mfocusable[39m=[32m"false"[39m
+    [33mheight[39m=[32m"1em"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"1.75"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"1em"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0m No open blockers[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"pj-card-ok"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-check"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mfocusable[39m=[32m"false"[39m
+    [33mheight[39m=[32m"1em"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"1.75"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"1em"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0m No open blockers[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"pj-card-ok"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-check"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mfocusable[39m=[32m"false"[39m
+    [33mheight[39m=[32m"1em"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"1.75"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"1em"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0m No open blockers[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-index"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mProjects[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mEvery regulatory program across all workstreams. Open one to enter its project home.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New project[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-summary"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-summary-i"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0m4[0m
+          [36m</strong>[39m
+          [0m [0m
+          [0mactive programs[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-summary-i"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0m30%[0m
+          [36m</strong>[39m
+          [0m [0m
+          [0maverage readiness[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-summary-i"[39m
+          [33mdata-tone[39m=[32m"err"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0m0[0m
+          [36m</strong>[39m
+          [0m [0m
+          [0mblocked[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-summary-i"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0m0[0m
+          [36m</strong>[39m
+          [0m [0m
+          [0mfiling &lt; 60 days[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-toolbar"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-search"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"11"[39m
+                [33mcy[39m=[32m"11"[39m
+                [33mr[39m=[32m"8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21 21-4.3-4.3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Search projects by title or code"[39m
+            [33mclass[39m=[32m"pj-search-i"[39m
+            [33mplaceholder[39m=[32m"Search projects"[39m
+            [33mtype[39m=[32m"search"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<span[39m
+          [33mstyle[39m=[32m"flex: 1 1 0%;"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"seg"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"seg-b on"[39m
+          [36m>[39m
+            [0mGrid[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mList[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ws-switch"[39m
+        [33mstyle[39m=[32m"margin-bottom: 8px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ws-btn on"[39m
+        [36m>[39m
+          [0mAll workstreams[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ws-btn"[39m
+        [36m>[39m
+          [0mMDX[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ws-btn"[39m
+        [36m>[39m
+          [0mBiotech[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ws-btn"[39m
+        [36m>[39m
+          [0mPharma[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"seg"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b on"[39m
+        [36m>[39m
+          [0mAll[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mActive[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mBlocked[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mComplete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-cards"[39m
+        [33mstyle[39m=[32m""[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-t"[39m
+          [36m>[39m
+            [0mProgram soon[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-m"[39m
+          [36m>[39m
+            [0mSOON[0m
+            [0m · [0m
+            [0mPlanning[0m
+            [0m · Lead [0m
+            [0mRae Okafor[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-bar-track"[39m
+            [33mstyle[39m=[32m"margin: 12px 0px 6px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-bar-fill"[39m
+              [33mdata-tone[39m=[32m"ok"[39m
+              [33mstyle[39m=[32m"width: 30%;"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-r"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0m30% ready[0m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0m2026-11-07[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-f"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mPharma[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-ok"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m No open blockers[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-t"[39m
+          [36m>[39m
+            [0mProgram later[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-m"[39m
+          [36m>[39m
+            [0mLATER[0m
+            [0m · [0m
+            [0mPlanning[0m
+            [0m · Lead [0m
+            [0mRae Okafor[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-bar-track"[39m
+            [33mstyle[39m=[32m"margin: 12px 0px 6px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-bar-fill"[39m
+              [33mdata-tone[39m=[32m"ok"[39m
+              [33mstyle[39m=[32m"width: 30%;"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-r"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0m30% ready[0m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0m2027-02-05[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-f"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mPharma[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-ok"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m No open blockers[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-t"[39m
+          [36m>[39m
+            [0mProgram past[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-m"[39m
+          [36m>[39m
+            [0mPAST[0m
+            [0m · [0m
+            [0mPlanning[0m
+            [0m · Lead [0m
+            [0mRae Okafor[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-bar-track"[39m
+            [33mstyle[39m=[32m"margin: 12px 0px 6px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-bar-fill"[39m
+              [33mdata-tone[39m=[32m"ok"[39m
+              [33mstyle[39m=[32m"width: 30%;"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-r"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0m30% ready[0m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0m2026-10-03[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-f"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mPharma[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-ok"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m No open blockers[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-t"[39m
+          [36m>[39m
+            [0mProgram none[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-m"[39m
+          [36m>[39m
+            [0mNONE[0m
+            [0m · [0m
+            [0mPlanning[0m
+            [0m · Lead [0m
+            [0mRae Okafor[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-bar-track"[39m
+            [33mstyle[39m=[32m"margin: 12px 0px 6px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-bar-fill"[39m
+              [33mdata-tone[39m=[32m"ok"[39m
+              [33mstyle[39m=[32m"width: 30%;"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-r"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0m30% ready[0m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0m—[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-f"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mPharma[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-ok"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m No open blockers[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > shows no "Blocked" figure, since nothing writes that status 35ms
+   → expected '0' to be null
+ × client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > counts the programs whose target filing date is within the next 60 days 27ms
+   → expected '0' to be '1' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > offers no status filter that can only show an empty list 27ms
+   → expected [ 'Grid', 'List', 'All', …(3) ] to not include 'Blocked'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > no card claims "No open blockers" when no blocker was looked for
+TestingLibraryElementError: Found multiple elements with the text: /No open blockers/
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"pj-card-ok"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-check"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mfocusable[39m=[32m"false"[39m
+    [33mheight[39m=[32m"1em"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"1.75"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"1em"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0m No open blockers[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"pj-card-ok"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-check"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mfocusable[39m=[32m"false"[39m
+    [33mheight[39m=[32m"1em"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"1.75"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"1em"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0m No open blockers[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"pj-card-ok"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-check"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mfocusable[39m=[32m"false"[39m
+    [33mheight[39m=[32m"1em"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"1.75"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"1em"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0m No open blockers[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"pj-card-ok"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-check"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mfocusable[39m=[32m"false"[39m
+    [33mheight[39m=[32m"1em"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"1.75"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"1em"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0m No open blockers[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-index"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mProjects[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mEvery regulatory program across all workstreams. Open one to enter its project home.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New project[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-summary"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-summary-i"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0m4[0m
+          [36m</strong>[39m
+          [0m [0m
+          [0mactive programs[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-summary-i"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0m30%[0m
+          [36m</strong>[39m
+          [0m [0m
+          [0maverage readiness[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-summary-i"[39m
+          [33mdata-tone[39m=[32m"err"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0m0[0m
+          [36m</strong>[39m
+          [0m [0m
+          [0mblocked[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-summary-i"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0m0[0m
+          [36m</strong>[39m
+          [0m [0m
+          [0mfiling &lt; 60 days[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-toolbar"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-search"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"11"[39m
+                [33mcy[39m=[32m"11"[39m
+                [33mr[39m=[32m"8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21 21-4.3-4.3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Search projects by title or code"[39m
+            [33mclass[39m=[32m"pj-search-i"[39m
+            [33mplaceholder[39m=[32m"Search projects"[39m
+            [33mtype[39m=[32m"search"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<span[39m
+          [33mstyle[39m=[32m"flex: 1 1 0%;"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"seg"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"seg-b on"[39m
+          [36m>[39m
+            [0mGrid[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mList[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ws-switch"[39m
+        [33mstyle[39m=[32m"margin-bottom: 8px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ws-btn on"[39m
+        [36m>[39m
+          [0mAll workstreams[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ws-btn"[39m
+        [36m>[39m
+          [0mMDX[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ws-btn"[39m
+        [36m>[39m
+          [0mBiotech[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ws-btn"[39m
+        [36m>[39m
+          [0mPharma[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"seg"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b on"[39m
+        [36m>[39m
+          [0mAll[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mActive[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mBlocked[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mComplete[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-cards"[39m
+        [33mstyle[39m=[32m""[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-t"[39m
+          [36m>[39m
+            [0mProgram soon[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-m"[39m
+          [36m>[39m
+            [0mSOON[0m
+            [0m · [0m
+            [0mPlanning[0m
+            [0m · Lead [0m
+            [0mRae Okafor[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-bar-track"[39m
+            [33mstyle[39m=[32m"margin: 12px 0px 6px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-bar-fill"[39m
+              [33mdata-tone[39m=[32m"ok"[39m
+              [33mstyle[39m=[32m"width: 30%;"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-r"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0m30% ready[0m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0m2026-11-07[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-f"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mPharma[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-ok"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m No open blockers[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-t"[39m
+          [36m>[39m
+            [0mProgram later[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-m"[39m
+          [36m>[39m
+            [0mLATER[0m
+            [0m · [0m
+            [0mPlanning[0m
+            [0m · Lead [0m
+            [0mRae Okafor[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-bar-track"[39m
+            [33mstyle[39m=[32m"margin: 12px 0px 6px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-bar-fill"[39m
+              [33mdata-tone[39m=[32m"ok"[39m
+              [33mstyle[39m=[32m"width: 30%;"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-r"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0m30% ready[0m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0m2027-02-05[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-f"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mPharma[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-ok"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m No open blockers[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-t"[39m
+          [36m>[39m
+            [0mProgram past[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-m"[39m
+          [36m>[39m
+            [0mPAST[0m
+            [0m · [0m
+            [0mPlanning[0m
+            [0m · Lead [0m
+            [0mRae Okafor[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-bar-track"[39m
+            [33mstyle[39m=[32m"margin: 12px 0px 6px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-bar-fill"[39m
+              [33mdata-tone[39m=[32m"ok"[39m
+              [33mstyle[39m=[32m"width: 30%;"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-r"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0m30% ready[0m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0m2026-10-03[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-f"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mPharma[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-ok"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m No open blockers[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-t"[39m
+          [36m>[39m
+            [0mProgram none[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-m"[39m
+          [36m>[39m
+            [0mNONE[0m
+            [0m · [0m
+            [0mPlanning[0m
+            [0m · Lead [0m
+            [0mRae Okafor[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-bar-track"[39m
+            [33mstyle[39m=[32m"margin: 12px 0px 6px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-bar-fill"[39m
+              [33mdata-tone[39m=[32m"ok"[39m
+              [33mstyle[39m=[32m"width: 30%;"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-r"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0m30% ready[0m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0m—[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-f"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mPharma[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-ok"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m No open blockers[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx:68:19
+     66|     render(<Projects {...props()} />);
+     67|     await waitFor(() => expect(screen.getByText('Program soon')).toBeT…
+     68|     expect(screen.queryByText(/No open blockers/)).toBeNull();
+       |                   ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > shows no "Blocked" figure, since nothing writes that status
+AssertionError: expected '0' to be null
+
+- Expected:
+null
+
++ Received:
+"0"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx:74:32
+     72|     render(<Projects {...props()} />);
+     73|     await waitFor(() => expect(screen.getByText('Program soon')).toBeT…
+     74|     expect(figure(/blocked/i)).toBeNull();
+       |                                ^
+     75|   });
+     76|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > counts the programs whose target filing date is within the next 60 days
+AssertionError: expected '0' to be '1' // Object.is equality
+
+Expected: "1"
+Received: "0"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx:81:41
+     79|     await waitFor(() => expect(screen.getByText('Program soon')).toBeT…
+     80|     // 30 days: yes. 120 days, 5 days ago, and no date: no.
+     81|     expect(figure(/filing < 60 days/i)).toBe('1');
+       |                                         ^
+     82|   });
+     83|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > offers no status filter that can only show an empty list
+AssertionError: expected [ 'Grid', 'List', 'All', …(3) ] to not include 'Blocked'
+ ❯ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx:88:22
+     86|     await waitFor(() => expect(screen.getByText('Program soon')).toBeT…
+     87|     const segs = Array.from(document.querySelectorAll('.seg-b')).map((…
+     88|     expect(segs).not.toContain('Blocked');
+       |                      ^
+     89|     expect(segs).not.toContain('Complete');
+     90|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  00:49:34
+   Duration  1.72s (transform 607ms, setup 139ms, import 752ms, tests 187ms, environment 469ms)
+

@@ -920,7 +920,8 @@ function PortfolioPagedNote({ paged, settled, count }: { paged: boolean; settled
  * column (progress_percent → readiness, phase → stage, target_submission_date →
  * due, lead_user_id → lead). `blocker` is in the projection but the list query
  * returns it as a literal NULL — no blocker is computed at list level — so it is
- * typed nullable and rendered null-safe, never fabricated.
+ * typed nullable and rendered null-safe, never fabricated. Null means "not
+ * assessed here", never "none": the card says nothing about blockers then.
  */
 interface ProjPortfolioEntry {
   id: string;
@@ -935,7 +936,19 @@ interface ProjPortfolioEntry {
   lead: string;
   blocker: string | null;
   due: string;
+  /** target_submission_date as YYYY-MM-DD, or null when none is set. */
+  due_date?: string | null;
   activity: string;
+}
+
+/** Whole days from today to a YYYY-MM-DD date, in the viewer's calendar; null
+ *  for no date or an unreadable one. */
+function daysUntil(isoDate: string | null | undefined, today: Date = new Date()): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate ?? '');
+  if (!m) return null;
+  const due = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const now = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.round((due - now) / 86_400_000);
 }
 
 /** Workstream → chip tone (presentation config, not data). */
@@ -994,12 +1007,24 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const meanReadiness = measured.length
     ? Math.round(measured.reduce((s, p) => s + p.readiness, 0) / measured.length) + '%'
     : '—';
+  /* No "Blocked" figure. A program's status is only ever written as active or
+     archived (POST and the close-out routes in server/routes/c2c/projects.ts),
+     and the list computes no blocker, so the count could only read 0: an
+     all-clear nothing had assessed. Readiness is assessed per program, on
+     Project home and in Submission Center. */
+  const filingSoon = projects.filter(p => {
+    const d = daysUntil(p.due_date);
+    return d != null && d >= 0 && d < 60;
+  }).length;
   const health = [
     { l: 'Active programs', n: kv(countFloor(projects.length, truncated)), m: 'across MDX, Biotech, Pharma', t: '' },
     { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '' },
-    { l: 'Blocked', n: kv(String(projects.filter(p => p.status === 'blocked').length)), m: 'need attention', t: 'err' },
-    { l: 'Filing < 60 days', n: kv(String(projects.filter(p => /days/.test(p.due)).length)), m: 'near-term submissions', t: 'warn' },
+    { l: 'Filing < 60 days', n: kv(countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
   ];
+  /* The status filter offers the statuses the portfolio actually holds. It
+     offered Blocked and Complete, which nothing writes, so both always showed
+     an empty list. One status (or none) needs no filter. */
+  const statuses = ['all', ...Array.from(new Set(projects.map(p => p.status).filter(Boolean)))];
   const wss = ['all', 'MDX', 'Biotech', 'Pharma'];
 
   /* What AnA can see of this screen.
@@ -1042,7 +1067,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         availableActions: ['Retry the portfolio read'],
       };
     }
-    const blocked = projects.filter(p => p.status === 'blocked');
     /* The search narrows the list exactly as the two dropdowns do, so it has to
        be named here for the same reason they are: a summary that said "filtered
        by workstream and status" while a search term was also hiding rows would
@@ -1059,7 +1083,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         `Projects portfolio: ${projects.length} regulatory program(s)` +
         (truncated ? ` — the first ${projects.length} only; more exist, and every figure here covers the first ${projects.length}` : '') +
         (filtered ? `, filtered to ${list.length} by ${by.join(' and ')}` : '') +
-        `. ${blocked.length} blocked, average readiness ${health[1].n}. Shown as a ${view}.`,
+        `. Average readiness ${health[1].n}; ${health[2].n} with a target filing date in the next 60 days. ` +
+        'Blockers are not assessed on this list; each program\'s readiness is on its project home. ' +
+        `Shown as a ${view}.`,
       facts: {
         totalPrograms: projects.length,
         portfolioTruncated: truncated,
@@ -1067,8 +1093,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         workstreamFilter: ws,
         statusFilter: status,
         searchQuery: q.trim() || null,
-        blockedCount: blocked.length,
         averageReadiness: health[1].n,
+        filingWithin60Days: health[2].n,
+        blockersAssessed: false,
         // Enough to name a programme back to the user, not the whole row set.
         // `p.lead` is deliberately NOT published: the server projects it as
         // COALESCE(u.name, u.email, '—'), so a lead with no name set resolves to
@@ -1265,13 +1292,15 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         {wss.map(w => <button key={w} className={`ws-btn${ws === w ? ' on' : ''}`} onClick={() => setWs(w)}>{w === 'all' ? 'All workstreams' : w}</button>)}
       </div>
 
-      <div className="seg" style={{ marginBottom: 18 }}>
-        {(['all', 'active', 'blocked', 'complete'] as const).map(s => (
-          <button key={s} className={`seg-b${status === s ? ' on' : ''}`} onClick={() => setStatus(s)}>
-            {s[0].toUpperCase() + s.slice(1)}
-          </button>
-        ))}
-      </div>
+      {statuses.length > 2 && (
+        <div className="seg" style={{ marginBottom: 18 }}>
+          {statuses.map(s => (
+            <button key={s} className={`seg-b${status === s ? ' on' : ''}`} onClick={() => setStatus(s)}>
+              {s[0].toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {live.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
@@ -1323,9 +1352,10 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
                     the one thing on this card that changes what you do next,
                     and colour is not carrying it alone — the icon and the text
                     both say so. */}
-                {p.blocker
-                  ? <span className="pj-card-blk">{I.alertTriangle} {p.blocker}</span>
-                  : <span className="pj-card-ok">{I.check} No open blockers</span>}
+                {/* Nothing when no blocker came back: the list does not
+                    assess blockers, so "No open blockers" was an all-clear
+                    nothing had checked. */}
+                {p.blocker && <span className="pj-card-blk">{I.alertTriangle} {p.blocker}</span>}
               </div>
             </button>
           ))}

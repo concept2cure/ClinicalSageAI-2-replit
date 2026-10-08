@@ -1428,21 +1428,21 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
       ))}
 
       <div className="vd-coexist">
+        {/* It promised import with approval from Veeva Vault, SharePoint and
+            OneDrive, and its button only typed that request to AnA: no route
+            imports from a connector into the Vault (decision record
+            2026-10-08). What exists is AnA's search of connected
+            repositories, so that is what it offers. */}
         <span className="vd-coexist-txt">
-          {I.link || I.plug} Works alongside <b>Veeva Vault</b>,{' '}
-          <b>SharePoint</b> &amp; <b>OneDrive</b> — search in place, import
-          with approval (detect, classify, approve), export everything. No
-          rip-and-replace.
+          {I.link || I.plug} AnA can search your connected repositories (<b>Veeva Vault</b>,{' '}
+          <b>SharePoint</b>, <b>OneDrive</b>) in place. Importing from them into the
+          Vault comes in a later release; upload files here meanwhile.
         </span>
         <button
           className="vd-coexist-cta"
-          onClick={() =>
-            onAsk(
-              'Import documents from Veeva Vault into this project — run detect, classify to the dossier structure, and stage for approval.',
-            )
-          }
+          onClick={() => onAsk('Search my connected repositories for documents relevant to this project.')}
         >
-          Import from a connected source
+          Search connected sources
         </button>
       </div>
 

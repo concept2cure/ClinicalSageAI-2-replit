@@ -559,6 +559,10 @@ router.get('/', async (req: Request, res: Response) => {
               COALESCE(u.name, u.email, '—')                        AS lead,
               NULL::text                                            AS blocker,
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
+              -- The date itself, so the screen can count days to filing. \`due\`
+              -- is display text, and the "Filing < 60 days" figure that matched
+              -- it against /days/ could never be anything but 0.
+              to_char(p.target_submission_date, 'YYYY-MM-DD')      AS due_date,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
          LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
@@ -951,6 +955,10 @@ router.post('/', async (req: Request, res: Response) => {
               COALESCE(u.name, u.email, '—')                        AS lead,
               NULL::text                                            AS blocker,
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
+              -- The date itself, so the screen can count days to filing. \`due\`
+              -- is display text, and the "Filing < 60 days" figure that matched
+              -- it against /days/ could never be anything but 0.
+              to_char(p.target_submission_date, 'YYYY-MM-DD')      AS due_date,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
          LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
