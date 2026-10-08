@@ -197,7 +197,7 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
     expect((await statusOf(2)).status).toBe('assembling');
     // The one transition on record is the removal's own return to Assembling,
     // signed by no one; the refused freeze left none.
-    const afterRefusal = await chainRows(2);
+    const afterRefusal = (await chainRows(2)) as Array<{ action: string; signature: string | null }>;
     expect(afterRefusal.filter((r) => r.signature != null), 'a refused freeze left a status transition in the audit chain').toEqual([]);
     expect(afterRefusal.map((r) => r.action)).toEqual(['SEQUENCE_TRANSITIONED']);
     // With nothing moving, the same sequence — validated again — freezes under a
@@ -206,7 +206,7 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
     const fresh = await sign(2, 'freeze');
     await freezeSequence(2, ctx, fresh);
     expect((await statusOf(2)).status).toBe('frozen');
-    expect((await chainRows(2)).filter((r) => r.action === 'SEQUENCE_FROZEN'), 'the freeze committed without the chained audit row it is written with').toEqual([
+    expect(((await chainRows(2)) as Array<{ action: string }>).filter((r) => r.action === 'SEQUENCE_FROZEN'), 'the freeze committed without the chained audit row it is written with').toEqual([
       { action: 'SEQUENCE_FROZEN', tenant_id: ORG, actor_id: USER, target: 'ectd_sequence:2', chained: true, signature: fresh },
     ]);
   }, 120_000);

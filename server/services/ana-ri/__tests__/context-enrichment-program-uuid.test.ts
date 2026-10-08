@@ -37,13 +37,13 @@ describe('enrichContextForChat — project profile for a program UUID', () => {
     expect(h.ref).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ ref: PROGRAM, orgId: 1 }));
     expect(h.summary).toHaveBeenCalledWith(11, 1);
     expect(result.block).toContain('Bridge to the adult dose');
-    expect(result.enrichmentMeta.unavailableSources ?? []).not.toContain('project-profile');
+    expect(result.enrichmentMeta?.unavailableSources ?? []).not.toContain('project-profile');
   });
 
   it('an unanchored program has no profile — nothing read with NaN, nothing reported missing', async () => {
     h.ref.mockResolvedValue(null);
     const result = await enrichContextForChat({ message: 'What is left before filing?', projectId: PROGRAM, organizationId: 1 });
     expect(h.summary).not.toHaveBeenCalled();
-    expect(result.enrichmentMeta.unavailableSources ?? []).not.toContain('project-profile');
+    expect(result.enrichmentMeta?.unavailableSources ?? []).not.toContain('project-profile');
   });
 });
