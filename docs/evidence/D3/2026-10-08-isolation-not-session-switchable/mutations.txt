@@ -1,0 +1,12 @@
+== M2 no switch clear on release
+ × the request client clears the switches on release, before any next borrower applies anything 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+== M1 no pin when a request scope is applied
+ × a switch left on a connection by any path is pinned when the next request applies its scope 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+== M3 no LOCAL pin on the pool's statements
+ × the instrumented pool's own statements run isolated on a poisoned connection 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)

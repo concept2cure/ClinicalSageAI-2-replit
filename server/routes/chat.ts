@@ -12,6 +12,7 @@
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import multer from 'multer';
 import { makeUploadFileFilter } from '../middleware/uploadAllowlist';
+import { CHAT_UPLOAD_MAX_BYTES } from '@shared/constants/document-intake-formats';
 import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import { sendMessageHandler } from './chat/send-message.js';
 import { uploadHandler } from './chat/upload.js';
@@ -54,7 +55,8 @@ router.post('/', sendMessageHandler);
 const uploadEvidence = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 25 * 1024 * 1024,
+    // The one cap, shared with the client's check (document-intake-formats.ts).
+    fileSize: CHAT_UPLOAD_MAX_BYTES,
     files: 1,
   },
   fileFilter: makeUploadFileFilter(),

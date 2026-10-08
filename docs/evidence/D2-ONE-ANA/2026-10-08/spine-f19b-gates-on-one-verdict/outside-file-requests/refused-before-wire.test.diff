@@ -1,0 +1,12 @@
+--- a/server/services/submission-gateways/__tests__/refused-before-wire.test.ts
++++ b/server/services/submission-gateways/__tests__/refused-before-wire.test.ts
+@@ -243,7 +243,8 @@
+       // cannot send (gateway not supported yet / credentials missing). Thrown
+       // inside the guard's pre-wire try in index.ts, before impl.transmit.
+       'server/services/submission-gateways/gateway-accounts.ts': 2,
+-      'server/services/submission-gateways/health-canada-gateway.ts': 1,
++      // health-canada-gateway.ts left this set on 2026-10-08 (F19b): it reads no
++      // credentials and refuses before the wire (UnverifiedTransportError).
+       'server/services/submission-gateways/hsa-prism-gateway.ts': 1,
+       'server/services/submission-gateways/mfds-gateway.ts': 1,
+       'server/services/submission-gateways/mhra-gateway.ts': 1,

@@ -46,7 +46,7 @@ export interface DataRoomPage {
    * predecessor) and data-eligible. One file re-uploaded is one source.
    */
   currentTotal: number;
-  sources: Array<EvidenceSource & { snippet: string | null; charCount: number | null; pageCount: number | null }>;
+  sources: Array<EvidenceSource & { snippet: string | null; charCount: number | null; pageCount: number | null; studyRef: number | null }>;
 }
 
 /** Every column a list returns: all but extracted_text. */
@@ -56,7 +56,7 @@ const LIST_COLUMNS = [
   'phase', 'application_type', 'application_number', 'trial_registry_identifier', 'document_date',
   'official_url', 'stored_artifact_ref', 'checksum', 'version', 'is_current', 'provenance',
   'ingestion_status', 'extraction_status', 'linked_csr_report_id', 'linked_precedent_id', 'metadata',
-  'created_at', 'updated_at', 'char_count', 'page_count',
+  'created_at', 'updated_at', 'char_count', 'page_count', 'study_ref',
 ].map(c => `s.${c}`).join(', ');
 
 /** The searchable text of a source: the index's own expression, so the index serves the query. */
@@ -163,6 +163,7 @@ export async function searchDataRoom(orgId: number, p: DataRoomQuery): Promise<D
       snippet: r.snippet ?? null,
       charCount: r.char_count == null ? null : Number(r.char_count),
       pageCount: r.page_count == null ? null : Number(r.page_count),
+      studyRef: r.study_ref == null ? null : Number(r.study_ref),
     })),
   };
 }

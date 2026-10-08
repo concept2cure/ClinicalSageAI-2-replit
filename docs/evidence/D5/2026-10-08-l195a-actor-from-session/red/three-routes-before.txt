@@ -1,0 +1,30 @@
+# The three new tests against the UNFIXED routes (trunk d00acd0a6, before this change).
+# Each negative case asserts the leak first: the value names what the old route would have recorded.
+
+ × tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets decidedBy is refused, and nothing is stored
+ × tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets decidedAt is refused, and nothing is stored
+ × tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets reviewedBy is refused, and nothing is stored
+ × tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > a body that sets reviewedAt is refused, and nothing is stored
+ × tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > the stored row carries only decision fields, a server decider and a server time
+ × tests/gspr-mapping-actor.test.ts > a GSPR decision is attributed to the session user (L195) > with no user on the request nothing is stored under 'system'
+ × tests/submission-ops-blocker-resolver.test.ts > a blocker is resolved by the session user (L195) > a body naming another resolver is refused, and nothing is written
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is resolved by the session user (L195) > resolving with no resolver in the body records the caller
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is resolved by the session user (L195) > a body naming the caller themself is accepted, and records the caller
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is resolved by the session user (L195) > a status change that is not a resolution records no resolver
+ × tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > a body naming another resolver is refused, and nothing is written
+ × tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > resolving with no resolver in the body records the caller, not nobody
+ × tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > resolving with no user id on the session is refused, not recorded as nobody
+ ✓ tests/sentinel-finding-resolver.test.ts > a Sentinel finding is resolved by the session user (L195) > acknowledging is unchanged and needs no resolver
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the body must never write decidedBy: expected [ 'someone-else' ] to not include 'someone-else'
+AssertionError: the body must never write decidedAt: expected [ '2020-01-01T00:00:00Z' ] to not include '2020-01-01T00:00:00Z'
+AssertionError: the body must never write reviewedBy: expected [ 'qa-lead' ] to not include 'qa-lead'
+AssertionError: the body must never write reviewedAt: expected [ '2020-01-01T00:00:00Z' ] to not include '2020-01-01T00:00:00Z'
+AssertionError: expected { …(9) } to not have property "id"
+AssertionError: expected [ 'system' ] to not include 'system'
+AssertionError: the record must never name a resolver the session is not: expected [ 4242 ] to not include 4242
+AssertionError: expected [ Array(1) ] to deeply equal [ [ 'f-1', 99, 'resolved', 31 ] ]
+AssertionError: expected [ Array(1) ] to deeply equal []
+AssertionError: the record must never name a resolver the session is not: expected 4242 not to be 4242 // Object.is equality
+ Test Files  3 failed (3)
+      Tests  10 failed | 4 passed (14)

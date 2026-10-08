@@ -344,6 +344,20 @@ describe('ProjectHome — data room counts', () => {
     expect(document.body.textContent).not.toMatch(/(^|\D)2 sources/);
   });
 
+  /* What the catalog found a source is (S3), as facts: only those it found. */
+  it('shows what the catalog found: protocol, registry id, data cut-off, and a table\'s CDISC domain', async () => {
+    mockApi(() => ok({ projectId: PID, unscoped: [], total: 2, currentTotal: 2, sources: [
+      source({ id: 1, title: 'csr.pdf', catalog: { studyRef: 4, trialRegistryIdentifier: 'NCT04567890', protocolNumber: 'BX-301-02',
+        documentDate: '2025-03-14', dataCutDate: '2024-12-31', dataset: null } }),
+      source({ id: 2, title: 'ae.csv', catalog: { studyRef: null, trialRegistryIdentifier: null, protocolNumber: null, documentDate: null,
+        dataCutDate: null, dataset: { format: 'csv', tableCount: 1, tables: [{ name: 'ae.csv', standard: 'SDTM', domain: 'AE', rowCount: 340, columnCount: 23 }] } } }),
+    ] }));
+    renderOnEvidence(<ProjectHome {...props()} />);
+    await screen.findByText('csr.pdf');
+    const lines = screen.getAllByTestId('source-catalog').map((e) => e.textContent);
+    expect(lines).toEqual(['Protocol BX-301-02 · NCT04567890 · data cut-off 2024-12-31', 'SDTM AE · 23 columns · 340 rows']);
+  });
+
   /* The server counts the whole room (currentTotal) and pages; nothing is a floor. */
   it('a full page shows the exact total and pages to the older sources', async () => {
     mockApi((url) => url.includes('offset=200')

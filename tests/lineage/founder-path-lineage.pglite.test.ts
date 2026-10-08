@@ -214,6 +214,8 @@ const MIGRATIONS = [
   'migrations/20261001_cre_evidence_sources_capture_immutability.sql',
   // The text a capture was read to, and its measure (Data Room catalog S2).
   'migrations/20261008c_data_room_source_text.sql',
+  // The study a capture names, keyed to its organization (Data Room catalog S3).
+  'migrations/20261008d_cre_source_study_ref.sql',
   'migrations/20260726_file_uploads_tenancy.sql',
   'db/migrations/20260828_file_uploads_checksum.sql',
   'migrations/20261006_document_data_dispositions.sql',

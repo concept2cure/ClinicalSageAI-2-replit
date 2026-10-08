@@ -34,6 +34,7 @@ import {
 import { authedActorName } from '../../utils/authedActor';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
+import { applySessionScope, clearSessionScope, switchPinTerms } from '../../db/sessionScope';
 
 /**
  * The VERIFIED acting principal, for GxP attribution columns
@@ -201,9 +202,11 @@ async function withTenantClient<T>(fn: (client: PoolClient) => Promise<T>): Prom
   const client = await rawPool.connect();
   try {
     await client.query('BEGIN');
-    await client.query(`SELECT set_config('app.current_tenant_id', $1, true)`, [String(tenantId)]);
-    await client.query(`SELECT set_config('app.current_org_id', $1, true)`, [scope?.orgUuid ?? '']);
-    await client.query(`SELECT set_config('app.current_user_role', $1, true)`, [scope?.role ?? '']);
+    await client.query(
+      `SELECT set_config('app.current_tenant_id', $1, true), set_config('app.current_org_id', $2, true), ` +
+        `set_config('app.current_user_role', $3, true), ${switchPinTerms(true)}`,
+      [String(tenantId), scope?.orgUuid ?? '', scope?.role ?? ''],
+    );
     const out = await fn(client);
     await client.query('COMMIT');
     return out;
@@ -229,9 +232,7 @@ async function tenantConnect(): Promise<PoolClient> {
   }
   const client = await rawPool.connect();
   try {
-    await client.query(`SELECT set_config('app.current_tenant_id', $1, false)`, [String(tenantId)]);
-    await client.query(`SELECT set_config('app.current_org_id', $1, false)`, [scope?.orgUuid ?? '']);
-    await client.query(`SELECT set_config('app.current_user_role', $1, false)`, [scope?.role ?? '']);
+    await applySessionScope(client, { tenantId: String(tenantId), orgUuid: scope?.orgUuid ?? '', role: scope?.role ?? '' });
   } catch (err) {
     client.release();
     throw err;
@@ -241,12 +242,8 @@ async function tenantConnect(): Promise<PoolClient> {
   // another tenant with our vars still set.
   const origRelease = client.release.bind(client) as PoolClient['release'];
   (client as unknown as { release: (...a: unknown[]) => void }).release = (...args: unknown[]) => {
-    void client
-      .query(
-        `SELECT set_config('app.current_tenant_id', '', false),
-                set_config('app.current_org_id', '', false),
-                set_config('app.current_user_role', '', false)`,
-      )
+    // The tenant variables and the isolation switches (server/db/sessionScope.ts).
+    void clearSessionScope(client)
       .catch(() => {})
       .finally(() => (origRelease as (...a: unknown[]) => void)(...args));
   };

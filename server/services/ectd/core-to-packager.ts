@@ -24,6 +24,7 @@
 
 import type { EctdLeaf, PackagerInput } from '../submission-gateways/regional-packager';
 import type { Region } from '../submission-gateways/types';
+import { sequenceTypeRefusal } from '../regulatory/market-support';
 
 /** Core leaf shape (decoupled from the Drizzle row type so this stays pure). */
 export interface CoreLeaf {
@@ -223,9 +224,17 @@ export function fdaSubmissionTypeFor(
   const carriesSafetyReport = leaves.some((l) => /safety[_-]?report|icsr/i.test(String(l.documentType ?? '')));
   if (carriesSafetyReport) return { submissionType: 'ind_safety_report', submissionSubType: 'original' };
   if (type === 'annual') return { submissionType: 'annual', submissionSubType: 'original' };
-  if (type === 'amendment' || type === 'response' || type === 'variation') {
+  if (type === 'amendment' || type === 'response') {
     return { submissionType: 'original', submissionSubType: 'amendment' };
   }
+  // 2026-10-08 (F19b; WORKFLOW_DECISION_2026-10-08 §5). 'variation' was coded
+  // with amendment and response above, so an FDA "variation" left the packager
+  // as an amendment to the ORIGINAL application and a post-approval change
+  // would have been misfiled. FDA has no variation; the reason is the market
+  // verdict's (market-support.ts sequenceTypeRefusal), which createSequence
+  // also reads. This is the backstop for a sequence that already carries it.
+  const refused = sequenceTypeRefusal('fda', type);
+  if (refused) throw new Error(`FDA submission type for a '${type}' sequence is not derived. ${refused}`);
   if (type === 'withdrawal') {
     // The FDA submission-type vocabulary (CV_SUBMISSION_TYPE) has no withdrawal
     // entry, and this fell through to "Original Application" — a withdrawal
@@ -301,7 +310,9 @@ export function buildPackagerInputFromCore(args: BuildPackagerInputArgs): BuildP
   }
 
   const region = toPackagerRegion(args.sequence.region);
-  const fdaType = fdaSubmissionTypeFor(args.sequence, args.leaves);
+  // FDA only: 'variation' is a legitimate EU sequence type, and the FDA coding
+  // (which refuses it) is not derived for a sequence that is not FDA's.
+  const fdaType = region === 'fda' ? fdaSubmissionTypeFor(args.sequence, args.leaves) : null;
   const input: PackagerInput = {
     region,
     applicationId: args.applicationId,
@@ -317,7 +328,7 @@ export function buildPackagerInputFromCore(args: BuildPackagerInputArgs): BuildP
     // ('ind' → fdaat4), submission type and sub-type from the SEQUENCE. Without
     // this the packager resolved 'ind' as a submission type and coded every IND
     // sequence fdast9 (IND Safety Reports).
-    ...(region === 'fda'
+    ...(fdaType
       ? {
           fda: {
             applicationType: args.submission.applicationType,

@@ -57,6 +57,7 @@ import { regulatoryPrograms } from '../../../shared/schema/programs';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readiness';
 import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
+import { sequenceTypeRefusal } from '../regulatory/market-support';
 import {
   validateSectionCode,
   vocabularyForApplicationType,
@@ -496,7 +497,14 @@ export async function createSequence(
   ctx: { organizationId: number; userId: number }
 ): Promise<CreatedSequence> {
   // Tenant ownership of the parent submission.
-  await getSubmission(input.submissionId, ctx);
+  const parent = await getSubmission(input.submissionId, ctx);
+  // A sequence type the market does not take is refused before anything is
+  // written (F19b): today, an FDA 'variation', which the packager would code
+  // as an amendment to the original application. Judged on the region the
+  // caller names AND the submission's own region, so naming another region
+  // does not get one past. The reason is the market verdict's.
+  const refused = sequenceTypeRefusal(input.region, input.type) ?? sequenceTypeRefusal(parent.primaryRegion, input.type);
+  if (refused) throw new SubmissionError('VALIDATION', refused);
   const [row] = await db
     .insert(ectdSequences)
     .values({
