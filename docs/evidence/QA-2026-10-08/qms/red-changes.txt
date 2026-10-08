@@ -1,0 +1,6 @@
+GA demo seed → service reads (real Postgres) > counts every change past its target whose implementation is unfinished, whatever its stage
+GA demo seed → service reads (real Postgres) > flags each such change on the register from the server’s date, with the same predicate
+GA demo seed → service reads (real Postgres) > reads every change’s linked records for the register in one org-scoped query
+GET /api/mdx/qms/changes > returns each change with its linked records and the moves its state allows
+POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 422 without a reason for the move, reading and writing nothing
+POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > advances a legal transition (proposed → under_assessment), recording the reason

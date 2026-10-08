@@ -54,6 +54,8 @@ import {
   type SignerRefused,
 } from '../../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
+import { resolveSignerOrgRole } from '../../services/part11/resolve-signer-role.js';
+import { isSigningAuthorized } from '../../services/part11/signing-authority.js';
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
 import {
   assertSignerIsNotAuthor,
@@ -108,6 +110,8 @@ type Command =
   | 'transmittal_rollback';
 
 const HIGH_RISK_COMMANDS: Set<Command> = new Set(['sign', 'lock', 'revoke-signature', 'transmittal_rollback']);
+/** The commands that write an electronic_signatures row (writeMutation), so carry the §11.10(g) authority gate. */
+const SIGNATURE_COMMANDS: ReadonlySet<Command> = new Set<Command>(['sign', 'revoke-signature']);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -634,6 +638,41 @@ function commandMeaningRefusal(command: Command, body: ActionEnvelope) {
   return command === 'sign' ? signMeaningRefusal(body.payload?.meaning) : null;
 }
 
+/**
+ * §11.10(g): identity is not authority. A command that writes an
+ * electronic_signatures row is refused unless the signer's organisation role
+ * carries signing authority — the one policy every other signing route
+ * applies (services/part11/signing-authority), read from the membership row
+ * (never the token or the body). The handler runs it BEFORE the credential, so
+ * this route is not a password oracle for a role that may not sign. QA walk
+ * 2026-10-08 (J8): a manager's 'approval' signature was persisted here while
+ * the QMS approve route refused the same role; the only gate here was the
+ * GOVERNANCE_RBAC_ENFORCE one, which no environment sets. Null when admitted
+ * or when the command writes no signature.
+ */
+async function signingAuthorityRefusal(
+  command: Command,
+  userId: number,
+  orgId: number,
+): Promise<{ status: number; body: { error: string; detail?: string } } | null> {
+  if (!SIGNATURE_COMMANDS.has(command)) return null;
+  let signerRole: string | null;
+  try {
+    signerRole = await resolveSignerOrgRole(userId, orgId);
+  } catch (err: any) {
+    console.error(`[c2c/actions/${command}] signer role lookup failed`, err?.message);
+    return { status: 500, body: { error: 'INTERNAL_ERROR' } };
+  }
+  if (isSigningAuthorized(signerRole)) return null;
+  return {
+    status: 403,
+    body: {
+      error: 'ESIGNATURE_NO_AUTHORITY',
+      detail: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
+    },
+  };
+}
+
 function makeHandler(command: Command) {
   return async (req: Request, res: Response) => {
     const userId = resolveUserId(req);
@@ -652,6 +691,9 @@ function makeHandler(command: Command) {
     }
     const meaningRefusal = commandMeaningRefusal(command, body);
     if (meaningRefusal) return res.status(400).json(meaningRefusal);
+
+    const authority = await signingAuthorityRefusal(command, userId, orgId);
+    if (authority) return res.status(authority.status).json(authority.body);
 
     // Re-auth gate for high-risk commands.
     if (HIGH_RISK_COMMANDS.has(command)) {
