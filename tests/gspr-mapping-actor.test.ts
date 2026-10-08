@@ -51,7 +51,8 @@ const PROGRAM = 'aaaaaaaa-0000-4000-8000-000000000001';
 const REQUIREMENT = 'bbbbbbbb-0000-4000-8000-000000000002';
 const CALLER = 7;
 
-function makeApp(user: Record<string, unknown> | null = { id: CALLER, organizationId: 99 }) {
+// The session as admitLiveSession attaches it: the subject is a string.
+function makeApp(user: Record<string, unknown> | null = { id: String(CALLER), userId: String(CALLER), organizationId: 99 }) {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
@@ -101,6 +102,10 @@ describe('a GSPR decision is attributed to the session user (L195)', () => {
       applicability: 'applies',
       rationale: 'Annex I 1',
       decidedBy: String(CALLER),
+      // A new decision has not been reviewed: a review left from before the fix
+      // (when only a request body wrote it) is cleared, not carried over.
+      reviewedBy: null,
+      reviewedAt: null,
     });
     expect(stored.decidedAt).toBeInstanceOf(Date);
     expect(state.audited[0]).toMatchObject({ userId: String(CALLER), action: 'gspr.mapping.upsert' });
