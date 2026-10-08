@@ -41,6 +41,7 @@ import {
   readPendingApproval,
   recordApprovalDecision,
   readApprovalDecision,
+  isRunAwaitingApproval,
   endRun,
   readRun,
   applyControl,
@@ -621,7 +622,7 @@ describe('holding a run at a governed action', () => {
     expect(await requestApproval(pool(), runId, pending())).toBe(true);
     const row = await readRun(pool(), runId, ORG);
     expect(row?.status).toBe('awaiting_approval');
-    const asked = await readPendingApproval(pool(), runId, ORG);
+    const asked = await readPendingApproval(pool(), runId, ORG, USER);
     expect(asked).toMatchObject({ command: 'freeze_document', params: { documentId: 7 } });
   });
 
@@ -638,13 +639,13 @@ describe('holding a run at a governed action', () => {
     const { runId } = await newRun();
     await requestApproval(pool(), runId, pending('tu_1'));
     expect(await requestApproval(pool(), runId, pending('tu_2'))).toBe(false);
-    expect((await readPendingApproval(pool(), runId, ORG))?.toolUseId).toBe('tu_1');
+    expect((await readPendingApproval(pool(), runId, ORG, USER))?.toolUseId).toBe('tu_1');
   });
 
   it('a pending approval is scoped to the tenant', async () => {
     const { runId } = await newRun();
     await requestApproval(pool(), runId, pending());
-    expect(await readPendingApproval(pool(), runId, OTHER_ORG)).toBeNull();
+    expect(await readPendingApproval(pool(), runId, OTHER_ORG, USER)).toBeNull();
   });
 });
 
@@ -761,5 +762,89 @@ describe('deciding a held run', () => {
     });
     await requestApproval(pool(), runId, pending('tu_2'));
     expect(await readApprovalDecision(pool(), runId, 'tu_1')).toBeNull();
+  });
+});
+
+/**
+ * Only the person who asked may decide what AnA is holding.
+ *
+ * Both statements were scoped to the run and the organization and nothing
+ * else, so any member of the org who knew a run's toolUseId — a colleague with
+ * the thread open, a shared link, a log line — could read what was held and
+ * approve or decline it. `applyControl` already refused a non-owner (NOT_YOURS);
+ * the approval gate was the one door left open. The predicate is `user_id = $n`
+ * in the SQL, so it holds with RLS_ENFORCE off, and NULL = n is never true: a
+ * run with no owner is decided by no person.
+ */
+describe('only the asker decides a held run', () => {
+  it('a colleague in the same org cannot read what the run is holding', async () => {
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending());
+    expect(await readPendingApproval(pool(), runId, ORG, OTHER_USER)).toBeNull();
+    expect((await readPendingApproval(pool(), runId, ORG, USER))?.toolUseId).toBe('tu_1');
+  });
+
+  it('A COLLEAGUE WITH THE RIGHT runId AND toolUseId CANNOT APPROVE', async () => {
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending());
+    const ok = await recordApprovalDecision(pool(), runId, ORG, {
+      toolUseId: 'tu_1',
+      decided: 'approved',
+      decidedAt: '2026-10-08T00:01:00.000Z',
+      byUserId: OTHER_USER,
+      reasonForChange: 'Approving a step somebody else asked for',
+      result: { success: true },
+    });
+    expect(ok, 'a colleague must not be able to approve another person’s held step').toBe(false);
+    expect((await readRun(pool(), runId, ORG))?.status).toBe('awaiting_approval');
+    expect(await readApprovalDecision(pool(), runId, 'tu_1')).toBeNull();
+  });
+
+  it('a colleague cannot decline it either', async () => {
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending());
+    const ok = await recordApprovalDecision(pool(), runId, ORG, {
+      toolUseId: 'tu_1',
+      decided: 'denied',
+      decidedAt: '2026-10-08T00:01:00.000Z',
+      byUserId: OTHER_USER,
+      error: 'declined',
+    });
+    expect(ok).toBe(false);
+    expect((await readRun(pool(), runId, ORG))?.status).toBe('awaiting_approval');
+  });
+
+  it('a run with no owner is decided by no person', async () => {
+    const { runId } = await newRun({ userId: null });
+    await requestApproval(pool(), runId, pending());
+    expect(await readPendingApproval(pool(), runId, ORG, USER)).toBeNull();
+    const ok = await recordApprovalDecision(pool(), runId, ORG, {
+      toolUseId: 'tu_1', decided: 'approved', decidedAt: 'x', byUserId: USER,
+    });
+    expect(ok).toBe(false);
+    expect((await readRun(pool(), runId, ORG))?.status).toBe('awaiting_approval');
+  });
+
+  it('nobody-decided can only ever be a denial — the approval window closing', async () => {
+    // The stream's own timeout records a denial with no person behind it. That
+    // must still release the run; an approval with no person must not.
+    const a = await newRun();
+    await requestApproval(pool(), a.runId, pending());
+    expect(await recordApprovalDecision(pool(), a.runId, ORG, {
+      toolUseId: 'tu_1', decided: 'approved', decidedAt: 'x', byUserId: null,
+    })).toBe(false);
+    expect(await recordApprovalDecision(pool(), a.runId, ORG, {
+      toolUseId: 'tu_1', decided: 'denied', decidedAt: 'x', byUserId: null,
+      error: 'no decision within the approval window',
+    })).toBe(true);
+    expect((await readRun(pool(), a.runId, ORG))?.status).toBe('running');
+  });
+
+  it('tells a held-for-someone-else run apart from no run, within the org only', async () => {
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending());
+    expect(await isRunAwaitingApproval(pool(), runId, ORG)).toBe(true);
+    expect(await isRunAwaitingApproval(pool(), runId, OTHER_ORG)).toBe(false);
+    expect(await isRunAwaitingApproval(pool(), 'no-such-run', ORG)).toBe(false);
   });
 });

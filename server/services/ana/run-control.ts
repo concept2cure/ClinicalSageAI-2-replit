@@ -1060,18 +1060,47 @@ export interface RunControlQuery {
   query(text: string, params?: unknown[]): Promise<{ rows: any[]; rowCount?: number | null }>;
 }
 
-/** What the run is currently waiting on, if anything. */
+/**
+ * What the run is waiting on, if anything — for the person who asked.
+ *
+ * Scoped to the asker in the SQL (`user_id = $3`), not only to the org. Scoped
+ * to the org alone, any member who knew a run's id and toolUseId could read the
+ * held action and then approve or decline it: the same seizure `applyControl`
+ * refuses as NOT_YOURS, through the one door it did not cover. NULL = n is never
+ * true, so a run with no owner (a non-interactive surface) is held for no one.
+ * There is no admin override. A caller that needs to tell "held for someone
+ * else" from "nothing held" asks isRunAwaitingApproval, which returns no payload.
+ */
 export async function readPendingApproval(
   pool: RunControlQuery,
   runId: string,
   organizationId: number,
+  userId: number,
 ): Promise<PendingToolApproval | null> {
   const { rows } = await pool.query(
     `SELECT pending_approval FROM ana_runs
+     WHERE id = $1 AND organization_id = $2 AND user_id = $3 AND status = 'awaiting_approval'`,
+    [runId, organizationId, userId],
+  );
+  return (rows[0]?.pending_approval as PendingToolApproval) ?? null;
+}
+
+/**
+ * Whether a run of this org is waiting on an approval, whoever asked. Only for
+ * choosing the refusal — 403 for a colleague, 404 for nothing to decide — once
+ * readPendingApproval has already refused; it returns nothing that was held.
+ */
+export async function isRunAwaitingApproval(
+  pool: RunControlQuery,
+  runId: string,
+  organizationId: number,
+): Promise<boolean> {
+  const { rows } = await pool.query(
+    `SELECT 1 FROM ana_runs
      WHERE id = $1 AND organization_id = $2 AND status = 'awaiting_approval'`,
     [runId, organizationId],
   );
-  return (rows[0]?.pending_approval as PendingToolApproval) ?? null;
+  return rows.length > 0;
 }
 
 /**
@@ -1091,6 +1120,17 @@ export async function readPendingApproval(
  * inert, so the statement is the only place the boundary can live. Under
  * RLS_ENFORCE=on the request's scoped client enforces it as well; this is the
  * layer that does not depend on that switch. Ledger L206.
+ *
+ * Guarded on the ASKER as well (`user_id = byUserId`): a person decides only a
+ * run they started. The org predicate alone let any member of the tenant who
+ * knew the toolUseId approve or decline a colleague's held step. NULL = n is
+ * never true, so a run with no owner is decided by no person, and there is no
+ * admin override.
+ *
+ * The one decision with no person behind it is the stream's own approval
+ * window closing (`byUserId: null`). That may only DENY — it runs nothing — so
+ * an approval with no decider matches no row, rather than skipping the owner
+ * predicate.
  */
 export async function recordApprovalDecision(
   pool: RunControlQuery,
@@ -1098,6 +1138,10 @@ export async function recordApprovalDecision(
   organizationId: number,
   decision: ApprovalDecision,
 ): Promise<boolean> {
+  const byPerson = decision.byUserId !== null;
+  if (!byPerson && decision.decided !== 'denied') return false;
+  const params: unknown[] = [runId, JSON.stringify(decision), decision.toolUseId, organizationId];
+  if (byPerson) params.push(decision.byUserId);
   const { rowCount } = await pool.query(
     `UPDATE ana_runs
      SET status = 'running',
@@ -1106,9 +1150,10 @@ export async function recordApprovalDecision(
          updated_at = now()
      WHERE id = $1
        AND organization_id = $4
+       ${byPerson ? 'AND user_id = $5' : ''}
        AND status = 'awaiting_approval'
        AND pending_approval ->> 'toolUseId' = $3`,
-    [runId, JSON.stringify(decision), decision.toolUseId, organizationId],
+    params,
   );
   if (!rowCount) return false;
   await notifyAndDrive(pool, runId, 'running');
