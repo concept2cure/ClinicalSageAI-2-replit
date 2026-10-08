@@ -1,0 +1,11 @@
+ × server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > approver: assigned with a reason, recorded with the role before and after 456ms
+   → {"error":"Invalid role data","details":[{"received":"approver","code":"invalid_enum_value","options":["admin","manager","member","viewer"],"path":["role"],"message":"Invalid enum value. Expected 'admin' | 'manager' | 'member' | 'viewer', received 'approver'"}]}: expected 400 to be 200 // Object.is equality
+ × server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > reviewer: assigned with a reason, recorded with the role before and after 8ms
+   → {"error":"Invalid role data","details":[{"received":"reviewer","code":"invalid_enum_value","options":["admin","manager","member","viewer"],"path":["role"],"message":"Invalid enum value. Expected 'admin' | 'manager' | 'member' | 'viewer', received 'reviewer'"}]}: expected 400 to be 200 // Object.is equality
+ × server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > approver: refused without a reason (400 REASON_REQUIRED), nothing written 7ms
+   → expected 'Invalid role data' to be 'REASON_REQUIRED' // Object.is equality
+ × server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > reviewer: refused without a reason (400 REASON_REQUIRED), nothing written 4ms
+   → expected 'Invalid role data' to be 'REASON_REQUIRED' // Object.is equality
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > a role outside the assignable list is still refused 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed | 20 skipped (25)

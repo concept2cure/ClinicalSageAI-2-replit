@@ -34,6 +34,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { runWithTenantScope } from '../db/tenantStore';
 import { GOVERNED_WRITE_PERMISSION, REPORT_FINALIZE_PERMISSION, REPORT_FINALIZE_ROLES } from '../../shared/constants/permissions';
+import { withExtendingRoles } from '../../shared/constants/org-roles';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 
 const logger = createScopedLogger('auth-middleware');
@@ -502,15 +503,18 @@ export async function checkOrgMembership(
  * could lock out a platform administrator if any path ever does surface a
  * platform role here. `editor` is dropped: it is reachable from nowhere.
  */
-export const GOVERNED_WRITE_ROLES: ReadonlySet<string> = new Set([
-  'admin',
-  'manager',
-  'member',
-  // Platform roles — unreachable through organization_users.role, kept so that
-  // narrowing this set can never be what locks a platform admin out.
-  'owner',
-  'super_admin',
-]);
+export const GOVERNED_WRITE_ROLES: ReadonlySet<string> = new Set(
+  // P-18: approver and reviewer write wherever manager and member do.
+  withExtendingRoles([
+    'admin',
+    'manager',
+    'member',
+    // Platform roles — unreachable through organization_users.role, kept so that
+    // narrowing this set can never be what locks a platform admin out.
+    'owner',
+    'super_admin',
+  ]),
+);
 
 /**
  * The permissions a session carries, derived from its organisation role by the
@@ -524,7 +528,7 @@ export function sessionPermissions(role: string | null | undefined): string[] {
   // requireRole compares exactly, so this does too. Finalize is a signature
   // (P1-44b): offered only to a role the signing policy also authorises, so the
   // canvas never offers what the server refuses with ESIGNATURE_NO_AUTHORITY.
-  if ((REPORT_FINALIZE_ROLES as readonly string[]).includes(String(role ?? '')) && isSigningAuthorized(role)) {
+  if (REPORT_FINALIZE_ROLES.includes(String(role ?? '')) && isSigningAuthorized(role)) {
     permissions.push(REPORT_FINALIZE_PERMISSION);
   }
   return permissions;

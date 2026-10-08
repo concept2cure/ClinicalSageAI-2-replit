@@ -1,0 +1,83 @@
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names no category for a surface that belongs to both — the launch core, a device workbench 5ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names the one category a surface belongs to, and Admin for an admin surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD") 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > never names a category the rail does not list the surface under — for every surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws exactly that crumb 51ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > shows the organisation as a label, not as a control that does nothing 19ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > Help goes where the account menu’s "Get help" goes 253ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > marks the open surface as the current page, and the chosen category as pressed — not current 65ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > draws the current page, and draws a chosen category differently 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > collapsed, the brand mark keeps the top and the toggle moves to the foot 22ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > expanded, the toggle stays at the top 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > draws no floating launcher — the header’s Task and Collaborate buttons open it 3ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > the header’s Task and Collaborate buttons open it — the path that replaced the floating button 108ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > names the surface, not its URL slug or the payload field 28ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > offers each module once, by name, with the server’s value 30ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > labels priorities for people, and posts the server’s values 20ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > keeps the auto-assign note one sentence beside its icon 22ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered to a customer org admin the console refuses 265ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered on masterAdmin alone — the commercial unlock is not console access 72ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is offered when the server says the console guard admits this viewer, and opens it 129ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > follows the server, not the org role: a platform admin without an org-admin role sees it 49ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > survives resolved:false — the answer does not depend on the catalog read 45ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered when the navigation fetch fails 55ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered when an older server omits the field 55ms
+ ✓ client/src/concept2cure/auth/__tests__/signInRefusal.test.tsx > a refused sign-in > AUTH_001 reads as an incorrect email or password, never as an expired session 241ms
+ ✓ client/src/concept2cure/auth/__tests__/signInRefusal.test.tsx > a refused sign-in > any other refusal is shown in the server's words 91ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > renders nothing until a minute before the window, then the warning with the seconds left 190ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > "Stay signed in" closes the warning, tells the server, and the window starts again 30ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > signs out at the end of the window with the reason kept; "Sign out now" does so at once 21ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > uses the window the server reports, and ends the session at the end of its lifetime 9ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > keeps the server informed of activity while the person works without API traffic 3ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > tokenFromLocation > reads the fragment first, then the query, and refuses junk 12ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > posts the fragment token, drops it from the address bar, and offers sign-in when the server confirms 53ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > when the server refuses, says so and lets the person request a new link by address 34ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > with no token in the address, asks for a new link without calling the server 11ms
+ ✓ client/src/concept2cure/auth/__tests__/SignupVerifyStep.test.tsx > SignupVerifyStep > names the address, holds the resend for the cooldown, then sends again once and restarts the cooldown 59ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a 401 SESSION_IDLE on an API call ends the session: no refresh, storage cleared, reason kept, session_expired with the reason 80ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a refresh refused with SESSION_LIFETIME keeps that reason 4ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > any other 401 still refreshes and retries 3ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > remembers the session policy the probe reports and defaults to 15 minutes and 12 hours 3ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 22ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions 1ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password returns the server's refusal, and no refresh is attempted 8ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password with a stale session in storage still says so, and does not end or refresh it 2ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong current password (401 AUTH_001) is the refusal, not an expiry, and the session stays 3ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong verification code (401 AUTH_004) is the refusal, not an expiry 1ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a real expiry still says expiry > a signed-in request refused for its session, whose refresh also fails, is SESSION_EXPIRED 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts a session the server confirms: stored, policy kept, login raised, no refresh token 20ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts nothing the server refuses 3ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > warns a minute before the window ends and ends the session at the window 5ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > activity before the warning starts the window again 2ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > while the warning stands, ordinary activity does not extend the session; extend() does 2ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > the tab becoming visible is activity; stop() ends the watch silently 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > throttles activity to once a second 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > a warning longer than the window is clamped to it: the warning stands from the start 1ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > allows internal next param 2ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects external next param 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects protocol-relative next param starting with // 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > prefers organization membership to client portal 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects non-canonical internal routes outside allowed beta prefixes 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects traversal-style redirect payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects backslash path payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > preserves canonical query/hash in allowed paths 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects control-character payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > uses role-based client redirect for client_user/client_admin 0ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > is read back on the next load (persistent adoption) 6ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > an expired stored session is still not read back 1ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > reads the token, provider and an allowed return path from the fragment 2ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > drops a return path that is not a same-origin path this app allows 1ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > is null without a token shaped like a JWT, and for an empty or unrelated fragment 0ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a refusal nested under error, as /mfa/resend writes it 1ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > still reads a top-level { code, message } 3ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a bare error string, and falls back to the status when the body says nothing 1ms
+ ✓ client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > openWorkspaceAfterSignup > adopts the sign-up session (persistently) and opens the workspace 8ms
+ ✓ client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > openWorkspaceAfterSignup > a session the server does not confirm goes to sign-in 2ms
+ ✓ client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > openWorkspaceAfterSignup > no session (verification required, or none issued) goes to sign-in without asking the server 1ms
+ ✓ client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > ZenSignup source > sends nobody to the dead /ai route 1ms
+ ✓ client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > ZenSignup source > does not keep the session under the unread legacy key "token" 1ms
+ Test Files  16 passed (16)
+      Tests  81 passed (81)

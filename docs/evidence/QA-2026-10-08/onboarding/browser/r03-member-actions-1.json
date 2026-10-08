@@ -1,0 +1,71 @@
+{
+  "email": "qa-onboard-1@concept2cure.pro",
+  "inviteToast": [
+    "QA Onboard 1 invited as member. This server sends no email, so their password setup link is on your clipboard — it expires in 21 days."
+  ],
+  "activatedUrl": "/concept2cure/login",
+  "memberHomeBefore": "/concept2cure",
+  "drawerButtons": [
+    "GRANT ACCESS",
+    "AUDIT ACTIVITY",
+    "CHANGE ROLE",
+    "REMOVE FROM ORGANIZATION"
+  ],
+  "noReasonError": "Complete the required field: Reason for the change",
+  "roleToast": [
+    "QA Onboard 1 is now Viewer. The change and your reason are recorded in the audit trail."
+  ],
+  "drawerAfterRole": "ROLE | Viewer | STATE | Active | SSO | Local | SECOND FACTOR | Emailed code | LAST SEEN | Oct 8, 2026, 5:24 AM | GROUPS | —",
+  "ownRow": {
+    "changeDisabled": true,
+    "removeDisabled": true,
+    "note": "Your own role and membership are changed by another administrator, not from your own row."
+  },
+  "removeDialog": "MEMBERS · REMOVE | Remove QA Onboard 1 from this organization? | Reason for removal* | QA Onboard 1 loses access to this organization at their next request and cannot sign in to it. Their account and everything they recorded are kept. The removal is recorded in the audit trail against you, with the role they held and your reason. | Cancel | Remove member",
+  "removeToast": [
+    "QA Onboard 1 was removed from this organization. The removal and your reason are recorded in the audit trail."
+  ],
+  "stillListed": 0,
+  "memberApiAfterRemoval": {
+    "status": 401,
+    "body": "{\"error\":\"Invalid tenant membership\"}"
+  },
+  "signInAfterRemoval": {
+    "calls": [
+      {
+        "status": 403,
+        "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_011\",\"message\":\"No organization assigned\"}}"
+      }
+    ],
+    "url": "/concept2cure/login",
+    "shown": [
+      "Sign in",
+      "No organization assigned",
+      "Sign in"
+    ]
+  },
+  "writes": [
+    {
+      "method": "POST",
+      "url": "/api/tenant-users",
+      "status": 201,
+      "req": "{\"name\":\"QA Onboard 1\",\"email\":\"qa-onboard-1@concept2cure.pro\",\"role\":\"member\"}",
+      "body": "{\"id\":28,\"email\":\"qa-onboard-1@concept2cure.pro\",\"name\":\"QA Onboard 1\",\"role\":\"member\",\"createdNewUser\":true,\"quotaInfo\":{\"used\":13,\"maximum\":25,\"remaining\":12},\"invitation\":{\"expiresAt\":\"2026-10-29T05:23:56.137Z\",\"emailSent\":false,\"delivery\":\"link\",\"setupUrl\":\"[redacted]\"}}"
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/tenant-users/1/28",
+      "status": 200,
+      "req": "{\"role\":\"viewer\",\"reason\":\"QA 2026-10-08: read-only access for review\"}",
+      "body": "{\"message\":\"User role updated successfully\"}"
+    },
+    {
+      "method": "DELETE",
+      "url": "/api/tenant-users/1/28",
+      "status": 200,
+      "req": "{\"reason\":\"QA 2026-10-08: test account no longer needed\"}",
+      "body": "{\"message\":\"User removed from organization successfully\"}"
+    }
+  ],
+  "httpErrors": []
+}

@@ -100,6 +100,7 @@ import {
   type ExportFormat,
 } from '../services/authoring/authoring-export';
 import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
+import { withExtendingRoles } from '../../shared/constants/org-roles';
 import {
   fileAuthoringDocumentToVault,
   isPlausibleFolderId,
@@ -5762,7 +5763,8 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
  * The x-admin-token path is removed, not kept beside this: two doors to one
  * act is the parallel path CLAUDE.md rules out. Its one caller,
  * scripts/cleanup-fixtures.mjs, now signs in like any other client. */
-const DOCUMENT_DELETE_ROLES: ReadonlySet<string> = new Set(['owner', 'admin', 'manager']);
+// P-18: an approver may do what a manager may (shared/constants/org-roles.ts).
+const DOCUMENT_DELETE_ROLES: ReadonlySet<string> = new Set(withExtendingRoles(['owner', 'admin', 'manager']));
 
 type GovernedDeleteOutcome =
   | { kind: 'deleted' }

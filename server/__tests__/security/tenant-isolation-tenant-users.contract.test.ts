@@ -53,6 +53,8 @@ const { authState, dbState, emailState } = vi.hoisted(() => ({
     invitation: null as Record<string, unknown> | null,
     // make the activation-token UPDATE fail (the account is already committed)
     tokenStoreFails: false,
+    // a member of the target org who never redeemed their setup link (null = none)
+    unredeemedInvitee: null as { id: number; name: string; role: string } | null,
     // every SQL statement executed through the mocked pool/client
     executed: [] as Array<{ sql: string; params: unknown[] }>,
   },
@@ -84,6 +86,10 @@ async function fakeQuery(sql: string, params: unknown[] = []) {
   // atomic quota service: current member count
   if (/SELECT COUNT\(\*\) as count FROM organization_users WHERE organization_id/i.test(sql)) {
     return { rows: [{ count: '1' }] };
+  }
+  // re-issue: a member of the target org whose password hash is still the invitation's
+  if (/password_hash LIKE \$3/i.test(sql)) {
+    return { rows: dbState.unredeemedInvitee ? [dbState.unredeemedInvitee] : [] };
   }
   // invite dedupe: does this address already have an account? One row, the id
   // or null (public.user_id_for_email — the id is all that crosses tenants).
@@ -207,6 +213,7 @@ beforeEach(async () => {
   dbState.invitedUserInTargetOrg = false;
   dbState.invitation = null;
   dbState.tokenStoreFails = false;
+  dbState.unredeemedInvitee = null;
   dbState.executed = [];
 
   const mod = await import('../../routes/tenant-users');
@@ -587,5 +594,77 @@ describe('Tenant-users self-modification (#973 port)', () => {
     // A removal states its reason (P1-41); without one it is refused before the write.
     await request(app).delete('/api/tenant-users/999/42').send({ reason: 'Left the company' });
     expect(executedMatching(/DELETE FROM organization_users/i).length).toBe(1);
+  });
+});
+
+/**
+ * QA 2026-10-08 (j9, finding 5): an invitation's setup link was handed to the
+ * administrator once (toast / clipboard) and could not be had again; the
+ * invitee's only way in was "Forgot password". Inviting the same address again
+ * through the invitation route now re-issues the link for a member of the
+ * target organization who never set a password: a new token replaces the old
+ * one (the old link stops working), delivered the way the first was. An
+ * activated member is still refused, so no administrator can reset another
+ * person's password by re-inviting them. No seat or quota is consumed.
+ */
+describe('Re-issuing an invitation (POST / for a member who never activated)', () => {
+  const reinvite = (body: Record<string, unknown> = {}) =>
+    request(app)
+      .post('/api/tenant-users')
+      .send({ email: 'pat.pending@example.com', name: 'Pat Pending', role: 'admin', organizationId: 999, ...body });
+
+  it('replaces the setup token, returns the new link, keeps the stored role, creates nothing (200)', async () => {
+    authState.membershipRole = 'admin';
+    dbState.unredeemedInvitee = { id: 20, name: 'Pat Pending', role: 'manager' };
+
+    const res = await reinvite().expect(200);
+
+    expect(res.body).toMatchObject({ reissued: true, id: 20, role: 'manager' });
+    expect(res.body.invitation).toMatchObject({ delivery: 'link', emailSent: false });
+    const stored = executedMatching(/UPDATE users SET reset_token = \$1, reset_token_expires_at = \$2/i);
+    expect(stored).toHaveLength(1);
+    expect(stored[0].params[2]).toBe(20);
+    const rawToken = new URL(res.body.invitation.setupUrl).searchParams.get('token') as string;
+    const { hashPasswordSetupToken } = await import('../../services/password-setup-token');
+    expect(hashPasswordSetupToken(rawToken)).toBe(stored[0].params[0]);
+    expect(executedMatching(/INSERT INTO|FOR UPDATE/i)).toEqual([]);
+    const auditService = (await import('../../services/auditService')).default as unknown as { logAction: ReturnType<typeof vi.fn> };
+    expect(auditService.logAction).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'user_invited', resourceId: '20', details: expect.objectContaining({ reissued: true, role: 'manager' }) }),
+    );
+  });
+
+  it('looks only in the target organization, and only at an unredeemed invitation hash', async () => {
+    authState.membershipRole = 'admin';
+    await reinvite();
+    const lookup = executedMatching(/password_hash LIKE \$3/i);
+    expect(lookup).toHaveLength(1);
+    expect(lookup[0].params).toEqual([999, 'pat.pending@example.com', 'invite:%']);
+  });
+
+  it('an activated member is still refused (400 USER_EXISTS), and no token is written', async () => {
+    authState.membershipRole = 'admin';
+    dbState.existingUserIdByEmail = 42;
+    dbState.invitedUserInTargetOrg = true;
+    const res = await reinvite().expect(400);
+    expect(res.body.error).toBe('USER_EXISTS');
+    expect(executedMatching(/UPDATE users SET reset_token/i)).toEqual([]);
+  });
+
+  it('a non-admin of the target organization is refused before any lookup (403)', async () => {
+    authState.membershipRole = 'member';
+    dbState.unredeemedInvitee = { id: 20, name: 'Pat Pending', role: 'manager' };
+    await reinvite().expect(403);
+    expect(executedMatching(/password_hash LIKE|UPDATE users SET reset_token/i)).toEqual([]);
+  });
+
+  it('with SMTP configured the new link is emailed and not echoed back', async () => {
+    authState.membershipRole = 'admin';
+    emailState.configured = true;
+    dbState.unredeemedInvitee = { id: 20, name: 'Pat Pending', role: 'manager' };
+    const res = await reinvite().expect(200);
+    expect(res.body.invitation).toMatchObject({ delivery: 'email', emailSent: true });
+    expect(res.body.invitation.setupUrl).toBeUndefined();
+    expect(emailState.sent).toHaveLength(1);
   });
 });

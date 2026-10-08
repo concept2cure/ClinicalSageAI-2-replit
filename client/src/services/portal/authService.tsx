@@ -371,6 +371,27 @@ interface ApiRequestOptions {
  * its generic sentence instead of the server's (security audit IAM-18 (8) /
  * P1-3 follow-up). PURE.
  */
+/**
+ * The server's refusal of the credential a request asked it to check — a
+ * password (AUTH_001: sign-in, "current password") or a verification code
+ * (AUTH_004: second factor, authenticator enrolment). Such a 401 says nothing
+ * about the session, so it is never answered with a refresh or "Session
+ * expired" (QA 2026-10-08, j9 finding 2).
+ */
+const CREDENTIAL_REFUSAL_CODES = new Set(['AUTH_001', 'AUTH_004']);
+
+/**
+ * True when a 401 may mean the session is over and a refresh could help: the
+ * request presented a session, and the server did not refuse the credential
+ * it was asked to check. A request that carried no session (sign-in, the
+ * second-factor step, a password reset) cannot have an expired one. PURE.
+ */
+export function unauthorizedMeansSession(presentedSession: boolean, body: unknown): boolean {
+  if (!presentedSession) return false;
+  const code = apiErrorOfResponse(401, '', body).code;
+  return !CREDENTIAL_REFUSAL_CODES.has(code);
+}
+
 export function apiErrorOfResponse(
   status: number,
   statusText: string,
@@ -413,10 +434,12 @@ class ApiClient {
         ...headers,
       };
 
+      let presentedSession = false;
       if (!skipAuth) {
         const token = await this.authService.getValidAccessToken();
         if (token) {
           requestHeaders['Authorization'] = `Bearer ${token}`;
+          presentedSession = true;
         }
       }
 
@@ -426,6 +449,18 @@ class ApiClient {
         body: body ? JSON.stringify(body) : undefined,
         credentials: 'include',
       });
+
+      // A 401 that refuses what was presented — a wrong password, a wrong code,
+      // or any request that carried no session — is the server's answer, in
+      // its words. It was read as an expired session: the sign-in page said
+      // "Session expired" for a mistyped password (QA 2026-10-08, j9).
+      if (
+        response.status === 401 &&
+        !unauthorizedMeansSession(presentedSession, await response.clone().json().catch(() => null))
+      ) {
+        const errorData = await response.json().catch(() => ({}));
+        return { success: false, error: apiErrorOfResponse(response.status, response.statusText, errorData) };
+      }
 
       // Handle 401 Unauthorized
       if (response.status === 401 && retryOnUnauthorized) {
@@ -1007,12 +1042,16 @@ export class AuthService {
       const expiryStr = SecureStorage.getItem(AUTH_STORAGE_KEYS.tokenExpiry);
       const userStr = SecureStorage.getItem(AUTH_STORAGE_KEYS.user);
 
-      if (accessToken && refreshToken && expiryStr && userStr) {
+      // A session adopted from a hand-off (sign-up, single sign-on) has no
+      // refresh token; it is still the session, and the provider re-validates
+      // it with the server on load. Requiring one signed a new user out on
+      // their first reload (QA 2026-10-08, j9 finding 3).
+      if (accessToken && expiryStr && userStr) {
         const expiresAt = new Date(expiryStr);
         if (expiresAt > new Date()) {
           this.tokens = {
             accessToken,
-            refreshToken,
+            refreshToken: refreshToken ?? '',
             expiresAt,
             tokenType: 'Bearer',
           };

@@ -110,6 +110,7 @@ import {
 } from '../services/c2c/organization-default-workspace';
 import { runWithTenantScope } from '../db/tenantStore';
 import { signInLimits } from '../middleware/sign-in-limits';
+import { markResetLinkRefused, passwordResetLimits } from '../middleware/password-reset-limits';
 
 const router = Router();
 
@@ -157,20 +158,8 @@ const verificationLimiter = rateLimit({
   },
 });
 
-/** Password reset: 5 per hour per IP */
-const passwordResetLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: {
-      code: 'RATE_LIMIT',
-      message: 'Too many password reset requests. Please try again later.',
-    },
-  },
-});
+// Password reset and activation: two buckets per address, the redeeming one
+// counting only refused links (middleware/password-reset-limits.ts).
 
 // Development auth bypass fully removed — all authentication is enforced.
 // To test locally, create a user via POST /api/auth/signup then login normally.
@@ -2414,6 +2403,7 @@ async function handleResetPassword(req: Request, res: Response) {
     const { token, newPassword } = req.body;
 
     if (!token || !newPassword) {
+      markResetLinkRefused(res);
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_001', message: 'Reset token and new password are required' },
@@ -2453,6 +2443,7 @@ async function handleResetPassword(req: Request, res: Response) {
         ipAddress: req.ip,
         userAgent: req.get('user-agent'),
       });
+      markResetLinkRefused(res);
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
@@ -2480,6 +2471,7 @@ async function handleResetPassword(req: Request, res: Response) {
         ipAddress: req.ip,
         userAgent: req.get('user-agent'),
       });
+      markResetLinkRefused(res);
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Reset token has expired. Please request a new one.' },
@@ -2542,6 +2534,7 @@ async function handleResetPassword(req: Request, res: Response) {
         ipAddress: req.ip,
         userAgent: req.get('user-agent'),
       });
+      markResetLinkRefused(res);
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
@@ -2585,11 +2578,11 @@ async function handleResetPassword(req: Request, res: Response) {
 }
 
 // Register both legacy and v2 paths (rate-limited)
-router.post('/forgot-password', passwordResetLimiter, handleForgotPassword);
-router.post('/password/reset-request', passwordResetLimiter, handleForgotPassword);
+router.post('/forgot-password', passwordResetLimits.request, handleForgotPassword);
+router.post('/password/reset-request', passwordResetLimits.request, handleForgotPassword);
 
-router.post('/reset-password', passwordResetLimiter, handleResetPassword);
-router.post('/password/reset-confirm', passwordResetLimiter, handleResetPassword);
+router.post('/reset-password', passwordResetLimits.confirm, handleResetPassword);
+router.post('/password/reset-confirm', passwordResetLimits.confirm, handleResetPassword);
 
 // ---------------------------------------------------------------------------
 // Password Change (Authenticated)

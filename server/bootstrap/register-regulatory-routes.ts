@@ -10,6 +10,7 @@ export interface RegulatoryBootstrapContext {
 }
 
 import { GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
+import { ROLE_EXTENDS } from '../../shared/constants/org-roles';
 
   /*
    * Module scope, not per-request: this is a constant, and it was being rebuilt
@@ -61,6 +62,10 @@ import { GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
      access here. Adding a role to GOVERNED_WRITE_ROLES can therefore never
      again leave it locked out of this module — which is the exact shape of
      the defect this replaces. */
+  // P-18: a signing role holds what the role it extends holds here (approver: full).
+  for (const [extending, base] of Object.entries(ROLE_EXTENDS)) {
+    if (!IVDR_ROLE_PERMISSIONS[extending]) IVDR_ROLE_PERMISSIONS[extending] = IVDR_ROLE_PERMISSIONS[base];
+  }
   for (const role of GOVERNED_WRITE_ROLES) {
     if (!IVDR_ROLE_PERMISSIONS[role]) IVDR_ROLE_PERMISSIONS[role] = IVDR_CONTRIBUTOR;
   }

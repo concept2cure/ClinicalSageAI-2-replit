@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx > Setup → Multi-factor authentication > does not tell members to enrol an authenticator the product cannot enrol 93ms
+   → expected 'Multi-factor authenticationTOTP via a…' not to match /enrolled by each member/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx > Setup → Multi-factor authentication > does not tell members to enrol an authenticator the product cannot enrol
+      Tests  1 failed (1)

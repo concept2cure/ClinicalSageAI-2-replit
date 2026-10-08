@@ -154,7 +154,9 @@ describe('GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the p
 
   it('names no role the platform cannot grant', async () => {
     const { GOVERNED_WRITE_ROLES } = await import('../orgMembership');
-    const ORG_ROLES = ['admin', 'manager', 'member', 'viewer'];
+    // The roles an administrator can grant (P-18 added approver and reviewer).
+    const { ASSIGNABLE_ORG_ROLES } = await import('../../../shared/constants/org-roles');
+    const ORG_ROLES: readonly string[] = ASSIGNABLE_ORG_ROLES;
     const PLATFORM_ROLES = ['super_admin', 'platform_admin', 'support', 'business_admin', 'owner'];
     for (const role of GOVERNED_WRITE_ROLES) {
       expect(

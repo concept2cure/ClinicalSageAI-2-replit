@@ -31,6 +31,7 @@ import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/l
 import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
 import { useAuthUser, type AuthUser } from '@/services/portal/authService';
 import { isAnnotationsShape, openAnnotationsSentence } from './VaultAnnotations';
+import { withExtendingRoles } from '@shared/constants/org-roles';
 
 export interface VaultSignOff {
   printedName: string | null;
@@ -158,8 +159,15 @@ const approve = (canonicalId: string, input: SignInput) =>
 
 // ── Who may take the next step ──────────────────────────────────────────────
 
-/** Org roles that carry the regulatory-author grant the lifecycle route requires (server/middleware/auth.ts). */
-const AUTHOR_ROLES = ['admin', 'owner', 'manager', 'member', 'editor', 'regulatory-author'];
+/** Org roles that carry the regulatory-author grant the lifecycle route requires (server/middleware/auth.ts).
+ *  P-18: an approver and a reviewer carry it as the manager and member they extend. */
+const AUTHOR_ROLES = withExtendingRoles(['admin', 'owner', 'manager', 'member', 'editor', 'regulatory-author']);
+
+/** Whether a session's roles are all known to carry no authoring grant. Unknown roles are left to the server. */
+export function rolesCannotAuthor(sessionRoles: readonly string[]): boolean {
+  const roles = sessionRoles.map((r) => String(r).toLowerCase());
+  return roles.length > 0 && !roles.some((r) => AUTHOR_ROLES.includes(r));
+}
 
 function printedSigner(u: AuthUser | null): EsignSigner | undefined {
   const name = [u?.displayName, [u?.firstName, u?.lastName].filter(Boolean).join(' '), u?.email]
@@ -203,12 +211,11 @@ function nextStep(
 
 function useActor(): { actor: Actor; authUser: AuthUser | null } {
   const authUser = useAuthUser();
-  const roles = (authUser?.roles ?? []).map((r) => String(r).toLowerCase());
   return {
     authUser,
     actor: {
       id: authUser?.id && /^\d+$/.test(authUser.id) ? Number(authUser.id) : null,
-      cannotAuthor: roles.length > 0 && !roles.some((r) => AUTHOR_ROLES.includes(r)),
+      cannotAuthor: rolesCannotAuthor(authUser?.roles ?? []),
     },
   };
 }

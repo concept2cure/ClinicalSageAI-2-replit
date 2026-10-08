@@ -1,3 +1,5 @@
+import { withExtendingRoles } from './org-roles';
+
 /**
  * The one permission the session derives from the organisation role.
  *
@@ -34,7 +36,7 @@ export function canGovernedWrite(user: { permissions?: unknown } | null | undefi
  * reports and cannot finalize them; `roles: ['user']` could not tell the two
  * apart.
  */
-export const REPORT_FINALIZE_ROLES = ['owner', 'admin', 'manager'] as const;
+export const REPORT_FINALIZE_ROLES: readonly string[] = withExtendingRoles(['owner', 'admin', 'manager']);
 export const REPORT_FINALIZE_PERMISSION = 'report:finalize';
 
 /** Whether to offer Finalize to `user`. Unknown permissions offer it, as canGovernedWrite does; the server decides. */

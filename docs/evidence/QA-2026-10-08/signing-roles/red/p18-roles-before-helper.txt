@@ -1,0 +1,3 @@
+Error: Cannot find module '../../../shared/constants/org-roles' imported from /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/signing-roles-p18.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+      Tests  no tests

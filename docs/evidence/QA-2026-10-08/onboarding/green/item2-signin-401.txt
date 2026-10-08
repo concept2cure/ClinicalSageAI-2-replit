@@ -1,0 +1,52 @@
+ ✓ client/src/concept2cure/auth/__tests__/signInRefusal.test.tsx > a refused sign-in > AUTH_001 reads as an incorrect email or password, never as an expired session 300ms
+ ✓ client/src/concept2cure/auth/__tests__/signInRefusal.test.tsx > a refused sign-in > any other refusal is shown in the server's words 127ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > renders nothing until a minute before the window, then the warning with the seconds left 226ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > "Stay signed in" closes the warning, tells the server, and the window starts again 29ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > signs out at the end of the window with the reason kept; "Sign out now" does so at once 30ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > uses the window the server reports, and ends the session at the end of its lifetime 8ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > keeps the server informed of activity while the person works without API traffic 19ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > tokenFromLocation > reads the fragment first, then the query, and refuses junk 8ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > posts the fragment token, drops it from the address bar, and offers sign-in when the server confirms 48ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > when the server refuses, says so and lets the person request a new link by address 26ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > with no token in the address, asks for a new link without calling the server 6ms
+ ✓ client/src/concept2cure/auth/__tests__/SignupVerifyStep.test.tsx > SignupVerifyStep > names the address, holds the resend for the cooldown, then sends again once and restarts the cooldown 53ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password returns the server's refusal, and no refresh is attempted 10ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password with a stale session in storage still says so, and does not end or refresh it 4ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong current password (401 AUTH_001) is the refusal, not an expiry, and the session stays 3ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong verification code (401 AUTH_004) is the refusal, not an expiry 2ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a real expiry still says expiry > a signed-in request refused for its session, whose refresh also fails, is SESSION_EXPIRED 4ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a 401 SESSION_IDLE on an API call ends the session: no refresh, storage cleared, reason kept, session_expired with the reason 20ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a refresh refused with SESSION_LIFETIME keeps that reason 3ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > any other 401 still refreshes and retries 2ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > remembers the session policy the probe reports and defaults to 15 minutes and 12 hours 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts a session the server confirms: stored, policy kept, login raised, no refresh token 23ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts nothing the server refuses 3ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 25ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > warns a minute before the window ends and ends the session at the window 5ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > activity before the warning starts the window again 2ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > while the warning stands, ordinary activity does not extend the session; extend() does 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > the tab becoming visible is activity; stop() ends the watch silently 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > throttles activity to once a second 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > a warning longer than the window is clamped to it: the warning stands from the start 1ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > allows internal next param 1ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects external next param 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects protocol-relative next param starting with // 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > prefers organization membership to client portal 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects non-canonical internal routes outside allowed beta prefixes 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects traversal-style redirect payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects backslash path payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > preserves canonical query/hash in allowed paths 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects control-character payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > uses role-based client redirect for client_user/client_admin 0ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > reads the token, provider and an allowed return path from the fragment 3ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > drops a return path that is not a same-origin path this app allows 1ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > is null without a token shaped like a JWT, and for an empty or unrelated fragment 0ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a refusal nested under error, as /mfa/resend writes it 2ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > still reads a top-level { code, message } 2ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a bare error string, and falls back to the status when the body says nothing 1ms
+ Test Files  12 passed (12)
+      Tests  50 passed (50)

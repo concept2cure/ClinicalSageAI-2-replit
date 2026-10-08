@@ -1,0 +1,32 @@
+Concept2Cure.RI
+English
+Français
+Deutsch
+日本語
+中文
+한국어
+Español
+Português
+Italiano
+Nederlands
+Polski
+Svenska
+Dansk
+Suomi
+Čeština
+Ελληνικά
+Magyar
+Română
+✻
+Set a new password
+
+Choose a strong password you have not used before.
+
+Password must not contain common patterns or dictionary words
+New password
+Show
+Confirm password
+Show
+Update password
+Back to sign in
+FDAEMAPMDAHEALTH CANADAMHRA

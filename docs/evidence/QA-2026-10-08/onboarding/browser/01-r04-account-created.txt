@@ -1,0 +1,29 @@
+English
+Français
+Deutsch
+日本語
+中文
+한국어
+Español
+Português
+Italiano
+Nederlands
+Polski
+Svenska
+Dansk
+Suomi
+Čeština
+Ελληνικά
+Magyar
+Română
+C2C
+Account Created!
+
+Welcome to Concept2Cure. Your workspace is ready at qa.onboard.selfserve3@example.com.
+
+Workspace ready. Start with Deep Research to populate it, or open document authoring directly.
+
+Open Concept2Cure
+Built to support FDA 21 CFR Part 11 workflows
+
+© 2026 Concept2Cure. All rights reserved.

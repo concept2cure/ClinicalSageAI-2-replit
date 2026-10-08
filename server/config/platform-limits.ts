@@ -217,6 +217,30 @@ export const SIGN_IN_LIMITS = {
   mfaFailuresPerAccount: { windowMs: FIFTEEN_MINUTES_MS, max: 10 },
 } as const;
 
+/** One hour, the password-reset window. */
+const ONE_HOUR_MS = 60 * 60 * 1000;
+
+/**
+ * Password reset and invitation activation, per client address
+ * (server/middleware/password-reset-limits.ts; QA 2026-10-08, j9).
+ *
+ *   requestsPerIp      — asking for a reset link: every request counts, since
+ *                        each one can send mail. 5 per hour.
+ *   refusedLinksPerIp  — redeeming a link (the invitation's setup link is the
+ *                        same token): only a refused link counts — invalid,
+ *                        expired, already used, or none presented. Setting the
+ *                        password, and a password the policy refused for a
+ *                        valid link, cost nothing. 5 per hour.
+ *
+ * Until 2026-10-08 one bucket of 5 per hour covered both and counted every
+ * request, so an invitee retrying a refused password locked themselves (and
+ * their office) out of activation for an hour.
+ */
+export const PASSWORD_RESET_LIMITS = {
+  requestsPerIp: { windowMs: ONE_HOUR_MS, max: 5 },
+  refusedLinksPerIp: { windowMs: ONE_HOUR_MS, max: 5 },
+} as const;
+
 /**
  * Categories that must FAIL CLOSED when the limiter itself errors. Preserved
  * from redisRateLimiter.ts; see that file's comment for the rationale (auth =
@@ -322,6 +346,9 @@ Object.freeze(SIGN_IN_LIMITS);
 Object.freeze(SIGN_IN_LIMITS.failuresPerIp);
 Object.freeze(SIGN_IN_LIMITS.loginFailuresPerAccount);
 Object.freeze(SIGN_IN_LIMITS.mfaFailuresPerAccount);
+Object.freeze(PASSWORD_RESET_LIMITS);
+Object.freeze(PASSWORD_RESET_LIMITS.requestsPerIp);
+Object.freeze(PASSWORD_RESET_LIMITS.refusedLinksPerIp);
 Object.freeze(LEGACY_RATE_LIMITS);
 Object.freeze(LEGACY_RATE_LIMITS.auth);
 Object.freeze(LEGACY_RATE_LIMITS.api);

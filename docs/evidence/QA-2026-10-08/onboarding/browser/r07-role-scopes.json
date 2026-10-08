@@ -1,0 +1,14 @@
+{
+  "lisa.johnson@concept2cure.pro": "records:read records:write",
+  "raj.patel@concept2cure.pro": "records:read records:write programs:manage audit:read",
+  "qa-onboard-3@concept2cure.pro": "records:read records:write records:sign",
+  "newviewer@concept2cure.pro": "records:read",
+  "roleCards": [
+    "Member | 6 members | Writes governed records and creates programs. Does not sign. | records:read | records:write | EDIT SCOPES",
+    "Admin | 3 members | Administers the organization (members, roles, settings, API keys) and may do everything a manager may. Signs electronic records. | records:read | records:write | programs:manage | records:sign | reports:finalize | audit:read | members:administer | EDIT SCOPES",
+    "Manager | 3 members | Manages every program, writes governed records and reads the audit trail. Does not sign. | records:read | records:write | programs:manage | audit:read | EDIT SCOPES",
+    "Reviewer | 1 member | Everything a member may. Signs electronic records. | records:read | records:write | records:sign | EDIT SCOPES",
+    "Viewer | 1 member | Reads only; writes nothing. Does not sign. | records:read | EDIT SCOPES"
+  ],
+  "httpErrors": []
+}
