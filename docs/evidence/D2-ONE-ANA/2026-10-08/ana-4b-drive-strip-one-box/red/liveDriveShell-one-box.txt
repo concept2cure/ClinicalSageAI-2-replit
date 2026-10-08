@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > switches a live drive to a demonstration, keeping the turn and its queued moves
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > does not re-arm a drive the person took over
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > does not re-arm a drive the person switched off
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > a turn that begins driving after the switch went off does not engage
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > C / D — a move that did not land is reported to the run that made it, as an observation > reports through reportScreen, never as a human steer
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > C / D — a move that did not land is reported to the run that made it, as an observation > a pending move cancelled by a newer turn is reported to ITS turn, not the newer one
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move that lands is settled as landed, by its id — navigation or operation
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move the screen refuses is settled as not made, with the screen’s reason and its id
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move refused on arrival is still settled, with why — never silently dropped
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a pending action and the move behind it are both settled as not made when cleared
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move is settled once, even when reporting its landing fails
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > a new turn that begins driving drops the moves still queued from the last one
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > starting a tour over a running answer drops that answer’s queued moves
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > starting a tour over a running answer also refuses the moves still on their way from it
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > the strip’s Stop refuses the moves still on their way from the run it stopped
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > the driving chat’s own Stop halts the drive, queued moves and ones still arriving
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > stopping an older turn’s chat does not end the drive a newer turn began
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a navigation queued behind another move is not shown as made until it lands
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a move from the previous turn that lands after a new turn began is not claimed for it
+ ↓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a navigation that cannot be made is worded as a screen that did not open
+ × client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > one box: the drive strip draws no steer field on the conversation screen > while the shell’s own turn drives 1664ms
+   → expected <input …(5)></input> to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > one box: the drive strip draws no steer field on the conversation screen > while the shell’s own turn drives
+AssertionError: expected <input …(5)></input> to be null
+
+- Expected:
+null
+
++ Received:
+<input
+  aria-label="Ask or steer AnA while she drives"
+  class="ana-drive-steer-input"
+  placeholder="Ask or steer AnA…"
+  type="text"
+  value=""
+/>
+
+ ❯ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx:607:62
+    605|     drive(START_ASSIST, turnControls());
+    606|     expect(within(strip()!).getByText('AnA is driving')).toBeTruthy();
+    607|     expect(strip()!.querySelector('.ana-drive-steer-input')).toBeNull(…
+       |                                                              ^
+    608|     // Stop and take-over stay.
+    609|     expect(within(strip()!).getByRole('button', { name: /Stop/ })).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 skipped (21)
+   Start at  02:47:28
+   Duration  4.61s (transform 2.35s, setup 150ms, import 2.16s, tests 1.67s, environment 472ms)
+
