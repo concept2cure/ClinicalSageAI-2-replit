@@ -228,3 +228,90 @@ describe('document model + amendment intent', () => {
     expect(result.amendmentIntent?.sequenceType).toBe('amendment');
   });
 });
+
+/* QA 2026-10-08 (j7, findings 1, 11, 12). The card posted SAE / death /
+   definite / recovered for selects nobody touched, and the assembled report
+   asserted all four. With no dates the route answered 500 (toISOString of
+   undefined), and an absent patient id or country printed "undefined".
+   Nothing regulated is asserted that the person did not state: the engine
+   refuses, naming each field, and an absent identifier is an explicit gap. */
+describe('nothing regulated is assumed — the engine refuses, naming the fields', () => {
+  const blank = (keys: Array<keyof AdverseEvent>): AdverseEvent => {
+    const e = makeEvent() as unknown as Record<string, unknown>;
+    for (const k of keys) delete e[k];
+    return e as unknown as AdverseEvent;
+  };
+  const refusal = (fn: () => unknown): (Error & { code?: string }) | null => {
+    try {
+      fn();
+      return null;
+    } catch (e) {
+      return e as Error & { code?: string };
+    }
+  };
+
+  it('refuses to classify or assemble when the determinations and dates were not stated, naming each one', () => {
+    const ev = blank(['eventType', 'seriousnessCriteria', 'causality', 'outcome', 'onsetDate', 'reportDate']);
+    for (const run of [() => classifyIndSafetyReport(ev), () => assembleIndSafetyReport(ev)]) {
+      const err = refusal(run);
+      expect(err).not.toBeNull();
+      // 'VALIDATION' is the code the lifecycle routes map to 400 — never a 500.
+      expect(err!.code).toBe('VALIDATION');
+      for (const named of [
+        'event type',
+        'seriousness criterion',
+        'causality',
+        'outcome',
+        'onset date',
+        'sponsor awareness date',
+      ]) {
+        expect(err!.message).toContain(named);
+      }
+    }
+  });
+
+  it('a single unstated field is named on its own, and nothing is defaulted in its place', () => {
+    const err = refusal(() => assembleIndSafetyReport(blank(['causality'])));
+    expect(err?.code).toBe('VALIDATION');
+    expect(err!.message).toContain('causality');
+    expect(err!.message).not.toContain('outcome');
+  });
+
+  it('a value outside the enum is refused, not passed through', () => {
+    const err = refusal(() => assembleIndSafetyReport(makeEvent({ causality: 'maybe' as Causality })));
+    expect(err?.code).toBe('VALIDATION');
+    expect(err!.message).toContain('causality');
+  });
+
+  it('an unparseable date is refused (400), not thrown from toISOString (500)', () => {
+    const err = refusal(() => assembleIndSafetyReport(makeEvent({ onsetDate: new Date('not a date') })));
+    expect(err?.code).toBe('VALIDATION');
+    expect(err!.message).toContain('onset date');
+  });
+
+  it('a non-serious AE needs no seriousness criterion, and the report does not invent one', () => {
+    const r = assembleIndSafetyReport({ ...blank(['seriousnessCriteria']), eventType: 'AE' as EventType });
+    expect(r.classification.obligation).toBe('NOT_REPORTABLE');
+    const assessment = r.document.sections.find((s) => s.key === 'assessment')!.body;
+    expect(assessment).not.toMatch(/undefined/);
+    expect(assessment).toMatch(/non-serious/i);
+  });
+
+  it('an absent patient id or country is an explicit gap, never the word "undefined"', () => {
+    const r = assembleIndSafetyReport(blank(['patientId', 'countryOfOccurrence']));
+    const ident = r.document.sections.find((s) => s.key === 'identification')!.body;
+    expect(ident).not.toMatch(/undefined/);
+    expect(ident).toContain('Case (de-identified patient): [to be completed]');
+    expect(ident).toContain('Country of occurrence: [to be completed]');
+  });
+
+  it('an unrecorded expectedness is reported as not recorded, never as "expected"', () => {
+    const r = assembleIndSafetyReport(makeEvent({ expectedness: null }));
+    const assessment = r.document.sections.find((s) => s.key === 'assessment')!.body;
+    expect(assessment).toContain('Expectedness: not recorded');
+    expect(assessment).not.toMatch(/Expectedness: expected/);
+    // A recorded determination still reads as recorded.
+    const recorded = assembleIndSafetyReport(makeEvent({ expectedness: 'expected (listed in IB)' }));
+    expect(recorded.document.sections.find((s) => s.key === 'assessment')!.body).toMatch(/Expectedness: expected/);
+  });
+});

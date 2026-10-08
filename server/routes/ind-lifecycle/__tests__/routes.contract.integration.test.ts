@@ -302,6 +302,35 @@ describe('document routes', () => {
     expect(res.status).toBe(400);
   });
 
+  /* QA 2026-10-08 (j7, findings 1 + 11): the intake card's first assemble,
+     with no dates entered, answered 500 "Request failed." (toISOString of
+     undefined). Every safety-report route refuses an unstated determination
+     or date with 400 and names it — the classify, assemble, PDF and draft
+     routes alike, since they share one engine. */
+  it('POST /safety-report, /classify, /pdf and the draft route → 400 naming each unstated field, never 500', async () => {
+    const datesOnly = { id: 'ae-x', onsetDate: '2026-09-20', reportDate: '2026-09-25' };
+    for (const url of [
+      '/api/ind-lifecycle/safety-report',
+      '/api/ind-lifecycle/safety-report/classify',
+      '/api/ind-lifecycle/safety-report/pdf',
+      `/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports`,
+    ]) {
+      const res = await request(app).post(url).send({ event: datesOnly });
+      expect(res.status, url).toBe(400);
+      expect(res.body.error.code, url).toBe('VALIDATION');
+      for (const named of ['event type', 'seriousness criterion', 'causality', 'outcome']) {
+        expect(res.body.error.message, url).toContain(named);
+      }
+      expect(res.body.error.message, url).not.toContain('onset date');
+    }
+    const noDates = await request(app)
+      .post('/api/ind-lifecycle/safety-report')
+      .send({ event: { ...reportableEvent(), onsetDate: undefined, reportDate: undefined } });
+    expect(noDates.status).toBe(400);
+    expect(noDates.body.error.message).toContain('onset date');
+    expect(noDates.body.error.message).toContain('sponsor awareness date');
+  });
+
   it('POST /annual-report/line-listing → 200 with rows + tabulation', async () => {
     const res = await request(app)
       .post('/api/ind-lifecycle/annual-report/line-listing')

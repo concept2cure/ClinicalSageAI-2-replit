@@ -12,7 +12,8 @@
  *                                are the SERVER's verdict, not a guess
  *   • POST /:formId/pdf        — streams the filled FDA form as application/pdf
  *   • POST /:formId/official-upload — files the sponsor's COMPLETED, SIGNED form
- *                                as a Module 1 leaf in the program's sequence
+ *                                as a Module 1 leaf in the sequence the person
+ *                                chose (the shared filing-target picker)
  *
  * ── Where the values come from ──────────────────────────────────────────────
  * Sponsor, product, indication and the agency application number are read from
@@ -32,6 +33,7 @@ import { EmptyState } from '../dataConnect';
 import { apiRequest, apiUpload, serverMessage } from '@/lib/queryClient';
 import type { FireToast } from '../toast';
 import { downloadBlob } from '../download';
+import { useFilingTarget, FilingTargetFields } from './filingTarget';
 
 interface BuildResult { formId?: string; missingRequired?: string[]; fields?: Record<string, unknown> | Array<unknown>; }
 
@@ -59,11 +61,13 @@ interface ProgramFacts {
   formMetadata: Record<string, unknown>;
 }
 
-/** A sponsor-completed official form already filed into the sequence. */
+/** A sponsor-completed official form already filed into a sequence. */
 interface Placement {
   formId: string;
   leafId: number;
   sectionCode: string;
+  /** The sequence it is in — the listing covers every sequence of the submission. */
+  sequenceId?: number;
   sequenceNumber: string;
   fileName: string;
   sha256: string;
@@ -134,7 +138,7 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
   const [forms, setForms] = useState<string[]>([]);
   const [plans, setPlans] = useState<Record<string, RenderPlan>>({});
   const [program, setProgram] = useState<ProgramFacts | null>(null);
-  const [placements, setPlacements] = useState<Record<string, Placement>>({});
+  const [placements, setPlacements] = useState<Record<string, Placement[]>>({});
   const [state, setState] = useState<'loading' | 'ready' | 'forbidden' | 'error'>('loading');
   const [meta, setMeta] = useState({ sponsorName: '', drugName: '', indNumber: '', studyPhase: 'Phase 1', indication: '', serialNumber: '' });
   const [checks, setChecks] = useState<Record<string, BuildResult>>({});
@@ -146,6 +150,17 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
 
   const programIdent = programIdentOf(readProjectIdent());
 
+  /* WHERE a completed form is filed is the person's choice. The upload used to
+     file into the program's NEWEST sequence silently, so once an amendment
+     existed the initial-IND 1571 and 1572 landed in the draft 0001 while the
+     original 0000 still reported 1.1 empty (QA 2026-10-08, j7). The shared
+     submission → sequence picker (filingTarget.tsx) is reused, not copied:
+     it offers only this program's submissions and refuses frozen or
+     dispatched sequences with the reason said. */
+  const target = useFilingTarget(undefined, programIdent);
+  const { load: loadTargets } = target;
+  useEffect(() => { if (programIdent) loadTargets(); }, [programIdent, loadTargets]);
+
   const load = useCallback(async () => {
     const url = programIdent ? `/api/ind-forms/?projectIdent=${encodeURIComponent(programIdent)}` : '/api/ind-forms/';
     try {
@@ -156,7 +171,9 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       setForms(json.forms.map(String));
       setPlans(Object.fromEntries(((json.renderPlans ?? []) as RenderPlan[]).map((p) => [p.formId, p])));
       setProgram((json.program ?? null) as ProgramFacts | null);
-      setPlacements(Object.fromEntries(((json.placements ?? []) as Placement[]).map((p) => [p.formId, p])));
+      const byForm: Record<string, Placement[]> = {};
+      for (const p of (json.placements ?? []) as Placement[]) (byForm[p.formId] ??= []).push(p);
+      setPlacements(byForm);
       setState('ready');
     } catch { setState('error'); }
   }, [programIdent]);
@@ -331,11 +348,17 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       note('Open a program first — a completed form is filed into that program’s sequence.', 'error');
       return;
     }
+    const sequenceId = target.seqId;
+    if (sequenceId == null) {
+      note('Choose the submission and the sequence to file into first — the sequence is never picked for you.', 'error');
+      return;
+    }
     setBusy('attach-' + formId);
     try {
       const form = new FormData();
       form.append('file', file);
       form.append('projectIdent', programIdent);
+      form.append('sequenceId', String(sequenceId));
       const res = await apiUpload('POST', `/api/ind-forms/${formId}/official-upload`, form);
       const json = await res.json().catch(() => null);
       if (res.status === 401 || res.status === 403) { note('Filing a completed form requires the regulatory-author role.', 'error'); return; }
@@ -344,13 +367,16 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
         note(`Couldn’t file the completed FDA ${shortFormId(formId)} — ` + detail, 'error');
         return;
       }
-      setPlacements((p) => ({ ...p, [formId]: json as Placement }));
+      setPlacements((p) => ({
+        ...p,
+        [formId]: [json as Placement, ...(p[formId] ?? []).filter((x) => x.sequenceId !== (json as Placement).sequenceId)],
+      }));
       note(`Completed FDA ${shortFormId(formId)} filed at ${json.sectionCode} in sequence ${json.sequenceNumber}${json.replaced ? ', replacing the form previously attached' : ''}.`);
       // Re-read rather than trusting the local merge: the listing is what the
       // next visitor sees, and it is the server's record of the placement.
       void load();
     } finally { setBusy(null); }
-  }, [programIdent, note, load]);
+  }, [programIdent, target.seqId, note, load]);
 
   const recordFacts = useMemo(() => {
     if (!program) return null;
@@ -405,14 +431,25 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
         <label style={{ fontSize: 12 }}>Serial number<input className="c2c-input" style={{ height: 30 }} value={meta.serialNumber} onChange={(e) => setMeta({ ...meta, serialNumber: e.target.value })} placeholder="e.g. 0000" /></label>
       </div>
 
+      {programIdent && (
+        <section className="indf-target" aria-label="Where completed forms are filed" style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 12, marginBottom: 4 }}>
+            File completed, signed forms into — choose the submission and the sequence. Nothing is filed until you choose.
+          </div>
+          <FilingTargetFields target={target} idPrefix="indf-target" />
+        </section>
+      )}
+
       <table className="reg-tbl"><thead><tr><th>Form</th><th>Field check</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
         <tbody>{forms.map((f) => {
           const chk = checks[f];
           const missing = Array.isArray(chk?.missingRequired) ? chk!.missingRequired! : null;
           const plan = plans[f];
-          const placed = placements[f];
+          const placedIn = placements[f] ?? [];
+          const placedHere = target.seqId != null && placedIn.some((p) => p.sequenceId === target.seqId);
           const sponsorBoxes = plan?.sponsorCompletes ?? [];
-          const attachText = busy === 'attach-' + f ? 'Filing…' : placed ? 'Replace completed form' : 'Attach completed form';
+          const attachText = busy === 'attach-' + f ? 'Filing…' : placedHere ? 'Replace completed form' : 'Attach completed form';
+          const noTarget = target.seqId == null;
           return (
             <tr key={f}>
               <td style={{ fontWeight: 600, verticalAlign: 'top' }}>
@@ -443,12 +480,14 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
                 {missing && missing.length > 0 && (
                   <div style={{ fontSize: 12, color: 'var(--text-400)', marginTop: 2 }}>{missing.slice(0, 4).join(', ')}{missing.length > 4 ? '…' : ''}</div>
                 )}
-                {placed && (
+                {placedIn.length > 0 && (
                   <div style={{ fontSize: 12, marginTop: 6 }}>
                     <span className="rd-chip tone-ok">completed form filed</span>
-                    <div style={{ color: 'var(--text-400)', marginTop: 2 }}>
-                      {placed.sectionCode} · sequence {placed.sequenceNumber} · {bytesLabel(placed.byteSize)} · SHA-256 {placed.sha256.slice(0, 12)}…
-                    </div>
+                    {placedIn.map((placed) => (
+                      <div key={placed.leafId} style={{ color: 'var(--text-400)', marginTop: 2 }}>
+                        {placed.sectionCode} · sequence {placed.sequenceNumber} · {bytesLabel(placed.byteSize)} · SHA-256 {placed.sha256.slice(0, 12)}…
+                      </div>
+                    ))}
                   </div>
                 )}
               </td>
@@ -465,10 +504,12 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
                       onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; void attach(f, file); }} />
                     {/* Named for its form, visible text first (WCAG 2.5.3), so
                         a table of five rows is not five identical buttons. */}
-                    <button className="nda-open" style={{ marginLeft: 6 }} disabled={busy != null}
+                    <button className="nda-open" style={{ marginLeft: 6 }} disabled={busy != null || noTarget}
                       onClick={() => attachPickers.current.get(f)?.click()}
                       aria-label={`${attachText}: ${FORM_LABELS[f] ?? shortFormId(f)}`}
-                      title="File the completed, signed form into this program's eCTD sequence">
+                      title={noTarget
+                        ? 'Choose the submission and sequence to file into first'
+                        : `File the completed, signed form into sequence ${target.seq?.sequenceNumber ?? ''}`}>
                       {I.paperclip} {attachText}
                     </button>
                   </>

@@ -375,11 +375,24 @@ const LISTING = {
   placements: [],
 };
 
+/* The shared filing-target picker's two reads: this program's submissions,
+   and the chosen submission's sequences — an original 0000 and a NEWER draft
+   amendment 0001, the QA case (j7, finding 2). */
+const SUBMISSION = { id: 6, title: 'Vorelinib IND', applicationType: 'ind', primaryRegion: 'fda', status: 'active', programId: PROGRAM_UUID };
+const SEQ_0000 = { id: 61, sequenceNumber: '0000', type: 'original', status: 'validated', region: 'fda' };
+const SEQ_0001 = { id: 62, sequenceNumber: '0001', type: 'amendment', status: 'draft', region: 'fda' };
+
 function mockProgramListing(overrides: Partial<typeof LISTING> = {}) {
   (window as any).C2C_PROJECT = { id: PROGRAM_UUID };
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && isListing(url)) {
       return { ok: true, status: 200, json: async () => ({ ...LISTING, ...overrides }) } as Response;
+    }
+    if (method === 'GET' && url.startsWith('/api/submissions?')) {
+      return { ok: true, status: 200, json: async () => [SUBMISSION] } as Response;
+    }
+    if (method === 'GET' && url === `/api/submissions/${SUBMISSION.id}/sequences`) {
+      return { ok: true, status: 200, json: async () => [SEQ_0000, SEQ_0001] } as Response;
     }
     if (method === 'POST' && url.endsWith('/build')) {
       return { ok: true, status: 200, json: async () => ({ formId: 'FDA_1571', fields: {}, missingRequired: [] }) } as Response;
@@ -396,8 +409,9 @@ describe('IndFormsPanel — the program record fills the forms', () => {
     expect(screen.getByText('Vorelinib · BX-512')).toBeTruthy();
     expect(screen.getByText('000512')).toBeTruthy();
     expect(screen.getByText('IND number')).toBeTruthy();
-    // The listing was scoped to the open program.
-    const call = apiRequest.mock.calls.find((c) => c[0] === 'GET');
+    // The listing was scoped to the open program. (The filing-target picker
+    // also reads this program's submissions, so find the listing call itself.)
+    const call = apiRequest.mock.calls.find((c) => c[0] === 'GET' && isListing(String(c[1])));
     expect(call![1]).toBe(`/api/ind-forms/?projectIdent=${PROGRAM_UUID}`);
     // The record-backed fields are no longer typed here — that is what stops a
     // filing's sponsor name depending on who typed it into which panel.
@@ -463,15 +477,25 @@ describe('IndFormsPanel — the program record fills the forms', () => {
 describe('IndFormsPanel — filing the sponsor’s completed form', () => {
   const pdf = () => new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], 'signed-1571.pdf', { type: 'application/pdf' });
 
-  it('files the completed form and reports where it landed', async () => {
+  /** Choose the target the way the person does: the submission, then a sequence. */
+  async function chooseTarget(seq: { id: number }) {
+    const sub = (await screen.findByLabelText('Target submission')) as HTMLSelectElement;
+    fireEvent.change(sub, { target: { value: String(SUBMISSION.id) } });
+    const seqSelect = (await screen.findByLabelText('Sequence')) as HTMLSelectElement;
+    await waitFor(() => expect(seqSelect.options.length).toBeGreaterThan(1));
+    fireEvent.change(seqSelect, { target: { value: String(seq.id) } });
+  }
+
+  it('files the completed form into the ORIGINAL 0000 the person chose, although a newer 0001 exists', async () => {
     mockProgramListing();
     apiUpload.mockResolvedValue({
       ok: true, status: 201,
-      json: async () => ({ formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceNumber: '0000', sha256: 'a'.repeat(64), byteSize: 4, replaced: false }),
+      json: async () => ({ formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceId: 61, sequenceNumber: '0000', sha256: 'a'.repeat(64), byteSize: 4, replaced: false }),
     } as Response);
     const note = vi.fn();
     const { container } = render(<IndFormsPanel note={note} />);
     await screen.findByText(/FDA 1571/);
+    await chooseTarget(SEQ_0000);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [pdf()] } });
 
@@ -480,10 +504,37 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
     expect(method).toBe('POST');
     expect(url).toBe('/api/ind-forms/FDA_1571/official-upload');
     expect((form as FormData).get('projectIdent')).toBe(PROGRAM_UUID);
+    expect((form as FormData).get('sequenceId')).toBe('61');
     expect((form as FormData).get('file')).toBeTruthy();
     await waitFor(() =>
       expect(note).toHaveBeenCalledWith(expect.stringMatching(/filed at m1\.1 in sequence 0000/)),
     );
+  });
+
+  /* QA 2026-10-08 (j7, finding 2): the upload carried no target, and the
+     server filed into the newest sequence. With no sequence chosen nothing is
+     sent; the sequence the person chooses is the one that goes up. */
+  it('sends nothing until a sequence is chosen, and sends the one chosen', async () => {
+    mockProgramListing();
+    apiUpload.mockResolvedValue({
+      ok: true, status: 201,
+      json: async () => ({ formId: 'FDA_1571', leafId: 13, sectionCode: 'm1.1', sequenceId: 62, sequenceNumber: '0001', sha256: 'b'.repeat(64), byteSize: 4, replaced: false }),
+    } as Response);
+    const note = vi.fn();
+    const { container } = render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    expect((screen.getByRole('button', { name: /^Attach completed form: FDA 1571/ }) as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [pdf()] } });
+    await waitFor(() =>
+      expect(note).toHaveBeenCalledWith(expect.stringMatching(/Choose the submission and the sequence/), 'error'),
+    );
+    expect(apiUpload).not.toHaveBeenCalled();
+
+    await chooseTarget(SEQ_0001);
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [pdf()] } });
+    await waitFor(() => expect(apiUpload).toHaveBeenCalledTimes(1));
+    expect((apiUpload.mock.calls[0][2] as FormData).get('sequenceId')).toBe('62');
   });
 
   it('is reachable and operable from the keyboard, and names the form it files', async () => {
@@ -495,6 +546,7 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
     const user = userEvent.setup();
     const { container } = render(<IndFormsPanel note={vi.fn()} />);
     await screen.findByText(/FDA 1571/);
+    await chooseTarget(SEQ_0000);
     const attach = screen.getByRole('button', { name: /^Attach completed form: FDA 1571/ });
     const picker = container.querySelector('input[type="file"]') as HTMLInputElement;
     const pick = vi.spyOn(picker, 'click');
@@ -517,6 +569,7 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
     const note = vi.fn();
     const { container } = render(<IndFormsPanel note={note} />);
     await screen.findByText(/FDA 1571/);
+    await chooseTarget(SEQ_0000);
     fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [pdf()] } });
     await waitFor(() =>
       expect(note).toHaveBeenCalledWith(expect.stringMatching(/blank official form, byte for byte/), 'error'),
@@ -524,14 +577,20 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
     expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/filed at/));
   });
 
-  it('shows a form already filed, with the digest of the bytes the sponsor signed', async () => {
+  it('shows a form already filed in each sequence, with the digest of the bytes the sponsor signed', async () => {
     mockProgramListing({
-      placements: [{ formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceNumber: '0000', fileName: 'form-fda-1571.pdf', sha256: 'abcdef0123456789'.repeat(4), byteSize: 2048 }],
+      placements: [
+        { formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceId: 61, sequenceNumber: '0000', fileName: 'form-fda-1571.pdf', sha256: 'abcdef0123456789'.repeat(4), byteSize: 2048 },
+        { formId: 'FDA_1571', leafId: 14, sectionCode: 'm1.1', sequenceId: 62, sequenceNumber: '0001', fileName: 'form-fda-1571.pdf', sha256: '0123456789abcdef'.repeat(4), byteSize: 2048 },
+      ],
     } as never);
     render(<IndFormsPanel note={vi.fn()} />);
     expect(await screen.findByText('completed form filed')).toBeTruthy();
     expect(screen.getByText(/m1\.1 · sequence 0000 · 2 KB · SHA-256 abcdef012345…/)).toBeTruthy();
-    // A form already filed offers replacement, not a second filing.
+    expect(screen.getByText(/m1\.1 · sequence 0001 · 2 KB · SHA-256 0123456789ab…/)).toBeTruthy();
+    // A form already filed in the CHOSEN sequence offers replacement there,
+    // not a second filing.
+    await chooseTarget(SEQ_0000);
     expect(screen.getAllByText(/Replace completed form/).length).toBeGreaterThan(0);
   });
 });

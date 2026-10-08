@@ -58,7 +58,7 @@ import { assembleFormMetadata, programToFormMetadata } from '../services/ind-for
 import { resolveSubmissionSpine } from '../services/cmc/submission-spine';
 import { module1HeadingForSectionKey } from '../services/ectd/section-to-ctd';
 import { storeRenderedLeafFile } from '../services/ectd/rendered-leaf-files';
-import { upsertLeaf, SubmissionError } from '../services/submission-service/submission-service';
+import { upsertLeaf, SubmissionError, isSequenceLocked } from '../services/submission-service/submission-service';
 import { runM1FormsQc } from '../services/ind-forms/ind-form-qc';
 import {
   getSponsor,
@@ -66,7 +66,7 @@ import {
   getInvestigator,
 } from '../services/ind-master-data/ind-master-data-service';
 import { createScopedLogger } from '../utils/logger.js';
-import { FDAFormsRegistryClass, FDA_FORMS_RELEASE_READINESS } from '../config/FDAFormsRegistry';
+import { FDAFormsRegistryClass, FDA_FORMS_RELEASE_READINESS, type SubmissionProgram } from '../config/FDAFormsRegistry';
 import crypto from 'node:crypto';
 import { and, desc, eq, isNull, like } from 'drizzle-orm';
 import { db } from '../db';
@@ -76,6 +76,7 @@ import {
   organizations,
   submissionLeaves,
   renderedLeafFiles,
+  ectdSequences,
 } from '@shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
@@ -187,6 +188,39 @@ function documentTypeForForm(formId: string): string {
 }
 
 /**
+ * The registry's program vocabulary for a program record's type (`ind`, `IND`,
+ * `510K`, …), or null for a type no FDA form programme covers (CTA, MAA, …).
+ */
+function registryProgramOf(programType: string | null): SubmissionProgram | null {
+  const t = (programType ?? '').trim().toUpperCase();
+  if (t === 'IND' || t === 'NDA' || t === 'ANDA' || t === 'BLA' || t === 'PMA') return t;
+  if (t === '510K') return '510k';
+  return null;
+}
+
+/**
+ * Whether a form applies to the open program, by the registry's ONE
+ * applicability model (FDAFormsRegistry applicabilityOf). QA 2026-10-08 (j7):
+ * the IND panel offered Form 356h — an NDA / ANDA / BLA cover — and a placed
+ * 356h is what marked the IND's Module 1.1 approved. A program type the
+ * registry has no programme for gets no FDA form, never all of them.
+ */
+function formAppliesToProgram(formId: string, programType: string | null): boolean {
+  const program = registryProgramOf(programType);
+  if (program === null) return false;
+  return formsRegistry.getApplicability(formId)?.programs.includes(program) ?? false;
+}
+
+/** Why a form is not offered for this program, in the reader's words. */
+function notApplicableReason(formId: string, programType: string | null): string {
+  const programs = formsRegistry.getApplicability(formId)?.programs ?? [];
+  const type = (programType ?? 'this').toUpperCase();
+  return programs.length > 0
+    ? `Form ${formId.replace(/^FDA_/, '')} applies to ${programs.join(' / ')} submissions, not to a ${type} program.`
+    : `Form ${formId.replace(/^FDA_/, '')} is not catalogued for a ${type} program.`;
+}
+
+/**
  * Metadata for a form request: the open program's recorded facts, with anything
  * the caller actually stated layered on top.
  *
@@ -240,9 +274,28 @@ async function metaForRequest(
   return { meta: { ...programToFormMetadata(program), ...stated }, program };
 }
 
+/** The program's canonical submission spine — the one rule, from submission-spine. */
+function spineOf(program: ResolvedProgram, organizationId: number) {
+  return resolveSubmissionSpine(
+    {
+      programId: program.id,
+      programType: program.programType,
+      productName: program.productName,
+      title: program.name,
+      programCode: program.code,
+    },
+    organizationId,
+  );
+}
+
 /**
  * The official Module 1 forms this program has a sponsor-completed document
- * placed for, in its current eCTD sequence.
+ * placed for, in EVERY sequence of its submission, each with the sequence it
+ * is in.
+ *
+ * It read only the newest sequence, so once an amendment existed a form filed
+ * into the original 0000 was invisible here (QA 2026-10-08, j7). The person
+ * now chooses the sequence, so the listing says where each placement is.
  *
  * Read through the retained bytes (`rendered_leaf_files`), org-scoped on that
  * row rather than on the leaf: `submission_leaves.document_table` is a
@@ -253,16 +306,7 @@ async function listFormPlacements(
   program: ResolvedProgram,
   organizationId: number,
 ): Promise<Array<Record<string, unknown>>> {
-  const spine = await resolveSubmissionSpine(
-    {
-      programId: program.id,
-      programType: program.programType,
-      productName: program.productName,
-      title: program.name,
-      programCode: program.code,
-    },
-    organizationId,
-  );
+  const spine = await spineOf(program, organizationId);
   if (!spine?.sequence) return [];
   try {
     const rows = await db
@@ -275,8 +319,19 @@ async function listFormPlacements(
         sha256: renderedLeafFiles.sha256,
         byteSize: renderedLeafFiles.byteSize,
         placedAt: submissionLeaves.updatedAt,
+        sequenceId: ectdSequences.id,
+        sequenceNumber: ectdSequences.sequenceNumber,
       })
       .from(submissionLeaves)
+      .innerJoin(
+        ectdSequences,
+        and(
+          eq(ectdSequences.id, submissionLeaves.sequenceId),
+          eq(ectdSequences.organizationId, organizationId),
+          eq(ectdSequences.submissionId, spine.submissionId),
+          isNull(ectdSequences.deletedAt),
+        ),
+      )
       .innerJoin(
         renderedLeafFiles,
         and(
@@ -286,7 +341,6 @@ async function listFormPlacements(
       )
       .where(
         and(
-          eq(submissionLeaves.sequenceId, spine.sequence.id),
           eq(submissionLeaves.organizationId, organizationId),
           eq(submissionLeaves.documentTable, 'rendered_leaf_files'),
           like(submissionLeaves.documentType, 'form\\_%'),
@@ -297,7 +351,6 @@ async function listFormPlacements(
     return rows.map((r) => ({
       ...r,
       formId: `FDA_${String(r.documentType ?? '').replace(/^form_/, '').toUpperCase()}`,
-      sequenceNumber: spine.sequence!.sequenceNumber,
     }));
   } catch {
     // An unprovisioned store means nothing is known to be placed — never a
@@ -375,8 +428,15 @@ router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
     if (!program) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
     }
+    // Only the forms that apply to this program are offered; the rest are
+    // named with the reason, never silently dropped.
+    const applicable = SUPPORTED_FORM_IDS.filter((f) => formAppliesToProgram(f, program.programType));
+    const formsNotApplicable = SUPPORTED_FORM_IDS
+      .filter((f) => !applicable.includes(f))
+      .map((formId) => ({ formId, reason: notApplicableReason(formId, program.programType) }));
     return res.json({
-      forms: SUPPORTED_FORM_IDS,
+      forms: applicable,
+      formsNotApplicable,
       formDefinitions,
       releaseReadiness: FDA_FORMS_RELEASE_READINESS,
       renderPlans,
@@ -424,8 +484,13 @@ router.post('/:formId/build', limiter, requireRole(AUTHOR), async (req, res) => 
       case FORM_1574:
         return res.json(buildForm1574(meta));
       case FORM_1572: {
-        // 1572 is per-investigator; build one per investigator.
-        return res.json(buildAllForm1572(meta));
+        // 1572 is per-investigator; build one per investigator. With none
+        // recorded this answered [] — and the panel read an empty answer as
+        // "required fields present" while the PDF of the same form reported
+        // three required boxes blank (QA 2026-10-08, j7). The empty-investigator
+        // build is the one the PDF renders (buildFormById), so both say the same.
+        const perInvestigator = buildAllForm1572(meta);
+        return res.json(perInvestigator.length > 0 ? perInvestigator : [buildFormById(FORM_1572, meta)]);
       }
       default:
         return res.status(400).json({ error: { code: 'VALIDATION', message: `Unsupported form id: ${formId}` } });
@@ -1019,7 +1084,11 @@ router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
  * correcting a signature is the normal case.
  *
  * Multipart body: `file` (the completed PDF) + `projectIdent` (program UUID or
- * code). Returns 201 { formId, sectionCode, leafId, sequenceNumber, sha256, … }.
+ * code) + `sequenceId` (the sequence the person chose — required, never picked:
+ * it must belong to the program's submission and be neither frozen nor
+ * dispatched). A form the registry does not apply to the program's application
+ * type is refused (FORM_NOT_APPLICABLE). Returns 201 { formId, sectionCode,
+ * leafId, sequenceId, sequenceNumber, sha256, … }.
  */
 const officialFormUpload = multer({
   storage: multer.memoryStorage(),
@@ -1084,6 +1153,11 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
       if (!program) {
         return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
       }
+      if (!formAppliesToProgram(formId, program.programType)) {
+        return res.status(409).json({
+          error: { code: 'FORM_NOT_APPLICABLE', message: `${notApplicableReason(formId, program.programType)} It was not filed.` },
+        });
+      }
 
       const sectionCode = sectionCodeForForm(formId);
       if (!sectionCode) {
@@ -1105,16 +1179,7 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
         });
       }
 
-      const spine = await resolveSubmissionSpine(
-        {
-          programId: program.id,
-          programType: program.programType,
-          productName: program.productName,
-          title: program.name,
-          programCode: program.code,
-        },
-        ctx.organizationId,
-      );
+      const spine = await spineOf(program, ctx.organizationId);
       if (!spine) {
         return res.status(409).json({
           error: {
@@ -1132,6 +1197,55 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
         });
       }
 
+      /* The sequence is the person's choice, named on the upload. This filed
+         into spine.sequence — the NEWEST sequence — so once an amendment
+         existed every completed initial-IND form landed in the draft 0001
+         while the original 0000 still reported "Required section 1.1 has no
+         leaf" (QA 2026-10-08, j7). Every refusal below happens before any
+         bytes are stored. */
+      const sequenceId = Number(body.sequenceId);
+      if (!Number.isInteger(sequenceId) || sequenceId <= 0) {
+        return res.status(400).json({
+          error: {
+            code: 'SEQUENCE_REQUIRED',
+            message: 'Choose the eCTD sequence to file this form into. Which sequence a document is filed into is a regulatory decision, so it is never picked for you.',
+          },
+        });
+      }
+      const [target] = await db
+        .select({
+          id: ectdSequences.id,
+          sequenceNumber: ectdSequences.sequenceNumber,
+          status: ectdSequences.status,
+          submissionId: ectdSequences.submissionId,
+        })
+        .from(ectdSequences)
+        .where(
+          and(
+            eq(ectdSequences.id, sequenceId),
+            eq(ectdSequences.organizationId, ctx.organizationId),
+            isNull(ectdSequences.deletedAt),
+          ),
+        )
+        .limit(1);
+      if (!target || Number(target.submissionId) !== spine.submissionId) {
+        return res.status(409).json({
+          error: {
+            code: 'SEQUENCE_NOT_IN_PROGRAM',
+            message: 'That sequence is not part of this program’s submission, so the form was not filed into it.',
+          },
+        });
+      }
+      if (isSequenceLocked(String(target.status))) {
+        return res.status(409).json({
+          error: {
+            code: 'SEQUENCE_LOCKED',
+            message: `Sequence ${target.sequenceNumber} is ${target.status}; its leaves are immutable, so the form was not filed into it.`,
+          },
+        });
+      }
+      const chosen = { id: Number(target.id), sequenceNumber: String(target.sequenceNumber) };
+
       const documentType = documentTypeForForm(formId);
       const shortId = formId.replace(/^FDA_/, '').toLowerCase();
       try {
@@ -1142,7 +1256,7 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           .from(submissionLeaves)
           .where(
             and(
-              eq(submissionLeaves.sequenceId, spine.sequence.id),
+              eq(submissionLeaves.sequenceId, chosen.id),
               eq(submissionLeaves.organizationId, ctx.organizationId),
               eq(submissionLeaves.documentType, documentType),
               isNull(submissionLeaves.deletedAt),
@@ -1162,7 +1276,7 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
 
         const leaf = await upsertLeaf(
           {
-            sequenceId: spine.sequence.id,
+            sequenceId: chosen.id,
             ...(existing ? { leafId: existing.id } : {}),
             sectionCode,
             title: `Form FDA ${formId.replace(/^FDA_/, '')} (sponsor-completed)`,
@@ -1192,8 +1306,8 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
             formId,
             programId: program.id,
             sectionCode,
-            sequenceId: spine.sequence.id,
-            sequenceNumber: spine.sequence.sequenceNumber,
+            sequenceId: chosen.id,
+            sequenceNumber: chosen.sequenceNumber,
             sha256,
             md5: stored.md5,
             byteSize: bytes.length,
@@ -1211,8 +1325,8 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           formId,
           programId: program.id,
           submissionId: spine.submissionId,
-          sequenceId: spine.sequence.id,
-          sequenceNumber: spine.sequence.sequenceNumber,
+          sequenceId: chosen.id,
+          sequenceNumber: chosen.sequenceNumber,
           leafId: leaf.id,
           sectionCode,
           documentType,

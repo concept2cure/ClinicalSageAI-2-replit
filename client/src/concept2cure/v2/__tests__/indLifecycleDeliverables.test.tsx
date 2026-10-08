@@ -219,7 +219,10 @@ describe('IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence
 
     fireEvent.change(within(card).getByLabelText('De-identified patient id'), { target: { value: 'PT-001' } });
     fireEvent.change(within(card).getByLabelText('Event description'), { target: { value: 'Grade 4 hepatotoxicity' } });
+    fireEvent.change(within(card).getByLabelText('Event type'), { target: { value: 'SAE' } });
+    fireEvent.change(within(card).getByLabelText(/Seriousness criterion/), { target: { value: 'hospitalization' } });
     fireEvent.change(within(card).getByLabelText(/Causality/), { target: { value: 'probable' } });
+    fireEvent.change(within(card).getByLabelText('Outcome'), { target: { value: 'recovering' } });
     fireEvent.change(within(card).getByLabelText(/Expectedness/), { target: { value: 'unexpected' } });
     fireEvent.click(within(card).getByText('Assemble now'));
 
@@ -229,9 +232,9 @@ describe('IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence
     expect(postBody('/api/ind-lifecycle/safety-report')).toMatchObject({
       event: {
         eventType: 'SAE',
-        seriousnessCriteria: 'death',
+        seriousnessCriteria: 'hospitalization',
         causality: 'probable',
-        outcome: 'recovered',
+        outcome: 'recovering',
         expectedness: 'unexpected',
         patientId: 'PT-001',
         eventDescription: 'Grade 4 hepatotoxicity',
@@ -251,6 +254,67 @@ describe('IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence
       sequenceNumber: '0002',
       event: { patientId: 'PT-001' },
     });
+  });
+
+  /* QA 2026-10-08 (j7, finding 1): the selects displayed SAE / death /
+     definite / recovered with no placeholder, and an untouched card POSTed
+     exactly those — the assembled report then asserted a death, a definite
+     causality and a recovery nobody had stated. Every regulated select starts
+     empty, an untouched one goes up absent, and the server's named refusal is
+     what the card shows. */
+  it('safety-report: no regulated select is pre-selected, and an untouched one is never sent', async () => {
+    mockApi({
+      '/api/ind-lifecycle/safety-report': {
+        ok: false,
+        status: 400,
+        body: {
+          error: {
+            code: 'VALIDATION',
+            message:
+              'The IND safety report cannot be assembled until these are stated: event type; seriousness criterion (ICH E2A); causality (WHO-UMC); outcome. Nothing is assumed for a field left blank.',
+          },
+        },
+      },
+    });
+    const card = await renderAndFindCard('IND Safety Report', 'Lifecycle');
+
+    for (const label of ['Event type', /Seriousness criterion/, /Causality/, 'Outcome']) {
+      const sel = within(card).getByLabelText(label) as HTMLSelectElement;
+      expect(sel.value, String(label)).toBe('');
+      // What the person sees is a prompt to choose, not a chosen value.
+      expect(sel.options[sel.selectedIndex].text, String(label)).toMatch(/not stated/i);
+    }
+
+    fireEvent.change(within(card).getByLabelText('Onset date'), { target: { value: '2026-09-20' } });
+    fireEvent.change(within(card).getByLabelText(/Sponsor awareness date/), { target: { value: '2026-09-25' } });
+    fireEvent.click(within(card).getByText('Assemble now'));
+
+    expect(
+      await screen.findByText(/Could not assemble — The IND safety report cannot be assembled until these are stated: event type; seriousness criterion/),
+    ).toBeTruthy();
+    const ev = (postBody('/api/ind-lifecycle/safety-report') as { event: Record<string, unknown> }).event;
+    expect(ev).toEqual({ onsetDate: '2026-09-20', reportDate: '2026-09-25' });
+    expect(within(card).queryByText('File into sequence')).toBeNull();
+  });
+
+  it('safety-report: a refusal thrown by the request layer reads as one sentence, ending once', async () => {
+    mockApi({});
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/ind-checklist') {
+        return { ok: true, status: 200, json: async () => ({ data: [CHECKLIST], meta: { count: 1 } }) } as Response;
+      }
+      if (method === 'POST' && url === '/api/ind-lifecycle/safety-report') {
+        const err = new Error('The IND safety report cannot be assembled until these are stated: outcome. Nothing is assumed for a field left blank.');
+        err.name = 'ApiRequestError';
+        throw err;
+      }
+      return { ok: true, status: 200, json: async () => ({}) } as Response;
+    });
+    const card = await renderAndFindCard('IND Safety Report', 'Lifecycle');
+    fireEvent.click(within(card).getByText('Assemble now'));
+    const msg = await screen.findByText(/^Could not assemble — The IND safety report cannot be assembled/);
+    expect(msg.textContent).toMatch(/left blank\.$/);
+    expect(msg.textContent).not.toMatch(/\.\.$/);
   });
 
   it('safety-report: the 4-digit sequence number is required, never guessed', async () => {

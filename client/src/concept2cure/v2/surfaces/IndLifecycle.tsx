@@ -101,8 +101,14 @@ interface DelivField {
   label: string;
   kind: 'text' | 'date' | 'textarea' | 'select';
   options?: Array<{ v: string; label: string }>;
+  /** On a select: rendered as an empty first option, and the select starts on
+      it — nothing is chosen until the person chooses. Without one, a select
+      shows (and sends) its first option. */
   placeholder?: string;
 }
+
+/** The prompt a regulated select shows until the person states a value. */
+const NOT_STATED = 'Not stated — choose';
 
 interface WiredDeliverable {
   assemblePath: string;
@@ -161,7 +167,7 @@ const SERIOUSNESS = OPTS(['death', 'life_threatening', 'hospitalization', 'disab
 const CAUSALITY = OPTS(['definite', 'probable', 'possible', 'unlikely', 'unrelated']);
 const OUTCOME = OPTS(['recovered', 'recovering', 'not_recovered', 'fatal', 'unknown']);
 const EXPECTEDNESS = [
-  { v: '', label: 'Not assessed (treated as expected — no clock starts)' },
+  { v: '', label: 'Not assessed (no expedited clock starts)' },
   { v: 'expected', label: 'Expected (listed in RSI)' },
   { v: 'unexpected', label: 'Unexpected (not listed in RSI)' },
 ];
@@ -543,7 +549,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
       verbatim because the test was only `instanceof Error`. */
   const failMsg = (e: unknown) =>
     (e as { name?: unknown })?.name === 'ApiRequestError' && (e as Error).message
-      ? (e as Error).message
+      ? // Every caller ends the sentence itself; the server's own period made
+        // it "..left blank.." (QA 2026-10-08, j7).
+        (e as Error).message.replace(/\.\s*$/, '')
       : 'request failed';
   const assembleCoverLetter = async () => {
     setCl({ busy: true, model: null, error: '' });
@@ -683,15 +691,18 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
 
   /* Safety-report intake: only what the user entered goes up — an absent field
      reaches the server as absent, so classification never runs on invented
-     data (the un-assessed expectedness default is the server's conservative
-     "expected → no clock starts"). */
+     data. The four determinations used to go up through `sel`, which sent each
+     select's FIRST option when untouched (SAE / death / definite / recovered),
+     and the report asserted them (QA 2026-10-08, j7). They now start unstated
+     and the server refuses, naming each one, until the person states it. An
+     un-assessed expectedness stays absent and the server reports it as not
+     recorded — no expedited clock starts. */
   const safetyEventPayload = (): Record<string, unknown> => {
-    const ev: Record<string, unknown> = {
-      eventType: sel('sr.eventType', EVENT_TYPES),
-      seriousnessCriteria: sel('sr.seriousness', SERIOUSNESS),
-      causality: sel('sr.causality', CAUSALITY),
-      outcome: sel('sr.outcome', OUTCOME),
-    };
+    const ev: Record<string, unknown> = {};
+    if (fv('sr.eventType')) ev.eventType = fv('sr.eventType');
+    if (fv('sr.seriousness')) ev.seriousnessCriteria = fv('sr.seriousness');
+    if (fv('sr.causality')) ev.causality = fv('sr.causality');
+    if (fv('sr.outcome')) ev.outcome = fv('sr.outcome');
     if (fv('sr.patientId')) ev.patientId = fv('sr.patientId');
     if (fv('sr.description')) ev.eventDescription = fv('sr.description');
     if (fv('sr.country')) ev.countryOfOccurrence = fv('sr.country');
@@ -820,10 +831,10 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
       fields: [
         { key: 'sr.patientId', label: 'De-identified patient id', kind: 'text' },
         { key: 'sr.description', label: 'Event description', kind: 'textarea' },
-        { key: 'sr.eventType', label: 'Event type', kind: 'select', options: EVENT_TYPES },
-        { key: 'sr.seriousness', label: 'Seriousness criterion (ICH E2A)', kind: 'select', options: SERIOUSNESS },
-        { key: 'sr.causality', label: 'Causality (WHO-UMC)', kind: 'select', options: CAUSALITY },
-        { key: 'sr.outcome', label: 'Outcome', kind: 'select', options: OUTCOME },
+        { key: 'sr.eventType', label: 'Event type', kind: 'select', options: EVENT_TYPES, placeholder: NOT_STATED },
+        { key: 'sr.seriousness', label: 'Seriousness criterion (ICH E2A)', kind: 'select', options: SERIOUSNESS, placeholder: NOT_STATED },
+        { key: 'sr.causality', label: 'Causality (WHO-UMC)', kind: 'select', options: CAUSALITY, placeholder: NOT_STATED },
+        { key: 'sr.outcome', label: 'Outcome', kind: 'select', options: OUTCOME, placeholder: NOT_STATED },
         { key: 'sr.expectedness', label: 'Expectedness vs RSI', kind: 'select', options: EXPECTEDNESS },
         { key: 'sr.onset', label: 'Onset date', kind: 'date' },
         { key: 'sr.aware', label: 'Sponsor awareness date (clock start)', kind: 'date' },
@@ -1417,9 +1428,10 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                                   <select
                                     className="c2c-input"
                                     style={{ height: 28, width: '100%' }}
-                                    value={fv(f.key) || (f.options?.[0]?.v ?? '')}
+                                    value={f.placeholder != null ? fv(f.key) : fv(f.key) || (f.options?.[0]?.v ?? '')}
                                     onChange={(e) => setFieldVal(f.key, e.target.value)}
                                   >
+                                    {f.placeholder != null && <option value="">{f.placeholder}</option>}
                                     {(f.options ?? []).map((o) => (
                                       <option key={o.v} value={o.v}>{o.label}</option>
                                     ))}

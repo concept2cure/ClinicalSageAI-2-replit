@@ -149,6 +149,62 @@ export function isFatalOrLifeThreatening(criteria: SeriousnessCriteria): boolean
 }
 
 // ---------------------------------------------------------------------------
+// What the person must state — nothing regulated is assumed
+// ---------------------------------------------------------------------------
+
+/* QA 2026-10-08 (j7). The intake card posted SAE / death / definite /
+   recovered for selects nobody touched, and this service classified and
+   printed them. An absent awareness date fell through to
+   calculateReportingDeadline's `reportDate = new Date()` default (a clock
+   started today), and an absent onset date threw from toISOString (HTTP 500).
+   The engine now refuses an event whose determinations or dates were not
+   stated, naming each one, before anything is classified. */
+const EVENT_TYPE_VALUES = ['AE', 'SAE', 'SUSAR', 'AESI'] as const;
+const SERIOUSNESS_VALUES = ['death', 'life_threatening', 'hospitalization', 'disability', 'congenital_anomaly', 'medically_important'] as const;
+const CAUSALITY_VALUES = ['definite', 'probable', 'possible', 'unlikely', 'unrelated'] as const;
+const OUTCOME_VALUES = ['recovered', 'recovering', 'not_recovered', 'fatal', 'unknown'] as const;
+
+/** The refusal: code VALIDATION is what the lifecycle routes answer as 400. */
+export class IndSafetyReportIncompleteError extends Error {
+  readonly code = 'VALIDATION';
+  constructor(public readonly missingFields: string[]) {
+    super(
+      `The IND safety report cannot be assembled until these are stated: ${missingFields.join('; ')}. ` +
+        'Nothing is assumed for a field left blank.',
+    );
+    this.name = 'IndSafetyReportIncompleteError';
+  }
+}
+
+const isValidDate = (d: unknown): d is Date => d instanceof Date && !Number.isNaN(d.getTime());
+
+/**
+ * The determinations and dates the person has not stated (or stated outside
+ * the enum), as reader-facing names. Empty exactly when the event can be
+ * classified without assuming anything. A non-serious AE carries no
+ * seriousness criterion, so none is required of it.
+ */
+export function unstatedSafetyReportFields(event: Partial<AdverseEvent>): string[] {
+  const missing: string[] = [];
+  const oneOf = (v: unknown, values: readonly string[], name: string) => {
+    if (typeof v !== 'string' || v.trim() === '') missing.push(name);
+    else if (!values.includes(v)) missing.push(`${name} ("${v}" is not one of ${values.join(', ')})`);
+  };
+  oneOf(event.eventType, EVENT_TYPE_VALUES, 'event type');
+  if (event.eventType !== 'AE') oneOf(event.seriousnessCriteria, SERIOUSNESS_VALUES, 'seriousness criterion (ICH E2A)');
+  oneOf(event.causality, CAUSALITY_VALUES, 'causality (WHO-UMC)');
+  oneOf(event.outcome, OUTCOME_VALUES, 'outcome');
+  if (!isValidDate(event.onsetDate)) missing.push('onset date');
+  if (!isValidDate(event.reportDate)) missing.push('sponsor awareness date (clock start)');
+  return missing;
+}
+
+function assertStated(event: AdverseEvent): void {
+  const missing = unstatedSafetyReportFields(event);
+  if (missing.length > 0) throw new IndSafetyReportIncompleteError(missing);
+}
+
+// ---------------------------------------------------------------------------
 // Core classification — 21 CFR 312.32(c)
 // ---------------------------------------------------------------------------
 
@@ -165,11 +221,14 @@ export function isFatalOrLifeThreatening(criteria: SeriousnessCriteria): boolean
  *      expedited report (handled via aggregate/annual reporting, 312.33).
  *
  * Pure: no DB, no side effects, deterministic for a given input + clock.
+ * Throws IndSafetyReportIncompleteError (code VALIDATION) when a determination
+ * or date was not stated — see unstatedSafetyReportFields.
  */
 export function classifyIndSafetyReport(
   event: AdverseEvent,
   now: Date = new Date(),
 ): IndSafetyClassification {
+  assertStated(event);
   const serious = isSerious(event);
   const suspected = isSuspected(event.causality);
   const unexpected = isUnexpected(event.expectedness);
@@ -277,6 +336,31 @@ export interface AggregateContext {
   priorReportIds?: string[];
 }
 
+/* An identifier the person did not enter is an explicit gap, like the other
+   placeholders in the report — it printed the word "undefined" (QA
+   2026-10-08, j7). */
+function statedOrGap(v: unknown): string {
+  return typeof v === 'string' && v.trim() !== '' ? v.trim() : '[to be completed]';
+}
+
+/* A non-serious AE carries no seriousness criterion; the report says so
+   rather than printing an absent value. */
+function seriousnessLine(event: AdverseEvent): string {
+  return event.seriousnessCriteria
+    ? `Seriousness criterion: ${event.seriousnessCriteria}.`
+    : 'Seriousness criterion: none — non-serious adverse event.';
+}
+
+/* Expectedness is optional on intake; when nobody recorded it the report says
+   so rather than asserting "expected" on the reviewer's behalf. */
+function expectednessLine(event: AdverseEvent, classification: IndSafetyClassification): string {
+  if (!classification.determinations.expectednessRecorded) {
+    return 'Expectedness: not recorded — no determination against the Reference Safety Information has been made.';
+  }
+  const verdict = classification.determinations.unexpected ? 'unexpected' : 'expected';
+  return `Expectedness: ${verdict} vs the Reference Safety Information${event.rsiReference ? ` (${event.rsiReference})` : ''}.`;
+}
+
 /** The full structured IND Safety Report document model. */
 export interface IndSafetyReportDocument {
   reportType: 'IND_SAFETY_REPORT';
@@ -313,8 +397,8 @@ export function buildIndSafetyReportDocument(
         `IND Safety Report (${labelForObligation(classification.obligation)}).`,
         `Regulatory basis: ${classification.regulatoryBasis}.`,
         icsr?.worldwideUniqueId ? `ICSR worldwide unique ID: ${icsr.worldwideUniqueId}.` : '',
-        `Case (de-identified patient): ${event.patientId}.`,
-        `Country of occurrence: ${event.countryOfOccurrence}.`,
+        `Case (de-identified patient): ${statedOrGap(event.patientId)}.`,
+        `Country of occurrence: ${statedOrGap(event.countryOfOccurrence)}.`,
       ]
         .filter(Boolean)
         .join(' '),
@@ -350,9 +434,9 @@ export function buildIndSafetyReportDocument(
       key: 'assessment',
       heading: 'Assessment of Causality and Expectedness',
       body: [
-        `Seriousness criterion: ${event.seriousnessCriteria}.`,
+        seriousnessLine(event),
         `Causality (WHO-UMC): ${event.causality} — ${classification.determinations.suspected ? 'suspected (reasonable possibility)' : 'not suspected'}.`,
-        `Expectedness: ${classification.determinations.unexpected ? 'unexpected' : 'expected'} vs the Reference Safety Information${event.rsiReference ? ` (${event.rsiReference})` : ''}.`,
+        expectednessLine(event, classification),
         `Outcome: ${event.outcome}.`,
         classification.rationale,
       ]

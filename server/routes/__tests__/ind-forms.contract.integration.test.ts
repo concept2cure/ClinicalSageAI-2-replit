@@ -631,6 +631,7 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
     const res = await request(app)
       .post('/api/ind-forms/FDA_1571/official-upload')
       .field('projectIdent', 'BX-910')
+      .field('sequenceId', String(sequenceId))
       .attach('file', SIGNED_PDF, { filename: 'signed-1571.pdf', contentType: 'application/pdf' });
 
     expect(res.status).toBe(201);
@@ -668,10 +669,10 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
     await seedProgram({ code: 'BX-911', name: 'BX-911 (IND)', productName: 'Product 911' });
     const { sequenceId } = await seedSpine({ title: 'BX-911 (IND)', productName: 'Product 911' });
     const first = await request(app).post('/api/ind-forms/FDA_1572/official-upload')
-      .field('projectIdent', 'BX-911').attach('file', SIGNED_PDF, 'a.pdf');
+      .field('projectIdent', 'BX-911').field('sequenceId', String(sequenceId)).attach('file', SIGNED_PDF, 'a.pdf');
     const corrected = Buffer.from('%PDF-1.7\n% corrected signature\n%%EOF\n', 'utf8');
     const second = await request(app).post('/api/ind-forms/FDA_1572/official-upload')
-      .field('projectIdent', 'BX-911').attach('file', corrected, 'b.pdf');
+      .field('projectIdent', 'BX-911').field('sequenceId', String(sequenceId)).attach('file', corrected, 'b.pdf');
 
     expect(first.status).toBe(201);
     expect(second.status).toBe(201);
@@ -684,18 +685,18 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
 
   it('files the financial certification at its own catalogued section, not with the forms', async () => {
     await seedProgram({ code: 'BX-912', name: 'BX-912 (IND)', productName: 'Product 912' });
-    await seedSpine({ title: 'BX-912 (IND)', productName: 'Product 912' });
+    const { sequenceId } = await seedSpine({ title: 'BX-912 (IND)', productName: 'Product 912' });
     const res = await request(app).post('/api/ind-forms/FDA_3454/official-upload')
-      .field('projectIdent', 'BX-912').attach('file', SIGNED_PDF, 'signed-3454.pdf');
+      .field('projectIdent', 'BX-912').field('sequenceId', String(sequenceId)).attach('file', SIGNED_PDF, 'signed-3454.pdf');
     expect(res.status).toBe(201);
     expect(res.body.sectionCode).toBe('m1.3.4');
   });
 
   it('refuses a file that is not a PDF by its bytes, whatever it claims to be', async () => {
     await seedProgram({ code: 'BX-913', name: 'BX-913 (IND)', productName: 'Product 913' });
-    await seedSpine({ title: 'BX-913 (IND)', productName: 'Product 913' });
+    const { sequenceId } = await seedSpine({ title: 'BX-913 (IND)', productName: 'Product 913' });
     const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
-      .field('projectIdent', 'BX-913')
+      .field('projectIdent', 'BX-913').field('sequenceId', String(sequenceId))
       .attach('file', Buffer.from('PK\x03\x04 not a pdf'), { filename: 'claims.pdf', contentType: 'application/pdf' });
     expect(res.status).toBe(400);
     expect(res.body.error.message).toMatch(/not a PDF/i);
@@ -703,11 +704,11 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
 
   it('refuses the BLANK official template — attaching it would file an unsigned form as a signed one', async () => {
     await seedProgram({ code: 'BX-914', name: 'BX-914 (IND)', productName: 'Product 914' });
-    await seedSpine({ title: 'BX-914 (IND)', productName: 'Product 914' });
+    const { sequenceId } = await seedSpine({ title: 'BX-914 (IND)', productName: 'Product 914' });
     // The real vendored FDA asset, byte for byte.
     const blank = fs.readFileSync(templatePathFor('FDA_1571'));
     const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
-      .field('projectIdent', 'BX-914').attach('file', blank, 'FDA_1571.pdf');
+      .field('projectIdent', 'BX-914').field('sequenceId', String(sequenceId)).attach('file', blank, 'FDA_1571.pdf');
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('BLANK_TEMPLATE');
   }, 30_000);
@@ -751,5 +752,147 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
       .field('projectIdent', 'BX-910').attach('file', SIGNED_PDF, 'x.pdf');
     expect(res.status).toBe(403);
     currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 2). The completed 1571 and 1572 filed into
+   sequence 0001 — a draft amendment — because the route took the newest
+   sequence silently, while the original 0000 still reported "Required section
+   1.1 has no leaf". The route's own refusal calls the target "a regulatory
+   decision"; it is now the person's: the upload names the sequence, the route
+   files into that one or refuses, and never picks. */
+describe('the person chooses the sequence a completed form is filed into', () => {
+  async function seedWithAmendment(code: string): Promise<{ submissionId: number; original: number; amendment: number }> {
+    await seedProgram({ code, name: `${code} (IND)`, productName: `Product ${code}` });
+    const { submissionId, sequenceId } = await seedSpine({ title: `${code} (IND)`, productName: `Product ${code}` });
+    const amd = await harness.pglite.query(
+      `INSERT INTO ectd_sequences (submission_id, region, sequence_number, type, status, organization_id, created_by)
+       VALUES ($1,'fda','0001','amendment','draft',1,9) RETURNING id`,
+      [submissionId],
+    );
+    return { submissionId, original: sequenceId!, amendment: Number((amd.rows[0] as { id: number }).id) };
+  }
+
+  it('refuses an upload that names no sequence, and files nothing', async () => {
+    const { original, amendment } = await seedWithAmendment('BX-930');
+    const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-930').attach('file', SIGNED_PDF, 'signed-1571.pdf');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('SEQUENCE_REQUIRED');
+    expect(await leafRows(original)).toHaveLength(0);
+    expect(await leafRows(amendment)).toHaveLength(0);
+  });
+
+  it('files into the ORIGINAL 0000 when the person names it, although a newer 0001 exists', async () => {
+    const { original, amendment } = await seedWithAmendment('BX-931');
+    const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-931').field('sequenceId', String(original))
+      .attach('file', SIGNED_PDF, 'signed-1571.pdf');
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ sequenceId: original, sequenceNumber: '0000', sectionCode: 'm1.1' });
+    expect(await leafRows(original)).toHaveLength(1);
+    expect(await leafRows(amendment)).toHaveLength(0);
+    // The listing reports the placement where it really is — in 0000 — even
+    // though 0001 is the newest sequence.
+    const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-931' });
+    expect(listed.body.placements).toEqual([
+      expect.objectContaining({ formId: 'FDA_1571', sequenceNumber: '0000', sequenceId: original }),
+    ]);
+  });
+
+  it('a form placed in two sequences is listed in both, and replacing is per sequence', async () => {
+    const { original, amendment } = await seedWithAmendment('BX-932');
+    for (const seq of [original, amendment]) {
+      const r = await request(app).post('/api/ind-forms/FDA_1572/official-upload')
+        .field('projectIdent', 'BX-932').field('sequenceId', String(seq)).attach('file', SIGNED_PDF, 'a.pdf');
+      expect(r.status).toBe(201);
+      expect(r.body.replaced).toBe(false);
+    }
+    const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-932' });
+    expect(listed.body.placements.map((p: any) => p.sequenceNumber).sort()).toEqual(['0000', '0001']);
+  });
+
+  it('refuses a sequence of another submission, and a frozen one, before any bytes are stored', async () => {
+    await seedWithAmendment('BX-933');
+    const other = await seedSpine({ title: 'Unrelated (IND)', productName: 'Unrelated product' });
+    const foreign = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-933').field('sequenceId', String(other.sequenceId))
+      .attach('file', SIGNED_PDF, 'x.pdf');
+    expect(foreign.status).toBe(409);
+    expect(foreign.body.error.code).toBe('SEQUENCE_NOT_IN_PROGRAM');
+
+    const { original } = await seedWithAmendment('BX-934');
+    await harness.pglite.query(`UPDATE ectd_sequences SET status = 'frozen' WHERE id = $1`, [original]);
+    const before = storage.objects.size;
+    const frozen = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
+      .field('projectIdent', 'BX-934').field('sequenceId', String(original))
+      .attach('file', SIGNED_PDF, 'x.pdf');
+    expect(frozen.status).toBe(409);
+    expect(frozen.body.error.code).toBe('SEQUENCE_LOCKED');
+    expect(storage.objects.size).toBe(before);
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 3). Build & check said "required fields
+   present" for the 1572 — its response was [] because no investigator is
+   recorded — while the PDF of the same form, the same minute, said three
+   required boxes were blank. One engine answers both now. */
+describe('one verdict from one engine', () => {
+  it('a 1572 with no investigator recorded is a missing-investigator verdict, the same one the PDF reports', async () => {
+    await seedProgram({ code: 'BX-940', name: 'BX-940 (IND)', productName: 'Product 940' });
+    const built = await request(app).post('/api/ind-forms/FDA_1572/build').send({ projectIdent: 'BX-940' });
+    expect(built.status).toBe(200);
+    expect(Array.isArray(built.body)).toBe(true);
+    expect(built.body.length).toBeGreaterThan(0);
+    const missing: string[] = built.body[0].missingRequired;
+    expect(missing).toEqual(expect.arrayContaining(['investigator_name', 'facility_name', 'irb_name']));
+
+    const pdf = await request(app).post('/api/ind-forms/FDA_1572/pdf').send({ projectIdent: 'BX-940' });
+    expect(pdf.status).toBe(200);
+    const pdfMissing = String(pdf.headers['x-form-missing-required'] ?? '').split(',').filter(Boolean);
+    expect([...missing].sort()).toEqual([...pdfMissing].sort());
+  });
+
+  it('with investigators recorded, the build is still one per investigator', async () => {
+    const res = await request(app).post('/api/ind-forms/FDA_1572/build').send({
+      investigators: [{ name: 'Dr A', facilityName: 'Site A', irbName: 'IRB A' }, { name: 'Dr B' }],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+    expect(res.body[0].missingRequired).toEqual([]);
+    expect(res.body[1].missingRequired).toEqual(expect.arrayContaining(['facility_name', 'irb_name']));
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 3d). The IND panel offered Form 356h
+   (NDA / ANDA / BLA). The listing now carries the registry's applicability
+   verdict: only the forms that apply to the program are offered, the rest are
+   named with the reason, and filing an inapplicable form is refused. */
+describe('the listing is scoped to the program', () => {
+  it('an IND program is offered only the forms the registry says apply to an IND', async () => {
+    await seedProgram({ code: 'BX-950', name: 'BX-950 (IND)', productName: 'Product 950' });
+    const res = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-950' });
+    expect(res.status).toBe(200);
+    expect(res.body.forms).not.toContain('FDA_356H');
+    expect(res.body.forms).toEqual(expect.arrayContaining(['FDA_1571', 'FDA_1572', 'FDA_3674']));
+    expect(res.body.formsNotApplicable).toEqual([expect.objectContaining({ formId: 'FDA_356H' })]);
+  });
+
+  it('an NDA program is offered 356h and not the IND application', async () => {
+    await seedProgram({ code: 'BX-951', name: 'BX-951 (NDA)', productName: 'Product 951', programType: 'NDA' });
+    const res = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-951' });
+    expect(res.body.forms).toContain('FDA_356H');
+    expect(res.body.forms).not.toContain('FDA_1571');
+  });
+
+  it('a form that does not apply to the program is refused at filing, not placed', async () => {
+    await seedProgram({ code: 'BX-952', name: 'BX-952 (IND)', productName: 'Product 952' });
+    const { sequenceId } = await seedSpine({ title: 'BX-952 (IND)', productName: 'Product 952' });
+    const res = await request(app).post('/api/ind-forms/FDA_356H/official-upload')
+      .field('projectIdent', 'BX-952').field('sequenceId', String(sequenceId))
+      .attach('file', SIGNED_PDF, 'x.pdf');
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('FORM_NOT_APPLICABLE');
+    expect(await leafRows(sequenceId!)).toHaveLength(0);
   });
 });
