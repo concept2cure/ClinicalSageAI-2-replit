@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T08:04:12.226Z",
+  "generatedAt": "2026-10-08T08:15:04.552Z",
   "git": {
-    "sha": "ebc3076e4315a857736ba445dff6205acce58d43",
+    "sha": "113056e49c11ec2d74cb5738e2940e64b1de54dc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2525,10 +2525,6 @@
         "lines": 1968
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1948
-      },
-      {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
         "lines": 1931
       },
@@ -2635,6 +2631,10 @@
       {
         "file": "server/services/cmc-write-through.ts",
         "lines": 1773
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1741
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
