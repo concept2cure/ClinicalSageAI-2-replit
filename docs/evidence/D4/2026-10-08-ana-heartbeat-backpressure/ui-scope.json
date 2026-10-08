@@ -1,0 +1,12 @@
+{
+  "publication_base": "b16ba9c75416bc7e35441dd8ac55a24abe471d5a",
+  "qualified_checkpoint": "1e07124f682f680b129df0d804a8ca0bcd01b943",
+  "base_client_hash": "9075763570d1f4bf8ba0418080459091c9071c21",
+  "qualified_client_hash": "9075763570d1f4bf8ba0418080459091c9071c21",
+  "client_directory_unchanged": true,
+  "out_of_scope_paths": [],
+  "allowed_source_paths": [
+    "server/services/ana/run-control.ts",
+    "server/services/ana/__tests__/run-control-tenant-scope.test.ts"
+  ]
+}

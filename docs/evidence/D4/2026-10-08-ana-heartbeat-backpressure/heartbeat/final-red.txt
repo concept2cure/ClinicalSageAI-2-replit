@@ -1,0 +1,177 @@
+(node:7) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:7) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > reaps under the system scope even when called from inside a tenant request 3ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > does not inherit the caller tenant — the bug this replaces 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > scopes the disconnect write to the run own organization 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > aborts the local run even when the row write cannot be made 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > request-time reads inherit the caller scope rather than widening it > reads a run under the request own tenant 1ms
+ × server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > bounds a twenty-call burst and drains the newest round before any caller completes 10ms
+   → expected 20 to be 1 // Object.is equality
+ × server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > refreshes timestamps for overlapping requests even when their rounds are identical 5ms
+   → expected 3 to be 1 // Object.is equality
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > keeps run handles independent within one pool and across pools 3ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > uses actual request tenant scope on admitted and successor writes without system bypass 3ms
+ × server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > discards queued and future writes after local release while the issued write settles 3ms
+   → expected [ 1, 2, 3 ] to deeply equal [ 1 ]
+ × server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > does no database work after release before admission or before a scheduled first query 2ms
+   → expected [ { promise: Promise{…}, …(2) }, …(1) ] to have a length of +0 but got 2
+ × server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat failures and microtask admission > warns on asynchronous failure, drains the newest request and admits a later retry 1ms
+   → expected 3 to be 1 // Object.is equality
+ × server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat failures and microtask admission > warns on a synchronous throw, writes the pending newest round and remains retryable 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat failures and microtask admission > registers admission before the query callback can reenter heartbeat 1ms
+   → expected 2 to be 1 // Object.is equality
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat failures and microtask admission > does not lose a request between the final await and promise settlement 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > bounds a twenty-call burst and drains the newest round before any caller completes
+AssertionError: expected 20 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 20
+
+ ❯ server/services/ana/__tests__/run-control-tenant-scope.test.ts:168:25
+    166|     const pendingSuccessorWrites = fake.writes.length;
+    167|     await drainBeats(fake); await Promise.all([...calls, later]);
+    168|     expect(burstWrites).toBe(1); expect(earlyDone).toBe(false);
+       |                         ^
+    169|     expect(firstSuccessor).toEqual([1, 20]); expect(pendingSuccessorWr…
+    170|     expect(fake.rounds).toEqual([1, 20, 30]); expect(firstDone).toBe(t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > refreshes timestamps for overlapping requests even when their rounds are identical
+AssertionError: expected 3 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 3
+
+ ❯ server/services/ana/__tests__/run-control-tenant-scope.test.ts:179:27
+    177|     await beatFlush(); const pendingWrites = fake.writes.length;
+    178|     await drainBeats(fake); await Promise.all([first, second, third]);
+    179|     expect(pendingWrites).toBe(1); expect(fake.rounds).toEqual([4, 4]);
+       |                           ^
+    180|   });
+    181|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > discards queued and future writes after local release while the issued write settles
+AssertionError: expected [ 1, 2, 3 ] to deeply equal [ 1 ]
+
+- Expected
++ Received
+
+  [
+    1,
++   2,
++   3,
+  ]
+
+ ❯ server/services/ana/__tests__/run-control-tenant-scope.test.ts:207:25
+    205|     const released = run.handle.heartbeat(3); await beatFlush();
+    206|     await drainBeats(fake); await Promise.all([first, queued, released…
+    207|     expect(fake.rounds).toEqual([1]);
+       |                         ^
+    208|   });
+    209|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > does no database work after release before admission or before a scheduled first query
+AssertionError: expected [ { promise: Promise{…}, …(2) }, …(1) ] to have a length of +0 but got 2
+
+- Expected
++ Received
+
+- 0
++ 2
+
+ ❯ server/services/ana/__tests__/run-control-tenant-scope.test.ts:214:99
+    212|     const beforeRelease = scheduled.handle.heartbeat(1); releaseLocalR…
+    213|     releaseLocalRun(released.runId); const afterRelease = released.han…
+    214|     await drainBeats(fake); await Promise.all([beforeRelease, afterRel…
+       |                                                                                                   ^
+    215|   });
+    216|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat failures and microtask admission > warns on asynchronous failure, drains the newest request and admits a later retry
+AssertionError: expected 3 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 3
+
+ ❯ server/services/ana/__tests__/run-control-tenant-scope.test.ts:229:27
+    227|     await drainBeats(fake); await Promise.all(calls);
+    228|     const retry = run.handle.heartbeat(4); await drainBeats(fake); awa…
+    229|     expect(pendingWrites).toBe(1); expect(fake.rounds).toEqual([1, 3, …
+       |                           ^
+    230|     expect(heartbeatLogs.warn).toHaveBeenCalledWith(`[ana-run-control]…
+    231|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat failures and microtask admission > warns on a synchronous throw, writes the pending newest round and remains retryable
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/run-control-tenant-scope.test.ts:244:68
+    242|     await drainBeats(fake); const results = await settled;
+    243|     const retry = run.handle.heartbeat(4); await drainBeats(fake); awa…
+    244|     expect(results.every(result => result.status === 'fulfilled')).toB…
+       |                                                                    ^
+    245|     expect(fake.rounds).toEqual([3, 4]);
+    246|     expect(heartbeatLogs.warn).toHaveBeenCalledWith(`[ana-run-control]…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat failures and microtask admission > registers admission before the query callback can reenter heartbeat
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ana/__tests__/run-control-tenant-scope.test.ts:258:27
+    256|     const outer = run.handle.heartbeat(1); await beatFlush(); const pe…
+    257|     await drainBeats(fake); await Promise.all([outer, nested]);
+    258|     expect(pendingWrites).toBe(1); expect(fake.rounds).toEqual([1, 9]);
+       |                           ^
+    259|   });
+    260|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 8 passed (15)
+   Start at  00:45:10
+   Duration  490ms (transform 143ms, setup 77ms, import 96ms, tests 40ms, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-08-ana-heartbeat-backpressure/heartbeat/final-red.json
