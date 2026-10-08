@@ -366,6 +366,7 @@ describe('the collapsed rail does not clip its account menu', () => {
      layout, so this pins the rules that decide it. */
   const css = readFileSync(path.resolve(__dirname, '../styles/app-v2.css'), 'utf8');
   const rule = (sel: string) => {
+    // nosemgrep: detect-non-literal-regexp -- sel is a test constant and is regex-escaped on this line; the subject is a repo CSS file
     const m = css.match(new RegExp(`(?:^|\\n)\\.c2c-v2 ${sel.replace(/[.[\]()*+?^$|]/g, '\\$&')}\\{([^}]*)\\}`));
     return m?.[1] ?? null;
   };

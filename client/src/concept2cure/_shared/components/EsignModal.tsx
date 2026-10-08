@@ -268,7 +268,7 @@ export function EsignModal({
   }, [phase, onClose]);
 
   // Esc to close + focus trap.
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (!open) return undefined;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {

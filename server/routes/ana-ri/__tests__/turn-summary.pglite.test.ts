@@ -143,6 +143,7 @@ function leaksIn(payload: unknown): string[] {
   const text = JSON.stringify(payload);
   const found = SENTINELS.filter(s => text.includes(s));
   for (const [name, id] of [['organizationId', ORG], ['actorUserId', ASKER]] as const) {
+    // nosemgrep: detect-non-literal-regexp -- id is a numeric test fixture id
     if (new RegExp(`[:\\[,]${id}[,}\\]]`).test(text)) found.push(`${name} ${id}`);
   }
   return found;

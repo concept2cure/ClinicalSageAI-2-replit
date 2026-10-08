@@ -84,6 +84,7 @@ function ddlOf(table: PgTable): string {
 function twinDdl(): string {
   const src = sqlFile('server/services/innovation/submission-readiness-twin-service.ts');
   const grab = (table: string) => {
+    // nosemgrep: detect-non-literal-regexp -- table is a test literal; the subject is a repo migration file
     const m = src.match(new RegExp(`CREATE TABLE IF NOT EXISTS innovation\\.${table} \\([\\s\\S]*?\\n\\s*\\)\\s*\``));
     if (!m) throw new Error(`twin DDL for ${table} not found`);
     return m[0].slice(0, -1) + ';';
