@@ -262,9 +262,9 @@ describe('reviews — request a review and record a disposition', () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url === '/api/tenant-users/42') {
         return ok([
-          { id: 21, name: 'Dr Amara Okafor', email: 'okafor@c2c.test', role: 'member' },
-          { id: 22, name: 'Read Only', email: 'viewer@c2c.test', role: 'viewer' },
-          { id: 23, name: '', email: 'lead@c2c.test', role: 'manager' },
+          { id: 21, name: 'Dr Amara Okafor', email: 'okafor@c2c.test', role: 'reviewer', canSign: true },
+          { id: 22, name: 'Read Only', email: 'viewer@c2c.test', role: 'viewer', canSign: false },
+          { id: 23, name: '', email: 'lead@c2c.test', role: 'approver', canSign: true },
         ]);
       }
       if (method === 'GET' && url.startsWith('/api/protocol-dev')) return ok({ success: true, data: [DOC] });

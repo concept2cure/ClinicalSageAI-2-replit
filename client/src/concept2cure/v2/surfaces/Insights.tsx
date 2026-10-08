@@ -254,11 +254,20 @@ function roDecide(typeId: string, family: string, tier: string): { entitled: boo
 }
 
 /* ── Presets per segment ── */
+/** A pack as the canvas offers it: the reports it holds and its description. */
 interface Preset {
   id: string;
   label: string;
   types: string[];
   why: string;
+}
+
+/** A pack as defined: what it is for, in words that name no report. */
+interface PresetDef {
+  id: string;
+  label: string;
+  types: string[];
+  purpose: string;
 }
 
 /* A preset describes what the PACK contains — never what the reader's filing is
@@ -267,42 +276,62 @@ interface Preset {
    whose own home surface correctly reported no programs at all. The live facts
    are stated separately by roSuggestForClient, from the readiness model; a
    static string is not entitled to claim any of them. Guarded by
-   Insights.presetCopy.test.ts. */
-const RO_PRESETS: Record<string, Preset[]> = {
+   insightsHonestCopy.test.ts.
+
+   A pack's description names only the reports it computes (follow-up decision
+   "Pack copy", docs/LAUNCH_DEFINITION_OF_DONE.md). The descriptions were
+   written for every member, and after packs kept only their runnable members
+   (aac603a1b) the pre-approval pack, holding the readiness digest alone, still
+   promised safety-signal alignment and audit assurance. So `purpose` names no
+   report, and roPresetsForSeg names the reports the pack holds, by their
+   catalog labels, after the runnable filter. Guarded by
+   insightsReportsRunWhatTheyName.test.tsx (1b). */
+const RO_PRESETS: Record<string, PresetDef[]> = {
   pharma: [
-    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], why: 'Pairs the readiness digest with safety-signal alignment and the audit assurance an action date calls for.' },
-    { id: 'globalfile', label: 'Global filing harmonization', types: ['ema.maa_readiness_assessment', 'china_nmpa.ctd_module_gap_analysis', 'provenance.evidence_trace_report'], why: 'Reuse the US dossier across EMA and NMPA — the gap analyses show what each region still needs.' },
+    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], purpose: 'For the run-up to an action date.' },
+    { id: 'globalfile', label: 'Global filing harmonization', types: ['ema.maa_readiness_assessment', 'china_nmpa.ctd_module_gap_analysis', 'provenance.evidence_trace_report'], purpose: 'For reusing the US dossier in other regions.' },
   ],
   biotech: [
-    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], why: 'Tracks readiness and closes the evidence and financial-disclosure gaps before filing.' },
-    { id: 'nonclin', label: 'Nonclinical & CMC readiness', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], why: 'Confirm Module 4 / SEND datasets and the audit trail are submission-grade.' },
+    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], purpose: 'For closing gaps before a BLA is filed.' },
+    { id: 'nonclin', label: 'Nonclinical & CMC readiness', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], purpose: 'For confirming Module 4 is submission-grade.' },
   ],
   medtech: [
-    { id: 'clearance', label: '510(k) clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'compliance.audit_assurance_pack'], why: 'The equivalence matrix carries your substantial-equivalence argument; the inspection and audit packs keep the QMS ready for review.' },
+    { id: 'clearance', label: '510(k) clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'compliance.audit_assurance_pack'], purpose: 'For keeping a 510(k) and the quality system ready for review.' },
   ],
   diagnostics: [
-    { id: 'ivdperf', label: 'IVD performance & clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'provenance.evidence_trace_report'], why: 'Performance claims traced to source, with the equivalence matrix and inspection readiness for the IVD 510(k).' },
+    { id: 'ivdperf', label: 'IVD performance & clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'provenance.evidence_trace_report'], purpose: 'For an IVD 510(k) and the claims it rests on.' },
   ],
   cro: [
-    { id: 'sponsor', label: 'Sponsor oversight pack', types: ['etmf.completeness_pack', 'inspection.readiness_pack'], why: 'Cross-sponsor eTMF completeness plus 483 / inspection readiness across the sites you run.' },
+    { id: 'sponsor', label: 'Sponsor oversight pack', types: ['etmf.completeness_pack', 'inspection.readiness_pack'], purpose: 'For oversight across the sponsors and sites you run.' },
   ],
   academic: [
-    { id: 'researchadmin', label: 'Research administration pack', types: ['research_admin.scorecard', 'irb.submission_register', 'iacuc.protocol_register', 'effort.certification_register'], why: 'The scorecard rolls up IRB, IACUC, effort and COI so nothing lapses across your studies.' },
+    { id: 'researchadmin', label: 'Research administration pack', types: ['research_admin.scorecard', 'irb.submission_register', 'iacuc.protocol_register', 'effort.certification_register'], purpose: 'For keeping approvals from lapsing across your studies.' },
   ],
   health: [
-    { id: 'oversight', label: 'Portfolio oversight pack', types: ['readiness.executive_digest', 'compliance.audit_assurance_pack', 'inspection.readiness_pack'], why: 'Readiness, audit assurance and inspection readiness across the programs you oversee.' },
+    { id: 'oversight', label: 'Portfolio oversight pack', types: ['readiness.executive_digest', 'compliance.audit_assurance_pack', 'inspection.readiness_pack'], purpose: 'For the programs you oversee.' },
   ],
 };
+
+/** "the A", "the A and the B", "the A, the B and the C". */
+function roNamedList(labels: string[]): string {
+  const named = labels.map((label) => `the ${label}`);
+  if (named.length < 2) return named.join('');
+  return `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
+}
 
 /** The standard packs for a segment, each holding only the reports this
  *  program's catalog computes; a pack left with none is not offered. P-26
  *  (2026-10-08): packs list only types an engine computes. The engine-less
  *  ones are listed once, as not computed in this release (roNotComputed), not
- *  as tiles inside packs. */
+ *  as tiles inside packs. Each description is the pack's purpose and the
+ *  reports it holds, by their catalog labels, so it names no other. */
 function roPresetsForSeg(seg: string, types: ReportType[]): Preset[] {
-  const runs = new Set(types.filter((t) => t.runnable).map((t) => t.typeId));
+  const runs = new Map(types.filter((t) => t.runnable).map((t) => [t.typeId, t.label] as const));
   return (RO_PRESETS[seg] || RO_PRESETS.pharma)
-    .map((p) => ({ ...p, types: p.types.filter((id) => runs.has(id)) }))
+    .map(({ purpose, ...p }) => {
+      const held = p.types.filter((id) => runs.has(id));
+      return { ...p, types: held, why: `${purpose} It holds ${roNamedList(held.map((id) => runs.get(id) ?? id))}.` };
+    })
     .filter((p) => p.types.length > 0);
 }
 

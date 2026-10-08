@@ -22,6 +22,13 @@ const holder = vi.hoisted(() => ({
 }));
 vi.mock('../../../db.js', () => ({ pool: { query: (s: string, p?: unknown[]) => holder.query(s, p) }, db: {} }));
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => holder.query(s, p) }, db: {} }));
+// The reviewer's signing authority is read as the signing ceremony reads it:
+// the membership row (resolveSignerOrgRole). The real lookup goes through
+// drizzle, which this suite does not wire; this reads the same PGlite row.
+vi.mock('../../part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async (userId: number, orgId: number) =>
+    (await holder.query('SELECT role FROM organization_users WHERE user_id = $1 AND organization_id = $2', [userId, orgId])).rows[0]?.role ?? null,
+}));
 
 import { assignReviewerTx } from '../protocol-reviews-service';
 
@@ -80,9 +87,11 @@ beforeAll(async () => {
     INSERT INTO users (id, email, name) VALUES
       (${AUTHOR},'a@e.test','Author'), (${OKAFOR},'okafor@e.test','Dr Amara Okafor'),
       (${NO_NAME},'lead@e.test',''), (${NOBODY},NULL,NULL), (${STRANGER},'s@e.test','Stranger');
+    -- The reviewers hold signing roles: a review is assigned only to someone
+    -- who can sign its disposition ("Protocol reviewers", follow-up decision).
     INSERT INTO organization_users (organization_id, user_id, role) VALUES
-      (${ORG},${AUTHOR},'member'), (${ORG},${OKAFOR},'member'), (${ORG},${NO_NAME},'manager'), (${ORG},${NOBODY},'member'),
-      (${OTHER_ORG},${STRANGER},'member');
+      (${ORG},${AUTHOR},'member'), (${ORG},${OKAFOR},'reviewer'), (${ORG},${NO_NAME},'approver'), (${ORG},${NOBODY},'reviewer'),
+      (${OTHER_ORG},${STRANGER},'reviewer');
   `);
   for (const m of [
     'migrations/20260621_protocol_development.sql',

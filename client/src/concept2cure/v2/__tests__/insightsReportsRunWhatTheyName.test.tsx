@@ -33,7 +33,7 @@ vi.mock('@/services/portal/authService', async (importOriginal) => ({
 
 import { InsightsCanvas } from '../surfaces/Insights';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
-import { catalogForSegment } from './_insights-catalog-fixture';
+import { CANVAS_REPORT_TYPES, catalogForSegment } from './_insights-catalog-fixture';
 
 const PROGRAM = 'd979e567-4622-46f1-8cb7-8bf434227f25';
 const ok = (obj: unknown) => ({ ok: true, status: 200, json: async () => obj }) as unknown as Response;
@@ -140,6 +140,62 @@ describe('1 — a type no engine computes', () => {
     ask('Run the audit assurance pack');
     expect(await screen.findByText(/No engine computes the Compliance & Audit Assurance Pack in this release/)).toBeTruthy();
     expect(runBodies()).toEqual([]);
+  });
+});
+
+/* Follow-up decision "Pack copy" (docs/LAUNCH_DEFINITION_OF_DONE.md): a pack's
+   description names only the reports it computes. After aac603a1b a pack held
+   only its runnable members while its static copy still named the others:
+   the BLA assembly pack, holding the digest and the FCOI register, described
+   "the evidence ... gaps" its engine-less trace was to close, and the
+   pre-approval pack, holding the digest alone, promised safety-signal
+   alignment and audit assurance. */
+describe('1b — a pack’s description names only the reports it computes', () => {
+  /* Words that name a report in this catalog. Once the pack's own reports are
+     taken out of its description, none of them may remain. */
+  const REPORT_WORDS =
+    /\b(digest|registers?|matrix|trace[ds]?|provenance|signal|assurance|audit|analys[ie]s|eTMF|scorecard|equivalence|inspection|483|SEND|IRB|IACUC|effort|COI|disclosure|ledger|calendar|grid|training|PSUR|RMP)\b/i;
+  const CASES: Array<[string, string[], typeof CANVAS_REPORT_TYPES, string]> = [
+    ['a pharma program', ['pharma'], catalogForSegment('pharma'), 'biopharma'],
+    ['a biologic program', ['biotech'], catalogForSegment('biotech'), 'biopharma'],
+    ['a device program', ['device'], catalogForSegment('device'), 'medtech'],
+    ['an IVD program', ['ivd'], catalogForSegment('ivd'), 'diagnostics'],
+    ['a CRO program', ['cro'], catalogForSegment('cro'), 'cro'],
+    ['an academic organisation', ['academic'], catalogForSegment('academic'), 'academic'],
+    ['a health-system organisation', [], CANVAS_REPORT_TYPES, 'health'],
+  ];
+  const renderFor = (segments: string[], reportTypes: unknown, shellSegment: string) => {
+    answer = overview({ segments, reportTypes });
+    return render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment={shellSegment} onNav={onNav} />);
+  };
+
+  it.each(CASES)('for %s, every pack offered describes exactly the reports it holds', async (_who, segments, reportTypes, shellSegment) => {
+    renderFor(segments, reportTypes, shellSegment);
+    await ready();
+    const offered = document.querySelectorAll('.rc-empty-preset').length;
+    expect(offered, 'a pack is offered').toBeGreaterThan(0);
+    for (let i = 0; i < offered; i += 1) {
+      cleanup();
+      renderFor(segments, reportTypes, shellSegment);
+      await ready();
+      await waitFor(() => expect(document.querySelectorAll('.rc-empty-preset').length).toBe(offered));
+      const listed = document.querySelectorAll('.rc-empty-preset .rc-ep-s')[i]?.textContent ?? '';
+      /* A click that lands while the canvas is still settling after its first
+         read can be lost: the first case of "1" above fails that way about one
+         run in five, at HEAD too. So the pack is opened again until it stays
+         open; what is asserted is its description, not the first click. */
+      await waitFor(() => {
+        if (!document.querySelector('.ro-pack-grid')) fireEvent.click(document.querySelectorAll('.rc-empty-preset')[i] as HTMLElement);
+        expect(document.querySelector('.ro-pack-grid')).not.toBeNull();
+      });
+      const pack = document.querySelector('.ro-rep-title')?.textContent ?? '';
+      const held = [...document.querySelectorAll('.ro-pack-grid .ro-pack-title')].map((t) => t.textContent ?? '');
+      const described = document.querySelector('.ro-dash-why')?.textContent ?? '';
+      expect(described, pack).toBe(listed);
+      for (const title of held) expect(described, `${pack} names ${title}`).toContain(title);
+      const rest = held.reduce((text, title) => text.split(title).join(''), described);
+      expect(rest, `${pack} names a report it does not hold`).not.toMatch(REPORT_WORDS);
+    }
   });
 });
 

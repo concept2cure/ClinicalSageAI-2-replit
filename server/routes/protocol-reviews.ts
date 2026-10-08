@@ -62,7 +62,9 @@ function resolveOrgId(req: Request): number | null {
   const n = raw == null ? NaN : typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
 }
-const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400, FORBIDDEN: 403 };
+// REVIEWER_CANNOT_SIGN: the named account holds no signing authority, so the
+// review it would be assigned could never be signed (protocol-reviews-service).
+const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400, FORBIDDEN: 403, REVIEWER_CANNOT_SIGN: 409 };
 function fail(res: Response, err: unknown): void {
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) {

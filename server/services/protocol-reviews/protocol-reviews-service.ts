@@ -12,10 +12,13 @@
  */
 
 import { pool } from '../../db';
-// The roles that can sign here (routes/protocol-reviews.ts runs requireEditorAccess).
-import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { requireProtocolForWriteTx } from '../protocol-development/protocol-development-service';
 import { resolveSignerIdentity, SignerNotAttributableError } from '../part11/resolve-signer-identity';
+// The disposition's signing ceremony holds the signer to these two
+// (governed-signature-ceremony assertSigningAuthority); the assignment holds
+// the reviewer to the same pair, so an assignment cannot end at its 403.
+import { resolveSignerOrgRole } from '../part11/resolve-signer-role';
+import { isSigningAuthorized } from '../part11/signing-authority';
 import {
   summarizeReviewConsensus,
   evaluateReviewReadiness,
@@ -28,7 +31,7 @@ interface Queryable {
 }
 
 export class ProtocolReviewError extends Error {
-  constructor(public code: 'NOT_FOUND' | 'INVALID_STATE' | 'BAD_INPUT' | 'FORBIDDEN', message: string) {
+  constructor(public code: 'NOT_FOUND' | 'INVALID_STATE' | 'BAD_INPUT' | 'FORBIDDEN' | 'REVIEWER_CANNOT_SIGN', message: string) {
     super(message);
     this.name = 'ProtocolReviewError';
   }
@@ -77,6 +80,35 @@ async function accountReviewerName(client: Queryable, orgId: number, reviewerUse
   return name;
 }
 
+/**
+ * An account-bound review's reviewer, held to the disposition's signing floor;
+ * returns the name the review is listed under.
+ *
+ * Only the assigned user can sign the disposition, and nothing reassigns a
+ * review, so an assignment to someone who cannot sign is a review that can
+ * never complete. It admitted every writing role (GOVERNED_WRITE_ROLES), so a
+ * member or a manager was assigned and then refused at signing with 403
+ * ESIGNATURE_NO_AUTHORITY (follow-up decision "Protocol reviewers",
+ * docs/LAUNCH_DEFINITION_OF_DONE.md). The role is now read and judged exactly
+ * as the ceremony reads and judges it: the membership row through
+ * resolveSignerOrgRole, then isSigningAuthorized. Refused with 409 before
+ * anything is written.
+ */
+async function assertReviewerCanSign(client: Queryable, orgId: number, reviewerUserId: number, typed: string): Promise<string> {
+  const role = await resolveSignerOrgRole(reviewerUserId, orgId);
+  if (role === null) {
+    throw new ProtocolReviewError('BAD_INPUT', 'That reviewer is not a member of this organization. Assign a member, or name the reviewer without an account. Nothing was recorded.');
+  }
+  if (!isSigningAuthorized(role)) {
+    throw new ProtocolReviewError(
+      'REVIEWER_CANNOT_SIGN',
+      `That reviewer's role (${role}) does not permit signing, so they could not sign this review's disposition. ` +
+        'Assign someone who can sign, or name a reviewer who has no account here. Nothing was recorded.',
+    );
+  }
+  return accountReviewerName(client, orgId, reviewerUserId, typed);
+}
+
 /** Assign a reviewer to a protocol document for a given review role. */
 export async function assignReviewerTx(
   client: Queryable,
@@ -93,20 +125,7 @@ export async function assignReviewerTx(
   await requireProtocolForWriteTx(client, orgId, protocolDocumentId, { signedContent: false });
   let reviewerName = typed;
   if (input.reviewerUserId != null) {
-    // Only the assigned user can sign the disposition, and nothing reassigns a
-    // review, so an assignment to someone who can never sign is a review that
-    // can never complete. Refuse it here.
-    const member = await client.query(
-      `SELECT role FROM organization_users WHERE organization_id = $1 AND user_id = $2 LIMIT 1`,
-      [orgId, input.reviewerUserId],
-    );
-    if (member.rows.length === 0) {
-      throw new ProtocolReviewError('BAD_INPUT', 'That reviewer is not a member of this organization. Assign a member, or name the reviewer without an account. Nothing was recorded.');
-    }
-    if (!GOVERNED_WRITE_ROLES.has(String(member.rows[0].role ?? '').toLowerCase())) {
-      throw new ProtocolReviewError('BAD_INPUT', `That reviewer's role (${member.rows[0].role}) cannot sign, so they could never record a disposition. Nothing was recorded.`);
-    }
-    reviewerName = await accountReviewerName(client, orgId, input.reviewerUserId, typed);
+    reviewerName = await assertReviewerCanSign(client, orgId, input.reviewerUserId, typed);
   }
   const { rows } = await client.query(
     `INSERT INTO protocol_review_assignments (organization_id, protocol_document_id, reviewer_name, reviewer_user_id, role, status, due_date, created_by)
