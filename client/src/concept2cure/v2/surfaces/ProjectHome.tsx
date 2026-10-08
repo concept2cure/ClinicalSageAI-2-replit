@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { I } from '../icons';
-import { EmptyState, useLiveData, hasKeys, liveMutateOrNull, type DataState } from '../dataConnect';
+import { EmptyState, useLiveData, useLiveRows, hasKeys, liveMutateOrNull, type DataState, type ListState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
@@ -16,6 +17,20 @@ import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
 import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
+import { SC_APPTYPES, SC_REGIONS } from '../fixtures/submission';
+import type { SubRow } from './SubmissionCenter';
+import {
+  noSubmissionWords,
+  programSubmissionsPath,
+  SUB_STATUS_LABEL,
+  SUB_STATUS_TONE,
+  useProgramSequence,
+  useSequenceDispatchReadiness,
+  type DispatchGate,
+  type DispatchReadinessAssessment,
+  type Discovery,
+  type SequenceDispatchReadiness,
+} from './programSequence';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals — cross-surface project selection handoff ──
@@ -52,10 +67,11 @@ declare global {
    Real backend rows — the org-scoped, UUID-keyed project read-models this
    surface anchors to (server/routes/c2c/projects.ts). Every field is projected
    from a verified column; nullable columns are `| null` and rendered null-safe.
-   Slices with no reachable UUID-keyed backend (tasks, readiness, the CTD
-   pyramid, memory/instructions/intelligence, conversations, the vault tree,
-   agency meetings, eTMF, grants, submissions) are rendered as an honest
-   EmptyState rather than a fabricated fixture. The schedule-of-events panel
+   Slices with no reachable UUID-keyed backend (tasks, the CTD pyramid,
+   memory/instructions/intelligence, agency meetings, eTMF, grants) are
+   rendered as an honest EmptyState rather than a fabricated fixture. The
+   project's files, conversations, dispatch readiness and submissions are read
+   by the project's UUID (slices 23 and 24 of ONE_ANA_ONE_CANVAS.md). The schedule-of-events panel
    (plan stage) is live for numeric-keyed projects and renders the same honest
    id-space empty for UUID programs — see SchedulePanel.
    ════════════════════════════════════════════════════════════════════════ */
@@ -241,6 +257,265 @@ function ProjectEvidence({ pid, name, onNav, available }: {
       <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} />
       <C2CToast msg={toast} />
     </section>
+  );
+}
+
+/* ════ Submit: the project's dispatch readiness and its submissions ════════
+   ONE_ANA_ONE_CANVAS.md slice 24. The Submit stage said "Submissions open in
+   the Submission Center" and showed nothing, so a regulatory lead on the
+   project had to leave it to learn whether its sequence could be sent. It now
+   shows the dispatch gate's verdict, read through the same discovery and the
+   same endpoint as the readiness screen (programSequence.ts), above the
+   project's submissions from the server's project-scoped list. Nothing here
+   computes a figure: the verdict and every count are the server's.
+
+   The two panels sit side by side, so they must never contradict each other.
+   The gate reads only the submission of the project's own type, and a
+   submission with no project recorded may reach it by name; the list holds
+   the submissions recorded to the project. So the readiness panel never says
+   "no submission" over the project's submissions of other types (it names
+   them), and the list says when the verdict above is for a submission it does
+   not hold. Both read one discovery (ProjectSubmitStage). */
+
+/** The plain words for each state in which there is no verdict to show. */
+function notReadyCopy(d: Discovery): { title: string; hint: string } {
+  if (d.state === 'no-submission') return noSubmissionWords(d, 'this project');
+  if (d.state === 'no-sequence') {
+    return {
+      title: 'No sequence to gate yet',
+      hint:
+        d.match === 'legacy-name'
+          ? `Its submission "${d.submissionTitle}", matched by name because it has no project recorded, has no eCTD sequence yet.`
+          : `Its submission "${d.submissionTitle}" has no eCTD sequence yet.`,
+    };
+  }
+  if (d.state === 'sequence') {
+    return { title: 'No verdict for this sequence', hint: 'The readiness read returned nothing. The gate is unanswered, which is not the same as cleared.' };
+  }
+  return { title: 'No project open', hint: 'No sequence is being gated.' };
+}
+
+/** The verdict pill: the server's answer, or the absence of one, in words. */
+function verdictLook(answered: boolean, gate: DispatchGate): { cls: string; icon: React.ReactNode; text: string } {
+  if (!answered) return { cls: 'warn', icon: I.alertTriangle, text: 'No verdict from the server' };
+  return gate.cleared
+    ? { cls: 'ok', icon: I.shieldCheck, text: 'Cleared to dispatch' }
+    : { cls: 'blocked', icon: I.lock, text: 'Dispatch blocked' };
+}
+
+/** Which sequence was gated, as the server and the discovery name it. */
+function gatedSequenceLine(a: DispatchReadinessAssessment, d: Discovery): string {
+  const number = d.state === 'sequence' && d.sequenceNumber ? `Sequence ${d.sequenceNumber}` : `Sequence id ${a.sequenceId}`;
+  return [
+    number,
+    a.region ? String(a.region).toUpperCase() : null,
+    typeof a.leafCount === 'number' ? `${a.leafCount} ${a.leafCount === 1 ? 'leaf' : 'leaves'}` : null,
+    a.sequenceStatus ? `status ${a.sequenceStatus}` : null,
+    d.state === 'sequence' && d.match === 'legacy-name' ? 'submission matched by name: it has no project recorded' : null,
+  ].filter(Boolean).join(' · ');
+}
+
+/** What a cleared verdict did not check, in the server's words.
+ *  The server clears a gate whose check did not run and is not required here
+ *  (GateView.notAssessed: no agency-grade validator configured, the common
+ *  installation). The readiness screen shows that gate as "Not assessed" and
+ *  its lead says "external validator not run"; a bare "Cleared to dispatch"
+ *  here would be the overclaim that screen was fixed to stop making. */
+function NotAssessedLines({ a }: { a: DispatchReadinessAssessment }) {
+  const unassessed = (Array.isArray(a.gates) ? a.gates : []).filter((g) => g.cleared && Boolean(g.notAssessed));
+  if (unassessed.length > 0) {
+    return (
+      <>
+        {unassessed.map((g) => (
+          <p key={g.key} className="pj-desc" data-testid="pj-readiness-not-assessed" data-gate={g.key}>
+            <span aria-hidden="true">{I.alertTriangle}</span>{' '}
+            <b>{g.rule?.title ?? `The ${g.key} gate`}</b>: not assessed. {g.notAssessed}
+          </p>
+        ))}
+      </>
+    );
+  }
+  // A response with no gate breakdown still says whether the validator ran.
+  if (a.externalValidation && a.externalValidation.ran === false) {
+    return (
+      <p className="pj-desc" data-testid="pj-readiness-not-assessed" data-gate="external">
+        <span aria-hidden="true">{I.alertTriangle}</span> External validator not run: the package has not been checked against it.
+      </p>
+    );
+  }
+  return null;
+}
+
+function ReadinessVerdict({ a, gate, answered, discovery }: {
+  a: DispatchReadinessAssessment; gate: DispatchGate; answered: boolean; discovery: Discovery;
+}) {
+  const look = verdictLook(answered, gate);
+  const rd = a.readiness;
+  return (
+    <div data-testid="pj-readiness-verdict">
+      <div className={`dr2-verdict ${look.cls}`}>
+        <span className="dr2-verdict-ic" aria-hidden="true">{look.icon}</span>
+        <span className="dr2-verdict-t">{look.text}</span>
+      </div>
+      {answered && gate.cleared && <NotAssessedLines a={a} />}
+      <div className="pj-file-m">{gatedSequenceLine(a, discovery)}</div>
+      {!answered && <p className="pj-desc">The gate is unanswered, which is not the same as cleared.</p>}
+      {answered && !gate.cleared && gate.blockers.length > 0 && (
+        <div className="dr2-blockers">
+          <div className="dr2-blockers-hd">{I.lock} What must close before dispatch</div>
+          {gate.blockers.map((b, i) => (
+            <div key={i} className="dr2-blocker">
+              <span className="dr2-blocker-n">{i + 1}</span>
+              <span className="dr2-blocker-t">{b}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {rd && (
+        <div className="dr2-readiness-hd">
+          <span className="pj-file-m">Structural validation</span>
+          <span className="dr2-readiness-s">
+            <span className="dr2-count err">{rd.errors} error{rd.errors === 1 ? '' : 's'}</span>
+            <span className="dr2-count warn">{rd.warnings} warning{rd.warnings === 1 ? '' : 's'}</span>
+            <span className="dr2-count idle">{rd.infos} info</span>
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReadinessBody({ discovery, r, onRetry }: { discovery: Discovery; r: SequenceDispatchReadiness; onRetry: () => void }) {
+  if (r.gateState === 'evaluating') {
+    return <div role="status" aria-busy="true" className="scaf-note" style={{ padding: '16px 10px' }}>Checking this project&apos;s dispatch readiness…</div>;
+  }
+  if (r.gateState === 'error') {
+    return (
+      <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't read the dispatch readiness"
+        hint="The gate is unanswered, which is not the same as cleared." retry={onRetry} />
+    );
+  }
+  if (r.gateState !== 'evaluated' || !r.assessment) {
+    const copy = notReadyCopy(discovery);
+    return <EmptyState icon={I.rocket} title={copy.title} hint={copy.hint} />;
+  }
+  return <ReadinessVerdict a={r.assessment} gate={r.gate} answered={r.answered} discovery={discovery} />;
+}
+
+/** The open project's dispatch gate. Same discovery and endpoint as the
+ *  readiness screen, which "Open readiness" opens when this release has it. */
+function ProjectReadiness({ discovery, r, onRetry, onNav, available }: {
+  discovery: Discovery; r: SequenceDispatchReadiness; onRetry: () => void;
+  onNav: (id: string) => void; available: (id: string) => boolean;
+}) {
+  return (
+    <section className="pj-sec" aria-labelledby="pj-readiness-h" data-testid="pj-readiness">
+      <div className="pj-sec-h">
+        <h2 id="pj-readiness-h">Dispatch readiness</h2>
+        {available('dispatch-readiness') && (
+          <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('dispatch-readiness')}>
+            Open readiness {I.right}
+          </button>
+        )}
+      </div>
+      <ReadinessBody discovery={discovery} r={r} onRetry={onRetry} />
+    </section>
+  );
+}
+
+const appTypeLabel = (v: string) => SC_APPTYPES.find((a) => a.v === v)?.l ?? v;
+const regionLabel = (v: string) => SC_REGIONS.find((r) => r.v === v)?.l ?? v;
+/* The status chip's tone, in the file-row vocabulary (pj-file-status data-s). */
+const SUB_ROW_TONE: Record<string, string> = { ai: 'acc', ok: 'ok', idle: 'idle' };
+
+/** One submission: its type, name, status (in words, not colour alone), region and stage. */
+function SubmissionRowView({ s }: { s: SubRow }) {
+  return (
+    <div className="pj-file" role="listitem" data-testid="pj-submission">
+      <div className="pj-file-top">
+        <span className="pj-file-badge">{appTypeLabel(s.applicationType)}</span>
+        <span className="pj-file-status" data-s={SUB_ROW_TONE[SUB_STATUS_TONE[s.status] ?? 'idle'] ?? 'idle'}>
+          {SUB_STATUS_LABEL[s.status] ?? s.status}
+        </span>
+      </div>
+      <div className="pj-file-n">{s.title}{s.productName ? ` · ${s.productName}` : ''}</div>
+      <div className="pj-file-m">
+        {[s.primaryRegion ? regionLabel(s.primaryRegion) : null, s.lifecycleStage ? `${s.lifecycleStage} stage` : null].filter(Boolean).join(' · ')}
+      </div>
+    </div>
+  );
+}
+
+/** The submission the gate reads by name, when it has no project recorded:
+ *  the list (the server's project scope) does not hold it, so it says so
+ *  rather than leaving the verdict above about a submission it denies. */
+function legacyGated(d: Discovery): string | null {
+  return (d.state === 'sequence' || d.state === 'no-sequence') && d.match === 'legacy-name' ? d.submissionTitle : null;
+}
+
+/** The project's submissions: GET /api/submissions?programId=…, loading, a
+ *  failure with a retry, an honest empty and the rows, each its own state. */
+function ProjectSubmissions({ subs, onRetry, discovery, onNav, available }: {
+  subs: ListState<SubRow>; onRetry: () => void; discovery: Discovery;
+  onNav: (id: string) => void; available: (id: string) => boolean;
+}) {
+  const legacy = legacyGated(discovery);
+  return (
+    <section className="pj-sec" aria-labelledby="pj-subs-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-subs-h">Submissions</h2>
+        {/* The Submission Center reads the open project, so it opens on this one. */}
+        {available('submission-center') && (
+          <button type="button" className="btn primary" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('submission-center')}>
+            {I.right} Open Submission Center
+          </button>
+        )}
+      </div>
+      {subs.loading ? (
+        <div role="status" aria-busy="true" className="scaf-note" style={{ padding: '16px 10px' }}>Loading this project&apos;s submissions…</div>
+      ) : subs.error ? (
+        <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load this project's submissions"
+          hint="The submission store didn't respond, so nothing here says whether the project has any." retry={onRetry} />
+      ) : subs.rows.length === 0 ? (
+        legacy ? (
+          <EmptyState icon={I.rocket} title="No submission is recorded to this project"
+            hint={`The dispatch readiness above is for "${legacy}", which has no project recorded and is matched to this one by name.`} />
+        ) : (
+          <EmptyState icon={I.rocket} title="No submissions for this project yet"
+            hint="A submission created in the Submission Center while this project is open belongs to it." />
+        )
+      ) : (
+        <>
+          <div className="pj-files" role="list" data-testid="pj-submissions">
+            {subs.rows.map((s) => <SubmissionRowView key={s.id} s={s} />)}
+          </div>
+          {legacy && (
+            <p className="pj-desc" data-testid="pj-submissions-legacy">
+              The dispatch readiness above is for &quot;{legacy}&quot;, which has no project recorded and is matched to this one by name, so it is not listed here.
+            </p>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+/** The Submit stage: one discovery and one scoped list read, shared by the
+ *  two panels so that what one says the other cannot deny. */
+function ProjectSubmitStage({ pid, onNav, available }: {
+  pid: string; onNav: (id: string) => void; available: (id: string) => boolean;
+}) {
+  const [reload, setReload] = useState(0);
+  const discovery = useProgramSequence(reload);
+  const readiness = useSequenceDispatchReadiness(discovery);
+  const [bump, setBump] = useState(0);
+  const path = programSubmissionsPath(pid);
+  const subs = useLiveRows<SubRow>(path, [path, bump]);
+  return (
+    <>
+      <ProjectReadiness discovery={discovery} r={readiness} onRetry={() => setReload((k) => k + 1)} onNav={onNav} available={available} />
+      <ProjectSubmissions subs={subs} onRetry={() => setBump((b) => b + 1)} discovery={discovery} onNav={onNav} available={available} />
+    </>
   );
 }
 
@@ -997,6 +1272,38 @@ function StartConversation({ productName, onNav }: { productName: string; onNav:
 /** One persisted AnA thread of this program (GET /api/chat/threads?program_id=). */
 interface ThreadRow { id: string; title: string | null; created_at: string | null; updated_at: string | null; program_id?: string | null }
 
+/* ════ My work on this project ═════════════════════════════════════════════
+   ONE_ANA_ONE_CANVAS.md slice 24. The task store keys a project by the numeric
+   projects.id, which this page does not resolve (the integer-project-id
+   mapping, docs/design/PROJECT_FIRST_PLAN_2026-09-26.md), so the person's work
+   cannot be filtered to this project yet. It says so in one line and links to
+   My work. This section said "Tasks & submission readiness aren't wired"; the
+   dispatch readiness is on the Submit stage now.
+
+   "Open My work" opens what the nav's My work opens: the task board on the
+   signed-in person's own tasks, asked of the board through the same validated
+   action bus (tasking.filter, mine), not the board on everyone's. */
+function MyWorkLine({ onNav, available }: { onNav: (id: string) => void; available: (id: string) => boolean }) {
+  const openMyWork = () => {
+    const res = resolveSurfaceAction('tasking.filter', { mine: 'true' });
+    if (res.ok) applySurfaceAction(res.directive, () => onNav('tasks'));
+    else onNav('tasks');
+  };
+  return (
+    <section className="pj-sec" aria-labelledby="pj-mywork-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-mywork-h">My work</h2>
+        {available('tasks') && (
+          <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={openMyWork}>
+            Open My work {I.right}
+          </button>
+        )}
+      </div>
+      <p className="pj-desc">Your work is not filtered to this project yet. My work lists it for every project.</p>
+    </section>
+  );
+}
+
 function AuthorWorkspace({
   seg, pid, completion, onNav, onAsk, teamState, activityState, wsState, draftsState,
 }: {
@@ -1014,6 +1321,7 @@ function AuthorWorkspace({
 }) {
   /* Launch-scope verdicts, for the workspace tool grid below. */
   const { verdictFor } = useNavEntitlements();
+  const available = useSurfaceAvailable();
   /* The program's own AnA threads — REAL. Threads carry the program they were
      started in (chat_threads.program_id, bound when the stream mints the
      thread, only to a program of its organization), so this lists exactly the conversations held on this
@@ -1126,19 +1434,7 @@ function AuthorWorkspace({
             Sits directly above the documentation sections it feeds. */}
         <DataRoom pid={pid} onNav={onNav} onAsk={onAsk} />
 
-        {/* Tasks & readiness — project_tasks / readiness engine are keyed by the
-            NUMERIC projects.id, not reachable from this UUID-scoped surface. */}
-        <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Tasks &amp; readiness</h2></div>
-          <EmptyState
-            icon={I.checkCircle}
-            title="Tasks &amp; submission readiness aren't wired to this workspace yet"
-            hint={<>Project tasks and the readiness engine are keyed to the numeric project record, which this workspace doesn't resolve yet. Open the task board to see and manage this org's tasks.</>}
-          />
-          <div style={{ marginTop: 8 }}>
-            <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
-          </div>
-        </section>
+        <MyWorkLine onNav={onNav} available={available} />
 
         {/* Records in this project — REAL: GET /:id/records, every store read
             by its project key (PF-17). A store it cannot read says so. */}
@@ -1587,20 +1883,8 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
         <>
           {stage === 'evidence' && pid && <ProjectEvidence pid={pid} name={title} onNav={onNav} available={available} />}
 
-          {/* Submit — submissions are owned by the Submission Center surface. */}
-          {stage === 'submit' && (
-            <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Submissions</h2></div>
-              <EmptyState
-                icon={I.rocket}
-                title="Submissions open in the Submission Center"
-                hint="Agency gateways, the eCTD pipeline and this project's submissions are managed in the Submission Center, wired to the real submissions store."
-              />
-              <div style={{ marginTop: 8 }}>
-                <button className="btn primary" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('submission-center')}>{I.right} Open Submission Center</button>
-              </div>
-            </section>
-          )}
+          {/* Submit — the project's dispatch readiness, then its submissions (slice 24). */}
+          {stage === 'submit' && pid && <ProjectSubmitStage pid={pid} onNav={onNav} available={available} />}
 
           {/* Review — tasks are keyed by the numeric project record, not reachable here. */}
           {stage === 'review' && (

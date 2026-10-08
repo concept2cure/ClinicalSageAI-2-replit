@@ -49,6 +49,8 @@ import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
 import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
+import { readShellProject, shellProgramId, type ShellProject } from '../shellProject';
+import { notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import {
   // Canonical enum / label / state-machine maps (mirror shared/types/
@@ -84,8 +86,9 @@ import { C2CForm } from '../C2CForm';
    separate table) and its `status` enum is planning|active|submitted|archived
    (distinct from the sequence status enum). ── */
 
-// GET /api/submissions → listSubmissions() → `submissions` rows.
-interface SubRow {
+// GET /api/submissions → listSubmissions() → `submissions` rows. Project home
+// lists the same rows for its project (type-only import, no runtime coupling).
+export interface SubRow {
   id: number;
   title: string;
   productName: string | null;
@@ -170,18 +173,8 @@ function requiredModule1For(
   return out;
 }
 
-// Deterministic display tone for the submission status enum (not sample data).
-const SUB_STATUS_TONE: Record<string, string> = {
-  planning: 'idle',
-  active: 'ai',
-  submitted: 'ok',
-  archived: 'idle',
-};
-// The status cell printed the raw enum ("submitted") while every other chip on
-// the surface carries a label; an unknown value stays visible as itself.
-const SUB_STATUS_LABEL: Record<string, string> = {
-  planning: 'Planning', active: 'Active', submitted: 'Submitted', archived: 'Archived',
-};
+// (SUB_STATUS_TONE / SUB_STATUS_LABEL — the submission status chip — live in
+// programSequence.ts, shared with Project home's list of the project's submissions.)
 
 /* ── Device filings (eSTAR tracker) ─────────────────────────────────────────
    eSTAR is NOT eCTD: a tracked device filing never becomes an ectd_sequences
@@ -332,6 +325,72 @@ function NextSequenceControl({ sub, rows, type, onType, busy, onStart }: {
   );
 }
 
+/** The open project as the create form's programme: the org's own row when
+ *  the projects list has it, otherwise what the shell knows of it. */
+function openProgramme(
+  id: string,
+  row: { title: string; code: string } | undefined,
+  shell: ShellProject | null,
+): { id: string; title: string; code: string } {
+  return { id, title: row?.title || shell?.title || '', code: row?.code || shell?.code || '' };
+}
+
+/** Whose submissions are listed, in one line, with the way to the others.
+ *  `notOffered` is the server's count of the organization's submissions the
+ *  project scope left out (meta.notOffered); null when it did not say, and the
+ *  line then says nothing about them rather than guessing. `name` is null when
+ *  neither the shell nor the projects list names the project; the line then
+ *  says "the open project" once, not twice.
+ *
+ *  One <p>, one <span> of words and the toggle <button> at the same place in
+ *  both states, so the button is the same element after a toggle and keyboard
+ *  focus stays on it (WCAG 2.4.3). It used to sit at a different child index
+ *  in each state, so React replaced it and focus fell to <body>. */
+function ProjectScopeLine({ name, scoped, notOffered, onToggle }: {
+  name: string | null;
+  scoped: boolean;
+  notOffered: number | null;
+  onToggle: () => void;
+}) {
+  const others =
+    notOffered == null
+      ? ''
+      : notOffered === 0
+        ? ' Your organization has no other submissions.'
+        : ` ${plural(notOffered, 'other submission', 'other submissions')} in your organization ${notOffered === 1 ? 'is' : 'are'} not shown.`;
+  const words = !scoped
+    ? 'Every submission in your organization.'
+    : name
+      ? <>Submissions of <b>{name}</b>, the open project.{others}</>
+      : <>Submissions of the open project.{others}</>;
+  // Scoped with no other submission, "show all" would list the same rows.
+  const showToggle = !scoped || notOffered !== 0;
+  return (
+    <p className="sp-state sc-mb" data-testid="sc-scope">
+      <span>{words}</span>{' '}
+      {showToggle && (
+        <button type="button" className="pj-card-h-go" onClick={onToggle}>
+          {scoped ? "Show all of the organization's submissions" : `Show only ${name ? `${name}'s` : "the open project's"} submissions`}
+        </button>
+      )}
+    </p>
+  );
+}
+
+/** AnA's miss on a submission while the list is the open project's. The list
+ *  is the project's, so a miss is a miss there, not "no such submission": the
+ *  organization's others are not listed (the server counted them in
+ *  `notOffered`, null when it did not say), and only the person can list them. */
+function scopedMissReason(wanted: string, projectName: string | null, notOffered: number | null): string {
+  const head = `No submission named "${wanted}" among the open project's submissions${projectName ? ` (${projectName})` : ''}`;
+  if (notOffered === 0) return `${head}; the organization has no other submissions.`;
+  const others =
+    notOffered != null
+      ? `${plural(notOffered, 'other submission', 'other submissions')} of the organization ${notOffered === 1 ? 'is' : 'are'}`
+      : "The organization's other submissions are";
+  return `${head}. ${others} not listed here; the person can list them with "Show all of the organization's submissions" under the title.`;
+}
+
 /** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
 const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'cross-region', 'dispatch']);
 
@@ -352,13 +411,36 @@ export function SubmissionCenter({
   const authUser = useAuthUser();
   const signerLabel = authUser?.displayName || authUser?.email || 'the authenticated user';
 
+  /* ── The open project (ONE_ANA_ONE_CANVAS.md slice 24) ─────────────────────
+     With a project open this screen is about that project: it lists the
+     project's submissions (GET /api/submissions?programId=…, the server's own
+     scope) and a new submission belongs to it. The line under the title says
+     whose submissions these are and how many others the organization has, as
+     the server counted them, with a control to list them all. With no project
+     open, or one that is not a regulatory_programs uuid, nothing changes. */
+  const shell = readShellProject();
+  const openProgramId = shellProgramId(shell);
+  const [orgWide, setOrgWide] = React.useState(false);
+  const scopedTo = openProgramId && !orgWide ? openProgramId : null;
+
   // GET /api/submissions — real DB rows, honest empty, honest error (no fixture).
   const [subsBump, setSubsBump] = React.useState(0);
-  const subs = useLiveRows<SubRow>('/api/submissions', ['/api/submissions', subsBump]);
+  const subsPath = scopedTo ? programSubmissionsPath(scopedTo) : '/api/submissions';
+  const subs = useLiveRows<SubRow>(subsPath, [subsPath, subsBump]);
+  const notOffered = scopedTo && !subs.loading && !subs.error ? notOfferedCount(subs.meta) : null;
   /* The org's programmes, so the required programId is PICKED rather than
      typed as a uuid — createSubmissionSchema requires one (the submission's
-     project) and a customer does not have one to hand. */
+     project) and a customer does not have one to hand. With a project open the
+     programme is that project, and this list only names it. */
   const programmes = useLiveRows<{ id: string; title: string; code: string }>('/api/c2c/projects');
+  const openRow = openProgramId ? programmes.rows.find((p) => p.id === openProgramId) : undefined;
+  /* The project's name when the shell or the projects list gives one; null
+     when neither does (the shell may carry the id alone), and the screen then
+     says "the open project" rather than a name it does not have. */
+  const openProjectKnownName = openProgramId
+    ? shell?.title || openRow?.title || shell?.code || openRow?.code || null
+    : null;
+  const openProjectName = openProgramId ? openProjectKnownName ?? 'the open project' : null;
   const list = subs.rows;
   const sub = list.find((s) => s.id === selSub) ?? list[0];
 
@@ -503,7 +585,11 @@ export function SubmissionCenter({
   const [creating, setCreating] = React.useState(false);
   const createSubmission = async (v: Record<string, string>) => {
     if (creating) return;
-    const programme = programmes.rows.find((p) => p.id === (v.projectId ?? '').trim());
+    /* With a project open, the submission is that project's: there is no
+       picker, and its name is the product name the picker would have sent. */
+    const programme = openProgramId
+      ? openProgramme(openProgramId, openRow, shell)
+      : programmes.rows.find((p) => p.id === (v.projectId ?? '').trim());
     if (!programme) {
       setNotice({ tone: 'err', text: 'Pick the programme this submission belongs to.' });
       return;
@@ -723,7 +809,9 @@ export function SubmissionCenter({
                   contains.map((s) => s.title),
                   'Matches',
                 )}`
-              : `No submission named "${params.submission}" in this portfolio.${listed()}`,
+              : scopedTo
+                ? `${scopedMissReason(params.submission ?? '', openProjectKnownName, notOffered)}${listed()}`
+                : `No submission named "${params.submission}" in this portfolio.${listed()}`,
         };
       }
       const already = match.id === sub?.id;
@@ -786,6 +874,12 @@ export function SubmissionCenter({
      A FAILED read publishes the failure. `list` and `seqs.rows` are both []
      when the read threw, and reporting "no submissions" over an outage would be
      a confident claim about a customer's filing portfolio that nobody made. */
+  // How many submissions are listed, and whose: the scope is stated to AnA, so
+  // a project's list is never reported as the organization's portfolio.
+  const portfolioCountLine = scopedTo
+    ? `${list.length} submission(s) of the open project${openProjectKnownName ? ` ${openProjectKnownName}` : ''}` +
+      (notOffered != null ? ` (${notOffered} other submission(s) of the organization not listed)` : '')
+    : `${list.length} submission(s) in the portfolio`;
   const anaContext = React.useMemo(() => {
     if (subs.loading) {
       return { summary: 'The submission portfolio is still loading; nothing on screen is final yet.' };
@@ -806,7 +900,7 @@ export function SubmissionCenter({
     return {
       summary:
         `Submission Center, "${SUBMISSION_WORKSPACES.find((w) => w.id === ws)?.label ?? ws}" workspace: ` +
-        `${list.length} submission(s) in the portfolio` +
+        portfolioCountLine +
         (sub
           ? `, "${sub.title}" selected — a ${regL(sub.primaryRegion)} ${appL(sub.applicationType)} at the ` +
             `${sub.lifecycleStage} stage, ${seqLine}` +
@@ -815,6 +909,9 @@ export function SubmissionCenter({
       facts: {
         workspace: ws,
         totalSubmissions: list.length,
+        /* Which submissions `totalSubmissions` counts: the open project's, with
+           the server's count of the organization's others, or all of them. */
+        listScope: scopedTo ? { project: openProjectKnownName, programId: scopedTo, otherSubmissionsNotListed: notOffered } : 'organization',
         selectedSubmission: sub
           ? {
               id: sub.id, title: sub.title, product: sub.productName,
@@ -881,6 +978,7 @@ export function SubmissionCenter({
       availableActions: [
         'Switch workspace — planner, sequences, builder, validation, shadow review, cross-region, dispatch',
         'Select a different submission from the portfolio picker',
+        ...(openProjectName ? ["List all of the organization's submissions, or only the open project's"] : []),
         'Select the working sequence the build and validation workspaces act on',
         'Move a sequence through its non-governed lifecycle transitions',
         'Freeze or dispatch a sequence (each requires a Part 11 e-signature and a clear gate; a missing release signature never blocks a freeze)',
@@ -889,6 +987,7 @@ export function SubmissionCenter({
     };
   }, [
     subs.loading, subs.error, list, sub, ws, seqs.loading, seqs.error, seqs.rows, seq,
+    scopedTo, openProjectName, openProjectKnownName, notOffered, portfolioCountLine,
     deviceRes.loading, deviceRes.error, deviceFilings.length, assembly, notice,
     profile.loading, profile.error, profile.data,
   ]);
@@ -920,6 +1019,15 @@ export function SubmissionCenter({
           </select>
         )}
       </div>
+
+      {openProjectName && (
+        <ProjectScopeLine
+          name={openProjectKnownName}
+          scoped={Boolean(scopedTo)}
+          notOffered={notOffered}
+          onToggle={() => setOrgWide((w) => !w)}
+        />
+      )}
 
       {sub && (
         <AnswerLead
@@ -1027,14 +1135,18 @@ export function SubmissionCenter({
                 ],
                 default: 'biotech', required: true, half: true,
               },
-              {
-                key: 'projectId', label: 'Programme', type: 'select',
-                options: programmes.rows.map((p) => ({
-                  value: p.id,
-                  label: [p.code, p.title].filter(Boolean).join(' · ') || p.id,
-                })),
-                required: true, half: true,
-              },
+              /* With a project open the submission is that project's: it is
+                 named here, read-only, and there is no picker. */
+              openProjectName
+                ? { key: 'project', label: 'Project', type: 'text', half: true, derive: () => openProjectName }
+                : {
+                    key: 'projectId', label: 'Programme', type: 'select',
+                    options: programmes.rows.map((p) => ({
+                      value: p.id,
+                      label: [p.code, p.title].filter(Boolean).join(' · ') || p.id,
+                    })),
+                    required: true, half: true,
+                  },
             ],
           }}
           onCancel={() => setNewOpen(false)}
@@ -1051,9 +1163,9 @@ export function SubmissionCenter({
               type="button"
               className="pj-card-h-go"
               onClick={() => setNewOpen(true)}
-              disabled={creating || programmes.rows.length === 0}
+              disabled={creating || (!openProgramId && programmes.rows.length === 0)}
               title={
-                programmes.rows.length === 0
+                !openProgramId && programmes.rows.length === 0
                   ? 'A submission belongs to a programme, and this organization has none yet. Create one in Projects first.'
                   : undefined
               }
@@ -1071,7 +1183,17 @@ export function SubmissionCenter({
                 tone="error"
                 icon={I.alertTriangle}
                 title="Couldn't load the submissions"
-                hint="The canonical submission core didn't respond. These are your organization's submissions — sign in and retry, or check the service is reachable."
+                hint={
+                  scopedTo
+                    ? "The canonical submission core didn't respond, so this project's submissions could not be read — sign in and retry, or check the service is reachable."
+                    : "The canonical submission core didn't respond. These are your organization's submissions — sign in and retry, or check the service is reachable."
+                }
+              />
+            ) : subs.empty && scopedTo ? (
+              <EmptyState
+                icon={I.fileText}
+                title={`No submissions for ${openProjectName} yet`}
+                hint="Create this project's first submission to plan, assemble, validate and dispatch a regulatory sequence."
               />
             ) : subs.empty ? (
               <EmptyState
