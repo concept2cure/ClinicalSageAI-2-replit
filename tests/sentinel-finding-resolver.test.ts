@@ -32,7 +32,8 @@ import sentinelRouter from '../server/routes/sentinel-routes';
 const CALLER = 31;
 const SOMEONE_ELSE = 4242;
 
-// The session as admitLiveSession attaches it: the subject is a string.
+// The session as admitLiveSession attaches it (a string subject), before the global gate
+// normalises it to an integer: the stricter of the two shapes.
 function makeApp(user: Record<string, unknown> = { id: String(CALLER), userId: String(CALLER), organizationId: '99' }) {
   const app = express();
   app.use(express.json());

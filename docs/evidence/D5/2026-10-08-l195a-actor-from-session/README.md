@@ -81,12 +81,15 @@ correctness, ways around the fix, and a sweep for the same class elsewhere. A
 skeptic re-checked each finding. These were confirmed in the three routes, and
 are fixed in the follow-up:
 
-1. **A regression in the blocker route.** Every sign-in path puts a STRING
-   subject on `req.user.id`, and the route compared it with a number. So a
-   caller naming their own id got a 422, whether they sent it as a number or a
-   string. The first change's test used a numeric id and could not see this.
-   The route now uses the canonical `authedUserId`, which the GSPR and Sentinel
-   routes already used, and all three tests use string subjects.
+1. **The blocker route read the session id with a local helper.** Two review
+   lenses reported a regression: the token carries a STRING subject, so a caller
+   naming their own id would get a 422. **Corrected after the follow-up was
+   pushed:** two skeptics showed that this does not happen in the deployed app.
+   The global `/api` gate (`server/auth.ts`, mounted by
+   `register-platform-routes.ts`) rebuilds `req.user` with integer ids before the
+   submission-ops router runs. The change to the canonical `authedUserId`, which
+   the GSPR and Sentinel routes already used, is consistency, not a production
+   fix. The tests use string subjects so the handlers hold either shape.
 2. **A repeat closure overwrote the original closer and time** (blocker and
    Sentinel). The closer is now written only on the transition, decided in the
    UPDATE itself against the row as it stands.
@@ -103,7 +106,7 @@ are fixed in the follow-up:
 
 | Run | Result |
 |---|---|
-| The follow-up's four files against `3a8961ca14` (`review-followup/red/four-files-against-3a8961ca14.txt`) | 16 of 33 fail: the self-id 422s, the overwrite, the dismissal with no closer, the closer kept through a reopen and an acknowledgement, the five free-text statuses, and the review carried over. |
+| The follow-up's four files against `3a8961ca14` (`review-followup/red/four-files-against-3a8961ca14.txt`) | 16 of 33 fail: the overwrite, the dismissal with no closer, the closer kept through a reopen and an acknowledgement, the five free-text statuses, the review carried over, and two self-id 422s. **The two self-id cases come from the string-subject harness only.** In production the global gate passes an integer id, so those two do not reproduce there. The other 14 failures are production behaviour. |
 | The follow-up (`review-followup/green/four-files-after.txt`) | 33 of 33. The blocker test and the Sentinel SQL test run on PGlite, against the table as its migration (blocker) or drizzle-kit (Sentinel) creates it. |
 | Related suites (`review-followup/green/related-suites.txt`) | 44 files and 588 tests pass; 2 files are skipped by design. |
 
