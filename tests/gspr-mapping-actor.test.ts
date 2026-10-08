@@ -51,7 +51,8 @@ const PROGRAM = 'aaaaaaaa-0000-4000-8000-000000000001';
 const REQUIREMENT = 'bbbbbbbb-0000-4000-8000-000000000002';
 const CALLER = 7;
 
-// The session as admitLiveSession attaches it: the subject is a string.
+// The session as admitLiveSession attaches it (a string subject), before the global gate
+// normalises it to an integer: the stricter of the two shapes.
 function makeApp(user: Record<string, unknown> | null = { id: String(CALLER), userId: String(CALLER), organizationId: 99 }) {
   const app = express();
   app.use(express.json());

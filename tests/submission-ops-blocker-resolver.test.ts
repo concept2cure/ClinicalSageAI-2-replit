@@ -12,7 +12,10 @@
  *
  * Real SQL on PGlite, against the table as its migration creates it (foreign
  * keys stripped), because the repeat and reopen rules are decided in the UPDATE
- * itself. The session carries a STRING subject, as every sign-in path mints it.
+ * itself. The session carries a STRING subject, as the token does. In the
+ * deployed app the global /api gate (server/auth.ts) normalises it to an integer
+ * before this router runs; the handler reads it through authedUserId and must
+ * hold either shape.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
@@ -42,7 +45,8 @@ const ORG = 99;
 const ALICE = 11;
 const BOB = 22;
 
-/** The session as admitLiveSession attaches it: the subject is a string. */
+/** The session as admitLiveSession attaches it, before the global gate
+ *  normalises the subject to an integer: the stricter of the two shapes. */
 function app(userId: number) {
   const a = express();
   a.use(express.json());
