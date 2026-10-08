@@ -1,0 +1,42 @@
+{
+  "sourceCommit": "099eb36d2914135989d85f1df927de26abf6904d",
+  "workflowRunId": 37707725875,
+  "integrationJobId": 113091054671,
+  "artifactId": 11521416035,
+  "artifactBytes": 83050,
+  "artifactZipSha256": "238f5e52b2b4fa05d9dd9f2e29c6e54d7c693db26518dafb26bc0dd13e0c9a36",
+  "vitestJsonSha256": "b334cda6c88c9b20fd8716ef071f8b17dc9995ed000328613139ee4357e363b1",
+  "physicalFiles": {
+    "total": 150,
+    "passed": 149,
+    "failed": 1
+  },
+  "cases": {
+    "total": 1582,
+    "passed": 1581,
+    "failed": 1,
+    "pending": 0
+  },
+  "soleFailure": {
+    "file": "ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts",
+    "assertion": {
+      "ancestorTitles": [
+        "the archive ledger excuses only what the archive door could have removed (DP-68)"
+      ],
+      "fullName": "the archive ledger excuses only what the archive door could have removed (DP-68) 12. a head older than the 24-month floor, removed through the door, is archived: not tampering, not verified",
+      "status": "failed",
+      "title": "12. a head older than the 24-month floor, removed through the door, is archived: not tampering, not verified",
+      "duration": 14.229657999999972,
+      "failureMessages": [
+        "AssertionError: expected { \u2026(7) } to match object { status: 'unverifiable', \u2026(2) }\n(4 matching properties omitted from actual)\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1283:10)\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/chai/index.js:1700:25)\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts:423:21\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+      ],
+      "meta": {},
+      "tags": []
+    }
+  },
+  "limits": [
+    "The original artifact truncates the actual verdict and omits anchor/ledger/verifier timestamps. Historical root cause is unproven.",
+    "This preserves the actual failure rather than claiming the synthetic reproduction is its historical trace.",
+    "Vitest nested-suite counters are not physical-file totals."
+  ]
+}
