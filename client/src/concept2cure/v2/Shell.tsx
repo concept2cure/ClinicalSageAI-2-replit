@@ -1,7 +1,7 @@
 /**
  * ui-v2 shell chrome, first ported from kit app/Shell.jsx:
  * Rail (the places · account menu with Apps and the client type)
- * · TopBar (breadcrumb · segment switcher · org · ⌘K · task/collab/bell/help)
+ * · TopBar (breadcrumb · the open project · org · ⌘K · task/collab/bell/help)
  * · CmdK palette. The rail's list is decided in docs/design/ONE_ANA_ONE_CANVAS.md
  * §5, not ported from the kit (registryModel.ts, RAIL_CORE).
  *
@@ -21,15 +21,12 @@ import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
 import { TaskTray } from './TaskTray';
-import { segmentForShellProject, useShellProject } from './shellProject';
+import { useShellProject } from './shellProject';
 import {
   AI_ACTIONS,
   CLIENT_CATEGORIES,
-  PRIMARY_SEGMENTS,
   RAIL_CORE,
-  SEGMENTS,
   breadcrumbTierOf,
-  getSegment,
   resolveSegmentId,
 } from './registryModel';
 import {
@@ -443,16 +440,60 @@ function AccountMenu({
 }
 
 /* ── Topbar ───────────────────────────────────────────────────────────── */
+
+/**
+ * The open project, named (FILING_SPINE F8). No screen said which filing a
+ * person was in, and the top bar's control here was "Switch client domain": a
+ * second place to set the client type, which the account menu already sets
+ * (FILING_SPINE §6 row 10). The project is the filing, so the chip names it by
+ * code, or by title when it has none, and opens its page. With none open it
+ * says so and opens Projects, where one is chosen. It reads the shell's one
+ * project channel, so it changes the moment a surface opens another project.
+ */
+function ProjectChip({ here, onNav }: { here: string; onNav?: (id: string) => void }) {
+  const openProject = useShellProject();
+  if (!openProject) {
+    return (
+      <button type="button" className="tb-proj" data-empty="true" onClick={() => onNav?.('projects')} title="Choose a project in Projects">
+        <span className="ico" aria-hidden="true">{I.folder}</span>
+        <span className="tb-proj-lbl">No project open</span>
+        {/* The label is a state; this says what the button does, for a screen
+            reader, where the title tooltip is not reliably read. */}
+        <span className="sr-only">. Choose one in Projects</span>
+      </button>
+    );
+  }
+  const code = String(openProject.code ?? '').trim();
+  const title = String(openProject.title ?? '').trim();
+  const name = code || title;
+  return (
+    <button
+      type="button"
+      className="tb-proj"
+      onClick={() => onNav?.('project-home')}
+      title={[code, title].filter(Boolean).join(' — ') || 'The open project'}
+      aria-current={here === 'project-home' ? 'page' : undefined}
+    >
+      <span className="ico" aria-hidden="true">{I.folder}</span>
+      {/* A project opened by id alone (a deep link) has no name in the channel
+          yet; the chip says what it does rather than invent one. */}
+      {name && <span className="sr-only">Open project </span>}
+      <span className="tb-proj-lbl">{name || 'Open project'}</span>
+    </button>
+  );
+}
+
 export function TopBar({
   surface,
   onPalette,
-  segment,
-  onSegment,
   onNav,
   onAsk,
 }: {
   surface: ShellSurfaceRef;
   onPalette: () => void;
+  /** Not read here since the top bar stopped setting the client type
+   *  (FILING_SPINE F8): it is chosen in the account menu, which the rail
+   *  renders. Kept so the shell's call site is unchanged by that slice. */
   segment: string;
   onSegment: (id: string) => void;
   onNav?: (id: string) => void;
@@ -467,37 +508,6 @@ export function TopBar({
     .slice(0, 2)
     .toUpperCase();
   const tier = breadcrumbTierOf(surface);
-  const [segOpen, setSegOpen] = React.useState(false);
-  /* The segment the label shows follows the OPEN PROGRAM's product type (or
-     the workstream it was opened from) and falls back to the stored preference
-     when no program is open. A 510(k) IVD program used to sit under a
-     "Biotech & Pharma" label because the preference was the only input
-     (MDX demo pack, 2026-09-21, finding F9). */
-  const openProject = useShellProject();
-  const effectiveSegment = segmentForShellProject(openProject) ?? segment;
-  const seg = getSegment(effectiveSegment) ?? SEGMENTS[0];
-  const secondary = SEGMENTS.filter((s) => !s.primary);
-  const segOpt = (s: (typeof SEGMENTS)[number]) => (
-    <button
-      key={s.id}
-      type="button"
-      className="tb-dom-opt"
-      data-on={s.id === seg.id}
-      onClick={() => {
-        /* The type already shown changes nothing; it does not move the
-           person off their screen either. */
-        if (s.id !== seg.id) onSegment(s.id);
-        setSegOpen(false);
-      }}
-    >
-      <span className="ico">{I[s.icon] ?? I.globe}</span>
-      <span className="tdo-mid">
-        <span className="tdo-l">{s.label}</span>
-        <span className="tdo-p">{s.pathways.join(' · ')}</span>
-      </span>
-      {s.id === seg.id && <span className="ico tdo-chk">{I.check}</span>}
-    </button>
-  );
   return (
     <header className="topbar">
       <div className="crumbs">
@@ -515,36 +525,7 @@ export function TopBar({
         <span className="here">{surface.label}</span>
       </div>
       <div className="tb-spacer" />
-      {seg && (
-        <div className="tb-dom-wrap">
-          <button
-            type="button"
-            className="tb-dom"
-            onClick={() => setSegOpen((o) => !o)}
-            title="Switch client domain"
-            data-open={segOpen}
-          >
-            <span className="ico">{I[seg.icon] ?? I.globe}</span>
-            <span className="tb-dom-lbl">{seg.label}</span>
-            <span className="tb-org-chev">{I.down}</span>
-          </button>
-          {segOpen && (
-            <>
-              <div className="tb-dom-scrim" onClick={() => setSegOpen(false)} />
-              <div className="tb-dom-menu" role="menu">
-                <div className="tb-dom-sec">Client domain</div>
-                {PRIMARY_SEGMENTS.map(segOpt)}
-                <div className="tb-dom-sec">Other</div>
-                {secondary.map(segOpt)}
-                <div className="tb-dom-foot">
-                  {I.info}
-                  <span>Scopes modules, default workflow &amp; AnA context. Nav stays the same.</span>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      )}
+      <ProjectChip here={surface.id} onNav={onNav} />
       {/* The organisation this session is scoped to — a label, not a control.
           It was a button with a dropdown chevron, no handler and the tooltip
           "switcher lands with the auth flow phase" (launch sweep finding 131).

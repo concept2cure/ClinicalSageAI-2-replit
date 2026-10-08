@@ -1,0 +1,7 @@
+# ESLint warnings (w) and errors (e) per changed file, now vs `git show HEAD:<file>` linted in place under a temporary name. No file has more than at HEAD; the new files have none.
+tests/ui/filing-path-reachability.test.ts: HEAD (new) -> now 0w/0e
+client/src/concept2cure/v2/surfaces/Insights.tsx: HEAD 7w/0e -> now 7w/0e
+client/src/concept2cure/v2/Shell.tsx: HEAD 6w/0e -> now 5w/0e
+client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx: HEAD 1w/0e -> now 0w/0e
+client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx: HEAD (new) -> now 0w/0e
+client/src/concept2cure/v2/__tests__/topBarProject.test.tsx: HEAD (new) -> now 0w/0e

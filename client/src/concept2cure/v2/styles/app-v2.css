@@ -3755,3 +3755,18 @@
 @media (prefers-reduced-motion: reduce) {
   .c2c-v2 * { transition-duration: 1ms !important; }
 }
+
+/* ── Top bar: the open project (FILING_SPINE F8) ─────────────────────────────
+   Replaces the "Switch client domain" control, whose job the account menu's
+   Client type already does (.tb-dom* above is no longer rendered). The chip
+   names the open project and opens its page; with none open it reads "No
+   project open" in a muted, dashed chip, which says so by its words, not its
+   colour alone. Hover moves the border only: the surface stays --bg-000, so
+   the chip establishes no tinted surface for the text ramp to re-base. On a
+   narrow bar its label truncates rather than wrapping. */
+.c2c-v2 .tb-proj{display:inline-flex;align-items:center;gap:7px;height:30px;min-width:0;max-width:260px;flex:0 1 auto;padding:0 10px 0 8px;border-radius:var(--radius-md);border:1px solid var(--border-strong);background:var(--bg-000);color:var(--text-100);font-size:12px;font-weight:500;transition:border-color var(--dur);}
+.c2c-v2 .tb-proj:hover{border-color:var(--accent-100);}
+.c2c-v2 .tb-proj .ico{display:inline-flex;flex-shrink:0;font-size:15px;color:var(--accent-100);}
+.c2c-v2 .tb-proj-lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.c2c-v2 .tb-proj[data-empty="true"]{border-style:dashed;color:var(--text-300);font-weight:400;}
+.c2c-v2 .tb-proj[data-empty="true"] .ico{color:var(--text-300);}

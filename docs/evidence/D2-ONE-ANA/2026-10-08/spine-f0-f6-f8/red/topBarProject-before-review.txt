@@ -1,0 +1,769 @@
+# F8 red, review finding: Shell.tsx as first implemented in this slice (before review), for this run, then restored and checked with cmp.
+# With no project open the chip's accessible name was the state alone, 'No project open'; only the title tooltip said it opens Projects.
+# $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/topBarProject.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > on the Vault with ONC-221 open, the chip names it and opens its project page
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > has no "Switch client domain" control: the client type is chosen in the account menu
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > with no project open, reads "No project open", says it opens Projects, and does
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > on the Vault with ONC-221 open, the chip names it and opens its project page 245ms
+ ✓ client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > has no "Switch client domain" control: the client type is chosen in the account menu 12ms
+stderr | client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > names a project by its title when it has no code
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > follows the channel when another project is opened
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTray inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > with no project open, reads "No project open", says it opens Projects, and does 139ms
+   → Unable to find an accessible element with the role "button" and name "No project open. Choose one in Projects"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  <header
+    class="topbar"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "No project open":
+  <button
+    class="tb-proj"
+    data-empty="true"
+    title="Choose a project in Projects"
+    type="button"
+  />
+
+  Name "Search, jump, or run a command":
+  <button
+    aria-label="Search, jump, or run a command"
+    class="tb-cmdk"
+    title="Search, jump, or run a command (⌘K)"
+    type="button"
+  />
+
+  Name "Task":
+  <button
+    class="tb-task"
+    title="New task — assign & track from this screen"
+    type="button"
+  />
+
+  Name "Collaborate":
+  <button
+    aria-label="Collaborate"
+    class="tb-btn"
+    title="Collaborate — message a colleague about this screen"
+    type="button"
+  />
+
+  Name "Your work":
+  <button
+    aria-expanded="false"
+    aria-label="Your work"
+    class="tt-trigger tb-btn"
+    title="Your tasks, approvals and messages"
+  />
+
+  Name "Get help":
+  <button
+    aria-label="Get help"
+    class="tb-btn"
+    title="Get help"
+    type="button"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <header
+      class="topbar"
+    >
+      <div
+        class="crumbs"
+      >
+        <span
+          class="crumb-root"
+        >
+          Concept2Cure.RI
+        </span>
+        <span
+          aria-hidden="true"
+          class="sep crumb-root-sep"
+        >
+          ›
+        </span>
+        <span
+          class="here"
+        >
+          Vault
+        </span>
+      </div>
+      <div
+        class="tb-spacer"
+      />
+      <button
+        class="tb-proj"
+        data-empty="true"
+        title="Choose a project in Projects"
+        type="button"
+      >
+        <span
+          aria-hidden="true"
+          class="ico"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+        </span>
+        <span
+          class="tb-proj-lbl"
+        >
+          No project open
+        </span>
+      </button>
+      <div
+        class="tb-org"
+        title="Concept2Cure Therapeutics"
+      >
+        <span
+          aria-hidden="true"
+          class="tb-org-mark"
+        >
+          CT
+        </span>
+        <span
+          class="tb-org-name"
+        >
+          Concept2Cure Therapeutics
+        </span>
+      </div>
+      <button
+        aria-label="Search, jump, or run a command"
+        class="tb-cmdk"
+        title="Search, jump, or run a command (⌘K)"
+        type="button"
+      >
+        <span
+          class="ico"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-search"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="11"
+              cy="11"
+              r="8"
+            />
+            <path
+              d="m21 21-4.3-4.3"
+            />
+          </svg>
+        </span>
+        <span
+          class="lbl"
+        >
+          Search, jump, or run a command
+        </span>
+        <span
+          class="kbd"
+        >
+          ⌘K
+        </span>
+      </button>
+      <button
+        class="tb-task"
+        title="New task — assign & track from this screen"
+        type="button"
+      >
+        <span
+          class="ico"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-square-check-big"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"
+            />
+            <path
+              d="m9 11 3 3L22 4"
+            />
+          </svg>
+        </span>
+        <span
+          class="tb-task-lbl"
+        >
+          Task
+        </span>
+      </button>
+      <button
+        aria-label="Collaborate"
+        class="tb-btn"
+        title="Collaborate — message a colleague about this screen"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-message-square"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+          />
+        </svg>
+      </button>
+      <button
+        aria-expanded="false"
+        aria-label="Your work"
+        class="tt-trigger tb-btn"
+        title="Your tasks, approvals and messages"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-bell"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
+          />
+          <path
+            d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
+          />
+        </svg>
+      </button>
+      <button
+        aria-label="Get help"
+        class="tb-btn"
+        title="Get help"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-circle-help"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+          />
+          <path
+            d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"
+          />
+          <path
+            d="M12 17h.01"
+          />
+        </svg>
+      </button>
+    </header>
+  </div>
+</body>
+ ✓ client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > names a project by its title when it has no code 30ms
+ ✓ client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > follows the channel when another project is opened 43ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > with no project open, reads "No project open", says it opens Projects, and does
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "No project open. Choose one in Projects"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  <header
+    class="topbar"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "No project open":
+  <button
+    class="tb-proj"
+    data-empty="true"
+    title="Choose a project in Projects"
+    type="button"
+  />
+
+  Name "Search, jump, or run a command":
+  <button
+    aria-label="Search, jump, or run a command"
+    class="tb-cmdk"
+    title="Search, jump, or run a command (⌘K)"
+    type="button"
+  />
+
+  Name "Task":
+  <button
+    class="tb-task"
+    title="New task — assign & track from this screen"
+    type="button"
+  />
+
+  Name "Collaborate":
+  <button
+    aria-label="Collaborate"
+    class="tb-btn"
+    title="Collaborate — message a colleague about this screen"
+    type="button"
+  />
+
+  Name "Your work":
+  <button
+    aria-expanded="false"
+    aria-label="Your work"
+    class="tt-trigger tb-btn"
+    title="Your tasks, approvals and messages"
+  />
+
+  Name "Get help":
+  <button
+    aria-label="Get help"
+    class="tb-btn"
+    title="Get help"
+    type="button"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <header
+      class="topbar"
+    >
+      <div
+        class="crumbs"
+      >
+        <span
+          class="crumb-root"
+        >
+          Concept2Cure.RI
+        </span>
+        <span
+          aria-hidden="true"
+          class="sep crumb-root-sep"
+        >
+          ›
+        </span>
+        <span
+          class="here"
+        >
+          Vault
+        </span>
+      </div>
+      <div
+        class="tb-spacer"
+      />
+      <button
+        class="tb-proj"
+        data-empty="true"
+        title="Choose a project in Projects"
+        type="button"
+      >
+        <span
+          aria-hidden="true"
+          class="ico"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+        </span>
+        <span
+          class="tb-proj-lbl"
+        >
+          No project open
+        </span>
+      </button>
+      <div
+        class="tb-org"
+        title="Concept2Cure Therapeutics"
+      >
+        <span
+          aria-hidden="true"
+          class="tb-org-mark"
+        >
+          CT
+        </span>
+        <span
+          class="tb-org-name"
+        >
+          Concept2Cure Therapeutics
+        </span>
+      </div>
+      <button
+        aria-label="Search, jump, or run a command"
+        class="tb-cmdk"
+        title="Search, jump, or run a command (⌘K)"
+        type="button"
+      >
+        <span
+          class="ico"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-search"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="11"
+              cy="11"
+              r="8"
+            />
+            <path
+              d="m21 21-4.3-4.3"
+            />
+          </svg>
+        </span>
+        <span
+          class="lbl"
+        >
+          Search, jump, or run a command
+        </span>
+        <span
+          class="kbd"
+        >
+          ⌘K
+        </span>
+      </button>
+      <button
+        class="tb-task"
+        title="New task — assign & track from this screen"
+        type="button"
+      >
+        <span
+          class="ico"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-square-check-big"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"
+            />
+            <path
+              d="m9 11 3 3L22 4"
+            />
+          </svg>
+        </span>
+        <span
+          class="tb-task-lbl"
+        >
+          Task
+        </span>
+      </button>
+      <button
+        aria-label="Collaborate"
+        class="tb-btn"
+        title="Collaborate — message a colleague about this screen"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-message-square"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+          />
+        </svg>
+      </button>
+      <button
+        aria-expanded="false"
+        aria-label="Your work"
+        class="tt-trigger tb-btn"
+        title="Your tasks, approvals and messages"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-bell"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
+          />
+          <path
+            d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
+          />
+        </svg>
+      </button>
+      <button
+        aria-label="Get help"
+        class="tb-btn"
+        title="Get help"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-circle-help"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+          />
+          <path
+            d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"
+          />
+          <path
+            d="M12 17h.01"
+          />
+        </svg>
+      </button>
+    </header>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/topBarProject.test.tsx:75:25
+     73|     // The visible label is the state; the accessible name also says t…
+     74|     // which the title tooltip alone does not carry to a screen reader.
+     75|     const chip = screen.getByRole('button', { name: 'No project open. …
+       |                         ^
+     76|     expect(chip.querySelector('.tb-proj-lbl')?.textContent).toBe('No p…
+     77|     fireEvent.click(chip);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  07:52:53
+   Duration  2.42s (transform 715ms, setup 169ms, import 935ms, tests 476ms, environment 632ms)
+
