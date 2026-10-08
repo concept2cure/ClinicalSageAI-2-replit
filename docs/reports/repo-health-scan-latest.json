@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T15:09:26.189Z",
+  "generatedAt": "2026-10-08T15:43:43.931Z",
   "git": {
-    "sha": "407a60a9fd1f0b3d438acdeb4a38b3bd43f09467",
+    "sha": "27926af0f5654616a923386b9b02ee7f40552d35",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2601,6 +2601,10 @@
         "lines": 1855
       },
       {
+        "file": "server/services/advancedRAGPipeline.ts",
+        "lines": 1854
+      },
+      {
         "file": "server/services/ana/citation-engine.ts",
         "lines": 1853
       },
@@ -2647,10 +2651,6 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1787
-      },
-      {
-        "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1786
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
