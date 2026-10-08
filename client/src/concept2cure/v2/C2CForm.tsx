@@ -64,15 +64,23 @@ export interface C2CFormConfig {
   governed?: string | boolean;
   submitLabel?: string;
   fields: C2CFormField[];
+  /** A sentence the drawer states before its fields, as an alert: why a
+   *  default could not be set, for example. Inside the dialog, so it is not
+   *  behind the scrim and a screen reader reaches it. */
+  notice?: string;
 }
 
 export interface C2CFormProps {
   config: C2CFormConfig;
   onCancel: () => void;
   onSubmit: (values: Record<string, string>) => void;
+  /** Told the field and value of every edit, so a caller can make one field's
+   *  options follow another's value (the region options follow the chosen
+   *  application type, FILING_SPINE.md F20). The form still owns its values. */
+  onFieldChange?: (key: string, value: string) => void;
 }
 
-export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
+export function C2CForm({ config, onCancel, onSubmit, onFieldChange }: C2CFormProps) {
   const { eyebrow, title, sub, fields = [], submitLabel = 'Save', governed } = config;
 
   /**
@@ -114,6 +122,7 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
 
   const set = (k: string, val: string) => {
     setV((s) => ({ ...s, [k]: val }));
+    onFieldChange?.(k, val);
     if (err) setErr('');
     if (invalidKeys.size) setInvalidKeys(new Set());
   };
@@ -237,6 +246,11 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
           </button>
         </div>
         <div className="de-body">
+          {config.notice && (
+            <div className="de-gov" role="alert">
+              <span className="de-gov-t">{config.notice}</span>
+            </div>
+          )}
           {fields.map((f) => (
             <div key={f.key} className={'de-field' + (f.half ? ' half' : '')}>
               {/* A seg is a radiogroup, not a labellable control, so its label

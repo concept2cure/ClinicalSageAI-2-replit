@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T15:09:26.189Z",
+  "generatedAt": "2026-10-08T15:49:05.203Z",
   "git": {
-    "sha": "407a60a9fd1f0b3d438acdeb4a38b3bd43f09467",
+    "sha": "97ab887d43273dc69f01d5c5b66273ce154a2408",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2581,10 +2581,6 @@
         "lines": 1869
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 1868
-      },
-      {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
       },
@@ -2599,6 +2595,10 @@
       {
         "file": "server/routes/ivdr-routes.ts",
         "lines": 1855
+      },
+      {
+        "file": "server/services/advancedRAGPipeline.ts",
+        "lines": 1854
       },
       {
         "file": "server/services/ana/citation-engine.ts",
@@ -2619,6 +2619,10 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1833
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1829
       },
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
@@ -2647,10 +2651,6 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1787
-      },
-      {
-        "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1786
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",

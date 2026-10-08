@@ -135,6 +135,9 @@ describe('Submission Center — with a project open', () => {
     fireEvent.change(screen.getByLabelText(/Title/), { target: { value: 'ONC-221 — EU MAA' } });
     fireEvent.change(screen.getByLabelText(/Application type/), { target: { value: 'maa' } });
     fireEvent.change(screen.getByLabelText(/Primary region/), { target: { value: 'eu' } });
+    // No client type is preselected unless the open project's workspace names
+    // one (F20: the form no longer defaults every submission to Biotech).
+    fireEvent.change(screen.getByLabelText(/Client type/), { target: { value: 'biotech' } });
     fireEvent.click(screen.getByRole('button', { name: /Create submission/ }));
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({ title: 'ONC-221 — EU MAA', programId: PID, applicationType: 'maa', primaryRegion: 'eu' });
