@@ -124,7 +124,7 @@ Each fix has a test that fails on the code before it, saved under `docs/evidence
 3. **No visible history.**
    - Creation attribution is recorded (`SUBMISSION_CREATED`) but not shown.
    - The Builder shows no leaf history (who placed it, when, what it replaced).
-   - "Place into filing" is offered to every role, and the refusal arrives as a 403.
+   - "Place into filing" is offered to every role, and the refusal arrives as a 403. **Fixed after the review**: the document read carries the server's placement gate and the trigger names the refusal before the dialog (`…/filing-spine-review-followups/`, item 3). Creation attribution and leaf history remain open.
    - All of this predates the spine.
 4. **The global half-field rule.** `.de-field.half:nth-of-type(odd)` (`journey-v2.css:472`) counts every div in the drawer body. `AuthoringCreateExport.tsx` has the same latent mispairing. A sibling-independent rule (flex-wrap with `gap`) wants a visual pass across all 332 uses.
 5. **Selector-shadowing baseline.** `scripts/ci/css-selector-shadowing-baseline.json` still lists `.pj-convo` and `.pj-convo-t`, which no longer shadow. The file says it is edited downward by a human only, so the two lines are left for one to delete.
@@ -138,12 +138,12 @@ Each fix has a test that fails on the code before it, saved under `docs/evidence
    - "snapshot" versus "filing copy".
 
    The summary strings also label 12 options at once and are pinned in three test files. They are worth one pass together with F22's picker.
-8. **The project-scoped submissions read has no shape guard** (`SubmissionCenter.tsx`, `useLiveRows`). A non-list 200 reads as "no submissions", so a region could be preselected as if the market did not exist.
+8. **Fixed after the review** (`…/filing-spine-review-followups/`, item 4): the project-scoped submissions read has a shape guard (`isRowsWith`). As raised: a non-list 200 read as "no submissions", so a region could be preselected as if the market did not exist.
 9. **No as-of time.** The readiness card shows none, and the market-support reply's `asOf` is dropped.
 10. **Hierarchy notes:**
     - BuilderSources is an accent note plus a button bar, where a line with two links would do.
     - The Respond tab's coming-later line sits in a card, while Submit's is bare.
-    - The Vault header's "Open project" shows with no project open.
+    - The Vault header's "Open project" shows with no project open. **Fixed after the review** (item 5): it shows only with a project open.
 11. **Motion advisory.** The global `--ease` token is in-out, not ease-out. It is global and not this change's.
 
 ## Lens reports

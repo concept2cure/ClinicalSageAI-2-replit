@@ -615,7 +615,7 @@ export function DocumentCanvas({
               docId={doc.id}
               docTitle={doc.title}
               activeSectionCode={first?.code ?? null}
-              sectionCodes={sections.map((x) => x.code)} docStatus={doc.status ?? null} dirty={false}
+              sectionCodes={sections.map((x) => x.code)} docStatus={doc.status ?? null} refusal={actRefusal(access.placeIntoFiling)} dirty={false}
               onNav={onNav}
               fireToast={fireToast}
             />

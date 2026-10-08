@@ -586,6 +586,8 @@ export interface DocumentAccess {
   esignReview: DocumentActGate | null;
   fileToVault: DocumentActGate | null;
   assignReview: DocumentActGate | null;
+  /** Place into filing: its two writes require regulatory-author. */
+  placeIntoFiling: DocumentActGate | null;
 }
 export const UNKNOWN_DOCUMENT_ACCESS: DocumentAccess = {
   freeze: null,
@@ -593,6 +595,7 @@ export const UNKNOWN_DOCUMENT_ACCESS: DocumentAccess = {
   esignReview: null,
   fileToVault: null,
   assignReview: null,
+  placeIntoFiling: null,
 };
 
 function readActGate(raw: unknown): DocumentActGate | null {
@@ -612,6 +615,7 @@ export function readDocumentAccess(raw: unknown): DocumentAccess {
     esignReview: readActGate(a.esignReview),
     fileToVault: readActGate(a.fileToVault),
     assignReview: readActGate(a.assignReview),
+    placeIntoFiling: readActGate(a.placeIntoFiling),
   };
 }
 
@@ -4031,6 +4035,7 @@ export function DocumentWorkbench({
                 sectionCodes={sectionsState === 'ready' ? sections.map(s => s.code) : undefined}
                 /* The filing copy takes this state when placed (F17). */
                 docStatus={activeDoc.status ?? null}
+                refusal={actRefusal(docAccess.placeIntoFiling)}
                 dirty={dirty}
                 onNav={onNav}
                 fireToast={fireToast}

@@ -74,6 +74,7 @@ import { shellProgramId, useShellProject } from '../shellProject';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { snapshotStatusFor } from '@shared/regulatory/filing-copy-status';
+import { copyStatusLine, placedCopyNote } from './filingCopyStatusLines';
 
 /* ── Server row shapes (only the columns this dialog reads) ── */
 
@@ -165,33 +166,8 @@ export function ownSectionRefusal(canonical: string | null, sectionCodes: Readon
   );
 }
 
-/**
- * What the filing copy will be, said before placing (FILING_SPINE.md F17).
- * The copy takes the source's state at placement and keeps it: a draft placed
- * today is still a draft copy after the document is approved, and freeze,
- * dispatch and transmit release only approved copies. An unknown state claims
- * nothing and states the rule.
- */
-export function copyStatusLine(docStatus: string | null | undefined): string {
-  if (docStatus == null || String(docStatus).trim() === '') {
-    return 'The filing copy takes this document’s state when it is placed, and keeps it. ' +
-      'Freeze, dispatch and transmit accept only an approved copy.';
-  }
-  /* A forecast from the status as loaded: nothing is filed yet, and only the
-     server reads the approval seal (it refuses an unsealed or altered source). */
-  const copy = snapshotStatusFor(docStatus);
-  if (copy === 'approved') return 'Will be filed as approved once the server verifies its approval seal.';
-  if (copy === 'finalized') return 'Will be filed as finalized, not approved. Freeze refuses it until you re-place the document after approval.';
-  return 'Will be filed as a draft. Freeze refuses it until you re-place the document after approval.';
-}
-
-/** The server's copy status after placing, as a sentence; empty when it is
- *  approved or the server did not say. */
-export function placedCopyNote(copyStatus: string | null): string {
-  if (copyStatus === 'draft') return ' The filing copy is a draft. Freeze will refuse it until you re-place it after approval.';
-  if (copyStatus === 'finalized') return ' The filing copy is finalized, not approved. Freeze will refuse it until you re-place it after approval.';
-  return '';
-}
+/* The filing copy's status, as sentences (F17): filingCopyStatusLines.ts. */
+export { copyStatusLine, placedCopyNote } from './filingCopyStatusLines';
 
 export interface AuthoringPlaceIntoFilingProps {
   docId: string;
@@ -212,6 +188,10 @@ export interface AuthoringPlaceIntoFilingProps {
   docStatus?: string | null;
   onNav: (id: string) => void;
   fireToast: FireToast;
+  /** The server's placement gate as a sentence (actRefusal of the document
+   *  read's `placeIntoFiling`), or null when allowed or unknown: both of the
+   *  placement's writes require regulatory-author (design review 2026-10-08). */
+  refusal?: string | null;
 }
 
 type Verdict = { tone: 'ok' | 'err'; text: string } | null;
@@ -238,8 +218,10 @@ function AuthoringPlaceIntoFilingForDocument({
   docStatus,
   onNav,
   fireToast,
+  refusal = null,
 }: AuthoringPlaceIntoFilingProps) {
   const [open, setOpen] = React.useState(false);
+  const refusalId = React.useId();
   /* The code a whole-document leaf is filed at, when the sections give one. */
   const ownCode = sectionCodes ? documentFilingCode(sectionCodes) : null;
   /* `enabled` is the open flag: the panel is inline below rather than its own
@@ -434,10 +416,13 @@ function AuthoringPlaceIntoFilingForDocument({
         className="btn ghost"
         style={{ height: 30 }}
         onClick={openDialog}
+        disabled={!!refusal}
+        aria-describedby={refusal ? refusalId : undefined}
         title="Place this document into an eCTD sequence of the submission core"
       >
         {I.layers} Place into filing
       </button>
+      {refusal && <span id={refusalId} style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 240 }}>{refusal}</span>}
 
       {open && (
         <div

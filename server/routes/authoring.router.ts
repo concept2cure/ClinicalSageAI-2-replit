@@ -10,6 +10,7 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { isUuid } from '../middleware/uuidParam';
 import { enforceOrgMembership, GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
+import { expandRoleClaims, roleClaimsSatisfy } from '../middleware/auth';
 import { getTenantScope } from '../db/tenantStore';
 import { vaultWriteRefusal } from '../services/vault/vault-write-authority';
 import { getPool } from '../db';
@@ -1612,8 +1613,8 @@ async function settle<T>(what: string, docId: string, fn: () => Promise<T> | T):
 }
 
 async function callerDocumentAccess(req: Request, tenantId: number, docId: string) {
-  const unknown = { freeze: null, esign: null, esignReview: null, fileToVault: null, assignReview: null } as Record<
-    'freeze' | 'esign' | 'esignReview' | 'fileToVault' | 'assignReview',
+  const unknown = { freeze: null, esign: null, esignReview: null, fileToVault: null, assignReview: null, placeIntoFiling: null } as Record<
+    'freeze' | 'esign' | 'esignReview' | 'fileToVault' | 'assignReview' | 'placeIntoFiling',
     DocumentActGate
   >;
   const principal = authoringPrincipalFromRequest(req);
@@ -1684,6 +1685,21 @@ async function callerDocumentAccess(req: Request, tenantId: number, docId: strin
     return bothGates(roleGate, edit ? objectGate(edit, 'Sending for review', 'an Owner or Author grant') : null);
   });
 
+  /* Place into filing (FILING_SPINE.md F17). Its two writes, the filing copy
+     (POST /api/coauthor/documents with a source) and the leaf (PUT
+     /api/submissions/sequences/:id/leaves), each run
+     requireRole('regulatory-author') over req.user's expanded role claims.
+     The org role is read as Send for review reads it, and expanded as it is
+     where those writes run, then judged by requireRole's own decision
+     (roleClaimsSatisfy). A viewer was offered the control and met a 403 after
+     filling it in (design review 2026-10-08, Part 11 lens). */
+  const placeRole = String((req as Request & { userRole?: string }).userRole || req.user?.role || '').toLowerCase();
+  const placeGate: DocumentActGate = !placeRole
+    ? null
+    : roleClaimsSatisfy({ roles: expandRoleClaims(placeRole, undefined) }, ['regulatory-author'])
+      ? { allowed: true, reason: null }
+      : { allowed: false, reason: `Placing into a filing needs an authoring role in this organization. Your role: ${placeRole}.` };
+
   return {
     // A freeze is signed (DP-35): the same two decisions as E-sign.
     freeze: bothGates(approveGate('Freezing'), signingGate),
@@ -1698,6 +1714,7 @@ async function callerDocumentAccess(req: Request, tenantId: number, docId: strin
       vaultGate ?? null,
     ),
     assignReview: assignGate ?? null,
+    placeIntoFiling: placeGate,
   };
 }
 
