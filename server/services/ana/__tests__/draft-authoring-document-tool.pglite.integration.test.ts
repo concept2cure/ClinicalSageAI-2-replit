@@ -150,6 +150,23 @@ describe('draft_authoring_document — durable project source references', () =>
     expect(JSON.stringify(out.projectSourceReferences)).not.toContain(SOURCE_TEXT);
   });
 
+  it('checks each figure of the section against the cited source: found with where, or unverified and said (S5a)', async () => {
+    const figuresInput = { ...input, sections: [{ ...M25_SECTIONS[0],
+      content: '<p>The endpoint was observed in 30 subjects. The response rate was 55%.</p>', sourceReferences: [sourceRef()] }] };
+    const out = JSON.parse(await handler(figuresInput, { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
+    expect(out.saved, JSON.stringify(out)).toBe(true);
+    const figures = out.projectSourceReferences[0].figures;
+    expect(figures).toMatchObject({ checked: 2, found: 1, unverified: 1 });
+    expect(figures.figures[0]).toMatchObject({ status: 'unverified', text: expect.stringContaining('55') });
+    const found = figures.figures.find((f: { status: string }) => f.status === 'found');
+    expect(found.source).toMatchObject({ documentId: SOURCE_ID, contentHash: 'a'.repeat(64) });
+    expect(SOURCE_TEXT.slice(found.source.offset)).toMatch(/^30 subjects/);
+    // AnA is told, in the result she relays, which figure no source states.
+    expect(out.message).toMatch(/1 figure\(s\) in the draft are not stated in the sources it cites: .*55/);
+    const saved = await jdb.pool.query('SELECT provenance FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
+    expect((saved.rows[0] as { provenance: { projectSourceReferences: Array<{ figures: unknown }> } }).provenance.projectSourceReferences[0].figures).toEqual(figures);
+  });
+
   it('retains the original legacy NULL-organization source as a no-write admission refusal', async () => {
     await jdb.pool.query('UPDATE vault.documents SET organization_id=NULL WHERE id=$1', [SOURCE_ID]);
     const before = await authoringCounts();

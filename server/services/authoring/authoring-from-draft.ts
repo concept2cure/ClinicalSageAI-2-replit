@@ -17,6 +17,8 @@
 import { programInOrganization } from '../c2c/program-access';
 import { parseDraftSourceReferences, verifyDraftSourceReferences, type DraftSourceReference, type VerifiedDraftSourceReference } from './draft-source-references';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
+import { checkSectionFigures, type CitedExcerpt, type SectionFigureCheck } from './draft-figure-check';
+import { sectionReadableText } from './authoring-read-render';
 import crypto from 'crypto';
 import { ANA_MACHINE_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { columnState, type Queryable } from './authoring-evidence';
@@ -43,7 +45,11 @@ export const PROVENANCE_SOURCES: readonly ProvenanceSource[] = ['ana', 'seed', '
 export interface DocumentProvenance {
   /** Declared references checked against current project records at save.
    * This is not claim-level support, generation proof, approval, or filing readiness. */
-  projectSourceReferences?: Array<{ sectionCode: string; sources: VerifiedDraftSourceReference[]; qualification: 'unassessed'; verification: 'current_at_save' }>;
+  projectSourceReferences?: Array<{
+    sectionCode: string; sources: VerifiedDraftSourceReference[]; qualification: 'unassessed'; verification: 'current_at_save';
+    /** Each figure of the stored section, found in these excerpts or unverified (S5a, draft-figure-check.ts). */
+    figures?: SectionFigureCheck;
+  }>;
   source: ProvenanceSource;
   conversationId?: string;
   turnId?: string;
@@ -207,7 +213,8 @@ const CHANGE_REASON: Record<ProvenanceSource, string> = {
  * nothing written — when the deployment cannot record provenance: a document
  * that claims AnA drafted it must be able to say so.
  */
-type SelectedDraftSources = Array<{ sectionCode: string; refs: DraftSourceReference[] }>;
+/** Each section that cites sources: its references and the content as it is stored. */
+type SelectedDraftSources = Array<{ sectionCode: string; refs: DraftSourceReference[]; storedContent: string }>;
 class DraftSourceVerificationError extends Error {}
 const SOURCE_VERIFICATION_REFUSAL: Refusal = { kind: 'refused', status: 409, error: 'Project source references are unavailable, changed, or could not be verified. Refresh the source records and draft receipts before saving. Nothing was created.' };
 
@@ -217,8 +224,11 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
     await lockDocumentDispositionProgram(q, ctx.tenantId, programId);
     const references: NonNullable<DocumentProvenance['projectSourceReferences']> = [];
     for (const section of selected) {
-      const sources = await verifyDraftSourceReferences(section.refs, q, ctx.tenantId, programId);
-      references.push({ sectionCode: section.sectionCode, sources, qualification: 'unassessed', verification: 'current_at_save' });
+      const excerpts: CitedExcerpt[] = [];
+      const sources = await verifyDraftSourceReferences(section.refs, q, ctx.tenantId, programId, excerpts);
+      // Every figure the stored section states, against the excerpts just verified (S5a).
+      const figures = checkSectionFigures(sectionReadableText(section.storedContent), excerpts);
+      references.push({ sectionCode: section.sectionCode, sources, qualification: 'unassessed', verification: 'current_at_save', figures });
     }
     // Keep the same object used by the document and every CREATE audit row.
     provenance.projectSourceReferences = references;
@@ -256,11 +266,17 @@ export async function createDocumentFromDraft(
     ...(input.module ? {} : { moduleDefaulted: true }),
     recordedAt: new Date().toISOString(),
   };
+  const isMachineDraft = provenance.source === 'ana';
+  // A machine draft keeps no image: a model's image is never an uploaded
+  // figure (item 18, 2026-10-05). An import or seed keeps its figures.
+  const storedContent = input.sections.map(s =>
+    isMachineDraft ? sanitizeMachineDraftSectionHtml(s.content) : sanitizeAuthoringSectionHtml(s.content));
   let selectedSources: SelectedDraftSources;
   try {
     // Parse even for typed callers; actual source reads occur only inside BEGIN.
-    selectedSources = input.sections.filter(s => s.sourceReferences?.length)
-      .map(s => ({ sectionCode: s.code, refs: parseDraftSourceReferences(s.sourceReferences) }));
+    selectedSources = input.sections.flatMap((s, i) => s.sourceReferences?.length
+      ? [{ sectionCode: s.code, refs: parseDraftSourceReferences(s.sourceReferences), storedContent: storedContent[i] }]
+      : []);
   } catch {
     return SOURCE_VERIFICATION_REFUSAL;
   }
@@ -269,7 +285,6 @@ export async function createDocumentFromDraft(
   // copy; every further document is created in the project unbound, with the
   // reason stated — so AnA can draft several documents into one program.
   const resolvedBinding = await resolveBinding(ctx.pool, ctx.tenantId, input.programId);
-  const isMachineDraft = provenance.source === 'ana';
   const contributors = isMachineDraft
     ? [{ id: ANA_MACHINE_AUTHOR_ID, name: MACHINE_AUTHOR_IDS[ANA_MACHINE_AUTHOR_ID] }]
     : [];
@@ -290,9 +305,7 @@ export async function createDocumentFromDraft(
     input.sections.map((s, i) => ({
       code: s.code,
       title: s.title,
-      // A machine draft keeps no image: a model's image is never an uploaded
-      // figure (item 18, 2026-10-05). An import or seed keeps its figures.
-      content: isMachineDraft ? sanitizeMachineDraftSectionHtml(s.content) : sanitizeAuthoringSectionHtml(s.content),
+      content: storedContent[i],
       orderIndex: i,
       changeReason: CHANGE_REASON[provenance.source],
       metadata: { provenance, drafted: true },

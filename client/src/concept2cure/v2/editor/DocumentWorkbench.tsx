@@ -75,7 +75,8 @@ import { FileToVaultDialog } from './FileToVaultDialog';
 import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramSummary, programHeadline, programName } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt } from './askAnaToDraft';
-import { describeProvenance, type DocumentProvenance } from './provenance';
+import { describeFigureCheck, describeProvenance, type DocumentProvenance, type FigureCheckSummary } from './provenance';
+import { DraftFigureLine } from './DraftFigureLine';
 import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
@@ -1073,6 +1074,8 @@ export function DocumentWorkbench({
      the gateway reported, the conversation). Null until read; a failed read
      is a failed read, and the header then makes no origin claim. */
   const [docProvenance, setDocProvenance] = useState<DocumentProvenance | null>(null);
+  /* S5a: the save's check of the draft's figures against its cited sources. */
+  const [docFigures, setDocFigures] = useState<FigureCheckSummary | null>(null);
   /** What this caller may do to the open document (GE-P-3); unknown until read. */
   const [docAccess, setDocAccess] = useState<DocumentAccess>(UNKNOWN_DOCUMENT_ACCESS);
   const assignRefusalId = useId();
@@ -1623,6 +1626,7 @@ export function DocumentWorkbench({
   useEffect(() => {
     provenanceDocRef.current = activeDocId;
     setDocProvenance(null);
+    setDocFigures(null);
     setDocAccess(UNKNOWN_DOCUMENT_ACCESS);
     if (!activeDocId) return;
     const wanted = activeDocId;
@@ -1632,6 +1636,7 @@ export function DocumentWorkbench({
       if (provenanceDocRef.current !== wanted) return;
       if (!ok || !body?.document) return;
       setDocProvenance(describeProvenance(body.document.provenance));
+      setDocFigures(describeFigureCheck(body.document.provenance));
       /* GE-P-3: the same read carries the caller's access. */
       setDocAccess(readDocumentAccess(body.access));
     });
@@ -4080,6 +4085,7 @@ export function DocumentWorkbench({
                       {docProvenance.line}
                     </div>
                   )}
+                  {docFigures && <DraftFigureLine check={docFigures} />}
                   <div className="ed-mast-meta">
                     {/* "0 sections" printed over a failed or in-flight read,
                         directly above a body that said the read failed. */}
@@ -4286,6 +4292,7 @@ export function DocumentWorkbench({
                       {docProvenance.line}
                     </div>
                   )}
+                  {docFigures && <DraftFigureLine check={docFigures} />}
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0

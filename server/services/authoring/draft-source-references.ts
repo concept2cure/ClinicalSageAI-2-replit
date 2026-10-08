@@ -30,6 +30,8 @@ export function parseDraftSourceReferences(raw: unknown): DraftSourceReference[]
 
 export async function verifyDraftSourceReferences(
   refs: DraftSourceReference[], pool: Queryable, organizationId: number, programId: string,
+  /** Filled with each verified excerpt's text, for the drafted-figure check (S5a). */
+  excerpts?: Array<{ documentId: string; contentHash: string; text: string }>,
 ): Promise<VerifiedDraftSourceReference[]> {
   const { loadDocumentForOrg } = await import('../vault/document-catalog.service.js');
   const verified: VerifiedDraftSourceReference[] = [];
@@ -40,6 +42,7 @@ export async function verifyDraftSourceReferences(
         !['extracted', 'cataloged'].includes(doc.catalog.status) ||
         ['remove_data', 'supersede'].includes(doc.disposition ?? '') ||
         !doc.extractedText?.trim() || doc.extractedText.length !== ref.span.totalChars) throw new Error('Source references could not be verified');
+    excerpts?.push({ documentId: doc.id, contentHash: doc.contentHash, text: doc.extractedText.slice(0, ref.span.end) });
     verified.push({ documentId: doc.id, programId, contentHash: doc.contentHash,
       title: doc.documentTitle || doc.fileName, span: ref.span,
       completeText: ref.span.end === doc.extractedText.length,
