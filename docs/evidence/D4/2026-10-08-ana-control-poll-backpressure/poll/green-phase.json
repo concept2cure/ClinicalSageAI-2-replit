@@ -1,0 +1,24 @@
+{
+  "files": {
+    "server/services/ana/run-control.ts": "b7dc079f7c2602fea63201fa76de4f8999b53474dc3a80dfb61bd9ea847f6b1d",
+    "server/services/ana/__tests__/run-control-poll-backpressure.test.ts": "eef7faacf1cf0896fe820b2c79ec13cee5abcdfa8e75b13879ab51d0a1f5734e"
+  },
+  "node": "22.23.3",
+  "direct": {
+    "passed": 10,
+    "failed": 0,
+    "exitCode": 0
+  },
+  "related": {
+    "files": 3,
+    "passed": 18,
+    "failed": 0,
+    "exitCode": 0
+  },
+  "eslint": {
+    "errors": 0,
+    "warnings": 0,
+    "exitCode": 0,
+    "command": "node node_modules/eslint/bin/eslint.js --no-ignore --max-warnings 0 server/services/ana/__tests__/run-control-poll-backpressure.test.ts"
+  }
+}

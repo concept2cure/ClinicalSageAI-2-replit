@@ -1,0 +1,219 @@
+import type { Pool, PoolClient } from 'pg';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getTenantScope, runWithTenantScope, type TenantScope } from '../../../db/tenantStore.js';
+import {
+  _resetLocalRunsForTest,
+  beginRun,
+  POLL_FALLBACK_MS,
+  releaseLocalRun,
+  RUN_CONTROL_CHANNEL,
+  startRunControlListener,
+  stopRunControlListener,
+} from '../run-control.js';
+
+const logs = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() }));
+vi.mock('../../../utils/logger', () => ({ createScopedLogger: () => logs }));
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: Error) => void;
+  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+
+type QueryResult = { rows: Array<{ id: string; status: string }>; rowCount?: number };
+function fakeClient() {
+  const callbacks = new Map<string, (...args: any[]) => void>();
+  const client = {
+    on: vi.fn((event: string, callback: (...args: any[]) => void) => callbacks.set(event, callback)),
+    query: vi.fn(async () => ({ rows: [] })),
+    release: vi.fn(),
+  };
+  return { client: client as unknown as PoolClient, raw: client, callbacks };
+}
+function fakePool(connect = vi.fn(async (): Promise<PoolClient> => { throw new Error('listen unavailable'); })) {
+  const reads: Array<ReturnType<typeof deferred<QueryResult>>> = [];
+  const scopes: Array<ReturnType<typeof getTenantScope>> = [];
+  let throwNextSelect: Error | undefined;
+  const query = vi.fn((sql: string) => {
+    if (sql.startsWith('SELECT') && throwNextSelect) {
+      const error = throwNextSelect;
+      throwNextSelect = undefined;
+      throw error;
+    }
+    if (sql.startsWith('SELECT')) {
+      scopes.push(getTenantScope());
+      const read = deferred<QueryResult>();
+      reads.push(read);
+      return read.promise;
+    }
+    return Promise.resolve({ rows: [], rowCount: 1 });
+  });
+  return { pool: { connect, query } as unknown as Pool, connect, query, reads, scopes, failNextSelect: (error: Error) => { throwNextSelect = error; } };
+}
+async function flush() { for (let i = 0; i < 8; i++) await Promise.resolve(); }
+async function open(pool: Pool, organizationId = 7) {
+  const run = await beginRun({ pool, organizationId, userId: 3, surface: 'chat' });
+  await flush();
+  return run;
+}
+async function tick(count = 1) { await vi.advanceTimersByTimeAsync(POLL_FALLBACK_MS * count); }
+
+beforeEach(() => { _resetLocalRunsForTest(); vi.useFakeTimers(); vi.clearAllMocks(); });
+afterEach(() => { _resetLocalRunsForTest(); vi.useRealTimers(); });
+
+describe('run-control fallback backpressure', () => {
+  it('keeps one pending SELECT across slow ticks, then polls again and delivers cancellation', async () => {
+    const fake = fakePool();
+    const run = await open(fake.pool);
+    await tick(5);
+    expect(fake.reads).toHaveLength(1);
+    fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'paused' }] });
+    await flush();
+    await tick();
+    expect(fake.reads).toHaveLength(2);
+    fake.reads[1].resolve({ rows: [{ id: run.runId, status: 'cancelled' }] });
+    await flush();
+    expect(run.handle.cancelSignal.aborted).toBe(true);
+  });
+
+  it('logs a genuine failed read and releases admission for the next tick', async () => {
+    const fake = fakePool();
+    await open(fake.pool);
+    await tick(3);
+    expect(fake.reads).toHaveLength(1);
+    fake.reads[0].reject(new Error('poll database unavailable'));
+    await flush();
+    expect(logs.error).toHaveBeenCalledWith(expect.stringContaining('poll fallback query failed: poll database unavailable'));
+    await tick();
+    expect(fake.reads).toHaveLength(2);
+    fake.reads[1].resolve({ rows: [] });
+    await flush();
+  });
+
+  it('logs a synchronous query failure without stranding poll admission', async () => {
+    const fake = fakePool();
+    await open(fake.pool);
+    fake.failNextSelect(new Error('synchronous poll failure'));
+    await tick();
+    expect(logs.error).toHaveBeenCalledWith(expect.stringContaining('poll fallback query failed: synchronous poll failure'));
+    await tick();
+    expect(fake.reads).toHaveLength(1);
+    fake.reads[0].resolve({ rows: [] });
+    await flush();
+  });
+
+  it('does not query with no local runs or after the last local run is released', async () => {
+    const fake = fakePool();
+    await startRunControlListener(fake.pool);
+    await tick(3);
+    expect(fake.reads).toHaveLength(0);
+    const run = await open(fake.pool);
+    releaseLocalRun(run.runId);
+    await tick(3);
+    expect(fake.reads).toHaveLength(0);
+  });
+
+  it('executes each admitted poll under actual system scope across tenant requests', async () => {
+    const fake = fakePool();
+    const scope = { tenantId: '7', role: 'member', source: 'request', caller: 'poll-test' } as TenantScope;
+    const first = await runWithTenantScope(scope, () => open(fake.pool));
+    const second = await open(fake.pool, 42);
+    await tick();
+    expect(fake.query.mock.calls.find(([sql]) => sql.startsWith('SELECT'))).toBeDefined();
+    expect(fake.scopes[0]?.tenantId).toBe('0');
+    expect(fake.scopes[0]?.role).toBe('app_super_admin');
+    fake.reads[0].resolve({ rows: [{ id: first.runId, status: 'cancelled' }, { id: second.runId, status: 'cancelled' }] });
+    await flush();
+    expect(first.handle.cancelSignal.aborted).toBe(true);
+    expect(second.handle.cancelSignal.aborted).toBe(true);
+  });
+});
+
+describe('obsolete listener lifecycle', () => {
+  it('ignores an old pending poll result after stop/restart while the new poll remains pending', async () => {
+    const old = fakePool();
+    const run = await open(old.pool);
+    await tick();
+    stopRunControlListener();
+    const current = fakePool();
+    await startRunControlListener(current.pool);
+    await tick();
+    expect(current.reads).toHaveLength(1);
+    old.reads[0].resolve({ rows: [{ id: run.runId, status: 'cancelled' }] });
+    await flush();
+    expect(run.handle.cancelSignal.aborted).toBe(false);
+    await tick(2);
+    expect(current.reads).toHaveLength(1);
+    current.reads[0].resolve({ rows: [{ id: run.runId, status: 'cancelled' }] });
+    await flush();
+    expect(run.handle.cancelSignal.aborted).toBe(true);
+  });
+
+  it('returns a late old connection without replacing or leaking the restarted client', async () => {
+    const pending = deferred<PoolClient>();
+    const old = fakePool(vi.fn(() => pending.promise));
+    const oldStart = startRunControlListener(old.pool);
+    stopRunControlListener();
+    const currentClient = fakeClient();
+    const current = fakePool(vi.fn(async () => currentClient.client));
+    await startRunControlListener(current.pool);
+    const oldClient = fakeClient();
+    pending.resolve(oldClient.client);
+    await oldStart;
+    expect(oldClient.raw.release).toHaveBeenCalledTimes(1);
+    expect(oldClient.raw.query).not.toHaveBeenCalled();
+    expect(currentClient.raw.release).not.toHaveBeenCalled();
+    stopRunControlListener();
+    expect(currentClient.raw.release).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores late old connection failure without releasing the restarted client or arming old polling', async () => {
+    const pending = deferred<PoolClient>();
+    const old = fakePool(vi.fn(() => pending.promise));
+    const oldStart = startRunControlListener(old.pool);
+    stopRunControlListener();
+    const active = fakeClient();
+    const current = fakePool(vi.fn(async () => active.client));
+    await startRunControlListener(current.pool);
+    await open(current.pool);
+    pending.reject(new Error('obsolete connect failure'));
+    await oldStart;
+    await tick(3);
+    expect(active.raw.release).not.toHaveBeenCalled();
+    expect(old.reads).toHaveLength(0);
+    expect(current.reads).toHaveLength(0);
+  });
+
+  it('does not let a released client error rearm the obsolete pool after restart', async () => {
+    const oldClient = fakeClient();
+    const old = fakePool(vi.fn(async () => oldClient.client));
+    await startRunControlListener(old.pool);
+    stopRunControlListener();
+    const active = fakeClient();
+    const current = fakePool(vi.fn(async () => active.client));
+    await startRunControlListener(current.pool);
+    await open(current.pool);
+    oldClient.callbacks.get('error')!(new Error('late old socket error'));
+    await tick(3);
+    expect(old.reads).toHaveLength(0);
+    expect(active.raw.release).not.toHaveBeenCalled();
+    expect(oldClient.raw.release).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not dispatch notifications from an obsolete released client into a restarted lifecycle', async () => {
+    const oldClient = fakeClient();
+    const old = fakePool(vi.fn(async () => oldClient.client));
+    await startRunControlListener(old.pool);
+    stopRunControlListener();
+    const active = fakeClient();
+    const current = fakePool(vi.fn(async () => active.client));
+    await startRunControlListener(current.pool);
+    const run = await open(current.pool);
+    oldClient.callbacks.get('notification')!({ channel: RUN_CONTROL_CHANNEL, payload: run.runId });
+    await flush();
+    expect(old.reads).toHaveLength(0);
+    expect(run.handle.cancelSignal.aborted).toBe(false);
+  });
+});
