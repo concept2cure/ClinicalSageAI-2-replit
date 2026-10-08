@@ -38,6 +38,13 @@ const connectFn = vi.fn();
 // The signing ceremony reads the signer's account standing (VSR-001 F-28);
 // every signer here is active. Suspended and deprovisioned signers are pinned
 // by reverify-signer.test.ts and tests/db/account-standing.dbtest.ts.
+// The transmitter holds a signing role (approver); only such a role may
+// transmit to an agency (SEC-1008-1, governed-transmit-checks.ts).
+// An approver unless a case sets `signerRole.next`, which is used once (SEC-1008-1).
+const signerRole = vi.hoisted(() => ({ next: null as string | null }));
+vi.mock('../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async () => { const r = signerRole.next ?? 'approver'; signerRole.next = null; return r; },
+}));
 vi.mock('../server/services/account-standing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../server/services/account-standing')>()),
   isAccountActive: async () => true,
@@ -346,6 +353,22 @@ function goodDescriptor(overrides: Record<string, unknown> = {}) {
 }
 
 /* ── Client descriptors cannot name a filesystem path ────────────── */
+
+describe('POST transmit — only a role that may sign transmits (SEC-1008-1)', () => {
+  it.each(['member', 'manager'])('refuses a %s: 403 before the password is read, and nothing is sent', async (role) => {
+    queryFn.mockClear();
+    signerRole.next = role;
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ environment: 'staging', packageId: 1, ...REAUTH });
+    expect(res.status).toBe(403);
+    expect(JSON.stringify(res.body)).toContain('ESIGNATURE_NO_AUTHORITY');
+    // No password_hash read: the refusal cost the account no lockout attempt.
+    const credentialReads = queryFn.mock.calls.filter((c: unknown[]) => /password_hash/i.test(String(c[0])));
+    expect(credentialReads, 'a password attempt was spent on a role that may not sign').toHaveLength(0);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+});
 
 describe('POST transmit — client-supplied bundle descriptors (C2C-SUB-003)', () => {
   it('refuses an explicit descriptor pointing at an arbitrary server-readable file', async () => {

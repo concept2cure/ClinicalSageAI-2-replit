@@ -20,6 +20,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const h = vi.hoisted(() => ({ transmit: vi.fn(), assess: vi.fn() }));
 const ASSEMBLED = vi.hoisted(() => `v4:${'a'.repeat(64)}`);
 
+// The transmitter holds a signing role (approver); only such a role may
+// transmit to an agency (SEC-1008-1, governed-transmit-checks.ts).
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'approver' }));
 vi.mock('../../../db', () => ({
   pool: {
     query: vi.fn(async (sql: string) =>
