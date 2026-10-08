@@ -56,21 +56,21 @@ const rowOf = (name: string) =>
 
 describe('Artifacts Center — signature status per version', () => {
   it('draws the e-signed shield once: only for the signature that covers the current version', async () => {
-    render(<ArtifactsCenter surface={{ id: 'artifacts-center', label: 'Artifacts Center' } as never} onAsk={vi.fn()} onNav={vi.fn()} />);
+    render(<ArtifactsCenter surface={{ id: 'artifacts-center', label: 'Artifacts Center' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />);
     await waitFor(() => expect(screen.getByText('Artifact cur')).toBeTruthy());
     expect(screen.getAllByLabelText('E-signed (21 CFR Part 11)')).toHaveLength(1);
     expect(rowOf('Artifact cur').querySelector('[aria-label="E-signed (21 CFR Part 11)"]')).toBeTruthy();
   });
 
   it('says in words that an earlier version is the one signed', async () => {
-    render(<ArtifactsCenter surface={{ id: 'artifacts-center', label: 'Artifacts Center' } as never} onAsk={vi.fn()} onNav={vi.fn()} />);
+    render(<ArtifactsCenter surface={{ id: 'artifacts-center', label: 'Artifacts Center' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />);
     await waitFor(() => expect(screen.getByText('Artifact old')).toBeTruthy());
     expect(screen.getByText(/Signed v2 only/)).toBeTruthy();
     expect(rowOf('Artifact old').querySelector('[aria-label="E-signed (21 CFR Part 11)"]')).toBeNull();
   });
 
   it('does not claim the current version is signed when the covered version is unknown', async () => {
-    render(<ArtifactsCenter surface={{ id: 'artifacts-center', label: 'Artifacts Center' } as never} onAsk={vi.fn()} onNav={vi.fn()} />);
+    render(<ArtifactsCenter surface={{ id: 'artifacts-center', label: 'Artifacts Center' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />);
     await waitFor(() => expect(screen.getByText('Artifact unk')).toBeTruthy());
     expect(screen.getByText(/Signed · version unknown/)).toBeTruthy();
   });
