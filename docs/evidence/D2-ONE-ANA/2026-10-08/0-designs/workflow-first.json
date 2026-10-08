@@ -1,0 +1,357 @@
+{
+ "angle": "workflow-first",
+ "design": {
+  "name": "Beside: one AnA next to one canvas, with the project as the workflow",
+  "principle": "Every screen has three places, always in the same order from left to right.\n1. **Navigation** (far left): where you go.\n2. **AnA**: one conversation with one composer. It always sits in the column just left of the work. It never jumps from a right rail to the centre.\n3. **The canvas** (right): the thing you are working on, which is a project, a document or a submission.\n\nEvery regulatory step happens as an action on that project or document, never as a trip to another app. The steps are: draft, review, sign, file to the record, place into a sequence, check readiness, submit. Deterministic engines produce the numbers and verdicts, AnA prepares the work and explains it, and the person signs.\n\nThe shell's existing work column is the canvas. No second canvas system is built. Opening a document means putting `document-authoring` with a `docId` into that column, through the existing `editorTarget.ts` channel. The conversation stays where it is.\n\nThe design answers questions left open since 2026-07:\n- WO-9: the surface set.\n- Convergence E2: one composer.\n- The editor-beside-conversation work begun on 2026-10-01: it is now generalised to every screen.\n\nIt supersedes three earlier records:\n- The \"inline canvas\" and \"Edit in Authoring\" hand-off in `docs/design/ANA_DOCUMENT_CANVAS.md`.\n- The right context drawer in `ANA_CHATGPT_PARITY_UI_DESIGN.md` \u00a76.1 and \u00a79.1.\n- The 2026-07-28 \"shipped navigation wins\" revert (`2fd1fa108`). The founder's direction of 2026-10-07, and his delegation of these decisions to the CPO, are recorded in the design doc so a later session cannot cite the revert against it.",
+  "layout": "**Desktop, 1101px and wider.** The shell grid becomes nav | AnA | work. Today it is nav | work | AnA (`app-v2.css:1306`). The width budget is unchanged, because the columns swap places and nothing is added.\n- **Nav:** 264px, or 56px collapsed.\n- **AnA column:** 400px, or a 40px \"AnA\" strip in the same place (\u2318\\, with a dot when AnA has answered). It is open by default for new profiles; a saved preference wins.\n- **Canvas:** the rest, at least 720px.\n- **Nav auto-collapse:** the nav collapses to 56px whenever nav + 400 + 720 is wider than the window, and while a document is open below 1600px. A nav the person has pinned stays as pinned.\n- **Worked example at 1440px:** a project, Vault or Submissions gets a 776px canvas; an open document gets 984px. The editor's three-track floor of 940px fits even with Comments open, and at 1500px or narrower Comments already floats over the page (`authoring-v2.css:33-38`, `1653-1666`).\n\n**1. The AnA conversation (Home, or a resumed conversation with nothing open).**\n- The canvas column is 0px and the conversation centres to a 720px reading measure, as on Claude's home screen. Layout: nav | conversation | nothing.\n- Home shows a greeting, starter prompts for the client type, and a \"Continue\" row of recent projects and documents.\n- When something opens, the conversation settles into its 400px column: 200ms ease-out, and no animation under prefers-reduced-motion.\n\n**2. A project.** Layout: nav | AnA (scoped to the project) | Project canvas.\n- **Header:** product, application, target date, team, and one \"Next step\" line from the readiness engine.\n- **Tabs:** Overview \u00b7 Documents \u00b7 Review \u00b7 Record \u00b7 Submission.\n- There is no composer anywhere on the page.\n\n**3. An open document.** Layout: nav (56px) | AnA | Document canvas.\n- **Header:** a breadcrumb (Projects \u203a ONC-221 IND \u203a Module 2.5), a document switcher, a status and version chip, the overflow menu (Download working copy, Export for filing, Audit trail) and Close.\n- **Lifecycle strip:** Draft \u2192 In review \u2192 Approved \u2192 Filed \u2192 In submission, with the next governed action as the only primary button.\n- **Body:** a 220px outline and the page, edited in place one section at a time.\n- **Side tabs** (Comments, Review, Sources, History, Signatures, Audit) open on demand. They overlay the page at 1500px or narrower. The editor's own AnA tab is gone.\n\n**4. Vault, Submissions, Quality, Reporting, My work, Settings.** Layout: nav | AnA (or its strip) | that place at full canvas width.\n- An item opened from one of these (a document, a sequence, a change control) replaces it in the canvas, with a Back breadcrumb.\n- Submission Center's per-project workspace is the project's Submission tab. The cross-project list is \"Submissions\".\n\n**1100px and narrower: one pane at a time, and still one composer.**\n- The top bar carries a two-option switch, AnA \u00b7 Canvas.\n- The AnA pane has three states:\n  - **Full:** the conversation.\n  - **Peek:** a bottom bar holding the same composer plus one status line, such as \"AnA is writing 2.5.3\u2026\". Tap it to expand over the canvas.\n  - **Hidden:** only while a dialog is open.\n- Opening an item switches to Canvas. Sending from the peek bar keeps the canvas in view.\n- The editor's \"Back to conversation\" (`authoring-v2.css:1631-1634`) is folded into the switch.\n\n**640px and narrower:** the nav is the existing drawer, the canvas header's actions collapse into its overflow menu, the side gutter is 16px, and nothing scrolls sideways at 390px.\n\n**Focus order** is nav \u2192 AnA \u2192 canvas. Two skip links, \"Skip to AnA\" and \"Skip to content\", replace the single one at `V2App.tsx:1195-1206`.",
+  "anaPlacement": "**Where AnA is talked to.** The only place is the AnA column between the navigation and the canvas. It is the existing `AnaRail` (`Shell.tsx:622`), moved from the right of the work to the left of it.\n- **One instance:** it runs the one `useAnaChat` instance in `V2App.tsx:727`.\n- **One renderer:** turns render through one renderer, `AnaTurn.tsx`, moved unchanged out of `ConversationThread.tsx`. That gives the column the document card, insert-as-tracked-suggestion offers, governed sign-off and the Grounded-in chip.\n- **Header:** a scope chip (the open project, or \"All projects\"); a conversation picker (this project's threads from `GET /api/chat/threads`, plus New); and a menu (Memory, Runs & agents, Manual/Auto).\n- **Foot:** the one composer: attach, @app, run policy and Live Drive.\n\n**Why only one.** Context follows the canvas, so no screen needs its own chat.\n- The column's \"Working in\" block already reads the active surface's context (`Shell.tsx:933-1014`).\n- An open document is named on every turn: the workbench's `authoringContext`, sent per turn (row 49 step 5).\n- A selected item, such as a finding, a vault document or a task, is published through the same surface context.\n- On every screen there is one visible thread, one history and one place an answer can appear.\n\n**What happens to each existing entry point:**\n- **The right rail** becomes the column: it moves left and is open by default. Its \"Open in conversation\" hand-off (`Shell.tsx:604-620`, `1097-1105`) is deleted, because a document card now opens its document into the canvas beside it.\n- **The conversation page** (`conversation-thread`) becomes the column with an empty canvas. The URL is kept as an alias that loads `?c=<thread>`. The seed-and-navigate protocol (`window.C2C_CONVO`, `V2App.tsx:1015-1033`) is retired, and `ask()` always sends into the column.\n- **The editor dock (W)** (`DocumentWorkbench.tsx:1419-1430`, `4533-4777`, toggle `3702-3711`) is deleted.\n  - The workbench already hands every ask to a host that owns the conversation (`:1480-1483`). `DocumentAuthoring` now always passes `onAsk`.\n  - \"Draft with AnA\", \"Draft this section\" and \"Suggest a source\" land in the column, with the section named.\n- **The eCTD co-author dock (E)** (`EctdCoauthor.tsx:335-343`, `794-923`) is deleted. The co-author document takes the full canvas and its asks go through `onAsk`.\n- **The RBM dock (R)** (`Rbm.tsx:160`, `RbmSurfaces.tsx:363-424`) is deleted last. RBM is outside the launch scope.\n- **ConversationThread's private fallback (C)** (`:888`) is deleted.\n- **The allow-list** in `tests/ui/one-shell.test.ts` shrinks from 5 files to `V2App.tsx` alone.\n- **The Home composer (C1)** (`Surfaces.tsx:264-402`) is deleted. On Home the column is centred at full width.\n- **The Project home composer (C2)** (`ProjectHome.tsx:883-937`) is deleted. Its conversation list (C3, `:965-1027`) moves into the column's conversation picker, where Resume loads the thread in place.\n- **The Template library's inline ask (C4)** (`TemplateLibrary.tsx:713-725`) is deleted.\n- **Live Drive's steer box (A8)** (`LiveDriveOverlay.tsx:149-161`) and the run strip's steer input (A9, `AnaWorkSections.tsx:538-553`) are deleted. While a run streams, the one composer sends as \"Steer\". Stop and Pause stay.\n- **Top-bar and account \"Get help\"** focus the composer instead of navigating.\n- **\u2318K \"Ask AnA: \u2026\"** sends into the column.\n- **Left-nav \"Conversation\"** is removed.\n\n**The Ask-AnA buttons** (77 by the brief's count; a grep at HEAD finds `onAsk`/`onAskAna` calls in 86 client files) each go one of three ways.\n1. **A button named for a job does the job.** It never types into the chat.\n   - \"Open in editor\": `BiopharmaProject.tsx:743` \u2192 `setEditorTarget` and navigate.\n   - Transmit: `DispatchReadiness.tsx:646` \u2192 the governed dispatch with e-signature.\n   - Contact sales: `LicensingSurface.tsx:104` \u2192 an access request.\n   - The automatic message after a task template is created (`TaskBoard.tsx:1098`) is deleted.\n   - \"Ask AnA to apply this\" (`TemplateLibrary.tsx:737`) \u2192 \"New document from this template\".\n2. **A button that asks something specific stays one click.** Examples: \"Explain this plan\", \"Triage findings\", \"Fix\". It sends that prompt into the one conversation with a typed reference (surface, item id), so AnA answers about the right item.\n3. **A generic \"Ask AnA\" button is deleted.** Examples: Vault `:1359` and `:2028`, Projects `:1223`, Review `:750`, DossierMap `:174`, FilingsCatalog `:119`, quality/App `:290`. The column is always on screen and already names the selection.\n\nA shrink-only count of `onAsk(` call sites under `v2/surfaces` holds the direction.\n\n**Look-alikes:**\n- Insights' chat-shaped report builder (`Insights.tsx:1279-1350`, a fixed matcher rather than a model) is redrawn as a report picker, so it no longer looks like a second AnA.\n- The Evidence ask box is outside the release and is left alone.\n\n**Governed sign-offs AnA asks for:**\n- A sign-off that a chat turn asked for still renders inline in the column (`GovernedActionSignoff`).\n- A document lifecycle action renders in the canvas, where the document is.\n- AnA never signs, freezes, files or places anything.",
+  "canvas": "**What it is.** The canvas is the shell's work column on the right. It holds exactly one thing at a time: a project, a document, a submission or a cross-project place. A document in it is always an authoring document (`authoring_documents` and `authoring_sections`, the one document store; decision 1 of `ANA_DOCUMENT_CANVAS.md`), shown by the one editor, `DocumentWorkbench` mounted by `DocumentAuthoring`.\n\n**Watching it being built.**\n- When a turn emits `artifact_draft` with an `authoringDocId` (`stream.ts:2603-2643`), the shell opens that document in the canvas if both hold:\n  - the canvas is empty, or it shows a document from this conversation; and\n  - the open editor reports no unsaved edit (the workbench's `requestLeave`).\n- Otherwise the column shows \"Built Module 2.5 \u2014 Open\", and the person's work is never pulled away.\n- While the turn runs, the document is read-only, under a banner fed by the existing phase and tool-step events: \"AnA is writing 2.5.3 Overview of efficacy\u2026 Stop\". It re-reads when the turn ends (`DocumentCanvas.tsx:280-287`), and changed sections are labelled.\n- The canvas never shows unsaved text as if it were the record.\n- **Honest limit:** the document fills in section by section as saved records arrive, not word by word. Token-level streaming of tool input depends on the gateway and on every approved model, and is deferred.\n\n**The list of documents.**\n- **This conversation:** the canvas header's switcher lists every document the conversation built or opened. These come from a structured `authoringDocId` on each turn's outputs, not from the step history that is cut at 180 characters (`tool-trace.ts:68-101`).\n- **This project:** the switcher's second section, \"All project documents\", opens Project \u203a Documents. That tab reads the project's authoring documents (ProjectRecords, PF-17), each with its status and a \"Built by AnA\" filter (`provenance.source = 'ana'`).\n- **Retired:**\n  - The side \"Artifacts\" list (`ConversationThread.tsx:798-828`, `1469-1476`).\n  - Project home's \"Recent drafts\", which reads a third store.\n  - \"Recent Documents\" in the nav.\n- **Generated drafts:** a draft from a tool other than `draft_authoring_document` becomes an authoring document when it is created, provided a project is open. With no project open, its card offers \"Save to a project\".\n\n**Open.** Clicking a card, a switcher entry, a Documents row, a Vault \"Open in editor\" or a readiness \"Fix\" calls `setEditorTarget({docId, section?, returnTo})` and puts `document-authoring` in the canvas.\n- The conversation does not move.\n- Close (\u00d7) returns to whatever the canvas held before.\n\n**Download.** There are three distinct acts, labelled so that none can be mistaken for another.\n1. **Download working copy** (.docx or .pdf), available at any status. This is the founder's decision, delegated to the CPO.\n   - Every page header and footer reads \"WORKING COPY \u2014 NOT A CONTROLLED RECORD \u00b7 doc id \u00b7 version \u00b7 status \u00b7 downloaded <UTC> by <user>\".\n   - The filename carries a `_WORKING-COPY_v<n>` suffix.\n   - It has no signature manifest and writes no `authoring_export_history` row, so it does not re-baseline \"changed since last export\".\n   - It writes one audit event, `authoring.working_copy.downloaded`, with the SHA-256 of the bytes.\n   - It is rendered by the same renderer as the controlled export, so there is no second document format.\n2. **Export for filing** (Word, PDF, XML) is the controlled export. The existing route stays exactly as it is and still answers 409 for anything not FROZEN or APPROVED (`authoring.router.ts:5816-5840`). It sits after \"Approved\" in the lifecycle strip and, while disabled, says why.\n3. **File to record** is the existing governed filing into the project vault (`FileToVaultDialog`: format, folder, reason, SHA-256).\n\nThe side-list .docx route for type-B drafts (`server/routes/c2c/exports.ts:125-129`) is retired once every draft is an authoring document.\n\n**Edit in place.**\n- The person edits the section under the cursor (`RichSectionEditor`). The whole-document view stays read-only.\n- AnA's changes to an open document arrive only as tracked suggestions attributed to AnA and to the turn record. They go through the editor's `insertSuggestion` door (row 49 step 3) or as anchored proposals (row 50). The person accepts or rejects them in the page. Nothing is written over the person's open section.\n- A frozen or approved document opens read-only, with \"Revise\". Recommendation: \"Revise\" creates a new draft version linked to the approved one, filed later as an eCTD replace. How that binds is JM's open question on row 40, and that lane implements it.\n\n**Versions.**\n- The status chip opens the version menu, which reads the existing revision history (History tab, `AuthoringRevisionDiff`).\n- The person's saves and AnA's accepted suggestions each appear with their author and turn.\n- A freeze or approval snapshot (`frozen_documents` with SHA-256) is a numbered version.\n- Viewing an old version is read-only, with \"Compare with current\". Restoring creates a new revision with a reason; nothing is overwritten.\n\n**Part 11.** The lifecycle strip composes the existing governed components; none is reimplemented.\n- Request review: `AssignReviewDialog`.\n- Approve & sign, and Freeze: `AuthoringFilingBar` through the one `EsignModal` ceremony (meaning, reason, password, MFA), re-verified server-side by `reverify-signer.ts`.\n- File to record: `FileToVaultDialog`, with a reason.\n- Place into submission: `AuthoringPlaceIntoFiling`.\n\nEvery action keeps its reason for change, its \u00a711.50 signature where one applies, and its audit row. These show in the document's Audit tab and in Reporting \u203a Audit trail. AnA may prepare an action, for example by pre-filling reviewers or proposing \"File to record\", but the person always executes it in the canvas.\n\n**How it connects to the record.**\n- Filing writes a controlled version into the project vault (`POST /docs/:docId/file-to-vault`).\n- Project \u203a Record shows that vault tree in place. It reuses `editor/ProjectFilesPanel.tsx`, which already reads `GET /api/c2c/project-vault/:programId`.\n- A vault document opens in the same canvas read-only, with its versions, signatures and lineage (\"Filed from Module 2.5 v0.4\"). \"Open source draft\" returns to the authoring document.\n\n**The path stays gated.** The AnA-draft \u2192 canvas \u2192 editor \u2192 vault path stays pinned by `ci:canvas-path`. Its links are re-pinned in the same commit that moves them:\n- column renders card;\n- card opens editor;\n- surface mounts workbench;\n- tool registered;\n- workbench reads vault;\n- file-to-vault route;\n- founder walk.",
+  "workflow": "**The client's path through a project.** The example is a biotech IND; device programmes follow the same path. Every step after the first happens in the canvas, with AnA beside it.\n1. **Start.** On Home, the person writes \"Start the ONC-221 IND\" in the one composer. AnA proposes the project, or the existing new-project wizard opens in the canvas. The project then opens in the canvas.\n2. **Plan.** Project \u203a Overview shows:\n   - \"Next step\" from the readiness engine, for example \"Module 2.5 not started \u00b7 14 of 38 documents drafted\";\n   - the schedule (the existing `SchedulePanel`);\n   - the team;\n   - the Path, which replaces the Program journey screen.\n3. **Author.** In AnA: \"Draft the 2.5 clinical overview from the pinned CSR and IB\". The new document opens on the right and fills in as AnA writes. The person edits in place, and AnA's revisions arrive as tracked suggestions. Alternatively, Documents \u203a New document (blank, or from a template) opens in the canvas.\n4. **Review and approve.** Lifecycle \"Request review\" picks reviewers and a due date. Each reviewer finds the request in My work and opens it: the same document, in the same canvas, with the Review panel open. Verdict, comments and \"Approve & sign\" (`EsignModal`) all happen there.\n   - Signing a review task in place replaces the hand-off to the task board (`ReviewTasksPanel.tsx:303-310`).\n   - The Review app's \"Sign in the authoring workspace\" opens the document by its id (`Review.tsx:818`).\n5. **File to the record.** Lifecycle \"File to record\" (reason, SHA-256). Project \u203a Record shows the controlled version.\n6. **Assemble.** Lifecycle \"Place into submission\" lists only this project's sequences.\n   - Submission Center reads the open project and stops asking for the programme again (`SubmissionCenter.tsx:358-361`, `497-526`).\n   - The sequence opens in the canvas with four steps: Build \u00b7 Validate \u00b7 Publish \u00b7 Transmit.\n7. **Readiness.** The sequence's Validate step is the readiness verdict, from the same endpoint `DispatchReadiness` calls (`:351`). Each finding's \"Fix\" opens the document and section that need it. The verdict also feeds the project's \"Next step\" line.\n8. **Submit.** Transmit is the governed freeze-and-dispatch with e-signature. Gateway receipts and acknowledgements are recorded on the sequence.\n9. **Answer the agency.** This is outside the release. The sequence says so in one honest line. When it is released, an agency question will arrive on the sequence and open as a response document in the canvas.\n\nThe whole path is the D10 act (\"filed at least one governed document into a sequence\"), and none of it leaves the project.\n\n**Screens folded into the project and document.** Each surface id is kept as a deep-link alias, and each module id is kept as its licence key:\n\n| Today | Becomes |\n|---|---|\n| project-home | the Project canvas |\n| program-journey | Overview \u203a Path |\n| filings-catalog | the \"New submission\" picker in Project \u203a Submission |\n| document-authoring | the document canvas; its list becomes Project \u203a Documents |\n| template-library | New document \u203a From template, with admin upkeep in Settings \u203a Templates |\n| review | the document's Review panel, plus My work |\n| regulatory-workspace | the Project canvas, which it duplicated |\n| protocol-dev | a protocol document opened in the canvas; its editor family stays until consolidated |\n| dossier-map | Project \u203a Documents, dossier view |\n| submission-center (per project) | Project \u203a Submission |\n| ectd-compile, ectd-publishing, gateway-transmittals | the Build, Publish and Transmit steps of a sequence |\n| ectd-coauthor | filing-document editing in the canvas, with no AnA of its own |\n| dispatch-readiness | the Validate step |\n| tasks / task-board | My work across projects, and Project \u203a Review for this project |\n| conversation-thread | the AnA column |\n| ana-command, ana-memory | the AnA column's menu (Runs & agents, Memory) |\n| artifacts-center | a Vault filter until `concept2cure_artifacts` stops receiving documents |\n| apps | Settings \u203a Modules & licensing |\n| compliance-reports, audit-trail | Reporting |\n| qmp | Quality |\n\n**What stays as cross-project places:** Home (the conversation), Projects, My work, Vault (the organisation's controlled record), Submissions, Quality and Reporting.\n- **Quality:** organisation SOPs, change control and QMPs. A product change control created from a project carries that project (PF-16) and also shows in Project \u203a Record.\n- **Reporting:** organisation analytics, compliance reports and the audit trail. The project's own figures appear on its Overview.\n\n**Rule 2.** No surface is added. \"My work\" is the existing `tasks` surface relabelled, with its team board as a view inside it.",
+  "navigation": "**Left navigation after the change.** Everything is a place; there are no \"apps\" and no AnA entries.\n- **Brand mark:** goes to Home.\n- **Home:** the AnA conversation with an empty canvas. Greeting, starters for the client type, and \"Continue\" (recent projects and documents).\n- **Projects:** the list. The open project is pinned beneath it as a child row (for example \"ONC-221 IND\") so it is one click away from anywhere.\n- **My work:** reviews, signatures and tasks waiting on me, across projects. It carries a count badge from `GET /api/task-management/my-work`, which replaces the top-bar TaskTray popover, and has a \"Team board\" view. Every row opens its item in the canvas through row 70's open-the-item channel.\n- **Vault:** the organisation's controlled record: search, folders and versions. While `concept2cure_artifacts` still holds documents, it has an \"AnA drafts (legacy)\" filter.\n- **Submissions:** every sequence in every project. Each opens inside its project.\n- **Quality:** SOPs, change control, quality plans.\n- **Reporting:** analytics, compliance reports, audit trail.\n- **Settings** (gear, in the foot):\n  - Organisation & client type: the single client-type selector, replacing the rail's Client categories and the top bar's Client domain.\n  - Members & access, and access requests.\n  - Modules & licensing (the former Apps catalog), Billing & usage, Templates, Part 11 console, Identity (SSO/SCIM), Training, Setup.\n  - The account menu: profile, sign out, and Help, which focuses the AnA composer.\n\n**Removed from the navigation:**\n- The Science & intelligence section. All three of its entries are out of scope in production, and the code renders the heading even when it is empty.\n- The Explore section: AnA Command, AnA memory, Apps catalog, Artifacts Center, Conversation.\n- The Quick access section: Recent Documents, My Tasks.\n- \"Tasking\".\n- The Client categories toggles.\n\n**What keeps every screen reachable:**\n- \u2318K still searches every screen, and shows locked ones as \"not in this release\".\n- `ci:surface-discoverability` requires every launch surface to be either a nav place or declared contextual, naming its parent inside the workflow (for example \"dispatch-readiness: the Validate step of a sequence\").\n\n**The registry source.** `registryModel.ts` says it is \"GENERATED from the kit registry\". The commit that changes the rail either edits the kit source or retires that header, so a regeneration cannot quietly restore the old rail.",
+  "removals": [
+   {
+    "what": "The editor's own AnA conversation (W): its useAnaChat instance, the 'AnA \u2014 document authoring' pane and the toolbar AnA toggle",
+    "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:1419-1430, 3702-3711, 4533-4777",
+    "replacement": "The shell's one AnA column (AnaRail, client/src/concept2cure/v2/Shell.tsx:622, mounted by V2App.tsx) receives the editor's asks through the workbench's existing hand-off (DocumentWorkbench.tsx:1480-1483), because DocumentAuthoring now always passes onAsk. Reachability is held by tests/ui/one-shell.test.ts (ALLOWED loses the file) and tests/e2e/one-ana-layout.e2e.spec.ts."
+   },
+   {
+    "what": "The eCTD co-author's middle AnA pane (E) and its useAnaChat instance",
+    "file": "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx:335-343, 794-923, 1072-1074; styles/ectd-v2.css:9",
+    "replacement": "The shell AnA column through onAsk. The co-author document takes the full canvas (tree plus document). Held by one-shell.test.ts ALLOWED."
+   },
+   {
+    "what": "The RBM co-monitor dock (R) and its useAnaChat instance (outside the launch scope, removed last)",
+    "file": "client/src/concept2cure/v2/surfaces/Rbm.tsx:160; RbmSurfaces.tsx:363-424",
+    "replacement": "The shell AnA column, with the study as the surface context. one-shell.test.ts ALLOWED becomes {V2App.tsx}."
+   },
+   {
+    "what": "ConversationThread's private useAnaChat fallback (C)",
+    "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx:888",
+    "replacement": "The shell chat is always passed in; tests pass a fake shell chat."
+   },
+   {
+    "what": "The conversation page's own transcript, composer and editor portal (ct-canvas-pane)",
+    "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx:832-1483 (pane at :1435); the DocumentCanvas expand-into-portal mode in editor/DocumentCanvas.tsx:597-631",
+    "replacement": "The turn renderer moves unchanged into client/src/concept2cure/v2/AnaTurn.tsx and is rendered in the AnA column. Documents open in the shell's work column as document-authoring with an editor target. The conversation-thread URL stays as an alias. Held by ci:canvas-path, re-pinned in the same commit (column-renders-card, card-opens-editor)."
+   },
+   {
+    "what": "The seed-and-navigate protocol (window.C2C_CONVO, startShellConversation, convoEpoch) and the ownsConversation branch of ask()",
+    "file": "client/src/concept2cure/v2/V2App.tsx:1015-1059; surfaces/Surfaces.tsx:211-214; surfaces/ProjectHome.tsx:910-913",
+    "replacement": "Every ask sends into the one column (V2App ask() \u2192 anaChat.send)."
+   },
+   {
+    "what": "Home's centre composer (C1)",
+    "file": "client/src/concept2cure/v2/surfaces/Surfaces.tsx:264-402",
+    "replacement": "Home is the AnA column at full width with an empty canvas: greeting, starters and Continue come from AnaRail's empty state (Shell.tsx:903-932, 1023-1031)."
+   },
+   {
+    "what": "Project home's 'AnA \u00b7 co-author' composer card (C2)",
+    "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx:883-937 (ConversationComposer, mounted :1588)",
+    "replacement": "The AnA column, scoped to the open project (readShellProjectId)."
+   },
+   {
+    "what": "Project home's conversation list (C3)",
+    "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx:965-1027",
+    "replacement": "client/src/concept2cure/v2/AnaConversationPicker.tsx (the same component, moved) in the AnA column header, reading the same GET /api/chat/threads. Resume loads the thread in place."
+   },
+   {
+    "what": "Template library's inline ask box (C4) and 'Ask AnA to apply this'",
+    "file": "client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx:713-725, 737-739",
+    "replacement": "'New document from this template', which creates an authoring document in the open project and opens it in the canvas. The selected template is the column's surface context."
+   },
+   {
+    "what": "The rail output card's 'Open in conversation' hand-off and its thumbnail file card",
+    "file": "client/src/concept2cure/v2/Shell.tsx:604-620, 1097-1105; AnaOutputs.tsx:66-103 (rail use)",
+    "replacement": "The DocumentCanvas card rendered by AnaTurn.tsx in the column. Its Open puts the document in the canvas."
+   },
+   {
+    "what": "The conversation side column's Artifacts list, its .docx button and the type-B .docx route",
+    "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx:454-490, 522-559, 728-763, 798-828, 1469-1476; server/routes/c2c/exports.ts:125-129",
+    "replacement": "Every generated draft becomes an authoring document at creation (server/routes/ana-ri/post-processing.ts through authoring-from-draft). It is then listed in the canvas switcher and Project \u203a Documents, and downloaded through GET /api/authoring/docs/:docId/working-copy."
+   },
+   {
+    "what": "The Explore, Science & intelligence and Quick access nav sections, and 'Tasking'",
+    "file": "client/src/concept2cure/v2/registryModel.ts:95-121; Shell.tsx:334-339",
+    "replacement": "Conversation \u2192 the AnA column. AnA Command and AnA memory \u2192 the column's menu (Runs & agents, Memory). Apps catalog \u2192 Settings \u203a Modules & licensing. Artifacts Center \u2192 a Vault filter. Recent Documents \u2192 Home 'Continue' and Project \u203a Documents. My Tasks and Tasking \u2192 'My work'. Science & intelligence has nothing reachable in production. Every surface stays in \u2318K, held by scripts/ci/check-surface-discoverability.mjs."
+   },
+   {
+    "what": "The two client-type selectors (rail Client categories and top-bar Client domain)",
+    "file": "client/src/concept2cure/v2/Shell.tsx:310-330, 479-505; registryModel.ts:314-323",
+    "replacement": "One selector in Settings \u203a Organisation (account menu), which saves the segment and does not jump to an out-of-scope default screen."
+   },
+   {
+    "what": "Top-bar and account-menu 'Get help', which navigate to the conversation page",
+    "file": "client/src/concept2cure/v2/Shell.tsx:547-555, 217",
+    "replacement": "Each focuses the AnA column's composer, opening the column if it is collapsed."
+   },
+   {
+    "what": "The TaskTray popover (a second task list in the top bar)",
+    "file": "client/src/concept2cure/v2/TaskTray.tsx; Shell.tsx:528, 544",
+    "replacement": "The 'My work' nav place and its count badge (same GET /api/task-management/my-work). 'Triage my day' is a starter prompt in the column."
+   },
+   {
+    "what": "The steer input in the Live Drive strip (A8) and in the run strip (A9)",
+    "file": "client/src/concept2cure/v2/LiveDriveOverlay.tsx:149-161; AnaWorkSections.tsx:538-553",
+    "replacement": "While a run streams, the column's one composer sends as 'Steer' (anaChat.interject). Stop and Pause stay on the strip."
+   },
+   {
+    "what": "Project home's seven stage tabs and their 'opens in its own workspace' or locked-tool panels",
+    "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1499-1585; fixtures/project-home-data.tsx:284-306",
+    "replacement": "Project tabs Overview \u00b7 Documents \u00b7 Review \u00b7 Record \u00b7 Submission, backed by ProjectRecords (PF-17), editor/ProjectFilesPanel.tsx (project vault) and project-scoped submissions."
+   },
+   {
+    "what": "Program journey, Dispatch readiness, Dossier map and Filings catalog as separate destinations",
+    "file": "client/src/concept2cure/v2/surfaceViews.ts:529 (program-journey), :450 (dispatch-readiness), :465 (dossier-map), :475 (filings-catalog)",
+    "replacement": "Overview \u203a Path; the Validate step of a sequence (DispatchReadiness reused as the step body); the Project \u203a Documents dossier view; the New submission picker. Surface ids stay as deep-link aliases and module ids stay as licence keys. Declared contextual in check-surface-discoverability.mjs."
+   },
+   {
+    "what": "Signing hand-offs that land without the document",
+    "file": "client/src/concept2cure/v2/surfaces/Review.tsx:818; editor/ReviewTasksPanel.tsx:303-310",
+    "replacement": "The Review app's Sign opens the document by docId. A review task is signed in place in the document's Review panel through EsignModal."
+   },
+   {
+    "what": "Buttons that type into the chat instead of doing their job, and messages sent automatically",
+    "file": "client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx:743; DispatchReadiness.tsx:646; TaskBoard.tsx:1098; LicensingSurface.tsx:104",
+    "replacement": "setEditorTarget and navigate; the governed dispatch flow in the sequence's Transmit step; no message; an access request (access-requests surface)."
+   },
+   {
+    "what": "Regulatory workspace's second right-hand column ('Intelligence') beside AnA",
+    "file": "client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx:766-773",
+    "replacement": "The Project canvas Overview, with the project context in the AnA column."
+   },
+   {
+    "what": "Insights' chat-shaped report builder, which looks like AnA but is a fixed matcher",
+    "file": "client/src/concept2cure/v2/surfaces/Insights.tsx:1279-1350",
+    "replacement": "A report picker over the same roRouteReply matcher (a list with filters, no chat bubbles or composer), so the one AnA is the only conversation on screen."
+   },
+   {
+    "what": "Quality's own top bar and tab bar inside the shell",
+    "file": "client/src/concept2cure/v2/surfaces/QualityModule.tsx:6-8",
+    "replacement": "The canvas header with Quality's tabs (SOPs, Change control, Quality plans)."
+   },
+   {
+    "what": "The ownsConversation union and the zero-width trailing AnA column",
+    "file": "client/src/concept2cure/v2/surfaceViews.ts (flag on :404, 410, 463, 470, 493, 557); V2App.tsx:1171-1176, 1254; styles/app-v2.css:1377-1379",
+    "replacement": "Every surface renders in the canvas beside the one column. client-portal keeps an explicit noAna flag, because external clients deliberately get no AnA."
+   }
+  ],
+  "slices": [
+   {
+    "title": "1. Record the decision and ratchet the AnA count [beta]",
+    "change": "Write docs/design/ONE_ANA_ONE_CANVAS.md. It records:\n- this design;\n- the founder's 2026-10-07 direction and his delegation to the CPO;\n- what it supersedes (the inline canvas and the 'Edit in Authoring' hand-off in ANA_DOCUMENT_CANVAS.md; parity \u00a76.1 and \u00a79.1; the 2026-07-28 revert);\n- that it answers WO-9 and convergence E2.\n\nClaim one board row under D2, naming the evidence folder docs/evidence/D2-ONE-ANA/.\n\nIn tests/ui/one-shell.test.ts, make the useAnaChat ALLOWED set shrink-only (5 today). Add a second shrink-only list naming every AnA composer site (A1, B1\u2013B4, C1, C2, C4, A8, A9), so neither list can grow.",
+    "files": "docs/design/ONE_ANA_ONE_CANVAS.md (new); docs/work-orders/README.md (own row only); tests/ui/one-shell.test.ts",
+    "proof": "Add a sixth useAnaChat( caller and a new textarea that calls onAsk in a scratch file under client/src/concept2cure. The test fails and names both. Remove them and it passes. Both runs are captured in docs/evidence/D2-ONE-ANA/<date>/s1/.",
+    "size": "S",
+    "collidesWith": "None. one-shell.test.ts is unclaimed, and the board edit is this lane's own row."
+   },
+   {
+    "title": "2. The AnA column moves to the left of the work, at 1101px and wider [beta]",
+    "change": "- The shell grid becomes nav | AnA | work: .ana takes grid-column 2 and .main takes 3.\n- DOM order becomes Rail \u2192 AnaRail \u2192 main, so tab order matches what is seen. 'Skip to AnA' joins 'Skip to content'.\n- New profiles default to anaOpen:true (V2App.tsx:179); a saved preference wins.\n- The collapsed seam (40px) sits in the same place.\n- The nav auto-collapses to 56px when nav + 400 + 720 is wider than the window, unless the person pinned it.\n- At 1100px and narrower nothing changes yet.",
+    "files": "client/src/concept2cure/v2/V2App.tsx (render order :1220-1312, default :179); client/src/concept2cure/v2/styles/app-v2.css (the shell-grid block :1306-1379 only); tests/e2e/launch-surface-keyboard.e2e.spec.ts (focus order)",
+    "proof": "New tests/e2e/one-ana-layout.e2e.spec.ts at 1440\u00d7900 and 1280\u00d7800 on projects, project-home, vault and submission-center. It asserts three things: the AnA column's right edge is at or left of the work column's left edge; the composer is fully inside the viewport; scrollWidth is no wider than innerWidth. It fails on HEAD, where AnA is the third column, and passes after.",
+    "size": "M",
+    "collidesWith": "app-v2.css is named by row 81 (019ZvHmh, run-policy rules) and row 97 (01TTTQ1h, chip rules). This slice edits only the shell-grid block, which neither row names. V2App.tsx is unclaimed. Post the line range on the board before pushing."
+   },
+   {
+    "title": "3. One turn renderer: the column shows what the conversation page shows [beta]",
+    "change": "Move ConversationThread's per-turn rendering, unchanged, into client/src/concept2cure/v2/AnaTurn.tsx. It covers the answer, AnaActivity, the DocumentCanvas card, the insert-as-tracked-suggestion offer, GovernedActionSignoff and Grounded in.\n- ConversationThread imports it back.\n- AnaRail renders turns through it, instead of adaptChatMessage plus file cards.\n- In the column, the card's Open uses the existing editor hand-off (DocumentCanvas.tsx:365-376).\n- The rail's 'Open in conversation' (Shell.tsx:604-620, 1097-1105) is deleted.",
+    "files": "surfaces/ConversationThread.tsx (move out, import back); v2/AnaTurn.tsx (new); Shell.tsx (AnaRail transcript block :1040-1110 and :604-620); V2App.tsx (:1112 adapter); AnaOutputs.tsx",
+    "proof": "New __tests__/anaRailDocumentCard.test.tsx: a rail turn whose draft carries authoringDocId renders the DocumentCanvas card with Open and no 'Open in conversation'. It fails on HEAD.\n\nThe move is shown to change nothing because these stay unchanged and green: conversationThread*.test.tsx, documentCanvas*.test.tsx, conversationThreadSignoff.test.tsx and ci:canvas-path.",
+    "size": "M",
+    "collidesWith": "ConversationThread.tsx is held by:\n- rows 49 and 50 (01Wcyqbq: card wiring; the propose_section_edit card in row 50 step 5 is still open);\n- row 81 (019ZvHmh);\n- row 97 (01TTTQ1h: Grounded in).\n\nShell.tsx is held by row 81.\n\nLand only after those rows acknowledge on the board, as one mechanical move with no logic change, so their pending hunks re-apply to AnaTurn.tsx. If row 50 step (5) has not landed, its card is created directly in AnaTurn.tsx."
+   },
+   {
+    "title": "4. A document opens in the canvas beside AnA; the editor's own AnA is deleted [beta]",
+    "change": "- The card's Open, Vault 'Open in editor' and Project \u203a Documents rows all call setEditorTarget({docId, returnTo}) and navigate to document-authoring.\n- ownsConversation is dropped from 'document-authoring' (surfaceViews.ts:463), and DocumentAuthoring passes onAsk into DocumentWorkbench.\n- Delete the workbench's useAnaChat (:1419-1430), its AnA pane (:4533-4777) and its toolbar toggle (:3702-3711).\n- 'Draft with AnA', 'Draft this section' and 'Suggest a source' now reach the column, with the section named per turn.\n- The nav auto-collapses while a document is open below 1600px.\n- The commit message names the replacement (the AnaRail column via onAsk) and the gates that prove it is reachable.",
+    "files": "surfaceViews.ts; surfaces/DocumentAuthoring.tsx; editor/DocumentWorkbench.tsx (three deletions only); editor/DocumentCanvas.tsx (one Open handler); tests/ui/one-shell.test.ts (ALLOWED loses DocumentWorkbench)",
+    "proof": "- one-shell.test with DocumentWorkbench removed from ALLOWED fails on HEAD and passes after.\n- documentAuthoringEditor.test.tsx: 'Draft with AnA' calls the shell's onAsk and makes no second send. It fails on HEAD.\n- one-ana-layout.e2e at 1440 and 1280: open Module 2.5 from the column. The column and the editor are both visible, an ask from the editor appears in the column, and there is no horizontal overflow with Comments open.",
+    "size": "M",
+    "collidesWith": "DocumentWorkbench.tsx is held by row 83 (01TTTQ1h, editor-family review) and row 50 step (2) (01Wcyqbq, EditorBridge). The three deletions are in the AnA-pane blocks, which neither row edits; claim those ranges on the board first. DocumentCanvas.tsx (row 49) gets one handler only."
+   },
+   {
+    "title": "5. Home is the conversation with an empty canvas [beta]",
+    "change": "- Home sets data-canvas=\"empty\": the work column collapses and the AnA column fills to a 720px centred measure.\n- Home's greeting, segment starters and 'Continue' (recent projects and documents) become the column's empty state.\n- Delete Home's centre composer (Surfaces.tsx:264-402) and its C2C_CONVO seed (:211-214).",
+    "files": "surfaces/Surfaces.tsx (Home); V2App.tsx (home body :1081, data-canvas attribute); Shell.tsx (AnaRail empty state :903-932, 1023-1031); app-v2.css (shell block)",
+    "proof": "- New __tests__/homeOneComposer.test.tsx: Home renders no composer of its own and the shell renders exactly one. It fails on HEAD, where there are two.\n- Playwright at 1440: one AnA message box on Home, and sending answers in place with no navigation. It fails on HEAD, which navigates to conversation-thread.",
+    "size": "S",
+    "collidesWith": "Shell.tsx empty-state block: row 81 edits run-policy parts, not the welcome; note it on the board. Surfaces.tsx is unclaimed."
+   },
+   {
+    "title": "6. The conversation page becomes the column; ci:canvas-path is re-pinned in the same commit [beta]",
+    "change": "- 'conversation-thread' drops ownsConversation. Its route loads ?c=<threadId> into the shell chat and sets data-canvas=\"empty\"; the URL is kept.\n- Cards open documents into the canvas (slice 4), not into ConversationThread's portal.\n- In the same commit, amend scripts/ci/check-canvas-path.mjs and its selftest:\n  - thread-mounts-canvas becomes column-renders-card (AnaTurn renders DocumentCanvas);\n  - canvas-mounts-workbench becomes card-opens-editor (DocumentCanvas sets the editor target and navigates to document-authoring);\n  - the other five links are unchanged.\n- Add a dated amendment note to docs/design/ANA_DOCUMENT_CANVAS.md.",
+    "files": "surfaceViews.ts (:410); surfaces/ConversationThread.tsx (route body); editor/DocumentCanvas.tsx; scripts/ci/check-canvas-path.mjs; scripts/ci/check-canvas-path.selftest.mjs; docs/design/ANA_DOCUMENT_CANVAS.md",
+    "proof": "- ci:canvas-path:selftest builds a tree with card-opens-editor cut, and the gate fails.\n- conversationThreadCanvas.test.tsx is rewritten to assert that Open puts the document in the work column. It fails on HEAD, where Open portals into the pane.\n- Playwright: resume a thread from the column's picker, open its document, and see both at 1440.",
+    "size": "M",
+    "collidesWith": "These are row 49's files (01Wcyqbq: DocumentCanvas, the canvas wiring in ConversationThread, the .ct-* rules). Every step listed on that row has landed. Do this as that lane's next step, or after the founder releases the row; never in parallel with it."
+   },
+   {
+    "title": "7. Delete the conversation page's duplicate machinery [beta]",
+    "change": "Delete, now that the column replaces them:\n- ConversationThread's own transcript, composer, private useAnaChat fallback (:888) and ct-canvas-pane (:1435);\n- DocumentCanvas's portal mode (:597-631);\n- V2App's startShellConversation, window.C2C_CONVO and convoEpoch (:1015-1033, :1068-1070), and the ownsConversation branch in ask().\n\nAfter this, every ask sends into the column.",
+    "files": "surfaces/ConversationThread.tsx; editor/DocumentCanvas.tsx; V2App.tsx; tests/ui/one-shell.test.ts (ALLOWED loses ConversationThread); tests/ci/no-ghost-globals contract (C2C_CONVO entry removed)",
+    "proof": "- one-shell ALLOWED = {V2App, EctdCoauthor, Rbm} fails on HEAD.\n- ci:canvas-path stays green.\n- No reader or writer of C2C_CONVO remains, so the ghost-global contract test fails if one is reintroduced.",
+    "size": "S",
+    "collidesWith": "Same as slice 6 (row 49). It follows slice 6 in the same lane."
+   },
+   {
+    "title": "8. Project page: no composer; conversations live in the column [beta]",
+    "change": "- Delete ProjectHome's ConversationComposer (:883-937).\n- Move the conversation list (:965-1027) unchanged into v2/AnaConversationPicker.tsx, mounted in the AnA column header. It is filtered to the open project and has 'New conversation'. Resume loads the thread in place instead of navigating.",
+    "files": "surfaces/ProjectHome.tsx; v2/AnaConversationPicker.tsx (moved); Shell.tsx (AnaRail header only); __tests__/projectHomeConversations.test.tsx \u2192 anaConversationPicker.test.tsx",
+    "proof": "- A ProjectHome test asserting no composer on the page fails on HEAD.\n- Picker test: Resume calls loadThread and does not navigate. It fails on HEAD, which navigates to conversation-thread.",
+    "size": "S",
+    "collidesWith": "Shell.tsx header block (row 81 holds run-policy parts); announce it. ProjectHome.tsx is unclaimed."
+   },
+   {
+    "title": "9. Project tabs follow the workflow: Overview \u00b7 Documents [beta]",
+    "change": "Replace the seven stage tabs (ProjectHome.tsx:1499-1585; PJ_LIFECYCLE and PJ_STAGE_TOOLS in fixtures/project-home-data.tsx:284-306) with five tabs: Overview \u00b7 Documents \u00b7 Review \u00b7 Record \u00b7 Submission.\n- **Overview:** Next step from the readiness engine, the schedule (SchedulePanel), the team, and the Path (replacing Program journey).\n- **Documents:** ProjectRecords' authoringDocuments with a status chip and a 'Built by AnA' filter. Each row opens in the canvas by docId. 'New document' offers blank or from a template.\n- **Review, Record, Submission:** an honest 'next slice' line until slices 10, 13 and 14 fill them.",
+    "files": "surfaces/ProjectHome.tsx; fixtures/project-home-data.tsx; surfaces/ProjectRecords.tsx (row click only); __tests__/projectHomeStageTracker.test.tsx",
+    "proof": "- projectHomeStageTracker test: five tabs, and no panel containing 'opens in its own workspace' or a locked tool. It fails on HEAD.\n- Clicking a Documents row sets an editor target carrying docId. It fails on HEAD, where Recent drafts open Authoring with no document (ProjectHome.tsx:1193).",
+    "size": "M",
+    "collidesWith": "Unclaimed. Use row 70's navParams (01JNRgCK) for deep links and do not edit them."
+   },
+   {
+    "title": "10. Project \u203a Record is the project vault, in place [beta]",
+    "change": "Mount editor/ProjectFilesPanel.tsx, unchanged, in Project \u203a Record. It already reads GET /api/c2c/project-vault/:programId and its search. A vault document opens in the canvas read-only, with its versions and lineage. Delete the 'opens in its own workspace' empty state (ProjectHome.tsx:1527-1537).",
+    "files": "surfaces/ProjectHome.tsx; __tests__/projectHomeRecord.test.tsx (new)",
+    "proof": "projectHomeRecord test: Record lists folders from a mocked project-vault route. It fails on HEAD, which shows the empty state.",
+    "size": "S",
+    "collidesWith": "ProjectFilesPanel.tsx sits in the editor directory but no active row names it; it is reused, not edited."
+   },
+   {
+    "title": "11. The document's lifecycle strip [beta]",
+    "change": "One strip in the document header: Draft \u2192 In review \u2192 Approved \u2192 Filed \u2192 In submission. The next governed action is the only primary button. The strip composes existing components:\n- Request review: AssignReviewDialog.\n- Approve & sign, and Freeze: AuthoringFilingBar, through the one EsignModal ceremony.\n- File to record: FileToVaultDialog.\n- Place into submission: AuthoringPlaceIntoFiling.\n\n'Export for filing' sits after Approved and, while disabled, states why.",
+    "files": "editor/DocumentLifecycleStrip.tsx (new composition); editor/DocumentWorkbench.tsx (header mount line only); __tests__/documentLifecycleStrip.test.tsx",
+    "proof": "- documentLifecycleStrip test, which fails on HEAD because there is no strip:\n  - DRAFT: primary 'Request review', export disabled with the reason text;\n  - APPROVED: primary 'File to record';\n  - FILED: primary 'Place into submission'.\n- The existing EsignModal, freeze and file-to-vault tests stay green, so every action still opens its ceremony and writes its audit row.",
+    "size": "S",
+    "collidesWith": "DocumentWorkbench header (row 83): one mount line. AuthoringPlaceIntoFiling.tsx (row 40, 01TtwRHm) is composed, not edited."
+   },
+   {
+    "title": "12. Download working copy, kept separate from the controlled export [beta]",
+    "change": "Add GET /api/authoring/docs/:docId/working-copy?format=docx|pdf, using the controlled export's renderer in a working-copy mode:\n- every page carries the header and footer 'WORKING COPY \u2014 NOT A CONTROLLED RECORD \u00b7 doc id \u00b7 version \u00b7 status \u00b7 downloaded <UTC> by <user>';\n- the filename carries _WORKING-COPY_v<n>;\n- there is no signature manifest and no authoring_export_history row;\n- it writes one audit event, authoring.working_copy.downloaded, with the byte SHA-256.\n\nThe controlled export route (authoring.router.ts:5816-5840) is unchanged. The canvas menu gains 'Download working copy'. The design doc records the Part 11 rationale.",
+    "files": "server/routes/authoring-working-copy.ts (new; mounted with one line in authoring.router.ts); the authoring export renderer (mode flag); canvas header menu; server/routes/__tests__/authoringWorkingCopy.test.ts",
+    "proof": "The route test fails on HEAD, where the route returns 404. It asserts:\n- a draft returns 200, the header XML contains the watermark, there is an audit row with the hash, and there is no export-history row;\n- the controlled export of the same draft still returns 409 (the regression is held).",
+    "size": "M",
+    "collidesWith": "authoring.router.ts registration lines: row 50's held windows have passed, and this adds one mount line. The renderer is unclaimed."
+   },
+   {
+    "title": "13. Submission inside the project; readiness inside the sequence [beta]",
+    "change": "- SubmissionCenter reads the shell project (SubmissionCenter.tsx:358-361, 497-526) instead of asking for the programme again.\n- Project \u203a Submission lists the project's sequences (ProjectRecords submissions), each with the readiness verdict from the dispatch-readiness endpoint (DispatchReadiness.tsx:351).\n- A sequence opens in the canvas with four steps: Build \u00b7 Validate \u00b7 Publish \u00b7 Transmit.\n- 'dispatch-readiness' becomes a deep-link alias to Validate.\n- eCTD compile, Publishing and Gateway transmittals are linked as steps.\n- A finding's Fix opens its document and section.",
+    "files": "surfaces/SubmissionCenter.tsx; surfaces/SubmissionSeqWorkspaces.tsx; surfaces/ProjectHome.tsx (Submission tab); surfaceViews.ts (alias); scripts/ci/check-surface-discoverability.mjs (CONTEXTUAL entries with parent and reason)",
+    "proof": "- SubmissionCenter test with the shell project set: the programme is preselected and the list filtered. It fails on HEAD.\n- The discoverability gate fails on HEAD because dispatch-readiness has no inbound link, and passes after.",
+    "size": "M",
+    "collidesWith": "Row 40 (01TtwRHm: AuthoringPlaceIntoFiling, IndFormsPanel) is not touched. Row 70's navParams are consumed, not edited."
+   },
+   {
+    "title": "14. The canvas follows the build [beta]",
+    "change": "On artifact_draft carrying authoringDocId, the shell opens the document in the canvas if two things hold: the canvas is empty or shows a document from this conversation, and the workbench reports no unsaved edit. Otherwise the column shows 'Built <title> \u2014 Open'.\n\nWhile the turn runs, the document shows 'AnA is writing <section>' from the existing progress events. It is read-only during the turn, offers Stop, and re-reads at turn end.\n\nThe canvas header gains a switcher with two sections: 'This conversation' and 'All project documents'.",
+    "files": "V2App.tsx (event subscription); editor/DocumentCanvas.tsx or the DocumentAuthoring header (building banner, switcher); __tests__/canvasFollowsBuild.test.tsx",
+    "proof": "canvasFollowsBuild test with a fake stream:\n- empty canvas: the shell navigates to the document. This fails on HEAD.\n- an unsaved edit: no navigation, and the chip is shown.\n\nA real-browser check with the stand-in model harness (docs/evidence/ANA-AGENTS/2026-09-27/E2E-stand-in): ask for a draft on Home, and the document appears on the right without a click.",
+    "size": "M",
+    "collidesWith": "It reads useAnaChat events and does not change the hook. The hook belongs to row 61 (this session), row 81 and row 97."
+   },
+   {
+    "title": "15. Navigation lists places [beta]",
+    "change": "The rail becomes Home, Projects (with the open project as a child), My work, Vault, Submissions, Quality, Reporting, and Settings in the foot.\n\nDelete:\n- the Science & intelligence, Explore and Quick access sections;\n- Client categories (one selector moves to Settings \u203a Organisation);\n- the TaskTray popover (replaced by the My work badge).\n\n'Get help' focuses the composer. AnA memory and Runs move to the column's menu. In the same commit, edit the kit source, or retire registryModel.ts's GENERATED header.",
+    "files": "client/src/concept2cure/v2/registryModel.ts (:95-121, 314-323); Shell.tsx (Rail function :158-405, TopBar selector :479-505, Get help :547-555, :217); TaskTray.tsx; __tests__/railPlaces.test.ts (new); scripts/ci/check-surface-discoverability.mjs",
+    "proof": "railPlaces test fails on HEAD: Science & intelligence lists three out-of-scope screens, and Explore lists Conversation. It asserts:\n- the rail arrays equal the target;\n- there is no AnA-badged entry;\n- no entry targets an out-of-scope surface.\n\nThe discoverability gate requires every launch surface to be a place or CONTEXTUAL with a parent. \u2318K still finds each one.",
+    "size": "M",
+    "collidesWith": "Shell.tsx is held by row 81 (019ZvHmh) for run policy. This edits the separate Rail and TopBar functions; announce the ranges. registryModel.ts is unclaimed but generated from the kit."
+   },
+   {
+    "title": "16. Narrow widths: one pane at a time, one composer [beta]",
+    "change": "At 1100px and narrower:\n- the top bar shows the switch AnA \u00b7 Canvas;\n- the AnA pane has three states (full, peek, hidden), and the one composer is on screen in the peek bar;\n- opening an item shows the canvas;\n- the editor's 'Back to conversation' (authoring-v2.css:1631-1634) is folded into the switch.\n\nThe drawer at 640px and narrower is kept.",
+    "files": "app-v2.css (shell block); styles/authoring-v2.css (.ct-* narrow rules); Shell.tsx (TopBar switch); tests/e2e/one-ana-layout.e2e.spec.ts",
+    "proof": "Playwright at 1024\u00d7768, 768\u00d71024 and 390\u00d7844 on Home, project-home and an open document. It asserts:\n- exactly one AnA composer in the DOM, visible in both states;\n- no horizontal scroll;\n- focus order nav \u2192 switch \u2192 pane.\n\nIt fails on HEAD at 1024 on document-authoring, where the composer is off screen while the editor is open.",
+    "size": "M",
+    "collidesWith": "The .ct-* narrow rules in authoring-v2.css belong to row 49 (01Wcyqbq); this follows slice 7 in that lane's sequence. The app-v2.css shell block is as in slice 2."
+   },
+   {
+    "title": "17. Review and sign-off happen on the document",
+    "change": "- ReviewTasksPanel signs a task in place through EsignModal, instead of sending the reviewer to the task board (:303-310).\n- Review.tsx's 'Sign in the authoring workspace' (:818) opens that document by docId.\n- Project \u203a Review lists this project's review requests and signatures once tasks resolve by program id. Until then it says so in one line and links to My work.",
+    "files": "editor/ReviewTasksPanel.tsx; surfaces/Review.tsx; surfaces/ProjectHome.tsx (Review tab)",
+    "proof": "- ReviewTasksPanel test: a task that needs a signature opens EsignModal in place. It fails on HEAD, which navigates to task-board.\n- Review test: Sign carries docId. It fails on HEAD.",
+    "size": "M",
+    "collidesWith": "Row 70 (open-the-item) owns navigation params; consume them. DocumentWorkbench is not touched. The program-id \u2194 integer project-id resolution is the PF data lane's dependency."
+   },
+   {
+    "title": "18. Every AnA draft is an authoring document",
+    "change": "When a project is open, post-processing creates the authoring document through authoring-from-draft (provenance ana, split at headings) instead of a concept2cure_artifacts row. With no project open, the card offers 'Save to a project'.\n\nDelete:\n- ConversationThread's ArtifactPanel, which remains in AnaTurn only if anything still feeds it;\n- the .docx button (:522-559, 728-763);\n- the type-B .docx route (server/routes/c2c/exports.ts:125-129).\n\nThese are replaced by the canvas switcher and slice 12's working copy.",
+    "files": "server/routes/ana-ri/post-processing.ts; server/routes/c2c/exports.ts; client ArtifactPanel; server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts",
+    "proof": "Draft-persistence test: a generated briefing book with a project open creates an authoring document and no artifact row. It fails on HEAD. conversationArtifactPanel.test.tsx is deleted, and the commit names its replacement test.",
+    "size": "M",
+    "collidesWith": "Before touching post-processing.ts, check rows 38, 96 and 127 (server-only AnA lanes)."
+   },
+   {
+    "title": "19. Reload restores every document a conversation built",
+    "change": "First reproduce the defect inferred in the canvas report (\u00a75): a draft that cites project sources pushes authoringDocId past the 180-character trace cut, so its card does not come back after a reload. If it reproduces, persist authoringDocId as a structured field of the turn's outputs and restore from that field.",
+    "files": "server/services/ana/tool-trace.ts; client/src/concept2cure/components/ana/useAnaChat.ts (restore :389-396)",
+    "proof": "A test reloads a conversation whose draft cited three or more sources and expects the card and the switcher entry to come back. It must fail on HEAD. If it does not fail, the slice closes as 'not reproduced', with the evidence filed.",
+    "size": "S",
+    "collidesWith": "tool-trace.ts is row 61 (this session). useAnaChat restore is shared with row 81 and row 97; the restore function only."
+   },
+   {
+    "title": "20. Buttons do their job; AnA gets context, not keystrokes",
+    "change": "Applied in several commits, one group of surfaces per commit.\n\n(a) Job buttons do the job:\n- BiopharmaProject :743 \u2192 editor target;\n- DispatchReadiness :646 \u2192 governed dispatch;\n- TaskBoard :1098 automatic message \u2192 deleted;\n- LicensingSurface :104 \u2192 access request;\n- TemplateLibrary :713-739 \u2192 'New document from this template'.\n\n(b) Generic 'Ask AnA' buttons are deleted where the column already names the selection.\n\n(c) Explain, Triage and Fix buttons send one prompt with a typed reference.\n\nAdd a shrink-only count of onAsk( call sites under v2/surfaces.",
+    "files": "surfaces/BiopharmaProject.tsx, DispatchReadiness.tsx, TaskBoard.tsx, LicensingSurface.tsx, TemplateLibrary.tsx, Vault.tsx, Projects.tsx, Review.tsx, DossierMap.tsx, FilingsCatalog.tsx, quality/App.tsx; tests/ui/one-shell.test.ts (ratchet)",
+    "proof": "- A per-button test asserts that onAsk is not called and that the route or navigation is. Each fails on HEAD.\n- The ratchet fails when a call site is added.",
+    "size": "M",
+    "collidesWith": "TaskBoard and Vault: row 70 touches navigation params only. The rest are unclaimed."
+   },
+   {
+    "title": "21. eCTD co-author on the one conversation",
+    "change": "Delete EctdCoauthor's useAnaChat (:335-343), its middle pane (:794-923) and its pane routing (:1072-1074). The document takes the canvas, asks go through onAsk, and ownsConversation is dropped (surfaceViews.ts:470).",
+    "files": "surfaces/EctdCoauthor.tsx; styles/ectd-v2.css; surfaceViews.ts; tests/ui/one-shell.test.ts",
+    "proof": "- one-shell ALLOWED = {V2App, Rbm} fails on HEAD.\n- An EctdCoauthor test shows that an ask reaches the shell's onAsk.",
+    "size": "S",
+    "collidesWith": "Unclaimed."
+   },
+   {
+    "title": "22. One composer steers",
+    "change": "While a run streams, the column's composer sends as 'Steer' (interject). Delete the run strip's input (AnaWorkSections.tsx:538-553) and the Live Drive steer box (LiveDriveOverlay.tsx:149-161). Stop and Pause stay.",
+    "files": "Shell.tsx (composer send), AnaWorkSections.tsx, LiveDriveOverlay.tsx",
+    "proof": "- A composer-during-stream test calls interject. It fails on HEAD.\n- The composer ratchet from slice 1 falls by two.\n- liveDriveShell.test.tsx stays green.",
+    "size": "S",
+    "collidesWith": "AnaWorkSections.tsx is row 61 (this session). Agree held-run wording with row 81 (019ZvHmh, Manual/Auto)."
+   },
+   {
+    "title": "23. Quality and Reporting are canvas pages",
+    "change": "QualityModule's own top bar and tab bar (:6-8) become the canvas header. Insights' chat-shaped report builder (:1279-1350) becomes a list and filter over the same roRouteReply matcher.",
+    "files": "surfaces/QualityModule.tsx; quality/App.tsx; surfaces/Insights.tsx; styles/insights-v2.css",
+    "proof": "- one-shell test 'no surface draws its own top bar' fails on HEAD for quality.\n- An Insights test asserting the report builder has no chat log or composer fails on HEAD.",
+    "size": "S",
+    "collidesWith": "Unclaimed."
+   },
+   {
+    "title": "24. RBM last: one conversation in code",
+    "change": "Delete Rbm's useAnaChat (:160) and RbmAnaDock (RbmSurfaces.tsx:363-424). Delete the ownsConversation union and the data-editor zero-width rule (app-v2.css:1377-1379). client-portal keeps an explicit noAna flag.",
+    "files": "surfaces/Rbm.tsx, RbmSurfaces.tsx; surfaceViews.ts; V2App.tsx; app-v2.css; tests/ui/one-shell.test.ts",
+    "proof": "The ALLOWED ceiling of 1 (V2App.tsx) fails on HEAD. Type-check proves no surface still declares OwnedSurfaceViewProps.",
+    "size": "S",
+    "collidesWith": "Unclaimed. RBM is outside the launch scope, which is why it runs last."
+   },
+   {
+    "title": "25. Walk the client's path end to end",
+    "change": "Extend tests/e2e/biotech-founder-path.e2e.spec.ts so it walks the whole path inside the project, with AnA always in the column:\n- Home \u2192 project \u2192 AnA drafts \u2192 edit \u2192 request review;\n- second user: sign;\n- file to record \u2192 place into sequence \u2192 Validate \u2192 Transmit (stand-in transport).\n\nIt counts navigations that leave the project.",
+    "files": "tests/e2e/biotech-founder-path.e2e.spec.ts; docs/evidence/D2-ONE-ANA/<date>/walk/",
+    "proof": "On HEAD the walk fails at the first step that leaves the project (readiness). After the slices it passes with zero exits. Screenshots at 1440 and 1024 are filed as the D2 and D10 path evidence.",
+    "size": "S",
+    "collidesWith": "Row 40's IND path (01TtwRHm) uses the same seed. Read it, do not edit it."
+   }
+  ],
+  "risks": [
+   "**Lane collisions on the shared shell files.** ConversationThread.tsx is held by rows 49/50 (01Wcyqbq), 81 (019ZvHmh) and 97 (01TTTQ1h). Shell.tsx and app-v2.css are held by row 81, and DocumentWorkbench.tsx by rows 83 and 50.\n- A big-bang refactor would collide with all of them.\n- Mitigation: block-scoped edits announced on the board; slice 3 as a pure mechanical move; slices 6, 7 and 16 run inside row 49's own sequence or after the founder releases that row (every step listed on it has landed).\n- All work goes to concept2cure-v2 only, per Rule 0.",
+   "**The existing gates encode the opposite rule.** one-shell.test.ts treats per-screen docks as deliberate, and ci:canvas-path pins ConversationThread \u2192 DocumentCanvas \u2192 DocumentWorkbench. Each slice must amend the gate in the same commit, naming the new path, and show the amended gate failing on a cut link (the selftest). Deleting an assertion to get green is the failure CLAUDE.md warns about.",
+   "**The nav can be regenerated away.** registryModel.ts is 'GENERATED from the kit registry'. A regeneration would silently restore the rail of apps unless the kit source is edited or the generator retired in the same commit.",
+   "**Widths are tight below 1366px.** The editor needs 640px at minimum and 940px with Comments. With the column at 400px, that holds only with nav auto-collapse and the existing Comments overlay at 1500px or narrower. Verify in a real browser at 1280, 1366 and 1440, not from CSS arithmetic.",
+   "**The working copy is a judgement call under Part 11.** The risk is that someone files a working copy as if it were controlled. Mitigations:\n- a watermark on every page and a filename suffix;\n- an audit row with the hash;\n- no signature manifest;\n- the controlled export stays the only filing artifact, and its 409 is untouched.\n\nThe decision and rationale go in the design doc, and the validation package (D4: URS/OQ for export) needs a new test case.",
+   "**Section-by-section is not word-by-word.** 'Watch it being built' fills in at section level from saved records. The founder may expect Claude's word-by-word streaming. True token streaming of tool input depends on the gateway and on every approved model (multi-model governance), and is deferred. Say so plainly in the demo.",
+   "**The launch definition speaks in apps.** D2 reads 'Seven apps on by default', and module id = surface id = billing key. Module ids and the semantics of launch-scope.ts must stay as entitlement keys: a feature inside the workflow hides or locks when its module is off. D2 evidence screenshots need re-shooting.",
+   "**Project-scoped review and tasks are blocked by a key mismatch.** The task and readiness stores are keyed on an integer project id, not the program id. Until the PF data lane resolves that, the Review tab is honest but partial (slice 17).",
+   "**Live Drive depends on the old layout.** It relies on the rail and on the ownsConversation special cases (V2App.tsx:671-681, 810). Moving the column and retiring the flag can break driving. liveDriveShell.test.tsx and a real-browser drive must pass in every shell slice.",
+   "**Two editor families and three document stores remain.** Protocol development and the eCTD co-author keep their own editors, and coauthor_documents and concept2cure_artifacts still exist. The canvas hosts them, but zero duplication for editors is not yet met. Name it as later consolidation, not done.",
+   "**Old evidence and demos will look wrong.** Demo scripts (docs/evidence/DEMO/*) and earlier W1 evidence show the old layout, and the founder's own habits change. Re-record the demo after slice 16, and say in the evidence README which screenshots predate it.",
+   "**Rendering the full transcript everywhere may cost too much.** Long threads may need virtualisation. Measure on a 200-turn thread before slice 3 ships.",
+   "**Accessibility.** Focus order, landmarks and skip links change. launch-surface-keyboard.e2e must be updated and green, and the AnA \u00b7 Canvas switch must be a real tablist with its state announced.",
+   "**Rule 2 framing.** Every slice is filed under D2, with evidence under docs/evidence/D2-ONE-ANA/. No surface is added: My work is the existing tasks surface. The working-copy route stays inside Authoring. A session that cannot produce a slice's evidence reports blocked."
+  ]
+ }
+}

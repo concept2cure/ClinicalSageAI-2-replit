@@ -58,7 +58,10 @@ describe('Projects — summary over a successful empty read', () => {
     expect(document.querySelector('.pj-summary')?.textContent).not.toMatch(/\d+%/);
     // The counts over an empty set are real zeros and stay so.
     expect(figure(/active programs/i)).toBe('0');
-    expect(figure(/blocked/i)).toBe('0');
+    // No "Blocked" figure at all since 2026-10-08: nothing writes a blocked
+    // status or computes a blocker, so it could only state an unchecked 0
+    // (projectsHonestCounts.test.tsx).
+    expect(figure(/blocked/i)).toBeNull();
   });
 });
 
@@ -72,7 +75,6 @@ describe('Projects — a mixed portfolio still has a mean', () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program a1')).toBeTruthy());
 
-    expect(figure(/blocked/i)).toBe('1');
     // (40 + 20 + 90) / 3 = 50 — the mean still covers every program shown.
     expect(figure(/average readiness/i)).toBe('50%');
   });

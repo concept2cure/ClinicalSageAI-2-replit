@@ -1,0 +1,2078 @@
+{
+  "workstream": "W3",
+  "row": "D4",
+  "base": "5fa728ae446376ed24ed8892ea161b4e06fedeee",
+  "productionPaths": [
+    "scripts/release-evidence/assemble-input.mjs"
+  ],
+  "testPaths": [
+    "tests/release-evidence/assemble-input.test.mjs"
+  ],
+  "candidateSources": [
+    {
+      "path": "scripts/release-evidence/assemble-input.mjs",
+      "baseGitBlob": "5ceba1c440efe9893d9c58512cc01c43af00b673",
+      "candidateGitBlob": "f232fb87f84508fb09f0f86b6ab12d631f420b82"
+    },
+    {
+      "path": "tests/release-evidence/assemble-input.test.mjs",
+      "baseGitBlob": "8fe2244712122b9780808bfe4dc4783808ebc1e6",
+      "candidateGitBlob": "4a8cf3a0fa0959720cbe6dc296762bdaf3552032"
+    }
+  ],
+  "protectedGitObjects": [
+    {
+      "path": ".ai-instructions.md",
+      "kind": "blob",
+      "gitObject": "c4dcdcf094c7617a9ebd9cac2f6c4c8490f8cc55"
+    },
+    {
+      "path": ".claude",
+      "kind": "tree",
+      "gitObject": "09faa6e1a79ee9332e7a90a5975502ea62cba4ef"
+    },
+    {
+      "path": ".design",
+      "kind": "tree",
+      "gitObject": "68fd8662d718424c76e91959aa209a075b381208"
+    },
+    {
+      "path": ".devcontainer",
+      "kind": "tree",
+      "gitObject": "026356327d28d0131c76c1faacc7f92e03de2a19"
+    },
+    {
+      "path": ".dockerignore",
+      "kind": "blob",
+      "gitObject": "714d878ee1ef80f731af5c35b6864dfa05bcaeea"
+    },
+    {
+      "path": ".env.beta.example",
+      "kind": "blob",
+      "gitObject": "5297ccc75c0fe4052f1e5a2bdfded96bc2f666de"
+    },
+    {
+      "path": ".env.example",
+      "kind": "blob",
+      "gitObject": "327b9b05f4439b7e157a6d35d445aaa7200d4faf"
+    },
+    {
+      "path": ".gitattributes",
+      "kind": "blob",
+      "gitObject": "76df1eb113631dd702463cab6cbf3afc3790147d"
+    },
+    {
+      "path": ".gitguardian.yaml",
+      "kind": "blob",
+      "gitObject": "3f547e262ef94a28a6abf9aa26cf8aa5228168f9"
+    },
+    {
+      "path": ".github",
+      "kind": "tree",
+      "gitObject": "a633740a3d709c907eaa0d40c9c099e9bc3f35b2"
+    },
+    {
+      "path": ".gitignore",
+      "kind": "blob",
+      "gitObject": "927bc26826710a8176c5f98f5c140d846c1951f0"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "kind": "blob",
+      "gitObject": "73a7b0b59b71051eb914815a0c6533f810aa78cd"
+    },
+    {
+      "path": ".gitleaksignore",
+      "kind": "blob",
+      "gitObject": "44aff7c2168cdaeaad07d2208bc8bfe22499d9a5"
+    },
+    {
+      "path": ".husky",
+      "kind": "tree",
+      "gitObject": "b814c803a69df415692225799cd53fa14b59d05c"
+    },
+    {
+      "path": ".node-version",
+      "kind": "blob",
+      "gitObject": "2bd5a0a98a36cc08ada88b804d3be047e6aa5b8a"
+    },
+    {
+      "path": ".npmrc",
+      "kind": "blob",
+      "gitObject": "f9bd6bb2aa9ee639f9faeed85ed2dadc889e29fb"
+    },
+    {
+      "path": ".nvmrc",
+      "kind": "blob",
+      "gitObject": "2bd5a0a98a36cc08ada88b804d3be047e6aa5b8a"
+    },
+    {
+      "path": ".prettierignore",
+      "kind": "blob",
+      "gitObject": "b9f77e767c1b16ec67a0c10216289d424cb21c50"
+    },
+    {
+      "path": ".prettierrc",
+      "kind": "blob",
+      "gitObject": "49fb29b5838a88dd6d1f70ebcab12cf1a765a2d5"
+    },
+    {
+      "path": ".replit",
+      "kind": "blob",
+      "gitObject": "955eaaab917ac607e2c554e0eca1ec00cb5c6fff"
+    },
+    {
+      "path": ".storybook",
+      "kind": "tree",
+      "gitObject": "4956e56afc6e58dcef2d1268def4c76f09a311c3"
+    },
+    {
+      "path": ".trivyignore",
+      "kind": "blob",
+      "gitObject": "a9bdde3d8398414b784ab94d471dbcfbceba5ab5"
+    },
+    {
+      "path": ".typecheck-baseline.json",
+      "kind": "blob",
+      "gitObject": "2a3cec07f7828f6765bd25c28f5a90acec581657"
+    },
+    {
+      "path": ".vercelignore",
+      "kind": "blob",
+      "gitObject": "13711326d1adcfa336963a5718a3efb56d73e0cc"
+    },
+    {
+      "path": ".vscode",
+      "kind": "tree",
+      "gitObject": "849f7f4b79166f5955a6bf6a5d7abc5182443575"
+    },
+    {
+      "path": "AGENTS.md",
+      "kind": "blob",
+      "gitObject": "66c2c57d7b496a3e0234e5fc6a7dd394fc3b557e"
+    },
+    {
+      "path": "ANA_DOCUMENT_STUDIO_SPEC_2026-06-20.md",
+      "kind": "blob",
+      "gitObject": "8ac554c7ecc163fe66bd8e3ac2311c79d44c5770"
+    },
+    {
+      "path": "ANA_DOCUMENT_STUDIO_UI_SPEC_2026-06-22.md",
+      "kind": "blob",
+      "gitObject": "984673a7bed689735f2c4b38fd1095ac571a754b"
+    },
+    {
+      "path": "ANA_INTELLIGENCE_EXPANSION_MASTER_PLAN_2026-06-29.md",
+      "kind": "blob",
+      "gitObject": "ee1008c2b3d34b60534a9701d2935ade38a9ea83"
+    },
+    {
+      "path": "ARCHITECTURE-AI-ACTIONS.md",
+      "kind": "blob",
+      "gitObject": "defb3073ea5fe6a17271c51223b2cdcdb534e30d"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "kind": "blob",
+      "gitObject": "26f2999c584a0ff3ef5fe1c392743777f3805c93"
+    },
+    {
+      "path": "CLAUDE.md",
+      "kind": "blob",
+      "gitObject": "1d012461501c1bb07f9d48878f39402f06070209"
+    },
+    {
+      "path": "CLAUDE_CODE_SETUP.md",
+      "kind": "blob",
+      "gitObject": "7eaf0c499451305c8bc0ef1c2027871556d9e650"
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "kind": "blob",
+      "gitObject": "666250ac998c206f762c9681913c073e065de87f"
+    },
+    {
+      "path": "COLLABORATION_TASKING_UX_ASSESSMENT_2026-08-07.md",
+      "kind": "blob",
+      "gitObject": "96916daf0cef5285b61da0aa8731be342227a1b9"
+    },
+    {
+      "path": "DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md",
+      "kind": "blob",
+      "gitObject": "fd19ad6c544e0b3d0bd67da30bd374236bf5ba72"
+    },
+    {
+      "path": "DEVICE_IVD_SUBMISSION_ASSEMBLY_SPEC_2026-06-15.md",
+      "kind": "blob",
+      "gitObject": "1253837801b21335276f73a5e4bed4171e76574a"
+    },
+    {
+      "path": "Dockerfile.optimized",
+      "kind": "blob",
+      "gitObject": "165e2e56bce7ac9d1fd3413f243b57eee56e436c"
+    },
+    {
+      "path": "EVALIDATOR_INTEGRATION_SPEC.md",
+      "kind": "blob",
+      "gitObject": "8a849aad06f74c66364349e907cae2c96a5eecf1"
+    },
+    {
+      "path": "FEATURE_INVENTORY.md",
+      "kind": "blob",
+      "gitObject": "a0aff1afb9aa5f34f80d92f87384ba759b4b366e"
+    },
+    {
+      "path": "FORENSIC_CODE_AUDIT_2026-05-29.md",
+      "kind": "blob",
+      "gitObject": "8ed37e8e70dcf34439d0798cf9621e623532430f"
+    },
+    {
+      "path": "GA_GAP_AUDIT_2026-06-10.md",
+      "kind": "blob",
+      "gitObject": "86b123a7c496ea61ce40033d9787c3c0ebdd2c43"
+    },
+    {
+      "path": "GLOBAL_LANGUAGE_STRATEGY_2026-06-29.md",
+      "kind": "blob",
+      "gitObject": "b373e5daad1a6b0e3fd616b75d591984154691e4"
+    },
+    {
+      "path": "GLOBAL_SUBMISSION_READINESS_ASSESSMENT_2026-07-30.md",
+      "kind": "blob",
+      "gitObject": "35e90a423b2b0c4d6635531a79524da01595b61d"
+    },
+    {
+      "path": "GOVERNANCE_BINDING_CONTRACT.md",
+      "kind": "blob",
+      "gitObject": "edb6882016034b8ca4ce528d234f1e92005f9b5f"
+    },
+    {
+      "path": "HANDOFF.md",
+      "kind": "blob",
+      "gitObject": "d4cb42481352ece4d4a5ae1132b2c1dcea5f561d"
+    },
+    {
+      "path": "HANDOFF_TO_DESIGN_document_authoring.md",
+      "kind": "blob",
+      "gitObject": "0c7752ad6ecbc45db32e0060ad0292f6b44536a4"
+    },
+    {
+      "path": "HANDOFF_TO_DESIGN_global_ri.md",
+      "kind": "blob",
+      "gitObject": "1c270e5268a5de3d8824ff3f06b43e09c10365a6"
+    },
+    {
+      "path": "HANDOFF_TO_DESIGN_master_admin_business_center.md",
+      "kind": "blob",
+      "gitObject": "faace0f7ecd1cb6898551c8dad87473ac1d1cf45"
+    },
+    {
+      "path": "HI_8_ECTD_SCOPING_BRIEF.md",
+      "kind": "blob",
+      "gitObject": "7d23a511b90582e6950fd4766a97b7e7fbd0400a"
+    },
+    {
+      "path": "HUMAN_FACTORS_AND_USABILITY_SPEC_2026-06-15.md",
+      "kind": "blob",
+      "gitObject": "703af99d51f4ee26597f190ec841c95c87a43412"
+    },
+    {
+      "path": "IMPLEMENTATION_TASK_CHECKLISTS_2026-06-15.md",
+      "kind": "blob",
+      "gitObject": "dd6386b67c29f938d5eaf5f80c28131e55178ec6"
+    },
+    {
+      "path": "INSIGHTS_REPORTING_IMPLEMENTATION_SPEC.md",
+      "kind": "blob",
+      "gitObject": "92f91d592060c4631e6522f8df1fc0458647cbd1"
+    },
+    {
+      "path": "LICENSE",
+      "kind": "blob",
+      "gitObject": "3b5a52a493b2c186554db8185a0f29c983eb6bad"
+    },
+    {
+      "path": "LOCALAI_ONPREM_INFERENCE_PILOT_PLAN_2026-07-30.md",
+      "kind": "blob",
+      "gitObject": "e97c8e29b160f1faf78b6289158fec11ed3765d1"
+    },
+    {
+      "path": "MDX_PAYING_CUSTOMER_VALUE_AND_ENTITLEMENTS_2026-06-15.md",
+      "kind": "blob",
+      "gitObject": "d67577384851ce1a44833c4350a224347e2d2a5e"
+    },
+    {
+      "path": "Makefile",
+      "kind": "blob",
+      "gitObject": "f086fe3d0bbadaaa730bfe112c75c183692bf75c"
+    },
+    {
+      "path": "OSS_AI_TOOLING_FIT_ASSESSMENT_2026-07-30.md",
+      "kind": "blob",
+      "gitObject": "a735f68985dc77bfc5d8e8d1dd5c568fed611fd6"
+    },
+    {
+      "path": "PDEV_IND_DESIGN_BRIEF.md",
+      "kind": "blob",
+      "gitObject": "d2ec4b7b65d20c2c3cdc56f536a3c70bd9220326"
+    },
+    {
+      "path": "PDEV_IND_WORKFLOW_AUDIT.md",
+      "kind": "blob",
+      "gitObject": "0bebd206d7118269ed04a9fcf2aa5a906863df8f"
+    },
+    {
+      "path": "PHASE_10_2_INSTALL.md",
+      "kind": "blob",
+      "gitObject": "5df0859ae92fa4a78cbfc68004887616962d9adc"
+    },
+    {
+      "path": "PHASE_11_INSTALL.md",
+      "kind": "blob",
+      "gitObject": "86669f9c1a6e3385c9eb00ab756641a76facc07a"
+    },
+    {
+      "path": "PRODUCT_READINESS_ASSESSMENT.md",
+      "kind": "blob",
+      "gitObject": "b354506cdb55467534d35536a8efbbcae43020ba"
+    },
+    {
+      "path": "QUALITY_ASSURANCE_MODULE_GA.md",
+      "kind": "blob",
+      "gitObject": "c52559bce5bc64617d46654994fb49476cc0503e"
+    },
+    {
+      "path": "QUICKSTART.md",
+      "kind": "blob",
+      "gitObject": "0abaa4093eb182da8c732e94fa82c6835e67855f"
+    },
+    {
+      "path": "README.md",
+      "kind": "blob",
+      "gitObject": "a889ae0fdd140ae48dfaab46915c31af72f399e6"
+    },
+    {
+      "path": "RECONCILE.md",
+      "kind": "blob",
+      "gitObject": "e256dc3cde4a6364bc0a4ab99d3c120e7ac55d60"
+    },
+    {
+      "path": "REPORTING_INTELLIGENCE_AUDIT_AND_SPEC_2026-06-15.md",
+      "kind": "blob",
+      "gitObject": "fb924a9283c6ccd67305aff9f3fcec230c461dab"
+    },
+    {
+      "path": "SECURITY.md",
+      "kind": "blob",
+      "gitObject": "3b67911a7bb1d70d1f7ef54b66e0f42e81b22e19"
+    },
+    {
+      "path": "SKILL.md",
+      "kind": "blob",
+      "gitObject": "fe8aeb1d798c66e3a7f8ceabc6c8e388b5738102"
+    },
+    {
+      "path": "SUBMISSION_CENTER.http",
+      "kind": "blob",
+      "gitObject": "dd06d760a710d99e04bc676959c2f3dcbbc58e80"
+    },
+    {
+      "path": "SUBMISSION_CENTER.md",
+      "kind": "blob",
+      "gitObject": "7cf6e8d4c21cbddc1c8ba00542945b29e14d41c4"
+    },
+    {
+      "path": "SUBMISSION_CENTER_API.md",
+      "kind": "blob",
+      "gitObject": "7f12c53cbe2df8fbb0d125f376d1def6e134c25f"
+    },
+    {
+      "path": "VAULT_DATA_ROOM_ASSESSMENT_2026-09-05.md",
+      "kind": "blob",
+      "gitObject": "10fca86332b1622af44b91c6b03d99510678e69a"
+    },
+    {
+      "path": "VAULT_DOCUMENT_ARCHITECTURE_SPEC_2026-09-05.md",
+      "kind": "blob",
+      "gitObject": "6ec49267c4afd796207c53b3b00d23c9b529315e"
+    },
+    {
+      "path": "_sync",
+      "kind": "tree",
+      "gitObject": "f0a1e1946dbfb00f0df2263894b0731425d7a89c"
+    },
+    {
+      "path": "app.yaml",
+      "kind": "blob",
+      "gitObject": "75e0ca82391f0378f46c4798fe2f6a36497ad29e"
+    },
+    {
+      "path": "assets",
+      "kind": "tree",
+      "gitObject": "1ec751d6d86d0100ba0ef090dc777be78cd58f85"
+    },
+    {
+      "path": "charts",
+      "kind": "tree",
+      "gitObject": "3fa2a50008cb8ba6fde6cf16eead5a2f8f692975"
+    },
+    {
+      "path": "client",
+      "kind": "tree",
+      "gitObject": "5d9443b9f4c68f1a13ad5f5a098b46883d0f9755"
+    },
+    {
+      "path": "config",
+      "kind": "tree",
+      "gitObject": "44d0945969da510a6dc1c4156d405642a09e1fc1"
+    },
+    {
+      "path": "csrs",
+      "kind": "tree",
+      "gitObject": "15d69cb3c8d4a35ce7834407ee08bcd2e13b209f"
+    },
+    {
+      "path": "dangerfile.js",
+      "kind": "blob",
+      "gitObject": "eebe41ddb8ada6abd5f63e24842e9a67651e0cc2"
+    },
+    {
+      "path": "data",
+      "kind": "tree",
+      "gitObject": "956b3ea9799e5734a2d18e827c4a7135eaf5de4c"
+    },
+    {
+      "path": "database",
+      "kind": "tree",
+      "gitObject": "7c93170ca81198d6d7ad9534d9752f28f28539cb"
+    },
+    {
+      "path": "db",
+      "kind": "tree",
+      "gitObject": "3cf0b2c4aff29ac4fc74977200ceef404890a6b0"
+    },
+    {
+      "path": "deploy",
+      "kind": "tree",
+      "gitObject": "6629a239adde9ff0cadc55083126f7e0c229f142"
+    },
+    {
+      "path": "design-system-bundle.tgz.bin",
+      "kind": "blob",
+      "gitObject": "f4de3b228ab800fbfc0c1d7fd674eb0fe2e37134"
+    },
+    {
+      "path": "design-system",
+      "kind": "tree",
+      "gitObject": "a091679ec8c5b53e5d17c9680d924729af3eb9de"
+    },
+    {
+      "path": "dev_ops",
+      "kind": "tree",
+      "gitObject": "e80dcb8f43b7a491cf674a309e1f7e6556450ef6"
+    },
+    {
+      "path": "docker-compose.beta.yml",
+      "kind": "blob",
+      "gitObject": "3d623d52dc950dee020306ad74de7a211d9ae5fc"
+    },
+    {
+      "path": "docker-compose.staging.yml",
+      "kind": "blob",
+      "gitObject": "8019b8539936ad5ee4d6a7292f5e2e7d0ac6e516"
+    },
+    {
+      "path": "docker-compose.yml",
+      "kind": "blob",
+      "gitObject": "be93e14c134ed625c967dbaecc355e2969c71ec0"
+    },
+    {
+      "path": "drizzle.config.ts",
+      "kind": "blob",
+      "gitObject": "8a295b1608fc130a45022ee456e12956611a7a67"
+    },
+    {
+      "path": "ectd-stubs",
+      "kind": "tree",
+      "gitObject": "9429e5ce897383d4535700351f8ec9d8b5158d0c"
+    },
+    {
+      "path": "eslint.config.js",
+      "kind": "blob",
+      "gitObject": "628363801e916254c6fa7acc4ca5f94da28af82b"
+    },
+    {
+      "path": "global-ri.openapi.json",
+      "kind": "blob",
+      "gitObject": "79c3395d38a98d2aaf981ec4104a6f3de929d58d"
+    },
+    {
+      "path": "helm",
+      "kind": "tree",
+      "gitObject": "6b65172c5fb6c71baf85fcf4d9ec609ce5295d4f"
+    },
+    {
+      "path": "infra",
+      "kind": "tree",
+      "gitObject": "be965e31441383e72a482d4450583999f6d29db9"
+    },
+    {
+      "path": "ingestion",
+      "kind": "tree",
+      "gitObject": "003c362220c9a8cc2f444640e7e68f74c356e614"
+    },
+    {
+      "path": "init-scripts",
+      "kind": "tree",
+      "gitObject": "c727f2840d71b1e2068d1756f512294155b34fd6"
+    },
+    {
+      "path": "init-sql",
+      "kind": "tree",
+      "gitObject": "b83c97227af7a2dddc29d13cfc855d07b57319f9"
+    },
+    {
+      "path": "ivd-platform.openapi.json",
+      "kind": "blob",
+      "gitObject": "c548990a7db106277a5d7e9156c56f176e248ff7"
+    },
+    {
+      "path": "knip.json",
+      "kind": "blob",
+      "gitObject": "d7c9d5d91060451c3900d2e2fdd49d4c9d1c9b99"
+    },
+    {
+      "path": "lighthouse-ci.json",
+      "kind": "blob",
+      "gitObject": "845e38373f471db0d917de7d33cb0e4f7a1b625d"
+    },
+    {
+      "path": "logs",
+      "kind": "tree",
+      "gitObject": "d4cf5953b6cac89704d02625643132a3c838efa8"
+    },
+    {
+      "path": "migrations",
+      "kind": "tree",
+      "gitObject": "d15e1cc5b06696662c975ea4bba9bd1b0ba1ef94"
+    },
+    {
+      "path": "package-lock.json",
+      "kind": "blob",
+      "gitObject": "a4e96f97a62b2a6304968ef85a073a3e448b2cbd"
+    },
+    {
+      "path": "package.json",
+      "kind": "blob",
+      "gitObject": "e4eedaafcb063557958f769ff7f697106d252fd0"
+    },
+    {
+      "path": "playwright.config.ts",
+      "kind": "blob",
+      "gitObject": "6e87a0d7ee96490c2bb07e230412ada96766b310"
+    },
+    {
+      "path": "policy",
+      "kind": "tree",
+      "gitObject": "61dd64ae19b1ae36a84f09a0a51a61783e8a0040"
+    },
+    {
+      "path": "postcss.config.js",
+      "kind": "blob",
+      "gitObject": "51a6e4e62be6d68903fc0f44a0bd8b4ea4eae7e5"
+    },
+    {
+      "path": "regulatory_data",
+      "kind": "tree",
+      "gitObject": "3fa327aedad0b2315e969b677f59d2691e101e2f"
+    },
+    {
+      "path": "replit.nix",
+      "kind": "blob",
+      "gitObject": "2f3e2f57616f1abf97afd03dad595150631ca297"
+    },
+    {
+      "path": "reports",
+      "kind": "tree",
+      "gitObject": "5eb2f770a7ff7cd7a3dc4105dd5d32b7fdcbeb8b"
+    },
+    {
+      "path": "requirements.txt",
+      "kind": "blob",
+      "gitObject": "429af997a0b0ef25aa52611d78eedc5d3365c398"
+    },
+    {
+      "path": "schemas",
+      "kind": "tree",
+      "gitObject": "fcef54d947045f9f4c0b201a425ddb1c3ef6c82e"
+    },
+    {
+      "path": "server",
+      "kind": "tree",
+      "gitObject": "dc86f572138d9cd555860cdf5ba636887c5bae70"
+    },
+    {
+      "path": "services",
+      "kind": "tree",
+      "gitObject": "c8a9c83bfa1ebb22aa1014f5c11f3c1d65a19538"
+    },
+    {
+      "path": "shadow_service",
+      "kind": "tree",
+      "gitObject": "6a935437e3cb19824c3ad4d518d9679932965ceb"
+    },
+    {
+      "path": "shared",
+      "kind": "tree",
+      "gitObject": "f91972b8ace2a0f8d067936a0ab15f871e916427"
+    },
+    {
+      "path": "skills",
+      "kind": "tree",
+      "gitObject": "df73bdf50cd1c5b611d9ffac8cfc112aeed0b6b6"
+    },
+    {
+      "path": "sql",
+      "kind": "tree",
+      "gitObject": "90594bdc31bee6e38f62d0faf9f41082ad6b4c9d"
+    },
+    {
+      "path": "start-platform.sh",
+      "kind": "blob",
+      "gitObject": "c9bd1100c8d0d682762a747165e1431bb6c6f2f3"
+    },
+    {
+      "path": "start.sh",
+      "kind": "blob",
+      "gitObject": "bb819e69d1fb27367009de6ae262abe67c6e075b"
+    },
+    {
+      "path": "storage",
+      "kind": "tree",
+      "gitObject": "deebb31112da6d96173a3c914352436463bea5e2"
+    },
+    {
+      "path": "submission-center.openapi.json",
+      "kind": "blob",
+      "gitObject": "1ecb803984ede19757b844c40636fe40536a470a"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "kind": "blob",
+      "gitObject": "11bcbd11df046b19443c2a8617401013ffff449d"
+    },
+    {
+      "path": "templates",
+      "kind": "tree",
+      "gitObject": "a188500da324f2b14a620e52d9a12af590a95e18"
+    },
+    {
+      "path": "terraform",
+      "kind": "tree",
+      "gitObject": "5ce09347f114f67c00567e56346ef7708c0c7351"
+    },
+    {
+      "path": "theme.json",
+      "kind": "blob",
+      "gitObject": "5f7511763485a82061e4dd3e08c3ef59c0e7c6d6"
+    },
+    {
+      "path": "tsconfig.beta-slice.json",
+      "kind": "blob",
+      "gitObject": "728f871de4a88760ed62f5c5c0c675d6cce3194f"
+    },
+    {
+      "path": "tsconfig.check.json",
+      "kind": "blob",
+      "gitObject": "60c8dffb276d406903fa57bdba2531645092cd76"
+    },
+    {
+      "path": "tsconfig.json",
+      "kind": "blob",
+      "gitObject": "ff4a2be628310712404ecdddfe74b3bca8f89aff"
+    },
+    {
+      "path": "ui_kits",
+      "kind": "tree",
+      "gitObject": "262f6226f777723af5b7e5cc14c0084687918a78"
+    },
+    {
+      "path": "vite.config.ts",
+      "kind": "blob",
+      "gitObject": "82232630fd0745f49aab2f440f7db2e9152e6c43"
+    },
+    {
+      "path": "vitest.clock-shift.config.ts",
+      "kind": "blob",
+      "gitObject": "412b9358b0284df9568e8fbf48f1e66a51a294b6"
+    },
+    {
+      "path": "vitest.config.ts",
+      "kind": "blob",
+      "gitObject": "8935bc6c016ffc6bbfbb41cb54e2f5220f7f2215"
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "kind": "blob",
+      "gitObject": "e1be1748b9ce90e92c32d864a457dc42b029b73b"
+    },
+    {
+      "path": "vitest.visual-qa.config.ts",
+      "kind": "blob",
+      "gitObject": "b27e6d14ee3b4ef3bd1dfac2b0167d068d7da276"
+    },
+    {
+      "path": "vitest.workspace.ts",
+      "kind": "blob",
+      "gitObject": "98c7614e3062b3e52280c572b1e7892fbc5dafe6"
+    },
+    {
+      "path": "workers",
+      "kind": "tree",
+      "gitObject": "23cb144fb803b42f530088a6225a85d7d7fe67c1"
+    },
+    {
+      "path": "scripts/ci/__tests__/action-overclaim-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "da4d8d77a3943b683ce0bc56ba4878c623717288"
+    },
+    {
+      "path": "scripts/ci/__tests__/bundle-reachability-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "d13625f142a6e995d51f34cc3c0c464496d938a2"
+    },
+    {
+      "path": "scripts/ci/__tests__/canonicalizers-shape.test.mjs",
+      "kind": "blob",
+      "gitObject": "661bb0a8298c463ae98d0eb87be6e560a9098a3a"
+    },
+    {
+      "path": "scripts/ci/__tests__/commonjs-require-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "bbcb2cfd4c9fb7be891c8155b9b17347e158a708"
+    },
+    {
+      "path": "scripts/ci/__tests__/component-class-coverage.test.mjs",
+      "kind": "blob",
+      "gitObject": "af56b031c9a49b496643f60869a53227cb44b8d5"
+    },
+    {
+      "path": "scripts/ci/__tests__/db-test-isolation.test.mjs",
+      "kind": "blob",
+      "gitObject": "3d3ef8d746f7f61ace29e1d792337eeece6259a5"
+    },
+    {
+      "path": "scripts/ci/__tests__/dependency-risk-gate.test.mjs",
+      "kind": "blob",
+      "gitObject": "0d8bc5cd2903cab4c62c32d9e5245a251813dd4e"
+    },
+    {
+      "path": "scripts/ci/__tests__/ecs-one-off-task.test.mjs",
+      "kind": "blob",
+      "gitObject": "56c9f3af6c70f9af7f04c50daea5be108ef0e952"
+    },
+    {
+      "path": "scripts/ci/__tests__/empty-state-honesty-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "fa471329291189ab98e0ed64389d4fe1f8ad84ea"
+    },
+    {
+      "path": "scripts/ci/__tests__/eslint-warning-ratchet.test.mjs",
+      "kind": "blob",
+      "gitObject": "3995aa4ed5b4be13cb50eee8418627f45c3139d8"
+    },
+    {
+      "path": "scripts/ci/__tests__/fabricated-identity-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "f2f145133d2cc2c3bd10580692030641c2457d5f"
+    },
+    {
+      "path": "scripts/ci/__tests__/helpers/scratch-repo-gate.mjs",
+      "kind": "blob",
+      "gitObject": "b68b329e9644e9e70d6983388fcb0508f9d84e8d"
+    },
+    {
+      "path": "scripts/ci/__tests__/image-document-runtime.test.mjs",
+      "kind": "blob",
+      "gitObject": "a3b7ab2699e0731d7757ea9ab69d33512a067b17"
+    },
+    {
+      "path": "scripts/ci/__tests__/internals-in-copy-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "821b86357bf227e0cb45b60a6fdb8e927317b309"
+    },
+    {
+      "path": "scripts/ci/__tests__/lineage-save-gate-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "c421d034adb49f06f56d0e65b743675ec0673398"
+    },
+    {
+      "path": "scripts/ci/__tests__/native-db-early-verdict.test.mjs",
+      "kind": "blob",
+      "gitObject": "cfe6a5e5d5d09bfc651245d4f60217d7761fc432"
+    },
+    {
+      "path": "scripts/ci/__tests__/no-mock-in-prod-routes-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "6c794ecb298f3fea02286559804df1e07b706596"
+    },
+    {
+      "path": "scripts/ci/__tests__/pushed-typecheck.test.mjs",
+      "kind": "blob",
+      "gitObject": "fa47492cde956fb48be6573194b21ef47d33f5d0"
+    },
+    {
+      "path": "scripts/ci/__tests__/recorded-lineage-query-bindings.test.mjs",
+      "kind": "blob",
+      "gitObject": "a1c570fa26239b039fd42dddcb71aa7cf266554f"
+    },
+    {
+      "path": "scripts/ci/__tests__/server-error-leaks-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "219495551cd9326442edf591b9a4a6b86f3fba2f"
+    },
+    {
+      "path": "scripts/ci/__tests__/session-scoped-rls-bypass-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "26c37017e7ec1b2f5106b25e944d39deeaf6bd7e"
+    },
+    {
+      "path": "scripts/ci/__tests__/strip-comments.test.mjs",
+      "kind": "blob",
+      "gitObject": "2209f64bbf70ae0e2468f08b7416cf2854789cb0"
+    },
+    {
+      "path": "scripts/ci/__tests__/success-before-ok-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "de9560204d7ba500a0246c8ea13e2be35e351cd0"
+    },
+    {
+      "path": "scripts/ci/__tests__/tenant-entry-points-code-only.test.mjs",
+      "kind": "blob",
+      "gitObject": "5f8a354d44195cdceba1c02cd8f599bf30e76ebd"
+    },
+    {
+      "path": "scripts/ci/__tests__/unbacked-tables-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "04924c7102e4d7391e0f5a0090d166e9220eb943"
+    },
+    {
+      "path": "scripts/ci/__tests__/ungated-fixture-fallback-strings.test.mjs",
+      "kind": "blob",
+      "gitObject": "8b3a46638f32dedd468e054996804a505a2a7b4c"
+    },
+    {
+      "path": "scripts/ci/action-overclaim-baseline.json",
+      "kind": "blob",
+      "gitObject": "046955d4b9cdd4a5e628876ee021d8cfc5cef348"
+    },
+    {
+      "path": "scripts/ci/audit-requestdb-coverage.mjs",
+      "kind": "blob",
+      "gitObject": "a2a3be9206f22c8f92399b75ff0a44e1aa8e9cde"
+    },
+    {
+      "path": "scripts/ci/audit-route-mounts.mjs",
+      "kind": "blob",
+      "gitObject": "21edb5ad8bd287b1ca02cc9a7edc5740930c8600"
+    },
+    {
+      "path": "scripts/ci/audit-route-mounts.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "4da978209149491e07bb71f8890291a67afb7d65"
+    },
+    {
+      "path": "scripts/ci/ban-new-pool.sh",
+      "kind": "blob",
+      "gitObject": "1de085e9f99f99979e08a78ada429585dca51d7c"
+    },
+    {
+      "path": "scripts/ci/canonicalizers-baseline.json",
+      "kind": "blob",
+      "gitObject": "8e9ca62150c7fc98c39d7e0d19805229d2ad80ae"
+    },
+    {
+      "path": "scripts/ci/check-action-overclaim.mjs",
+      "kind": "blob",
+      "gitObject": "4d9d544bc6130a7dd14184a9826ea5abd71a4b6b"
+    },
+    {
+      "path": "scripts/ci/check-ai-tenant-binding.mjs",
+      "kind": "blob",
+      "gitObject": "8b965ce94d21e36caf94658258654d19c4a17c46"
+    },
+    {
+      "path": "scripts/ci/check-ana-surface-context.mjs",
+      "kind": "blob",
+      "gitObject": "b1f8eb1139ae25ed2a1449410b88735ac202ea9b"
+    },
+    {
+      "path": "scripts/ci/check-artifact-provenance.mjs",
+      "kind": "blob",
+      "gitObject": "6d09fe04fd1e4c07b8a31e0bfaee8f38d990d1f3"
+    },
+    {
+      "path": "scripts/ci/check-audit-logs-fixture.mjs",
+      "kind": "blob",
+      "gitObject": "d9530fad41b15bed58df80b059a2186d06b0685f"
+    },
+    {
+      "path": "scripts/ci/check-audit-logs-fixture.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "d3805170f34a6cdff49deb46e6865eb90b8aa67b"
+    },
+    {
+      "path": "scripts/ci/check-baseline-justifications.mjs",
+      "kind": "blob",
+      "gitObject": "24a90b2dbc42ea6548e41ee69635b00439621e3f"
+    },
+    {
+      "path": "scripts/ci/check-baseline-justifications.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "d4c743d6b2caac9a71835707a192c2c5db665e00"
+    },
+    {
+      "path": "scripts/ci/check-biostat-calculator-keys.mjs",
+      "kind": "blob",
+      "gitObject": "bcebc6534779e035044e1612465de3f333c4909b"
+    },
+    {
+      "path": "scripts/ci/check-bundle-reachability.mjs",
+      "kind": "blob",
+      "gitObject": "47043a6e61c18bc24eac91136f06e364af1e1ccb"
+    },
+    {
+      "path": "scripts/ci/check-canonicalizers.mjs",
+      "kind": "blob",
+      "gitObject": "746e409d9082499e21906c1a9d222af1df55d4c6"
+    },
+    {
+      "path": "scripts/ci/check-canvas-path.mjs",
+      "kind": "blob",
+      "gitObject": "5d5edc629bbeb8911f81061a27559fc6bcd234e5"
+    },
+    {
+      "path": "scripts/ci/check-canvas-path.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "4f19f19c0a16320ce8390865b70a3eb4ad5cdd17"
+    },
+    {
+      "path": "scripts/ci/check-catalog-copy.mjs",
+      "kind": "blob",
+      "gitObject": "e198cc31dd6978816c482a82f8e0f52f6b13eefc"
+    },
+    {
+      "path": "scripts/ci/check-chip-tones.mjs",
+      "kind": "blob",
+      "gitObject": "0053b035676475d72a98c97655af32f19f1e1c7a"
+    },
+    {
+      "path": "scripts/ci/check-client-api-calls-resolve.mjs",
+      "kind": "blob",
+      "gitObject": "a8b2b797ddc2d5b474898a4a0956702668431b52"
+    },
+    {
+      "path": "scripts/ci/check-client-ip-single-source.mjs",
+      "kind": "blob",
+      "gitObject": "abcc524c5a1bf9bf32b10a57e1b98569299268ea"
+    },
+    {
+      "path": "scripts/ci/check-client-reachability.mjs",
+      "kind": "blob",
+      "gitObject": "0a236e2fcfc9ea28bffdbab905376d5f8843e626"
+    },
+    {
+      "path": "scripts/ci/check-column-reachability.mjs",
+      "kind": "blob",
+      "gitObject": "b98ac7ded474d7a556a61441983c8468a67f79cd"
+    },
+    {
+      "path": "scripts/ci/check-committed-secrets.mjs",
+      "kind": "blob",
+      "gitObject": "12533073ece3b19a9c16aa2172caf056e8d57d74"
+    },
+    {
+      "path": "scripts/ci/check-committed-secrets.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "868108c16ae32aecf8a701fae53b452f5f99a832"
+    },
+    {
+      "path": "scripts/ci/check-commonjs-require.mjs",
+      "kind": "blob",
+      "gitObject": "d46ee19bbeda918c55d1f430e372b6832e5a8050"
+    },
+    {
+      "path": "scripts/ci/check-compliance-claims.mjs",
+      "kind": "blob",
+      "gitObject": "6b0b612833071b4d7a34f4db9b40772c8a51c26e"
+    },
+    {
+      "path": "scripts/ci/check-component-class-coverage.mjs",
+      "kind": "blob",
+      "gitObject": "4a60be8966a1f00c636a72a4a3d4abab73a49758"
+    },
+    {
+      "path": "scripts/ci/check-compose-boot-contract.mjs",
+      "kind": "blob",
+      "gitObject": "57b7a26221ebf8b4503878c2fd59bff411ed9cc1"
+    },
+    {
+      "path": "scripts/ci/check-coverage-ratchet.mjs",
+      "kind": "blob",
+      "gitObject": "53fc842d4c62dc8771790eba53b32faa9ee9ef21"
+    },
+    {
+      "path": "scripts/ci/check-css-selector-shadowing.mjs",
+      "kind": "blob",
+      "gitObject": "4ba19c0dba5b09f96624bf749a3a66809ee9308b"
+    },
+    {
+      "path": "scripts/ci/check-db-test-isolation.mjs",
+      "kind": "blob",
+      "gitObject": "80df74b104212ddd6e8348728192a75ae04354c4"
+    },
+    {
+      "path": "scripts/ci/check-dead-audit-catch.mjs",
+      "kind": "blob",
+      "gitObject": "d28458039f02575a24e09a43be6f59b25571f1db"
+    },
+    {
+      "path": "scripts/ci/check-dead-audit-tables.mjs",
+      "kind": "blob",
+      "gitObject": "01ee6c55597a1b6f4e219dfc8ff1f686184e4922"
+    },
+    {
+      "path": "scripts/ci/check-dead-audit-tables.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "2e6518aefa2e85b99a474a2e41af2a395e097ebe"
+    },
+    {
+      "path": "scripts/ci/check-dependency-risk.mjs",
+      "kind": "blob",
+      "gitObject": "d0e560b90c85f2e273cfb7b9cf2b1cdfed61649e"
+    },
+    {
+      "path": "scripts/ci/check-design-system-compliance.mjs",
+      "kind": "blob",
+      "gitObject": "a18dcde7a64dc1ef249f4546db8005e83fef12d4"
+    },
+    {
+      "path": "scripts/ci/check-discarded-audit-write.mjs",
+      "kind": "blob",
+      "gitObject": "f48f72581592138cb58bfa2a8fc253dcaae4ea64"
+    },
+    {
+      "path": "scripts/ci/check-document-alias-attribute-free.mjs",
+      "kind": "blob",
+      "gitObject": "eee08326648ae793f7188492897c0b1e4466b75b"
+    },
+    {
+      "path": "scripts/ci/check-docx-runtime-canonicality.mjs",
+      "kind": "blob",
+      "gitObject": "b0b94fb639681c4b9afc7065d7cfb1c7f8443816"
+    },
+    {
+      "path": "scripts/ci/check-drizzle-tenant-scope.mjs",
+      "kind": "blob",
+      "gitObject": "93a4eaa2baa536e0e390cfa25157532d17efde22"
+    },
+    {
+      "path": "scripts/ci/check-drizzle-tenant-scope.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "9b17daa07f801f02be0ce5e1b9cde16acf6a61ed"
+    },
+    {
+      "path": "scripts/ci/check-duplicate-exported-types.mjs",
+      "kind": "blob",
+      "gitObject": "5ac86ce79e4e3fb7816160281f44b30125bb0a2d"
+    },
+    {
+      "path": "scripts/ci/check-duplicate-table-ddl.mjs",
+      "kind": "blob",
+      "gitObject": "dae7ef0927260f02b6006b3cd3e9aaedcd4a3781"
+    },
+    {
+      "path": "scripts/ci/check-editor-extension-integrity.mjs",
+      "kind": "blob",
+      "gitObject": "d5cae128fa7411a41e8f1b989a77883e9ac9b949"
+    },
+    {
+      "path": "scripts/ci/check-embedding-runtime-canonicality.mjs",
+      "kind": "blob",
+      "gitObject": "c7f3f716264a6ef8eac085a3e111f8446ce645c7"
+    },
+    {
+      "path": "scripts/ci/check-empty-state-honesty.mjs",
+      "kind": "blob",
+      "gitObject": "0652349ba9a4e3efb5abce5722a5698abea2396b"
+    },
+    {
+      "path": "scripts/ci/check-env-var-docs.mjs",
+      "kind": "blob",
+      "gitObject": "08ae7e65b2b743c0c0f2a244e83da38dee96352c"
+    },
+    {
+      "path": "scripts/ci/check-error-envelope-reads.mjs",
+      "kind": "blob",
+      "gitObject": "2f1f05c3a762f2857890c3b9577567b1ebefb526"
+    },
+    {
+      "path": "scripts/ci/check-eslint-warning-ratchet.mjs",
+      "kind": "blob",
+      "gitObject": "d2f80f34fed9d39fcedd1f5e81ee6d40680511a7"
+    },
+    {
+      "path": "scripts/ci/check-fabricated-identity.mjs",
+      "kind": "blob",
+      "gitObject": "68c92c01e10315a221e3c9bba8ce531026cab5b1"
+    },
+    {
+      "path": "scripts/ci/check-frontend-sync-coverage.mjs",
+      "kind": "blob",
+      "gitObject": "04422cfe40f2ddefa1f6c03fc7d6949e9d268f62"
+    },
+    {
+      "path": "scripts/ci/check-frozen-theme-aliases.mjs",
+      "kind": "blob",
+      "gitObject": "5abb9edee50c04925ff57262ce61831b6a336bcb"
+    },
+    {
+      "path": "scripts/ci/check-gateway-bypass.mjs",
+      "kind": "blob",
+      "gitObject": "44997e1b3f7e0f41e5dc55c023d6bf9d99ace99a"
+    },
+    {
+      "path": "scripts/ci/check-gateway-bypass.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "566fa0b797b98363ebdc7abbb36d927dd2aa22ad"
+    },
+    {
+      "path": "scripts/ci/check-governed-export-consequence-shape.mjs",
+      "kind": "blob",
+      "gitObject": "38855feca9e5f0ceb2ab3992e74a5f403d7b1a1d"
+    },
+    {
+      "path": "scripts/ci/check-governed-export-consequence-shape.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "afe4b13f36aa8e0f742575b2b0f048155c2a1394"
+    },
+    {
+      "path": "scripts/ci/check-governed-export-routes.mjs",
+      "kind": "blob",
+      "gitObject": "2c8ba412dfcfa5041965a2cbb8e022668794cfae"
+    },
+    {
+      "path": "scripts/ci/check-i18n-integrity.mjs",
+      "kind": "blob",
+      "gitObject": "8cf26771286f4e48a5ec770af5410c8e39f84293"
+    },
+    {
+      "path": "scripts/ci/check-image-document-runtime.mjs",
+      "kind": "blob",
+      "gitObject": "dcbfcb15099bf9e6d85ff4a78d18f23182331c5b"
+    },
+    {
+      "path": "scripts/ci/check-image-runtime-assets.mjs",
+      "kind": "blob",
+      "gitObject": "1502df6f2b7f52393c0eea631c4a30d826a2682d"
+    },
+    {
+      "path": "scripts/ci/check-image-runtime-assets.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "cf263439d3ac2da29216fcb9ca89e1094870e658"
+    },
+    {
+      "path": "scripts/ci/check-insert-columns-declared.mjs",
+      "kind": "blob",
+      "gitObject": "b4a91dc320648ec679bc1f8cd2e198b5a2fe3239"
+    },
+    {
+      "path": "scripts/ci/check-insert-columns-declared.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "5437c75e3d318096f7941e3c2d8db401951ecc8d"
+    },
+    {
+      "path": "scripts/ci/check-internals-in-copy.mjs",
+      "kind": "blob",
+      "gitObject": "126261c775a91ff8ed5554c63631763c0617f88a"
+    },
+    {
+      "path": "scripts/ci/check-journey-migration-reachability.mjs",
+      "kind": "blob",
+      "gitObject": "9a5523b6ad07de04eeede32321e66b88c5825f81"
+    },
+    {
+      "path": "scripts/ci/check-js-ts-shadows.mjs",
+      "kind": "blob",
+      "gitObject": "1b2571ec423952854fa01852b66250008d1153f6"
+    },
+    {
+      "path": "scripts/ci/check-json-operator-types.mjs",
+      "kind": "blob",
+      "gitObject": "dcc463d2edbefb9ba8502cf5a2e5f9418713108b"
+    },
+    {
+      "path": "scripts/ci/check-jwt-verify-pinned.mjs",
+      "kind": "blob",
+      "gitObject": "ee7922dc084dba374c2574d041652a723023154c"
+    },
+    {
+      "path": "scripts/ci/check-launch-scope-api.ts",
+      "kind": "blob",
+      "gitObject": "4297348b1a400b39c6182a2b540bd82a4b9020fe"
+    },
+    {
+      "path": "scripts/ci/check-launch-scope.mjs",
+      "kind": "blob",
+      "gitObject": "02e6a3baa9c6f8c383f09ca7d983a904714f2ecf"
+    },
+    {
+      "path": "scripts/ci/check-launch-scope.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "1d6f9c5e386c21c74a029d7d7748f88ae0f41fee"
+    },
+    {
+      "path": "scripts/ci/check-legacy-dep-quarantine.mjs",
+      "kind": "blob",
+      "gitObject": "2e8b8926698618483bbdfad8ff1003c5386fcc97"
+    },
+    {
+      "path": "scripts/ci/check-lineage-save-gate.mjs",
+      "kind": "blob",
+      "gitObject": "3f33bf9a8cad50bb0f470a2aeae8c946ccd43a3c"
+    },
+    {
+      "path": "scripts/ci/check-microcopy.mjs",
+      "kind": "blob",
+      "gitObject": "6553dfcacd734176949e3f6a50602b021ebb41de"
+    },
+    {
+      "path": "scripts/ci/check-migration-deploy-path.mjs",
+      "kind": "blob",
+      "gitObject": "b790c764e3653f3b08dc25a95cda52e3808aa366"
+    },
+    {
+      "path": "scripts/ci/check-migration-drop-safety.mjs",
+      "kind": "blob",
+      "gitObject": "065985dad5524a83fd17eef985956f54928ddae2"
+    },
+    {
+      "path": "scripts/ci/check-migration-drop-safety.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "25086c27e3dba9853f86938d9bac5e63dec6ad88"
+    },
+    {
+      "path": "scripts/ci/check-migration-prefix-collisions.mjs",
+      "kind": "blob",
+      "gitObject": "461ffa9542ec0ac2058bc4209b3f4f90e82365cc"
+    },
+    {
+      "path": "scripts/ci/check-migration-reachability.mjs",
+      "kind": "blob",
+      "gitObject": "faa632a95b952611ad0f9bc47672b898dbaac43c"
+    },
+    {
+      "path": "scripts/ci/check-migration-set-order.mjs",
+      "kind": "blob",
+      "gitObject": "5bee90338c0be2527c450c18cf336dcd0961059e"
+    },
+    {
+      "path": "scripts/ci/check-model-migration-agreement.mjs",
+      "kind": "blob",
+      "gitObject": "f033065a4c2e3139fce5e4a6a79fcfb59a205d59"
+    },
+    {
+      "path": "scripts/ci/check-no-dev-auth-in-prod.mjs",
+      "kind": "blob",
+      "gitObject": "8b6a4bbcb7615c92c57c870c28ca68506621b354"
+    },
+    {
+      "path": "scripts/ci/check-no-dev-auth-in-prod.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "915b1581d9a9685a856f2245b01b9e9e16429276"
+    },
+    {
+      "path": "scripts/ci/check-no-mock-in-prod-routes.mjs",
+      "kind": "blob",
+      "gitObject": "5d917329dd9d75f7aca429af7b5503b8c9c05a23"
+    },
+    {
+      "path": "scripts/ci/check-node-runtime.mjs",
+      "kind": "blob",
+      "gitObject": "0a784607e4ec23b726ea94ce4682e0b88908bcfd"
+    },
+    {
+      "path": "scripts/ci/check-org-path-param-guards.mjs",
+      "kind": "blob",
+      "gitObject": "33df4c7041de6899867832c8858b00b2e63a4b8d"
+    },
+    {
+      "path": "scripts/ci/check-org-path-param-guards.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "705df2c2a0c79e49609bd43ec5ea2543993991bd"
+    },
+    {
+      "path": "scripts/ci/check-orm-table-reachability.mjs",
+      "kind": "blob",
+      "gitObject": "8ffaacebde0ee90e2b2151b12d1854ac7502860e"
+    },
+    {
+      "path": "scripts/ci/check-orphaned-stylesheets.mjs",
+      "kind": "blob",
+      "gitObject": "49ec9ef8a4b6241dbfd7aca8a78aac4d31181eef"
+    },
+    {
+      "path": "scripts/ci/check-password-hygiene.mjs",
+      "kind": "blob",
+      "gitObject": "45facc9deb7c05ba8e3b826c73d8bbd43b922162"
+    },
+    {
+      "path": "scripts/ci/check-password-hygiene.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "f8050199f901a523b074bdd843361e8102a739b5"
+    },
+    {
+      "path": "scripts/ci/check-path-containment.mjs",
+      "kind": "blob",
+      "gitObject": "d5924525b44e8d134c0b37a324a47bf1cca1b173"
+    },
+    {
+      "path": "scripts/ci/check-pdf-runtime-canonicality.mjs",
+      "kind": "blob",
+      "gitObject": "6ab8023b3fa8050063cac009f4dad4bd31d50405"
+    },
+    {
+      "path": "scripts/ci/check-phantom-tokens.mjs",
+      "kind": "blob",
+      "gitObject": "105bf7a13c5001439058a35b48bb01415aafe1d8"
+    },
+    {
+      "path": "scripts/ci/check-pptx-image-reachability.mjs",
+      "kind": "blob",
+      "gitObject": "f24337e77c4fb4e40eafe9fa5a99e600c5e18104"
+    },
+    {
+      "path": "scripts/ci/check-pq-evaluation-callers.mjs",
+      "kind": "blob",
+      "gitObject": "30cdf892d54abeca218c66aa6560c2d6248ba339"
+    },
+    {
+      "path": "scripts/ci/check-program-ownership-single-source.mjs",
+      "kind": "blob",
+      "gitObject": "8c9ac32eb25342becc69dc1632214ec13172caa5"
+    },
+    {
+      "path": "scripts/ci/check-proof-tier.mjs",
+      "kind": "blob",
+      "gitObject": "c254d77d4637ec57bb32c3f79810d146320b8002"
+    },
+    {
+      "path": "scripts/ci/check-purge-coverage.mjs",
+      "kind": "blob",
+      "gitObject": "d50d356dbf4352d4f862a4bdea7075e29513c236"
+    },
+    {
+      "path": "scripts/ci/check-purge-coverage.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "6eaa6ac8a6aec26e08f7febf5669d7d5279eec71"
+    },
+    {
+      "path": "scripts/ci/check-pushed-lint-errors.mjs",
+      "kind": "blob",
+      "gitObject": "548a6b19fa0f70b714a4356774b2a79403f45d51"
+    },
+    {
+      "path": "scripts/ci/check-pushed-lint-warnings.mjs",
+      "kind": "blob",
+      "gitObject": "04a7dd123d6c9178f76af863ef87cbd5675ef89b"
+    },
+    {
+      "path": "scripts/ci/check-pushed-typecheck.mjs",
+      "kind": "blob",
+      "gitObject": "f6f18788c3e4f237c7fb2ac865199cdd1d1d5b32"
+    },
+    {
+      "path": "scripts/ci/check-reasoning-tier-ga-readiness.mjs",
+      "kind": "blob",
+      "gitObject": "3b4b3e331ad5fdd36514dbfad7c5162c6e122c52"
+    },
+    {
+      "path": "scripts/ci/check-reasoning-tier-readiness-suite.mjs",
+      "kind": "blob",
+      "gitObject": "10da331998c1d7004b6076dfe4bba7cb9fb633df"
+    },
+    {
+      "path": "scripts/ci/check-reasoning-tier-uat-evidence.mjs",
+      "kind": "blob",
+      "gitObject": "4fb9951aac28a40918394b7f681d0f8a4f9bac0a"
+    },
+    {
+      "path": "scripts/ci/check-regulated-delete-audit.mjs",
+      "kind": "blob",
+      "gitObject": "d78af8114d9a72c456038faf6955f54fe9fc4839"
+    },
+    {
+      "path": "scripts/ci/check-regulated-delete-audit.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "ce4e9ed42cea4f13ea7ba5f3a6a951004f237b92"
+    },
+    {
+      "path": "scripts/ci/check-regulatory-reference-data-single-copy.mjs",
+      "kind": "blob",
+      "gitObject": "73cf82528758f65afc4745de22c9577edf2ce99e"
+    },
+    {
+      "path": "scripts/ci/check-replay-rebuilds-nothing.mjs",
+      "kind": "blob",
+      "gitObject": "09063f7111c520e4a87319f7a64600ef162c6284"
+    },
+    {
+      "path": "scripts/ci/check-required-workflow-concurrency.mjs",
+      "kind": "blob",
+      "gitObject": "3766749bf3d66ca488daaf30f1b983050cedb787"
+    },
+    {
+      "path": "scripts/ci/check-requirements-pins.mjs",
+      "kind": "blob",
+      "gitObject": "6bc9a5bc4fecf17cf11d4949dd7b80f4fbef1ab0"
+    },
+    {
+      "path": "scripts/ci/check-rls-allowlist-sync.mjs",
+      "kind": "blob",
+      "gitObject": "d9adf11cc0795735734238c276d241f213daea56"
+    },
+    {
+      "path": "scripts/ci/check-rls-allowlist-sync.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "a1ece1c8c0e9523c00b8d1dfce95ba4bf4abb436"
+    },
+    {
+      "path": "scripts/ci/check-route-collisions.mjs",
+      "kind": "blob",
+      "gitObject": "396d094f0866cafed331fcc95783cb715d38e119"
+    },
+    {
+      "path": "scripts/ci/check-route-ownership-matrix.mjs",
+      "kind": "blob",
+      "gitObject": "7a618cef7715b57514387cb771ad52c8f6c09605"
+    },
+    {
+      "path": "scripts/ci/check-route-ownership-matrix.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "91e452a7b667fc6033d84ef271ab0d1e7cb0cd31"
+    },
+    {
+      "path": "scripts/ci/check-rule-pack-provenance.mjs",
+      "kind": "blob",
+      "gitObject": "d34b77bede4019cb420377f35bab9a002918c774"
+    },
+    {
+      "path": "scripts/ci/check-runtime-ddl.mjs",
+      "kind": "blob",
+      "gitObject": "164efcd741730d7921280a975b4cd1f5defccc3a"
+    },
+    {
+      "path": "scripts/ci/check-runtime-ddl.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "03d8188b4f3fca33c1658174317ce40b94bb60e9"
+    },
+    {
+      "path": "scripts/ci/check-saml-fail-closed.mjs",
+      "kind": "blob",
+      "gitObject": "3f01e7323c59668ddf62775945cc523cad623766"
+    },
+    {
+      "path": "scripts/ci/check-server-bundle-prod-imports.mjs",
+      "kind": "blob",
+      "gitObject": "ae60e4c4cf9cc92c0487182f438e9a5fb9d16890"
+    },
+    {
+      "path": "scripts/ci/check-server-bundle-prod-imports.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "9f0e34a385e5180ee5d9caa5e400a04afaa426bf"
+    },
+    {
+      "path": "scripts/ci/check-server-error-leaks.mjs",
+      "kind": "blob",
+      "gitObject": "974369356081d21bc0f337ddeaff54503172afb9"
+    },
+    {
+      "path": "scripts/ci/check-server-error-leaks.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "52f67db87537397abb01e14b20b73f31b69d9544"
+    },
+    {
+      "path": "scripts/ci/check-session-scoped-rls-bypass.mjs",
+      "kind": "blob",
+      "gitObject": "5806dd0601bf8df5a2eb5ccdbf714547a55b5977"
+    },
+    {
+      "path": "scripts/ci/check-session-scoped-rls-bypass.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "873c548f31dd376742c31d0cd36b54bd9e5e8c08"
+    },
+    {
+      "path": "scripts/ci/check-shell-css-collisions.mjs",
+      "kind": "blob",
+      "gitObject": "61f9a43bef7f8457a4ae3f4d8e76dc20d6036774"
+    },
+    {
+      "path": "scripts/ci/check-sign-ceremony.mjs",
+      "kind": "blob",
+      "gitObject": "95b9d8e83882d669079968477d5f953e99f690dd"
+    },
+    {
+      "path": "scripts/ci/check-sign-ceremony.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "e2adead8855ab1785e3170f7b744602ddfa80470"
+    },
+    {
+      "path": "scripts/ci/check-single-native-canvas.mjs",
+      "kind": "blob",
+      "gitObject": "2281942b60b41ea4b1c3c0cc18842eecdc08c62f"
+    },
+    {
+      "path": "scripts/ci/check-success-before-ok.mjs",
+      "kind": "blob",
+      "gitObject": "28ac88955494938a7d4fda711203e3f4b588489a"
+    },
+    {
+      "path": "scripts/ci/check-surface-discoverability.mjs",
+      "kind": "blob",
+      "gitObject": "e467cc4c3cc86a35b1f460cd1f31e0576ddec4fb"
+    },
+    {
+      "path": "scripts/ci/check-tables-against-live-schema.mjs",
+      "kind": "blob",
+      "gitObject": "e53bfebf36f9571b139f10eb5cba107f02ec07f2"
+    },
+    {
+      "path": "scripts/ci/check-tenant-blind-models.mjs",
+      "kind": "blob",
+      "gitObject": "312c54e1154dd4bf8d9e224fc0e885d9e0cdd851"
+    },
+    {
+      "path": "scripts/ci/check-tenant-blind-models.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "9bb98e483aa57b9d7e2c5285fcec7c856da19ae2"
+    },
+    {
+      "path": "scripts/ci/check-tenant-column-types.mjs",
+      "kind": "blob",
+      "gitObject": "dc900178a8ccbb4be38b948f29bb22f6d100a721"
+    },
+    {
+      "path": "scripts/ci/check-tenant-column-types.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "3c83fbbd7de4bfd235a52463bb86e51e8be9bcfa"
+    },
+    {
+      "path": "scripts/ci/check-tenant-entry-points.mjs",
+      "kind": "blob",
+      "gitObject": "ceaa24699eda07d735bbdde9957a6507d6a39276"
+    },
+    {
+      "path": "scripts/ci/check-tenant-entry-points.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "3208590b9bcd00d7901a3b2d934b4c145f9c2631"
+    },
+    {
+      "path": "scripts/ci/check-tenant-isolation.mjs",
+      "kind": "blob",
+      "gitObject": "d1fdd54bb5d8e27a580d703c6a1637924c8d408b"
+    },
+    {
+      "path": "scripts/ci/check-tenant-isolation.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "4686d812fde60b86969a0de0fca7d05a3dcdd92b"
+    },
+    {
+      "path": "scripts/ci/check-tenant-resolvers.mjs",
+      "kind": "blob",
+      "gitObject": "8383a8b55b8339151e81762903ffe4bc2bbd51c8"
+    },
+    {
+      "path": "scripts/ci/check-tenant-resolvers.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "f51bda10413de6bf0545c90067f662882ae3ad6c"
+    },
+    {
+      "path": "scripts/ci/check-test-imports.mjs",
+      "kind": "blob",
+      "gitObject": "479a78bdd8f4f00ec6c0fc45211616ae7f888878"
+    },
+    {
+      "path": "scripts/ci/check-toast-canonicality.mjs",
+      "kind": "blob",
+      "gitObject": "253f3ea69e87f00809d522a5f208c7269dd7708f"
+    },
+    {
+      "path": "scripts/ci/check-token-cascade.mjs",
+      "kind": "blob",
+      "gitObject": "09b7060adc4eb9248758627a733c21fca6499e4f"
+    },
+    {
+      "path": "scripts/ci/check-token-contrast.mjs",
+      "kind": "blob",
+      "gitObject": "99c06a070dad2e5dd4cc46dbdc3d73422f5d5766"
+    },
+    {
+      "path": "scripts/ci/check-trivy-inline-ignores.mjs",
+      "kind": "blob",
+      "gitObject": "fbefb902d885b58931ccaf0c2434a73775099a58"
+    },
+    {
+      "path": "scripts/ci/check-trivyignore-hygiene.mjs",
+      "kind": "blob",
+      "gitObject": "233b2c1b948ca4439a64a35a2e44fbc5e3656de8"
+    },
+    {
+      "path": "scripts/ci/check-unapproved-model-pins.mjs",
+      "kind": "blob",
+      "gitObject": "8f048d57827f4673430382eb38684e107e46ff5f"
+    },
+    {
+      "path": "scripts/ci/check-unauthenticated-fetch.mjs",
+      "kind": "blob",
+      "gitObject": "f9212772e648226b25799567b9d76a08facec481"
+    },
+    {
+      "path": "scripts/ci/check-unauthenticated-fetch.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "da8a39aa8d42fbdab73ad658447d2492079fd8ed"
+    },
+    {
+      "path": "scripts/ci/check-unbacked-tables.mjs",
+      "kind": "blob",
+      "gitObject": "2c54a799c63e054cc7f061477d8197ae4158a8ee"
+    },
+    {
+      "path": "scripts/ci/check-undefined-css-classes.mjs",
+      "kind": "blob",
+      "gitObject": "a094e2704d9b95b3164e60c05ec61a8428db63d7"
+    },
+    {
+      "path": "scripts/ci/check-undefined-css-classes.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "500f963d7cf145ce3452253896d6048ad383777c"
+    },
+    {
+      "path": "scripts/ci/check-ungated-fixture-fallback.mjs",
+      "kind": "blob",
+      "gitObject": "53d077142d23815677f6911368666daf675bf963"
+    },
+    {
+      "path": "scripts/ci/check-unkeyed-request-tables.mjs",
+      "kind": "blob",
+      "gitObject": "89ce7406bab33e9b5504e12afaae0b8ee7faad6f"
+    },
+    {
+      "path": "scripts/ci/check-unkeyed-request-tables.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "72ed7a6e682d5b6a0ff06867eb007dbb7ade871e"
+    },
+    {
+      "path": "scripts/ci/check-unreferenced-modules.mjs",
+      "kind": "blob",
+      "gitObject": "78983fe5a2484a943940cc13c6d16c7446c69dcd"
+    },
+    {
+      "path": "scripts/ci/check-unrun-tests.mjs",
+      "kind": "blob",
+      "gitObject": "d987ac747d2418ab5e310f6b40f245972ad8f6cc"
+    },
+    {
+      "path": "scripts/ci/check-untracked-imports.mjs",
+      "kind": "blob",
+      "gitObject": "f2c77951bef8fb44b6de5e4bfafdea697929da40"
+    },
+    {
+      "path": "scripts/ci/check-untracked-imports.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "70e516eee111da931615ccc91f23a20b11bf1ef6"
+    },
+    {
+      "path": "scripts/ci/check-unverified-verdicts.mjs",
+      "kind": "blob",
+      "gitObject": "a101a82dcbc40e1da5ef05919ef5d734a9e25352"
+    },
+    {
+      "path": "scripts/ci/check-upload-guards.mjs",
+      "kind": "blob",
+      "gitObject": "4845d891d9630bc6e8e80f048ff24b68fe8fc9d8"
+    },
+    {
+      "path": "scripts/ci/check-validation-traceability.mjs",
+      "kind": "blob",
+      "gitObject": "63d3f9d9b540733a591254482376128e0200c1ba"
+    },
+    {
+      "path": "scripts/ci/check-vault-document-writers.mjs",
+      "kind": "blob",
+      "gitObject": "da57bbaf78f4ebbf2567357495b198cfd105f096"
+    },
+    {
+      "path": "scripts/ci/check-vault-document-writers.selftest.mjs",
+      "kind": "blob",
+      "gitObject": "8392f34f25afdd35449f181d046dc85b50b2d0d3"
+    },
+    {
+      "path": "scripts/ci/check-workflow-targets.mjs",
+      "kind": "blob",
+      "gitObject": "fe56f1ad3f3f6fc6e4320484b72c39044ddfd95f"
+    },
+    {
+      "path": "scripts/ci/check-writerless-stores.mjs",
+      "kind": "blob",
+      "gitObject": "b2defca03b6913f1b728570bea3f6259fa12c8fa"
+    },
+    {
+      "path": "scripts/ci/client-reachability-baseline.json",
+      "kind": "blob",
+      "gitObject": "ab2f44f8eda79f5f2d5fc14423374f22ad6584fd"
+    },
+    {
+      "path": "scripts/ci/column-reachability-baseline.json",
+      "kind": "blob",
+      "gitObject": "02ca6b18dcec5290a56aa44c4932ce835eacb139"
+    },
+    {
+      "path": "scripts/ci/commonjs-require-baseline.json",
+      "kind": "blob",
+      "gitObject": "b0ef15c86729f426da9c50e85ade7061273ea26c"
+    },
+    {
+      "path": "scripts/ci/compliance-claims.rules.mjs",
+      "kind": "blob",
+      "gitObject": "61a90d5c2dcf014ebdd152d57e05d9b3028f0f16"
+    },
+    {
+      "path": "scripts/ci/component-class-coverage-baseline.json",
+      "kind": "blob",
+      "gitObject": "544166f63a1784a66e7229094b169bf8f74f48c7"
+    },
+    {
+      "path": "scripts/ci/coverage-baseline.json",
+      "kind": "blob",
+      "gitObject": "4e1643de6b9f4b18e2bd01e1c33743fcdda1a059"
+    },
+    {
+      "path": "scripts/ci/css-selector-shadowing-baseline.json",
+      "kind": "blob",
+      "gitObject": "c6a438e9706bd618f30b1f9e2026cf203eb49ecb"
+    },
+    {
+      "path": "scripts/ci/dead-audit-catch-baseline.json",
+      "kind": "blob",
+      "gitObject": "d946318dcb5cfd460d5597707c74c7dd893d997e"
+    },
+    {
+      "path": "scripts/ci/dead-audit-tables-baseline.json",
+      "kind": "blob",
+      "gitObject": "0e70b63e06f50d2b14537a005e108cd9d506b74f"
+    },
+    {
+      "path": "scripts/ci/discarded-audit-write-baseline.json",
+      "kind": "blob",
+      "gitObject": "28b634a173ac0113f925be06bd25fa3ae0b042b6"
+    },
+    {
+      "path": "scripts/ci/drizzle-tenant-scope-baseline.json",
+      "kind": "blob",
+      "gitObject": "58b93701b62535fba454f4351a17ceea56a5e309"
+    },
+    {
+      "path": "scripts/ci/duplicate-exported-types-baseline.json",
+      "kind": "blob",
+      "gitObject": "9cb666e70d6df1c267da3a762f52f72981eea9c1"
+    },
+    {
+      "path": "scripts/ci/duplicate-table-ddl-baseline.json",
+      "kind": "blob",
+      "gitObject": "210fb603c0924d97e26bbd57ce6abdfa8aa611a1"
+    },
+    {
+      "path": "scripts/ci/empty-state-honesty-baseline.json",
+      "kind": "blob",
+      "gitObject": "c6e1fe329b5fd4b31a53b30e6d34916848891475"
+    },
+    {
+      "path": "scripts/ci/error-envelope-reads-baseline.json",
+      "kind": "blob",
+      "gitObject": "cd83cfb207b96491b48b46a0b8dc1b82c575da21"
+    },
+    {
+      "path": "scripts/ci/eslint-warning-baseline.json",
+      "kind": "blob",
+      "gitObject": "14d6699d6db254304e3aed42c73499df4404b69a"
+    },
+    {
+      "path": "scripts/ci/fabricated-identity-baseline.json",
+      "kind": "blob",
+      "gitObject": "01ae2ee3e091521c0295b421c79c1d5db365e09b"
+    },
+    {
+      "path": "scripts/ci/gateway-bypass-baseline.json",
+      "kind": "blob",
+      "gitObject": "d8542a91f45f35d36a90ccf82fce2eec75c1bdbf"
+    },
+    {
+      "path": "scripts/ci/generate-test-summary.js",
+      "kind": "blob",
+      "gitObject": "9c2efa9cba20da8c5bcee0b6914b4e6f336d4723"
+    },
+    {
+      "path": "scripts/ci/image-boot-signin.mjs",
+      "kind": "blob",
+      "gitObject": "ac2460695c0288ce2914288a05be63e12ac35fad"
+    },
+    {
+      "path": "scripts/ci/insert-columns-baseline.json",
+      "kind": "blob",
+      "gitObject": "5491e88079a19f9f15888cc8900c4cee780824c4"
+    },
+    {
+      "path": "scripts/ci/internals-in-copy-baseline.json",
+      "kind": "blob",
+      "gitObject": "d946318dcb5cfd460d5597707c74c7dd893d997e"
+    },
+    {
+      "path": "scripts/ci/json-operator-types-baseline.json",
+      "kind": "blob",
+      "gitObject": "36af1f754698f63c565dab4626e32fa6f48d8a8a"
+    },
+    {
+      "path": "scripts/ci/launch-scope-fixture-allowlist.json",
+      "kind": "blob",
+      "gitObject": "a7d0c392709fa35ef1b7342c6f0162db0294c7b4"
+    },
+    {
+      "path": "scripts/ci/launch-scope-route-inventory.ts",
+      "kind": "blob",
+      "gitObject": "e9a7f2ffaf958e11698a7b2d553a519282aff38c"
+    },
+    {
+      "path": "scripts/ci/lib/allowlist-paths.mjs",
+      "kind": "blob",
+      "gitObject": "fd9210133ba4f9e8e69dedfa39d2b8f9d0849b6f"
+    },
+    {
+      "path": "scripts/ci/lib/baseline-drift.mjs",
+      "kind": "blob",
+      "gitObject": "58f207e616dcc12f224bc3307fdbb2d4bd52d217"
+    },
+    {
+      "path": "scripts/ci/lib/extract-string-literals.mjs",
+      "kind": "blob",
+      "gitObject": "cf4caa80169ee8cae0245a4014c8ea27d049fb6a"
+    },
+    {
+      "path": "scripts/ci/lib/inline-suppression.mjs",
+      "kind": "blob",
+      "gitObject": "b5a3835a340b3f94934945dcdfc7b382abdc9dd4"
+    },
+    {
+      "path": "scripts/ci/lib/push-range.mjs",
+      "kind": "blob",
+      "gitObject": "4c39c5b5951ba2504c2b24d1c38df78f41e38de7"
+    },
+    {
+      "path": "scripts/ci/lib/scan-roots.mjs",
+      "kind": "blob",
+      "gitObject": "cd0cde89497c7e08279f4fd755656d62d11fd804"
+    },
+    {
+      "path": "scripts/ci/lib/sql-columns.mjs",
+      "kind": "blob",
+      "gitObject": "4121040cc31a200a3497368f4f736e12c0c98fa8"
+    },
+    {
+      "path": "scripts/ci/lib/strip-comments.mjs",
+      "kind": "blob",
+      "gitObject": "a364fbd256581fdf4071b782e3769567c661d9d6"
+    },
+    {
+      "path": "scripts/ci/lib/verdict-inspector.d.mts",
+      "kind": "blob",
+      "gitObject": "f9b021ccfbcfe55cbe42a153a04572761b156911"
+    },
+    {
+      "path": "scripts/ci/lib/verdict-inspector.mjs",
+      "kind": "blob",
+      "gitObject": "6a4f215445ec4b7a21b31d374afac5bdeda649ab"
+    },
+    {
+      "path": "scripts/ci/migration-deploy-path-baseline.json",
+      "kind": "blob",
+      "gitObject": "a3945dc23293c07473294add3764f45dae285259"
+    },
+    {
+      "path": "scripts/ci/migration-drop-safety-baseline.json",
+      "kind": "blob",
+      "gitObject": "91e49666834a1b20cc1b8cc8d8923d94ee1219d5"
+    },
+    {
+      "path": "scripts/ci/migration-reachability-baseline.json",
+      "kind": "blob",
+      "gitObject": "daac3d253cceeb86b84254e47e32cc0e073d5fc4"
+    },
+    {
+      "path": "scripts/ci/model-migration-agreement-baseline.json",
+      "kind": "blob",
+      "gitObject": "8ba60d785122266f7de5f1d56516ff06a2e5a3ca"
+    },
+    {
+      "path": "scripts/ci/orm-table-reachability-baseline.json",
+      "kind": "blob",
+      "gitObject": "827b7d1211d2488b1744f6b88bc96f2b08719193"
+    },
+    {
+      "path": "scripts/ci/orphaned-stylesheets-baseline.json",
+      "kind": "blob",
+      "gitObject": "6a305601de2458cba80710d4d2babc382b374850"
+    },
+    {
+      "path": "scripts/ci/phantom-tokens-baseline.json",
+      "kind": "blob",
+      "gitObject": "c6d2c946688f199237722101f5bf751144ebdd53"
+    },
+    {
+      "path": "scripts/ci/proof-tier-baseline.json",
+      "kind": "blob",
+      "gitObject": "adf5d88804868af84588aec7e00a1d6d83e2b822"
+    },
+    {
+      "path": "scripts/ci/prove-module-unused.mjs",
+      "kind": "blob",
+      "gitObject": "79b43ee9eb18b5d9ab3b8850a534cef8b0afa79c"
+    },
+    {
+      "path": "scripts/ci/report-branch-drift.mjs",
+      "kind": "blob",
+      "gitObject": "1ce26d2536284c3101f37b651bf16bccec8fe3ec"
+    },
+    {
+      "path": "scripts/ci/require-migration-headers.sh",
+      "kind": "blob",
+      "gitObject": "aecc2523ca937b0920531fdb3db497a418a100c3"
+    },
+    {
+      "path": "scripts/ci/reseal-dependency-risk-ledger.mjs",
+      "kind": "blob",
+      "gitObject": "6236eaf44b9db58606602611b74d555dfb2e0750"
+    },
+    {
+      "path": "scripts/ci/runtime-ddl-baseline.json",
+      "kind": "blob",
+      "gitObject": "93446019f75cd1c58767e6c5eddf251649a910d1"
+    },
+    {
+      "path": "scripts/ci/server-error-leaks-baseline.json",
+      "kind": "blob",
+      "gitObject": "e14ca5101049e2bbe1e549ddee6ebc4014240436"
+    },
+    {
+      "path": "scripts/ci/shell-css-collisions-baseline.json",
+      "kind": "blob",
+      "gitObject": "aefb271ac8e3160523a4579339eba9385f45676c"
+    },
+    {
+      "path": "scripts/ci/sign-ceremony-baseline.json",
+      "kind": "blob",
+      "gitObject": "5304f21db74fe9cee39fb1059b00587ece1e8e84"
+    },
+    {
+      "path": "scripts/ci/tables-live-schema-baseline.json",
+      "kind": "blob",
+      "gitObject": "d9cdb02c571454e0d96dbeddd69ab16a263a7693"
+    },
+    {
+      "path": "scripts/ci/tenant-resolvers-baseline.json",
+      "kind": "blob",
+      "gitObject": "985b012acc20bfce7dedc80aa78e71bbec730331"
+    },
+    {
+      "path": "scripts/ci/typecheck-no-regression.mjs",
+      "kind": "blob",
+      "gitObject": "f4d812afe2285d9686a734dcbdd694130813fc35"
+    },
+    {
+      "path": "scripts/ci/unapproved-model-pins-baseline.json",
+      "kind": "blob",
+      "gitObject": "0ceb2b0a8dfc87df1d228a9ac5290a4dfcdff7fd"
+    },
+    {
+      "path": "scripts/ci/unauthenticated-fetch-baseline.json",
+      "kind": "blob",
+      "gitObject": "58e10c8797cdddc4f895e68c285e51a1225db146"
+    },
+    {
+      "path": "scripts/ci/unbacked-tables-baseline.json",
+      "kind": "blob",
+      "gitObject": "a32c74c5072a2c3c57cd814a697ad67fa5f8f73e"
+    },
+    {
+      "path": "scripts/ci/undefined-css-classes-baseline.json",
+      "kind": "blob",
+      "gitObject": "9343fbc6e42690ebf98dbdb3d0cf94af6bc32f23"
+    },
+    {
+      "path": "scripts/ci/unkeyed-request-tables-baseline.json",
+      "kind": "blob",
+      "gitObject": "09e2d6daf9c79db8dc80d8b3ba4af30f07fb38ef"
+    },
+    {
+      "path": "scripts/ci/unreferenced-modules-baseline.json",
+      "kind": "blob",
+      "gitObject": "67fa81cd878485a8ed91389d9ebe4da1eb2d2adc"
+    },
+    {
+      "path": "scripts/ci/upload-guards-baseline.json",
+      "kind": "blob",
+      "gitObject": "7748e3846fb892dcb86912c90a6c7b5c25c2794b"
+    },
+    {
+      "path": "scripts/ci/writerless-stores-baseline.json",
+      "kind": "blob",
+      "gitObject": "137acdb04a2f4cffc33fb4909e8d6806a43336de"
+    },
+    {
+      "path": "scripts/release-evidence/cli.mjs",
+      "kind": "blob",
+      "gitObject": "b607349fa05d57775a3d62da776731bf1a72ae91"
+    },
+    {
+      "path": "scripts/release-evidence/lib.mjs",
+      "kind": "blob",
+      "gitObject": "6fd3fc0124ca6ccea354285f959751aa2deb3a33"
+    },
+    {
+      "path": "tests/release-evidence/generate-refusals.test.mjs",
+      "kind": "blob",
+      "gitObject": "b7e8fa9da7ba59a226977a954e022407643ecd00"
+    },
+    {
+      "path": "tests/release-evidence/helpers.mjs",
+      "kind": "blob",
+      "gitObject": "50fce7a5d16489cd2b37c3a056df9f4631e50dd5"
+    },
+    {
+      "path": "tests/release-evidence/index-rendering.test.mjs",
+      "kind": "blob",
+      "gitObject": "093ad8f8db5143bea1af311ff6b2d1d848473d37"
+    },
+    {
+      "path": "tests/release-evidence/manifest.test.mjs",
+      "kind": "blob",
+      "gitObject": "d84690e86751f0fb76204fbf4495c14ee8a27bc5"
+    }
+  ],
+  "scope": "release evidence lookup only; workflow, policy, schema, approval rules and conclusion handling unchanged",
+  "redCases": 15,
+  "redFailed": 13,
+  "nameOnlyFixLookupFailed": 6,
+  "allReleaseContractsPassed": 62,
+  "actualAPISnapshotReplayed": true,
+  "remoteCandidateReleasePassed": false,
+  "D4Complete": false
+}

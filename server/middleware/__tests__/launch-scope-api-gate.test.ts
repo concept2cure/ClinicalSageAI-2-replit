@@ -125,10 +125,17 @@ describe('the real registry, launch scope on', () => {
     expect(await refused('/api/orchestration/executions/abc')).toBe(true);
   });
 
-  it('passes what the launch catalog and AnA use: execute, templates, the package model, tasks, dispatch readiness', async () => {
+  /* 2026-10-08 (docs/SURFACE_DECISIONS_2026-10-08.md): AnA Command left the
+     launch scope. It and the locked Orchestration board were the only callers of
+     the workflow templates and execute routes, so production refuses them now. */
+  it('refuses the workflow runner AnA Command used, now that AnA Command is locked', async () => {
+    for (const p of ['/api/orchestration/execute', '/api/orchestration/templates', '/api/report-os/portfolio/org']) {
+      expect(await refused(p), p).toBe(true);
+    }
+  });
+
+  it('passes what the launch catalog and AnA use: the package model, tasks, dispatch readiness', async () => {
     for (const p of [
-      '/api/orchestration/execute',
-      '/api/orchestration/templates',
       '/api/submission-ops/packages',
       '/api/task-management/tasks',
       '/api/approval-workflows/pending',
@@ -156,10 +163,12 @@ describe('the real registry, launch scope on', () => {
       '/api/mdx/admin/users',
       '/api/mdx/industry-profile',
       '/api/mdx/notifications/unread-count',
-      '/api/mdx/ana/memory',
     ]) {
       expect(await refused(p), p).toBe(false);
     }
+    // AnA memory left the launch scope on 2026-10-08: it listed a store nothing
+    // writes. Its routes are refused with it.
+    expect(await refused('/api/mdx/ana/memory'), '/api/mdx/ana/memory').toBe(true);
   });
 
   /* 2026-09-29: three more broad claims, each pre-dating launch scope, that let
@@ -172,9 +181,12 @@ describe('the real registry, launch scope on', () => {
     for (const p of ['/api/global-ri/catalog', '/api/global-ri/impurities/x', '/api/rim/products', '/api/510k/estar/official', '/api/510k/estar/build']) {
       expect(await refused(p), p).toBe(true);
     }
-    for (const p of ['/api/dossier-map', '/api/510k/estar/submissions', '/api/510k/estar/assemble']) {
+    for (const p of ['/api/510k/estar/submissions', '/api/510k/estar/assemble']) {
       expect(await refused(p), p).toBe(false);
     }
+    // The dossier map left the launch scope on 2026-10-08 (always empty for a
+    // program created in the product); its read is refused with it.
+    expect(await refused('/api/dossier-map'), '/api/dossier-map').toBe(true);
   });
 
   /* Found 2026-09-29: Projects and Project home each claimed all of /api/programs.

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T17:24:24.354Z",
+  "generatedAt": "2026-10-08T01:11:58.688Z",
   "git": {
-    "sha": "d46df5e1c406b0e8347385bcc0963dc02fd3e513",
+    "sha": "d390f96465ed6d88f02befb966cd5cc7f4614197",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 51,
-    "largeFilesByLines": 111
+    "largeFilesByLines": 112
   },
   "findings": {
     "duplicateBasenames": [
@@ -2103,7 +2103,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 163039
+        "bytes": 165188
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2301,7 +2301,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3648
+        "lines": 3684
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2488,16 +2488,16 @@
         "lines": 2024
       },
       {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2022
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
         "lines": 2015
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 2014
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2652,6 +2652,10 @@
         "lines": 1650
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1638
+      },
+      {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
       },
@@ -2666,10 +2670,6 @@
       {
         "file": "server/routes/mdx-rbm.ts",
         "lines": 1612
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1607
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
@@ -2694,6 +2694,10 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "lines": 1552
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 1541
       },
       {
         "file": "server/services/grdhe/grdheService.ts",
@@ -2725,7 +2729,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 6,
-      "largeByLines": 16
+      "largeByLines": 17
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",

@@ -1,0 +1,235 @@
+✖ upgrade binding matches the two live CI commands exactly (2.891204ms)
+✖ upgrade record retains the live replay result and omits unrelated steps (2.059619ms)
+✔ upgrade binding refuses a missing live step: Deploy migration succeeds on the provisioned database (1.112269ms)
+✖ upgrade binding refuses ambiguous records (success first): Deploy migration succeeds on the provisioned database (0.861771ms)
+✖ upgrade binding refuses ambiguous records (failure first): Deploy migration succeeds on the provisioned database (0.519374ms)
+✖ upgrade binding refuses an incomplete record carrying success: Deploy migration succeeds on the provisioned database (0.506605ms)
+✔ upgrade binding refuses a missing live step: Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.300674ms)
+✖ upgrade binding refuses ambiguous records (success first): Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.387675ms)
+✖ upgrade binding refuses ambiguous records (failure first): Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.44368ms)
+✖ upgrade binding refuses an incomplete record carrying success: Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.573635ms)
+✖ upgrade binding emits failure honestly (0.58332ms)
+✖ upgrade binding emits timed_out honestly (0.533775ms)
+✖ upgrade binding emits skipped honestly (0.280443ms)
+✖ upgrade binding emits cancelled honestly (0.367275ms)
+✖ upgrade binding emits null honestly (0.294395ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 2
+ℹ fail 13
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 117.017052
+
+✖ failing tests:
+
+test at tests/release-evidence/assemble-input.test.mjs:134:1
+✖ upgrade binding matches the two live CI commands exactly (2.891204ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'Deploy migration succeeds on the provisioned database',
+  +   'Deploy migration is idempotent (every release re-runs it)'
+  -   'Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it)'
+    ]
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:135:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'Deploy migration succeeds on the provisioned database', 'Deploy migration is idempotent (every release re-runs it)' ],
+    expected: [ 'Deploy migration succeeds on the provisioned database', 'Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it)' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:141:1
+✖ upgrade record retains the live replay result and omits unrelated steps (2.059619ms)
+  Error [AssemblyError]: release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs
+      at file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:208:22
+      at Array.map (<anonymous>)
+      at assembleInput (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:206:38)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:142:28)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at tests/release-evidence/assemble-input.test.mjs:157:5
+✖ upgrade binding refuses ambiguous records (success first): Deploy migration succeeds on the provisioned database (0.861771ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /more than one upgrade evidence step/. Input:
+  
+  `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`
+  
+      at Object.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:130:12)
+      at expectedException (node:assert:578:17)
+      at expectsError (node:assert:703:21)
+      at strict.rejects (node:assert:769:3)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:163:7)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`,
+    expected: /more than one upgrade evidence step/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:157:5
+✖ upgrade binding refuses ambiguous records (failure first): Deploy migration succeeds on the provisioned database (0.519374ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /more than one upgrade evidence step/. Input:
+  
+  `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`
+  
+      at Object.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:130:12)
+      at expectedException (node:assert:578:17)
+      at expectsError (node:assert:703:21)
+      at strict.rejects (node:assert:769:3)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:163:7)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`,
+    expected: /more than one upgrade evidence step/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:166:3
+✖ upgrade binding refuses an incomplete record carrying success: Deploy migration succeeds on the provisioned database (0.506605ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /upgrade evidence step .* has not completed/. Input:
+  
+  `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`
+  
+      at Object.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:130:12)
+      at expectedException (node:assert:578:17)
+      at expectsError (node:assert:703:21)
+      at strict.rejects (node:assert:769:3)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:169:5)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`,
+    expected: /upgrade evidence step .* has not completed/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:157:5
+✖ upgrade binding refuses ambiguous records (success first): Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.387675ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /more than one upgrade evidence step/. Input:
+  
+  `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`
+  
+      at Object.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:130:12)
+      at expectedException (node:assert:578:17)
+      at expectsError (node:assert:703:21)
+      at strict.rejects (node:assert:769:3)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:163:7)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`,
+    expected: /more than one upgrade evidence step/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:157:5
+✖ upgrade binding refuses ambiguous records (failure first): Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.44368ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /more than one upgrade evidence step/. Input:
+  
+  `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`
+  
+      at Object.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:130:12)
+      at expectedException (node:assert:578:17)
+      at expectsError (node:assert:703:21)
+      at strict.rejects (node:assert:769:3)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:163:7)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`,
+    expected: /more than one upgrade evidence step/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:166:3
+✖ upgrade binding refuses an incomplete record carrying success: Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.573635ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /upgrade evidence step .* has not completed/. Input:
+  
+  `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`
+  
+      at Object.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:130:12)
+      at expectedException (node:assert:578:17)
+      at expectsError (node:assert:703:21)
+      at strict.rejects (node:assert:769:3)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:169:5)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`,
+    expected: /upgrade evidence step .* has not completed/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:180:3
+✖ upgrade binding emits failure honestly (0.58332ms)
+  Error [AssemblyError]: release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs
+      at file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:208:22
+      at Array.map (<anonymous>)
+      at assembleInput (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:206:38)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:183:23)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at tests/release-evidence/assemble-input.test.mjs:180:3
+✖ upgrade binding emits timed_out honestly (0.533775ms)
+  Error [AssemblyError]: release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs
+      at file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:208:22
+      at Array.map (<anonymous>)
+      at assembleInput (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:206:38)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:183:23)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at tests/release-evidence/assemble-input.test.mjs:180:3
+✖ upgrade binding emits skipped honestly (0.280443ms)
+  Error [AssemblyError]: release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs
+      at file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:208:22
+      at Array.map (<anonymous>)
+      at assembleInput (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:206:38)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:183:23)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at tests/release-evidence/assemble-input.test.mjs:180:3
+✖ upgrade binding emits cancelled honestly (0.367275ms)
+  Error [AssemblyError]: release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs
+      at file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:208:22
+      at Array.map (<anonymous>)
+      at assembleInput (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:206:38)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:183:23)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at tests/release-evidence/assemble-input.test.mjs:180:3
+✖ upgrade binding emits null honestly (0.294395ms)
+  Error [AssemblyError]: release-evidence assembly failed closed: upgrade evidence step "Deploy migration is idempotent (every release re-runs it)" was not found in job "Blank DB Provisioning + Deploy Migration" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs
+      at file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:208:22
+      at Array.map (<anonymous>)
+      at assembleInput (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/release-evidence/assemble-input.mjs:206:38)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:183:23)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)

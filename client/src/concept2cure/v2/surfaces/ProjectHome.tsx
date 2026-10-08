@@ -205,12 +205,30 @@ function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string
   );
 }
 
-function StagePanel({ stage, onNav }: { stage: string; onNav: (id: string) => void }) {
+/** Whether a surface can be opened in this release. Unknown (verdicts not yet
+    read, or unreadable) counts as available, the rule the rail uses: a lock is a
+    claim about the customer's release and is never invented. */
+function useSurfaceAvailable(): (id: string) => boolean {
+  const { verdictFor } = useNavEntitlements();
+  return (id: string) => !isLaunchScopeLocked(verdictFor(id));
+}
+
+function StagePanel({ stage, onNav, available }: { stage: string; onNav: (id: string) => void; available: (id: string) => boolean }) {
   const meta = PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '', blurb: '' };
-  const tools = PJ_STAGE_TOOLS[stage] || [];
+  /* A tool outside the launch scope is not offered: a card that opens a "not
+     in this release" panel is not a thing this project can do (the same rule
+     as the Workspace grid below). */
+  const tools = (PJ_STAGE_TOOLS[stage] || []).filter(t => available(t.id));
   return (
     <section className="pj-sec">
       <div className="pj-sec-h"><h2>{meta.label}</h2><span className="sec-sub">{meta.blurb}</span></div>
+      {tools.length === 0 && (
+        <EmptyState
+          icon={I.clock}
+          title="Not in this release"
+          hint="The tools for this stage come in a later release. AnA can still help with it in the conversation."
+        />
+      )}
       <div className="pj-tools">
         {tools.map(t => (
           <button key={t.id} className="pj-tool" onClick={() => onNav(t.id)}>
@@ -354,6 +372,7 @@ function sourcePinTitle(s: SourceRow): string {
 }
 
 function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
+  const available = useSurfaceAvailable();
   const [reloadKey, setReloadKey] = useState(0);
   const [q, setQ] = useState('');
   // Sources the user has pinned as context for the next AnA turn. Handed over
@@ -614,9 +633,11 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
       {pid && <ConversationFilesAdopt pid={pid} onAdopted={() => setReloadKey((k) => k + 1)} />}
 
       <div className="cm-pushbar" style={{ marginTop: 12 }}>
-        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('source-tracer')}>
-          Trace a claim to its source {I.right}
-        </button>
+        {available('source-tracer') && (
+          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('source-tracer')}>
+            Trace a claim to its source {I.right}
+          </button>
+        )}
         <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('document-authoring')} disabled={uploading}>
           Write from these sources {I.right}
         </button>
@@ -1047,7 +1068,11 @@ function AuthorWorkspace({
                   const done = Number(w.completion_pct ?? 0);
                   const label = String(w.module ?? '—').toUpperCase();
                   return (
-                    <button key={i} className="pj-lmod" data-risk={done < 50 || undefined} onClick={() => onNav('dossier-map')}>
+                    /* Opens the program's documents, where these sections are
+                       written. It opened the dossier map, which reads a store
+                       programs created here never write (decision record
+                       2026-10-08). */
+                    <button key={i} className="pj-lmod" data-risk={done < 50 || undefined} onClick={() => onNav('document-authoring')}>
                       <span className="pj-lmod-t">{label}{Number(w.total) ? ` · ${Number(w.total)} section${Number(w.total) === 1 ? '' : 's'}` : ''}</span>
                       <span className="pj-lmod-track"><span className="pj-lmod-fill" data-risk={done < 50 || undefined} style={{ width: done + '%' }} /></span>
                       <span className="pj-lmod-pct">{done}%</span>
@@ -1215,6 +1240,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   // Other v2 surfaces treat onAsk as optional; keep that contract so ProjectHome
   // renders standalone (and in tests) without a host wired up.
   const ask = onAsk || (() => {});
+  const available = useSurfaceAvailable();
   const sel = window.C2C_PROJECT ?? null;
 
   // Selected-project identity handed off from the Projects surface. Its `id` is
@@ -1570,7 +1596,11 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
               org-shaped/absent here (meetings, eTMF, grants). */}
           {stage === 'plan' && (<>
             <SchedulePanel pid={pid} onAsk={ask} />
-            <StagePanel stage="plan" onNav={onNav} />
+            <StagePanel stage="plan" onNav={onNav} available={available} />
+            {/* Said only while one of those surfaces can be opened: in this
+                release none can, and the sentence would point at tools that
+                are not there. */}
+            {['agency-meetings', 'etmf'].some(available) && (
             <section className="pj-sec">
               <div className="pj-sec-h"><h2>Agency meetings &amp; planning data</h2></div>
               <EmptyState
@@ -1579,10 +1609,11 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
                 hint="Agency meetings, the Trial Master File and grant milestones are managed in their dedicated surfaces, each wired to its real store. Use the tools above to open them."
               />
             </section>
+            )}
           </>)}
 
-          {stage === 'respond' && <StagePanel stage="respond" onNav={onNav} />}
-          {stage === 'lifecycle' && <StagePanel stage="lifecycle" onNav={onNav} />}
+          {stage === 'respond' && <StagePanel stage="respond" onNav={onNav} available={available} />}
+          {stage === 'lifecycle' && <StagePanel stage="lifecycle" onNav={onNav} available={available} />}
 
           {stage === 'author' && (<>
             <ConversationComposer productName={productName} onNav={onNav} />
