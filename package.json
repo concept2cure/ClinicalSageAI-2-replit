@@ -92,7 +92,6 @@
     "ai:model-cards": "tsx scripts/ai-governance/generate-model-cards.ts",
     "ai:evidence-pack": "tsx scripts/ai-governance/generate-evidence-pack.ts",
     "cre:atoms": "tsx scripts/cre/generate-atoms.ts",
-    "cre:seed-demo": "tsx scripts/cre/seed-demo-evidence.ts",
     "ai:eval-doc-quality": "tsx server/eval/doc-quality/run-eval.ts",
     "pq:run": "tsx server/eval/pq/run-pq.ts",
     "ci:pq-evaluation-callers": "node scripts/ci/check-pq-evaluation-callers.mjs",
