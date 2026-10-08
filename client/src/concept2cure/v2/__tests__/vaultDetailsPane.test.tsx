@@ -7,8 +7,13 @@
  *     History were keyed `${docId}-${vaultEpoch}` as siblings in one fragment, so
  *     React could not match the one it had mounted and kept it in the DOM.
  * (b) A saved change shows the server's confirmation, and the confirmation is
- *     still there when the Vault re-reads after the save. The history renders the
- *     reason a change was recorded with.
+ *     still there after the Vault has re-read the save and settled. The history
+ *     renders the reason a change was recorded with.
+ * (c) A recorded removal decision keeps its confirmation after the same re-read.
+ *
+ * The re-read is delayed, as a network round trip is. The confirmation is checked
+ * once the re-read has been delivered and the pane is back, not at the instant it
+ * first appears: a note that is on screen for one frame does not count.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -28,11 +33,16 @@ const DOC_B = '55555555-5555-4555-8555-555555555555';
 const DOC_C = '66666666-6666-4666-8666-666666666666';
 const REASON = 'The sponsor renamed the protocol at the pre-IND meeting.';
 const VAULT_URL = `/api/c2c/project-vault/${PID}`;
+const PREVIEW_URL = `/api/c2c/projects/${PID}/document-dispositions`;
+const REREAD_MS = 120;
 const VERIFIED = { store: 'audit_logs', ok: true, rowsChecked: 40, legacyRows: 0, sequencedRows: 40 };
+
+let recordedChoice: string | undefined;
+let settledReads = 0;
 
 const docs = () => [
   uploadDoc({
-    id: `up-${DOC_A}`, docId: DOC_A, title: 'stability-summary-24m', type: 'Test reports',
+    id: `up-${DOC_A}`, docId: DOC_A, title: 'stability-summary-24m', type: 'Test reports', disposition: recordedChoice,
     details: { documentTitle: 'stability-summary-24m', documentType: 'OTHER', classification: 'INTERNAL' },
   }),
   uploadDoc({
@@ -48,11 +58,36 @@ const docs = () => [
 let historyEntries: unknown[] = [];
 let detailsReply: () => Response = () => ok({ success: true, unchanged: false, changes: [] });
 
+/** A preview of the first document, as the server reads it: every count and hash present, nothing blocked. */
+function dispositionPreview() {
+  return {
+    target: { type: 'vault_document', id: DOC_A, title: 'stability-summary-24m', sha256: 'a'.repeat(64) },
+    linkedIds: { capturedSourceIds: [], vaultDocumentIds: [DOC_A], artifactIds: [], uploadIds: [`up-${DOC_A}`] },
+    counts: { extractedTexts: 1, chunks: 18, atoms: 4, catalogValues: 6, citations: 3, downstreamReferences: 2 },
+    retention: { legalHolds: 0, retentionUntil: null, physicalErasure: false }, approvals: { active: 0 }, blockers: [],
+    replacement: null, allowedChoices: ['keep_data', 'remove_data', 'supersede'], previewToken: 'signed-preview',
+    expiresAt: new Date(Date.now() + 600_000).toISOString(), currentDisposition: null,
+  };
+}
+
 function mockApi() {
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (url === VAULT_URL && method === 'GET') return ok(vaultPayload({ tree: cabinetTree(docs()) }));
+    if (url === VAULT_URL && method === 'GET') {
+      // The first read is the page load. Every later read is a re-read after a change, and takes a round trip.
+      if (vaultReads() > 1) await new Promise((r) => setTimeout(r, REREAD_MS));
+      settledReads += 1;
+      return ok(vaultPayload({ tree: cabinetTree(docs()) }));
+    }
     if (url.endsWith('/history') && method === 'GET') return ok({ success: true, data: { entries: historyEntries, chain: VERIFIED } });
     if (url.endsWith('/details') && method === 'POST') return detailsReply();
+    if (url.startsWith(`${PREVIEW_URL}/preview?`) && method === 'GET') return ok({ preview: dispositionPreview() });
+    if (url === PREVIEW_URL && method === 'POST') {
+      recordedChoice = 'keep_data';
+      return ok({
+        success: true,
+        disposition: { id: 'decision-1', choice: 'keep_data', target: { type: 'vault_document', id: DOC_A }, auditReceipt: { id: 'receipt-1', sha256Chain: 'b'.repeat(64) } },
+      });
+    }
     return ok({});
   });
 }
@@ -65,6 +100,8 @@ beforeEach(() => {
   (window as any).C2C_PROJECT = { id: PID, title: 'BX-301' };
   historyEntries = [];
   detailsReply = () => ok({ success: true, unchanged: false, changes: [] });
+  recordedChoice = undefined;
+  settledReads = 0;
   apiRequest.mockReset();
   mockApi();
 });
@@ -94,7 +131,7 @@ describe('Vault detail pane: one document at a time', () => {
 });
 
 describe('Vault detail pane: a saved change', () => {
-  it('shows the server confirmation, and still shows it after the Vault re-reads the save', async () => {
+  it('shows the server confirmation, and still shows it after the Vault has re-read the save and settled', async () => {
     detailsReply = () => ok({ success: true, unchanged: false, changes: [{ field: 'document_type', from: 'OTHER', to: 'REPORT' }] });
     render(<Vault {...props()} />);
     const block = await waitFor(() => {
@@ -106,11 +143,29 @@ describe('Vault detail pane: a saved change', () => {
     fireEvent.change(within(block).getByTestId('vault-edit-details-reason'), { target: { value: REASON } });
     fireEvent.click(within(block).getByTestId('vault-edit-details-save'));
 
-    // The save makes the surface re-read the Vault: the second read is the proof it happened.
-    await waitFor(() => expect(vaultReads()).toBeGreaterThan(1));
-    await waitFor(() =>
-      expect(screen.getByTestId('vault-edit-details-note').textContent).toMatch(/recorded in this document's history/),
-    );
+    // The save makes the surface re-read the Vault. Wait until that re-read has been delivered and the
+    // block is back on screen, then check the confirmation: it must still be there, not only for a frame.
+    await waitFor(() => expect(settledReads).toBe(2));
+    await waitFor(() => expect(detailsBlocks()).toHaveLength(1));
+    await new Promise((r) => setTimeout(r, 30));
+    expect(screen.getByTestId('vault-edit-details-note').textContent).toMatch(/recorded in this document's history/);
+  });
+});
+
+describe('Vault detail pane: a removal decision', () => {
+  it('shows the recorded decision after the Vault has re-read the document and settled', async () => {
+    render(<Vault {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Review removal of stability-summary-24m' }));
+    await screen.findByText('a'.repeat(64));
+    fireEvent.click(screen.getByRole('radio', { name: /Remove file; retain extracted data/ }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Reason for this decision' }), { target: { value: REASON } });
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Confirm this decision' }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm this decision' }));
+
+    await waitFor(() => expect(settledReads).toBe(2));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Review removal of stability-summary-24m' })).toBeTruthy());
+    await new Promise((r) => setTimeout(r, 30));
+    expect(screen.getByText(/recorded with your reason and its audit receipt/)).toBeTruthy();
   });
 });
 

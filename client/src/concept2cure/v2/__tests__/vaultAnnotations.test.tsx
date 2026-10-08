@@ -19,6 +19,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { ApiRequestError } from '@/lib/queryClient';
 import { VaultAnnotations, codePointRange, openAnnotationsSentence, type OpenByVersion } from '../surfaces/VaultAnnotations';
+import { Vault } from '../surfaces/Vault';
+import { cabinetTree, ok, props, uploadDoc, vaultPayload } from './_vault-surface-fixtures';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const DOC = '22222222-2222-4222-8222-222222222222';
@@ -78,8 +80,15 @@ beforeEach(() => {
 });
 afterEach(() => cleanup());
 
-const mount = (actorId: number | null = 7) =>
-  render(<VaultAnnotations projectId={PID} documentId={DOC} onChanged={onChanged} actorId={actorId} />);
+/** The panel with the parent's part in it: a change bumps the refresh counter, as the Vault's re-read does. */
+function Parent({ actorId }: { actorId: number | null }) {
+  const [refreshKey, setRefreshKey] = React.useState(0);
+  return (
+    <VaultAnnotations projectId={PID} documentId={DOC} actorId={actorId} refreshKey={refreshKey}
+      onChanged={() => { onChanged(); setRefreshKey((n) => n + 1); }} />
+  );
+}
+const mount = (actorId: number | null = 7) => render(<Parent actorId={actorId} />);
 const cards = () => screen.findAllByTestId('vault-annotation');
 const openAdd = async () => {
   fireEvent.click(await screen.findByTestId('vault-annotations-open'));
@@ -319,5 +328,86 @@ describe('openAnnotationsSentence (7)', () => {
     expect(openAnnotationsSentence([v('3.0', 0, 0, true), v('2.0', 3, 0), v(null, 1, 1)]))
       .toBe('These annotations were open: v2.0 — 3 (no change requests); an unnumbered version — 1 (1 change request).');
     expect(openAnnotationsSentence([v('2.0', 1, 0, true)])).toBe('This annotation was open: v2.0 — 1 (no change requests).');
+  });
+});
+
+/*
+ * A post made from the Vault itself, as a person makes it. A change makes the
+ * Vault re-read, and while it re-reads the Vault shows its loading state in
+ * place of the whole body, so the panel is unmounted and mounted again. The
+ * confirmation of the post must survive that. QA 2026-10-08 (annotation-success):
+ * the post returned 201, and the confirmation was never on screen.
+ */
+describe('a post made in the Vault (8)', () => {
+  const POSTED = "Annotation posted. Recorded in the document's history.";
+  let server: Array<Record<string, unknown>> = [];
+  let vaultReads = 0;
+  let refuseAfterPost = false;
+  let refuseReads = false;
+
+  beforeEach(() => {
+    (window as any).C2C_PROJECT = { id: PID, title: 'BX-301' };
+    server = [];
+    vaultReads = 0;
+    refuseAfterPost = false;
+    refuseReads = false;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') {
+        vaultReads += 1;
+        // A re-read takes a round trip; the Vault is shown in its loading state meanwhile.
+        if (vaultReads > 1) await new Promise((r) => setTimeout(r, 30));
+        return ok(vaultPayload({ tree: cabinetTree([uploadDoc({ id: `up-${DOC}`, docId: DOC, title: 'Vorelinib DS specification' })]) }));
+      }
+      if (url === ANN_URL && method === 'GET') {
+        if (refuseReads) return res(429, { success: false, error: 'RATE_LIMITED', message: 'Too many document requests. Please wait.' });
+        return res(200, { success: true, data: { annotations: server, openByVersion: [{ versionId: DOC, versionLabel: '2.0', current: true, open: server.length, openChangeRequests: 0 }] } });
+      }
+      if (url === ANN_URL && method === 'POST') {
+        const sent = body as { kind: string; body: string; anchor: unknown };
+        server = [ann({ id: 'a-new', kind: sent.kind, body: sent.body, anchor: sent.anchor })];
+        refuseReads = refuseAfterPost;
+        return res(201, { success: true, data: { id: 'a-new' } });
+      }
+      return ok({});
+    });
+  });
+  afterEach(() => { delete (window as any).C2C_PROJECT; });
+
+  async function postFromVault(text: string) {
+    render(<Vault {...props()} />);
+    fireEvent.click(await screen.findByTestId('vault-annotations-open'));
+    const form = screen.getByTestId('vault-annotations-add');
+    fireEvent.change(within(form).getByTestId('vault-annotations-body'), { target: { value: text } });
+    fireEvent.click(within(form).getByTestId('vault-annotations-post'));
+  }
+
+  it('the confirmation is still shown once the Vault has re-read, and the list shows the new annotation', async () => {
+    await postFromVault('Check the units.');
+    expect((await screen.findByTestId('vault-annotation')).textContent).toContain('Check the units.');
+    expect(vaultReads).toBeGreaterThan(1);
+    expect(screen.getByText(POSTED)).toBeTruthy();
+  });
+
+  it('a refused refresh after the post keeps the confirmation, and says only that the list could not be read', async () => {
+    refuseAfterPost = true;
+    await postFromVault('Check the units.');
+    // Looked up again after each wait: the Vault's re-read remounts the panel, so an earlier node is detached.
+    await waitFor(() => expect(screen.getByTestId('vault-annotations').textContent).toMatch(/The review annotations could not be read;/));
+    const panel = () => screen.getByTestId('vault-annotations');
+    expect(within(panel()).getByRole('alert').textContent).toMatch(/^The review annotations could not be read;/);
+    expect(within(panel()).queryByTestId('vault-annotation')).toBeNull();
+    expect(screen.getByText(POSTED)).toBeTruthy();
+    expect(screen.queryByText(/The annotation was not posted/)).toBeNull();
+  });
+
+  it('one post makes one annotation read and one Vault re-read after it', async () => {
+    await postFromVault('Check the units.');
+    await waitFor(() => expect(vaultReads).toBe(2));
+    await new Promise((r) => setTimeout(r, 150));
+    const calls = apiRequest.mock.calls;
+    const postAt = calls.findIndex(([m, u]) => m === 'POST' && u === ANN_URL);
+    const annotationReadsAfterPost = calls.slice(postAt + 1).filter(([m, u]) => m === 'GET' && u === ANN_URL).length;
+    expect(annotationReadsAfterPost).toBe(1);
+    expect(vaultReads - 1).toBe(1);
   });
 });

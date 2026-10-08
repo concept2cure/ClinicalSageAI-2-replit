@@ -48,7 +48,7 @@ function mockApi(doc: unknown, loseReply = false) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload({ tree: cabinetTree([doc]) }));
     if (url === VERSIONS_URL && method === 'GET') return versionsAnswer();
-    if (url === '/api/submissions') return ok([{ id: 4, title: 'Our IND', applicationType: 'ind', primaryRegion: 'us', status: 'open', programId: PID }]);
+    if (url === '/api/submissions' || url.startsWith('/api/submissions?')) return ok([{ id: 4, title: 'Our IND', applicationType: 'ind', primaryRegion: 'us', status: 'open', programId: PID }]);
     if (url === '/api/submissions/4/sequences') return ok([{ id: 9, sequenceNumber: '0000', type: 'original', status: 'draft', region: 'us' }]);
     if (method === 'PUT' && loseReply) throw new Error('lost reply');
     return ok({});

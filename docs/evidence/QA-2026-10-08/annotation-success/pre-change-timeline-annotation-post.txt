@@ -1,0 +1,11 @@
+PRE-CHANGE timeline, annotation post in the real Vault (temporary probe, deleted; the Vault-level red test is the kept reproduction).
+Each line is a DOM state after a mutation. vaultGET counts Vault re-reads; annGET counts annotation list reads.
+PROBE LOG ["vault-GET","ann-GET","ann-POST","ann-GET","ann-GET","vault-GET","ann-GET"]
+PROBE SAMPLES
+vaultGET=1 loading=false posted-msg=false panel=true annGET=1 annPOST=0
+vaultGET=1 loading=false posted-msg=false panel=true annGET=1 annPOST=1
+vaultGET=1 loading=false posted-msg=false panel=true annGET=2 annPOST=1
+vaultGET=2 loading=true posted-msg=false panel=false annGET=3 annPOST=1
+vaultGET=2 loading=false posted-msg=false panel=true annGET=3 annPOST=1
+vaultGET=2 loading=false posted-msg=false panel=true annGET=4 annPOST=1
+PROBE FINAL posted-msg=false
