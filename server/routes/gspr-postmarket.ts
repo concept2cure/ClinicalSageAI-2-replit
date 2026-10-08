@@ -44,6 +44,8 @@ import {
 import {
   approveDocument,
   createDocument,
+  DOCUMENT_EDITABLE,
+  DOCUMENT_GOVERNED,
   getDocument,
   listProgramDocuments,
   supersedeDocument,
@@ -63,7 +65,11 @@ import {
   upsertPmcfEnrollmentRecord,
   STORE_ABSENT,
 } from '../services/gspr-postmarket/pmcf-enrollment.service';
-import type { InsertGsprProgramMapping, PostMarketDocumentType } from '../../shared/schema/gspr-postmarket';
+import type {
+  InsertGsprProgramMapping,
+  InsertPostMarketDocument,
+  PostMarketDocumentType,
+} from '../../shared/schema/gspr-postmarket';
 import {
   POST_MARKET_DOCUMENT_TYPES,
   PMCF_ACTIVITY_KINDS,
@@ -286,18 +292,30 @@ postMarketRouter.post(
     if (!body.code || !body.title) {
       return res.status(422).json({ error: 'code and title are required' });
     }
+    // A new document is a draft created by the session's user. The whole body
+    // used to be spread into the insert, so a caller could create it approved,
+    // locked and signed by anyone, at any version, and a request with no user
+    // was created by 'system'. Governed fields are refused; the rest is the
+    // same allow-list an edit uses.
+    const governed = DOCUMENT_GOVERNED.filter((key) => Object.prototype.hasOwnProperty.call(body, key));
+    if (governed.length) {
+      return res.status(422).json({
+        error: `${governed.join(', ')} cannot be set on create: a document is created as a draft by the signed-in user, and is approved only through its approval`,
+      });
+    }
+    const userId = authedUserId(req);
+    if (userId === null) {
+      return res.status(401).json({ error: 'Authentication required to create a post-market document' });
+    }
+    const createdBy = String(userId);
     try {
-      const userIdRaw = (req as any).user?.id;
-      const createdBy =
-        typeof userIdRaw === 'string'
-          ? userIdRaw
-          : userIdRaw != null
-          ? String(userIdRaw)
-          : 'system';
       const doc = await createDocument({
-        ...body,
+        ...pickWritable<InsertPostMarketDocument>(body, DOCUMENT_EDITABLE),
+        documentType: body.documentType,
+        code: body.code,
+        title: body.title,
         organizationId: orgId,
-        programId: req.params.programId,
+        programId: String(req.params.programId),
         createdBy,
         updatedBy: createdBy,
       });

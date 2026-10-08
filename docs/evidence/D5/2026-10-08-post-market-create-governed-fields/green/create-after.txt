@@ -1,0 +1,15 @@
+# The same test on the fixed route.
+
+ ✓ tests/post-market-document-create.test.ts > a post-market document is created as a draft by the session user > a body that sets status is refused, and nothing is created
+ ✓ tests/post-market-document-create.test.ts > a post-market document is created as a draft by the session user > a body that sets locked is refused, and nothing is created
+ ✓ tests/post-market-document-create.test.ts > a post-market document is created as a draft by the session user > a body that sets approvedBy is refused, and nothing is created
+ ✓ tests/post-market-document-create.test.ts > a post-market document is created as a draft by the session user > a body that sets approvedAt is refused, and nothing is created
+ ✓ tests/post-market-document-create.test.ts > a post-market document is created as a draft by the session user > a body that sets signatureId is refused, and nothing is created
+ ✓ tests/post-market-document-create.test.ts > a post-market document is created as a draft by the session user > a body that sets version is refused, and nothing is created
+ ✓ tests/post-market-document-create.test.ts > a post-market document is created as a draft by the session user > a body that sets createdBy is refused, and nothing is created
+ ✓ tests/post-market-document-create.test.ts > a post-market document is created as a draft by the session user > a body that sets updatedBy is refused, and nothing is created
+ ✓ tests/post-market-document-create.test.ts > a post-market document is created as a draft by the session user > the stored row carries only document fields, and the session user as its creator
+ ✓ tests/post-market-document-create.test.ts > a post-market document is created as a draft by the session user > with no user on the request nothing is created by 'system'
+ ✓ tests/post-market-document-create.test.ts > a post-market document is created as a draft by the session user > a session subject that arrives as a string still records the user
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
