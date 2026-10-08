@@ -143,6 +143,11 @@ vi.mock('../../server/services/vault/document-chunking.service', () => ({
 }));
 vi.mock('../../server/export/renderers', () => ({
   renderHtmlToPdf: async (html: string) => Buffer.from(`%PDF-1.7\n% rendered by the lineage test engine\n${html}`),
+  // Filing renders through the tracked form since a056eb9ea (QA 2026-10-08, j4); same stub.
+  renderHtmlToPdfTracked: async (html: string) => ({
+    buffer: Buffer.from(`%PDF-1.7\n% rendered by the lineage test engine\n${html}`),
+    usedFallback: false,
+  }),
 }));
 /* No embedding provider exists here; the atom writer treats that as non-fatal. */
 vi.mock('../../server/services/enhancedEmbeddingService', async (importOriginal) => {

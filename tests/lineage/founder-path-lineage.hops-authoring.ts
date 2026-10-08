@@ -282,10 +282,13 @@ export async function hopSeal(w: World): Promise<void> {
     k.approvedSealHash = approved?.content_hash;
     expect((await q<{ status: string }>('SELECT status FROM authoring_documents WHERE id = $1', [k.docId]))[0].status).toBe('APPROVED');
   });
-  await hop.check('signature-binds-seal', 'the APPROVER signature names the freeze it covered, by version and content hash', async (observe) => {
+  // Since a056eb9ea (QA 2026-10-08, j4) the approval writes its own sealed
+  // snapshot BEFORE the signature and the signature is bound to it: the approval
+  // attests to the snapshot it sealed, not to the earlier freeze.
+  await hop.check('signature-binds-seal', 'the APPROVER signature names the snapshot its approval sealed, by version and content hash', async (observe) => {
     const [sig] = await q('SELECT meaning, covered_freeze_version, covered_content_hash, signature_digest FROM authoring_signatures WHERE id = $1', [es.body.signatureId]);
     observe(sig?.covered_freeze_version);
-    expect(sig).toMatchObject({ meaning: 'APPROVER', covered_freeze_version: 'v1.0.frozen', covered_content_hash: k.freezeHash });
+    expect(sig).toMatchObject({ meaning: 'APPROVER', covered_freeze_version: 'approved', covered_content_hash: k.approvedSealHash });
     expect(String(sig.signature_digest)).toMatch(HEX64);
   });
   await hop.check('seal-binds-revision-and-lineage', 'the seal names each section’s doc_revisions head, and each head carries a lineage digest', async (observe) => {

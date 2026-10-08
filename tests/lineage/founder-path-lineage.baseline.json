@@ -90,16 +90,6 @@
       }
     },
     "transmit": {
-      "reachable-from-the-product": {
-        "findings": [
-          "SUB-1"
-        ],
-        "closedBy": [
-          "LX-13"
-        ],
-        "observed": "0",
-        "why": "The sequence transmit route (server/routes/submissions.ts:1718) has no caller in client/src; the only UI transmit is the package spine's (client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx:282). This test reaches it over the API, as the plan's A17 says a direct call can."
-      },
       "bytes-retained": {
         "findings": [
           "SUB-2"
