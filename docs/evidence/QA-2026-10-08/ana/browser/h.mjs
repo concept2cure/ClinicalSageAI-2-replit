@@ -1,5 +1,5 @@
 // j5-fix harness: 5078, signed in as michael.brown through the real form.
-import { chromium, watchedPage, snap, writeLog, BASE, sleep, say, signIn } from '../lib.mjs';
+import { chromium, watchedPage, snap, writeLog, BASE, sleep, say, signIn } from '../../rate-limits/scripts/lib.mjs';
 import fs from 'node:fs';
 export { snap, sleep, BASE, say };
 export const OUT = process.env.OUT;

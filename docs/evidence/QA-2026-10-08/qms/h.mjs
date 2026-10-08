@@ -1,4 +1,4 @@
-import { chromium, snap, say, watchedPage, sleep, writeLog, BASE } from '../lib.mjs';
+import { chromium, snap, say, watchedPage, sleep, writeLog, BASE } from '../rate-limits/scripts/lib.mjs';
 export { chromium, snap, say, watchedPage, sleep, writeLog, BASE };
 const DIR = new URL('.', import.meta.url).pathname;
 export async function launch() {

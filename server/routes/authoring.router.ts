@@ -4681,12 +4681,11 @@ async function approveAndSnapshotForSignature(args: {
   docHash: string;
 }): Promise<{ version: string; contentHash: string }> {
   const { client, docId, tenantId, email, docHash } = args;
-  await client.query(
-    `UPDATE authoring_documents
-        SET status = $1, approved_at = COALESCE(approved_at, NOW()), frozen_at = COALESCE(frozen_at, NOW())
-      WHERE id = $2 AND tenant_id = $3`,
-    ['APPROVED', docId, tenantId]
-  );
+  // The approval stamp itself (status, approved_at, frozen_at) is written by
+  // the caller, inline in the signing handler that re-verifies the signer and
+  // writes the signature row on this same client — so ci:sign-ceremony sees the
+  // stamp beside its ceremony. This function only reads the approved row back
+  // and freezes its snapshot.
   const approvedDoc = await client.query(
     'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
     [docId, tenantId]
@@ -4803,6 +4802,12 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       // On APPROVER the approval and its snapshot come FIRST, so the signature
       // can name the snapshot it creates (approveAndSnapshotForSignature).
       if (meaning === 'APPROVER') {
+        await client.query(
+          `UPDATE authoring_documents
+              SET status = $1, approved_at = COALESCE(approved_at, NOW()), frozen_at = COALESCE(frozen_at, NOW())
+            WHERE id = $2 AND tenant_id = $3`,
+          ['APPROVED', docId, tenantId]
+        );
         covered = await approveAndSnapshotForSignature({ client, docId: String(docId), tenantId, email, docHash });
       }
 
