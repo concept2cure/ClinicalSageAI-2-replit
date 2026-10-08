@@ -17,6 +17,10 @@ const connectFn = vi.fn();
 // The signing ceremony reads the signer's account standing (VSR-001 F-28);
 // every signer here is active. Suspended and deprovisioned signers are pinned
 // by reverify-signer.test.ts and tests/db/account-standing.dbtest.ts.
+// The transmitter holds a signing role (approver); only such a role may
+// transmit to an agency (SEC-1008-1, governed-transmit-checks.ts).
+const signerRole = vi.hoisted(() => ({ value: 'approver' as string | null }));
+vi.mock('../server/services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => signerRole.value }));
 vi.mock('../server/services/account-standing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../server/services/account-standing')>()),
   isAccountActive: async () => true,
@@ -320,6 +324,32 @@ describe('POST /api/mdx/gateways/:region/:gateway/transmit', () => {
     expect(res.status).toBe(201);
     expect(res.body.data.transmittalId).toBe(42);
     expect(res.body.data.transmissionId).toBe('mdn-12345');
+  });
+
+  it.each(['member', 'manager'])('refuses a %s with no signing authority — 403 before the password is checked, nothing sent (SEC-1008-1)', async (role) => {
+    queryFn.mockClear();
+    transmitFn.mockClear();
+    signerRole.value = role;
+    try {
+      const res = await request(makeApp())
+        .post('/api/mdx/gateways/fda/esg/transmit')
+        .send({
+          environment: 'staging',
+          bundle: { path: '/tmp/ectd.zip', sha256: 'a'.repeat(64), sizeBytes: 123456, format: 'ectd' },
+          application_id: 'IND-12345',
+          sequence: '0001',
+          ...REAUTH,
+        });
+      expect(res.status).toBe(403);
+      expect(JSON.stringify(res.body)).toContain('ESIGNATURE_NO_AUTHORITY');
+    } finally {
+      signerRole.value = 'approver';
+    }
+    // The credential read (reverifySigner's password_hash lookup) never ran, so
+    // no attempt counted against the account's lockout.
+    const credentialReads = queryFn.mock.calls.filter((c: unknown[]) => /password_hash/i.test(String(c[0])));
+    expect(credentialReads, 'a password attempt was spent on a role that may not sign').toHaveLength(0);
+    expect(transmitFn).not.toHaveBeenCalled();
   });
 
   it('refuses a transmit that declares no §11.50 signature meaning — nothing reaches the gateway', async () => {

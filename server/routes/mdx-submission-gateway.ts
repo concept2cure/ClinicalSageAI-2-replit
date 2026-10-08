@@ -37,6 +37,7 @@ import {
 } from '../services/submission-gateways/fda-esg';
 import {
   executeGovernedTransmit,
+  assertTransmitterHasSigningAuthority,
   GovernedTransmitRefusal,
   GovernedTransmitInternalError,
   BUNDLE_FORMAT_SET,
@@ -216,6 +217,18 @@ const transmitBody = z.object({
   reauth: reauthEnvelope,
 });
 
+/** Answers the refusal and returns true when this person may not sign a transmission. */
+async function refusedForSigningAuthority(res: Response, orgId: number, userId: number): Promise<boolean> {
+  try {
+    await assertTransmitterHasSigningAuthority(orgId, userId);
+    return false;
+  } catch (err: unknown) {
+    if (err instanceof GovernedTransmitRefusal) clientError(res, err.httpStatus, err.message, { code: err.code });
+    else serverError(res, log, 'transmit-signing-authority', err);
+    return true;
+  }
+}
+
 router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -234,8 +247,12 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
   }
   const p = parsed.data;
 
-  // Re-auth gate FIRST (high-risk sign).
   if (userId === null) return orgRequired(res);
+  // Signing authority before the credentials (SEC-1008-1): a role that may not
+  // sign spends no password attempt. executeGovernedTransmit asks again, for
+  // its other callers.
+  if (await refusedForSigningAuthority(res, orgId, userId)) return;
+  // Re-auth gate next (high-risk sign).
   const reauthResult = await verifyReauth(userId, p.reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
