@@ -32,6 +32,7 @@ import { computationEngine } from '../ana-biostats/computation-engine';
 import { judgmentEngine } from '../ana-biostats/judgment-engine';
 import type { ComputationResult, JudgmentResult, StatisticalDocumentType, StatisticalInput } from '../ana-biostats/types';
 import { STATS_ENGINE, STATS_ENGINE_VERSION, hashInputs } from '../stats/computation-provenance';
+import { recordComputationRun, SAMPLE_SIZE_METHOD } from '../stats/computation-runs';
 import {
   isUuid,
   loadStudyDesign,
@@ -276,6 +277,8 @@ export interface ApplySampleSizeResult {
   power: number;
   /** The power the engine computed for this N (at or just above the target). */
   achievedPower: number;
+  /** The stored run that computed this N (stats_computation_runs, S5b). */
+  computationRunId: number;
   actionId: string;
   auditId: string;
   sha256Chain: string;
@@ -286,6 +289,30 @@ export class BridgeError extends Error {
   constructor(public readonly code: 'NOT_FOUND' | 'CANNOT_SIZE' | 'REASON_REQUIRED' | 'NO_TASKS' | 'NO_PROJECT', message: string, public readonly details?: unknown) {
     super(message);
   }
+}
+
+/** The sizing run, stored against the design's own row (its id and project, this organization's). */
+async function recordSizingRun(
+  client: import('pg').PoolClient,
+  args: { organizationId: number; userId: number; studyId: string },
+  input: StatisticalInput,
+  computation: ComputationResult,
+) {
+  const { rows } = await client.query(
+    'SELECT id, program_id FROM cdisc_prm_studies WHERE study_id = $1 AND tenant_id = $2 LIMIT 1',
+    [args.studyId, args.organizationId],
+  );
+  return recordComputationRun(client, {
+    organizationId: args.organizationId,
+    programId: rows[0]?.program_id ?? null,
+    studyRef: rows[0]?.id != null ? Number(rows[0].id) : null,
+    method: SAMPLE_SIZE_METHOD,
+    methodVersion: computation.method,
+    inputs: input,
+    outputs: computation,
+    purpose: 'study-design:planned-sample-size',
+    userId: args.userId,
+  });
 }
 
 /**
@@ -310,13 +337,18 @@ export async function applySampleSizeToDesign(args: {
     throw new BridgeError('CANNOT_SIZE', 'The design cannot be sized until its blocking gaps are resolved.', adapter.gaps.filter((g) => g.severity === 'blocking'));
   }
   const computation = computationEngine.compute(adapter.input);
-  const inputsSha256 = hashInputs(adapter.input);
-  const patch = computationToPlanPatch(adapter.input, computation, { engine: STATS_ENGINE, version: STATS_ENGINE_VERSION, inputsSha256 });
-  const next = applyPlanPatch(loaded.design, patch);
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    /* The run is stored first, in this transaction, so the figure the design
+       records names it (S5b): its inputs, outputs and their hashes, and a
+       recompute that can be checked (stats/computation-runs.ts). */
+    const run = await recordSizingRun(client, args, adapter.input, computation);
+    const inputsSha256 = run.inputsSha256;
+    const patch = computationToPlanPatch(adapter.input, computation,
+      { engine: STATS_ENGINE, version: STATS_ENGINE_VERSION, inputsSha256, runId: run.runId });
+    const next = applyPlanPatch(loaded.design, patch);
     const studyId = await persistStudyDesignTx(client, next, { tenantId: args.organizationId, userId: args.userId });
     const gov = await recordGovernedAction(client, {
       orgId: args.organizationId,
@@ -337,6 +369,8 @@ export async function applySampleSizeToDesign(args: {
         engine: STATS_ENGINE,
         engineVersion: STATS_ENGINE_VERSION,
         inputsSha256,
+        computationRunId: run.runId,
+        outputsSha256: run.outputsSha256,
         previousPlannedSampleSize: loaded.design.statisticalPlan?.plannedSampleSize ?? null,
       },
       domain: 'biostatistics',
@@ -349,6 +383,7 @@ export async function applySampleSizeToDesign(args: {
       plannedSampleSize: patch.plannedSampleSize as number,
       power: patch.power as number,
       achievedPower: computation.power,
+      computationRunId: run.runId,
       ...gov,
       design: next,
     };

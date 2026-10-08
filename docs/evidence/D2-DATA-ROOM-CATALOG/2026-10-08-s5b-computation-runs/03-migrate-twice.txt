@@ -1,0 +1,10 @@
+# run 1
+  tenant_isolation_policy: 19/19 tables policied
+  governed-content tree: 3/3 sentinel(s) present
+
+✅ Schema migration complete — safe to roll services.
+# run 2 (replay)
+  tenant_isolation_policy: 19/19 tables policied
+  governed-content tree: 3/3 sentinel(s) present
+
+✅ Schema migration complete — safe to roll services.
