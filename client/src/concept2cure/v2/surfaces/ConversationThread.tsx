@@ -284,6 +284,35 @@ interface AnaTurnProps {
   after?: React.ReactNode;
 }
 
+/* What the right rail drew under an answer, drawn here since the rail is
+   deleted (ana-2a): the steers AnA accepted for the turn — a steer the person
+   cannot see afterwards is one they cannot tell was taken, and the server has
+   already written it into the decision lineage — and the CRL/RTF pre-mortem
+   the turn assembled. No `onExport` on the panel: this screen has no DOCX
+   route for it, and the panel then disables the action and says where export
+   lives. */
+function TurnSteersAndPremortem({ turn }: { turn: CtTurn }) {
+  return (
+    <>
+      {turn.interjections && (
+        <div className="ana-steers">
+          {turn.interjections.map((t, si) => (
+            <div key={si} className="ana-steer">
+              <span className="ana-steer-ic" aria-hidden="true">{I.chevRight}</span>
+              <span><span className="ana-steer-k">You steered AnA:</span> {t}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {turn.crlPremortem && (
+        <div className="ana-premortem">
+          <CrlPremortemPanel artifact={turn.crlPremortem} />
+        </div>
+      )}
+    </>
+  );
+}
+
 function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, insertTarget, after }: AnaTurnProps) {
   const a = turn.activity;
   return (
@@ -344,27 +373,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, inser
         {/* What went wrong around the answer (a failed save, a timeout), as
             the rail shows it: this screen showed none (row 74, ADR-0015 §9). */}
         <AnaMessageWarnings warnings={turn.warnings} />
-        {/* Steers AnA accepted for this turn: a steer the person cannot see
-            afterwards is one they cannot tell was taken, and the server has
-            already written it into the decision lineage. */}
-        {turn.interjections && (
-          <div className="ana-steers">
-            {turn.interjections.map((t, si) => (
-              <div key={si} className="ana-steer">
-                <span className="ana-steer-ic" aria-hidden="true">{I.chevRight}</span>
-                <span><span className="ana-steer-k">You steered AnA:</span> {t}</span>
-              </div>
-            ))}
-          </div>
-        )}
-        {/* The pre-mortem, when this turn assembled one. No `onExport`: this
-            screen has no DOCX route for it, and the panel then disables the
-            action and says where export lives. */}
-        {turn.crlPremortem && (
-          <div className="ana-premortem">
-            <CrlPremortemPanel artifact={turn.crlPremortem} />
-          </div>
-        )}
+        <TurnSteersAndPremortem turn={turn} />
         {/* What was checked about the answer, directly under it: the engine's
             check of its specific claims against this turn's sources, then
             AnA's labels, the same strip as the rail and the editor. Never under
