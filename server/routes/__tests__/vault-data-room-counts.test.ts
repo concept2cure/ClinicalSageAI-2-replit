@@ -10,6 +10,11 @@
  *   - "Classified" meant "the classifier ran", including its fail-closed answer
  *     (no folder proposed, needsReview), so a source the classifier refused to
  *     place was reported as classified.
+ *
+ * Since 2026-10-08 (Data Room catalog S2) the counts are one aggregate over
+ * every current source of the project (countDataRoomStages), not the 200 rows
+ * the lane lists. Here the aggregate's answer is mocked; its definitions are
+ * proven on PostgreSQL in tests/db/data-room-processing.dbtest.ts.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
@@ -49,10 +54,14 @@ function source(n: number, dossier: Record<string, unknown> | null = null) {
   };
 }
 
+let stageCounts = { captured: 0, classified: 0, filed: 0, needs_review: 0 };
+
 beforeEach(() => {
   vi.clearAllMocks();
+  stageCounts = { captured: 0, classified: 0, filed: 0, needs_review: 0 };
   query.mockImplementation(async (sql: string) => {
     const q = String(sql);
+    if (/AS needs_review/.test(q)) return { rows: [stageCounts] };
     if (/COUNT\(\*\)::int AS total/.test(q)) return { rows: [{ total: 0, unfiled: 0 }] };
     if (/SELECT id, name, product_type/.test(q)) return { rows: [{ id: PROGRAM, name: 'P', product_type: null }] };
     return { rows: [] };
@@ -69,12 +78,15 @@ describe('data room — the window', () => {
     expect(opts).toMatchObject({ programId: PROGRAM, currentOnly: true, limit: 201 });
   });
 
-  it('a full window says so, and shows only the window', async () => {
+  it('a full window says so and lists only the window, while the counts cover the whole project', async () => {
     listClientDocuments.mockResolvedValue(Array.from({ length: 201 }, (_, i) => source(i + 1)));
+    stageCounts = { captured: 250, classified: 0, filed: 0, needs_review: 0 };
     const room = await dataRoom();
     expect(room.window).toEqual({ shown: 200, truncated: true });
     expect(room.sources).toHaveLength(200);
-    expect(room.captured).toBe(200);
+    expect(room.captured).toBe(250);
+    const counted = query.mock.calls.find(([sql]) => /AS needs_review/.test(String(sql)));
+    expect(counted?.[1]).toEqual([PROGRAM, 7]);
   });
 
   it('a window with room to spare is not truncated', async () => {
@@ -96,9 +108,11 @@ describe('data room — what "classified" means', () => {
     expect(byId[1]).toBe('classified');
     expect(byId[2]).toBe('needs_review');
     expect(byId[3]).toBe('captured');
-    expect(room.classified).toBe(1);
-    expect(room.needsReview).toBe(1);
-    expect(room.captured).toBe(3);
+    stageCounts = { captured: 3, classified: 1, filed: 0, needs_review: 1 };
+    const counted = await dataRoom();
+    expect(counted.classified).toBe(1);
+    expect(counted.needsReview).toBe(1);
+    expect(counted.captured).toBe(3);
   });
 });
 
@@ -122,6 +136,5 @@ describe('data room — "filed" names the Vault version (VR-16)', () => {
     expect(by(1)).toMatchObject({ stage: 'filed', filedAs: { version: '1.0', supersededBy: '2.0' } });
     expect(by(2)).toMatchObject({ stage: 'filed', filedAs: { version: '3.0', supersededBy: null } });
     expect(by(3)).toMatchObject({ stage: 'captured', filedAs: null });
-    expect(room.filed).toBe(2);
   });
 });

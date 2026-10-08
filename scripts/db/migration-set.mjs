@@ -3068,6 +3068,15 @@ export const C2C_MIGRATION_FILES = [
   // must reach. Evidence docs/evidence/QA-2026-10-08/ind-reporting-3/.
   'migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql',
 
+  // ── The Data Room keeps the text it read, and is searchable (2026-10-08) ──
+  // Data Room catalog S2 (D2): extracted_text, char_count, page_count and
+  // text_extracted_at on cre_evidence_sources, plus a GIN full-text index over
+  // vault.document_search_vector for client documents. ADD COLUMN / CREATE
+  // INDEX IF NOT EXISTS, each guarded; no DROP. The table is public with
+  // organization_id INTEGER and already policied. Evidence
+  // docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-08-s2-processed-searchable/.
+  'migrations/20261008c_data_room_source_text.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

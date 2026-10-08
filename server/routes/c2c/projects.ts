@@ -1512,6 +1512,20 @@ function adoptionRefusalResponse(res: Response, err: unknown): Response | null {
   return res.status(failure.status).json({ error: failure.error, code: err.code });
 }
 
+/**
+ * Read, classify and version an adopted file, as an upload is
+ * (data-room-processing.ts). After the commit: the adopt is the record and
+ * stands without its derived text; a failure is left 'pending' for the sweep.
+ */
+async function processAdopted(orgId: number, programId: string, sourceId: number, f: AdoptionFileRow, upload: UploadedFile): Promise<boolean> {
+  const { processCapturedSource } = await import('../../services/clinical-regulatory-evidence/data-room-processing.js');
+  const done = await processCapturedSource(orgId, sourceId, {
+    bytes: upload.buffer, fileName: f.original_name ?? upload.fileName, mimeType: f.mime_type ?? upload.mimeType,
+    programId, processedBy: 'adopt',
+  });
+  return done.ok;
+}
+
 router.post('/:id/adopt', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   const userId = resolveUserId(req);
@@ -1569,7 +1583,8 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
       details: { file_upload_id: upload.fileId, source_id: source.id, checksum: sha256, from: 'conversation' },
     });
     await client.query('COMMIT');
-    return res.status(201).json({ adopted: true, sourceId: source.id });
+    const processed = await processAdopted(orgId, programId, source.id, f, upload);
+    return res.status(201).json({ adopted: true, sourceId: source.id, processed });
   } catch (err: unknown) {
     await client.query('ROLLBACK').catch(() => {});
     const refusal = adoptionRefusalResponse(res, err);
@@ -1769,8 +1784,55 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
 // project does not own must never appear as though it does.
 // ════════════════════════════════════════════════════════════════════════════
 
-/** How many of a project's sources /:id/sources returns, newest first. */
-const SOURCES_WINDOW = 200;
+// Search, filters and paging (Data Room catalog S2, 2026-10-08): `q` (full
+// text over title and the text read from the file), `status`, `kind`, `from`,
+// `to`, `current=true`, `limit` (1-200, default 200) and `offset`, with the
+// real `total`. With none of them the answer is what it was: the newest 200,
+// superseded included. An unreadable filter is a 400, never a wider list.
+
+type ShapeableSource = EvidenceSourceRow & { snippet?: string | null; charCount?: number | null; pageCount?: number | null };
+type EvidenceSourceRow = import('../../services/clinical-regulatory-evidence/types.js').EvidenceSource;
+type SourceUsageSummary = { sourceId: number; sections: number; documents: number; changedSections: number };
+
+/** One Data Room source as GET /:id/sources answers it. */
+function shapeSource(s: ShapeableSource, usage: Map<number, SourceUsageSummary>) {
+  const meta = (s.metadata ?? {}) as Record<string, any>;
+  const prov = (s.provenance ?? {}) as Record<string, unknown>;
+  return {
+    id: s.id,
+    title: s.title,
+    checksum: s.checksum,
+    isCurrent: s.isCurrent !== false,
+    dataEligible: s.dataEligible !== false,
+    originalFileAvailable: s.originalFileAvailable !== false,
+    disposition: s.disposition ?? null,
+    ingestionStatus: s.ingestionStatus,
+    extractionStatus: s.extractionStatus,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+    // Reported from recorded citations only. Nothing here is inferred from
+    // titles or text similarity: a usage exists because someone recorded it.
+    usage: usage.get(s.id) ?? { sourceId: s.id, sections: 0, documents: 0, changedSections: 0 },
+    ...sourceFileFacts(meta, prov),
+    // Where a search matched, and how much was read (S2). Null outside a search.
+    snippet: s.snippet ?? null,
+    charCount: s.charCount ?? null,
+    pageCount: s.pageCount ?? null,
+  };
+}
+
+/** What kind of file a source is and how it arrived, without a second round trip. */
+function sourceFileFacts(meta: Record<string, any>, prov: Record<string, unknown>) {
+  return {
+    mimeType: meta.mimeType ?? null,
+    fileSize: meta.fileSize ?? null,
+    artifactId: meta.artifactId ?? null,
+    origin: prov.origin ?? null,
+    fileUploadId: prov.fileUploadId ?? null,
+    extractionMethod: prov.extractionMethod ?? null,
+    evidenceKind: (meta.dossier?.evidenceKind as string | undefined) ?? null,
+  };
+}
 
 router.get('/:id/sources', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
@@ -1782,15 +1844,23 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     const { listClientDocuments } = await import(
       '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
     );
+    const { searchDataRoom, parseDataRoomQuery, DataRoomQueryError } = await import(
+      '../../services/clinical-regulatory-evidence/data-room-search.js'
+    );
 
     const programId = String(req.params.id);
-    /* One past the window, so a full one can say so: the reader's default cap
-       was 200 and nothing said when it was reached. Superseded sources stay in
-       the list — the authoring canvas and sources rail read this route too —
-       and each carries isCurrent, so a reader that counts can count once. */
-    const read = await listClientDocuments(orgId, { programId, limit: SOURCES_WINDOW + 1 });
-    const truncated = read.length > SOURCES_WINDOW;
-    const sources = truncated ? read.slice(0, SOURCES_WINDOW) : read;
+    let query;
+    try {
+      query = parseDataRoomQuery(programId, req.query as Record<string, unknown>);
+    } catch (e) {
+      if (e instanceof DataRoomQueryError) return send400(res, e.message);
+      throw e;
+    }
+    /* Superseded sources stay in the list unless current=true: the authoring
+       canvas and sources rail read this route too, and each carries isCurrent,
+       so a reader that counts can count once. */
+    const { total, currentTotal, sources } = await searchDataRoom(orgId, query);
+    const truncated = (query.offset ?? 0) + sources.length < total;
     const unscoped =
       req.query.includeUnscoped === 'true'
         ? await listClientDocuments(orgId, { includeUnscoped: true, limit: 50 })
@@ -1812,35 +1882,15 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       [...sources, ...unscoped].map((s) => s.id),
     );
 
-    const shape = (s: (typeof sources)[number]) => ({
-      id: s.id,
-      title: s.title,
-      checksum: s.checksum,
-      isCurrent: s.isCurrent !== false,
-      dataEligible: s.dataEligible !== false,
-      originalFileAvailable: s.originalFileAvailable !== false,
-      disposition: s.disposition ?? null,
-      ingestionStatus: s.ingestionStatus,
-      extractionStatus: s.extractionStatus,
-      createdAt: s.createdAt,
-      updatedAt: s.updatedAt,
-      // Reported from recorded citations only. Nothing here is inferred from
-      // titles or text similarity: a usage exists because someone recorded it.
-      usage: usage.get(s.id) ?? { sourceId: s.id, sections: 0, documents: 0, changedSections: 0 },
-      // Surfaced so the Data Room can show what kind of file this is and how it
-      // arrived, without a second round trip.
-      mimeType: (s.metadata as Record<string, unknown> | null)?.mimeType ?? null,
-      fileSize: (s.metadata as Record<string, unknown> | null)?.fileSize ?? null,
-      artifactId: (s.metadata as Record<string, unknown> | null)?.artifactId ?? null,
-      origin: (s.provenance as Record<string, unknown> | null)?.origin ?? null,
-      fileUploadId: (s.provenance as Record<string, unknown> | null)?.fileUploadId ?? null,
-      extractionMethod: (s.provenance as Record<string, unknown> | null)?.extractionMethod ?? null,
-    });
+    const shape = (s: ShapeableSource) => shapeSource(s, usage);
 
     return res.json({
       projectId: programId,
       sources: sources.map(shape),
       unscoped: unscoped.map(shape),
+      total,
+      currentTotal,
+      page: { limit: query.limit, offset: query.offset },
       window: { shown: sources.length, truncated },
     });
   } catch (err: unknown) {

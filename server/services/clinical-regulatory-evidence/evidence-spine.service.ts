@@ -798,7 +798,7 @@ export async function listDesignLessons(orgId: number, opts: { humanReviewStatus
 const j = (v: any) => (v == null ? {} : typeof v === 'string' ? JSON.parse(v) : v);
 const arr = (v: any) => (v == null ? [] : typeof v === 'string' ? JSON.parse(v) : v);
 
-function adaptSource(r: any): EvidenceSource {
+export function adaptSource(r: any): EvidenceSource {
   return {
     id: r.id, organizationId: r.organization_id, visibilityClass: r.visibility_class,
     clientWorkspaceId: r.client_workspace_id, clientProgramId: r.client_program_id ?? null,

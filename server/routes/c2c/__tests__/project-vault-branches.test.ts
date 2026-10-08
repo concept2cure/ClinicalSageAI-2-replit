@@ -73,6 +73,9 @@ const folders = (body: any): Record<string, any> =>
 
 beforeEach(() => {
   queryMock.mockReset();
+  // Past the sequenced answers below: an empty result, e.g. the data room's
+  // stage counts (countDataRoomStages, 2026-10-08), which every read now asks.
+  queryMock.mockResolvedValue({ rows: [] });
   resolveSpineMock.mockReset();
   // Anchored is the normal state; a case that tests otherwise says so.
   resolveSpineMock.mockResolvedValue({ state: 'linked', artifactProjectId: 42, via: 'program-anchor' });
