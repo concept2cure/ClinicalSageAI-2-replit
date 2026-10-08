@@ -83,6 +83,7 @@ function serve(opts: ServeOpts = {}) {
 }
 
 const select = (label: RegExp) => screen.getByLabelText(label) as HTMLSelectElement;
+const desc = (label: RegExp) => document.getElementById(select(label).getAttribute('aria-describedby')?.split(' ')[0] ?? '')?.textContent ?? '';
 const optionText = (label: RegExp, value: string) =>
   Array.from(select(label).options).find((o) => o.value === value)?.textContent ?? '';
 
@@ -123,11 +124,63 @@ describe('New submission takes the open project\'s filing (F20)', () => {
     expect(select(/Primary region/).value).toBe('ca');
   });
 
-  it('when that market already exists on the project, no region is preselected', async () => {
+  it("a project opened from a link (no workspace on the shell) takes its client type from the project's product type", async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'ONC-221' };
+    serve({ program: { id: PID, name: 'ONC-221', program_type: 'IND', primary_agency: 'FDA', product_type: 'biologic' } });
+    await openNew();
+    expect(select(/Client type/).value).toBe('biotech');
+  });
+
+  it('an IVD product is an IVD client, whatever bucket its filing type falls in', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'DX-9', ws: 'MDX' };
+    serve({ program: { id: PID, name: 'DX-9', program_type: '510k', primary_agency: 'FDA', product_type: 'ivd' } });
+    await openNew();
+    expect(select(/Client type/).value).toBe('ivd');
+  });
+
+  it('when that market already exists on the project, no region is preselected, and the field says why', async () => {
     serve({ existing: [{ applicationType: 'nda', primaryRegion: 'fda' }] });
     await openNew();
     expect(select(/Application type/).value).toBe('nda');
     expect(select(/Primary region/).value).toBe('');
+    expect(desc(/Primary region/)).toMatch(/^NDA in the project's region already exists on this project, so no region is preselected\./);
+  });
+
+  /* Design review 2026-10-08 (Part 11 lens): a defaulted value looked like a
+     choice already made. Each one says where it came from. */
+  it("each defaulted field says it came from the project's record", async () => {
+    serve();
+    await openNew();
+    expect(desc(/Application type/)).toBe("From this project's record.");
+    expect(desc(/Primary region/)).toMatch(/^From this project's record\. /);
+    expect(desc(/Client type/)).toBe("From this project's product type.");
+    // The region description changes as its read lands: a polite live region.
+    expect(document.getElementById(select(/Primary region/).getAttribute('aria-describedby')!.split(' ')[0])!.getAttribute('aria-live')).toBe('polite');
+  });
+
+  /* Design review 2026-10-08 (honest-state lens): the filing type's bucket put
+     every IND under Biotech. The recorded product type decides. */
+  it("a small-molecule IND is a Pharma client: the product type decides, not the filing type's bucket", async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'ONC-221' };
+    serve({ program: { id: PID, name: 'ONC-221', program_type: 'IND', primary_agency: 'FDA', product_type: 'drug' } });
+    await openNew();
+    expect(select(/Client type/).value).toBe('pharma');
+  });
+
+  /* Design review 2026-10-08 (motion and a11y lenses): while the reads were in
+     flight a placeholder sat in the page, moved it twice and was never
+     announced. The drawer opens at once and says it is reading. */
+  it('opens at once while the project is read: the dialog says so, with no fields and no submit', async () => {
+    serve();
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      url === `/api/c2c/projects/${PID}` ? new Promise(() => {}) : res({ data: [] }));
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /New submission/ }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('status').textContent).toBe("Loading the project's filing…");
+    expect(dialog.getAttribute('aria-busy')).toBe('true');
+    expect(within(dialog).queryByLabelText(/Title/)).toBeNull();
+    expect(within(dialog).getByRole('button', { name: /Create submission/ })).toHaveProperty('disabled', true);
   });
 
   it('a type the form does not offer (J-NDA) is not guessed', async () => {
@@ -142,8 +195,10 @@ describe('New submission takes the open project\'s filing (F20)', () => {
     await openNew();
     expect(select(/Application type/).value).toBe('');
     expect(select(/Primary region/).value).toBe('');
-    const alert = within(screen.getByRole('dialog')).getByRole('alert');
-    expect(alert.textContent).toMatch(/project record could not be read, so nothing is preselected/i);
+    const notice = within(screen.getByRole('dialog')).getByText(/project record could not be read, so nothing is preselected/i).closest('p')!;
+    // Read with the dialog (it describes it), not raised as an alert competing with its name.
+    expect(notice.getAttribute('role')).toBe('status');
+    expect(screen.getByRole('dialog').getAttribute('aria-describedby')).toBe(notice.id);
   });
 
   it("when the project's submissions cannot be read, no region is preselected, and the drawer says why", async () => {
@@ -151,7 +206,7 @@ describe('New submission takes the open project\'s filing (F20)', () => {
     await openNew();
     expect(select(/Application type/).value).toBe('nda');
     expect(select(/Primary region/).value).toBe('');
-    expect(within(screen.getByRole('dialog')).getByRole('alert').textContent).toMatch(/whether that market already exists is not known/);
+    expect(within(screen.getByRole('dialog')).getByText(/whether that market already exists is not known/)).toBeTruthy();
   });
 
   it("each region option carries the server's statement for the chosen application type, and follows a change of type", async () => {

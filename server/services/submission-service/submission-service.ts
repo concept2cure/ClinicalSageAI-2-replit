@@ -2341,6 +2341,28 @@ const sha256Hex = (value: string | Buffer): string =>
     .update(typeof value === 'string' ? Buffer.from(value, 'utf8') : value)
     .digest('hex');
 
+/**
+ * The status an authoring filing copy carries at this write (draft, finalized,
+ * approved; coauthor-snapshot.ts takes it from the source when the copy is
+ * taken). Recorded on the leaf's ledger row, because re-placing a copy that was
+ * approved without its text changing leaves the pin, and so documentChanged,
+ * as they were: without the status the row could not show draft → approved.
+ * Other stores carry no copy status, and null claims nothing.
+ */
+async function placedCopyStatus(
+  documentTable: string | null | undefined,
+  documentId: number | null | undefined,
+  organizationId: number,
+): Promise<string | null> {
+  if (documentTable !== 'coauthor_documents' || documentId == null) return null;
+  const [doc] = await db
+    .select({ status: coauthorDocuments.status })
+    .from(coauthorDocuments)
+    .where(and(eq(coauthorDocuments.id, documentId), eq(coauthorDocuments.organizationId, organizationId)))
+    .limit(1);
+  return doc?.status ?? null;
+}
+
 const LEAF_SOURCE_VERIFIERS: Record<string, LeafSourceVerifier> = {
   /** Authoring store. Pin = sha256 of the stored body text. */
   coauthor_documents: async (documentId, organizationId) => {
@@ -2929,6 +2951,7 @@ export async function upsertLeaf(
     documentId: input.documentId ?? null,
     documentUuid: input.documentUuid ?? null,
     documentContentSha256,
+    documentStatus: await placedCopyStatus(input.documentTable, input.documentId, ctx.organizationId),
     programId: submissionProgramId,
     documentProgramId,
   };

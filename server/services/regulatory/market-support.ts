@@ -28,10 +28,12 @@
  * Pure apart from `readMarketSupport`, which reads the active packs once.
  */
 import {
+  AGENCY_FALLBACKS,
   AGENCY_TO_CODE,
   PROGRAM_TO_DOC_TYPE,
   describeUnmappedClass,
 } from '../c2c/document-class.js';
+import { workstreamForFilingType } from '../../../shared/constants/domain/product-types.js';
 import { listActiveRulePacks, type RulePackQueryable } from '../c2c/rule-pack-lookup.js';
 import { module1ShapeOf, type Module1Shape } from '../ectd/regional-backbone-readiness.js';
 import { pmdaEctdV4Fact } from '../ectd/dispatch-readiness.js';
@@ -89,13 +91,14 @@ export interface MarketSupport {
   /** True when the gate checks this region's Module 1 against a region profile. */
   regionProfile: boolean;
   channel: { state: ChannelState; detail: string };
-  /** The short statement: "Structured Module 1", "Flat Module 1, no channel", "No outline, no channel", "Unmapped", "Not offered". */
+  /** The short statement: "Structured Module 1", "Flat Module 1, no channel", "No outline, no channel",
+   *  "Outline only, no package" (a device filing), "Not supported", "Not offered". */
   summary: string;
   /** The sentence a market row says (FILING_SPINE.md §3, "Market row says"). */
   line: string;
   /** A region-correct dossier can be built: an outline, and Module 1 to the agency's own headings. */
   buildable: boolean;
-  /** False when the platform refuses the market at creation or does not offer it. */
+  /** False when the platform maps no outline or channel for the market, or the agency has no such application. */
   offered: boolean;
 }
 
@@ -137,7 +140,7 @@ export function channelSupportFor(entry: RegulatoryApplicationType | null): { st
       const name = `${ch.region}:${ch.name}`;
       if (ch.region === 'pmda') return { state: 'refused', detail: PMDA_PROTOCOL_UNVERIFIED, channel: name };
       if (ch.region === 'fda' && ch.name === 'esg') return { state: 'unproven', detail: FDA_ESG_NOT_PROVEN, channel: name };
-      if (ch.region === 'ema') return { state: 'unproven', detail: `the ${name} adapter is wired and nothing has been accepted through it`, channel: name };
+      if (ch.region === 'ema') return { state: 'unproven', detail: 'the EMA gateway is connected and no submission has been accepted through it', channel: name };
       return { state: 'none', detail: ADAPTER_UNSOURCED, channel: name };
     }
   }
@@ -188,26 +191,36 @@ function identify(input: MarketInput): { base: Base; identity: Identity | null; 
   return { base: { applicationType, market, region, agency: identity?.agency ?? null }, identity, agencyCode };
 }
 
-/** Refused at creation: the agency is one the platform maps to no governed class. */
+/**
+ * A market the platform maps to no governed document class: no outline and no
+ * channel. A project created for it gets no outline (scaffold-project-documents
+ * declines the binding); creating a submission for it is not refused, so the
+ * line states what is missing and claims no refusal (design review, 2026-10-08).
+ */
 function unmappedSupport(base: Base, identity: Identity | null): MarketSupport {
   const reason = describeUnmappedClass(base.applicationType, identity?.agency ?? base.market);
+  const named = identity?.agency ?? (base.market || 'this market');
   const shape = identity ? module1ShapeOf(identity.gatewaySlug) : null;
   return {
     ...base,
     outline: { state: 'unmapped', pack: null, detail: reason },
     module1: { state: shape, detail: shape ? MODULE1_DETAIL[shape] : 'no region' },
     regionProfile: false,
-    channel: { state: 'none', detail: 'the market is refused at creation' },
-    summary: 'Unmapped',
-    line: `Refused at creation: ${reason}`,
+    channel: { state: 'none', detail: 'the platform maps no channel for this market' },
+    summary: 'Not supported',
+    line: `Not supported: the platform has no filing outline or channel for ${named}`,
     buildable: false,
     offered: false,
   };
 }
 
-/** The agency's own pack, never a neighbour's. */
+/** The agency's own pack, else the ICH-harmonised one, never another agency's:
+ *  the order scaffold-project-documents.ts takes, so the outline stated is the
+ *  one a project created for this market gets (a DMF's is mod3:ich). */
 function outlineFor(docType: string | null, agencyCode: string, applicationType: string, packs: ActiveRulePacks): MarketSupport['outline'] {
-  const pack = docType ? packs.find(docType, agencyCode) : null;
+  const pack = docType
+    ? [agencyCode, ...AGENCY_FALLBACKS].map((agency) => packs.find(docType, agency)).find(Boolean) ?? null
+    : null;
   if (pack) return { state: 'outline', pack, detail: `governed outline ${pack.label} (${pack.version})` };
   return {
     state: 'no_outline',
@@ -215,6 +228,26 @@ function outlineFor(docType: string | null, agencyCode: string, applicationType:
     detail: docType
       ? `no rule pack defines '${docType}' for '${agencyCode}'`
       : `the application type '${applicationType}' has no governed document class`,
+  };
+}
+
+/**
+ * A device filing (510(k), De Novo, PMA, IDE, MDR, IVDR, CER) is not eCTD, and
+ * the platform builds no device package or transmit yet (FILING_SPINE.md §4).
+ * Its outline is stated and nothing more is claimed: it read "Structured
+ * Module 1. Transmit not proven…" and buildable (design review, 2026-10-08).
+ */
+function deviceSupport(shared: Omit<MarketSupport, 'outline' | 'summary' | 'line' | 'buildable' | 'offered'>, outline: MarketSupport['outline']): MarketSupport {
+  const lead = outline.state === 'outline' ? 'Outline only' : 'No outline';
+  return {
+    ...shared,
+    outline,
+    module1: { state: null, detail: 'a device filing is not eCTD, so it has no Module 1' },
+    channel: { state: 'none', detail: 'the platform transmits no device filing yet' },
+    summary: `${lead}, no package`,
+    line: `${lead}: device filings are not eCTD, and the platform builds no device package or transmit yet`,
+    buildable: false,
+    offered: true,
   };
 }
 
@@ -257,13 +290,14 @@ export function marketSupport(input: MarketInput, packs: ActiveRulePacks, asOf: 
       ...shared,
       outline: { state: 'no_outline', pack: null, detail: 'the ind:mhra rule pack is mislabelled: the UK has no IND' },
       summary: 'Not offered',
-      line: 'Not offered: the UK has no IND, and the ind:mhra rule pack is mislabelled',
+      line: 'Not offered: the UK has no IND application type',
       buildable: false,
       offered: false,
     };
   }
 
   const outline = outlineFor(docType, agencyCode, applicationType, packs);
+  if (workstreamForFilingType(applicationType) === 'MDX') return deviceSupport(shared, outline);
   return {
     ...shared,
     outline,
@@ -281,6 +315,10 @@ export async function readMarketSupport(
   asOf?: string,
 ): Promise<MarketSupport[]> {
   const rows = await listActiveRulePacks(client);
+  /* No active pack at all is a store that was not read (unseeded, or emptied),
+     not a platform with no outline for any market: said as a failure, it
+     reaches the caller's error state instead of "No outline" on every row. */
+  if (rows.length === 0) throw new Error('No active rule pack could be read, so no market can be judged.');
   const byKey = new Map(rows.map((r) => [`${r.doc_type}:${r.agency}`, { version: r.version, label: r.label }]));
   const packs: ActiveRulePacks = { find: (docType, agency) => byKey.get(`${docType}:${agency}`) ?? null };
   return inputs.map((input) => marketSupport(input, packs, asOf));

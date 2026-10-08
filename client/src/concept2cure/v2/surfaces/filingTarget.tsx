@@ -417,12 +417,15 @@ export function PlacementReasonField({
   idPrefix,
   disabled,
   variant = 'dialog',
+  label = 'Reason for this placement',
 }: {
   value: string;
   onChange: (value: string) => void;
   /** Prefix for the field id, so two forms can coexist in one document. */
   idPrefix: string;
   disabled?: boolean;
+  /** The field's name, when the act is not a first placement (a re-place). */
+  label?: string;
   /** `dialog` for the de- dialog kit, `inline` for the Submission Center form. */
   variant?: keyof typeof REASON_KIT;
 }) {
@@ -437,7 +440,7 @@ export function PlacementReasonField({
   return (
     <div className={kit.field}>
       <label className={kit.label} htmlFor={id}>
-        Reason for this placement<span className="req" aria-hidden="true">*</span>
+        {label}<span className="req" aria-hidden="true">*</span>
       </label>
       <textarea
         id={id}

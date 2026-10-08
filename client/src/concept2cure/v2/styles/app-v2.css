@@ -1067,14 +1067,6 @@
    panel, bounded so a large vault scrolls inside the section, not the page. */
 .c2c-v2 .pj-evidence .pf-search{padding:0 0 10px;border-bottom:none;}
 .c2c-v2 .pj-evidence .pf-list{max-height:480px;border:1px solid var(--border);border-radius:var(--radius-md);}
-.c2c-v2 .pj-convo{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:10px 6px;border-bottom:1px solid var(--border);}
-.c2c-v2 .pj-convo:last-child{border-bottom:none;}
-.c2c-v2 .pj-convo:hover{background:var(--bg-050);border-radius:var(--radius-lg);}
-.c2c-v2 .pj-convo-ic{width:28px;height:28px;border-radius:7px;background:var(--bg-100);color:var(--text-300);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
-.c2c-v2 .pj-convo-b{display:flex;flex-direction:column;min-width:0;flex:1;}
-.c2c-v2 .pj-convo-t{font-size:12.5px;font-weight:500;color:var(--text-100);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.c2c-v2 .pj-convo-m{font-size:10.5px;color:var(--text-400);}
-.c2c-v2 .pj-convo-go{color:var(--text-500);font-size:15px;flex-shrink:0;}
 .c2c-v2 .pj-map{display:flex;gap:18px;align-items:center;}
 .c2c-v2 .pj-map-ring{position:relative;flex-shrink:0;text-align:center;}
 .c2c-v2 .pj-map-ring-l{font-size:10px;color:var(--text-400);margin-top:2px;line-height:1.2;}

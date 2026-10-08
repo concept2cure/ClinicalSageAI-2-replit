@@ -172,6 +172,9 @@ function Anchored<T>(props: {
   emptyTitle: string;
   emptyHint?: string;
   isEmpty?: (d: T) => boolean;
+  /** The empty state as one line, where a panel above other content would
+   *  otherwise push it below the fold. */
+  compactEmpty?: boolean;
   render: (d: T) => React.ReactNode;
 }) {
   const { state } = props;
@@ -185,6 +188,7 @@ function Anchored<T>(props: {
     return <EmptyState tone="error" icon={I.alertTriangle} title={props.errorTitle} hint={props.errorHint} />;
   }
   if (!state.data || (props.isEmpty ? props.isEmpty(state.data) : false)) {
+    if (props.compactEmpty) return <p className="pj-desc" role="status">{[props.emptyTitle, props.emptyHint].filter(Boolean).join(' ')}</p>;
     return <EmptyState icon={I.fileText} title={props.emptyTitle} hint={props.emptyHint} />;
   }
   return <>{props.render(state.data)}</>;
@@ -199,20 +203,25 @@ function Anchored<T>(props: {
    Review. Nothing this surface reads records per-stage completion, so the one
    state stated is the one that is true: which stage is open. */
 
+/* A nav of five buttons, the open one marked aria-current="step". It was a
+   role="tablist" over plain buttons carrying aria-selected, which is not valid
+   on a button, so a screen reader was told of no open stage at all (design
+   review 2026-10-08, a11y lens, WCAG 4.1.2). The stage bodies are not tab
+   panels: each stage renders below the conversations, so a nav is what it is. */
 function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string) => void }) {
   return (
-    <div className="pj-lc" role="tablist" aria-label="Project lifecycle">
+    <nav className="pj-lc" aria-label="Project lifecycle">
       {PJ_LIFECYCLE.map((s) => {
         const status = s.id === stage ? 'active' : undefined;
         return (
-          <button key={s.id} className="pj-lc-stage" data-status={status} aria-selected={stage === s.id || undefined}
+          <button key={s.id} type="button" className="pj-lc-stage" data-status={status} aria-current={stage === s.id ? 'step' : undefined}
             onClick={() => setStage(s.id)} title={s.blurb}>
             <span className="pj-lc-node"><span className="pj-lc-ic">{I[s.icon] || I.grid}</span></span>
             <span className="pj-lc-l">{s.label}</span>
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 }
 
@@ -1290,14 +1299,17 @@ function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string)
   };
   return (
     <section className="pj-sec" aria-labelledby="pj-threads-h">
-      <div className="pj-sec-h"><h2 id="pj-threads-h">Conversations</h2><span className="sec-sub">resume a thread held on this project</span></div>
+      <div className="pj-sec-h"><h2 id="pj-threads-h">Conversations</h2><span className="sec-sub">yours on this project, to resume</span></div>
       <Anchored
         state={threads.state}
         loadingText="Loading conversations…"
         errorTitle="Couldn't load conversations"
         errorHint="The conversation store didn't respond. Sign in and retry, or check that the service is reachable."
-        emptyTitle="No project conversations yet"
-        emptyHint="Start one in the box above. Threads started here are kept on this project and listed for resuming."
+        /* The server lists the caller's own conversations only, so the empty
+           says whose list it is. */
+        emptyTitle="You have no conversations on this project yet."
+        emptyHint="Start one in the box above; it is kept on this project and listed here."
+        compactEmpty
         isEmpty={(d) => (d.threads ?? []).length === 0}
         render={() => (
           <>

@@ -1514,7 +1514,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             icon={I.folder}
             title="Open a project to see its vault"
             hint="The Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine."
-            action={onNav ? { label: 'Open Projects', onAct: () => onNav('projects') } : undefined}
+            action={onNav ? { label: 'Go to Projects', onAct: () => onNav('projects') } : undefined}
           />
         </div>
       ) : vaultState.loading && !vault ? (

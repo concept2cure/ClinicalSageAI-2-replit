@@ -102,6 +102,18 @@ describe('No dead ends on the filing path (F16)', () => {
     expect(screen.queryByText(/Open 510\(k\) surface/)).toBeNull();
   });
 
+  /* Design review 2026-10-08: with no device filing tracked, the empty state
+     sent the reader to "the 510(k) surface's filing panel", which is locked. */
+  it('Submission Center: with no device filings, the empty state does not send the reader to the locked 510(k) surface', async () => {
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      method === 'GET' && url === '/api/510k/estar/submissions' ? ok({ submissions: [] }) : base(method, url));
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    await waitFor(() => expect(document.body.textContent).toContain('No device filings tracked yet'));
+    expect(document.body.textContent).not.toMatch(/from the 510\(k\) surface's filing panel/);
+    expect(document.body.textContent).toContain('which is not part of this release');
+  });
+
   it('Vault, with a project open: no "Inspection readiness" door into the locked eTMF', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
     render(<Vault surface={{ id: 'vault', label: 'Vault' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biotech" />);
@@ -113,7 +125,8 @@ describe('No dead ends on the filing path (F16)', () => {
     const onNav = vi.fn();
     render(<Vault surface={{ id: 'vault', label: 'Vault' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" />);
     expect(await screen.findByText('Open a project to see its vault')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /Open Projects/ }));
+    // "Go to", not "Open": beside the header's "Open project" it read as a second door to the same place.
+    fireEvent.click(screen.getByRole('button', { name: /Go to Projects/ }));
     expect(onNav).toHaveBeenCalledWith('projects');
   });
 
@@ -149,6 +162,9 @@ describe('No dead ends on the filing path (F16)', () => {
     const back = screen.getAllByRole('button');
     expect(back).toHaveLength(1);
     expect(back[0].textContent).toMatch(/Back to Projects/);
+    // A bare `.btn` has no border or fill: the one exit read as grey text
+    // (design review 2026-10-08, review-launch-scope-gate-desktop-1280.png).
+    expect(back[0].className).toMatch(/\bbtn\b.*\b(ghost|primary)\b/);
     fireEvent.click(back[0]);
     expect(onNav).toHaveBeenCalledWith('projects');
   });

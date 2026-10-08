@@ -1,0 +1,1042 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the surfaces this test treats as locked are outside the launch scope, and the doors it expects are inside it 3ms
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: a device filing row does not offer the locked 510(k) surface 124ms
+ × client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: with no device filings, the empty state does not send the reader to the locked 510(k) surface 30ms
+   → expected 'SubmissionSubmission centerPlan, asse…' not to match /from the 510\(k\) surface's filing pa…/
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with a project open: no "Inspection readiness" door into the locked eTMF 56ms
+ × client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with no project open: one button opens Projects 443ms
+   → Unable to find an accessible element with the role "button" and name `/Go to Projects/`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Vault (DMS)":
+  [36m<h1[39m
+    [33mclass[39m=[32m"vd-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Open project":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtitle[39m=[32m"Open this project in Project management"[39m
+  [36m/>[39m
+
+  Name "Upload":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-primary"[39m
+    [33mdata-testid[39m=[32m"vault-upload-button"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Open a project first — a Vault document is filed against a program."[39m
+  [36m/>[39m
+
+  Name "Ask AnA to import":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtitle[39m=[32m"Describe an import to AnA instead — e.g. bulk import from another system"[39m
+  [36m/>[39m
+
+  Name "Search connected sources":
+  [36m<button[39m
+    [33mclass[39m=[32m"vd-coexist-cta"[39m
+  [36m/>[39m
+
+  Name "Open Projects":
+  [36m<button[39m
+    [33mclass[39m=[32m"c2c-empty-action"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Document type for uploaded files":
+  [36m<select[39m
+    [33maria-label[39m=[32m"Document type for uploaded files"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mdata-testid[39m=[32m"vault-upload-type"[39m
+    [33mstyle[39m=[32m"width: auto; max-width: 260px;"[39m
+    [33mtitle[39m=[32m"Document type for uploaded files"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Clinical study report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"CSR"[39m
+  [36m/>[39m
+
+  Name "Protocol":
+  [36m<option[39m
+    [33mvalue[39m=[32m"PROTOCOL"[39m
+  [36m/>[39m
+
+  Name "Clinical evaluation report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"CER"[39m
+  [36m/>[39m
+
+  Name "Investigator's brochure":
+  [36m<option[39m
+    [33mvalue[39m=[32m"IB"[39m
+  [36m/>[39m
+
+  Name "Development safety update report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"DSUR"[39m
+  [36m/>[39m
+
+  Name "Periodic safety update report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"PSUR"[39m
+  [36m/>[39m
+
+  Name "Statistical analysis plan":
+  [36m<option[39m
+    [33mvalue[39m=[32m"SAP"[39m
+  [36m/>[39m
+
+  Name "Statistical analysis report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"SAR"[39m
+  [36m/>[39m
+
+  Name "Module 2 · summaries":
+  [36m<option[39m
+    [33mvalue[39m=[32m"MODULE_2"[39m
+  [36m/>[39m
+
+  Name "Module 3 · quality":
+  [36m<option[39m
+    [33mvalue[39m=[32m"MODULE_3"[39m
+  [36m/>[39m
+
+  Name "Module 4 · nonclinical":
+  [36m<option[39m
+    [33mvalue[39m=[32m"MODULE_4"[39m
+  [36m/>[39m
+
+  Name "Module 5 · clinical":
+  [36m<option[39m
+    [33mvalue[39m=[32m"MODULE_5"[39m
+  [36m/>[39m
+
+  Name "Standard operating procedure":
+  [36m<option[39m
+    [33mvalue[39m=[32m"SOP"[39m
+  [36m/>[39m
+
+  Name "Report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"REPORT"[39m
+  [36m/>[39m
+
+  Name "Agency correspondence":
+  [36m<option[39m
+    [33mvalue[39m=[32m"CORRESPONDENCE"[39m
+  [36m/>[39m
+
+  Name "Other":
+  [36m<option[39m
+    [33mvalue[39m=[32m"OTHER"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"vd-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"vd-top"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mDocuments [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m project vault[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"vd-title"[39m
+          [36m>[39m
+            [0mVault (DMS)[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"vd-sub"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"vd-sub-x"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"sp-ask"[39m
+          [33mtitle[39m=[32m"Open this project in Project management"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-folder"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Open project[0m
+        [36m</button>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"Document type for uploaded files"[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mdata-testid[39m=[32m"vault-upload-type"[39m
+          [33mstyle[39m=[32m"width: auto; max-width: 260px;"[39m
+          [33mtitle[39m=[32m"Document type for uploaded files"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"CSR"[39m
+          [36m>[39m
+            [0mClinical study report[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"PROTOCOL"[39m
+          [36m>[39m
+            [0mProtocol[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"CER"[39m
+          [36m>[39m
+            [0mClinical evaluation report[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"IB"[39m
+          [36m>[39m
+            [0mInvestigator's brochure[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"DSUR"[39m
+          [36m>[39m
+            [0mDevelopment safety update report[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"PSUR"[39m
+          [36m>[39m
+            [0mPeriodic safety update report[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"SAP"[39m
+          [36m>[39m
+            [0mStatistical analysis plan[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"SAR"[39m
+          [36m>[39m
+            [0mStatistical analysis report[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"MODULE_2"[39m
+          [36m>[39m
+            [0mModule 2 · summaries[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"MODULE_3"[39m
+          [36m>[39m
+            [0mModule 3 · quality[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"MODULE_4"[39m
+          [36m>[39m
+            [0mModule 4 · nonclinical[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"MODULE_5"[39m
+          [36m>[39m
+            [0mModule 5 · clinical[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"SOP"[39m
+          [36m>[39m
+            [0mStandard operating procedure[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"REPORT"[39m
+          [36m>[39m
+            [0mReport[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"CORRESPONDENCE"[39m
+          [36m>[39m
+            [0mAgency correspondence[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"OTHER"[39m
+          [36m>[39m
+            [0mOther[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<input[39m
+          [33maccept[39m=[32m".pdf,.docx,.xlsx,.txt,.md,.csv,.tsv,.json,.xml,.png,.jpg,.jpeg,.gif,.doc,.xls,.rtf"[39m
+          [33maria-label[39m=[32m"Choose documents to upload to the Vault"[39m
+          [33mdata-testid[39m=[32m"vault-upload-input"[39m
+          [33mmultiple[39m=[32m""[39m
+          [33mstyle[39m=[32m"display: none;"[39m
+          [33mtype[39m=[32m"file"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"sp-primary"[39m
+          [33mdata-testid[39m=[32m"vault-upload-button"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtitle[39m=[32m"Open a project first — a Vault document is filed against a program."[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-upload"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"17 8 12 3 7 8"[39m
+            [36m/>[39m
+            [36m<line[39m
+              [33mx1[39m=[32m"12"[39m
+              [33mx2[39m=[32m"12"[39m
+              [33my1[39m=[32m"3"[39m
+              [33my2[39m=[32m"15"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mUpload[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"sp-ask"[39m
+          [33mtitle[39m=[32m"Describe an import to AnA instead — e.g. bulk import from another system"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 3v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 5h-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 17v2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 18H3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Ask AnA to import[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"vd-coexist"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"vd-coexist-txt"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-link"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m AnA can search your connected repositories ([0m
+          [36m<b>[39m
+            [0mVeeva Vault[0m
+          [36m</b>[39m
+          [0m,[0m
+          [0m [0m
+          [36m<b>[39m
+            [0mSharePoint[0m
+          [36m</b>[39m
+          [0m, [0m
+          [36m<b>[39m
+            [0mOneDrive[0m
+          [36m</b>[39m
+          [0m) in place. Importing from them into the Vault comes in a later release; upload files here meanwhile.[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"vd-coexist-cta"[39m
+        [36m>[39m
+          [0mSearch connected sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"padding: 16px 24px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-folder"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mOpen a project to see its vault[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mThe Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine.[0m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-empty-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mOpen Projects[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Builder: says where documents come from, opens the editor and the Vault, and never points at the Co-Author 89ms
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the launch-scope panel has one way back: Projects 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: with no device filings, the empty state does not send the reader to the locked 510(k) surface
+AssertionError: expected 'SubmissionSubmission centerPlan, asse…' not to match /from the 510\(k\) surface's filing pa…/
+
+- Expected:
+/from the 510\(k\) surface's filing panel/
+
++ Received:
+"SubmissionSubmission centerPlan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Seven workspaces scaffolded from the submission contract.BX-204 IND · IND · FDA (US) Where BX-204 IND standsBX-204 IND (BX-204) — a FDA (US) IND at the original stage.0 eCTD sequences tracked yet. Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled. I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you. Plan the submissionOr move through the workspaces below — plan, build, validate, dispatch.SubmissionsPlannerBuilderSequencesValidationShadow reviewDispatchSubmissions+ New submissionProgramRegionTypeClientStageStatusBX-204 IND · Product BX-204FDA (US)INDbiotechoriginalPlanningDevice filings · eSTAR510(k) device assembly readiness unavailable right nowNo device filings tracked yetStart tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
+
+ ❯ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx:113:43
+    111|     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    112|     await waitFor(() => expect(document.body.textContent).toContain('N…
+    113|     expect(document.body.textContent).not.toMatch(/from the 510\(k\) s…
+       |                                           ^
+    114|     expect(document.body.textContent).toContain('which is not part of …
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with no project open: one button opens Projects
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Go to Projects/`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Vault (DMS)":
+  [36m<h1[39m
+    [33mclass[39m=[32m"vd-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Open project":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtitle[39m=[32m"Open this project in Project management"[39m
+  [36m/>[39m
+
+  Name "Upload":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-primary"[39m
+    [33mdata-testid[39m=[32m"vault-upload-button"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Open a project first — a Vault document is filed against a program."[39m
+  [36m/>[39m
+
+  Name "Ask AnA to import":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtitle[39m=[32m"Describe an import to AnA instead — e.g. bulk import from another system"[39m
+  [36m/>[39m
+
+  Name "Search connected sources":
+  [36m<button[39m
+    [33mclass[39m=[32m"vd-coexist-cta"[39m
+  [36m/>[39m
+
+  Name "Open Projects":
+  [36m<button[39m
+    [33mclass[39m=[32m"c2c-empty-action"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Document type for uploaded files":
+  [36m<select[39m
+    [33maria-label[39m=[32m"Document type for uploaded files"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mdata-testid[39m=[32m"vault-upload-type"[39m
+    [33mstyle[39m=[32m"width: auto; max-width: 260px;"[39m
+    [33mtitle[39m=[32m"Document type for uploaded files"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Clinical study report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"CSR"[39m
+  [36m/>[39m
+
+  Name "Protocol":
+  [36m<option[39m
+    [33mvalue[39m=[32m"PROTOCOL"[39m
+  [36m/>[39m
+
+  Name "Clinical evaluation report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"CER"[39m
+  [36m/>[39m
+
+  Name "Investigator's brochure":
+  [36m<option[39m
+    [33mvalue[39m=[32m"IB"[39m
+  [36m/>[39m
+
+  Name "Development safety update report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"DSUR"[39m
+  [36m/>[39m
+
+  Name "Periodic safety update report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"PSUR"[39m
+  [36m/>[39m
+
+  Name "Statistical analysis plan":
+  [36m<option[39m
+    [33mvalue[39m=[32m"SAP"[39m
+  [36m/>[39m
+
+  Name "Statistical analysis report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"SAR"[39m
+  [36m/>[39m
+
+  Name "Module 2 · summaries":
+  [36m<option[39m
+    [33mvalue[39m=[32m"MODULE_2"[39m
+  [36m/>[39m
+
+  Name "Module 3 · quality":
+  [36m<option[39m
+    [33mvalue[39m=[32m"MODULE_3"[39m
+  [36m/>[39m
+
+  Name "Module 4 · nonclinical":
+  [36m<option[39m
+    [33mvalue[39m=[32m"MODULE_4"[39m
+  [36m/>[39m
+
+  Name "Module 5 · clinical":
+  [36m<option[39m
+    [33mvalue[39m=[32m"MODULE_5"[39m
+  [36m/>[39m
+
+  Name "Standard operating procedure":
+  [36m<option[39m
+    [33mvalue[39m=[32m"SOP"[39m
+  [36m/>[39m
+
+  Name "Report":
+  [36m<option[39m
+    [33mvalue[39m=[32m"REPORT"[39m
+  [36m/>[39m
+
+  Name "Agency correspondence":
+  [36m<option[39m
+    [33mvalue[39m=[32m"CORRESPONDENCE"[39m
+  [36m/>[39m
+
+  Name "Other":
+  [36m<option[39m
+    [33mvalue[39m=[32m"OTHER"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"vd-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"vd-top"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mDocuments [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m project vault[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"vd-title"[39m
+          [36m>[39m
+            [0mVault (DMS)[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"vd-sub"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"vd-sub-x"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"sp-ask"[39m
+          [33mtitle[39m=[32m"Open this project in Project management"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-folder"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Open project[0m
+        [36m</button>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"Document type for uploaded files"[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mdata-testid[39m=[32m"vault-upload-type"[39m
+          [33mstyle[39m=[32m"width: auto; max-width: 260px;"[39m
+          [33mtitle[39m=[32m"Document type for uploaded files"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"CSR"[39m
+          [36m>[39m
+            [0mClinical study report[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"PROTOCOL"[39m
+          [36m>[39m
+            [0mProtocol[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"CER"[39m
+          [36m>[39m
+            [0mClinical evaluation report[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"IB"[39m
+          [36m>[39m
+            [0mInvestigator's brochure[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"DSUR"[39m
+          [36m>[39m
+            [0mDevelopment safety update report[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"PSUR"[39m
+          [36m>[39m
+            [0mPeriodic safety update report[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"SAP"[39m
+          [36m>[39m
+            [0mStatistical analysis plan[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"SAR"[39m
+          [36m>[39m
+            [0mStatistical analysis report[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"MODULE_2"[39m
+          [36m>[39m
+            [0mModule 2 · summaries[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"MODULE_3"[39m
+          [36m>[39m
+            [0mModule 3 · quality[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"MODULE_4"[39m
+          [36m>[39m
+            [0mModule 4 · nonclinical[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"MODULE_5"[39m
+          [36m>[39m
+            [0mModule 5 · clinical[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"SOP"[39m
+          [36m>[39m
+            [0mStandard operating procedure[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"REPORT"[39m
+          [36m>[39m
+            [0mReport[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"CORRESPONDENCE"[39m
+          [36m>[39m
+            [0mAgency correspondence[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"OTHER"[39m
+          [36m>[39m
+            [0mOther[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<input[39m
+          [33maccept[39m=[32m".pdf,.docx,.xlsx,.txt,.md,.csv,.tsv,.json,.xml,.png,.jpg,.jpeg,.gif,.doc,.xls,.rtf"[39m
+          [33maria-label[39m=[32m"Choose documents to upload to the Vault"[39m
+          [33mdata-testid[39m=[32m"vault-upload-input"[39m
+          [33mmultiple[39m=[32m""[39m
+          [33mstyle[39m=[32m"display: none;"[39m
+          [33mtype[39m=[32m"file"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"sp-primary"[39m
+          [33mdata-testid[39m=[32m"vault-upload-button"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtitle[39m=[32m"Open a project first — a Vault document is filed against a program."[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-upload"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"17 8 12 3 7 8"[39m
+            [36m/>[39m
+            [36m<line[39m
+              [33mx1[39m=[32m"12"[39m
+              [33mx2[39m=[32m"12"[39m
+              [33my1[39m=[32m"3"[39m
+              [33my2[39m=[32m"15"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mUpload[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"sp-ask"[39m
+          [33mtitle[39m=[32m"Describe an import to AnA instead — e.g. bulk import from another system"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 3v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 5h-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 17v2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 18H3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Ask AnA to import[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"vd-coexist"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"vd-coexist-txt"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-link"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m AnA can search your connected repositories ([0m
+          [36m<b>[39m
+            [0mVeeva Vault[0m
+          [36m</b>[39m
+          [0m,[0m
+          [0m [0m
+          [36m<b>[39m
+            [0mSharePoint[0m
+          [36m</b>[39m
+          [0m, [0m
+          [36m<b>[39m
+            [0mOneDrive[0m
+          [36m</b>[39m
+          [0m) in place. Importing from them into the Vault comes in a later release; upload files here meanwhile.[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"vd-coexist-cta"[39m
+        [36m>[39m
+          [0mSearch connected sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"padding: 16px 24px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-folder"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mOpen a project to see its vault[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mThe Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine.[0m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-empty-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mOpen Projects[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx:129:28
+    127|     expect(await screen.findByText('Open a project to see its vault'))…
+    128|     // "Go to", not "Open": beside the header's "Open project" it read…
+    129|     fireEvent.click(screen.getByRole('button', { name: /Go to Projects…
+       |                            ^
+    130|     expect(onNav).toHaveBeenCalledWith('projects');
+    131|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  17:41:42
+   Duration  4.00s (transform 1.85s, setup 188ms, import 2.19s, tests 761ms, environment 608ms)
+

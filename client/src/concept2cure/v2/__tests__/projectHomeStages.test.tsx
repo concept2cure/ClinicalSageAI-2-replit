@@ -155,7 +155,10 @@ describe('Project home — the start box sits above the tabs', () => {
     render(<ProjectHome {...props()} />);
     const region = await screen.findByRole('region', { name: /Start a conversation in/ });
     await screen.findByText(THREAD.title);
-    const tablist = screen.getByRole('tablist', { name: 'Project lifecycle' });
+    const tablist = screen.getByRole('navigation', { name: 'Project lifecycle' });
+    // The open stage is told to a screen reader, not only drawn (WCAG 4.1.2).
+    expect(within(tablist).getAllByRole('button').filter((b) => b.getAttribute('aria-current') === 'step')).toHaveLength(1);
+    expect(tablist.querySelector('[aria-selected]')).toBeNull();
     expect(region.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING, 'start box above the tabs').toBeTruthy();
     const threads = screen.getByTestId('pj-threads');
     expect(threads.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING, 'conversations above the tabs').toBeTruthy();

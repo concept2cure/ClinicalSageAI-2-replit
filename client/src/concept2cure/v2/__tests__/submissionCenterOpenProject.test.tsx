@@ -127,7 +127,7 @@ describe('Submission Center — with a project open', () => {
     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
     fireEvent.click(await screen.findByRole('button', { name: /New submission/ }));
     await screen.findByLabelText(/Title/);
-    expect(screen.queryByLabelText(/Programme/)).toBeNull();
+    expect(screen.queryByRole('combobox', { name: /^Project/ })).toBeNull();
     const project = screen.getByLabelText(/Project/) as HTMLInputElement;
     expect(project.value).toBe('ONC-221');
     expect(project.readOnly).toBe(true);
@@ -135,8 +135,8 @@ describe('Submission Center — with a project open', () => {
     fireEvent.change(screen.getByLabelText(/Title/), { target: { value: 'ONC-221 — EU MAA' } });
     fireEvent.change(screen.getByLabelText(/Application type/), { target: { value: 'maa' } });
     fireEvent.change(screen.getByLabelText(/Primary region/), { target: { value: 'eu' } });
-    // No client type is preselected unless the open project's workspace names
-    // one (F20: the form no longer defaults every submission to Biotech).
+    // No client type is preselected unless the project's product type or the
+    // open workspace names one (F20: no longer Biotech for every submission).
     fireEvent.change(screen.getByLabelText(/Client type/), { target: { value: 'biotech' } });
     fireEvent.click(screen.getByRole('button', { name: /Create submission/ }));
     await waitFor(() => expect(posts).toHaveLength(1));
@@ -154,7 +154,7 @@ describe('Submission Center — with no project open', () => {
     expect(urls()).not.toContain(SCOPED);
     expect(screen.queryByTestId('sc-scope')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /New submission/ }));
-    expect(await screen.findByLabelText(/Programme/)).toBeTruthy();
+    expect(await screen.findByRole('combobox', { name: /^Project/ })).toBeTruthy();
     expect(text()).not.toMatch(/the open project/);
   });
 });

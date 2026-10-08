@@ -29,6 +29,9 @@ export interface C2CFormField {
   max?: number;
   half?: boolean;
   desc?: string;
+  /** The description changes while the drawer is open (a read lands, or fails),
+   *  so it is a polite live region: a screen reader hears the change. */
+  descLive?: boolean;
   default?: string;
   /**
    * The value this field takes from the others while it applies: the field is
@@ -64,10 +67,15 @@ export interface C2CFormConfig {
   governed?: string | boolean;
   submitLabel?: string;
   fields: C2CFormField[];
-  /** A sentence the drawer states before its fields, as an alert: why a
-   *  default could not be set, for example. Inside the dialog, so it is not
-   *  behind the scrim and a screen reader reaches it. */
+  /** A sentence the drawer states before its fields: why a default could not
+   *  be set, for example. Inside the dialog, so it is not behind the scrim; it
+   *  describes the dialog, so it is read with the dialog's name rather than
+   *  raised as an alert that competes with it. */
   notice?: string;
+  /** Set while what the fields start from is still being read. The drawer opens
+   *  at once with this status and no fields, so nothing moves in the page
+   *  behind it; when it clears, the fields start from the defaults then given. */
+  busy?: string;
 }
 
 export interface C2CFormProps {
@@ -78,6 +86,38 @@ export interface C2CFormProps {
    *  options follow another's value (the region options follow the chosen
    *  application type, FILING_SPINE.md F20). The form still owns its values. */
   onFieldChange?: (key: string, value: string) => void;
+}
+
+/** Each field's starting value: its default, a segmented control's first option, or empty. */
+function initialValues(fields: ReadonlyArray<C2CFormField>): Record<string, string> {
+  const o: Record<string, string> = {};
+  for (const f of fields) {
+    if (f.default != null) {
+      o[f.key] = f.default;
+    } else if (f.type === 'seg' && f.options?.length) {
+      const first = f.options[0];
+      o[f.key] = typeof first === 'string' ? first : first.value;
+    } else {
+      o[f.key] = '';
+    }
+  }
+  return o;
+}
+
+/**
+ * The form's values. While busy, the defaults are not final; they are taken
+ * once the read they come from has settled, during that render, so the fields
+ * never show a frame of empty values. Nothing can be typed while busy (no field
+ * is rendered), so nothing is lost.
+ */
+function useFieldValues(fields: ReadonlyArray<C2CFormField>, busy: string | undefined) {
+  const [v, setV] = React.useState<Record<string, string>>(() => initialValues(fields));
+  const [seedPending, setSeedPending] = React.useState(!!busy);
+  if (seedPending && !busy) {
+    setSeedPending(false);
+    setV(initialValues(fields));
+  }
+  return [v, setV] as const;
 }
 
 export function C2CForm({ config, onCancel, onSubmit, onFieldChange }: C2CFormProps) {
@@ -99,26 +139,14 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange }: C2CFormPr
   const labelId = (key: string) => `${uid}-${key}-label`;
   const descId = (key: string) => `${uid}-${key}-desc`;
 
-  const [v, setV] = React.useState<Record<string, string>>(() => {
-    const o: Record<string, string> = {};
-    for (const f of fields) {
-      if (f.default != null) {
-        o[f.key] = f.default;
-      } else if (f.type === 'seg' && f.options?.length) {
-        const first = f.options[0];
-        o[f.key] = typeof first === 'string' ? first : first.value;
-      } else {
-        o[f.key] = '';
-      }
-    }
-    return o;
-  });
+  const [v, setV] = useFieldValues(fields, config.busy);
   const [err, setErr] = React.useState('');
   /* The fields a failed submit found empty: each is marked aria-invalid and
      described by the error message, so the error is tied to the control
      (WCAG 3.3.1) rather than being a summary the user must go and find. */
   const [invalidKeys, setInvalidKeys] = React.useState<ReadonlySet<string>>(() => new Set());
   const errId = `${uid}-error`;
+  const noticeId = `${uid}-notice`;
 
   const set = (k: string, val: string) => {
     setV((s) => ({ ...s, [k]: val }));
@@ -234,7 +262,16 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange }: C2CFormPr
 
   return (
     <div className="de-bd" onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
-      <div className="de" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={panelRef}>
+      <div
+        className="de"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        aria-describedby={config.notice ? noticeId : undefined}
+        aria-busy={config.busy ? true : undefined}
+        tabIndex={-1}
+        ref={panelRef}
+      >
         <div className="de-h">
           <div>
             {eyebrow && <div className="de-h-eye">{eyebrow}</div>}
@@ -246,12 +283,15 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange }: C2CFormPr
           </button>
         </div>
         <div className="de-body">
+          {/* A <p>, not a <div>: `.de-field.half:nth-of-type(odd)` counts the
+              body's divs, so a div here moved the half fields' gap. */}
           {config.notice && (
-            <div className="de-gov" role="alert">
+            <p className="de-gov" role="status" id={noticeId}>
               <span className="de-gov-t">{config.notice}</span>
-            </div>
+            </p>
           )}
-          {fields.map((f) => (
+          {config.busy && <p className="de-desc" role="status">{config.busy}</p>}
+          {!config.busy && fields.map((f) => (
             <div key={f.key} className={'de-field' + (f.half ? ' half' : '')}>
               {/* A seg is a radiogroup, not a labellable control, so its label
                   is referenced by id rather than pointing at an input. The
@@ -266,7 +306,11 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange }: C2CFormPr
                 {f.label}
                 {f.required && <span className="req" aria-hidden="true">*</span>}
               </label>
-              {f.desc && <div className="de-desc" id={descId(f.key)}>{f.desc}</div>}
+              {f.desc && (
+                <div className="de-desc" id={descId(f.key)} aria-live={f.descLive ? 'polite' : undefined}>
+                  {f.desc}
+                </div>
+              )}
               {renderField(f)}
             </div>
           ))}
@@ -286,7 +330,7 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange }: C2CFormPr
           <button className="de-btn ghost" onClick={onCancel}>
             Cancel
           </button>
-          <button className="de-btn primary" onClick={submit}>
+          <button className="de-btn primary" onClick={submit} disabled={!!config.busy}>
             {governed ? I.lock : I.check} {submitLabel}
           </button>
         </div>

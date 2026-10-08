@@ -44,7 +44,7 @@ export function LaunchScopeGate({
       </h2>
       <p>{notice.body}</p>
       {onNav && (
-        <button type="button" className="btn" onClick={() => onNav('projects')}>
+        <button type="button" className="btn ghost" onClick={() => onNav('projects')}>
           Back to Projects
         </button>
       )}

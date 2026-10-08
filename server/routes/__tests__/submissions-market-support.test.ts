@@ -48,7 +48,7 @@ describe('GET /api/submissions/market-support', () => {
     const by = Object.fromEntries(res.body.markets.map((m: { region: string; summary: string }) => [m.region, m.summary]));
     expect(by.US).toBe('Structured Module 1');
     expect(by.CA).toBe('No outline, no channel');
-    expect(by.BR).toBe('Unmapped');
+    expect(by.BR).toBe('Not supported');
     expect(db.query).toHaveBeenCalledTimes(1);
     expect(String(db.query.mock.calls[0][0])).toMatch(/superseded_by IS NULL/);
   });
