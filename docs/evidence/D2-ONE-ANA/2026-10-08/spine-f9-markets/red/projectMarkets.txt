@@ -1,0 +1,39 @@
+# Trimmed to the result and assertion lines; the rendered-DOM dumps of the full run are omitted.
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row 5165ms
+   → expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'Dispatch blocked · 2 blockers'
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a 500 on one verdict shows "No verdict" with a retry on that row only, never "Cleared", and keeps the other row 5089ms
+   → expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'No verdict'
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a sequence list with no body is "No verdict" with a retry, never "No sequence yet" 5080ms
+   → expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'No verdict · its sequences could not …'
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > opening a row stashes the submission, its sequence and Validation when blocked, then opens the Submission Center 5099ms
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > offers no "Add a market" button while the Submission Center cannot open New submission from a link 5057ms
+   → Unable to find an element by: [data-testid="pj-markets"]
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a project with no submission says so in words and says where New submission is 5052ms
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a 403 on the list is the person’s role, stated once, with no retry and no alert in the header 5063ms
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a failed list read is a failure with a retry, never "no market" 5047ms
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > states both verdicts and the count in review, from the reads the tabs make (one board read) 5033ms
+   → Unable to find role="group" and name "Where this filing stands"
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a board of approved documents is not "in review" 5033ms
+   → Unable to find an element by: [data-testid="pj-status-line"]
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a failed verdict is "No verdict" in the header too, never "Cleared" 5031ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row
+AssertionError: expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'Dispatch blocked · 2 blockers'
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a 500 on one verdict shows "No verdict" with a retry on that row only, never "Cleared", and keeps the other row
+AssertionError: expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'No verdict'
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a sequence list with no body is "No verdict" with a retry, never "No sequence yet"
+AssertionError: expected 'INDActiveONC-221 IND · VorelinibFDA (…' to contain 'No verdict · its sequences could not …'
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > opening a row stashes the submission, its sequence and Validation when blocked, then opens the Submission Center
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > offers no "Add a market" button while the Submission Center cannot open New submission from a link
+TestingLibraryElementError: Unable to find an element by: [data-testid="pj-markets"]
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a project with no submission says so in words and says where New submission is
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a 403 on the list is the person’s role, stated once, with no retry and no alert in the header
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a failed list read is a failure with a retry, never "no market"
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > states both verdicts and the count in review, from the reads the tabs make (one board read)
+TestingLibraryElementError: Unable to find role="group" and name "Where this filing stands"
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a board of approved documents is not "in review"
+TestingLibraryElementError: Unable to find an element by: [data-testid="pj-status-line"]
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a failed verdict is "No verdict" in the header too, never "Cleared"
+ Test Files  1 failed (1)
+      Tests  11 failed (11)

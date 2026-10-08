@@ -1,0 +1,21 @@
+# Trimmed to the result and assertion lines; the rendered-DOM dumps of the full run are omitted.
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > reads the review board scoped to this program, and groups the documents by what they need 680ms
+   → Unable to find an accessible element with the role "list" and name "Declined"
+ × client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a document every reviewer approved but nobody has signed is not shown as Approved 65ms
+   → expected 'Approved' to be 'Reviewers approved, sign-off pending' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open document" opens THAT document, by id, in this program 215ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a failed read is an error with a retry, never an empty list, and the retry reads again 64ms
+   → expected <div class="c2c-error-h"></div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > an empty board says so in words 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > never says "aren't wired" and never sends the person to the task-board alias 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open the review board" opens the Review surface when it is available, and is not shown when it is not 228ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > reads the review board scoped to this program, and groups the documents by what they need
+TestingLibraryElementError: Unable to find an accessible element with the role "list" and name "Declined"
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a document every reviewer approved but nobody has signed is not shown as Approved
+AssertionError: expected 'Approved' to be 'Reviewers approved, sign-off pending' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a failed read is an error with a retry, never an empty list, and the retry reads again
+AssertionError: expected <div class="c2c-error-h"></div> to be null
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed (7)

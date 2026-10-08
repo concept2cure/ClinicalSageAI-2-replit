@@ -84,6 +84,10 @@ const REGULATORY_PROGRAMS_DDL = `
     associated_product_codes text,
     indications_for_use_citation text,
     equivalent_devices json,
+    -- The sponsor address and the IND type Form FDA 1571 carries
+    -- (20261008b_regulatory_programs_sponsor_address_ind_type.sql).
+    sponsor_address text,
+    ind_type text,
     status text NOT NULL,
     phase text,
     priority text,

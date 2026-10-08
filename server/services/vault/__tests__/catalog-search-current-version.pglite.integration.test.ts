@@ -26,7 +26,7 @@ const DISTANCE = 'c.embedding <=> $2::vector';
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ + VAULT_DDL,
-    migrations: ['migrations/20260905_document_catalog.sql', 'migrations/20261006_document_data_dispositions.sql'],
+    migrations: ['migrations/20260905_document_catalog.sql', 'migrations/20261008e_document_catalog_attribution.sql', 'migrations/20261006_document_data_dispositions.sql'],
     testOnlySql: 'ALTER TABLE vault.document_catalog ADD COLUMN embedding REAL',
   });
   h.query.mockImplementation((sql: string, params: unknown[] = []) => {

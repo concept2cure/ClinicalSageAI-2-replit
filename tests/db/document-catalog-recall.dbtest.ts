@@ -314,7 +314,7 @@ describe('semantic search over the catalog', () => {
 
     const done = await callTool('catalog_project_document', {
       document_id: docId,
-      document_kind: 'GLP 28-day repeat-dose toxicology study report',
+      document_kind: 'nonclinical',
       purpose: 'Supports Module 4 repeat-dose toxicology for Recallin.',
       summary: 'TOX-77-A in rats; NOAEL 50 mg/kg/day; reversible hepatocellular hypertrophy at 150.',
       key_data: { study: 'TOX-77-A', noaelMgKgDay: 50 },

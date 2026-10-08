@@ -112,3 +112,42 @@ export function describeProvenance(
 export function moduleWasAssumed(raw: unknown): boolean {
   return !!raw && typeof raw === 'object' && (raw as Record<string, unknown>).moduleDefaulted === true;
 }
+
+/** What the save found of a drafted document's figures in the sources it cites (S5a). */
+export interface FigureCheckSummary {
+  checked: number;
+  found: number;
+  unverified: number;
+  /** The figures no cited source states, each with its section, as recorded. */
+  unverifiedItems: Array<{ section: string; text: string }>;
+  /** The record kept fewer findings than it counted. */
+  truncated: boolean;
+}
+
+/**
+ * The drafted-figure check the save recorded in `projectSourceReferences`
+ * (authoring/draft-figure-check.ts): each figure of a section that cites
+ * sources, found in them or unverified. Null when nothing was checked (no
+ * section cited a source, or the document predates the check), so the editor
+ * says nothing rather than "0 unverified", which would read as all clear.
+ */
+/** One section's recorded check, added into the summary. */
+function addSection(summary: FigureCheckSummary, sectionCode: unknown, f: Record<string, unknown>): void {
+  summary.checked += Number(f.checked) || 0;
+  summary.found += Number(f.found) || 0;
+  summary.unverified += Number(f.unverified) || 0;
+  summary.truncated ||= f.truncated === true;
+  const items = Array.isArray(f.figures) ? (f.figures as Array<Record<string, unknown>>) : [];
+  for (const item of items.filter((i) => i?.status === 'unverified')) {
+    summary.unverifiedItems.push({ section: String(sectionCode ?? ''), text: String(item.text ?? '') });
+  }
+}
+
+export function describeFigureCheck(raw: unknown): FigureCheckSummary | null {
+  const refs = raw && typeof raw === 'object' ? (raw as Record<string, unknown>).projectSourceReferences : null;
+  if (!Array.isArray(refs)) return null;
+  const summary: FigureCheckSummary = { checked: 0, found: 0, unverified: 0, unverifiedItems: [], truncated: false };
+  const checked = (refs as Array<Record<string, unknown>>).filter((r) => r?.figures && typeof r.figures === 'object');
+  for (const ref of checked) addSection(summary, ref.sectionCode, ref.figures as Record<string, unknown>);
+  return checked.length > 0 ? summary : null;
+}

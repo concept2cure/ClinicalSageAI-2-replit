@@ -83,6 +83,8 @@ import { NewSubmissionForm } from './NewSubmissionForm';
 import { gatewayLabel } from '../gatewayLabels';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
+import { consumeNavParams } from '../navParams';
+import { readSubmissionNavTarget, useOpenOnNavTarget } from './submissionNavTarget';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -610,6 +612,16 @@ export function SubmissionCenter({
     setNotice(null);
   }, [subId]);
 
+  /* F10: opened on the submission, sequence and tab a sender named (Place into
+     filing's "Open in Submission Center"). Read once on mount; opened against
+     the rows the server returned, after the reset above, never guessed. */
+  const [navParams] = React.useState(() => consumeNavParams('submission-center'));
+  const [navTarget] = React.useState(() =>
+    navParams ? readSubmissionNavTarget({ submissionId: navParams.submissionId, sequenceId: navParams.sequenceId, ws: navParams.ws }) : null);
+  const navMiss = useOpenOnNavTarget(navTarget, {
+    subs, sub, seqs, ws, selSeq, selectSubmission: setSelSub, selectSequence: setSelSeq, openWorkspace: setWs,
+  });
+
   /**
    * Create a submission — POST /api/submissions.
    *
@@ -629,7 +641,9 @@ export function SubmissionCenter({
    * body targeted a different, unmounted router's schema; every submit
    * answered 400 VALIDATION.)
    */
-  const [newOpen, setNewOpen] = React.useState(false);
+  /* F9: the project page's "Add a market" opens this form on arrival — only
+     with a project open, since the submission is that project's (F20). */
+  const [newOpen, setNewOpen] = React.useState(() => navParams?.newSubmission === '1' && !!openProgramId);
   const [creating, setCreating] = React.useState(false);
   const createSubmission = async (v: Record<string, string>) => {
     if (creating) return;
@@ -1225,6 +1239,7 @@ export function SubmissionCenter({
 
       {/* The latest server verdict (transition / governed outcome) — verbatim. */}
       <VerdictNote notice={notice} />
+      <VerdictNote notice={navMiss} />
 
       {newOpen && (
         <NewSubmissionForm

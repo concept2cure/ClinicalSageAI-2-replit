@@ -1328,6 +1328,7 @@ router.get('/docs', async (req: Request, res: Response) => {
         to_jsonb(d)->'provenance'->>'source' AS provenance_source,
         to_jsonb(d)->'provenance'->>'conversationId' AS conversation_id,
         to_jsonb(d)->>'client_program_id' AS program_id,
+        to_jsonb(d)->>'c2c_document_id' AS c2c_document_id,
         COUNT(s.id) as section_count,
         COALESCE(SUM(LENGTH(s.content)), 0) as total_content_length
       FROM authoring_documents d
@@ -1727,6 +1728,7 @@ router.get('/docs/:docId', async (req: Request, res: Response) => {
     const docResult = await pool.query(
       `SELECT
         d.id, d.title, d.module, d.product_code, d.locale, d.status, d.created_at, d.updated_at, d.created_by, d.template_id, d.submitted_at, d.current_workflow_id, d.approved_at, d.frozen_at, d.locked_at, d.locked_by, d.tenant_id, d.version,
+        to_jsonb(d)->>'c2c_document_id' AS c2c_document_id,
         COUNT(DISTINCT s.id) as section_count,
         COUNT(DISTINCT c.id) as comment_count,
         COUNT(DISTINCT r.id) as revision_count

@@ -17,10 +17,13 @@
  *     GET /api/submissions/sequences/:seqId/dispatch-readiness. Both moved here
  *     unchanged from DispatchReadiness.tsx so the readiness screen and the
  *     project page cannot drift apart.
+ *   - `useProgramMarkets` (FILING_SPINE.md F9) answers the same question for
+ *     every market of the project: each submission in the scoped list, its
+ *     latest sequence, and that sequence's verdict from the same endpoint.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { redactInternals } from '@/lib/queryClient';
-import { liveGetOrNull, unwrapList, useLiveData, type DataState } from '../dataConnect';
+import { liveGetOrNull, unwrapList, useLiveData, useLiveRows, type DataState, type ListState } from '../dataConnect';
 import { readShellProject } from '../shellProject';
 import { SC_APPTYPES } from '../fixtures/submission';
 
@@ -282,21 +285,42 @@ async function findProgramSubmission(program: ProgramRecord, programId: string, 
   return { done: { state: 'no-submission', programId, programLabel, programType, otherSubmissions, unanchoredOfType } };
 }
 
+/** A submission's latest sequence, as GET /api/submissions/:id/sequences
+ *  lists them (the last row), or null when it lists none. */
+export interface LatestSequence {
+  id: number;
+  /** The eCTD sequence NUMBER ("0000"); null when the row has none. */
+  sequenceNumber: string | null;
+  /** The sequence's status as the server stored it ("assembling"); null when absent. */
+  status: string | null;
+}
+
+const trimmedOrNull = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim() : null);
+
+/** The latest sequence in a sequence-list payload. One rule for the readiness
+ *  screen's discovery and the project's markets. */
+export function latestSequenceOf(payload: unknown): LatestSequence | null {
+  const list = unwrapList(payload);
+  const rows = Array.isArray(list) ? (list as Array<{ id?: unknown; sequenceNumber?: unknown; status?: unknown }>) : [];
+  const latest = rows[rows.length - 1];
+  if (!latest || typeof latest.id !== 'number' || !latest.id) return null;
+  return { id: latest.id, sequenceNumber: trimmedOrNull(latest.sequenceNumber), status: trimmedOrNull(latest.status) };
+}
+
+const sequencesPath = (submissionId: number): string => `/api/submissions/${submissionId}/sequences`;
+const dispatchReadinessPath = (seqId: number): string => `/api/submissions/sequences/${seqId}/dispatch-readiness`;
+
 async function findLatestSequence(sub: SubmissionRow, programId: string, programLabel: string): Promise<Discovery> {
-  const r = await liveGetOrNull<unknown>(`/api/submissions/${sub.id}/sequences`);
+  const r = await liveGetOrNull<unknown>(sequencesPath(sub.id));
   if (r.error || r.data == null) {
     return { state: 'error', detail: r.error ?? 'The sequences could not be read.' };
   }
-  const list = unwrapList(r.data);
-  const rows = Array.isArray(list) ? (list as Array<{ id?: number; sequenceNumber?: unknown }>) : [];
-  const latest = rows[rows.length - 1];
+  const latest = latestSequenceOf(r.data);
   const submissionTitle = submissionTitleOf(sub);
-  if (!latest?.id) {
+  if (!latest) {
     return { state: 'no-sequence', programId, programLabel, submissionId: sub.id, submissionTitle };
   }
-  const sequenceNumber =
-    typeof latest.sequenceNumber === 'string' && latest.sequenceNumber.trim() !== '' ? latest.sequenceNumber.trim() : null;
-  return { state: 'sequence', programId, programLabel, submissionId: sub.id, submissionTitle, seqId: latest.id, sequenceNumber };
+  return { state: 'sequence', programId, programLabel, submissionId: sub.id, submissionTitle, seqId: latest.id, sequenceNumber: latest.sequenceNumber };
 }
 
 export async function discoverProgramSequence(programId: string, shellTitle: string | undefined): Promise<Discovery> {
@@ -438,7 +462,7 @@ function readPending(live: DataState<unknown>): boolean {
 export function useSequenceDispatchReadiness(discovery: Discovery): SequenceDispatchReadiness {
   const seqId = discovery.state === 'sequence' ? discovery.seqId : null;
   const live = useLiveData<DispatchReadinessAssessment>(
-    seqId === null ? null : `/api/submissions/sequences/${seqId}/dispatch-readiness`,
+    seqId === null ? null : dispatchReadinessPath(seqId),
     [seqId],
   );
   const a = live.data;
@@ -475,4 +499,120 @@ export function useSequenceDispatchReadiness(discovery: Discovery): SequenceDisp
       ? 'error'
       : notReadyState(discovery) ?? (seqId === null || !a ? 'no-sequence' : 'evaluated');
   return { seqId, live, assessment: a, gate, answered, loading, gateState };
+}
+
+/* ── The project's markets (FILING_SPINE.md F9, §6 row 12) ─────────────────
+   One verdict per project read only the submission of the project's own
+   application type (findProgramSubmission above), so a project filing an IND
+   to FDA and an MAA to EMA had a verdict for one of them. A market is one
+   submission: an application type to one agency. Each is read on its own:
+
+     GET /api/submissions?programId=<uuid>            the project's markets
+       → GET /api/submissions/:id/sequences            its latest sequence
+         → GET /api/submissions/sequences/:seqId/dispatch-readiness   its verdict
+
+   The list is the server's project scope, so no submission is matched to the
+   project by name. Each market's reads succeed or fail alone: one failed
+   verdict is that market's failure, never another's, and never "cleared".
+   The verdict is the server's composed gate, consumed as it is (serverGate);
+   nothing here recomputes it. */
+
+/** A market: one submission in the project's scoped list (the columns read). */
+export interface MarketSubmission {
+  id: number;
+  title: string;
+  productName: string | null;
+  applicationType: string;
+  primaryRegion: string;
+  status: string;
+  lifecycleStage: string;
+  programId?: string | null;
+}
+
+/** Where one market's reads stand. */
+export type MarketRead =
+  | { state: 'reading' }
+  /** The sequence list could not be read: there is no verdict, and no claim
+   *  about whether a sequence exists. */
+  | { state: 'sequences-failed' }
+  | { state: 'no-sequence' }
+  /** The latest sequence is known; its verdict could not be read. */
+  | { state: 'verdict-failed'; sequence: LatestSequence }
+  /** The server answered. `gate` is null when it stated no verdict, which is
+   *  unanswered, never cleared. */
+  | { state: 'verdict'; sequence: LatestSequence; assessment: DispatchReadinessAssessment | null; gate: DispatchGate | null };
+
+export interface ProgramMarket {
+  submission: MarketSubmission;
+  read: MarketRead;
+}
+
+export interface ProgramMarkets {
+  /** The scoped list read: loading, failed, empty or rows. */
+  list: ListState<MarketSubmission>;
+  /** The server's count of the organization's submissions the scope left out. */
+  notOffered: number | null;
+  markets: ProgramMarket[];
+  retryList: () => void;
+  /** Read one market again; the others are not touched. */
+  retryMarket: (submissionId: number) => void;
+}
+
+const READING: MarketRead = { state: 'reading' };
+
+async function readMarket(submissionId: number): Promise<MarketRead> {
+  const seqs = await liveGetOrNull<unknown>(sequencesPath(submissionId));
+  // No body is not "no sequence": the same rule as findLatestSequence.
+  if (seqs.error || seqs.data == null) return { state: 'sequences-failed' };
+  const sequence = latestSequenceOf(seqs.data);
+  if (!sequence) return { state: 'no-sequence' };
+  const v = await liveGetOrNull<DispatchReadinessAssessment>(dispatchReadinessPath(sequence.id));
+  if (v.error) return { state: 'verdict-failed', sequence };
+  const assessment = v.data && typeof v.data === 'object' ? v.data : null;
+  return { state: 'verdict', sequence, assessment, gate: serverGate(assessment) };
+}
+
+/** The open project's markets, each with its latest sequence and that
+ *  sequence's own verdict. Read once and shared by every reader on the page
+ *  (the Submit tab and the header line), so the two cannot disagree. */
+export function useProgramMarkets(programId: string | null): ProgramMarkets {
+  const [listBump, setListBump] = useState(0);
+  const path = programId ? programSubmissionsPath(programId) : null;
+  const list = useLiveRows<MarketSubmission>(path, [path, listBump]);
+  const [reads, setReads] = useState<Record<number, MarketRead>>({});
+  /* The latest read asked of each market; an older answer is dropped. */
+  const asked = useRef<Record<number, number>>({});
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  const read = useCallback((submissionId: number) => {
+    const n = (asked.current[submissionId] ?? 0) + 1;
+    asked.current[submissionId] = n;
+    const put = (r: MarketRead) => {
+      if (mounted.current && asked.current[submissionId] === n) setReads((m) => ({ ...m, [submissionId]: r }));
+    };
+    put(READING);
+    readMarket(submissionId).then(put, () => put({ state: 'sequences-failed' }));
+  }, []);
+
+  const { rows, loading, error } = list;
+  useEffect(() => {
+    if (loading || error) return;
+    for (const s of rows) {
+      if (s && typeof s.id === 'number') read(s.id);
+    }
+  }, [rows, loading, error, read]);
+
+  const markets = useMemo<ProgramMarket[]>(
+    () => rows.filter((s) => s && typeof s.id === 'number').map((submission) => ({ submission, read: reads[submission.id] ?? READING })),
+    [rows, reads],
+  );
+  const notOffered = !loading && !error ? notOfferedCount(list.meta) : null;
+  const retryList = useCallback(() => setListBump((b) => b + 1), []);
+  return { list, notOffered, markets, retryList, retryMarket: read };
 }

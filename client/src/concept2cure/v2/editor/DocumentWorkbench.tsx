@@ -75,7 +75,8 @@ import { FileToVaultDialog } from './FileToVaultDialog';
 import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramSummary, programHeadline, programName } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt } from './askAnaToDraft';
-import { describeProvenance, type DocumentProvenance } from './provenance';
+import { describeFigureCheck, describeProvenance, type DocumentProvenance, type FigureCheckSummary } from './provenance';
+import { DraftFigureLine } from './DraftFigureLine';
 import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
@@ -96,6 +97,7 @@ import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
 
 import { useFilingOutline, findSectionForNode, nodeHasDraft } from '../useFilingOutline';
+import { useStartOutlineSection, unstartedRowProps } from './startOutlineSection';
 import {
   editorTargetDocLabel,
   clearEditorTarget,
@@ -131,6 +133,10 @@ interface AuthDoc {
   section_count: number | string | null;
   /** The author (GET /docs returns it): not offered as the document's reviewer. */
   created_by?: string | number | null;
+  /** The governed filing this is the editing copy of; null when unbound,
+      absent when the list did not say. The outline starts a section only in
+      the filing's copy (startOutlineSection.ts startOffer). */
+  c2c_document_id?: string | null;
 }
 
 /**
@@ -1077,6 +1083,8 @@ export function DocumentWorkbench({
      the gateway reported, the conversation). Null until read; a failed read
      is a failed read, and the header then makes no origin claim. */
   const [docProvenance, setDocProvenance] = useState<DocumentProvenance | null>(null);
+  /* S5a: the save's check of the draft's figures against its cited sources. */
+  const [docFigures, setDocFigures] = useState<FigureCheckSummary | null>(null);
   /** What this caller may do to the open document (GE-P-3); unknown until read. */
   const [docAccess, setDocAccess] = useState<DocumentAccess>(UNKNOWN_DOCUMENT_ACCESS);
   const assignRefusalId = useId();
@@ -1627,6 +1635,7 @@ export function DocumentWorkbench({
   useEffect(() => {
     provenanceDocRef.current = activeDocId;
     setDocProvenance(null);
+    setDocFigures(null);
     setDocAccess(UNKNOWN_DOCUMENT_ACCESS);
     if (!activeDocId) return;
     const wanted = activeDocId;
@@ -1636,6 +1645,7 @@ export function DocumentWorkbench({
       if (provenanceDocRef.current !== wanted) return;
       if (!ok || !body?.document) return;
       setDocProvenance(describeProvenance(body.document.provenance));
+      setDocFigures(describeFigureCheck(body.document.provenance));
       /* GE-P-3: the same read carries the caller's access. */
       setDocAccess(readDocumentAccess(body.access));
     });
@@ -1698,6 +1708,14 @@ export function DocumentWorkbench({
     }
     void loadSections(activeDocId);
   }, [activeDocId, loadSections]);
+
+  /* F4: a click on an outline node with no section here starts it — created
+     through POST /api/authoring/sections, opened, the cursor put in it — but
+     only in the document that is the filing's editing copy. */
+  const startNode = useStartOutlineSection({
+    activeDoc, filing: filing.document, docs, sections, loadSections, requestLeave, fireToast,
+    activeSectionId, docPane: () => docScrollRef.current,
+  });
 
   /* ── Reset editor bookkeeping on section switch ──
      The canonical editor remounts per section (key includes the id) and reads
@@ -3428,6 +3446,9 @@ export function DocumentWorkbench({
               const sectionsUnread = sectionsState !== 'ready';
               const bound = sectionsUnread ? null : findSectionForNode(sections, node.key);
               const isActive = bound != null && bound.id === activeSectionId;
+              // F4: an unstarted node's tooltip, accessible name, disabled and
+              // busy state (spread last, so its title is the one shown).
+              const startProps = bound || sectionsUnread ? null : unstartedRowProps(startNode, node);
               return (
                 <button
                   key={node.key}
@@ -3437,10 +3458,9 @@ export function DocumentWorkbench({
                   title={
                     sectionsUnread
                       ? `${node.label} — this document’s sections have not been read yet`
-                      : bound
-                        ? `${node.label} — open`
-                        : `${node.label} — not started in this document yet`
+                      : `${node.label} — open`
                   }
+                  {...startProps}
                   onClick={() => {
                     if (sectionsUnread) {
                       fireToast(
@@ -3460,10 +3480,9 @@ export function DocumentWorkbench({
                         module: m ? `M${m}` : undefined,
                       });
                     } else {
-                      fireToast(
-                        `${node.key} ${node.label} — no draft yet in this document.`,
-                        'error'
-                      );
+                      // F4: the click starts the section (a person's act),
+                      // or says why it cannot be started in this document.
+                      void startNode(node);
                     }
                   }}
                 >
@@ -4085,6 +4104,7 @@ export function DocumentWorkbench({
                       {docProvenance.line}
                     </div>
                   )}
+                  {docFigures && <DraftFigureLine check={docFigures} />}
                   <div className="ed-mast-meta">
                     {/* "0 sections" printed over a failed or in-flight read,
                         directly above a body that said the read failed. */}
@@ -4291,6 +4311,7 @@ export function DocumentWorkbench({
                       {docProvenance.line}
                     </div>
                   )}
+                  {docFigures && <DraftFigureLine check={docFigures} />}
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0

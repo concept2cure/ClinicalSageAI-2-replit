@@ -83,14 +83,20 @@ export const CATALOG_PROJECT_DOCUMENT: AnaTool = {
     'differences of dash, space and letter case are tolerated, a different digit is not). A figure you computed, ' +
     'converted, corrected or inferred is not in the text and is refused; true/false/null are judgements, not ' +
     'transcriptions, and are refused — say those in the summary. One unverifiable value refuses the whole write, and ' +
-    'the response names each one by path in unverifiedKeyData; correct or drop exactly those and catalog again.',
+    'the response names each one by path in unverifiedKeyData; correct or drop exactly those and catalog again. ' +
+    'What you record is YOUR SUGGESTION: it is stored under your model and this turn, recalled as unconfirmed, and a ' +
+    'person confirms or corrects it in the Vault. Once a person has, you cannot replace it; tell them what you would change.',
   input_schema: {
     type: 'object',
     properties: {
       document_id: { type: 'string', description: 'The vault document UUID. A chat upload\u0027s file_id cannot be cataloged — durable comprehension records live on vault documents.' },
       document_kind: {
         type: 'string',
-        description: 'What the document IS, specifically (e.g. "GLP 28-day rat toxicology study report", "Certificate of Analysis, batch 23-104", "Investigator CV").',
+        enum: VAULT_DOC_KINDS.map(k => k.value),
+        description:
+          'What the document IS, in the Vault\u0027s evidence-kind vocabulary (e.g. "nonclinical" for a GLP 28-day ' +
+          'rat toxicology report, "batch_record" or "cert" for a certificate of analysis). A value outside the list ' +
+          'is refused and nothing is stored. Put the specifics (species, duration, batch) in purpose and summary.',
       },
       purpose: {
         type: 'string',

@@ -443,3 +443,34 @@
    section figure is not read as that document's progress. */
 .c2c-v2 .pj-lmodrow{display:flex;flex-direction:column;gap:0;}
 .c2c-v2 .pj-lmod-doc{font-size:11px;color:var(--text-400);padding:0 2px 6px;}
+/* Review tab: this filing's reviews, grouped by what they need from the
+   person (FILING_SPINE.md F7). The rows are the canvas list's own rows. */
+.c2c-v2 .pj-rv-group + .pj-rv-group{margin-top:14px;}
+.c2c-v2 .pj-rv-h{margin:0 0 6px;font-size:12px;font-weight:600;color:var(--text-200);}
+.c2c-v2 .pj-rv-n{font-weight:400;color:var(--text-400);}
+/* Submit tab: one row per market, each with its own server verdict, and the
+   line under the project header that states them (FILING_SPINE.md F9). The
+   rows are the file-row cards (.pj-file); the verdict carries an icon and
+   words, never colour alone. */
+.c2c-v2 .pj-mkts{list-style:none;margin:0;padding:0;}
+.c2c-v2 .pj-mkt{display:flex;flex-direction:column;gap:2px;}
+.c2c-v2 .pj-mkt-verdict{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:12px;font-weight:600;color:var(--text-200);}
+.c2c-v2 .pj-mkt-verdict[data-tone=ok]{color:var(--success);}
+.c2c-v2 .pj-mkt-verdict[data-tone=blocked]{color:var(--error);}
+.c2c-v2 .pj-mkt-verdict[data-tone=warn]{color:var(--warning);}
+.c2c-v2 .pj-mkt-verdict-ic{display:inline-flex;}
+.c2c-v2 .pj-mkt-verdict-ic svg{width:14px;height:14px;}
+.c2c-v2 .pj-mkt-btn{font-size:12px;padding:4px 12px;}
+.c2c-v2 .pj-mkt-note{margin:4px 0 0;font-size:11.5px;line-height:1.5;color:var(--text-300);}
+.c2c-v2 .pj-mkt-blockers{margin:4px 0 2px;padding-left:18px;font-size:11.5px;line-height:1.5;color:var(--text-200);}
+.c2c-v2 .pj-mkt-acts{display:flex;justify-content:flex-end;margin-top:6px;}
+.c2c-v2 .pj-status{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin:0 0 16px;font-size:12px;color:var(--text-300);}
+.c2c-v2 .pj-status-item{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px;}
+.c2c-v2 .pj-status-item svg{width:13px;height:13px;}
+.c2c-v2 .pj-status-item b{font-weight:600;color:var(--text-200);}
+.c2c-v2 .pj-status-item[data-tone=ok]{color:var(--success);}
+.c2c-v2 .pj-status-item[data-tone=blocked]{color:var(--error);}
+.c2c-v2 .pj-status-item[data-tone=warn]{color:var(--warning);}
+.c2c-v2 .pj-mkt-verdict:focus-visible,.c2c-v2 .pj-status:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:4px;}
+/* Read by a screen reader, not shown: the market a verdict belongs to. */
+.c2c-v2 .pj-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
