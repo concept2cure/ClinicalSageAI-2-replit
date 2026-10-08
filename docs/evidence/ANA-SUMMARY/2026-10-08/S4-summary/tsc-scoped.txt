@@ -1,0 +1,2 @@
+# npx tsc -p tsconfig.s4.json (scoped-tsc-config.json here: extends the repo tsconfig.json; files = the 50 changed .ts/.tsx files listed in lint.md); NODE_OPTIONS=--max-old-space-size=9000
+exit 0

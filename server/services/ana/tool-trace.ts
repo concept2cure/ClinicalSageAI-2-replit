@@ -53,12 +53,36 @@ function truncate(s: string, max: number): string {
   return t.length > max ? t.slice(0, max - 1) + '…' : t;
 }
 
+/** The refusal's sentence when the tool gave none of its own. */
+export const NO_REFUSAL_SENTENCE = 'The step answered that it did not do what was asked, and gave no reason.';
+
 /**
- * The refusal a handler returned instead of throwing: a JSON object whose own
- * top-level `error` is a non-empty string. Handlers across the tool set say "I
- * could not do this" that way (`{ error: 'needs an open project …' }`), and a
- * step that did not happen must not be reported — or drawn with a check mark —
- * as one that did. Anything else, including a non-JSON result, is null.
+ * Fields with which a result carries the work its `ok` is a verdict on: a
+ * check's findings (check_grounding's `ungroundedClaims`, validate_docx's
+ * `validation`, verify_docx_against_source's `missingRequiredStrings`), an
+ * insertion's `applied` list, a script's `stdout`. Such a result did what it
+ * was asked; `ok: false` there says what it found, not that it refused.
+ */
+const VERDICT_FIELDS = ['ungroundedClaims', 'validation', 'missingRequiredStrings', 'applied', 'stdout'] as const;
+
+const sentence = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
+
+/**
+ * The refusal a handler returned instead of throwing, in its own words, or
+ * null. A step that did not happen must not be reported — or drawn with a
+ * check mark — as one that did. Handlers say "I could not do this" three ways:
+ *
+ *   `{ error: '…' }`                    the sentence is `error`
+ *   `{ refused: true | '<code>', … }`   the sentence is `reason`, then `message`
+ *   `{ ok: false, … }`                  likewise, unless the result carries the
+ *                                       work its `ok` judges (VERDICT_FIELDS)
+ *
+ * The second and third were read as successes until ANA-SUMMARY S4: 36
+ * refusals under server/services/ana answer `{ ok: false, reason | message }`
+ * with no `error` (a filing only a person confirms, a signature AnA cannot
+ * give, a document with no extracted text), and each was recorded, noted to
+ * the model and counted as a step that worked. One that gives no sentence
+ * reads NO_REFUSAL_SENTENCE. Anything else, including a non-JSON result, is null.
  */
 export function refusalOf(resultContent: string): string | null {
   let parsed: unknown;
@@ -68,8 +92,13 @@ export function refusalOf(resultContent: string): string | null {
     return null;
   }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-  const error = (parsed as { error?: unknown }).error;
-  return typeof error === 'string' && error.trim() ? error.trim() : null;
+  const r = parsed as Record<string, unknown>;
+  const error = sentence(r.error);
+  if (error) return error;
+  const refused = r.refused === true || Boolean(sentence(r.refused));
+  const notOk = r.ok === false && !VERDICT_FIELDS.some(f => f in r);
+  if (!refused && !notOk) return null;
+  return sentence(r.reason) ?? sentence(r.message) ?? NO_REFUSAL_SENTENCE;
 }
 
 /**
@@ -470,6 +499,11 @@ function stopWords(
       );
     case 'answer_cut_off':
       return `The answer was cut off${ran}, before AnA finished writing it. What the person saw ends where it stopped.`;
+    case 'client_disconnected':
+      return (
+        `The page lost its connection${ran}, before AnA said she was done, so the run was stopped. ` +
+        `The answer is what she had written by then.${notRunSentence(pendingSteps)}`
+      );
     default:
       // A reason this module has no words for. Said plainly rather than
       // dropped, so a record can never be silent about a stop.
@@ -527,6 +561,8 @@ const UNFINISHED_STOP: ReadonlyMap<string, (rounds: number | null) => string> = 
   ['hold_expired', () => `stopped after waiting ${PAUSE_WORDS} for the person to say whether to go on,`],
   ['hold_unavailable', () => 'stopped where it would have asked the person (Manual could not hold this turn)'],
   ['answer_cut_off', () => 'had its answer cut off'],
+  // The page lost its connection (a phone locked, a tab closed): Continue picks it up (S4).
+  ['client_disconnected', () => 'was stopped when the page lost its connection,'],
 ]);
 
 /**

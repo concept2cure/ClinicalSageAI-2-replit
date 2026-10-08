@@ -20,6 +20,7 @@ import { downloadBlob, safeFileName } from '../download';
 import { readShellProject, shellProgramName } from '../shellProject';
 import { conversationIdFromLocation, locationForConversation, surfaceIdFromLocation } from '../routing';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
+import { TurnSummarySheet, useSummaryTurn } from '../TurnSummary';
 import { RunControlStrip, steerHelpFor } from '../AnaWorkSections';
 import { useAgentActivity } from '../useAgentActivity';
 import { AnaActivity, activityPropsFor, hasReportableWork, type AnaActivityProps } from '../AnaActivity';
@@ -260,6 +261,8 @@ interface AnaTurnProps {
   onStartDemo?: (demoId: string, title: string) => void;
   /** Continue, offered on the latest settled turn only (anaWorkModel.continueTurnIndex). */
   onContinue?: () => void;
+  /** Opens this turn's Summary: the side panel at this turn, or the sheet on a phone (S4). */
+  onSummary?: () => void;
   /** The document canvas beneath this turn, when the turn drafted a document. */
   canvas?: {
     conversationId: string | null;
@@ -315,7 +318,7 @@ function TurnSteersAndPremortem({ turn }: { turn: CtTurn }) {
   );
 }
 
-function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, insertTarget, after }: AnaTurnProps) {
+function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, canvas, insertTarget, after }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
@@ -345,7 +348,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, inser
             reportable) or together with `streaming: false` — so the state
             "streaming with nothing to show" cannot occur, and a renderer for
             it would be the fifth dead one on this surface. */}
-        {a && <AnaActivity {...a} onContinue={onContinue} />}
+        {a && <AnaActivity {...a} onContinue={onContinue} onSummary={onSummary} />}
         {/* ── The proposal block was unreachable, and it advertised a
             workflow this surface does not have ───────────────────────────────
             It rendered a diff with Accept / Refine / Discard, and a chip for a
@@ -1079,6 +1082,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
      with focus handed back to the chip. */
   const dock = useProgressDock();
   const panelCollapsed = !dock.open;
+  /* Which turn's Summary is open: the panel at that turn, or the sheet below
+     760px, which replaces the stacked dock there (TurnSummary.tsx, S4). */
+  const summary = useSummaryTurn(anaChat.messages);
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   /* The background queue the work dock shows — read only while the side
@@ -1302,6 +1308,10 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
      in flight. It sends a new turn on this conversation; the stopped run is
      over, so there is nothing to resume. */
   const continueAt = continueTurnIndex(anaChat.messages, busy);
+  const continueTurn = () => {
+    void sendTurn(CONTINUE_PROMPT);
+  };
+  const summaryContinue = summary.turn && anaChat.messages[continueAt]?.id === summary.turn.id ? continueTurn : undefined;
   /* A card's draft, opened as a document in the open project: the one already
      made from this turn's draft, or a new one through from-draft. It opens
      beside the conversation. Refusals are said, never shown as success. */
@@ -1603,11 +1613,25 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
   /* The progress chip shows the side column; while the list holds the right
      column, pressing it puts the progress there instead. */
   const toggleProgress = () => {
+    // On a phone the chip opens the sheet on the latest turn; elsewhere the panel, on the latest turn.
+    const latest = [...anaChat.messages].reverse().find((m) => m.role === 'assistant');
+    if (summary.narrow) {
+      if (latest) summary.open(latest.id);
+      return;
+    }
+    summary.close();
     if (!listShown) {
       dock.toggle();
       return;
     }
     setListMode('closed');
+    if (!dock.open) dock.toggle();
+  };
+  /* A turn's Summary button: its Summary in the panel, which opens if it was shut. */
+  const openSummary = (id: string) => {
+    summary.open(id);
+    if (summary.narrow) return;
+    if (listShown) setListMode('closed');
     if (!dock.open) dock.toggle();
   };
 
@@ -1721,7 +1745,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                     onRefine={() => { void sendTurn('Refine that — keep it tighter and more declarative.'); }}
                     onNav={onNav}
                     onStartDemo={liveDrive?.onStartDemo}
-                    onContinue={i === continueAt ? () => { void sendTurn(CONTINUE_PROMPT); } : undefined}
+                    onContinue={i === continueAt ? continueTurn : undefined}
+                    onSummary={() => openSummary(anaChat.messages[i].id)}
                     insertTarget={insertTarget}
                     canvas={t.authoringDoc ? {
                       conversationId,
@@ -2012,6 +2037,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                 pendingSteers={anaChat.pendingSteers}
                 queue={agentActivity}
                 onClose={dock.close}
+                turn={summary.narrow ? null : summary.turn}
+                onContinue={summaryContinue}
                 /* Not `announce`. This surface passed it because it mounted no
                    other announcer; every AnA turn above now carries its own
                    <AnaActivity />, whose polite region speaks the phase, so a
@@ -2035,6 +2062,14 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
           </div>
         )}
       </div>
+      {summary.narrow && summary.turn && (
+        <TurnSummarySheet
+          turn={summary.turn}
+          live={Boolean(anaChat.isStreaming && summary.turn.streaming)}
+          onClose={summary.close}
+          onContinue={summaryContinue}
+        />
+      )}
       <C2CToast msg={toast} />
     </div>
   );

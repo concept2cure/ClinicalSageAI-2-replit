@@ -4,6 +4,8 @@
  *
  *   GET /api/ana-ri/turn-records?thread_id=&run_id=&limit=   the records, newest first
  *   GET /api/ana-ri/turn-records/:id                 one record, re-verified now
+ *   GET /api/ana-ri/turn-records/:id/summary         the turn's Summary: what AnA did,
+ *                                                    redacted by construction (S4)
  *   GET /api/ana-ri/turn-records/:id/export          a self-contained package an
  *                                                    inspector can check offline
  *
@@ -13,10 +15,20 @@
  * exported what, and refuses to export when that row cannot be written
  * (§11.10(e): an export is itself an event on the record).
  *
- * Who may read: the person whose turn it was, and the organization's admins
- * and owners — the people who answer an inspector. A record in another
- * organization is 404: its existence is not confirmable from outside. A
- * colleague's record in the same organization is 403, as for a colleague's run.
+ * Who may read the full record (its texts, its export): the person whose turn
+ * it was, and the organization's admins and owners — the people who answer an
+ * inspector. A record in another organization is 404: its existence is not
+ * confirmable from outside. A colleague's record in the same organization is
+ * 403, as for a colleague's run.
+ *
+ * Who may read a turn's Summary: anyone who may read the conversation's
+ * transcript — the organisation's own thread (decision 6 of ANA-SUMMARY, as
+ * the product owner took it on 2026-10-08). The Summary holds nothing the
+ * Summary never contains (turn-summary.ts), and the transcript already shows
+ * the answer and its steps. A turn with no conversation has no transcript, so
+ * its Summary keeps the record's rule. A thread's record listing follows the
+ * same rule, so a colleague's reloaded conversation finds each turn's record,
+ * without being told who asked.
  *
  * Every verdict is recomputed from the stored bytes on each read. A verdict is
  * never cached, and one that could not be computed is said to be unknown,
@@ -35,8 +47,11 @@ import {
   listTurnRecords,
   loadTurnRecord,
   verifyStoredTurnRecord,
+  type ListedTurnRecord,
   type StoredTurnRecord,
 } from '../../services/ana/turn-record-verify.js';
+import { buildTurnSummary } from '../../services/ana/turn-summary.js';
+import { resolveThreadStore } from '../../services/chat-thread-helpers.js';
 import { extractRequestContext, sendError, sendSuccess } from './shared.js';
 
 export const TURN_RECORD_EXPORT_ACTION = 'ana.turn.exported';
@@ -75,8 +90,26 @@ function accessOf(req: Request, res: Response): Access {
   return { ok: true, orgId, userId, everyRecord: readsEveryRecord((req as any).user) };
 }
 
-/** Load one record the caller may read, or answer the refusal and return null. */
-async function recordFor(req: Request, res: Response, access: Extract<Access, { ok: true }>): Promise<StoredTurnRecord | null> {
+/** The asker, or someone who reads every record: who may have the full record. */
+const holdsFullRecord = (access: Extract<Access, { ok: true }>, actorUserId: number | null) =>
+  access.everyRecord || (access.userId != null && actorUserId === access.userId);
+
+/** The conversation's transcript is readable in this organisation (chat-thread-helpers.ts resolveThreadStore). */
+async function transcriptReadable(req: Request, orgId: number, threadId: string | null): Promise<boolean> {
+  return threadId ? (await resolveThreadStore(threadId, orgId, requestPgClient(req))) !== null : false;
+}
+
+/**
+ * Load one record the caller may read, or answer the refusal and return null.
+ * `reach` is what is being read: the full record (the asker and admins), or
+ * its Summary (anyone who may read the conversation's transcript).
+ */
+async function recordFor(
+  req: Request,
+  res: Response,
+  access: Extract<Access, { ok: true }>,
+  reach: 'record' | 'summary' = 'record',
+): Promise<StoredTurnRecord | null> {
   const id = String(req.params.id);
   if (!UUID.test(id)) {
     sendError(res, 404, 'Turn record not found', null, 'TURN_RECORD_NOT_FOUND');
@@ -87,11 +120,18 @@ async function recordFor(req: Request, res: Response, access: Extract<Access, { 
     sendError(res, 404, 'Turn record not found', null, 'TURN_RECORD_NOT_FOUND');
     return null;
   }
-  if (!access.everyRecord && (access.userId == null || record.actorUserId !== access.userId)) {
-    sendError(res, 403, "That turn record belongs to someone else's conversation", null, 'TURN_RECORD_NOT_YOURS');
-    return null;
-  }
-  return record;
+  if (holdsFullRecord(access, record.actorUserId)) return record;
+  if (reach === 'summary' && (await transcriptReadable(req, access.orgId, record.threadId))) return record;
+  sendError(
+    res,
+    403,
+    reach === 'summary'
+      ? "This turn's record is visible to the person who asked and to administrators."
+      : 'The full record is available to the person who asked and to administrators.',
+    null,
+    'TURN_RECORD_NOT_YOURS',
+  );
+  return null;
 }
 
 const metaOf = (r: StoredTurnRecord) => ({
@@ -108,7 +148,40 @@ const metaOf = (r: StoredTurnRecord) => ({
   recordSha256: r.recordSha256,
 });
 
-/** GET /turn-records — the caller's records, or every record for an admin or owner. */
+/** A listed record as a caller who is not its asker sees it: not told who asked. */
+const listedFor = (access: Extract<Access, { ok: true }>) => (r: ListedTurnRecord) =>
+  holdsFullRecord(access, r.actorUserId)
+    ? r
+    : {
+        id: r.id,
+        threadId: r.threadId,
+        assistantMessageId: r.assistantMessageId,
+        outcome: r.outcome,
+        startedAt: r.startedAt,
+        endedAt: r.endedAt,
+        recordSha256: r.recordSha256,
+      };
+
+/**
+ * Whose records a listing returns: one person's for an admin who asks for
+ * one, every one for an admin who does not; for anyone else their own — or,
+ * within one conversation whose transcript they may read, the whole
+ * conversation's (decision 6).
+ */
+async function listedActor(req: Request, access: Extract<Access, { ok: true }>, threadId: string | null, runId: string | null) {
+  if (access.everyRecord) {
+    const requested = Number(req.query.actor_user_id);
+    return Number.isInteger(requested) && requested > 0 ? requested : null;
+  }
+  const wholeThread = !runId && (await transcriptReadable(req, access.orgId, threadId));
+  return wholeThread ? null : access.userId;
+}
+
+/**
+ * GET /turn-records — the caller's records, or every record for an admin or
+ * owner. Within one conversation whose transcript the caller may read, every
+ * turn's record, so a reloaded conversation can open each turn's Summary.
+ */
 async function listRecords(req: Request, res: Response) {
   const access = accessOf(req, res);
   if (!access.ok) return;
@@ -119,17 +192,16 @@ async function listRecords(req: Request, res: Response) {
   // The run a turn was served under — how a client that closed its connection
   // before the turn ended (Stop, a dropped network) learns what was filed.
   const runId = typeof req.query.run_id === 'string' && req.query.run_id ? req.query.run_id : null;
-  const requestedActor = Number(req.query.actor_user_id);
-  const actorUserId = access.everyRecord
-    ? Number.isInteger(requestedActor) && requestedActor > 0 ? requestedActor : null
-    : access.userId;
   try {
-    const records = await listTurnRecords(requestPgClient(req), access.orgId, {
-      threadId,
-      runId,
-      actorUserId,
-      limit: Number(req.query.limit) || 100,
-    });
+    const actorUserId = await listedActor(req, access, threadId, runId);
+    const records = (
+      await listTurnRecords(requestPgClient(req), access.orgId, {
+        threadId,
+        runId,
+        actorUserId,
+        limit: Number(req.query.limit) || 100,
+      })
+    ).map(listedFor(access));
     return sendSuccess(res, { records }, { count: records.length });
   } catch (err: any) {
     console.error('[turn-records] list failed:', err?.message);
@@ -156,6 +228,24 @@ async function readRecord(req: Request, res: Response) {
   } catch (err: any) {
     console.error('[turn-records] read failed:', err?.message);
     return sendError(res, 500, 'The turn record could not be read', null, 'TURN_RECORD_UNAVAILABLE');
+  }
+}
+
+/**
+ * GET /turn-records/:id/summary — the turn's Summary, re-verified from the
+ * stored bytes on this read. Built by allow-list (turn-summary.ts); never the
+ * record's metadata, which names the organisation and the person.
+ */
+async function readSummary(req: Request, res: Response) {
+  const access = accessOf(req, res);
+  if (!access.ok) return;
+  try {
+    const record = await recordFor(req, res, access, 'summary');
+    if (!record) return;
+    return sendSuccess(res, buildTurnSummary(record, verifyStoredTurnRecord(record)));
+  } catch (err: any) {
+    console.error('[turn-records] summary read failed:', err?.message);
+    return sendError(res, 500, "The turn's summary could not be read", null, 'TURN_SUMMARY_UNAVAILABLE');
   }
 }
 
@@ -212,5 +302,6 @@ async function exportRecord(req: Request, res: Response) {
 export function mountTurnRecordRoutes(router: Router): void {
   router.get('/turn-records', listRecords);
   router.get('/turn-records/:id', readRecord);
+  router.get('/turn-records/:id/summary', readSummary);
   router.get('/turn-records/:id/export', exportRecord);
 }

@@ -184,7 +184,7 @@ describe('S3 through the stream route', () => {
     const r = resultOf(events, 'tu_m');
     expect(r?.source).toBe('engine');
     expect(r?.usedModel).toBe(true);
-    expect(r?.facts).toContainEqual({ name: 'Model', value: 'a model wrote part of this result' });
+    expect(r?.facts).toContainEqual({ name: 'Model', value: 'a model was used in this step' });
   });
 
   it('6. control: the same engine step with no generation carries usedModel: false and no Model fact', async () => {

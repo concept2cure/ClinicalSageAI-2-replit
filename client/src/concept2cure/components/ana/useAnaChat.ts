@@ -85,6 +85,14 @@ import { clientContinuationContext } from '@shared/ana/continuation-context';
 import { MAX_INTERJECTION_CHARS, type AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { unknownStepLabel, type StepFact, type StepSource } from '@shared/ana/step-verbs';
 import { readGroundingStrip, readStoredVerification } from './anaAnswerCheck';
+import {
+  applyTimelineFrame,
+  confirmRecordByRun,
+  fetchThreadRecords,
+  joinTurnRecords,
+  readServerId,
+  settleRecordConfirm,
+} from './anaTurnTimeline';
 
 import type {
   AnaChatAction,
@@ -727,29 +735,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
    * the server cannot confirm stays unconfirmed, never recorded by default.
    */
   const confirmTurnRecordByRun = useCallback((runId: string, messageId: string) => {
-    void (async () => {
-      for (const waitMs of RECORD_CONFIRM_WAITS_MS) {
-        await new Promise((r) => setTimeout(r, waitMs));
-        try {
-          const res = await fetch(`/api/ana-ri/turn-records?run_id=${encodeURIComponent(runId)}&limit=1`, {
-            headers: getAuthHeaders(),
-            credentials: 'include',
-          });
-          if (!res.ok) return;
-          const body = await res.json().catch(() => null);
-          const rec = body?.data?.records?.[0];
-          const turnRecord = rec ? readTurnRecord({ status: 'recorded', id: rec.id, sha256: rec.recordSha256 }) : undefined;
-          if (turnRecord) {
-            setMessages((prev) =>
-              prev.map((m) => (m.id === messageId && m.turnRecord?.status === 'unconfirmed' ? { ...m, turnRecord } : m)),
-            );
-            return;
-          }
-        } catch {
-          return;
-        }
-      }
-    })();
+    // While the waits run the Summary reads "Recording…" (anaTurnTimeline.ts).
+    setMessages((prev) => settleRecordConfirm(prev, messageId, { confirming: true }));
+    void confirmRecordByRun(runId, RECORD_CONFIRM_WAITS_MS).then((record) =>
+      setMessages((prev) => settleRecordConfirm(prev, messageId, { confirming: false, record })),
+    );
   }, []);
 
   const stop = useCallback(async () => {
@@ -865,6 +855,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       }
       const body = (await Promise.race([deadline.promise, res.json()])) as {
         messages?: Array<{
+          id?: unknown;
           role?: string;
           content?: string;
           metadata?: {
@@ -921,8 +912,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           // What was checked about the answer, as the person was shown it.
           // A message stored before checks were kept has none, and shows none.
           const evidence = m.role === 'assistant' ? readStoredVerification(m.metadata) : undefined;
+          // The stored message's own id, which its turn's record names (S4).
+          const serverId = readServerId(m.id);
           return {
-            id: `t-${threadId}-${idx}`,
+            id: serverId !== undefined ? `m-${serverId}` : `t-${threadId}-${idx}`,
+            ...(serverId !== undefined ? { serverId } : {}),
             role: m.role as 'user' | 'assistant',
             text: m.content as string,
             ...(plan ? { plan } : {}),
@@ -936,6 +930,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       threadIdRef.current = threadId;
       messagesRef.current = hydrated;
       setMessages(hydrated);
+      // One call for the conversation's records, each attached to the message it names.
+      void fetchThreadRecords(threadId, loading.signal).then((records) => {
+        if (threadIdRef.current === threadId) setMessages((prev) => joinTurnRecords(prev, records));
+      });
     } catch (err: any) {
       // Aborting alone cannot cancel an already-resolved response/body. Only
       // the current selection may replace history, fail, or finish loading.
@@ -1848,6 +1846,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   )
                 );
               }
+            } else if (event.type === 'timeline') {
+              // The Summary's events, kept on the turn as the server sent them (S4).
+              setMessages(prev => prev.map(m => (m.id === assistantId ? applyTimelineFrame(m, event.event) : m)));
             } else if (event.type === 'plan' || event.type === 'context_used') {
               // Her declared plan, and what the turn read before answering. Both
               // parsed and applied by pure helpers in anaProgress.ts.

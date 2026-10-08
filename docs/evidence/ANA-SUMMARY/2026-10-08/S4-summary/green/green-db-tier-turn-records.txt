@@ -1,0 +1,34 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-08T13:11:02.600Z","pid":24785,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T13:11:02.601Z","pid":24785,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T13:11:02.601Z","pid":24785,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT (INSERT only where the store's ceiling allows it), and no UPDATE, DELETE or TRUNCATE, on every append-only table present 17ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs 42ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too 60ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 47ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role 10ms
+{"level":40,"time":"2026-10-08T13:11:03.852Z","pid":24785,"hostname":"vm","context":{"organizationId":90611,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"trpurge_24785_muzk1kz8-digest","deletedRows":{"ana_turn_records":2,"ana_record_blobs":4},"turnRecordErasure":{"records":2,"blobs":4},"artifactRecordErasure":{"signatures":0,"snapshots":0}},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row 1038ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing 14ms
+{"level":30,"time":"2026-10-08T13:11:05.029Z","pid":24840,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T13:11:05.032Z","pid":24840,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T13:11:05.032Z","pid":24840,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/tenant-purge-artifact-records.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":20,"time":"2026-10-08T13:11:05.274Z","pid":24840,"hostname":"vm","context":{"table":"relation_extraction_log"},"msg":"[tenant-offboarding] Purge skipped a table not present in this schema"}
+{"level":40,"time":"2026-10-08T13:11:05.281Z","pid":24840,"hostname":"vm","context":{"organizationId":90631,"purgedByUserId":2180,"retentionOverride":null,"finalExportDigest":"artpurge_24840_muzk1mvs-digest","deletedRows":{"module_access_requests":0,"ana_runs":0,"project_workflows":0,"organization_users":1,"concept2cure_signatures":1,"concept2cure_submission_snapshots":1,"projects":1,"client_workspaces":1,"documents":0,"vault.document_chunks":0,"vault.documents":0,"regulatory_programs":1,"file_uploads":0,"regulatory_twin_simulations":0,"cmc_container_closures":0,"cmc_reference_standards":0,"cmc_impurity_profiles":0,"cmc_dissolution_profiles":0,"cmc_material_specs":0,"cmc_formulation_records":0,"cmc_characterization_studies":0,"manufacturing_processes":0,"cmc_interview_sessions":"[REDACTED]","rendered_leaf_files":0,"assumption_records":0,"decision_records":0,"governed_decision_transitions":0,"collab_presence":0,"project_continuity_snapshots":0,"scheduled_job_claims":0,"cmc_workflow_tasks":0,"cmc_workflow_instances":0,"cmc_checklist_instances":0,"cmc_ai_tool_executions":0,"cmc_workflows":0,"organization_retention_settings":0,"ana_turn_records":1,"ana_record_blobs":2,"organization_gateway_accounts":0,"session_activity":"[REDACTED]","coordination_leases":0},"turnRecordErasure":{"records":1,"blobs":2},"artifactRecordErasure":{"signatures":1,"snapshots":1}},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays 208ms
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > a direct DELETE, and deleting its project, are refused for the owner 77ms
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > the door refuses an organization that is not pending deletion, and erases nothing 24ms
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  13:10:59
+   Duration  5.74s (transform 1.37s, setup 122ms, import 2.99s, tests 2.09s, environment 0ms)
+

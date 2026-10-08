@@ -1,0 +1,7 @@
+### M7 AnaActivity draws its Summary button whether or not its host shows a Summary
+# mutation in client/src/concept2cure/v2/AnaActivity.tsx (all three sites): onSummary && <SummaryButton onClick={onSummary} />  ->  <SummaryButton onClick={onSummary ?? (() => undefined)} />
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > a turn's Summary button opens it, beside the folded line and beside the live phase
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > a host that shows no Summary has no button
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > on a phone it is a modal dialog titled "Summary" that Escape closes
+      Tests  1 failed | 2 passed | 18 skipped (21)
+# restored: md5 OK

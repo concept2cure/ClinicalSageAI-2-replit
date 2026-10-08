@@ -34,6 +34,8 @@ export function textRefsOf(body: TurnRecordBody): TextRef[] {
   }
   for (const s of body.steps) refs.push(s.input, s.result, s.sentToModel);
   for (const d of body.outputs.drafts) refs.push(d.content);
+  // From /4: each note's text is a reference like any other (turn-record.ts addEvent).
+  for (const e of body.timeline ?? []) if (e.kind === 'note') refs.push(e.text);
   return refs.filter((r): r is TextRef => Boolean(r));
 }
 
@@ -221,20 +223,29 @@ export function verifyStoredTurnRecord(r: StoredTurnRecord): TurnRecordVerdict {
   });
 }
 
-/** A tenant's records, newest first, optionally one thread's or one person's. */
-export async function listTurnRecords(
-  q: Queryable,
-  orgId: number,
-  filter: { threadId?: string | null; runId?: string | null; actorUserId?: number | null; limit?: number },
-): Promise<Array<{
+/** One row of a record listing. */
+export interface ListedTurnRecord {
   id: string;
   threadId: string | null;
+  /**
+   * The assistant message the turn saved, by its chat_messages id: how a
+   * reloaded conversation attaches each record to its message (S4). Null for a
+   * turn that saved none (a failed one).
+   */
+  assistantMessageId: number | null;
   actorUserId: number | null;
   outcome: TurnOutcome;
   startedAt: string;
   endedAt: string;
   recordSha256: string;
-}>> {
+}
+
+/** A tenant's records, newest first, optionally one thread's or one person's. */
+export async function listTurnRecords(
+  q: Queryable,
+  orgId: number,
+  filter: { threadId?: string | null; runId?: string | null; actorUserId?: number | null; limit?: number },
+): Promise<ListedTurnRecord[]> {
   const params: unknown[] = [orgId];
   const where = ['organization_id = $1'];
   if (filter.threadId) {
@@ -251,7 +262,7 @@ export async function listTurnRecords(
   }
   params.push(Math.min(Math.max(Math.trunc(filter.limit ?? 100), 1), 500));
   const { rows } = await q.query(
-    `SELECT id, thread_id, actor_user_id, outcome, started_at, ended_at, record_sha256
+    `SELECT id, thread_id, assistant_message_id, actor_user_id, outcome, started_at, ended_at, record_sha256
        FROM ana_turn_records
       WHERE ${where.join(' AND ')}
       ORDER BY started_at DESC
@@ -261,6 +272,7 @@ export async function listTurnRecords(
   return rows.map((r) => ({
     id: r.id,
     threadId: r.thread_id ?? null,
+    assistantMessageId: r.assistant_message_id == null ? null : Number(r.assistant_message_id),
     actorUserId: r.actor_user_id == null ? null : Number(r.actor_user_id),
     outcome: r.outcome,
     startedAt: iso(r.started_at),

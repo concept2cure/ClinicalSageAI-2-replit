@@ -1,0 +1,264 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+{
+  "timestamp": "2026-10-08T11:54:53.440Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T11:54:53.441Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+{
+  "timestamp": "2026-10-08T11:54:53.441Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 4. tense: the live step reads "Searching the Vault", the finished one "Searched the Vault", with "shelf life" beneath 45ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a read is announced by the title of its document, scoped to the open project 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a document id outside the open project yields no title 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a project with no program (the read would be refused) yields no title at all 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 3. a tool with no register entry never reaches a frame by its name 8ms
+ × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. a step whose handler made a model generation carries usedModel: true and the Model fact 11ms
+   → expected [ …(2) ] to deep equally contain { name: 'Model', …(1) }
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. control: the same engine step with no generation carries usedModel: false and no Model fact 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 1. (server half) no id reaches what a row is built from 6ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > a tool with no entry reads "Running a step" live and "Ran a step" finished 3ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > the unknown-step words are the shared table's, both halves 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > a live step reads in the doing form, a finished one in the done form 17ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > a step that did not succeed keeps the doing form: a failed validation never reads "Validated" 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > every verb has both forms, and they differ 6ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > previews the query beneath "Searched the Vault" 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > drops a value that looks like a uuid or a long hex string, keeps numbers 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > caps a preview at 80 characters and never lets a double quote split the label 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} carries no uuid 3ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > counts are read from allow-listed numeric fields and nothing else 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a listing states the scope's total, not the page it returned; the Vault search counts its hits 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a read states the Vault title and the characters it delivered 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > document titles (S3 test 5, presentation half) > names the document when the stream resolved its title, and reads generically when it did not 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > connected systems > one system searched reads as that system; the reasons are said in words, never as tool names 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > connected systems > several systems read as "connected" 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > true when the capture noted a generation, false when none, null when the handler ran elsewhere 0ms
+ × server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > a step whose handler made a generation says so, whatever the register claims 8ms
+   → expected [ { name: 'Model', …(1) } ] to deep equally contain { name: 'Model', …(1) }
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_found (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > cancelled (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: declined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: no decision within the approval window) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_run (held back: false, why: manual hold) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > success (held back: false, why: undefined) 0ms
+stdout | server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts
+{
+  "timestamp": "2026-10-08T11:55:00.296Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T11:55:00.297Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts
+{
+  "timestamp": "2026-10-08T11:55:00.298Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts > { ok: false, reason } through the stream route > is a failed step, with that sentence on its record, in the model's note and in the telemetry 66ms
+   → expected 'success' to be 'error' // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts > { ok: false, reason } through the stream route > control: a check whose ok is its verdict stays a step that succeeded 11ms
+ × server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > reads `reason` as the sentence (document-placement-tools: confirm a filing) 8ms
+   → expected null to be 'You cannot confirm a filing.' // Object.is equality
+ × server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > reads `message` when there is no reason (refuseSignatureInChat) 2ms
+   → expected null to be 'AnA cannot sign.' // Object.is equality
+ × server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > prefers the reason over an instruction to the model (extraction failed) 1ms
+   → expected null to be 'No extracted text is stored.' // Object.is equality
+ × server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > a refusal that gave no sentence still is one, in a plain sentence of the server 1ms
+   → expected null to be undefined // Object.is equality
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > `error` still wins, as before 1ms
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > a check whose ok is its verdict is not a refusal: it did the check 1ms
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > is null for what never refused 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts > { ok: false, reason } through the stream route > is a failed step, with that sentence on its record, in the model's note and in the telemetry
+AssertionError: expected 'success' to be 'error' // Object.is equality
+
+Expected: "error"
+Received: "success"
+
+ ❯ server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts:74:23
+     72|
+     73|     const r = resultOf(events, 'tu_l');
+     74|     expect(r?.status).toBe('error');
+       |                       ^
+     75|     // The sentence the person reads is stepMessage's, word for word; …
+     76|     // form, because nothing was listed.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. a step whose handler made a model generation carries usedModel: true and the Model fact
+AssertionError: expected [ …(2) ] to deep equally contain { name: 'Model', …(1) }
+
+- Expected:
+{
+  "name": "Model",
+  "value": "a model was used in this step",
+}
+
++ Received:
+[
+  {
+    "name": "Took",
+    "value": "0 ms",
+  },
+  {
+    "name": "Model",
+    "value": "a model wrote part of this result",
+  },
+]
+
+ ❯ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts:187:22
+    185|     expect(r?.source).toBe('engine');
+    186|     expect(r?.usedModel).toBe(true);
+    187|     expect(r?.facts).toContainEqual({ name: 'Model', value: 'a model w…
+       |                      ^
+    188|   });
+    189|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > a step whose handler made a generation says so, whatever the register claims
+AssertionError: expected [ { name: 'Model', …(1) } ] to deep equally contain { name: 'Model', …(1) }
+
+- Expected:
+{
+  "name": "Model",
+  "value": "a model was used in this step",
+}
+
++ Received:
+[
+  {
+    "name": "Model",
+    "value": "a model wrote part of this result",
+  },
+]
+
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:199:21
+    197|     const p = presentStep('compute_sample_size', {}, null, { status: '…
+    198|     expect(p.source).toBe('engine');
+    199|     expect(p.facts).toContainEqual({ name: 'Model', value: 'a model wa…
+       |                     ^
+    200|   });
+    201| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > reads `reason` as the sentence (document-placement-tools: confirm a filing)
+AssertionError: expected null to be 'You cannot confirm a filing.' // Object.is equality
+
+- Expected:
+"You cannot confirm a filing."
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/tool-refusal-ok-false.test.ts:25:113
+     23| describe('refusalOf: ok:false is a refusal, in its own words', () => {
+     24|   it('reads `reason` as the sentence (document-placement-tools: confir…
+     25|     expect(refusalOf(j({ ok: false, refused: true, documentId: 'd', re…
+       |                                                                                                                 ^
+     26|       'You cannot confirm a filing.',
+     27|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > reads `message` when there is no reason (refuseSignatureInChat)
+AssertionError: expected null to be 'AnA cannot sign.' // Object.is equality
+
+- Expected:
+"AnA cannot sign."
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/tool-refusal-ok-false.test.ts:33:7
+     31|     expect(
+     32|       refusalOf(j({ ok: false, signatureRequired: true, tool: 'approve…
+     33|     ).toBe('AnA cannot sign.');
+       |       ^
+     34|   });
+     35|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > prefers the reason over an instruction to the model (extraction failed)
+AssertionError: expected null to be 'No extracted text is stored.' // Object.is equality
+
+- Expected:
+"No extracted text is stored."
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/tool-refusal-ok-false.test.ts:39:7
+     37|     expect(
+     38|       refusalOf(j({ ok: false, extractionFailed: true, reason: 'No ext…
+     39|     ).toBe('No extracted text is stored.');
+       |       ^
+     40|   });
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > a refusal that gave no sentence still is one, in a plain sentence of the server
+AssertionError: expected null to be undefined // Object.is equality
+
+- Expected:
+undefined
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/tool-refusal-ok-false.test.ts:43:41
+     41|
+     42|   it('a refusal that gave no sentence still is one, in a plain sentenc…
+     43|     expect(refusalOf(j({ ok: false }))).toBe(NO_REFUSAL_SENTENCE);
+       |                                         ^
+     44|     expect(refusalOf(j({ refused: 'human_authorization_required' }))).…
+     45|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  7 failed | 34 passed (41)
+   Start at  11:54:46
+   Duration  14.85s (transform 6.78s, setup 138ms, import 13.63s, tests 254ms, environment 0ms)
+

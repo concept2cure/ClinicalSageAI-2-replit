@@ -58,6 +58,8 @@ describe('aborted stream isolation', () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: true, body: old.body })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ messages: [] }) })
+      // The reloaded conversation's one call for its turn records (S4).
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { records: [] } }) })
       .mockResolvedValueOnce({ ok: true, body: fresh.body });
     if (action === 'reset') fetchMock.mockReset().mockResolvedValueOnce({ ok: true, body: old.body }).mockResolvedValueOnce({ ok: true, body: fresh.body });
     vi.stubGlobal('fetch', fetchMock);
@@ -82,7 +84,8 @@ describe('aborted stream isolation', () => {
     expect(result.current.threadId).toBe(action === 'reset' ? null : 'selected');
     expect(result.current.isStreaming).toBe(true);
     expect(onDriveEvent).not.toHaveBeenCalled();
-    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('turn-records'))).toBe(false);
+    // The abandoned turn never asks for its record by run id.
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('turn-records?run_id='))).toBe(false);
     await act(async () => { fresh.push({ type: 'text', content: 'Fresh answer' }); fresh.push({ type: 'post_done' }); fresh.close(); await newTurn; });
     expect(result.current.messages.at(-1)?.text).toBe('Fresh answer');
     expect(result.current.messages.at(-1)?.stopped).not.toBe(true);

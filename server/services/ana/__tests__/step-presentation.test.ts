@@ -6,7 +6,7 @@
  * and facts; stepMessage writes the one status sentence. These pin the rules
  * the stream and the client then carry: a tool's name never reaches a label, a
  * finished step reads in the done form only when it succeeded, an id never
- * reaches a preview or a fact, and "a model wrote part of this result" is said
+ * reaches a preview or a fact, and "a model was used in this step" is said
  * only from the generation capture.
  */
 import { describe, it, expect } from 'vitest';
@@ -196,7 +196,7 @@ describe('usedModel is the generation capture, never a list (S3 test 6, presenta
   it('a step whose handler made a generation says so, whatever the register claims', () => {
     const p = presentStep('compute_sample_size', {}, null, { status: 'success', result: '{}', usedModel: true });
     expect(p.source).toBe('engine');
-    expect(p.facts).toContainEqual({ name: 'Model', value: 'a model wrote part of this result' });
+    expect(p.facts).toContainEqual({ name: 'Model', value: 'a model was used in this step' });
   });
 });
 

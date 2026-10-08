@@ -2007,6 +2007,13 @@
       flex: 0 0 auto;
       max-height: 38%;
     }
+    /* The Summary sheet replaces the stacked work dock here (ANA-SUMMARY S4):
+       a third region at 38% of 844px was a strip too short to read a turn in.
+       The header chip and each turn's Summary button open the sheet
+       (TurnSummarySheet); a drafted artifact list, when there is one, stays. */
+    .ct-side-work {
+      display: none;
+    }
     .ct-side-work,
     .ct-artifacts {
       width: 100%;

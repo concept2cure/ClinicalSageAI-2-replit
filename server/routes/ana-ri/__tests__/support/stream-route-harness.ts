@@ -21,6 +21,14 @@ import express from 'express';
 import request from 'supertest';
 
 export type ToolUse = { id: string; name: string; input: Record<string, unknown> };
+/**
+ * One model call that says something as well as (or instead of) calling tools:
+ * `say` streams as text, the way the gateway hands over AnA's words; `think`
+ * streams as a summarized thinking block (reasoning); `progress` is a
+ * progress-update block, passed through the gateway's real ProgressNotes so
+ * only what it accepts becomes text (ai-gateway/progress-updates.ts).
+ */
+export type ModelSays = { say?: string; think?: string; progress?: string; tools?: ToolUse[] };
 export type SseEvent = Record<string, any> & { type: string };
 export type QueueEntry = { kind: 'steer' | 'screen_report' | 'move_landed'; text: string; moveId?: string };
 
@@ -28,14 +36,20 @@ export type QueueEntry = { kind: 'steer' | 'screen_report' | 'move_landed'; text
 export interface GatewayRequestSeen {
   callerModule?: string;
   toolChoice?: unknown;
+  /** The thinking config the call asked for (visible reasoning when enabled). */
+  thinking?: { enabled?: boolean } | undefined;
+  /** The call asked for the notes between tool calls as AnA's words (decision 3, A). */
+  notesBetweenTools?: boolean;
   /** The messages, copied at the moment of the call. */
   messages: Array<{ role: string; content: unknown; inlineSystem?: boolean }>;
 }
 
 function freshState() {
   return {
-    /** One entry per model call: tool calls to make, or the answer text. */
-    script: [] as Array<ToolUse[] | string>,
+    /** One entry per model call: tool calls to make, the answer text, or words with tool calls. */
+    script: [] as Array<ToolUse[] | string | ModelSays>,
+    /** The gateway request id each call reports, by call number from 1; none when absent. */
+    requestIds: [] as string[],
     /** How many model calls were made. */
     gatewayCalls: 0,
     /** Every model call, in order. */
@@ -76,6 +90,8 @@ function freshState() {
     endRuns: [] as Array<{ status: string; stoppedReason: string }>,
     /** The context post-processing was handed. */
     post: null as any,
+    /** Each tool-run telemetry row the route wrote (toolRegistry.logToolRun). */
+    toolRunLogs: [] as Array<{ toolName: string; status: string; errorMessage?: string }>,
     /** The signed-in user the route sees. */
     user: { id: 3, organizationId: 7 } as Record<string, unknown>,
     /** Aborts the run's cancel signal (a Stop). */
@@ -100,14 +116,50 @@ const gateway = {
   getModels: () => [],
   route: async (req: any) => {
     state.gatewayCalls++;
-    state.requests.push({ callerModule: req.callerModule, toolChoice: req.toolChoice, messages: [...req.messages] });
+    state.requests.push({
+      callerModule: req.callerModule,
+      toolChoice: req.toolChoice,
+      thinking: req.thinking,
+      notesBetweenTools: req.notesBetweenTools,
+      messages: [...req.messages],
+    });
+    const requestId = state.requestIds[state.gatewayCalls - 1];
+    const served = { model: 'm', provider: 'p', usage: {}, latencyMs: 1, ...(requestId ? { requestId } : {}) };
     const step = state.script.shift();
-    if (Array.isArray(step)) return { content: '', toolUses: step, model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
+    if (Array.isArray(step)) return { content: '', toolUses: step, ...served };
+    if (step && typeof step === 'object') return modelSays(req, step, served);
     const text = step ?? 'Done.';
     req.onStream?.(text, undefined);
-    return { content: text, toolUses: [], model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
+    return { content: text, toolUses: [], ...served };
   },
 };
+
+/** The flagship's own declaration: it returns the notes between tool calls as thinking blocks. */
+const NOTES_IN_THINKING = { thinkingMode: 'adaptive', progressUpdatesInThinking: true } as const;
+
+/**
+ * A call that speaks: reasoning as thinking, notes through ProgressNotes, words
+ * as text. ProgressNotes is active exactly when the gateway would ask for
+ * notes on this request (wantsProgressUpdates); otherwise a progress block is
+ * reasoning and its note is lost, as on the flagship.
+ */
+async function modelSays(req: any, step: ModelSays, served: Record<string, unknown>) {
+  const { ProgressNotes, wantsProgressUpdates } = await import('../../../../services/ai-gateway/progress-updates.js');
+  let content = '';
+  if (step.think) req.onStream?.('', { type: 'thinking', thinkingContent: step.think });
+  if (step.progress) {
+    const shown = new ProgressNotes(wantsProgressUpdates(NOTES_IN_THINKING, req)).note(step.progress, content);
+    if (shown) {
+      content += shown;
+      req.onStream?.(shown, undefined);
+    }
+  }
+  if (step.say) {
+    content += step.say;
+    req.onStream?.(step.say, undefined);
+  }
+  return { content, toolUses: step.tools ?? [], ...served };
+}
 
 /** A handler that counts its runs and answers like a read tool. */
 function reader(name: string, result: Record<string, unknown>) {
@@ -256,7 +308,11 @@ export const mocks = {
     PromptInjectionError: class PromptInjectionError extends Error {},
   }),
   audit: () => ({ default: { logAction: async () => {} } }),
-  toolRegistry: () => ({ logToolRun: async () => {} }),
+  toolRegistry: () => ({
+    logToolRun: async (row: { toolName: string; status: string; errorMessage?: string }) => {
+      state.toolRunLogs.push({ toolName: row.toolName, status: row.status, errorMessage: row.errorMessage });
+    },
+  }),
   relationalProfile: () => ({ reflectAfterTurn: async () => {} }),
   toolTelemetry: () => ({ getUnhealthyTools: () => [] }),
   metrics: () => ({ recordAnaTurn: () => {} }),

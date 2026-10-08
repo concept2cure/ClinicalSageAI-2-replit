@@ -1,0 +1,7 @@
+### M6 records are attached by position, not by message id
+# mutation in client/src/concept2cure/components/ana/anaTurnTimeline.ts:  const record = m.role === 'assistant' && m.serverId !== undefined ? records.get(m.serverId) : undefined;  ->  const record = m.role === 'assistant' ? [...records.values()][messages.filter((x) => x.role === 'assistant').indexOf(m)] : undefined;
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts > 4. reload joins each record to its message by id > keeps each message's server id, and attaches the record that names it
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts > 4. reload joins each record to its message by id > never attaches a record by position: a record naming no message here is attached to none
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts > a live turn keeps its timeline frames > keeps each event once, in the order the server numbered them
+      Tests  2 failed | 1 passed (3)
+# restored: md5 OK

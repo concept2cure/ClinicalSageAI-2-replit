@@ -183,8 +183,13 @@ export function unknownStepLabel(tense: StepTense): string {
   return stepLabel(UNKNOWN_STEP.verb, UNKNOWN_STEP.object, tense);
 }
 
-/** The fact that says a model wrote part of a step's result (generation-capture.ts). */
-export const MODEL_FACT: StepFact = { name: 'Model', value: 'a model wrote part of this result' };
+/**
+ * The fact that says the step's generation capture saw a model call
+ * (generation-capture.ts). It says a model was used, not that a model wrote
+ * the result: the capture also sees a rerank or a query rewrite inside a
+ * search, which writes none of what the step returned (S3 finding; S4).
+ */
+export const MODEL_FACT: StepFact = { name: 'Model', value: 'a model was used in this step' };
 
 /**
  * How long one step took: "340 ms" under a second, "2.4s" above it. One

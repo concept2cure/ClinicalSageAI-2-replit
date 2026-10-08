@@ -1,0 +1,255 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts
+{
+  "timestamp": "2026-10-08T12:02:56.833Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T12:02:56.835Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts
+{
+  "timestamp": "2026-10-08T12:02:56.835Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > the timeline frames equal the record's sealed timeline, notes resolved 56ms
+   → expected 'ana-turn-record/3' to be 'ana-turn-record/4' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > a step's events say only what a row says: a handle, never the tool's name or its id 10ms
+   → expected [] to deeply equal [ [ 'announced', 's1', …(2) ], …(1) ]
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a round with prose and tool calls yields exactly one note, before its steps; a round with none yields none 7ms
+   → expected [] to deeply equal [ Array(1) ]
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > no note is staging text: a round with no prose is staged as "(Ran: …)" for the model, never noted 6ms
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a summarized thinking block is reasoning, never a note 13ms
+   → expected [] to deeply equal [ 'Looking now.' ]
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a progress-update note ProgressNotes accepts is a note; its placeholder for interrupted work is not 11ms
+   → expected [] to deeply equal [ Array(1) ]
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > decision 3 (A): a thinking turn's tool rounds ask for notes as her words, the closing round does not 7ms
+   → expected undefined to be true // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > declined 26ms
+   → expected undefined to match object { …(2) }
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > no answer 19ms
+   → expected undefined to match object { …(2) }
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > authorised, then failed 7ms
+   → expected undefined to match object { …(2) }
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 8. stopped after cancel > a turn cancelled mid-round seals its cancelled step events 32ms
+   → sealed is not iterable
+stderr | server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts
+{
+  "timestamp": "2026-10-08T12:03:02.206Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts [ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts ]
+Error: Cannot find module '/server/services/ana/turn-timeline-emitter' imported from /home/user/ClinicalSageAI-2-replit/server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:53:1
+     51| import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
+     52| import { TurnRecorder, writeTurnRecord } from '../../../services/ana/t…
+     53| import { TurnTimeline } from '../../../services/ana/turn-timeline-emit…
+       | ^
+     54| import { announcedStepFields, finishedStep } from '../../../services/a…
+     55| import { mountTurnRecordRoutes } from '../turn-records';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > the timeline frames equal the record's sealed timeline, notes resolved
+AssertionError: expected 'ana-turn-record/3' to be 'ana-turn-record/4' // Object.is equality
+
+Expected: "ana-turn-record/4"
+Received: "ana-turn-record/3"
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:113:32
+    111|     const live = timelineOf(await turn());
+    112|     const record = sealed();
+    113|     expect(record.body.schema).toBe('ana-turn-record/4');
+       |                                ^
+    114|     expect(resolveTimeline(record.body.timeline, record.blobs)).toEqua…
+    115|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > a step's events say only what a row says: a handle, never the tool's name or its id
+AssertionError: expected [] to deeply equal [ [ 'announced', 's1', …(2) ], …(1) ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "announced",
+-     "s1",
+-     "Searching the Vault",
+-     "shelf life",
+-   ],
+-   [
+-     "finished",
+-     "s1",
+-     "Searched the Vault",
+-     "shelf life",
+-   ],
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:142:94
+    140|     const live = timelineOf(await turn());
+    141|     const steps = live.filter(e => e.kind === 'step');
+    142|     expect(steps.map(e => (e.kind === 'step' ? [e.phase, e.step, e.lab…
+       |                                                                                              ^
+    143|       ['announced', 's1', 'Searching the Vault', 'shelf life'],
+    144|       ['finished', 's1', 'Searched the Vault', 'shelf life'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a round with prose and tool calls yields exactly one note, before its steps; a round with none yields none
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "Searching the Vault for the reports.",
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:154:42
+    152|     h.state.script = [{ say: 'Searching the Vault for the reports.', t…
+    153|     const live = timelineOf(await turn());
+    154|     expect(notes(live).map(n => n.text)).toEqual(['Searching the Vault…
+       |                                          ^
+    155|     const firstStep = live.findIndex(e => e.kind === 'step');
+    156|     const note = live.findIndex(e => e.kind === 'note');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a summarized thinking block is reasoning, never a note
+AssertionError: expected [] to deeply equal [ 'Looking now.' ]
+
+- Expected
++ Received
+
+- [
+-   "Looking now.",
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:173:42
+    171|     h.state.script = [{ think: 'THINK_SENTINEL_9 weighing the reports'…
+    172|     const live = timelineOf(await turn());
+    173|     expect(notes(live).map(n => n.text)).toEqual(['Looking now.']);
+       |                                          ^
+    174|     expect(JSON.stringify(live)).not.toContain('THINK_SENTINEL_9');
+    175|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a progress-update note ProgressNotes accepts is a note; its placeholder for interrupted work is not
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "Here is the Vault, where every source is tracked.",
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:184:42
+    182|     ];
+    183|     const live = timelineOf(await turn());
+    184|     expect(notes(live).map(n => n.text)).toEqual(['Here is the Vault, …
+       |                                          ^
+    185|   });
+    186|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > decision 3 (A): a thinking turn's tool rounds ask for notes as her words, the closing round does not
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:197:37
+    195|     const [first, ...rest] = h.state.requests;
+    196|     expect(first.thinking?.enabled).toBe(true);
+    197|     expect(first.notesBetweenTools).toBe(true);
+       |                                     ^
+    198|     for (const r of rest) expect(r.notesBetweenTools).toBe(r.toolChoic…
+    199|     expect(notes(live).map(n => n.text)).toEqual(['First the Vault.', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > declined
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > no answer
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > authorised, then failed
+AssertionError: expected undefined to match object { …(2) }
+
+- Expected:
+{
+  "label": "Saving a document to the Vault",
+  "source": "vault",
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:222:22
+    220|     const live = timelineOf(await turn());
+    221|     const awaiting = live.find(e => e.kind === 'step' && e.phase === '…
+    222|     expect(awaiting).toMatchObject({ label: 'Saving a document to the …
+       |                      ^
+    223|     const done = finishedOf(live, /a document to the Vault/);
+    224|     expect(done).toMatchObject({ status: 'error', heldBack, message: s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 8. stopped after cancel > a turn cancelled mid-round seals its cancelled step events
+TypeError: sealed is not iterable
+ ❯ Module.resolveTimeline shared/ana/turn-timeline.ts:100:19
+     98| export function resolveTimeline(sealed: readonly SealedTimelineEvent[]…
+     99|   const out: TimelineEvent[] = [];
+    100|   for (const e of sealed) {
+       |                   ^
+    101|     if (e.kind !== 'note') {
+    102|       out.push(e);
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:241:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  10 failed | 1 passed (11)
+   Start at  12:02:51
+   Duration  10.37s (transform 5.90s, setup 98ms, import 8.59s, tests 200ms, environment 0ms)
+

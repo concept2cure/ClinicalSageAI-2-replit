@@ -24,6 +24,8 @@ import type { AuthoringContextPack } from '../../../../../shared/types/authoring
 import type { DetectedDocumentTemplatePayload } from '../../../../../shared/types/ana-document-detection';
 import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 import type { StepFact, StepSource } from '@shared/ana/step-verbs';
+import type { PlanChange, PlanStep } from '@shared/ana/plan-diff';
+import type { TimelineEvent } from '@shared/ana/turn-timeline';
 
 /** Shape of an action chip produced by the server's guidance/command executors. */
 export interface AnaChatAction {
@@ -151,24 +153,14 @@ export interface AnaProgressPhase {
  * count: a turn that declared no plan has none, and a step is `completed`
  * only because she marked it so — nothing on the client infers it.
  */
-export interface AnaPlanStep {
-  title: string;
-  status: 'pending' | 'in_progress' | 'completed';
-}
+export type AnaPlanStep = PlanStep;
 /**
  * One change to the declared plan, in the order it arrived. The panel reads
  * the plan itself; the transcript reads these to say "Planned 5 steps" or
- * "Added step …" at the point in the work where it happened.
+ * "Added step …" at the point in the work where it happened. The diff is the
+ * server's too (shared/ana/plan-diff.ts): the Summary's task rows come from it.
  */
-export interface AnaPlanChange {
-  kind: 'added' | 'started' | 'completed' | 'removed';
-  title: string;
-  at: number;
-  /** The agentic-loop round of the update_plan call that made the change. */
-  round?: number;
-  /** True for the steps of the first plan the turn declared. */
-  initial?: boolean;
-}
+export type AnaPlanChange = PlanChange;
 /**
  * What the turn actually read before answering — the server's
  * `context_used` event (server/services/ana/turn-context-used.ts). Only
@@ -226,6 +218,10 @@ export type AnaTurnRecordStatus =
  *   hold_expired      Manual waited for the person, who did not come back
  *   hold_unavailable  Manual could not hold this turn, so she stopped
  *
+ * And since ANA-SUMMARY S4:
+ *   client_disconnected  the page lost its connection (a phone locked, a tab
+ *                        closed), so the run was stopped
+ *
  * Distinct from `stopped` (the person's Stop, seen by this client) and
  * `interrupted` (the stream failed): a round-limit stop is neither, and must
  * not borrow their flags.
@@ -241,7 +237,8 @@ export type AnaStoppedReason =
   | 'hold_unavailable'
   /** The answer she was writing was cut off: the model's length limit, or a
    *  stream that stalled mid-answer. */
-  | 'answer_cut_off';
+  | 'answer_cut_off'
+  | 'client_disconnected';
 
 export interface AnaContextUsed {
   uploads: Array<{ fileId: string; fileName: string; mimeType: string; read: 'content' | 'name_only' }>;
@@ -340,8 +337,26 @@ export interface MessageAttachment {
 }
 export interface AnaChatMessage {
   id: string;
+  /**
+   * The stored message's own id (chat_messages.id), for a message read back
+   * from the server: the key its turn's record names it by
+   * (`assistant_message_id`). Absent for a turn sent in this view.
+   */
+  serverId?: number;
   role: 'user' | 'assistant';
   text: string;
+  /**
+   * The Summary's events for this turn, as the server sent them live
+   * (`timeline` frames; shared/ana/turn-timeline.ts). The same events the
+   * record seals, so a reload reads them back from the record, not from here.
+   */
+  timeline?: TimelineEvent[];
+  /**
+   * True while this view is still asking the server, by run id, whether the
+   * turn's record was filed (the confirm waits): the Summary then reads
+   * "Recording…", never "Not recorded".
+   */
+  recordConfirming?: boolean;
   /** Files attached to this (user) turn, shown as chips above the bubble. */
   attachments?: MessageAttachment[];
   /** True while tokens are still arriving for this message. */

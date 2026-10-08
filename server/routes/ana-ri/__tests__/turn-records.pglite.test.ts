@@ -112,6 +112,8 @@ beforeAll(async () => {
                                title TEXT, model TEXT, metadata JSONB, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now());
     CREATE TABLE chat_messages (id SERIAL PRIMARY KEY, thread_id TEXT, role TEXT, content TEXT, model TEXT,
                                 tokens_used INTEGER, metadata JSONB, created_at TIMESTAMPTZ DEFAULT now());
+    -- The second thread store: a thread's transcript is readable when either store holds it (S4).
+    CREATE TABLE ai_threads (id TEXT PRIMARY KEY, organization_id INTEGER);
   `);
 });
 afterAll(async () => {

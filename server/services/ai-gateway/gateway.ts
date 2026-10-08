@@ -2329,15 +2329,17 @@ export class AIGateway {
     request: GatewayRequest
   ): void {
     if (modelConfig.thinkingMode === 'adaptive') {
-      if (request.thinking?.enabled) {
+      if (wantsProgressUpdates(modelConfig, request)) {
+        // Its notes between tool calls come back as thinking blocks, empty
+        // under the default display (progress-updates.ts) — and, on a call
+        // that asked for its notes over its reasoning (notesBetweenTools,
+        // ANA-SUMMARY decision 3, A), in place of the summary.
+        params.thinking = { type: 'adaptive', display: 'updates' };
+      } else if (request.thinking?.enabled) {
         // Adaptive thinking self-budgets — the resolver's budgetTokens is a hint
         // that only the legacy surface below consumes. Summarized display keeps
         // the reasoning stream visible to the client on the SSE path.
         params.thinking = { type: 'adaptive', display: 'summarized' };
-      } else if (wantsProgressUpdates(modelConfig, request)) {
-        // Its notes between tool calls come back as thinking blocks, empty
-        // under the default display (progress-updates.ts).
-        params.thinking = { type: 'adaptive', display: 'updates' };
       }
       return;
     }

@@ -1,0 +1,63 @@
+--- /home/user/ClinicalSageAI-2-replit/docs/evidence/W1/2026-09-28-ana-drive/harness/stand-in-model.mjs	2026-10-01 08:01:00.297488635 +0000
++++ stand-in-model.mjs	2026-10-08 12:45:24.239756020 +0000
+@@ -66,7 +66,7 @@
+     const t = textOf(m.content);
+     if (/\[Tool Result for /.test(t)) continue;
+     if (/^\s*\[(Screen report|User interjection)/i.test(t)) continue;
+-    if (/take me|open program|search the vault|demo|go to|show me|\bact [a-z]/i.test(t)) return t;
++    if (/take me|open program|search the vault|demo|go to|show me|\bact [a-z]|\bs4 /i.test(t)) return t;
+   }
+   return '';
+ }
+@@ -238,9 +238,50 @@
+   return { text: `Act result: ${outcomeOf(t.last)}. Screen: ${screen}` };
+ }
+ 
++// ── ANA-SUMMARY S4 plays (scratch copy; not the W1 harness) ──────────────────
++// "s4 summary …": a three-task plan, a Vault search with a note before it, a
++// listing with no prose, a read of the stability report with a short note, the
++// plan marked complete, then the answer. "s4 stop": a note and a search, then a
++// literature search the stand-in holds (FAKE_SLOW_TOOL=search_literature:ms) so
++// the person can press Stop, or close the page, while the turn runs.
++const S4_TASKS = ['Find the stability reports', 'Read each report', 'List the shelf-life claims'];
++const s4Plan = (...statuses) => ({ name: 'update_plan', input: { steps: S4_TASKS.map((title, i) => ({ title, status: statuses[i] })) } });
++
++function s4Docs(t) {
++  const listing = [...t.results].reverse().find(r => r.name === 'list_project_documents');
++  if (!listing) return [];
++  return listing.json?.documents ?? [...String(listing.raw).matchAll(/\\?"id\\?":\\?"([0-9a-f-]{36})\\?"[^{}]*?\\?"documentTitle\\?":\\?"([^"\\]+)/g)].map(m => ({ id: m[1], title: m[2] }));
++}
++
++function planS4(t) {
++  const m = /\bs4 (summary|stop)\b/i.exec(t.rawAsk.trim());
++  if (!m) return null;
++  const ran = name => t.results.filter(r => r.name === name).length;
++  if (m[1].toLowerCase() === 'stop') {
++    if (!t.last) return t.tool('search_project_documents', { query: 'stability' }, 'Searching the Vault before the literature.');
++    if (!ran('search_literature')) return t.tool('search_literature', { query: 'shelf life stability' }, '');
++    return { text: 'Never reached: the turn was stopped.' };
++  }
++  if (!t.last) {
++    const search = t.tool('search_project_documents', { query: 'stability' },
++      'I will look in the Vault for the stability reports first. Then I will read each one in turn. Then I will list the shelf-life claims they make.');
++    return search.tool ? { ...search, more: [s4Plan('in_progress', 'pending', 'pending')] } : search;
++  }
++  if (!ran('list_project_documents')) return t.tool('list_project_documents', {}, '');
++  if (!ran('read_project_document')) {
++    const docs = s4Docs(t);
++    const doc = docs.find(d => /stability/i.test(String(d.title ?? d.documentTitle ?? ''))) ?? docs[0];
++    if (!doc) return { text: 'No stability report is in this project.' };
++    const read = t.tool('read_project_document', { document_id: doc.id ?? doc.documentId }, 'Reading the stability report now.');
++    return read.tool ? { ...read, more: [s4Plan('completed', 'in_progress', 'pending')] } : read;
++  }
++  if (ran('update_plan') < 3) return { ...t.tool('update_plan', s4Plan('completed', 'completed', 'completed').input, 'The report is read; listing what it claims.') };
++  return { text: 'The stability protocol in this project states its shelf-life claim as the study design reads it; no other stability report was found.' };
++}
++
+ function plan(body) {
+   const t = turnOf(body);
+-  const planned = planAct(t) ?? planReport(t) ?? planDemo(t) ?? planVaultSearch(t) ?? planOpenProgram(t) ?? planNav(t);
++  const planned = planS4(t) ?? planAct(t) ?? planReport(t) ?? planDemo(t) ?? planVaultSearch(t) ?? planOpenProgram(t) ?? planNav(t);
+   if (planned) return cutOff(t, planned);
+   if (/title|summar/i.test(t.all.slice(0, 400)) && !body.stream) return { text: 'Live Drive test' };
+   return { text: 'Understood.' };

@@ -31,10 +31,14 @@
  * with a number on it. "Used in this session" lists only what reached the
  * model (the `context_used` event), and a failed read says so.
  *
- * The forensic detail — each tool's duration and the inputs she passed — is
- * in the transcript, behind each step's own disclosure (AnaActivity). The
+ * The forensic detail — each tool's duration and what it found — is in the
+ * transcript, behind each step's own disclosure (AnaActivity). The
  * projections live in anaWorkModel.ts; the section renderers in
  * AnaWorkSections.tsx.
+ *
+ * Given a `turn` (a turn's Summary button chose it; ANA-SUMMARY S4), the panel
+ * is that turn's: its plan as it stands above, its Summary — the timeline of
+ * everything she did (TurnSummary.tsx) — beneath, "Used in this session" below.
  *
  * @module client/src/concept2cure/v2/AnaWorkPanel
  */
@@ -55,6 +59,7 @@ import {
   type AnaWorkContext,
 } from './anaWorkModel';
 import { BackgroundQueue, Section, SteersWaiting, StepsBody, UsedBody } from './AnaWorkSections';
+import { TurnSummary } from './TurnSummary';
 
 export type { AnaWorkContext } from './anaWorkModel';
 
@@ -80,6 +85,13 @@ export interface AnaWorkPanelProps {
   onClose?: () => void;
   /** The id the host's chip names in aria-controls (useProgressDock().panelId). */
   id?: string;
+  /**
+   * The turn whose Summary to show, from its Summary button (useSummaryTurn).
+   * Absent or null: the latest turn, as the header chip opens it, and no Summary.
+   */
+  turn?: AnaChatMessage | null;
+  /** Continue, offered on the latest settled turn only (the transcript's own). */
+  onContinue?: () => void;
 }
 
 /** The title bar: a real h2 between the page title and the h3 sections (SC 1.3.1). */
@@ -95,6 +107,21 @@ function PanelHeader({ stateLine, onClose }: { stateLine: string; onClose?: () =
       )}
     </div>
   );
+}
+
+/** The chosen turn's Summary, in its own section; nothing for the latest turn the chip opens. */
+function ChosenSummary({ turn, streaming, onContinue }: { turn: AnaChatMessage | null; streaming: boolean; onContinue?: () => void }) {
+  if (!turn) return null;
+  return (
+    <Section title="Summary">
+      <TurnSummary turn={turn} live={streaming && Boolean(turn.streaming)} onContinue={onContinue} />
+    </Section>
+  );
+}
+
+/** The turn the panel is about: the one a Summary button chose, else the latest assistant turn. */
+function panelTurn(messages: AnaChatMessage[], chosen: AnaChatMessage | null | undefined): { turn: AnaChatMessage | null } {
+  return chosen ? { turn: chosen } : latestTurns(messages);
 }
 
 /** The latest assistant turn. */
@@ -116,14 +143,16 @@ export function AnaWorkPanel({
   announce = false,
   onClose,
   id,
+  turn: chosen,
+  onContinue,
 }: AnaWorkPanelProps) {
   /* Everything that depends only on the turns is derived once per change to
      them. The clock re-renders the panel every second while live and every
      streamed token re-renders it too. */
   const derived = React.useMemo(() => {
-    const { turn } = latestTurns(messages);
+    const { turn } = panelTurn(messages, chosen);
     return { turn, used: usedInSession(messages, context) };
-  }, [messages, context]);
+  }, [messages, context, chosen]);
   const { turn, used } = derived;
   const live = Boolean(streaming && turn?.streaming);
   const now = useNow(live);
@@ -145,6 +174,7 @@ export function AnaWorkPanel({
           <SteersWaiting steers={pendingSteers} />
         </div>
       )}
+      <ChosenSummary turn={chosen ?? null} streaming={streaming} onContinue={onContinue} />
       {used.length > 0 && (
         <Section title="Used in this session">
           <UsedBody rows={used} />
