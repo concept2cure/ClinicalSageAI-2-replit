@@ -164,6 +164,10 @@ describe('GET /docs/:docId — the caller’s access', () => {
     expect(access.freeze.reason).toMatch(/Your role: member/);
     expect(access.fileToVault).toEqual({ allowed: true, reason: null });
     expect(access.assignReview).toEqual({ allowed: true, reason: null });
+    /* 2026-10-08 (filing-spine design review, Part 11 lens): Place into filing
+       meets requireRole('regulatory-author') on both of its writes; a member
+       holds that role. */
+    expect(access.placeIntoFiling).toEqual({ allowed: true, reason: null });
     /* §11.10(g): 'member' is not a signing role by default (admin, approver,
        reviewer) — the e-sign route answers ESIGNATURE_NO_AUTHORITY. */
     expect(access.esign.allowed).toBe(false);
@@ -187,6 +191,11 @@ describe('GET /docs/:docId — the caller’s access', () => {
     // The control it describes is "Send for review" (wave 2C): the sentence
     // beside it names that act, not the task-only "Assigning a review".
     expect(access.assignReview.reason).toBe('Sending for review needs an editing role in this organization. Your role: viewer.');
+    // A viewer was offered Place into filing and met a 403 after filling it in.
+    expect(access.placeIntoFiling).toEqual({
+      allowed: false,
+      reason: 'Placing into a filing needs an authoring role in this organization. Your role: viewer.',
+    });
   });
 
   /* QA 2026-10-08 (j4): the review signature is a 'review' act (the middleware

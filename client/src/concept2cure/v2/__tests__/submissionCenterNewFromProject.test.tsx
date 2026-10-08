@@ -44,6 +44,8 @@ type ServeOpts = {
   existing?: Array<{ applicationType: string; primaryRegion: string }>;
   /** The project's submissions cannot be read. */
   failSubmissions?: boolean;
+  /** The project's submissions answer 200 with no list in it. */
+  shapelessSubmissions?: boolean;
 };
 
 function marketSupportReply(url: string) {
@@ -62,6 +64,7 @@ function projectReply(opts: ServeOpts) {
 
 function submissionsReply(opts: ServeOpts) {
   if (opts.failSubmissions) throw Object.assign(new Error('Server error'), { status: 500 });
+  if (opts.shapelessSubmissions) return res({ items: 'not a list' });
   return res({
     data: (opts.existing ?? []).map((e, i) => ({
       id: 90 + i, title: `existing ${i}`, clientType: 'pharma', status: 'planning', lifecycleStage: 'original', programId: PID, ...e,
@@ -252,5 +255,21 @@ describe('New submission with no project open (F20)', () => {
     expect(select(/Application type/).value).toBe('');
     expect(select(/Primary region/).value).toBe('');
     expect(select(/Client type/).value).toBe('');
+  });
+});
+
+describe("New submission over an unreadable submissions reply (F20)", () => {
+  beforeEach(() => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'ONC-221', ws: 'Pharma' };
+  });
+
+  /* Design review 2026-10-08 (honest-state lens, open item 8): a 200 with no
+     list in it was flattened to zero rows, so the market read as absent and
+     the project's own region was preselected over a read nobody could make. */
+  it("a submissions reply with no list is a failed read: no region is preselected, and the drawer says why", async () => {
+    serve({ shapelessSubmissions: true });
+    await openNew();
+    expect(select(/Primary region/).value).toBe('');
+    expect(within(screen.getByRole('dialog')).getByText(/whether that market already exists is not known/)).toBeTruthy();
   });
 });

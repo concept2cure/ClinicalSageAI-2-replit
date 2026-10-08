@@ -34,6 +34,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
+import { readDocumentAccess } from '../editor/DocumentWorkbench';
 
 const REASON = 'Clinical summary approved for sequence 0000';
 const SUBS = [{ id: 9, title: 'ZX-9 First-in-Human', applicationType: 'ind', primaryRegion: 'fda', status: 'active' }];
@@ -200,6 +201,41 @@ describe('every caller of the Place into filing dialog says what the document is
     for (const u of uses) {
       expect(u.props, `${u.file}: docStatus`).toMatch(/\bdocStatus=/);
       expect(u.props, `${u.file}: sectionCodes`).toMatch(/\bsectionCodes=/);
+      // And the server's placement gate, so a refusal is said before the dialog.
+      expect(u.props, `${u.file}: refusal`).toMatch(/\brefusal=/);
     }
+  });
+});
+
+/* Design review 2026-10-08 (Part 11 lens, open item 3): "Place into filing" was
+   offered to every role; a viewer filled in the dialog and met a 403 from the
+   copy write or the leaf write, both requireRole('regulatory-author'). The
+   document read now carries the server's placement gate (authoring.router.ts
+   callerDocumentAccess, by requireRole's own decision), and the dialog's
+   trigger states the refusal before anything is filled in. */
+describe('a refused placement is said before the dialog opens', () => {
+  const REFUSAL = 'Placing into a filing needs an authoring role in this organization. Your role: viewer.';
+
+  it("the document read carries the server's placement gate", () => {
+    expect(readDocumentAccess({ placeIntoFiling: { allowed: false, reason: REFUSAL } }).placeIntoFiling)
+      .toEqual({ allowed: false, reason: REFUSAL });
+    expect(readDocumentAccess({}).placeIntoFiling).toBeNull();
+  });
+
+  it('with a refusal the trigger is disabled and names why; without one it opens', () => {
+    mockApi('draft', []);
+    const { rerender } = render(
+      <AuthoringPlaceIntoFiling docId="D1" docTitle="M2.7 Clinical Summary" activeSectionCode="2.7.3" docStatus="DRAFT"
+        dirty={false} onNav={vi.fn()} fireToast={vi.fn()} refusal={REFUSAL} />,
+    );
+    const trigger = screen.getByRole('button', { name: /Place into filing/ });
+    expect(trigger).toHaveProperty('disabled', true);
+    expect(document.getElementById(trigger.getAttribute('aria-describedby') ?? '')?.textContent).toBe(REFUSAL);
+    rerender(
+      <AuthoringPlaceIntoFiling docId="D1" docTitle="M2.7 Clinical Summary" activeSectionCode="2.7.3" docStatus="DRAFT"
+        dirty={false} onNav={vi.fn()} fireToast={vi.fn()} refusal={null} />,
+    );
+    expect(screen.getByRole('button', { name: /Place into filing/ })).toHaveProperty('disabled', false);
+    expect(screen.queryByText(REFUSAL)).toBeNull();
   });
 });

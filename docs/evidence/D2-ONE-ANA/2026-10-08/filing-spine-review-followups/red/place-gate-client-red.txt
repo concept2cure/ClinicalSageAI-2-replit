@@ -1,0 +1,93 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a draft document: the copy will be a draft, which freeze refuses 254ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a document in review is filed as a draft too 57ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a frozen, unsigned document is filed as finalized, which freeze also refuses 52ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an approved document: filed as approved, with no refusal 57ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an unknown state claims neither: it states the rule 56ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > after placing, the server's copy status is stated, and a draft copy carries the refusal 73ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed, and the copy is now approved: "Re-place approved version" rewrites the same leaf by id 145ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed with a draft copy: no re-place is offered, and the refusal is stated 113ms
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > every caller of the Place into filing dialog says what the document is > passes docStatus and sectionCodes wherever the dialog is rendered 35ms
+   → editor/DocumentCanvas.tsx: refusal: expected '\n              docId={doc.id}\n     …' to match /\brefusal=/
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > a refused placement is said before the dialog opens > the document read carries the server's placement gate 3ms
+   → expected undefined to deeply equal { allowed: false, …(1) }
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > a refused placement is said before the dialog opens > with a refusal the trigger is disabled and names why; without one it opens 24ms
+   → expected <button class="btn ghost" …(2)>…(1)</button> to have property "disabled" with value true
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > every caller of the Place into filing dialog says what the document is > passes docStatus and sectionCodes wherever the dialog is rendered
+AssertionError: editor/DocumentCanvas.tsx: refusal: expected '\n              docId={doc.id}\n     …' to match /\brefusal=/
+
+- Expected:
+/\brefusal=/
+
++ Received:
+"
+              docId={doc.id}
+              docTitle={doc.title}
+              activeSectionCode={first?.code ?? null}
+              sectionCodes={sections.map((x) => x.code)} docStatus={doc.status ?? null} dirty={false}
+              onNav={onNav}
+              fireToast={fireToast}
+            "
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:216:45
+    214|       expect(u.props, `${u.file}: sectionCodes`).toMatch(/\bsectionCod…
+    215|       // And the server's placement gate, so a refusal is said before …
+    216|       expect(u.props, `${u.file}: refusal`).toMatch(/\brefusal=/);
+       |                                             ^
+    217|     }
+    218|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > a refused placement is said before the dialog opens > the document read carries the server's placement gate
+AssertionError: expected undefined to deeply equal { allowed: false, …(1) }
+
+- Expected:
+{
+  "allowed": false,
+  "reason": "Placing into a filing needs an authoring role in this organization. Your role: viewer.",
+}
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:232:8
+    230|   it("the document read carries the server's placement gate", () => {
+    231|     expect(readDocumentAccess({ placeIntoFiling: { allowed: false, rea…
+    232|       .toEqual({ allowed: false, reason: REFUSAL });
+       |        ^
+    233|     expect(readDocumentAccess({}).placeIntoFiling).toBeNull();
+    234|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > a refused placement is said before the dialog opens > with a refusal the trigger is disabled and names why; without one it opens
+AssertionError: expected <button class="btn ghost" …(2)>…(1)</button> to have property "disabled" with value true
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:243:21
+    241|     );
+    242|     const trigger = screen.getByRole('button', { name: /Place into fil…
+    243|     expect(trigger).toHaveProperty('disabled', true);
+       |                     ^
+    244|     expect(document.getElementById(trigger.getAttribute('aria-describe…
+    245|     rerender(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 8 passed (11)
+   Start at  20:14:48
+   Duration  5.52s (transform 2.67s, setup 267ms, import 3.45s, tests 878ms, environment 725ms)
+

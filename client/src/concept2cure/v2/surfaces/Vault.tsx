@@ -1337,13 +1337,17 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             </span>
           </div>
         </div>
-        <button
-          className="sp-ask"
-          onClick={() => onNav && onNav('project-home')}
-          title="Open this project in Project management"
-        >
-          {I.folder} Open project
-        </button>
+        {/* Only with a project open: without one it led to Project home's "No
+            project selected", beside the panel's own "Go to Projects". */}
+        {projectId && (
+          <button
+            className="sp-ask"
+            onClick={() => onNav && onNav('project-home')}
+            title="Open this project in Project management"
+          >
+            {I.folder} Open project
+          </button>
+        )}
         {/* Offered only where the eTMF can be opened: outside this release it
             led to the locked panel (FILING_SPINE.md F16). */}
         {available('etmf') && (

@@ -47,7 +47,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
-import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
+import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
 import { readShellProject, shellProgramId, type ShellProject } from '../shellProject';
 import { notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
@@ -460,7 +460,11 @@ export function SubmissionCenter({
   // GET /api/submissions — real DB rows, honest empty, honest error (no fixture).
   const [subsBump, setSubsBump] = React.useState(0);
   const subsPath = scopedTo ? programSubmissionsPath(scopedTo) : '/api/submissions';
-  const subs = useLiveRows<SubRow>(subsPath, [subsPath, subsBump]);
+  /* A 200 with no list in it is a failed read, not "no submissions": unguarded
+     it was flattened to zero rows, and New submission preselected the
+     project's region as if that market did not exist (design review
+     2026-10-08, honest-state lens). */
+  const subs = useLiveRows<SubRow>(subsPath, [subsPath, subsBump], isRowsWith<SubRow>('id', 'applicationType', 'primaryRegion'));
   const notOffered = scopedTo && !subs.loading && !subs.error ? notOfferedCount(subs.meta) : null;
   /* The org's programmes, so the required programId is PICKED rather than
      typed as a uuid — createSubmissionSchema requires one (the submission's

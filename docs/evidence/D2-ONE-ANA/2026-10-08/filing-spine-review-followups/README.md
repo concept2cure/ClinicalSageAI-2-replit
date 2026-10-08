@@ -47,6 +47,31 @@ Launch row **D2**. These were open items 1 and 2 of `.design/filing-spine/DESIGN
 - `coauthorSnapshotSeal.test.ts`, `coauthorSnapshotSeeds.test.ts` and `coauthorSnapshotStatus.test.ts`: they now send a reason.
 - The Status suite's auth mock gains a pass-through `requireRole`, because that suite is about status. The role is held against the real middleware in `coauthorSnapshotFromSource`.
 
+## 3. A placement a viewer could not make was offered to them (21 CFR 11.10(g), role-scoped visibility)
+
+**What was wrong.** "Place into filing" was offered to every member. A viewer filled in the dialog (submission, sequence, code, reason) and then met a 403 from the copy write or the leaf write, both `requireRole('regulatory-author')`. The editor already reports, per act, the decision the write will meet (`callerDocumentAccess`, GE-P-3). Placement was not one of those acts.
+
+**What changed**
+- **`server/middleware/auth.ts`.** `requireRole`'s decision is extracted unchanged into `roleClaimsSatisfy(claims, allowedRoles)`, and `requireRole` calls it.
+  - Exporting it is what lets a screen report that decision without a second permission model.
+  - `auth.js`, the pure re-export shim vitest resolves, re-exports it.
+  - The middleware suites (58 files, 568 tests) pass unchanged.
+- **`server/routes/authoring.router.ts`.** `GET /docs/:docId` returns `access.placeIntoFiling`.
+  - The org role is read as Send for review reads it.
+  - It is expanded as `req.user`'s roles are where the writes run.
+  - It is then judged by `roleClaimsSatisfy(…, ['regulatory-author'])`.
+  - It is null when no role is on the request, which means unknown, and the write still decides.
+- **`DocumentWorkbench.tsx` and `DocumentCanvas.tsx`.** Both pass `actRefusal(access.placeIntoFiling)`. `AuthoringPlaceIntoFiling` disables its trigger and names the refusal beside it (`aria-describedby`), as File to vault does.
+  - The copy-status sentences moved unchanged to `surfaces/filingCopyStatusLines.ts` and are re-exported, so the dialog's file stays inside its length limit.
+
+## 4. A submissions reply with no list read as "no submissions" (honest state)
+
+`SubmissionCenter.tsx` read the project's submissions with no shape guard. A 200 with no list in it was flattened to zero rows, so New submission preselected the project's region as if that market did not exist. It is now `isRowsWith('id', 'applicationType', 'primaryRegion')`. Such a reply is a failed read, and the drawer says whether the market exists is not known.
+
+## 5. The Vault offered "Open project" with no project open
+
+The header's "Open project" led to Project home's "No project selected", beside the empty state's own "Go to Projects". It shows only when a project is open.
+
 ## Red, then green
 
 | File | Before the fix |
@@ -55,6 +80,10 @@ Launch row **D2**. These were open items 1 and 2 of `.design/filing-spine/DESIGN
 | `red/validation-explain-client-red.txt` | 3 of 3 fail. No label. "Blocking." was printed from the model's flag. No unavailable state. |
 | `red/filing-copy-server-red.txt` | 3 of 48 fail. A copy was taken with no reason (201) and by a viewer (201). The retake's reason was the code's sentence. |
 | `red/filing-copy-client-red.txt` | 1 of 9 fails. The copy request carried no reason. |
+| `red/place-gate-server-red.txt` | 2 of 8 fail. The document read had no `placeIntoFiling` for a member or a viewer. |
+| `red/place-gate-client-red.txt` | 3 of 11 fail. The gate was not parsed. The trigger was enabled with a refusal. The canvas passed no `refusal`. |
+| `red/shape-red.txt` | 1 of 15 fails. `fda` was preselected over a reply with no list. |
+| `red/vault-header-red.txt` | 1 of 7 fails. "Open project" was offered with no project open. |
 
 Results are in `green/`.
 

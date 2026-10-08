@@ -1,0 +1,46 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an NDA · FDA project opens on NDA · FDA (US), with the project's client type 266ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an MAA · EMA project opens on MAA · EU (EMA), not on a US IND 56ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a Health Canada project preselects Health Canada, whatever its spelling 54ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project opened from a link (no workspace on the shell) takes its client type from the project's product type 58ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an IVD product is an IVD client, whatever bucket its filing type falls in 53ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when that market already exists on the project, no region is preselected, and the field says why 68ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each defaulted field says it came from the project's record 65ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a small-molecule IND is a Pharma client: the product type decides, not the filing type's bucket 47ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > opens at once while the project is read: the dialog says so, with no fields and no submit 52ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a type the form does not offer (J-NDA) is not guessed 40ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project record that could not be read preselects nothing, and says why 45ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when the project's submissions cannot be read, no region is preselected, and the drawer says why 49ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a submissions reply with no list is a failed read: no region is preselected, and the drawer says why 44ms
+   → expected 'fda' to be '' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type 61ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission with no project open (F20) > preselects no application type, region or client type 29ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a submissions reply with no list is a failed read: no region is preselected, and the drawer says why
+AssertionError: expected 'fda' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ fda
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:221:44
+    219|     serve({ shapelessSubmissions: true });
+    220|     await openNew();
+    221|     expect(select(/Primary region/).value).toBe('');
+       |                                            ^
+    222|     expect(within(screen.getByRole('dialog')).getByText(/whether that …
+    223|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  19:23:43
+   Duration  3.02s (transform 990ms, setup 164ms, import 1.20s, tests 994ms, environment 488ms)
+

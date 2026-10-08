@@ -51,6 +51,7 @@ export {
   requireAuth,
   PLATFORM_SCOPED_ROLES,
   expandRoleClaims,
+  roleClaimsSatisfy,
   requireRole,
   requireOrgAccess,
   requireSameOrganization,

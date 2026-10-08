@@ -128,6 +128,9 @@ describe('No dead ends on the filing path (F16)', () => {
     // "Go to", not "Open": beside the header's "Open project" it read as a second door to the same place.
     fireEvent.click(screen.getByRole('button', { name: /Go to Projects/ }));
     expect(onNav).toHaveBeenCalledWith('projects');
+    /* Design review 2026-10-08 (open item 10): with no project open, the
+       header's "Open project" led to Project home's "No project selected". */
+    expect(screen.queryByRole('button', { name: /^.?Open project$/ })).toBeNull();
   });
 
   it('Builder: says where documents come from, opens the editor and the Vault, and never points at the Co-Author', async () => {
