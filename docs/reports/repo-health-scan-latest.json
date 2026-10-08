@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T01:35:54.181Z",
+  "generatedAt": "2026-10-08T01:48:48.706Z",
   "git": {
-    "sha": "20e6bb429abf22946de4cde5edf7f93011a854a4",
+    "sha": "a8b0dbf87000b9b575638950ba7bcde90e67cc08",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2684,6 +2684,10 @@
         "lines": 1602
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 1598
+      },
+      {
         "file": "server/routes/mdx-qms.ts",
         "lines": 1589
       },
@@ -2694,10 +2698,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "lines": 1552
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 1541
       },
       {
         "file": "server/services/grdhe/grdheService.ts",
