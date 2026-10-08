@@ -316,8 +316,10 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling }: {
               Open readiness {I.right}
             </button>
           )}
-          {/* eCTD compile reads the open project's submission. F14 moves it
-              onto the sequence's Dispatch tab. It builds an FDA/EMA eCTD
+          {/* eCTD compile, opened from the project, compiles the submission
+              of the project's own application type; each sequence's Dispatch
+              tab opens it on that sequence (F14), which is how another
+              market's sequence is compiled. It builds an FDA/EMA eCTD
               backbone only, which is not how a 510(k), De Novo or PMA is
               filed, so a device or diagnostic project, or one not yet read,
               is not offered it. */}

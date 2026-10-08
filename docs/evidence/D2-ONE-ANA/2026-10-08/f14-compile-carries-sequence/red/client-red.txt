@@ -1,0 +1,1886 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx > compile opened on a sequence (F14) > reads, validates and compiles the sequence it was opened on, at its recorded region 5095ms
+   → expected '/api/ectd-compile/42/status' to be '/api/ectd-compile/42/status?sequenceI…' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"cm-body"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"t"[39m
+            [36m>[39m
+              [0mCompile & Export eCTD[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"s"[39m
+              [33mstyle[39m=[32m"display: flex; align-items: center; gap: 8px;"[39m
+            [36m>[39m
+              [0mONC-221[0m
+              [36m<button[39m
+                [33mclass[39m=[32m"reg-cta"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 3v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 5h-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M4 17v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 18H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Explain this compilation[0m
+              [36m</button>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-b"[39m
+            [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"font-size: 12.5px;"[39m
+            [36m>[39m
+              [0mRegion [0m
+              [36m<b>[39m
+                [0mFDA[0m
+              [36m</b>[39m
+              [36m<span[39m
+                [33mstyle[39m=[32m"color: var(--text-400);"[39m
+              [36m>[39m
+                [0m · recorded on sequence [0m
+                [0m0000[0m
+              [36m</span>[39m
+            [36m</span>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"ectd-subtype"[39m
+              [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+            [36m>[39m
+              [0mSubmission[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mid[39m=[32m"ectd-subtype"[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"initial"[39m
+              [36m>[39m
+                [0minitial[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"amendment"[39m
+              [36m>[39m
+                [0mamendment[0m
+              [36m</option>[39m
+            [36m</select>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"margin-left: auto; display: flex; gap: 8px;"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"nda-open"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-circle-check-big"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21.801 10A10 10 0 1 1 17 3.335"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 11 3 3L22 4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mValidate[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn primary"[39m
+                [33mstyle[39m=[32m"height: 32px;"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-layers"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mCompile eCTD[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"t"[39m
+            [36m>[39m
+              [0mModule readiness[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m of [0m
+              [0m2[0m
+              [0m required sections placed[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-b"[39m
+            [33mstyle[39m=[32m"padding: 0px;"[39m
+          [36m>[39m
+            [36m<table[39m
+              [33mclass[39m=[32m"reg-tbl"[39m
+            [36m>[39m
+              [36m<thead>[39m
+                [36m<tr>[39m
+                  [36m<th>[39m
+                    [0mModule[0m
+                  [36m</th>[39m
+                  [36m<th>[39m
+                    [0mRequired complete[0m
+                  [36m</th>[39m
+                  [36m<th>[39m
+                    [0mSections[0m
+                  [36m</th>[39m
+                  [36m<th>[39m
+                    [0mCompletion[0m
+                  [36m</th>[39m
+                  [36m<th[39m
+                    [33mstyle[39m=[32m"text-align: right;"[39m
+                  [36m>[39m
+                    [0mStatus[0m
+                  [36m</th>[39m
+                [36m</tr>[39m
+              [36m</thead>[39m
+              [36m<tbody>[39m
+                [36m<tr>[39m
+                  [36m<td[39m
+                    [33mstyle[39m=[32m"font-weight: 600;"[39m
+                  [36m>[39m
+                    [0mModule 3 — Quality[0m
+                  [36m</td>[39m
+                  [36m<td>[39m
+                    [0m1[0m
+                    [0m/[0m
+                    [0m2[0m
+                  [36m</td>[39m
+                  [36m<td>[39m
+                    [0m5[0m
+                  [36m</td>[39m
+                  [36m<td[39m
+                    [33mstyle[39m=[32m"min-width: 120px;"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mstyle[39m=[32m"background: var(--border); border-radius: 6px; height: 8px; overflow: hidden;"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mstyle[39m=[32m"width: 50%; height: 100%; background: var(--warning);"[39m
+                      [36m/>[39m
+                    [36m</div>[39m
+                    [36m<span[39m
+                      [33mstyle[39m=[32m"font-size: 11px; color: var(--text-400);"[39m
+                    [36m>[39m
+                      [0m50[0m
+                      [0m%[0m
+                    [36m</span>[39m
+                  [36m</td>[39m
+                  [36m<td[39m
+                    [33mstyle[39m=[32m"text-align: right;"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"rd-chip tone-warn"[39m
+                    [36m>[39m
+                      [0mpartial[0m
+                    [36m</span>[39m
+                  [36m</td>[39m
+                [36m</tr>[39m
+              [36m</tbody>[39m
+            [36m</table>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"t"[39m
+            [36m>[39m
+              [0mCompilation history[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"s"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-b"[39m
+            [33mstyle[39m=[32m"padding: 0px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"padding: 16px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-live[39m=[32m"polite"[39m
+                [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-empty-ic"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-clock"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"10"[39m
+                    [36m/>[39m
+                    [36m<polyline[39m
+                      [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-t"[39m
+                [36m>[39m
+                  [0mNo compilations yet[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-h"[39m
+                [36m>[39m
+                  [0mEach Compile run is recorded here with its status and version.[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"t"[39m
+            [36m>[39m
+              [0mOrchestrator run[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"s"[39m
+            [36m>[39m
+              [0mpaste a run id[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-b"[39m
+            [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33maria-label[39m=[32m"Orchestrator run id"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mplaceholder[39m=[32m"orchestrator run id"[39m
+              [33mstyle[39m=[32m"height: 30px; width: 320px;"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"11"[39m
+                  [33mcy[39m=[32m"11"[39m
+                  [33mr[39m=[32m"8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21 21-4.3-4.3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Load run[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-b"[39m
+            [33mstyle[39m=[32m"padding-top: 0px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"c2c-empty-ic"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-workflow"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"8"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"8"[39m
+                    [33mx[39m=[32m"3"[39m
+                    [33my[39m=[32m"3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+                  [36m/>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"8"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"8"[39m
+                    [33mx[39m=[32m"13"[39m
+                    [33my[39m=[32m"13"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-t"[39m
+              [36m>[39m
+                [0mNo orchestrator run loaded[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-h"[39m
+              [36m>[39m
+                [0mThe orchestrator sequences Module 3 composition, CSR tabulation, the Module 2 summaries, package assembly, hardened validation, and the Part 11 release signature. Paste a run id to see its per-step state.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx > compile opened on a sequence (F14) > opened with no sequence, it asks as it did: no sequenceId anywhere 229ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx > the Dispatch tab opens compile on its own sequence (F14) > "Validate and compile this sequence" carries the sequence to the compile screen 5012ms
+   → Unable to find role="button" and name `/Validate and compile this sequence/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m2[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDraft[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: the server writes the application number and sponsor as UNASSIGNED.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload an inspection copy of the package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mt"[39m
+          [36m>[39m
+            [0mTransmit opens once sequence [0m
+            [0m0000[0m
+            [0m is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mt"[39m
+        [36m>[39m
+          [0mThe governed freeze needs the sequence at Validated (currently[0m
+          [0m [0m
+          [0mDraft[0m
+          [0m) — move it forward in the Sequences workspace first.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m2[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDraft[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: the server writes the application number and sponsor as UNASSIGNED.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload an inspection copy of the package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mt"[39m
+          [36m>[39m
+            [0mTransmit opens once sequence [0m
+            [0m0000[0m
+            [0m is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mt"[39m
+        [36m>[39m
+          [0mThe governed freeze needs the sequence at Validated (currently[0m
+          [0m [0m
+          [0mDraft[0m
+          [0m) — move it forward in the Sequences workspace first.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx > compile opened on a sequence (F14) > reads, validates and compiles the sequence it was opened on, at its recorded region
+AssertionError: expected '/api/ectd-compile/42/status' to be '/api/ectd-compile/42/status?sequenceI…' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"cm-body"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"t"[39m
+            [36m>[39m
+              [0mCompile & Export eCTD[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"s"[39m
+              [33mstyle[39m=[32m"display: flex; align-items: center; gap: 8px;"[39m
+            [36m>[39m
+              [0mONC-221[0m
+              [36m<button[39m
+                [33mclass[39m=[32m"reg-cta"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 3v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 5h-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M4 17v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 18H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Explain this compilation[0m
+              [36m</button>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-b"[39m
+            [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"font-size: 12.5px;"[39m
+            [36m>[39m
+              [0mRegion [0m
+              [36m<b>[39m
+                [0mFDA[0m
+              [36m</b>[39m
+              [36m<span[39m
+                [33mstyle[39m=[32m"color: var(--text-400);"[39m
+              [36m>[39m
+                [0m · recorded on sequence [0m
+                [0m0000[0m
+              [36m</span>[39m
+            [36m</span>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"ectd-subtype"[39m
+              [33mstyle[39m=[32m"font-size: 12px; color: var(--text-400);"[39m
+            [36m>[39m
+              [0mSubmission[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mid[39m=[32m"ectd-subtype"[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"initial"[39m
+              [36m>[39m
+                [0minitial[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"amendment"[39m
+              [36m>[39m
+                [0mamendment[0m
+              [36m</option>[39m
+            [36m</select>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"margin-left: auto; display: flex; gap: 8px;"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"nda-open"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-circle-check-big"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21.801 10A10 10 0 1 1 17 3.335"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 11 3 3L22 4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mValidate[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn primary"[39m
+                [33mstyle[39m=[32m"height: 32px;"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-layers"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mCompile eCTD[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"t"[39m
+            [36m>[39m
+              [0mModule readiness[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m of [0m
+              [0m2[0m
+              [0m required sections placed[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-b"[39m
+            [33mstyle[39m=[32m"padding: 0px;"[39m
+          [36m>[39m
+            [36m<table[39m
+              [33mclass[39m=[32m"reg-tbl"[39m
+            [36m>[39m
+              [36m<thead>[39m
+                [36m<tr>[39m
+                  [36m<th>[39m
+                    [0mModule[0m
+                  [36m</th>[39m
+                  [36m<th>[39m
+                    [0mRequired complete[0m
+                  [36m</th>[39m
+                  [36m<th>[39m
+                    [0mSections[0m
+                  [36m</th>[39m
+                  [36m<th>[39m
+                    [0mCompletion[0m
+                  [36m</th>[39m
+                  [36m<th[39m
+                    [33mstyle[39m=[32m"text-align: right;"[39m
+                  [36m>[39m
+                    [0mStatus[0m
+                  [36m</th>[39m
+                [36m</tr>[39m
+              [36m</thead>[39m
+              [36m<tbody>[39m
+                [36m<tr>[39m
+                  [36m<td[39m
+                    [33mstyle[39m=[32m"font-weight: 600;"[39m
+                  [36m>[39m
+                    [0mModule 3 — Quality[0m
+                  [36m</td>[39m
+                  [36m<td>[39m
+                    [0m1[0m
+                    [0m/[0m
+                    [0m2[0m
+                  [36m</td>[39m
+                  [36m<td>[39m
+                    [0m5[0m
+                  [36m</td>[39m
+                  [36m<td[39m
+                    [33mstyle[39m=[32m"min-width: 120px;"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mstyle[39m=[32m"background: var(--border); border-radius: 6px; height: 8px; overflow: hidden;"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mstyle[39m=[32m"width: 50%; height: 100%; background: var(--warning);"[39m
+                      [36m/>[39m
+                    [36m</div>[39m
+                    [36m<span[39m
+                      [33mstyle[39m=[32m"font-size: 11px; color: var(--text-400);"[39m
+                    [36m>[39m
+                      [0m50[0m
+                      [0m%[0m
+                    [36m</span>[39m
+                  [36m</td>[39m
+                  [36m<td[39m
+                    [33mstyle[39m=[32m"text-align: right;"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"rd-chip tone-warn"[39m
+                    [36m>[39m
+                      [0mpartial[0m
+                    [36m</span>[39m
+                  [36m</td>[39m
+                [36m</tr>[39m
+              [36m</tbody>[39m
+            [36m</table>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"t"[39m
+            [36m>[39m
+              [0mCompilation history[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"s"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-b"[39m
+            [33mstyle[39m=[32m"padding: 0px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"padding: 16px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-live[39m=[32m"polite"[39m
+                [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+                [33mrole[39m=[32m"status"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"c2c-empty-ic"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-clock"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"10"[39m
+                    [36m/>[39m
+                    [36m<polyline[39m
+                      [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-t"[39m
+                [36m>[39m
+                  [0mNo compilations yet[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"c2c-empty-h"[39m
+                [36m>[39m
+                  [0mEach Compile run is recorded here with its status and version.[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-h"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"t"[39m
+            [36m>[39m
+              [0mOrchestrator run[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"s"[39m
+            [36m>[39m
+              [0mpaste a run id[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-b"[39m
+            [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33maria-label[39m=[32m"Orchestrator run id"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mplaceholder[39m=[32m"orchestrator run id"[39m
+              [33mstyle[39m=[32m"height: 30px; width: 320px;"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"11"[39m
+                  [33mcy[39m=[32m"11"[39m
+                  [33mr[39m=[32m"8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21 21-4.3-4.3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Load run[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-card-b"[39m
+            [33mstyle[39m=[32m"padding-top: 0px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"c2c-empty-ic"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-workflow"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"8"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"8"[39m
+                    [33mx[39m=[32m"3"[39m
+                    [33my[39m=[32m"3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+                  [36m/>[39m
+                  [36m<rect[39m
+                    [33mheight[39m=[32m"8"[39m
+                    [33mrx[39m=[32m"2"[39m
+                    [33mwidth[39m=[32m"8"[39m
+                    [33mx[39m=[32m"13"[39m
+                    [33my[39m=[32m"13"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-t"[39m
+              [36m>[39m
+                [0mNo orchestrator run loaded[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-empty-h"[39m
+              [36m>[39m
+                [0mThe orchestrator sequences Module 3 composition, CSR tabulation, the Module 2 summaries, package assembly, hardened validation, and the Part 11 release signature. Paste a run id to see its per-step state.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+Expected: "/api/ectd-compile/42/status?sequenceId=21"
+Received: "/api/ectd-compile/42/status"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx:49:85
+     47|     stashNavParamsForTarget('ectd-compile', { sequenceId: '21' });
+     48|     render(<EctdCompile {...props()} />);
+     49|     await waitFor(() => expect(calls('GET', '/api/ectd-compile/42/stat…
+       |                                                                                     ^
+     50|     expect(await screen.findByText(/recorded on sequence 0000/)).toBeT…
+     51|     expect(screen.getByText('EU')).toBeTruthy();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx > the Dispatch tab opens compile on its own sequence (F14) > "Validate and compile this sequence" carries the sequence to the compile screen
+TestingLibraryElementError: Unable to find role="button" and name `/Validate and compile this sequence/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m2[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDraft[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: the server writes the application number and sponsor as UNASSIGNED.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload an inspection copy of the package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mt"[39m
+          [36m>[39m
+            [0mTransmit opens once sequence [0m
+            [0m0000[0m
+            [0m is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mt"[39m
+        [36m>[39m
+          [0mThe governed freeze needs the sequence at Validated (currently[0m
+          [0m [0m
+          [0mDraft[0m
+          [0m) — move it forward in the Sequences workspace first.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mDispatch · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · QC[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-gate ok"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mDispatch gate clear[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m validation [0m
+          [0merrors[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m unacknowledged shadow[0m
+          [0m [0m
+          [0mcriticals[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m shadow [0m
+          [0mreview[0m
+          [0m [0m
+          [0mrun · [0m
+          [0m2[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m · status[0m
+          [0m [0m
+          [0mDraft[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-disp-actions"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mTest package[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mAssembles sequence [0m
+            [0m0000[0m
+            [0m's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: the server writes the application number and sponsor as UNASSIGNED.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssemble a test package[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-mt"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"tl-spec-k sc-mb"[39m
+          [36m>[39m
+            [0mPackage and transmit[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mb"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sc-trans-b"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-layers"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mDownload an inspection copy of the package (zip)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mt"[39m
+          [36m>[39m
+            [0mTransmit opens once sequence [0m
+            [0m0000[0m
+            [0m is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mt"[39m
+        [36m>[39m
+          [0mThe governed freeze needs the sequence at Validated (currently[0m
+          [0m [0m
+          [0mDraft[0m
+          [0m) — move it forward in the Sequences workspace first.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sc-trans-b"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mRun dispatch QC[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx:93:34
+     91|       />,
+     92|     );
+     93|     fireEvent.click(await screen.findByRole('button', { name: /Validat…
+       |                                  ^
+     94|     expect(onNav).toHaveBeenCalledWith('ectd-compile');
+     95|     expect(consumeNavParams('ectd-compile')).toEqual({ sequenceId: '21…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  20:52:07
+   Duration  12.20s (transform 782ms, setup 151ms, import 963ms, tests 10.34s, environment 556ms)
+
