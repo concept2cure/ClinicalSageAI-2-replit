@@ -992,6 +992,20 @@ export function mountStreamRoute(router: Router): void {
         console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
         return '';
       });
+      // Conversation admission and persistence are complete. Recall can now
+      // overlap independent optional route reads; handle rejection at startup
+      // so a quick memory failure is contained while prefetch is pending.
+      const memoryContextPromise = buildMemoryContextForChat({
+        threadId: threadId || '',
+        organizationId: orgId ? Number(orgId) : undefined,
+        projectId: streamProjectId || undefined,
+        query: message,
+        limitPerLayer: 4,
+        maxChars: 3500,
+      }).catch(err => {
+        console.warn('[AnA RI] Memory context failed:', err?.message);
+        return { memoryBlock: '', atoms: [], diagnostics: null };
+      });
 
       const prefetchedStreamContext = await prefetchRouteIntelligenceContext({
         projectId: streamProjectId,
@@ -1082,17 +1096,7 @@ export function mountStreamRoute(router: Router): void {
       const streamContextStart = Date.now();
       const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
         intelligencePrefixPromise,
-        buildMemoryContextForChat({
-          threadId: threadId || '',
-          organizationId: orgId ? Number(orgId) : undefined,
-          projectId: streamProjectId || undefined,
-          query: message,
-          limitPerLayer: 4,
-          maxChars: 3500,
-        }).catch(err => {
-          console.warn('[AnA RI] Memory context failed:', err?.message);
-          return { memoryBlock: '', atoms: [], diagnostics: null };
-        }),
+        memoryContextPromise,
         enrichContextForChat({
           message,
           projectId: streamProjectId,

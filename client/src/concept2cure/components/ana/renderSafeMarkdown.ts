@@ -133,7 +133,12 @@ export function renderSafeMarkdown(content: string): string {
   if (!content) return '';
 
   const cached = cache.get(content);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) {
+    // Keep actively viewed history recent while new streaming prefixes arrive.
+    cache.delete(content);
+    cache.set(content, cached);
+    return cached;
+  }
 
   let result: string;
   try {
