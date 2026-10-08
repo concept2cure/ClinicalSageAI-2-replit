@@ -2,7 +2,7 @@
  * Submission Center — kit app/submission-center.jsx ported (registry id
  * `submission-center`, contract-ready).
  *
- * Real-data standard (no mock in product): the 8 workspaces are scaffolded from
+ * Real-data standard (no mock in product): the 7 workspaces are scaffolded from
  * the REAL contract SUBMISSION_WORKSPACES (@shared/types/submission-ui). The
  * portfolio list binds live to GET /api/submissions and the per-submission
  * sequences to GET /api/submissions/:id/sequences (both DB-backed via
@@ -24,8 +24,8 @@
  *
  * Per-sequence workspaces (SubmissionSeqWorkspaces.tsx) are REAL: a sequence
  * selector feeds Builder (GET/PUT leaves), Validation (dispatch-readiness
- * findings + AI explain), Shadow Review (runs + persisted findings),
- * Cross-region (gap computation off the real leaves) and Dispatch (the
+ * findings + AI explain), Shadow Review (runs + persisted findings) and
+ * Dispatch (the
  * server-computed gate + AI QC advisory). Sequence lifecycle transitions POST
  * the real /sequences/:seqId/transition endpoint and surface the server's
  * verdict verbatim. The irreversible transitions — freeze and dispatch — run
@@ -65,7 +65,6 @@ import {
 import {
   BuilderWorkspace,
   Chip,
-  CrossRegionWorkspace,
   DispatchWorkspace,
   SeqPicker,
   ShadowReviewWorkspace,
@@ -424,7 +423,7 @@ function scopedMissReason(wanted: string, projectName: string | null, notOffered
 }
 
 /** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
-const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'cross-region', 'dispatch']);
+const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'dispatch']);
 
 export function SubmissionCenter({
   onAsk,
@@ -589,7 +588,7 @@ export function SubmissionCenter({
   });
 
   // The selected working sequence — the selector feeding Builder / Validation /
-  // Shadow Review / Cross-region / Dispatch. Defaults to the first real row.
+  // Shadow Review / Dispatch. Defaults to the first real row.
   const [selSeq, setSelSeq] = React.useState<number | null>(null);
   const seq = seqs.rows.find((r) => r.id === selSeq) ?? seqs.rows[0] ?? null;
 
@@ -974,7 +973,7 @@ export function SubmissionCenter({
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
 
   /* What AnA can see of this screen.
-     The Submission Center is eight workspaces over one selected submission and
+     The Submission Center is seven workspaces over one selected submission and
      one selected sequence, and every question a user asks here is about THAT
      pair — "is this ready to dispatch?", "what is blocking 0002?". Until now she
      was told only that the surface was called "submission-center", so she could
@@ -1085,7 +1084,7 @@ export function SubmissionCenter({
                 },
       },
       availableActions: [
-        'Switch workspace — planner, sequences, builder, validation, shadow review, cross-region, dispatch',
+        'Switch workspace — planner, sequences, builder, validation, shadow review, dispatch',
         'Select a different submission from the portfolio picker',
         ...(openProjectName ? ["List all of the organization's submissions, or only the open project's"] : []),
         'Select the working sequence the build and validation workspaces act on',
@@ -1110,7 +1109,7 @@ export function SubmissionCenter({
           <h1 className="sp-title">Submission center</h1>
           <p className="sp-state">
             Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2
-            / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+            / v4.0, eSTAR, MDR/IVDR. Seven workspaces scaffolded from the submission contract.
           </p>
         </div>
         {list.length > 0 && (
@@ -1605,7 +1604,7 @@ export function SubmissionCenter({
         </div>
       )}
 
-      {/* Builder / Validation / Shadow review / Cross-region / Dispatch — the
+      {/* Builder / Validation / Shadow review / Dispatch — the
           per-sequence workspaces. One selector (SeqPicker) chooses the working
           sequence; each workspace then reads/writes the REAL endpoints for it. */}
       {/* ── "No submission selected" is a claim about the reader's portfolio ──
@@ -1648,7 +1647,6 @@ export function SubmissionCenter({
               )}
               {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'shadow-review' && <ShadowReviewWorkspace key={seq.id} seq={seq} />}
-              {ws === 'cross-region' && <CrossRegionWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'dispatch' && (
                 <DispatchWorkspace
                   key={`${seq.id}:${seq.status}`}
@@ -1704,8 +1702,8 @@ export function SubmissionCenter({
                   Transitions POST the real lifecycle endpoint and the server&#39;s verdict is shown
                   verbatim. Freeze and Dispatch are irreversible — the generic endpoint refuses
                   them, so those two open the Part 11 e-signature chain instead. Selecting a row
-                  sets the working sequence for the Builder, Validation, Shadow review,
-                  Cross-region and Dispatch workspaces.
+                  sets the working sequence for the Builder, Validation, Shadow review
+                  and Dispatch workspaces.
                 </div>
                 <div className="sp-list">
                   {seqs.rows.map((s) => (

@@ -571,6 +571,45 @@ interface SourceRow {
   disposition?: import('@shared/document-data-disposition').DocumentDispositionChoice | null;
   /** Recorded citations of this source. Absent on a server that predates it. */
   usage?: { sections: number; documents: number; changedSections: number } | null;
+  /** Where a search matched in the text read from the file (ts_headline). Null outside a search. */
+  snippet?: string | null;
+  /** What the catalog found the source IS, by rule (S3). Absent on a server that predates it. */
+  catalog?: SourceCatalog | null;
+}
+
+/** The deterministic catalog facts of a source; a null field was not found, never guessed. */
+interface SourceCatalog {
+  studyRef: number | null;
+  trialRegistryIdentifier: string | null;
+  protocolNumber: string | null;
+  documentDate: string | null;
+  dataCutDate: string | null;
+  dataset: {
+    format: string | null;
+    tableCount: number;
+    tables: Array<{ name: string; standard: string | null; domain: string | null; rowCount: number; columnCount: number }>;
+  } | null;
+}
+
+/** One page of the project's Data Room, as GET /:id/sources answers it. */
+interface SourcesPage {
+  sources: SourceRow[];
+  window?: { shown: number; truncated: boolean };
+  /** Every source matching the read; currentTotal counts each re-uploaded file once. */
+  total?: number;
+  currentTotal?: number;
+}
+
+/** How many sources one page of the Data Room shows. */
+const SOURCES_PAGE = 200;
+
+/** The Data Room read: a full-text search over what was read from each file, and its page. */
+function sourcesUrl(pid: string, term: string, offset: number): string {
+  const params = new URLSearchParams();
+  if (term) params.set('q', term);
+  if (offset > 0) params.set('offset', String(offset));
+  const qs = params.toString();
+  return `/api/c2c/projects/${pid}/sources${qs ? `?${qs}` : ''}`;
 }
 
 /** A section drafted from a source that has since changed. */
@@ -672,10 +711,60 @@ function sourcePinTitle(s: SourceRow): string {
     : 'This source has no readable text, so it cannot ground a draft';
 }
 
+/**
+ * What the catalog found a source is: protocol, registry id, data cut-off, and
+ * for a table or define.xml its CDISC standard, domain and size. Facts only;
+ * a fact not found is left out, never filled in.
+ */
+function catalogFacts(c: SourceCatalog | null | undefined): string[] {
+  if (!c) return [];
+  const facts: string[] = [];
+  if (c.protocolNumber) facts.push(`Protocol ${c.protocolNumber}`);
+  if (c.trialRegistryIdentifier) facts.push(c.trialRegistryIdentifier);
+  if (c.dataCutDate) facts.push(`data cut-off ${c.dataCutDate}`);
+  else if (c.documentDate) facts.push(`dated ${c.documentDate}`);
+  const t = c.dataset?.tables[0];
+  if (t) {
+    const kind = t.standard ? `${t.standard}${t.domain ? ` ${t.domain}` : ''}` : 'table';
+    facts.push(c.dataset!.format === 'define-xml'
+      ? `define.xml · ${c.dataset!.tableCount} dataset${c.dataset!.tableCount === 1 ? '' : 's'}`
+      : `${kind} · ${t.columnCount} columns · ${t.rowCount} rows`);
+  }
+  return facts;
+}
+
+function SourceCatalogLine({ catalog }: { catalog?: SourceCatalog | null }) {
+  const facts = catalogFacts(catalog);
+  if (facts.length === 0) return null;
+  return (
+    <span className="sec-sub" style={{ display: 'block', fontSize: 11.5 }} data-testid="source-catalog">
+      {facts.join(' · ')}
+    </span>
+  );
+}
+
+/** Where a search matched in the text read from the file; nothing outside a search. */
+function SourceSnippet({ show, text }: { show: boolean; text?: string | null }) {
+  if (!show || !text) return null;
+  return (
+    <span className="sec-sub" style={{ display: 'block', fontSize: 11.5 }}>
+      &hellip;{text.replace(/<\/?b>/g, '')}&hellip;
+    </span>
+  );
+}
+
 function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
   const available = useSurfaceAvailable();
   const [reloadKey, setReloadKey] = useState(0);
   const [q, setQ] = useState('');
+  // The search the server runs: settled after the person stops typing, and a
+  // new search starts from the first page.
+  const [term, setTerm] = useState('');
+  const [offset, setOffset] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => { setTerm(q.trim()); setOffset(0); }, 300);
+    return () => clearTimeout(t);
+  }, [q]);
   // Sources the user has pinned as context for the next AnA turn. Handed over
   // via window.C2C_SOURCE_PINS, matching the window.C2C_PROJECT / C2C_CONVO
   // convention this surface already uses for cross-surface handoff.
@@ -683,10 +772,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const state = useLiveData<{ sources: SourceRow[]; window?: { shown: number; truncated: boolean } }>(
-    pid ? `/api/c2c/projects/${pid}/sources` : null,
-    [pid, reloadKey],
-    hasKeys<{ sources: SourceRow[]; window?: { shown: number; truncated: boolean } }>('sources'),
+  const state = useLiveData<SourcesPage>(
+    pid ? sourcesUrl(pid, term, offset) : null,
+    [pid, reloadKey, term, offset],
+    hasKeys<SourcesPage>('sources'),
   );
 
   // Sections in this project drafted from a source that has since changed. Read
@@ -719,15 +808,16 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
     setPinned(prev => prev.every(id => eligible.has(id)) ? prev : prev.filter(id => eligible.has(id)));
     if (window.C2C_SOURCE_PINS) window.C2C_SOURCE_PINS = window.C2C_SOURCE_PINS.filter(id => eligible.has(Number(id)));
   }, [state.data, state.loading, state.error]);
-  const rows = sources.filter(s =>
-    q.trim() ? (s.title || '').toLowerCase().includes(q.trim().toLowerCase()) : true,
-  );
+  // The server searched title and text; the list is its answer, not a filter of this page.
+  const rows = sources;
   /* One file re-uploaded is one source: its retired revision is listed but not
-     counted. A full window's count is a floor. */
+     counted. The server counts the whole room (currentTotal), not this page. */
   const current = sources.filter(s => s.isCurrent !== false && s.dataEligible !== false);
-  const total = current.length;
+  const total = state.data?.currentTotal ?? current.length;
   const readable = current.filter(s => s.extractionStatus === 'extracted').length;
   const truncated = state.data?.window?.truncated === true;
+  const searching = term.length > 0;
+  const matched = state.data?.total ?? sources.length;
   /* Sources whose text can ground a draft, newest first as the route lists
      them. "Write from these sources" hands over at most HANDOFF_LIMIT: the
      stream inlines every pinned file into one turn and limits only each
@@ -754,9 +844,11 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
               dropped a file in here would take an empty list as data loss. */}
           {state.error
             ? "couldn't load this project's sources — the list below is incomplete"
-            : total > 0
-              ? `${total}${truncated ? '+' : ''} source${total === 1 && !truncated ? '' : 's'} · ${readable} readable${truncated ? ` (newest ${sources.length} shown)` : ''} — what this project's documents are written from`
-              : "the sources this project's documents are written from"}
+            : searching
+              ? `${matched} source${matched === 1 ? '' : 's'} match \u201c${term}\u201d in their title or text`
+              : total > 0
+                ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable on this page${truncated || offset > 0 ? ` (showing ${offset + 1}\u2013${offset + sources.length})` : ''} — what this project's documents are written from`
+                : "the sources this project's documents are written from"}
         </span>
       </div>
 
@@ -849,14 +941,14 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         </div>
       )}
 
-      {total > 0 && (
+      {(total > 0 || searching) && (
         <div style={{ marginBottom: 8 }}>
           <input
             className="pj-input"
-            placeholder="Search sources…"
+            placeholder="Search titles and text…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            aria-label="Search sources"
+            aria-label="Search sources by title or text"
             style={{ width: '100%', maxWidth: 320, fontSize: 13, padding: '5px 10px' }}
           />
         </div>
@@ -873,7 +965,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         render={() =>
           rows.length === 0 ? (
             <div className="scaf-note" style={{ padding: '10px' }}>
-              No source matches &ldquo;{q}&rdquo;.
+              No source matches &ldquo;{term}&rdquo; in its title or text.
             </div>
           ) : (
             <div className="pj-srcs">
@@ -913,6 +1005,8 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                         {size ? ` · ${size}` : ''}
                         {fmtWhen(s.createdAt) ? ` · added ${fmtWhen(s.createdAt)}` : ''}
                       </span>
+                      <SourceCatalogLine catalog={s.catalog} />
+                      <SourceSnippet show={searching} text={s.snippet} />
                       {/* Where this source is actually used. Reported from
                           recorded citations; omitted entirely when the server
                           sent no usage field rather than shown as zero. */}
@@ -944,6 +1038,22 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           )
         }
       />
+
+      {/* Pages of the room: every source is reachable, not only the newest 200. */}
+      {(offset > 0 || truncated) && (
+        <div className="cm-pushbar" style={{ marginTop: 8 }}>
+          {offset > 0 && (
+            <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setOffset(o => Math.max(0, o - SOURCES_PAGE))}>
+              Newer sources
+            </button>
+          )}
+          {truncated && (
+            <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setOffset(o => o + SOURCES_PAGE)}>
+              Older sources
+            </button>
+          )}
+        </div>
+      )}
 
       {/* The caller's chat files with no project yet (PF-07): one audited adopt
           brings a file into this Data Room, and the list reloads. */}

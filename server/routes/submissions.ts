@@ -47,7 +47,6 @@ import { assessPathwayReadiness, PATHWAYS, type Pathway } from '../services/path
 import {
   generateSubmissionPlan,
   explainValidation,
-  computeCrossRegionGap,
   runDispatchQc,
 } from '../services/submission-ai/submission-ai-service';
 import {
@@ -280,7 +279,6 @@ router.get('/capabilities', limiter, requireRole(AUTHOR), async (req, res) => {
         sequences: true,
         validation: true,
         'shadow-review': true,
-        'cross-region': true,
         dispatch: true,
       },
       // Capability flags (not workspaces). The assemble/publish BYTES are now
@@ -1118,28 +1116,6 @@ router.post('/:id/validation/explain', limiter, requireRole(AUTHOR), async (req,
   try {
     await getSubmission(id, ctx);
     res.json(await explainValidation(parsed.data, { ...ctx, submissionId: id }));
-  } catch (err) {
-    fail(res, err);
-  }
-});
-
-// ── Cross-region gap (AI) ────────────────────────────────────────────────────
-const crossRegionSchema = z.object({
-  sourceRegion: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
-  targetRegions: z.array(z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'])).min(1),
-  applicationType: z.string().min(1).max(64),
-  sectionsPresent: z.array(z.string()).optional(),
-});
-router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) => {
-  const ctx = ctxOf(req);
-  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const id = idParam(req.params.id);
-  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
-  const parsed = crossRegionSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  try {
-    await getSubmission(id, ctx);
-    res.json(await computeCrossRegionGap(parsed.data, { ...ctx, submissionId: id }));
   } catch (err) {
     fail(res, err);
   }

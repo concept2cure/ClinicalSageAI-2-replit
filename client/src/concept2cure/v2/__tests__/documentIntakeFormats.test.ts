@@ -18,15 +18,17 @@ describe('project/chat intake admits canonical scientific source formats', () =>
     expect(validateUploadFile(new File(['source bytes'], name, { type }))).toBeNull();
   });
 
-  it('preserves empty, unsupported, and 25 MB refusal boundaries', () => {
-    expect(CHAT_UPLOAD_MAX_BYTES).toBe(25 * 1024 * 1024);
+  // 50 MB since 2026-10-08: one cap with the Vault (Data Room catalog S3).
+  it('preserves empty, unsupported, and 50 MB refusal boundaries', () => {
+    expect(CHAT_UPLOAD_MAX_BYTES).toBe(50 * 1024 * 1024);
+    expect(CHAT_UPLOAD_MAX_BYTES).toBe(VAULT_UPLOAD_MAX_BYTES);
     expect(validateUploadFile(new File([], 'empty.csv'))).toBe('File is empty');
     expect(validateUploadFile(new File(['source'], 'subjects.xpt'))).toMatch(/Unsupported/);
     const file = new File(['source'], 'enrollment.CSV');
     Object.defineProperty(file, 'size', { value: CHAT_UPLOAD_MAX_BYTES, configurable: true });
     expect(validateUploadFile(file)).toBeNull();
     Object.defineProperty(file, 'size', { value: CHAT_UPLOAD_MAX_BYTES + 1 });
-    expect(validateUploadFile(file)).toMatch(/max 25 MB/);
+    expect(validateUploadFile(file)).toMatch(/max 50 MB/);
   });
 
   it('shares Vault picker candidates with its receiver while keeping limits and legacy truth explicit', () => {

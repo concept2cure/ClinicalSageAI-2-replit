@@ -142,7 +142,10 @@ describe('adoption verifies current owned bytes before capture', () => {
     finalPatch = { original_name: 'current-study.txt', mime_type: 'text/markdown' };
     const res = await adopt();
     expect(res.status).toBe(201);
-    expect(res.body).toEqual({ adopted: true, sourceId: 41 });
+    // Captured pending in the transaction, then read after it commits (Data
+    // Room catalog S2): the processing step's UPDATE is the one write after.
+    expect(res.body).toEqual({ adopted: true, sourceId: 41, processed: expect.any(Boolean) });
+    expect(mocks.poolQuery).toHaveBeenCalledWith(expect.stringContaining('UPDATE cre_evidence_sources SET'), expect.anything());
     expect(mocks.loader).toHaveBeenCalledWith(FILE, ORG);
     expect(mocks.readFile).toHaveBeenCalledWith(path.resolve(process.cwd(), upload.storage_path));
     expect(mocks.createSource.mock.calls[0][2]).toBe(client);

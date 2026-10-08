@@ -18,6 +18,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { getPool } from '../db';
 import { getTenantContext } from '../utils/tenantContext';
+import { authedUserId } from '../utils/authedActor';
 import { getSentinelScheduler } from '../services/sentinel/scheduler';
 import type { SentinelAnalyzerType } from '../services/sentinel/types';
 
@@ -109,6 +110,16 @@ router.patch('/findings/:findingId', async (req: Request, res: Response) => {
     const { organizationId } = tenantContext;
 
     const data = updateFindingSchema.parse(req.body);
+    // Who resolved a finding is the session's user (ledger L195). The body's
+    // resolvedById used to be stored as given, and an absent one stored no
+    // resolver at all. A body naming anyone else is refused, not ignored.
+    const userId = authedUserId(req);
+    if (data.resolvedById !== undefined && data.resolvedById !== userId) {
+      return res.status(422).json({ error: 'resolvedById is the signed-in user; it cannot name anyone else' });
+    }
+    if (data.status === 'resolved' && userId === null) {
+      return res.status(401).json({ error: 'Authentication required to resolve a finding' });
+    }
     const scheduler = getSentinelScheduler(pool);
     const sentinel = scheduler.getSentinel();
 
@@ -116,7 +127,7 @@ router.patch('/findings/:findingId', async (req: Request, res: Response) => {
       String(req.params.findingId),
       organizationId,
       data.status,
-      data.resolvedById
+      userId ?? undefined
     );
 
     if (!updated) return res.status(404).json({ error: 'Finding not found' });

@@ -59,7 +59,7 @@ Domains:
 ## 1.6 Submission AI & planning
 - **Submission planner** — `submissions.ts`, `server/services/submission-ai/submission-ai-service.ts` · ✅ · AI gap analysis + module/form/timeline plan · ops: `POST /api/submissions/:id/plan` · UI: module map, forms checklist, timeline, gaps, dependencies.
 - **Validation co-pilot** — same · ✅ · Explain validation findings · ops: `POST /api/submissions/:id/validation/explain` · UI: findings with AI cause+fix, blocking indicator.
-- **Cross-region gap analysis** — same · ✅ · Regional deltas + bridging/translation scope · ops: `POST /api/submissions/:id/cross-region` · UI: per-region delta cards.
+- **Cross-region gap analysis** — retired 2026-10-08 (FILING_SPINE.md F21): a model's Module 1 deltas rendered as a verdict, against Rule 2. Replaced by the deterministic market statement, `GET /api/submissions/market-support` (F19), on the New submission region options and the project's submission rows.
 - **Dispatch QC (advisory)** — same · ✅ · Pre-dispatch readiness advisory · ops: `POST /api/submissions/:id/dispatch-qc` · UI: cleared/blocked + blocker/warning/checklist.
 
 ## 1.7 Truth engine, shadow review, dispatch

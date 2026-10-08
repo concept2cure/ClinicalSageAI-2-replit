@@ -358,23 +358,6 @@ export const EXPLAIN_VALIDATION_FINDINGS: AnaTool = {
   },
 };
 
-export const CROSS_REGION_GAP_ANALYSIS: AnaTool = {
-  name: 'cross_region_gap_analysis',
-  description:
-    'Given a submission prepared for a source region, compute what is additionally needed to file the same product in target regions: Module 1 deltas, bridging-study needs (ICH E5), translation scope, and format conversion. Tenant comes from the active context; the call is audited.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      source_region: { type: 'string', enum: ['fda', 'eu', 'jp'] },
-      target_regions: { type: 'array', items: { type: 'string', enum: ['fda', 'eu', 'jp'] } },
-      application_type: { type: 'string', description: 'e.g. nda, maa, jnda.' },
-      sections_present: { type: 'array', items: { type: 'string' }, description: 'Optional CTD section codes already prepared.' },
-      submission_id: { type: 'number', description: 'Optional submission id for the audit entry.' },
-    },
-    required: ['source_region', 'target_regions', 'application_type'],
-  },
-};
-
 export const DISPATCH_QC_CHECK: AnaTool = {
   name: 'dispatch_qc_check',
   description:

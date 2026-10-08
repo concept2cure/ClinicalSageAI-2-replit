@@ -9851,28 +9851,6 @@ registerToolHandler('explain_validation_findings', async (input, ctx) => {
   }
 });
 
-registerToolHandler('cross_region_gap_analysis', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) {
-    return JSON.stringify({ error: 'cross_region_gap_analysis requires tenant context (organizationId and userId).' });
-  }
-  const sourceRegion = typeof input.source_region === 'string' ? input.source_region : '';
-  const targetRegions = Array.isArray(input.target_regions) ? (input.target_regions as string[]) : [];
-  const applicationType = typeof input.application_type === 'string' ? input.application_type : '';
-  if (!sourceRegion) return JSON.stringify({ error: 'source_region is required.' });
-  if (targetRegions.length === 0) return JSON.stringify({ error: 'target_regions (non-empty array) is required.' });
-  if (!applicationType) return JSON.stringify({ error: 'application_type is required.' });
-  try {
-    const { computeCrossRegionGap } = await import('../submission-ai/submission-ai-service.js');
-    const result = await computeCrossRegionGap(
-      { sourceRegion, targetRegions, applicationType, sectionsPresent: Array.isArray(input.sections_present) ? (input.sections_present as string[]) : undefined },
-      { organizationId: ctx.organizationId, userId: ctx.userId, submissionId: typeof input.submission_id === 'number' ? input.submission_id : undefined }
-    );
-    return JSON.stringify({ ok: true, ...((result as object) ?? {}) });
-  } catch (err) {
-    return JSON.stringify({ error: `cross_region_gap_analysis failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
-  }
-});
-
 registerToolHandler('dispatch_qc_check', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'dispatch_qc_check requires tenant context (organizationId and userId).' });

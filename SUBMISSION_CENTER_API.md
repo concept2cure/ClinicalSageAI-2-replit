@@ -52,8 +52,8 @@ come from it. Do not send tenant ids in the body.
 ## Authoring (section-generation, SSE) — surfaced in Builder / an editor
 | POST | `/api/submissions/:id/sections/generate` | `GenerateSectionRequest` → **SSE** | streams `event: chunk {text}` … then `event: done` = `GenerateSectionResult` (persisted governed draft id + citations), or `event: error {code,message}`. RAG-grounded; ungrounded points surfaced, never invented. |
 
-## 6. Cross-Region (`/submissions/:id/cross-region`)
-| POST | `/api/submissions/:id/cross-region` | `CrossRegionRequest` → `CrossRegionResponse` | Module 1 deltas, bridging (ICH E5), translation, format conversion |
+## 6. Cross-Region — retired 2026-10-08
+`POST /api/submissions/:id/cross-region` and the AnA tool `cross_region_gap_analysis` are removed (docs/design/FILING_SPINE.md F21): a model's list of Module 1 deltas rendered as a regulatory verdict, against CLAUDE.md Rule 2. What the platform can carry for another market is stated deterministically by `GET /api/submissions/market-support` (F19).
 
 ## 7. Dispatch (`/submissions/:id/dispatch`)
 | POST | `/api/submissions/:id/dispatch-qc` | `DispatchQcRequest` → `DispatchQcResponse` | final QC gate; hard-fails on open error-severity validation or unacked Shadow criticals. **Does NOT transmit.** |
@@ -71,7 +71,7 @@ AnA can drive all of the above through her governed tools (tenant from
 `ToolContext`, audited): `plan_submission`, `classify_submission_document`,
 `extract_submission_document`, `compute_lifecycle_operations`, `generate_stf`,
 `check_ectd_cross_references`, `validate_ectd_package`, `run_shadow_review`,
-`explain_validation_findings`, `cross_region_gap_analysis`, `dispatch_qc_check`,
+`explain_validation_findings`, `dispatch_qc_check`,
 `trace_provenance`, `check_consistency`, `assess_pathway_readiness`,
 `build_pathway_manifest`, `list_validation_rules`, `get_market_submission_spec`,
 `get_document_template`, `validate_market_formatting`, `get_submission_requirements`,
@@ -99,7 +99,7 @@ Sentence case; no emoji/exclamations; body 13px; Claude orange `#d97757` as the
 only strong color (one focal point/screen); 200ms ease-out motion; Lucide icons;
 second person; numbers over adjectives. Loading/empty/error states mandatory.
 
-## Region profiles (static metadata — Planner / Builder / Validation / Cross-Region)
+## Region profiles (static metadata — Planner / Builder / Validation)
 | GET | `/api/region-profiles` | → `RegionProfileResponse[]` | all regions: Module 1 structure, forms, pathways, rule-pack size |
 | GET | `/api/region-profiles/:region` | → `RegionProfileResponse` | one region (fda \| eu \| jp); 404 on unknown |
 
@@ -148,7 +148,7 @@ Workspace map + error catalog for nav/error handling: `shared/types/submission-u
 
 > `POST /device/blueprint` now also returns a `scorecard` (weighted 0–100 readiness + level + top gaps).
 
-## Pathway readiness (non-eCTD projections — Cross-Region / Dispatch)
+## Pathway readiness (non-eCTD projections — Dispatch)
 | GET | `/api/submissions/sequences/:seqId/pathway-readiness?pathway=&memberStates=` | → `PathwayReadinessResponse` | projects the sequence's canonical leaves onto CTIS \| MDR \| IVDR \| eSTAR (510k/de_novo) and returns a required-slot gap/readiness report. Deterministic, map+gap only — never submits. `memberStates` (comma list) applies to CTIS Part II. |
 | GET | `/api/submissions/sequences/:seqId/pathway-manifest?pathway=&memberStates=` | → `PathwayManifestResponse` | Universal assembled table-of-contents for ANY non-eCTD pathway (eSTAR 510k/de_novo \| CTIS \| MDR \| IVDR \| PMDA Shōnin): uniform ordered entries with group label (annex / eSTAR / CTIS part+state / STED), deterministic paths, present/missing status, and source leaves. Maps + reports gaps, never invents. |
 | GET | `/api/submissions/sequences/:seqId/technical-file?regulation=mdr\|ivdr` | → `TechnicalFileResponse` | The device assemble structure (mdx/ivd): the assembled EU MDR/IVDR Annex II/III technical-file table-of-contents — ordered sections with deterministic paths, annex refs, present/missing status, and source leaves. The device equivalent of the eCTD index. Maps + reports gaps, never invents. |

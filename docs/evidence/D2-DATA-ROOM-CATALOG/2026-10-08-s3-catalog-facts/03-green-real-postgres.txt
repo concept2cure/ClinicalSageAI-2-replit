@@ -1,0 +1,8 @@
+# real PostgreSQL 16 with pgvector, RLS_ENFORCE=on as app_service, migrated twice with 20261008d: every dbtest touching the Data Room, its sources, adopt, upload, the study store, the same-org keys and the Vault
+ Test Files  30 passed (30)
+      Tests  224 passed (224)
+
+# deploy-migrate.mjs twice:
+✅ Schema migration complete — safe to roll services.
+✅ Schema migration complete — safe to roll services.
+# the key: cre_evidence_sources_study_same_org_fk FOREIGN KEY (study_ref, organization_id) REFERENCES cdisc_prm_studies(id, tenant_id) ON DELETE SET NULL (study_ref) NOT VALID
