@@ -789,6 +789,8 @@ export async function startRunControlListener(pool: Pool): Promise<void> {
   if (listenerStarted) return;
   listenerStarted = true;
   const generation = ++listenerGeneration;
+  // Admission belongs to this listener lifetime, independently for each run.
+  const pendingRefreshes = new Map<string, { dirty: boolean }>();
 
   try {
     // Every query below is estate-wide — a notification names a run, not a
@@ -809,7 +811,7 @@ export async function startRunControlListener(pool: Pool): Promise<void> {
     client.on('notification', msg => {
       if (!isCurrentListener(generation) || listenerClient !== client) return;
       if (msg.channel !== RUN_CONTROL_CHANNEL || !msg.payload) return;
-      void refreshFromRow(pool, msg.payload, generation);
+      void refreshFromRow(pool, msg.payload, generation, pendingRefreshes);
     });
     client.on('error', err => {
       if (!isCurrentListener(generation) || listenerClient !== client) return;
@@ -883,18 +885,38 @@ function startPollFallback(pool: Pool, generation: number): void {
   pollTimer.unref?.();
 }
 
-async function refreshFromRow(pool: Pool, runId: string, generation: number): Promise<void> {
-  if (!localRuns.has(runId)) return; // not ours
+async function refreshFromRow(
+  pool: Pool,
+  runId: string,
+  generation: number,
+  pendingRefreshes: Map<string, { dirty: boolean }>,
+): Promise<void> {
+  if (!isCurrentListener(generation) || !localRuns.has(runId)) return;
+  const pending = pendingRefreshes.get(runId);
+  if (pending) {
+    // Do not drop a newer Stop behind a read that already observed running.
+    pending.dirty = true;
+    return;
+  }
+  const refresh = { dirty: false };
+  pendingRefreshes.set(runId, refresh);
   // The notification carries a run id and no tenant, and this callback runs in
   // the LISTEN socket's creation context rather than the notifying request's —
   // so it opens its own system scope rather than inheriting a stale one.
-  const status = await runWithSystemTenantScope('ana-run-control:notify', () =>
-    readStatus(pool, runId),
-  ).catch(err => {
-    log.error(`[ana-run-control] notify refresh failed for ${runId}: ${err?.message}`);
-    return null;
-  });
-  if (status && isCurrentListener(generation)) driveLocalRun(runId, status);
+  try {
+    do {
+      refresh.dirty = false;
+      const status = await runWithSystemTenantScope('ana-run-control:notify', () =>
+        readStatus(pool, runId),
+      ).catch(err => {
+        log.error(`[ana-run-control] notify refresh failed for ${runId}: ${err?.message}`);
+        return null;
+      });
+      if (status && isCurrentListener(generation)) driveLocalRun(runId, status);
+    } while (refresh.dirty && isCurrentListener(generation) && localRuns.has(runId));
+  } finally {
+    pendingRefreshes.delete(runId);
+  }
 }
 
 /**
