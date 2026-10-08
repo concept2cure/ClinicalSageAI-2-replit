@@ -1,0 +1,340 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ana/__tests__/tool-selection-carry-over.test.ts
+{
+  "timestamp": "2026-10-08T02:01:18.513Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:18.514Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-carry-over.test.ts
+{
+  "timestamp": "2026-10-08T02:01:18.514Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-selection-carry-over.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and as a victim?" is still offered assess_ddi_risk 7ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "what about with itraconazole?" is still offered assess_ddi_risk 5ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and with 80% power?" is still offered estimate_sample_size 4ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and for the drug product?" is still offered design_stability_study 14ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "now the toxicology part" is still offered draft_nonclinical_overview_m2_4 6ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and for the EU?" keeps required CMC record get_cmc_requirements without needing the carry 4ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "go on" keeps required CMC record explain_cmc_topic without needing the carry 5ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > a bare continuation is offered the carried tool first, right after the always-on core and the pins 2ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > carries at most 4, in the order carried, inside the cap 3ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > carried tools never cost a question its own tools near the end of its slots 8ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > offers a carried tool once, though the current request also selects it 3ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > never offers a carried name outside the governed set, nor carries an unhealthy one ahead 0ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > with nothing carried the selection is what it was 13ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > reads the eval 0ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'prepare_fda_form' after any other topic 73ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'amend_fda_form' after any other topic 70ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_forms' after any other topic 74ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'search_grants_gov' after any other topic 76ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'screen_restricted_party' after any other topic 92ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'triage_compliance_attention' after any other topic 94ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 85ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 78ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 83ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 76ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 78ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 82ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_cmc_requirements' after any other topic 77ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_cmc_requirements' after any other topic 82ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'find_cmc_guidance' after any other topic 65ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'find_cmc_guidance' after any other topic 72ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'explain_cmc_topic' after any other topic 81ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 55ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 58ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 54ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 62ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 79ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 65ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 65ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 60ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 61ms
+stdout | server/services/ana/__tests__/tool-selection-routing.test.ts
+{
+  "timestamp": "2026-10-08T02:01:22.131Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:22.132Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-routing.test.ts
+{
+  "timestamp": "2026-10-08T02:01:22.132Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-selection-routing.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the always-on bridge + core are always offered 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the surface is genuinely over the cap (filtering actually engages) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_fda_form'" for: "'prepare FDA form 1571 as an editable …'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'amend_fda_form'" for: "'amend this FDA form with a reason for…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_forms'" for: "'list all FDA forms available in the c…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_effort_certification'" for: "'open a time and effort certification …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_coi_disclosure'" for: "'file a foreign appointment conflict o…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'search_grants_gov'" for: "'search grants.gov for posted cancer f…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'screen_restricted_party'" for: "'screen this vendor against the SAM.go…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'research_compliance_briefing'" for: "'what needs my attention across resear…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'open_grant_closeout'" for: "'open the grant closeout and track the…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'request_no_cost_extension'" for: "'request a no cost extension to extend…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_grant_budget'" for: "'reconcile the budget versus actual ex…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_expenditure'" for: "'record an actual expenditure booked a…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_subaward'" for: "'record a subaward to a subrecipient u…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'register_controlled_substance'" for: "'register a schedule II controlled sub…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'fulfill_regulatory_commitment'" for: "'mark this PMR regulatory commitment f…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_ha_interaction'" for: "'is this FDA formal meeting interactio…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_cost_share_contribution'" for: "'record an institutional cost share co…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_training_gate'" for: "'review the training gate, is the PI c…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_opportunity'" for: "'record this grants.gov funding opport…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'assess_study_onboarding'" for: "'what approvals and training do we nee…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_award_closeout'" for: "'can we close out this grant award yet…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_meeting_package'" for: "'are we ready for the FDA meeting, do …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'triage_compliance_attention'" for: "'triage the critical compliance attent…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what has to go in section 12.2 advers…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what should the summary of clinical e…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'we just locked the database, what hap…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'what is blocking the clinical overvie…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'will our dossier pass FDA technical v…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'why would the FDA gateway reject our …'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what CMC quality information does the…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what does the EU IMPD quality dossier…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'is ICH Q2(R2) final and which guidanc…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'which guidance covers nitrosamine imp…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'explain_cmc_topic'" for: "'explain how impurity limits are justi…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > each record tool is in the launch-scoped pool (so the cases below cannot pass vacuously) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the ISS'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should I write the clinical overv…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what does FDA want in 2.7.4'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how do I structure a CSR'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'help me write the quality overall sum…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should the investigator brochure …'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'review my clinical overview'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'list_fda_technical_rules'" for: "'will my submission be rejected'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'plan_submission_from_database_lock'" for: "'what do I do after database lock'" 2ms
+stdout | server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts
+{
+  "timestamp": "2026-10-08T02:01:23.632Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:23.633Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts
+{
+  "timestamp": "2026-10-08T02:01:23.634Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > uses a real governed pool larger than the relevance budget 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > offers the required cited record for: which version of ICH Q5C applies to our stability plan 5ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > offers the required cited record for: how do we document the potency assay in Module 3 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > offers the required cited record for: what quality requirements apply to our biologic stability data 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > offers the required cited record for: why does our gene therapy need a potency assay 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > keeps the persona-required CMC references available on an otherwise context-free follow-up 1ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > keeps required record reads under the existing core reliability rule 1ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > cannot resurrect a record tool withheld by tenant governance, even when pinned or carried 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains program peer: where are we with our gene therapy program and what should we do next 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains program peer: what is the critical path for our biosimilar 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains intake peer: read the PDF I just attached 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains intake peer: this scanned report is hard to read, extract the text from the pages 4ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains intake peer: inspect the files I attached before you start drafting 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains intake peer: read the Excel batch results I uploaded 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: what documents and sections do we have in this project 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: read the current clinical overview before revising it 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: find every section mentioning the changed dose 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: help me write a statistical analysis plan 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: help me prepare an EU clinical trial application 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: help me prepare a Canada CTA amendment 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: help me draft the investigator brochure 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains statistics peer: what sample size do we need for a phase 2 trial 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains statistics peer: define the estimand for our trial 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains statistics peer: how should we handle missing patient outcomes 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains statistics peer: plan how to control multiplicity for our co primary endpoints 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains consistency peer: check that the efficacy percentages match the counts 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains consistency peer: check for discrepancies across the study documents 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains submission peer: what happens next after database lock 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains submission peer: what would cause the FDA to reject our electronic submission 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains nonclinical peer: compute the first in human starting dose from NOAEL and MABEL 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > preserves the existing launch refusal for estimate_recorded_shelf_life 5ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > preserves the existing launch refusal for assess_recorded_stability_trend 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > preserves the existing launch refusal for assess_recorded_batch_poolability 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > the selected Q5C reference reads an actual cited record, with a recorded currency limit 1ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > potency requirements remain cited record reads, not numerical calculations or readiness 2ms
+stdout | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+{
+  "timestamp": "2026-10-08T02:01:24.871Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:24.873Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+{
+  "timestamp": "2026-10-08T02:01:24.873Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps dotted section codes and annex keys (it used to return only ["see"]) 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps eSTAR CH tokens whole, without a stray "05.06" fragment 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a code at the end of a sentence or in brackets without the punctuation 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a CTD Module 3 code with a letter segment whole, never a "3.2" fragment 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > emits no fragment from a code followed by a dot and a word 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > never emits the region acronyms eu, us or jp 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > is additive: the word tokens it produced before are unchanged 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > "2.5" reaches a tool describing 2.5, and never one describing only 12.5 or 2.5.1 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the description (+2) outranks one matching word (+1) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the name (+3) outranks a code in the description (+2) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a CTD Module 3 code does not reach a tool described only by "21 CFR 3.2(e)" 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > an annex key does not match inside a longer one ("ii.6.1" is not "iii.6.1") 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a single-number annex key is a code token too ("ii.6" is not inside "iii.6.1" or "ii.61") 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "draft 3.2.P.5.1" offers none of the 21 CFR 3.2(e) tools 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "what goes in 3.2.S.4.1 specification for the drug substance" offers none of the 21 CFR 3.2(e) tools 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > every expected tool is in the launch-scoped pool (so the cases cannot pass vacuously) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 3ms
+stdout | server/services/ana/__tests__/tool-selection.test.ts
+{
+  "timestamp": "2026-10-08T02:01:26.115Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:26.117Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection.test.ts
+{
+  "timestamp": "2026-10-08T02:01:26.117Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-selection.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the platform command bridge (the command registry; a typed tool it drops is not reachable through it) 5ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the core search/guidance/authoring tools 2ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > surfaces the nonclinical tools for a nonclinical turn 4ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > surfaces clin-pharm tools for a DDI / QTc turn, and respects the cap 4ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > returns the full surface unchanged below the cap 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > returns only the always-on set when the query carries no intent signal 1ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > passes everything through when disabled via env 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the user-pinned tools from the picker 1ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > selects by context (document type) even when the message is terse 3ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > getToolCatalog > groups the surface into categories for the picker 3ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > getToolCatalog > routes representative tools to sensible categories 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > keeps a healthy relevant tool over an unhealthy one when over the cap 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > without deprioritization, ranks purely by relevance (stable order) 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > never drops an always-on tool even if marked unhealthy (capability guarantee) 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > generate_document — no from-scratch regulatory artefacts > no longer offers ectd_backbone or icsr as document types 0ms
+stdout | server/services/ana/__tests__/tool-selection-context.test.ts
+{
+  "timestamp": "2026-10-08T02:01:27.263Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:27.264Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-context.test.ts
+{
+  "timestamp": "2026-10-08T02:01:27.264Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-selection-context.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > the selector reads a context field only as the string it is declared to be > an object never adds the word "object" 13ms
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > the selector reads a context field only as the string it is declared to be > hints that are not a list do not throw, and a list keeps only its strings 6ms
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > what a conversation carries into the next turn > the tools that succeeded, most recent first, each once 0ms
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > what a conversation carries into the next turn > never a step a person declined (recorded as an error), and nothing from no steps 0ms
+
+ Test Files  6 passed (6)
+      Tests  168 passed (168)
+   Start at  10:01:14
+   Duration  12.47s (transform 2.92s, setup 135ms, import 9.11s, tests 2.33s, environment 1ms)
+

@@ -1,0 +1,417 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > keep_data withdraws captured and vault binaries while preserving extracted data 147ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > remove_data excludes current data and binaries without deleting historical identities 76ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > supersede excludes the predecessor and keeps the named successor eligible 71ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > projects the later terminal decision by sequence when chained decisions share a timestamp 128ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > keeps matching bytes eligible in another organization or another program 80ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > keeps unrelated upload binaries available while excluding linked originals 67ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > keep_data cannot resurrect binary access through a fresh upload ID holding the same bytes 61ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > remove_data cannot resurrect binary access through a fresh upload ID holding the same bytes 54ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > uses the programme tenant for a legacy NULL-org Vault version and refuses contradictory tenant metadata 61ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > keep_data freezes both RAG metadata and late RAG chunks while projecting retained binary availability 71ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > remove_data freezes both RAG metadata and late RAG chunks while projecting retained binary availability 72ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > recognizes every supported atom alias and tolerates malformed numeric source IDs 83ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > refuses reparenting a disposed atom, chunk, catalog row or citation into an eligible identity 74ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > replays with one trigger of each kind and blocks update, delete and truncate 55ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > enforces source identity and a monotonic disposition chain at the database door 50ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > keep_data freezes linked OCR, atoms, chunks and catalog writes and refuses same-byte resurrection 73ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > remove_data freezes linked OCR, atoms, chunks and catalog writes and refuses same-byte resurrection 76ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > validates and normalizes a complete pharma input 3ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > rejects missing required fields 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > warns on unusual alpha 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > warns on low power target 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > warns on high attrition rate 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > prefills default values 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > requires NI margin for non-inferiority studies 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > requires sensitivity/specificity for diagnostic accuracy studies 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes reproducible sample size for continuous superiority 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes sample size for binary endpoints 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes sample size for survival endpoints 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes diagnostic accuracy metrics 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > adjusts sample size for attrition 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > generates scenario comparisons 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes non-inferiority design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > compares two scenarios correctly 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > larger effect size requires fewer subjects 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > higher power requires more subjects 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > judges a well-powered study with estimand as adequate 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > flags an underpowered study 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > assesses fragility correctly 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > assesses endpoint-method fit 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > generates role-specific explanations 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > recommends escalation for critical issues 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > provides confidence assessment 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > adapts for biotech/pharma track 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > adapts for medical device track 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > adapts for diagnostics/IVD track 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > produces different adaptations for different tracks 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for FDA 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for EMA 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for PMDA 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for MHRA 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > produces different content for FDA vs EMA 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > generates a sample size rationale document 2ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > generates a statistical risk memo 2ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > generates an SAP section draft 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > preserves provenance in generated documents 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > includes regulatory notes when body is specified 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > project-binds generated documents 0ms
+stdout | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+{
+  "timestamp": "2026-10-08T02:01:19.749Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:19.750Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+{
+  "timestamp": "2026-10-08T02:01:19.750Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+[database] Database connection successful
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+{
+  "timestamp": "2026-10-08T02:01:19.809Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "insert into \"concept2cure_artifacts\" (\"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"conte...",
+    "enforcement": "off"
+  }
+}
+
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow 1134ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full statistical risk review workflow 2ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes device track workflow 2ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes diagnostic track workflow 2ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > handles invalid input gracefully 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > quick compute returns results without document 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > quick compute handles validation failure 0ms
+ ✓ tests/services/ana-biostats.test.ts > Scenario Comparison Workflow > compares two pharma scenarios 1ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > handles missing effect size 0ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > handles zero effect size in computation 1ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > handles very small alpha 0ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > exposes confidence limitations 1ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > does not produce silent failures 0ms
+ ✓ tests/services/ana-biostats.test.ts > Deterministic Reproducibility > Scenario 1: Phase III NSCLC superiority — exact numeric reproduction 0ms
+ ✓ tests/services/ana-biostats.test.ts > Deterministic Reproducibility > Scenario 2: Device non-inferiority — exact numeric reproduction 1ms
+ ✓ tests/services/ana-biostats.test.ts > Deterministic Reproducibility > Scenario 3: Diagnostic accuracy — exact numeric reproduction 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Multiplicity Computation > computes Bonferroni adjustment for 3 endpoints 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Multiplicity Computation > computes Holm step-down adjustment 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Multiplicity Computation > returns no adjustment for single endpoint 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Crossover Computation > computes crossover sample size with efficiency gain 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Crossover Computation > higher correlation yields smaller crossover N 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Missing Data Impact > computes missing data impact for complete case 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Missing Data Impact > MMRM preserves more power than complete case 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Missing Data Impact > higher missing rate increases bias risk 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Agreement/Kappa Computation > computes kappa sample size 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: AUC Computation > computes AUC comparison sample size 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags missing multiplicity correction in Phase III 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > accepts single endpoint without multiplicity 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags missing estimand in Phase III pharma 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > accepts estimand for device track without penalty 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags high missing data rate 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags LOCF as not recommended 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags placebo in non-inferiority as contradictory 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Orchestrator with New Capabilities > includes multiplicity result in enhanced workflow 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Orchestrator with New Capabilities > includes missing data impact when specified 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Orchestrator with New Capabilities > includes 10 judgment dimensions in enhanced output 1ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: SAP Document Content > SAP section includes multiplicity adjustment when specified 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: SAP Document Content > SAP section includes missing data handling when specified 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: SAP Document Content > SAP section includes estimand framework when specified 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Agent Definitions > has exactly 5 SME agents defined 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Agent Definitions > all agents have required fields 1ms
+ ✓ tests/services/ana-biostats.test.ts > SME Agent Definitions > each agent has unique ID 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes sample size request to trial_design_power 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes device/diagnostics to device_diagnostics_performance 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes SAP workflow to sap_analysis_strategy 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes regulatory submission to regulatory_submission 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes adaptive design to adaptive_sensitivity 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > returns secondary SMEs when multiple match 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > provides routing rationale 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > trial_design_power provides design-specific guidance 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > sap_analysis_strategy provides SAP-specific guidance when estimand missing 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > regulatory_submission provides body-specific guidance 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > device_diagnostics_performance provides diagnostic-specific guidance 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > adaptive_sensitivity provides fragility-focused guidance 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > different SMEs produce different enhancements for same input 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > orchestrator includes SME routing in workflow response 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > orchestrator includes SME enhancement in workflow response 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > SME guidance merges into anaInterpretation 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > device track routes to device specialist in full workflow 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Fallback & Failure Behavior > falls back to trial_design_power when no strong match 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Fallback & Failure Behavior > SME enhancement does not crash on minimal input 1ms
+ ✓ tests/services/ana-biostats.test.ts > SME Fallback & Failure Behavior > escalation notes appear when conditions are met 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > a non-inferiority design sized for 90% reports 90%, not the superiority power of δ 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > holds for a positive true difference and an unequal allocation 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > an equivalence design sized for 80% reports 80% 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > the judgment does not call a correctly sized non-inferiority design underpowered 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > a non-inferiority trial against placebo is still flagged — for its comparator, not its power 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > missing-data power loss is measured against the same test, not collapsed to the superiority power 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > superiority is unchanged: sized for 80%, reports 80% 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > sizes d = 0.5 at 63 per group (80% power, two-sided 0.05), not 16 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > N depends on the effect size: d = 0.3 needs more subjects than d = 0.5 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > discloses the standardisation as a default assumption 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous superiority: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous non-inferiority: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous equivalence: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > binary superiority, 2:1: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > time to event: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > no scenario carries a missing or non-finite N 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > superiority sized for 80% reports a computed power at or just above 80%, not the target echoed 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > non-inferiority sized for 90% reports ~90% 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > each scenario reports the power computed for its own N, not one echoed target 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "Analyses followed the pre-specified SAP" as fact 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "analyzed on the ITT population" as fact 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "tipping-point sensitivity analyses" as fact 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "tested within a pre-specified hierarchy" as fact 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "handled per the pre-specified SAP approach" as fact 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > marks what the sponsor must confirm, in the placeholder the CSR completeness check detects 669ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > still states what the plan and the engine do establish 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the Phase 2 cross-registry link > maps artifact ids to their canonical cre_evidence_sources.id 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the Phase 2 cross-registry link > resolves an artifact with no canonical source to NOTHING (honest — no invented id) 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the Phase 2 cross-registry link > is tenant-scoped: org A never resolves org B's source 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the Phase 2 cross-registry link > mixes resolvable + unresolvable ids in one batch, returning only the real ones 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the Phase 2 cross-registry link > returns empty for invalid inputs without querying 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > resolves cre_source:<id> to that id when it exists and is org-owned 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > does NOT resolve cre_source:<id> for a missing source (honest — id never trusted blind) 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > is tenant-scoped: org A cannot resolve org B's source via cre_source:<id> 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > ignores a malformed cre_source:<non-numeric> (never resolved) 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > resolves a mixed batch of BOTH link forms in one call 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > resolves the inclusive SERIAL maximum only for its owning organization 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > keeps valid citations when an unavailable direct source ID exceeds SERIAL: 2147483648 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > keeps valid citations when an unavailable direct source ID exceeds SERIAL: 9007199254740992 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > keeps valid citations when an unavailable direct source ID exceeds SERIAL: 999999999999999999999999999999 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > drops and names an out-of-range drafting source without aborting the valid sources: {"evidence_source_id":2147483648} 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > drops and names an out-of-range drafting source without aborting the valid sources: {"artifact_id":"cre_source:2147483648"} 4ms
+stdout | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T02:01:23.380Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:23.382Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T02:01:23.382Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T02:01:23.503Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > resolves an evidence_source_id only when it exists in the tenant, and an artifact_id through the same resolver 28ms
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > is empty, not an error, when the tool call carried no sources 0ms
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > drives the same gate as the human accept: the verbatim clause lands on the source, the rest on the author 22ms
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > says so when sources were cited but nothing quotes them 11ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > find_cmc_guidance > answers a code with the document, its status, date and URL 9ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > find_cmc_guidance > marks a draft as a draft in the citation 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > find_cmc_guidance > refuses an authority the record does not know, and names the ones it does 0ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > find_cmc_guidance > says "not indexed", and not to answer from memory, when nothing matches 2ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > get_cmc_requirements > returns an authority’s pathway with its requirements, each cited 2ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > get_cmc_requirements > filters by CTD section 4ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > explain_cmc_topic > answers a note’s own topic with its citations, or says the record has no notes yet 6ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-tools.test.ts > every answer fits what the model is given to read > stays inside the budget for the broadest questions 8ms
+stdout | server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts
+{
+  "timestamp": "2026-10-08T02:01:26.945Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:26.946Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts
+{
+  "timestamp": "2026-10-08T02:01:26.946Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts > attrition assumptions distinguish supplied values from defaults > keeps an explicitly supplied valid rate 0 without labeling it a default 2ms
+ ✓ server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts > attrition assumptions distinguish supplied values from defaults > keeps an explicitly supplied valid rate 0.2 without labeling it a default 0ms
+ ✓ server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts > attrition assumptions distinguish supplied values from defaults > retains the existing default and attribution when the rate is omitted 1ms
+ ✓ server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts > attrition assumptions distinguish supplied values from defaults > retains the existing default and attribution when the rate is undefined 0ms
+ ✓ server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts > attrition assumptions distinguish supplied values from defaults > retains the existing default and attribution when the rate is null 0ms
+ ✓ server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts > attrition assumptions distinguish supplied values from defaults > still rejects rate -0.1 rather than substituting a default 0ms
+ ✓ server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts > attrition assumptions distinguish supplied values from defaults > still rejects rate 1 rather than substituting a default 0ms
+ ✓ server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts > attrition assumptions distinguish supplied values from defaults > leaves the caller's supplied design and zero attrition unchanged 1ms
+ ✓ server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts > AnA reports the engine's actual attrition assumption > returns a supplied zero as a user assumption with no dropout inflation or default claim 28ms
+ ✓ server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts > AnA reports the engine's actual attrition assumption > still applies and names the existing default when AnA receives no rate 1ms
+stdout | server/services/ana/__tests__/ana-launch-scope.test.ts
+{
+  "timestamp": "2026-10-08T02:01:31.097Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:31.098Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-launch-scope.test.ts
+{
+  "timestamp": "2026-10-08T02:01:31.098Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ana-launch-scope.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/ana-launch-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-launch-scope.test.ts
+{
+  "timestamp": "2026-10-08T02:01:31.541Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ana-launch-scope.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every enabled tool: a new one must be added as hiddenApp or inScope 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every platform command 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog 6ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > brings a tool back when its surface joins the launch catalog, without editing the inventory 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > withholds them for a request with no organisation too 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > with launch scope off (a development server), offers everything 0ms
+stdout | server/services/ana/__tests__/governed-toolset.test.ts
+{
+  "timestamp": "2026-10-08T02:01:34.880Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:34.882Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/governed-toolset.test.ts
+{
+  "timestamp": "2026-10-08T02:01:34.882Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/governed-toolset.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > removes a denied tool from the surface the model is offered 2ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > returns everything when the tenant denies nothing 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > does NOT apply the allowlist — that would strip every search tool 0ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > skips the policy lookup entirely when there is no organization 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > ignores a non-numeric organization id rather than passing it to the query 0ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > is default-allow when the policy cannot be read 0ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer the catalog tools to an organization whose catalog is off 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > offers them when the catalog is on 0ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > fails closed when the toggle cannot be read — a tool that would refuse is not offered 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer them to an org-less turn, which they refuse outright 1ms
+stdout | server/services/ana/__tests__/cmc-knowledge-registration.test.ts
+{
+  "timestamp": "2026-10-08T02:01:35.863Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T02:01:35.864Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/cmc-knowledge-registration.test.ts
+{
+  "timestamp": "2026-10-08T02:01:35.865Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/cmc-knowledge-registration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are offered to the model 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > have a handler 0ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are classed read, so a read never asks the person to confirm 0ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are in launch scope 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > have a plan label of their own, not a humanised tool name 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > report deterministic registry pedigree: no model wrote these answers 0ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are named in the prompt AnA works under, which tells her not to supply requirements from memory 1ms
+
+ Test Files  9 passed (9)
+      Tests  207 passed (207)
+   Start at  10:01:15
+   Duration  21.84s (transform 5.90s, setup 150ms, import 12.32s, tests 8.10s, environment 1ms)
+
