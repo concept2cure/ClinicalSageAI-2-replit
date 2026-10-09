@@ -257,6 +257,7 @@ router.get('/completion-status/:submissionType', async (req, res) => {
       criticalPath: predictions.criticalPath,
       regulatoryGaps: predictions.regulatoryGaps,
       topSuggestions: predictions.suggestions.slice(0, 5),
+      aiSuggestions: predictions.aiSuggestions,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {

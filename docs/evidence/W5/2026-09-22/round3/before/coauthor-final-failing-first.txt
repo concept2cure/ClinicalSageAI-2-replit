@@ -1,0 +1,217 @@
+co-author final pass — failing first. New and changed tests run on the tree BEFORE any source change (2026-09-23).
+Command, per file: npx vitest run --config vitest.config.ts --no-file-parallelism <file>
+Expected-to-pass-now cases pin existing behaviour (seal compare (a)-(d), audit reasons/flags); they are shown failing on mutants in coauthor-final-mutants.txt.
+
+================================================================
+FILE batch-draft-accept-lineage.pglite.integration.test.ts
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > records every clause of the accepted text as the acceptor's assertion, in the same transaction as the content and its audit row 73ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > refuses an accept with no identified user, and writes nothing 10ms
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 33ms
+   → {"success":true,"data":{"documentId":3,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 24ms
+   → {"success":true,"data":{"documentId":4,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 28ms
+   → {"success":true,"data":{"documentId":5,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 23ms
+   → {"success":true,"data":{"documentId":6,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 26ms
+   → {"success":true,"data":{"documentId":7,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > a working row is still accepted (the refusal is the verdict, not the route) 21ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 3 passed (8)
+
+================================================================
+FILE coauthor-document-delete-audit.contract.test.ts
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > writes the deleted event with its reason, actor and Part 11 flags 3224ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > deletes and audits in one transaction 6ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > fails closed — an audit failure rolls the delete back (500) 8ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > 404 when the document is absent performs no audit 4ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > writes the deleted event with its reason, actor and Part 11 flags 80ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > deletes and audits in one transaction 9ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > fails closed — an audit failure rolls the delete back (500) 4ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > 404 when the document is absent performs no audit 5ms
+      Tests  8 passed (8)
+
+================================================================
+FILE coauthorSnapshotFromSource.test.ts
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title — a forged body is not what gets approved 95ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized 77ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections — there is nothing to file — and creates nothing 22ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > leaves an unsourced POST as it was: the body is the text, and it is a draft 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again 58ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text 58ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again 45ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records 64ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing 36ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing 14ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was 49ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode) 20ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established 20ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections 37ms
+   → expected 'SOURCE_SEAL_INTEGRITY_FAILED' to be 'SOURCE_NOT_SEALED' // Object.is equality
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash 23ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze) 23ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > a draft source is not held to a seal (it has none), and still files as a draft 13ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses a source whose sections are headings with no text — the body would be empty 9ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses whitespace-only sections the same way 8ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > SOURCE_CHANGED: a source approved between the first read and the lock is refused, and nothing is written 15ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > DOCUMENT_ALIAS_CONFLICT: an alias naming another organization's row is refused, and neither row nor alias changes 20ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > a re-take that changes the copy writes one audit event with the text it replaced — even saved co-author edits 32ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > an unchanged re-take writes no audit event (and nothing else) 84ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > re-creating a deleted copy is recorded against the same id 63ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > both events carry their reason and are flagged regulatory-significant and GxP-relevant 85ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (a) a section heading renamed after the seal, same text: 409, nothing written 17ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (b) a section code changed after the seal: 409, nothing written 14ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (c) two sections swapped in order after the seal, texts unchanged: 409, nothing written 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (d) another tenant's seal of the same document id does not seal this tenant's document: 409, nothing written 15ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > a seal without section ids (the shape seed 99 wrote) whose filed text matches is not reported as altered 29ms
+   → {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was approved, so they cannot be filed as approved. Nothing was filed or changed."}: expected 409 to be 201 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order 18ms
+   → expected '## 1.2 — Beta\n\nbeta\n\n## 1.1 — Alp…' to be '## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 …' // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing 35ms
+   → expected true to be undefined
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the filed text is the text the seal check read > a section changed before the read and restored after it is refused, not filed 23ms
+   → {"success":true,"document":{"id":19,"organizationId":7,"title":"Cover letter","content":"## 1.1.3 — Form\n\nNOT-SEALED TEXT","sections":null,"status":"finalized","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,"regulatoryComplianceScore":null,"metadata":{"docId":"13000000-0000-4000-8000-000000000001","source":"authoring-document","status":"FROZEN","sealVersion":"v1.0.frozen","sealContentHash":"36a34e8cf0e678db05d08c128d7fc3e37709a0def485abd03814b22e0d5b45fc"},"ectdModuleId":null,"moduleNumber":"m1.2","moduleName":null,"embedding":null,"createdAt":"2026-09-23T09:00:52.087Z","updatedAt":"2026-09-23T09:00:52.087Z"}}: expected 201 to be 409 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > ["0a000000-0000-4000-8000-000000000001"] is refused 400 and nothing is written 12ms
+   → {"success":true,"document":{"id":1,"organizationId":7,"title":"Cover letter","content":"## 1.2 — Cover\n\nThe approved cover letter.\n\n## 1.2.1 — Annex\n\nApproved annex.","sections":null,"status":"approved","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,"regulatoryComplianceScore":null,"metadata":{"docId":"0a000000-0000-4000-8000-000000000001","source":"authoring-document","status":"APPROVED","sealVersion":"v1.0.frozen","sealContentHash":"30971673408fc57709756d54950b838807c5a0bc67f84c64a55242b18424dcfa"},"ectdModuleId":null,"moduleNumber":"m1.2","moduleName":null,"embedding":null,"createdAt":"2026-09-23T09:00:50.976Z","updatedAt":"2026-09-23T09:00:50.976Z"},"replaced":true}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > {"id":"0a000000-0000-4000-8000-000000000001"} is refused 400 and nothing is written 4ms
+   → {"error":"Source document not found","message":"The document this snapshot was to be taken from does not exist in this organization. Nothing was created."}: expected 404 to be 400 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > 42 is refused 400 and nothing is written 5ms
+   → {"error":"Source document not found","message":"The document this snapshot was to be taken from does not exist in this organization. Nothing was created."}: expected 404 to be 400 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > true is refused 400 and nothing is written 9ms
+   → {"error":"Source document not found","message":"The document this snapshot was to be taken from does not exist in this organization. Nothing was created."}: expected 404 to be 400 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  9 failed | 30 passed (39)
+
+================================================================
+FILE coauthorSnapshotSeal.test.ts
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text 174ms
+ × server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files 52ms
+   → {"ok":true,"upserts":1}: expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section 56ms
+   → {"ok":true,"upserts":0}: expected 200 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > a DRAFT document still takes a template (the lock is the refusal, not the route) 22ms
+ × server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing 115ms
+   → expected true to be undefined
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 2 passed (5)
+
+================================================================
+FILE coauthorSnapshotSeeds.test.ts
+   ✓ ind authoring doc: "Control of Drug Substance (CTD 3.2.S.4)" seeded for BX-512 (3 sections, incl. 3.2.S.4.2)
+ × server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112-ind-authoring-doc: the IND demo document is sealed and files as approved (201) 98ms
+   → expected [] to have a length of 1 but got +0
+   ✓ doc journey: 1 document + 3 sections, 1 revision, 1 comment, 1 freeze seeded into the real authoring store (doc 587d3349-8b52-4ff1-b654-7edb7458a11e)
+ × server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 99-doc-journey: the doc-journey document is sealed in the router format and files as approved (201) 45ms
+   → expected { …(4) } to deeply equal { …(19) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed (2)
+
+================================================================
+FILE ind-checklist-view-assembler.pglite.integration.test.ts
+ × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > maps a full real IND into the IndLifecycle contract (placed-leaf path) 78ms
+   → expected { code: 'm1.2', …(5) } to match object { title: 'Cover Letter', …(3) }
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > renders an honest empty section list (no org-wide fallback) when a submission has no placed leaves 14ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > does not leak one submission's org docs into a sibling submission with no leaves 21ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > returns [] for an org with no IND submission, and never crosses tenants 24ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > excludes soft-deleted submissions 12ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > ignores non-IND submissions 9ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > resolves the org's RECORDED target_submission_date by identity match 30ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > matches on the program name/code when product names differ 15ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when the matching program records no target date 22ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when no program matches the submission identity 27ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > never resolves across tenants, program type, or soft-deleted programs 21ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a placed form_3674 leaf backed by a retained file marks FDA 3674 complete; the others keep their authored state 18ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a leaf whose file belongs to another organisation does not complete the form 27ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a form leaf with no document behind it (awaiting the sponsor's file) does not complete the form 40ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a missing authoring store degrades sections, not the IND > still reports the IND, with honest empty sections, when coauthor_documents is absent 42ms
+ × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > completes a form and enriches a blueprint section whatever the stored spelling 17ms
+   → expected { code: 'm1.2', …(5) } to match object { title: 'Cover Letter', …(2) }
+ × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > maps finalized to 'locked', never 'signed'; a signed or approved copy of the same section outranks it 22ms
+   → expected { 'm1.2': 'signed', …(2) } to deeply equal { 'm1.2': 'approved', …(2) }
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > two spellings of one section are one section, at the more advanced status 7ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > a section the blueprint does not model keeps the document’s own name, never an invented title 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 16 passed (19)
+
+================================================================
+FAILURE DETAIL
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched
+AssertionError: {"success":true,"data":{"documentId":3,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched
+AssertionError: {"success":true,"data":{"documentId":4,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched
+AssertionError: {"success":true,"data":{"documentId":5,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched
+AssertionError: {"success":true,"data":{"documentId":6,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched
+AssertionError: {"success":true,"data":{"documentId":7,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections
+AssertionError: expected 'SOURCE_SEAL_INTEGRITY_FAILED' to be 'SOURCE_NOT_SEALED' // Object.is equality
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > a seal without section ids (the shape seed 99 wrote) whose filed text matches is not reported as altered
+AssertionError: {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was approved, so they cannot be filed as approved. Nothing was filed or changed."}: expected 409 to be 201 // Object.is equality
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order
+AssertionError: expected '## 1.2 — Beta\n\nbeta\n\n## 1.1 — Alp…' to be '## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 …' // Object.is equality
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing
+AssertionError: expected true to be undefined
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the filed text is the text the seal check read > a section changed before the read and restored after it is refused, not filed
+AssertionError: {"success":true,"document":{"id":19,"organizationId":7,"title":"Cover letter","content":"## 1.1.3 — Form\n\nNOT-SEALED TEXT","sections":null,"status":"finalized","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,"regulatoryComplianceScore":null,"metadata":{"docId":"13000000-0000-4000-8000-000000000001","source":"authoring-document","status":"FROZEN","sealVersion":"v1.0.frozen","sealContentHash":"36a34e8cf0e678db05d08c128d7fc3e37709a0def485abd03814b22e0d5b45fc"},"ectdModuleId":null,"moduleNumber":"m1.2","moduleName":null,"embedding":null,"createdAt":"2026-09-23T09:00:52.087Z","updatedAt":"2026-09-23T09:00:52.087Z"}}: expected 201 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > ["0a000000-0000-4000-8000-000000000001"] is refused 400 and nothing is written
+AssertionError: {"success":true,"document":{"id":1,"organizationId":7,"title":"Cover letter","content":"## 1.2 — Cover\n\nThe approved cover letter.\n\n## 1.2.1 — Annex\n\nApproved annex.","sections":null,"status":"approved","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,"regulatoryComplianceScore":null,"metadata":{"docId":"0a000000-0000-4000-8000-000000000001","source":"authoring-document","status":"APPROVED","sealVersion":"v1.0.frozen","sealContentHash":"30971673408fc57709756d54950b838807c5a0bc67f84c64a55242b18424dcfa"},"ectdModuleId":null,"moduleNumber":"m1.2","moduleName":null,"embedding":null,"createdAt":"2026-09-23T09:00:50.976Z","updatedAt":"2026-09-23T09:00:50.976Z"},"replaced":true}: expected 200 to be 400 // Object.is equality
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > {"id":"0a000000-0000-4000-8000-000000000001"} is refused 400 and nothing is written
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > 42 is refused 400 and nothing is written
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > true is refused 400 and nothing is written
+AssertionError: {"error":"Source document not found","message":"The document this snapshot was to be taken from does not exist in this organization. Nothing was created."}: expected 404 to be 400 // Object.is equality
+ FAIL  server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files
+AssertionError: {"ok":true,"upserts":1}: expected 200 to be 403 // Object.is equality
+ FAIL  server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section
+AssertionError: {"ok":true,"upserts":0}: expected 200 to be 403 // Object.is equality
+ FAIL  server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing
+AssertionError: expected true to be undefined
+ FAIL  server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112-ind-authoring-doc: the IND demo document is sealed and files as approved (201)
+AssertionError: expected [] to have a length of 1 but got +0
+ FAIL  server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 99-doc-journey: the doc-journey document is sealed in the router format and files as approved (201)
+AssertionError: expected { …(4) } to deeply equal { …(19) }
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > maps a full real IND into the IndLifecycle contract (placed-leaf path)
+AssertionError: expected { code: 'm1.2', …(5) } to match object { title: 'Cover Letter', …(3) }
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > completes a form and enriches a blueprint section whatever the stored spelling
+AssertionError: expected { code: 'm1.2', …(5) } to match object { title: 'Cover Letter', …(2) }
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > maps finalized to 'locked', never 'signed'; a signed or approved copy of the same section outranks it
+AssertionError: expected { 'm1.2': 'signed', …(2) } to deeply equal { 'm1.2': 'approved', …(2) }
+
+================================================================
+ADDENDUM (same session, before-tree re-runs of two tied-order cases whose assertions changed).
+The unchanged-re-take assertions first used 'replaced' (the route returns replaced:true on EVERY re-take, changed or not), so they were replaced by content/updated_at/audit checks; the Seal case's fixture was made deterministic (Beta row stored first) because the UPDATE-based heap reorder was nondeterministic on the real-migration table.
+Method: the four source files (authoring-canonical-bridge.ts, coauthor-snapshot.ts, authoring.router.ts, coauthor.ts) were copied back from the pre-change copies, the cases run, then the new files restored and confirmed with cmp.
+--- tied-order-rerun.txt
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing 198ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (a) a section heading renamed after the seal, same text: 409, nothing written 56ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (b) a section code changed after the seal: 409, nothing written 25ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (c) two sections swapped in order after the seal, texts unchanged: 409, nothing written 43ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (d) another tenant's seal of the same document id does not seal this tenant's document: 409, nothing written 16ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > a seal without section ids (the shape seed 99 wrote) whose filed text matches is not reported as altered 29ms
+   → {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was approved, so they cannot be filed as approved. Nothing was filed or changed."}: expected 409 to be 201 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order 31ms
+   → expected '## 1.2 — Beta\n\nbeta\n\n## 1.1 — Alp…' to be '## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 …' // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing 46ms
+   → expected '## 1.2 — Beta\n\nbeta\n\n## 1.1 — Alp…' to be '## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 …' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 5 passed | 36 skipped (44)
+--- tied-order-rerun-seal.txt
+ × server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing 157ms
+   → expected [ '1.2', '1.1' ] to deeply equal [ '1.1', '1.2' ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 skipped (5)
+
+--- tied-order-rerun-2.txt (a case added after the first implementation: a seal the pre-fix router wrote with ties in storage order; run on the pre-change tree the same way)
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order 77ms
+   → expected '## 1.2 — Beta\n\nbeta\n\n## 1.1 — Alp…' to be '## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 …' // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a seal the router wrote before it ordered ties (storage order) is read in the editor order, not refused 24ms
+   → expected '## 1.2 — Beta\n\nbeta\n\n## 1.1 — Alp…' to be '## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 …' // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing 26ms
+   → expected '## 1.2 — Beta\n\nbeta\n\n## 1.1 — Alp…' to be '## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 …' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 37 skipped (40)
+It also failed on the first implementation (sealed ties kept in storage order): mutant m_no_tiebreak in coauthor-final-mutants.txt.

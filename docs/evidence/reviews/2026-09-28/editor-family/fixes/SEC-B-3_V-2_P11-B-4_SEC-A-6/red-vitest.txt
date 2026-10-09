@@ -1,0 +1,126 @@
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx client/src/concept2cure/v2/__tests__/insertReferenceText.test.tsx
+# against unfixed RichSectionEditor.tsx / suggestions.ts (git diff on both: empty)
+
+# per-test results
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept, then Undo: the suggestion stays accepted 165ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Reject, then Undo: the rejected text does not come back 23ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept all, then Undo: nothing returns to pending 30ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > an AnA draft inserted and accepted in this session is not removed by Undo 39ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > CONTROL: ordinary typing is still undoable 19ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an accepted text present, unmarked, in the document — across a formatting split 50ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is back under a pending insertion mark, and its author with it 16ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is struck by a pending deletion 16ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text the document no longer holds 16ms
+ × client/src/concept2cure/v2/__tests__/insertReferenceText.test.tsx > insertReference > inserts a crafted vault title as the characters it contains 317ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an author while any one of their accepted texts survives 25ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > does not match a text across a paragraph boundary 9ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > does not save prose typed during the wait under the system reason, and anchors the quoted words 711ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > the ribbon Undo after Accept leaves the decision, the canvas and the save in agreement 476ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > attributes nothing to AnA once the accepted text is gone from the section 116ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > answers the same whichever list the host reads first 69ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > saves only the anchor under the system reason once the author saved their own edits during the wait 275ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > refuses the anchor when the quoted words themselves changed during the wait 158ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > CONTROL: an untouched buffer is anchored and saved under the system reason, as before 149ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — a save reports "saved" only for the text it sent > source mode: text typed while the save is in flight stays unsaved, guarded and cached 50ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — a save reports "saved" only for the text it sent > source mode: a keystroke during the save does not claim the save has settled 39ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — a save reports "saved" only for the text it sent > source mode autosave: the debounced save sends the latest keystroke, not the one before it 126ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — a save reports "saved" only for the text it sent > source mode: a restored device draft is what the next save sends 54ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — a save reports "saved" only for the text it sent > CONTROL: source mode with nothing typed mid-save is saved and leaves no device draft 41ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — a save reports "saved" only for the text it sent > rich mode: an edit made while the save is in flight keeps its device draft 122ms
+
+# failing assertions (first line of each)
+ FAIL  client/src/concept2cure/v2/__tests__/insertReferenceText.test.tsx > insertReference > inserts a crafted vault title as the characters it contains
+AssertionError: expected [ { from: 21, to: 36, …(5) } ] to deeply equal []
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > does not save prose typed during the wait under the system reason, and anchors the quoted words
+AssertionError: expected [ [ …(2) ] ] to deeply equal []
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > saves only the anchor under the system reason once the author saved their own edits during the wait
+AssertionError: expected ' changed' to be 'endpoint' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > refuses the anchor when the quoted words themselves changed during the wait
+AssertionError: expected 1 to be +0 // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — a save reports "saved" only for the text it sent > source mode: text typed while the save is in flight stays unsaved, guarded and cached
+AssertionError: expected 'All changes saved' to match /Unsaved changes/
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — a save reports "saved" only for the text it sent > source mode: a keystroke during the save does not claim the save has settled
+AssertionError: expected 'Unsaved changes — cached on this devi…' to match /Saving…/
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — a save reports "saved" only for the text it sent > source mode autosave: the debounced save sends the latest keystroke, not the one before it
+AssertionError: expected [ 'Visit 1  Day 1X' ] to deeply equal [ 'Visit 1  Day 1XY' ]
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — a save reports "saved" only for the text it sent > rich mode: an edit made while the save is in flight keeps its device draft
+AssertionError: expected null to be '<p>Stability narrative. First edit. T…' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept, then Undo: the suggestion stays accepted
+AssertionError: expected [ { from: 52, to: 72, …(5) } ] to have a length of +0 but got 1
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Reject, then Undo: the rejected text does not come back
+AssertionError: expected [ { from: 52, to: 72, …(5) } ] to have a length of +0 but got 1
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept all, then Undo: nothing returns to pending
+AssertionError: expected [ { from: 1, to: 14, …(5) }, …(1) ] to have a length of +0 but got 2
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > an AnA draft inserted and accepted in this session is not removed by Undo
+AssertionError: expected [ { from: 13, to: 33, …(5) } ] to have a length of +0 but got 1
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an accepted text present, unmarked, in the document — across a formatting split
+TypeError: settleAcceptedContributions is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is back under a pending insertion mark, and its author with it
+TypeError: settleAcceptedContributions is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is struck by a pending deletion
+TypeError: settleAcceptedContributions is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text the document no longer holds
+TypeError: settleAcceptedContributions is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an author while any one of their accepted texts survives
+TypeError: settleAcceptedContributions is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > does not match a text across a paragraph boundary
+TypeError: settleAcceptedContributions is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > the ribbon Undo after Accept leaves the decision, the canvas and the save in agreement
+AssertionError: expected [ { from: 52, to: 72, …(5) } ] to have a length of +0 but got 1
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > attributes nothing to AnA once the accepted text is gone from the section
+AssertionError: expected [ { id: 'ana', …(1) } ] to deeply equal []
+
+ Test Files  3 failed (3)
+      Tests  20 failed | 5 passed (25)
+exit=1
+
+# the 5 passing on unfixed code are controls/guards: ordinary typing undoable; list-read order; untouched-buffer comment anchor; restored-draft save; clean source save (they pin behaviour the fix must keep and catch mutants of it)
+# full unfiltered output: red.full.txt
+
+# SEC-B-3 key evidence (the finding reproduced on the unfixed code):
+AssertionError: expected [ [ …(2) ] ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   [
++     "<p>Dose<span data-comment-id=\"c-1\" class=\"rse-comment-anchor\"> changed</span> to 100 mg. The endpoint was met.</p>",
++     "Comment anchor applied",
++   ],
++ ]
+
+# ── Re-run after one test was added (SEC-B-3 'follows the range through the tracking plugin's own transactions') and the V-2 describe split for lint: final test files, unfixed source restored from pre-change copies, then the fix put back (cmp-verified). submissionCenterGovernedWorkspaces.test.tsx included to show its one failure is independent of this lane.
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx client/src/concept2cure/v2/__tests__/insertReferenceText.test.tsx client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx
+# final test files, against the UNFIXED RichSectionEditor.tsx / suggestions.ts (restored from the pre-change copies)
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept, then Undo: the suggestion stays accepted 343ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Reject, then Undo: the rejected text does not come back 35ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept all, then Undo: nothing returns to pending 20ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > an AnA draft inserted and accepted in this session is not removed by Undo 43ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > CONTROL: ordinary typing is still undoable 13ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an accepted text present, unmarked, in the document — across a formatting split 45ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is back under a pending insertion mark, and its author with it 15ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is struck by a pending deletion 17ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text the document no longer holds 20ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an author while any one of their accepted texts survives 20ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > does not match a text across a paragraph boundary 16ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > the ribbon Undo after Accept leaves the decision, the canvas and the save in agreement 977ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > attributes nothing to AnA once the accepted text is gone from the section 354ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > answers the same whichever list the host reads first 272ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > does not save prose typed during the wait under the system reason, and anchors the quoted words 1889ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > follows the range through the tracking plugin's own transactions 648ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > saves only the anchor under the system reason once the author saved their own edits during the wait 751ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > refuses the anchor when the quoted words themselves changed during the wait 383ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > CONTROL: an untouched buffer is anchored and saved under the system reason, as before 421ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: text typed while the save is in flight stays unsaved, guarded and cached 102ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: a keystroke during the save does not claim the save has settled 96ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode autosave: the debounced save sends the latest keystroke, not the one before it 239ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: a restored device draft is what the next save sends 160ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > CONTROL: source mode with nothing typed mid-save is saved and leaves no device draft 56ms
+ × client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — the rich canvas keeps its device draft the same way > rich mode: an edit made while the save is in flight keeps its device draft 354ms
+ × client/src/concept2cure/v2/__tests__/insertReferenceText.test.tsx > insertReference > inserts a crafted vault title as the characters it contains 263ms
+ Test Files  4 failed (4)
+      Tests  22 failed | 22 passed (44)
+exit=1
+# new tests on unfixed code: 21 failed, 5 passed (26); the 22nd failure is submissionCenterGovernedWorkspaces 'offers the governed freeze only when…', which fails identically with and without this lane's change.

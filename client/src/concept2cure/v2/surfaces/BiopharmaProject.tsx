@@ -617,8 +617,8 @@ export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!wsRes.loading && !wsRes.error) notifySurfaceActionReady('regulatory-workspace');
-  }, [wsRes.loading, wsRes.error]);
+    if (!wsRes.loading) notifySurfaceActionReady('regulatory-workspace');
+  }, [wsRes.loading]);
 
   /* What AnA can see of this screen. Published above the three honest-state
      early returns below — a hook after an early return is a conditional hook,

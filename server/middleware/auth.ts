@@ -9,8 +9,17 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
+import { isTokenRevoked, revokeToken, verifyLiveToken } from '../services/token-revocation';
+import { sessionEndCodeOf, sessionEndMessageOf, sessionInactivityReason } from '../services/session-inactivity';
 import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
-import { enforceOrgMembership, invalidateOrgMembershipCache } from './orgMembership';
+import { enforceOrgMembership, invalidateOrgMembershipCache, parseFiniteInt } from './orgMembership';
+import {
+  ACCOUNT_INACTIVE_MESSAGE,
+  issuedAtOfClaims,
+  readAccountStandingBeforeTenant,
+  sessionPredatesPasswordChange,
+  type AccountStanding,
+} from '../services/account-standing';
 import { establishRequestTenantScope } from './establishRequestTenantScope';
 import { enforceTenantLifecycle } from './tenantLifecycleGuard';
 import { enforceStorageQuota } from './storageQuotaGuard';
@@ -49,6 +58,20 @@ interface JWTPayload {
   // access path MUST reject them explicitly.
   type?: string;
   mfaPending?: boolean;
+  /** Issued-at, whole seconds; jsonwebtoken stamps it on every token it signs. */
+  iat?: number;
+  /** The session's id, start and idle window (services/session-inactivity.ts). */
+  sid?: string;
+  sst?: number;
+  idl?: number;
+  /**
+   * Which authentication surface issued the token: 'saml' on a federated
+   * sign-in (routes/sso.ts); absent on a password session. Carried onto
+   * req.user as `provider` ('local-jwt' when absent) so a guard behind this
+   * gate can tell the two apart — requirePlatformAdmin's e-mail allow-list
+   * does not apply to a federated identity (audit IAM-03).
+   */
+  provider?: string;
 }
 
 // Re-exported for callers that import the guard from the auth middleware.
@@ -152,38 +175,56 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         error: { code: 'AUTH_007', message: 'Token missing required subject claim' },
       });
     }
-    req.user = {
-      id: subject,
-      userId: subject,
-      email: decoded.email,
-      role: decoded.role || 'user',
-      roles: expandRoleClaims(decoded.role, decoded.roles),
-      organizationId: decoded.organizationId || decoded.orgId,
-      permissions: decoded.permissions || [],
-    };
-    // SECURITY (M1): the organizationId claim was minted at login; re-check
-    // that the membership row still exists so a revoked user loses access
-    // within the cache TTL instead of the full token lifetime.
+    // SECURITY (AUTH-03): a token whose session was signed out opens nothing.
+    // POST /api/auth/logout revokes the token and says "Tokens invalidated.",
+    // and until this check no authenticator read the revocation list, so a
+    // signed-out token kept the full /api surface for the rest of its 24 hours.
+    // Checked before a user is attached or membership is resolved. A lookup
+    // that fails outright answers 503, never a pass.
     //
-    // Only AFTER membership is confirmed (enforceOrgMembership calls this next
-    // on the member path) do we open the tenant scope + attach the request DB
-    // client, so the downstream handler runs inside a real RLS boundary instead
-    // of the historical bare next() that fail-closed every DB touch under
-    // RLS_ENFORCE=on. Revoked/indeterminate members are answered by
-    // enforceOrgMembership and never reach this callback. Idempotent; honours
-    // the SYSTEM carve-outs. See establishRequestTenantScope.
+    // VSR-001 F-29: so is the account's standing. An account suspended by an
+    // administrator or deprovisioned by the identity provider opens nothing,
+    // whenever its token was issued; nothing read it before. A subject that is
+    // not an integer names no account row, and has no standing to read.
     //
-    // The lifecycle guard runs LAST, once the tenant scope exists, because its
-    // posture lookup is itself a tenant-scoped query. Order matters in the other
-    // direction too: membership answers "is this user still in this org", the
-    // guard answers "is this org still entitled to operate". Both must hold.
-    //
-    // The storage quota guard runs LAST, and only on content-bearing writes. A
-    // suspended tenant must be told it is suspended, not that it is out of disk.
-    enforceOrgMembership(req, res, () =>
-      establishRequestTenantScope(req, res, () =>
-        enforceTenantLifecycle(req, res, () => enforceStorageQuota(req, res, next))
-      )
+    // Security audit 2026-09-24, IAM-04: and so is the account's last password
+    // change, read in the same statement. A reset or change stamps
+    // users.password_changed_at; a token issued before the stamp is a session
+    // the holder meant to end, and is answered like a revoked one.
+    const accountId = parseFiniteInt(subject);
+    Promise.all([
+      isTokenRevoked(token),
+      accountId === null ? Promise.resolve<AccountStanding | null>(null) : readAccountStandingBeforeTenant(accountId),
+      sessionInactivityReason(token, decoded),
+    ]).then(
+      ([revoked, standing, inactivity]) => {
+        if (revoked) {
+          res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
+          return;
+        }
+        if (standing && !standing.active) {
+          res.status(401).json({ error: { code: 'ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE } });
+          return;
+        }
+        if (standing && sessionPredatesPasswordChange(issuedAtOfClaims(decoded), standing.passwordChangedAtSeconds)) {
+          res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
+          return;
+        }
+        // Security audit 2026-09-24, IAM-06 (P1-1): a session idle past its
+        // window, or older than its lifetime, is over. This request was
+        // measured against the session's last recorded activity and, when
+        // admitted, recorded as it (services/session-inactivity.ts). The token
+        // is revoked so every other authenticator answers the same way.
+        if (inactivity) {
+          void revokeToken(token, inactivity);
+          res.status(401).json({ error: { code: sessionEndCodeOf(inactivity), message: sessionEndMessageOf(inactivity) } });
+          return;
+        }
+        admitLiveSession(req, res, next, decoded, subject);
+      },
+      () => {
+        res.status(503).json({ error: { code: 'SESSION_UNCHECKED', message: 'The session could not be checked. Try again.' } });
+      },
     );
   } catch {
     return res.status(401).json({
@@ -191,6 +232,82 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     });
   }
 };
+
+/** Attach the verified, live session's user and run the tenant boundary. */
+function admitLiveSession(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+  decoded: JWTPayload,
+  subject: NonNullable<JWTPayload['userId'] | JWTPayload['id'] | JWTPayload['sub']>,
+): void {
+  req.user = {
+    id: subject,
+    userId: subject,
+    email: decoded.email,
+    role: decoded.role || 'user',
+    roles: expandRoleClaims(decoded.role, decoded.roles),
+    organizationId: decoded.organizationId || decoded.orgId,
+    permissions: decoded.permissions || [],
+  };
+  // The token's provider, as server/auth.ts records it on req.identity: a
+  // guard behind this gate reads it to tell a federated session from a
+  // password one (requirePlatformAdmin, audit IAM-03). Set by assignment, not
+  // in the literal: Request.user is declared identically in several
+  // `declare global` blocks, which TypeScript requires to stay identical.
+  Object.assign(req.user, { provider: typeof decoded.provider === 'string' ? decoded.provider : 'local-jwt' });
+  // The numeric account id, as server/auth.ts sets it (req.userId). Guards that
+  // consult a database grant by user id — requirePlatformAdmin's
+  // platform_role_grants fallback — read this field, and behind this
+  // authenticator it was never set, so that fallback never ran here (found
+  // with IAM-10 / P1-4, when the org role stopped standing in for it).
+  (req as { userId?: number }).userId = parseFiniteInt(subject) ?? undefined;
+  // SECURITY (M1): the organizationId claim was minted at login; re-check
+  // that the membership row still exists so a revoked user loses access
+  // within the cache TTL instead of the full token lifetime.
+  //
+  // Only AFTER membership is confirmed (enforceOrgMembership calls this next
+  // on the member path) do we open the tenant scope + attach the request DB
+  // client, so the downstream handler runs inside a real RLS boundary instead
+  // of the historical bare next() that fail-closed every DB touch under
+  // RLS_ENFORCE=on. Revoked/indeterminate members are answered by
+  // enforceOrgMembership and never reach this callback. Idempotent; honours
+  // the SYSTEM carve-outs. See establishRequestTenantScope.
+  //
+  // The lifecycle guard runs LAST, once the tenant scope exists, because its
+  // posture lookup is itself a tenant-scoped query. Order matters in the other
+  // direction too: membership answers "is this user still in this org", the
+  // guard answers "is this org still entitled to operate". Both must hold.
+  //
+  // The storage quota guard runs LAST, and only on content-bearing writes. A
+  // suspended tenant must be told it is suspended, not that it is out of disk.
+  enforceOrgMembership(req, res, () => {
+    applyOrganizationRole(req);
+    establishRequestTenantScope(req, res, () =>
+      enforceTenantLifecycle(req, res, () => enforceStorageQuota(req, res, next))
+    );
+  });
+}
+
+/**
+ * The role a guard reads is the membership row's, read on this request, not
+ * the one minted into the token at login (security audit 2026-09-24 IAM-10,
+ * plan P1-4). enforceOrgMembership attaches `organizationRole` from the row it
+ * just confirmed (cached 60 s; role changes invalidate the cache), and this
+ * applies it: `role` and `roles` (expanded through the same functional grants
+ * the token path used) now come from the database, so a demotion takes effect
+ * on the next request and a promotion needs no new sign-in. server/auth.ts,
+ * the other authenticator, has resolved its role from the same row since its
+ * membership query was added; this brings authenticateToken level with it.
+ * A membership without a role value (never the case: the column is NOT NULL
+ * with a default) leaves the token's claims in place.
+ */
+function applyOrganizationRole(req: Request): void {
+  const user = req.user as ({ organizationRole?: unknown } & NonNullable<Request['user']>) | undefined;
+  if (!user || typeof user.organizationRole !== 'string' || !user.organizationRole) return;
+  user.role = user.organizationRole;
+  user.roles = expandRoleClaims(user.organizationRole, undefined);
+}
 
 /**
  * Alias for authenticateToken - used by some routes
@@ -457,16 +574,27 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
     return next();
   }
 
+  let decoded: JWTPayload;
   try {
-    const decoded = verifyJwtWithRotation(token) as JWTPayload;
-    const subject = decoded.userId ?? decoded.id ?? decoded.sub;
-    // Silently ignore tokens without a usable subject, and never attach a user
-    // from a non-access (refresh / MFA challenge / partial) token — optional
-    // auth continues unauthenticated rather than attaching a phantom user.
-    if (
-      !nonAccessTokenReason(decoded) &&
-      subject !== undefined && subject !== null && subject !== '' && subject !== 0
-    ) {
+    decoded = verifyJwtWithRotation(token) as JWTPayload;
+  } catch {
+    // Token invalid but that's okay for optional auth
+    return next();
+  }
+  const subject = decoded.userId ?? decoded.id ?? decoded.sub;
+  // Silently ignore tokens without a usable subject, and never attach a user
+  // from a non-access (refresh / MFA challenge / partial) token — optional
+  // auth continues unauthenticated rather than attaching a phantom user.
+  if (nonAccessTokenReason(decoded) || subject === undefined || subject === null || subject === '' || subject === 0) {
+    return next();
+  }
+  // Nor from a session that is over: signed out (AUTH-03), the account
+  // inactive, the password changed since (IAM-04), idle past its window,
+  // past its lifetime or superseded (IAM-06) — the same verification the
+  // other authenticators apply, in one call. If the check itself fails, the
+  // request continues unauthenticated rather than as the token's user.
+  verifyLiveToken(token).then(
+    () => {
       req.user = {
         id: subject,
         userId: subject,
@@ -476,12 +604,10 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
         organizationId: decoded.organizationId || decoded.orgId,
         permissions: decoded.permissions || [],
       };
-    }
-  } catch {
-    // Token invalid but that's okay for optional auth
-  }
-
-  next();
+      next();
+    },
+    () => next(),
+  );
 };
 
 export default {

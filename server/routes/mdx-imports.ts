@@ -44,6 +44,7 @@ import { recordArtifactProvenanceBestEffort } from '../services/provenance/artif
  * assembled from.
  */
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { resolveDocumentPath } from '../utils/document-file-roots';
 
 const router = Router();
 const log = createScopedLogger('mdx-imports');
@@ -79,6 +80,17 @@ router.post('/imports', requireEditorAccess, async (req: Request, res: Response)
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
 
+  // The detector reads, hashes and lists every entry of the archive at this
+  // path, and the listing is stored in the caller's import job. Taken from the
+  // body unconfined, `uploads/org-2/…` put another tenant's eCTD inventory into
+  // this tenant's rows, and any host path was opened (the route twin of AnA's
+  // start_legacy_import, INJ-PATH-002). Resolved through the one decision
+  // point for caller-supplied paths, confined to this organization's prefix.
+  const sourcePath = resolveDocumentPath(p.sourcePath, { organizationId: orgId });
+  if (sourcePath === null) {
+    return clientError(res, 400, "sourcePath must name one of your organization's uploaded files");
+  }
+
   /* Create the job row up front in 'detecting' state so the caller can
      poll for progress. Detection runs synchronously below; for very
      large archives this should be moved to a background worker (out of
@@ -92,7 +104,7 @@ router.post('/imports', requireEditorAccess, async (req: Request, res: Response)
        ) VALUES ($1, $2, $3, COALESCE($4, 'zip'), $5, 'detecting', $6)
        RETURNING id`,
       [
-        orgId, p.programId ?? null, p.sourcePath, p.sourceKind ?? null,
+        orgId, p.programId ?? null, sourcePath, p.sourceKind ?? null,
         p.sourceFilename ?? null, getUserId(req),
       ],
     );
@@ -103,7 +115,7 @@ router.post('/imports', requireEditorAccess, async (req: Request, res: Response)
 
   /* Run detection. */
   try {
-    const detected = await detectArchive(p.sourcePath);
+    const detected = await detectArchive(sourcePath);
     const mapped = detected.files.filter((f) => f.mappingConfidence >= 0.5).length;
     const skipped = detected.files.filter((f) => f.detectedKind !== 'leaf').length;
     /* Persist files. */

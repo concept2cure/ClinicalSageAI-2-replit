@@ -24,6 +24,7 @@
 
 import { apiRequest } from '@/lib/queryClient';
 import { unboundNotice } from './governanceNotice';
+import { shellProgramId } from './shellProject';
 
 export interface AuthoringHandoff {
   title: string;
@@ -67,16 +68,22 @@ export type AuthoringHandoffResult =
  * promise.
  */
 export async function saveToAuthoring(h: AuthoringHandoff): Promise<AuthoringHandoffResult> {
+  // A document belongs to a project (PF-07; founder decision 2026-09-26), and
+  // is created in the open one — the same project the editor lists. With none
+  // open it is not created: it used to be made org-wide, where no project ever
+  // listed it. Refused here, before any request, so the work stays put.
+  const programId = shellProgramId();
+  if (!programId) {
+    return {
+      ok: false,
+      message: `Not opened — open a project first: a document belongs to a project. Nothing was saved; ${h.subject} is still here.`,
+    };
+  }
   try {
-    // The same project scope the editor filters on, from the same runtime
-    // channel every project-aware surface reads.
-    const proj = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
-    const programId = proj && typeof proj.id === 'string' ? proj.id : null;
-
     const dRes = await apiRequest('POST', '/api/authoring/docs', {
       title: h.title,
       module: h.module,
-      ...(programId ? { client_program_id: programId } : {}),
+      client_program_id: programId,
     });
     const dJson = (await dRes.json().catch(() => null)) as
       | { document?: { id?: unknown }; governance?: unknown; error?: string }

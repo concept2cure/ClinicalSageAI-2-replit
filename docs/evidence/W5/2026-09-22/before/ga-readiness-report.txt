@@ -1,0 +1,209 @@
+GA readiness report — blocker status from env + asset presence
+Generated 2026-09-22T21:31:58.754Z   NODE_ENV=development
+Runbook: docs/GA_OPS_PROCUREMENT_RUNBOOK_2026-08.md
+============================================================================
+
+Licensed agency artifacts
+----------------------------------------------------------------------------
+  [ ] BLOCKER   Official FDA eSTAR / PreSTAR interactive PDFs
+        observed: 6/9 vendored in /home/user/ClinicalSageAI-2-replit/assets/estar-templates — missing: PreSTAR-q-sub.pdf, PreSTAR-ide.pdf, PreSTAR-513g.pdf
+        gate:     server/services/pathway-engines/estar/estar-fill.ts resolveTemplateBytes + estar-template-registry.ts assessEstarTemplateReadiness (ESTAR_REQUIRE_TEMPLATE)
+        owner:    Procurement / Regulatory Ops
+        unblock:  Download the current eSTAR templates from FDA and drop them at the paths above.
+  [ ] BLOCKER   eSTAR canonical → AcroForm field maps
+        observed: 6/9 descriptor maps populated — empty: q_sub-prestar, ide-prestar, 513g-prestar
+        gate:     server/services/pathway-engines/estar/estar-field-map.ts ESTAR_FIELD_MAPS; enforced by estar-fill.ts (blockers) and GET /api/510k/estar/readiness
+        owner:    Engineering (Regulatory pathway), after Procurement vendors the PDF
+        unblock:  POST /api/510k/estar/scaffold-field-map, verify each key against the real AcroForm, then populate estar-field-map.ts.
+  [ ] BLOCKER   eCTD v3.2.2 supportive files (ICH backbone + 4 regional DTDs, ICH + FDA stylesheets)
+        observed: 0/7 vendored in /home/user/ClinicalSageAI-2-replit/assets/ectd-dtd — missing: ich-ectd-3-2.dtd, us-regional-v3-3.dtd, eu-regional.dtd, jp-regional.dtd, ca-regional.dtd, ectd-2-0.xsl, us-regional.xsl
+        gate:     server/services/ectd/dtd-bundler.ts assessDtdReadiness (ECTD_REQUIRE_DTD); DOCTYPEs + <?xml-stylesheet?> PIs emitted by regional-packager.ts
+        owner:    Procurement / Regulatory Ops (acquire) + Engineering (commit + checksums)
+        unblock:  Acquire from ICH/FDA/EMA/PMDA/HC, commit verbatim, record SHA-256 in the drop-point checksums.txt.
+  [ ] BLOCKER   eCTD supportive-file SHA-256 manifest (checksums.txt in the drop-point)
+        observed: 0/7 required supportive files recorded with a SHA-256 matching their bytes, per /home/user/ClinicalSageAI-2-replit/assets/ectd-dtd/checksums.txt — required but not recorded: ich-ectd-3-2.dtd, us-regional-v3-3.dtd, eu-regional.dtd, jp-regional.dtd, ca-regional.dtd, ectd-2-0.xsl, us-regional.xsl
+        gate:     server/services/ectd/checksum-manifest.ts verifyChecksumManifest — the qualification harness (qualify.ts) fails on an unrecorded or tampered vendored file
+        owner:    Engineering (same commit as the DTD drop)
+        unblock:  cd assets/ectd-dtd && sha256sum *.dtd *.xsl >> checksums.txt (replacing the placeholder block).
+  [ ] BLOCKER   eCTD v4.0 RPS message XSD (rps-message.xsd)
+        observed: rps-message.xsd absent in /home/user/ClinicalSageAI-2-replit/assets/ectd-schema (genericode.xsd, optional: absent)
+        gate:     server/services/ectd/schema-bundler.ts requiredSchemasForVersion + assessSchemaReadiness (ECTD_REQUIRE_RPS_SCHEMA)
+        owner:    Procurement (ICH implementation package licence)
+        unblock:  Obtain the ICH eCTD v4.0 implementation package; drop rps-message.xsd in and record its SHA-256 in assets/ectd-schema/checksums.txt.
+  [ ] advisory  FDA recognized consensus standards dataset (product code → standards)
+        observed: fda-recognized-consensus-standards.json absent in /home/user/ClinicalSageAI-2-replit/assets/fda-recognized-standards — no product-code → standards mapping is possible
+        gate:     server/services/fda-recognized-standards/recognized-standards-dataset.ts loadRecognizedStandardsDataset — a missing or malformed dataset is reported ABSENT (never partially loaded); recognized-standards.service.ts returns available:false and GET /api/510k/device/standards passes that through labelled
+        owner:    Procurement / Regulatory Ops (acquire + normalize the FDA export)
+        unblock:  Export the CDRH Recognized Consensus Standards database, normalize it into the documented shape with a provenance block, and drop it at the path above. Never infer a product-code association FDA does not publish — see assets/fda-recognized-standards/README.md.
+
+Licensed engines & dictionaries
+----------------------------------------------------------------------------
+  [ ] BLOCKER   Agency-grade eCTD validator (LORENZ eValidator)
+        observed: neither EVALIDATOR_BINARY nor EVALIDATOR_ENDPOINT set; licence-free FDA-criteria fallback disabled
+        gate:     server/services/ectd/external-validator/gate.ts evaluateExternalValidationGate (ECTD_REQUIRE_EVALIDATOR); config.ts evalidatorBinary
+        owner:    Procurement (licence) + Ops (deploy the engine)
+        unblock:  Buy the licence, install the engine, set EVALIDATOR_BINARY/EVALIDATOR_ENDPOINT + EVALIDATOR_PROFILE_<REGION>.
+  [ ] BLOCKER   MedDRA dictionary (licensed)
+        observed: MEDDRA_DICTIONARY_PATH not set
+        gate:     server/services/medical-coding/medical-coding-service.ts codeMeddra — returns status:'license_required' and no code when unset
+        owner:    Procurement (MSSO / UMC subscription)
+        unblock:  Licence the dictionary, export it to the documented row shape, point MEDDRA_DICTIONARY_PATH at it.
+  [ ] BLOCKER   WHODrug dictionary (licensed)
+        observed: WHODRUG_DICTIONARY_PATH not set
+        gate:     server/services/medical-coding/medical-coding-service.ts codeWhodrug (line 302) — returns status:'license_required' and no code when unset
+        owner:    Procurement (MSSO / UMC subscription)
+        unblock:  Licence the dictionary, export it to the documented row shape, point WHODRUG_DICTIONARY_PATH at it.
+
+Agency gateway credentials (production)
+----------------------------------------------------------------------------
+  [ ] BLOCKER   FDA ESG (AS2/SFTP)
+        observed: missing: FDA_ESG_URL, FDA_ESG_AS2_FROM, FDA_ESG_CERT_PATH, FDA_ESG_KEY_PATH, FDA_ESG_FDA_CERT_PATH
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  EMA CESP
+        observed: missing: EMA_CESP_URL, EMA_CESP_CLIENT_ID, EMA_CESP_CLIENT_SECRET, EMA_CESP_ORG_ID
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  EUDAMED
+        observed: missing: EUDAMED_URL, EUDAMED_BEARER
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  PMDA gateway
+        observed: missing: PMDA_URL, PMDA_APPLICANT_ID, PMDA_CERT_PATH, PMDA_KEY_PATH, PMDA_HMAC_SECRET
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  Health Canada CESG
+        observed: missing: HC_CESG_URL, HC_CESG_COMPANY_ID, HC_CESG_CERT_PATH, HC_CESG_KEY_PATH, HC_CESG_HMAC_SECRET
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  MHRA gateway
+        observed: missing: MHRA_URL, MHRA_API_KEY, MHRA_ORG_ID
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  NMPA gateway
+        observed: missing: NMPA_URL, NMPA_TOKEN, NMPA_COMPANY_ID
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  TGA eBS
+        observed: missing: TGA_EBS_URL, TGA_EBS_API_KEY, TGA_EBS_SPONSOR_ID
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  Swissmedic eGov
+        observed: missing: SWISSMEDIC_URL, SWISSMEDIC_API_KEY, SWISSMEDIC_HOLDER_ID
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  ANVISA gateway
+        observed: missing: ANVISA_URL, ANVISA_TOKEN, ANVISA_COMPANY_ID
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  CDSCO SUGAM
+        observed: missing: CDSCO_URL, CDSCO_API_KEY, CDSCO_SESSION_TOKEN, CDSCO_APPLICANT_ID
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  MFDS dBIO
+        observed: missing: MFDS_URL, MFDS_COMPANY_ID, MFDS_CERT_PATH, MFDS_KEY_PATH, MFDS_HMAC_SECRET
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  HSA PRISM
+        observed: missing: HSA_URL, HSA_API_KEY, HSA_HMAC_SECRET, HSA_ORG_ID
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  E2B(R3) ICSR gateway
+        observed: ICSR_GATEWAY_URL not set, credentials not set (protocol https) — missing: ICSR_GATEWAY_URL, ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD
+        gate:     server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — configured ⇒ real AS2/HTTPS call (transmitted only on an accepting 2xx); unconfigured ⇒ IcsrGatewayNotConfiguredError in production
+        owner:    Regulatory Ops (agency gateway account + AS2 identity/certs) + Ops (secrets manager)
+        unblock:  Provision ICSR_GATEWAY_URL + (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_CERT_PATH, ICSR_GATEWAY_KEY_PATH, ICSR_GATEWAY_AS2_TO) for AS2, or (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD) for an HTTPS upload endpoint; then round-trip one ICSR in the agency test environment.
+
+Production enforcement flags
+----------------------------------------------------------------------------
+  [ ] BLOCKER   RLS enforcement (RLS_ENFORCE=on)
+        observed: RLS_ENFORCE="off"
+        gate:     server/db/rlsEnforcement.ts assertRlsEnforcementForProduction — production REFUSES TO BOOT on any other value
+        owner:    Ops (deploy env)
+        unblock:  Set RLS_ENFORCE=on. The policies are already provisioned by migration 0021 and the two-tenant probe is green; this only flips them from compiled to filtering.
+  [ ] BLOCKER   eSTAR template enforcement (ESTAR_REQUIRE_TEMPLATE=true)
+        observed: ESTAR_REQUIRE_TEMPLATE not set
+        gate:     server/services/pathway-engines/estar/estar-template-registry.ts estarTemplateRequiredFromEnv → assessEstarTemplateReadiness
+        owner:    Ops (deploy env)
+        unblock:  Set ESTAR_REQUIRE_TEMPLATE=true ONLY after the eSTAR PDFs are vendored — set earlier and every production eSTAR build reports a blocker.
+  [ ] BLOCKER   eCTD DTD self-containment enforcement (ECTD_REQUIRE_DTD=true)
+        observed: ECTD_REQUIRE_DTD not set
+        gate:     server/services/ectd/dtd-bundler.ts dtdRequiredFromEnv → assessDtdReadiness
+        owner:    Ops (deploy env)
+        unblock:  Set ECTD_REQUIRE_DTD=true ONLY after the DTDs are vendored + checksummed — set earlier and every production eCTD package is blocked as not self-contained.
+  [ ] BLOCKER   Agency-validator enforcement (ECTD_REQUIRE_EVALIDATOR=true)
+        observed: ECTD_REQUIRE_EVALIDATOR not set
+        gate:     server/services/ectd/external-validator/config.ts evalidatorRequiredFromEnv → gate.ts evaluateExternalValidationGate
+        owner:    Ops (deploy env)
+        unblock:  Set ECTD_REQUIRE_EVALIDATOR=true ONLY after a licensed engine is configured — set earlier and every production dispatch is blocked on "validator did not run".
+  [ ] BLOCKER   PDF/A submission-grade enforcement (ECTD_REQUIRE_PDFA=true)
+        observed: ECTD_REQUIRE_PDFA not set
+        gate:     server/services/ectd/pdfa-readiness.ts pdfaRequiredFromEnv → pre-transmit-check.ts
+        owner:    Ops (deploy env)
+        unblock:  Set ECTD_REQUIRE_PDFA=true after Ghostscript + veraPDF are present in the deployment image (see the pdfa-pipeline deployment TODO).
+  [ ] advisory  eCTD v4.0 RPS schema enforcement (ECTD_REQUIRE_RPS_SCHEMA=true)
+        observed: ECTD_REQUIRE_RPS_SCHEMA not set
+        gate:     server/services/ectd/schema-bundler.ts schemaRequiredFromEnv → assessSchemaReadiness
+        owner:    Ops (deploy env)
+        unblock:  Set ECTD_REQUIRE_RPS_SCHEMA=true after rps-message.xsd is vendored. Only needed for an eCTD v4.0 sequence.
+
+Boot-posture secrets
+----------------------------------------------------------------------------
+  [ ] BLOCKER   Audit HMAC seal key (AUDIT_HMAC_KEY, ≥32 chars)
+        observed: AUDIT_HMAC_KEY not set; AUDIT_SEAL_ACCEPT_UNSEALED=unset (production refuses to boot)
+        gate:     server/services/audit/auditSealPosture.ts assertAuditSealPostureForProduction — production refuses to boot without the key or the explicit accept flag
+        owner:    Ops / Security (secrets manager)
+        unblock:  Provision a high-entropy AUDIT_HMAC_KEY held outside the app database; clear AUDIT_SEAL_ACCEPT_UNSEALED.
+  [ ] BLOCKER   MFA secret encryption key (MFA_ENCRYPTION_KEY, ≥32 chars)
+        observed: MFA_ENCRYPTION_KEY not set
+        gate:     server/config/environment.ts assertMfaKeyPosture — production refuses to boot
+        owner:    Ops / Security (secrets manager)
+        unblock:  Provision a dedicated MFA_ENCRYPTION_KEY distinct from JWT_SECRET.
+  [ ] BLOCKER   SMTP transport for login OTP (mandatory 2FA)
+        observed: missing: SMTP_HOST, SMTP_USER, SMTP_PASS
+        gate:     server/services/emailService.ts isEmailConfigured; server/startup/services.ts logs CRITICAL in production when unconfigured
+        owner:    Ops
+        unblock:  Configure SMTP, then run `npm run pilot:verify-otp -- <real-external-inbox>` and keep the output as evidence.
+
+Observability & operational posture
+----------------------------------------------------------------------------
+  [ ] advisory  Error monitoring (SENTRY_DSN)
+        observed: SENTRY_DSN not set
+        gate:     server/startup/env.ts validateEnvironment — warns in production; server/utils/sentry.ts is inert without it
+        owner:    Ops
+        unblock:  Set SENTRY_DSN (+ VITE_SENTRY_DSN for the client) and verify a deliberate exception reaches an on-call human.
+  [ ] advisory  Precedent corpus ingestion sweep
+        observed: ENABLE_CORPUS_INGESTION is not "true" — the sweep is a no-op
+        gate:     server/jobs/corpusIngestionSweep.ts scheduleCorpusIngestionSweep (ENABLE_CORPUS_INGESTION) + buildIngestionPlan (CORPUS_INGESTION_INDICATIONS)
+        owner:    Ops (schedule) + Product (choose the indication set)
+        unblock:  Set ENABLE_CORPUS_INGESTION=true + CORPUS_INGESTION_INDICATIONS, or backfill with `tsx scripts/ingest-corpus.ts`; verify with `node scripts/verify-rag-corpus.mjs`.
+
+CI posture
+----------------------------------------------------------------------------
+  [ ] BLOCKER   Database backup / restore rehearsal (DR runbook + a proven restore)
+        observed: restore MECHANISM is proven in CI against a disposable fixture — runbook docs/operations/database-disaster-recovery.md; drill scripts/ops/dr-restore-drill.sh (pg_dump --format=custom → pg_restore); CI proof .github/workflows/database-dr-restore-proof.yml. Not yet observed: a rehearsal against a production-shaped database, with its RPO/RTO observations and date committed. The runbook says so itself.
+        gate:     no code gate — this is an operational obligation. The CI proof covers the mechanism, not the production estate.
+        owner:    Ops / DB owner
+        unblock:  Run scripts/ops/dr-restore-drill.sh against a production-shaped restore target, then commit the observed RPO/RTO and the rehearsal date to the runbook.
+
+============================================================================
+5/40 ready · 18 blocker(s) outstanding · 17 advisory item(s) outstanding
+(ready rows hidden — pass --all to see them)
+
+This probe observes disk + env only. A row reading "ready" means the artifact
+or variable is PRESENT — it is not proof the artifact is correct, licensed, or
+that a credential authenticates. Those are proven by the verification commands
+in the runbook, not by this script.

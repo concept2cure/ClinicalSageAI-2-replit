@@ -33,5 +33,11 @@
   "language": {
     "label": "Nyelv",
     "select": "Válasszon nyelvet"
+  },
+  "session": {
+    "stillThere": "Még itt van?",
+    "signOutIn": "Inaktivitás miatt {{seconds}} másodperc múlva kijelentkeztetjük.",
+    "staySignedIn": "Maradjon bejelentkezve",
+    "signOutNow": "Kijelentkezés most"
   }
 }

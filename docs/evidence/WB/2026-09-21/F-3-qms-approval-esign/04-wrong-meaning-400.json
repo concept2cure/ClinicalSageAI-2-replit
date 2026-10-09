@@ -1,0 +1,22 @@
+{
+    "step": "04-wrong-meaning-400",
+    "method": "POST",
+    "path": "/api/mdx/qms/documents/16/approve",
+    "request": {
+        "password": "<redacted: local evidence credential>",
+        "meaning": "REVIEWED",
+        "reason": "WB evidence: a non-approval meaning must be refused"
+    },
+    "status": 400,
+    "response": {
+        "error": "Approval is an electronic signature and requires a password, the signature meaning 'APPROVED' and a reason for change; missing or invalid: meaning",
+        "details": {
+            "code": "ESIGNATURE_COMPONENT_MISSING",
+            "fieldErrors": {
+                "meaning": [
+                    "Signature meaning must be 'APPROVED' (21 CFR Part 11 \u00a711.50)"
+                ]
+            }
+        }
+    }
+}

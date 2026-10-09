@@ -1,0 +1,69 @@
+# The tests this change adds, by name
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > commits the record, every text it references and a chain row carrying its hash
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > leaves nothing behind when the chain write fails
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > stores a repeated text once — turn 40 references the history, it does not copy it
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_turn_records SET outcome = 'failed'
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_turn_records
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_turn_records
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_record_blobs SET chars = 0
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_record_blobs
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_record_blobs
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > refuses a record or a text stored under a hash that is not its own
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a record rewritten with a consistent hash no longer matches the chain
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a text that is missing is named
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > controls that could not be read are recorded as unknown, not as none
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > numbers model calls in order, and gives each later call the input staged for it
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > the person who asked reads it, re-verified from the stored bytes
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > an org admin reads it; a colleague is refused; another organization cannot tell it exists
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > lists only the caller's own records unless they read every record
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > a record rewritten past the trigger reads as not intact
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > records the export on the chain, then hands over a package that verifies offline
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > is the owner's act, audited in the same transaction, and the turn records survive it
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > refuses a colleague, and removes nothing
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > removes nothing when the audit row cannot be written
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > is caught by the payload hash the chain link was computed over
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > and, when the payload hash is rewritten as well, by the walk of the tenant chain
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > points the disclosure at the region it controls
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names the deliverable as a step too once the record is open
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > renders nothing at all for a settled turn that did no reportable work
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the clock > runs a clock beside the live phase and freezes the recorded duration once settled
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the clock > claims no duration for a settled turn with no recorded end
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — each row opens in place, like the work it records > puts a step's duration and the inputs she passed behind that step's own chevron
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — each row opens in place, like the work it records > records her plan once as "Planned N steps", with the steps behind the chevron
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > claims no duration for a settled step whose end was never recorded
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > is fed by one mapping from the turn, which carries the plan and the fallback
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > a recorded turn carries one quiet row with the start of its hash, and the whole of it behind the row
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > a turn that was not recorded says so under the turn, unfolded, with the reason
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > says it even for a turn with nothing else to report
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > claims nothing while the turn is in flight, or when the server said nothing
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > activityPropsFor carries the status from the turn
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a recorded turn carries its id and hash from post_done
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a turn that was not recorded carries the reason
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a failed turn keeps the status the error event carried
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a server that says nothing leaves nothing on the turn
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord > drops anything it cannot read, and never reads it as recorded
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord > keeps an unexplained refusal as a refusal
+ ✓ server/services/ana/__tests__/lineage-dossier.test.ts > serializeDocumentLineageDossierXml — retained turn records > lists each retained record by id and hash
+ ✓ server/services/ana/__tests__/lineage-dossier.test.ts > serializeDocumentLineageDossierXml — retained turn records > says the store could not be read, rather than listing none
+ ✓ server/services/ana/__tests__/lineage-dossier.test.ts > serializeDocumentLineageDossierXml — retained turn records > omits the section for a dossier assembled before it existed
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > files the tool calls, an error result as a failed step, the answer, and what the door cannot report
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > a turn with no organization is not recorded, and says why
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status with ana:done
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was aborted
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a failed turn and emits its status with ana:error
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it
+ Test Files  7 passed (7)
+      Tests  99 passed (99)
+
+# Every suite the change touches (server/services/ana, server/routes/ana-ri, server/routes/chat, the thread and intelligence routes, audit, report-os, the client AnA hook and activity)
+ Test Files  306 passed | 1 skipped (307)
+      Tests  3966 passed | 3 skipped (3969)

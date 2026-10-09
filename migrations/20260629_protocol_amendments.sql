@@ -23,8 +23,13 @@ CREATE TABLE IF NOT EXISTS protocol_amendments (
   title                text NOT NULL,
   rationale            text,
   amendment_type       text CHECK (amendment_type IN ('major','minor','administrative')),
-  affects_consent      boolean NOT NULL DEFAULT false,
-  affects_risk         boolean NOT NULL DEFAULT false,
+  -- 2026-09-22: were `boolean NOT NULL DEFAULT false`. Amended in place
+  -- (Rule 1) to nullable, no default: NULL = not declared. The default stored
+  -- "affects neither" for every amendment the product's form created, since
+  -- the form never asked. Existing databases are converged by
+  -- migrations/20260922e_amendment_declarations_nullable.sql.
+  affects_consent      boolean,
+  affects_risk         boolean,
   status               text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','submitted','under_review','approved','rejected','implemented')),
   submitted_date       date,
   decided_date         date,

@@ -34,6 +34,7 @@ import { tenantContext, getTenantContext } from '../middleware/tenantContext';
 import { pool } from '../db';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { neverSaved } from '../services/qms/governed-qms-write';
 
 const logger = createScopedLogger('tenant-section-gating');
 
@@ -76,87 +77,18 @@ router.get('/api/tenant-section-gating/:qmpId', async (req, res) => {
   }
 });
 
-// Update section gating for a QMP
-router.post('/api/tenant-section-gating/:qmpId/update', async (req, res) => {
-  try {
-    const { qmpId } = req.params;
-    const { organizationId } = getTenantContext(req);
-    const { sectionKey, requiredLevel, active } = req.body;
-
-    if (!organizationId) {
-      return res.status(400).json({ error: 'Organization ID is required' });
-    }
-
-    // Check if the entry exists
-    const checkQuery = {
-      text: `
-        SELECT id FROM qmp_section_gating
-        WHERE ${cerSectionsGating.organizationId} = $1
-        AND ${cerSectionsGating.qmpId} = $2
-        AND ${cerSectionsGating.sectionKey} = $3
-      `,
-      values: [organizationId, qmpId, sectionKey],
-    };
-
-    const checkResult = await pool.query(checkQuery);
-
-    let result;
-    if ((checkResult.rowCount ?? 0) > 0) {
-      // Update existing record
-      const updateQuery = {
-        text: `
-          UPDATE qmp_section_gating 
-          SET ${cerSectionsGating.requiredLevel} = $1, 
-              ${cerSectionsGating.active} = $2,
-              ${cerSectionsGating.updatedAt} = CURRENT_TIMESTAMP,
-              ${cerSectionsGating.updatedById} = $3
-          WHERE ${cerSectionsGating.organizationId} = $4 
-          AND ${cerSectionsGating.qmpId} = $5
-          AND ${cerSectionsGating.sectionKey} = $6
-          RETURNING *
-        `,
-        values: [requiredLevel, active, req.user?.id || null, organizationId, qmpId, sectionKey],
-      };
-      result = await pool.query(updateQuery);
-    } else {
-      // Insert new record
-      const insertQuery = {
-        text: `
-          INSERT INTO qmp_section_gating (
-            ${cerSectionsGating.organizationId}, 
-            ${cerSectionsGating.qmpId}, 
-            ${cerSectionsGating.sectionKey}, 
-            ${cerSectionsGating.requiredLevel}, 
-            ${cerSectionsGating.active},
-            ${cerSectionsGating.createdById},
-            ${cerSectionsGating.updatedById},
-            ${cerSectionsGating.createdAt},
-            ${cerSectionsGating.updatedAt}
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING *
-        `,
-        values: [
-          organizationId,
-          qmpId,
-          sectionKey,
-          requiredLevel,
-          active,
-          req.user?.id || null,
-          req.user?.id || null,
-        ],
-      };
-      result = await pool.query(insertQuery);
-    }
-
-    res.json({
-      status: 'success',
-      data: result.rows[0],
-    });
-  } catch (error: any) {
-    console.error('Error updating section gating:', error);
-    return serverError(res, logger, 'updating tenant section gating', error);
-  }
-});
+// Update section gating for a QMP — not available. Until 2026-09-23 this wrote
+// columns qmp_section_gating does not have (required_level, active,
+// created_by_id, updated_by_id; see migrations/0000_sweet_joseph.sql) on the
+// shared pool, so every call answered 500 and it has never saved a rule. It
+// refuses before touching the database rather than being repaired in place:
+// with its columns fixed it would be an ungated, unledgered write to the rules
+// governed sections are validated against. Pinned by
+// server/routes/__tests__/qms-subrouters-governed.test.ts.
+router.post(
+  '/api/tenant-section-gating/:qmpId/update',
+  neverSaved('Changing section gating rules through this API is not available: it has never saved anything. Nothing was saved.')
+);
 
 // Get CTQ factors for a specific applicable section
 router.get('/api/tenant-ctq-factors/:section', async (req, res) => {
@@ -191,125 +123,29 @@ router.get('/api/tenant-ctq-factors/:section', async (req, res) => {
   }
 });
 
-// Create or update a CTQ factor
-router.post('/api/tenant-ctq-factors', async (req, res) => {
-  try {
-    const { id, name, description, riskLevel, mitigationStrategy, applicableSection, category } =
-      req.body;
-    const { organizationId } = getTenantContext(req);
-
-    if (!organizationId) {
-      return res.status(400).json({ error: 'Organization ID is required' });
-    }
-
-    let result;
-    if (id) {
-      // Update existing CTQ factor
-      const updateQuery = {
-        text: `
-          UPDATE ctq_factors 
-          SET ${ctqFactors.name} = $1, 
-              ${ctqFactors.description} = $2,
-              ${ctqFactors.riskLevel} = $3,
-              ${ctqFactors.mitigationStrategy} = $4,
-              ${ctqFactors.applicableSection} = $5,
-              ${ctqFactors.category} = $6,
-              ${ctqFactors.updatedAt} = CURRENT_TIMESTAMP
-          WHERE ${ctqFactors.id} = $7
-          AND ${ctqFactors.organizationId} = $8
-          RETURNING *
-        `,
-        values: [
-          name,
-          description,
-          riskLevel,
-          mitigationStrategy,
-          applicableSection,
-          category,
-          id,
-          organizationId,
-        ],
-      };
-      result = await pool.query(updateQuery);
-    } else {
-      // Create new CTQ factor
-      const insertQuery = {
-        text: `
-          INSERT INTO ctq_factors (
-            ${ctqFactors.organizationId}, 
-            ${ctqFactors.name}, 
-            ${ctqFactors.description}, 
-            ${ctqFactors.riskLevel}, 
-            ${ctqFactors.mitigationStrategy},
-            ${ctqFactors.applicableSection},
-            ${ctqFactors.category},
-            ${ctqFactors.createdAt},
-            ${ctqFactors.updatedAt}
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING *
-        `,
-        values: [
-          organizationId,
-          name,
-          description,
-          riskLevel,
-          mitigationStrategy,
-          applicableSection,
-          category,
-        ],
-      };
-      result = await pool.query(insertQuery);
-    }
-
-    res.json({
-      status: 'success',
-      data: result.rows[0],
-    });
-  } catch (error: any) {
-    console.error('Error updating CTQ factor:', error);
-    return serverError(res, logger, 'saving tenant ctq factors', error);
-  }
-});
-
-// Delete a CTQ factor
-router.delete('/api/tenant-ctq-factors/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { organizationId } = getTenantContext(req);
-
-    if (!organizationId) {
-      return res.status(400).json({ error: 'Organization ID is required' });
-    }
-
-    const query = {
-      text: `
-        DELETE FROM ctq_factors 
-        WHERE ${ctqFactors.id} = $1
-        AND ${ctqFactors.organizationId} = $2
-        RETURNING *
-      `,
-      values: [id, organizationId],
-    };
-
-    const result = await pool.query(query);
-
-    if ((result.rowCount ?? 0) === 0) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'CTQ factor not found',
-      });
-    }
-
-    res.json({
-      status: 'success',
-      message: 'CTQ factor deleted successfully',
-      data: result.rows[0],
-    });
-  } catch (error: any) {
-    console.error('Error deleting CTQ factor:', error);
-    return serverError(res, logger, 'deleting tenant ctq factors', error);
-  }
-});
+/* ── CTQ-factor writes: not here ────────────────────────────────────────────
+ * This router used to declare its own CTQ-factor writers with '/api/…' paths.
+ * Mounted under /api/tenant-section-gating and /api/quality/section-gating,
+ * they resolved to …/api/tenant-ctq-factors[/:id] under both. Removed
+ * 2026-09-23 (zero duplication):
+ *
+ *   DELETE …/api/tenant-ctq-factors/:id hard-deleted a ctq_factors row for ANY
+ *   authenticated member — a viewer included — with no reason and no ledger
+ *   row, on the shared pool rather than the request's client, and left the
+ *   deleted id in qmp_section_gating.required_ctq_factor_ids. The same user
+ *   outcome is delivered, governed, by the one canonical CTQ-factor delete:
+ *     DELETE /api/tenant-ctq-factors/:tenantId/ctq-factors/:factorId
+ *     DELETE /api/quality/ctq-factors/:tenantId/ctq-factors/:factorId
+ *   in server/routes/tenant-ctq-factors.ts. Both mounts are proven reachable,
+ *   and these two paths proven to delete nothing, by
+ *   server/routes/__tests__/qms-subrouters-governed.test.ts.
+ *
+ *   POST …/api/tenant-ctq-factors never saved anything: it wrote
+ *   mitigation_strategy, a column ctq_factors does not have, and omitted qmp_id,
+ *   which is NOT NULL, so every call answered 500 (captured by the same test
+ *   before the removal). There was no outcome to replace; creating CTQ factors
+ *   is not available (the canonical POST answers 501).
+ */
 
 console.log('Tenant Section Gating routes registered');
 

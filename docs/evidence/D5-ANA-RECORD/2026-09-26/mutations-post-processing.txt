@@ -1,0 +1,7 @@
+files the record: CAUGHT ['× server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id,', '× server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop']
+stopped outcome: CAUGHT ['× server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop']
+assistant id captured: CAUGHT ['× server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id,']
+controls recorded: CAUGHT ['× server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id,']
+no double filing: CAUGHT ['× server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-']
+failure still files: CAUGHT ['× server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processi']
+post_done carries status: CAUGHT ['× server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id,']

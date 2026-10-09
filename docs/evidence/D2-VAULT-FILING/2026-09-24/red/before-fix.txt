@@ -1,0 +1,30 @@
+# RED — the new tests against these files as at HEAD a3f3bcb1, fixed copies restored afterwards:
+#   client/src/concept2cure/v2/surfaces/filingTarget.tsx
+#   client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+#   server/routes/c2c/project-vault.ts
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > names the vault document by uuid, on the vault_documents table 321ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > writes NO snapshot — that is the whole point of the uuid column 56ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > reports the leaf the server actually wrote 61ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > surfaces the server verdict verbatim and never claims a placement 56ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > writes nothing for a section code no document can be filed at 42ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the target picker is the shared one > offers the draft sequence and disables the frozen one, saying why 64ms
+ × client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files a vault document into an IRB package at an IRB slot 45ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > refuses a CTD code in an IRB package, naming the IRB vocabulary 44ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files into a 510(k) at an eSTAR section 35ms
+   → expected true to be false // Object.is equality
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a suggested upload renders inside its taxonomy folder 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > an unfiled upload renders in the Unfiled queue — visible, never dropped 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > every preset folder of the view renders even when empty 2ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a confirmed upload counts as placed, and its leaf carries real provenance only 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a row with a folder but unfiled status stays in the queue (placement wins over stale folder) 0ms
+ × server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf carries the file type the filing action decides on > projects mime_type as mimeType 5ms
+   → expected undefined to be 'application/pdf' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > stays strict for an eCTD submission: an IRB slot is not a CTD section 41ms
+ × client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > says why, and offers no placement 5012ms
+   → Unable to find an element with the text: /Only a PDF can be filed/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > a PDF is filed as before 34ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 13 passed (18)

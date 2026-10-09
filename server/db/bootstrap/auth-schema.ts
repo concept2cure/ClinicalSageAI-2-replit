@@ -72,6 +72,7 @@ export async function applyAuthSchemaMigrations(client: PoolClient): Promise<voi
       ADD COLUMN IF NOT EXISTS mfa_backup_codes         JSONB,
       ADD COLUMN IF NOT EXISTS mfa_method               TEXT DEFAULT 'totp',
       ADD COLUMN IF NOT EXISTS mfa_verified_at          TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS mfa_totp_last_step       BIGINT,
       ADD COLUMN IF NOT EXISTS failed_login_attempts    INTEGER DEFAULT 0,
       ADD COLUMN IF NOT EXISTS locked_until             TIMESTAMP,
       ADD COLUMN IF NOT EXISTS last_failed_login        TIMESTAMP,

@@ -2,7 +2,8 @@
  * Every password-reset event reaches the audit trail.
  *
  * ── The defect ───────────────────────────────────────────────────────────────
- * `auth.ts` defines `auditAuthEvent`, and its docstring states the requirement
+ * `auth.ts` defined `auditAuthEvent` (now `recordAuthEvent`,
+ * server/services/audit/auth-event-audit.ts), and its docstring stated the requirement
  * exactly: "21 CFR Part 11 §11.10(e) requires an independent, tamper-evident
  * audit trail for every login attempt, logout, and CREDENTIAL-CHANGING EVENT."
  *
@@ -60,11 +61,17 @@ vi.mock('../../services/auditService', () => ({
 /** A drizzle-shaped stub the two handlers can be driven through. */
 const dbState = vi.hoisted(() => ({
   selectRows: [] as unknown[],
+  // What a read of organization_users answers: the account's memberships.
+  membershipRows: [] as unknown[],
   updates: [] as unknown[],
+  // What a conditional UPDATE ... RETURNING answers: the row when its WHERE
+  // still held, nothing when another request had already used the token.
+  returningRows: [] as unknown[],
 }));
 vi.mock('../../db', () => {
+  const tableName = (table: unknown) => (table as Record<symbol, unknown> | null)?.[Symbol.for('drizzle:Name')];
   const chain = (rows: unknown[]) => ({
-    from: () => chain(rows),
+    from: (table: unknown) => chain(tableName(table) === 'organization_users' ? dbState.membershipRows : rows),
     where: () => chain(rows),
     limit: async () => rows,
     then: (r: (v: unknown[]) => unknown) => Promise.resolve(rows).then(r),
@@ -73,14 +80,25 @@ vi.mock('../../db', () => {
     select: () => chain(dbState.selectRows),
     update: () => ({
       set: (v: unknown) => ({
-        where: async () => {
-          dbState.updates.push(v);
-          return undefined;
-        },
+        where: () => ({
+          returning: async () => {
+            dbState.updates.push(v);
+            return dbState.returningRows;
+          },
+          then: (resolve: (x: unknown) => unknown, reject?: (e: unknown) => unknown) => {
+            dbState.updates.push(v);
+            return Promise.resolve(undefined).then(resolve, reject);
+          },
+        }),
       }),
     }),
   };
-  const pool = { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) };
+  // The live-token check reads the revocation list and the account's standing here.
+  const pool = {
+    query: vi.fn(async (sql: string) =>
+      /SELECT status FROM users/i.test(sql) ? { rows: [{ status: 'active', password_changed_at_seconds: null }], rowCount: 1 } : { rows: [], rowCount: 0 },
+    ),
+  };
   return { db, pool, getPool: () => pool, getDb: () => db };
 });
 
@@ -101,7 +119,7 @@ vi.mock('../../services/emailService', () => ({
 }));
 vi.mock('../../services/mfaService', () => ({
   generateSecret: vi.fn(), enableMfa: vi.fn(), disableMfa: vi.fn(),
-  verifyToken: vi.fn(), detectVerificationMethod: vi.fn(),
+  verifyToken: vi.fn(), verifySecondFactor: vi.fn(),
 }));
 vi.mock('../../services/emailOtpService', () => ({
   createEmailOtp: vi.fn(), verifyEmailOtp: vi.fn(),
@@ -109,21 +127,25 @@ vi.mock('../../services/emailOtpService', () => ({
 vi.mock('../../services/auth-security-service', () => ({
   validatePasswordPolicy: () => ({ valid: true, errors: [] }),
   isAccountLocked: vi.fn(), recordFailedLogin: vi.fn(), resetFailedLogins: vi.fn(),
-  isPasswordExpired: vi.fn(), checkPasswordHistory: vi.fn(),
+  isPasswordExpired: vi.fn(), checkPasswordHistory: vi.fn(async () => true),
   createElectronicSignature: vi.fn(), verifySignatureIntegrity: vi.fn(),
 }));
 vi.mock('../../services/industry-context/signup-profile', () => ({
   primaryIndustryForIndustryMode: vi.fn(), pathwaysForUseCases: vi.fn(),
 }));
 vi.mock('../../db/tenantAdmission', () => ({ assertCanAdmitNewTenant: vi.fn() }));
+vi.mock('../../services/ai-actions/redis-manager.js', () => ({ isRedisAvailable: () => false, getRedisClient: () => null }));
 vi.mock('../../auth/dev-auth-policy', () => ({
   isDevAuthAllowed: () => false, devAuthDenialReason: () => 'disabled',
 }));
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import authRoutes from '../auth';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import { isAccountLocked } from '../../services/auth-security-service';
 
 const app = express();
 app.use(express.json());
@@ -136,7 +158,9 @@ beforeEach(() => {
   logAction.mockClear();
   sendPasswordResetEmail.mockClear();
   dbState.selectRows = [];
+  dbState.membershipRows = [];
   dbState.updates = [];
+  dbState.returningRows = [{ id: 7 }];
 });
 
 describe('requesting a password reset is audited', () => {
@@ -188,6 +212,43 @@ describe('requesting a password reset is audited', () => {
   });
 });
 
+describe('a reset link is built on the deployment\'s address, never the request\'s Host (D6)', () => {
+  const saved = { NODE_ENV: process.env.NODE_ENV, APP_URL: process.env.APP_URL };
+  afterEach(() => {
+    process.env.NODE_ENV = saved.NODE_ENV;
+    if (saved.APP_URL === undefined) delete process.env.APP_URL;
+    else process.env.APP_URL = saved.APP_URL;
+  });
+
+  it('in production, a forged Host does not become the link the victim is emailed', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.APP_URL = 'https://app.example.test';
+    dbState.selectRows = [{ id: 7, email: 'victim@example.test' }];
+    const res = await request(app)
+      .post('/api/auth/forgot-password')
+      .set('Host', 'attacker.example')
+      .send({ email: 'victim@example.test' });
+
+    expect(res.status).toBe(200);
+    const resetUrl = String((sendPasswordResetEmail.mock.calls[0] as unknown[] | undefined)?.[2]);
+    expect(resetUrl.startsWith('https://app.example.test/'), `the emailed link was ${resetUrl}`).toBe(true);
+  });
+
+  it('in production without APP_URL, every address is refused alike and no token is issued', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.APP_URL;
+    dbState.selectRows = [{ id: 7, email: 'victim@example.test' }];
+    const known = await request(app).post('/api/auth/forgot-password').set('Host', 'attacker.example').send({ email: 'victim@example.test' });
+    dbState.selectRows = [];
+    const unknown = await request(app).post('/api/auth/forgot-password').set('Host', 'attacker.example').send({ email: 'nobody@example.test' });
+
+    expect(sendPasswordResetEmail, 'a reset link was emailed with the attacker\'s Host as its origin').not.toHaveBeenCalled();
+    expect(dbState.updates, 'a reset token was stored for a link that cannot be built').toEqual([]);
+    expect(known.status).toBe(503);
+    expect([unknown.status, unknown.body]).toEqual([known.status, known.body]);
+  });
+});
+
 describe('changing the password is audited — the credential-changing event', () => {
   const future = () => new Date(Date.now() + 60_000);
 
@@ -210,6 +271,22 @@ describe('changing the password is audited — the credential-changing event', (
     expect(row!.resourceId).toBe('7');
     // The password itself never reaches the audit trail.
     expect(JSON.stringify(row)).not.toContain('Str0ng-Passphrase!42');
+  });
+
+  it('refuses, and records, a token another request used first — no second success', async () => {
+    // The read found the token, but by the time the conditional write ran it
+    // had been used (two requests racing one reset link). Until 2026-09-23 the
+    // write was by account id alone and both requests reported success.
+    dbState.selectRows = [{ id: 7, resetToken: 'x', resetTokenExpiresAt: future() }];
+    dbState.returningRows = [];
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'raw-token', newPassword: 'Str0ng-Passphrase!42' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('AUTH_006');
+    expect(actions()).toContain('user_password_reset_failed');
+    expect(actions(), 'a refused reset was recorded as a password change').not.toContain('user_password_changed');
   });
 
   it('records a token that matched no account', async () => {
@@ -247,5 +324,129 @@ describe('changing the password is audited — the credential-changing event', (
     const res = await request(app).post('/api/auth/reset-password').send({ token: 'only-a-token' });
     expect(res.status).toBe(400);
     expect(actions()).toHaveLength(0);
+  });
+});
+
+describe('changing the password while signed in is audited too (IAM-17)', () => {
+  it('records user_password_changed for the account holder, in the account tenant, without the password', async () => {
+    const passwordHash = await bcrypt.hash('Current-Passphrase!1', 4);
+    dbState.selectRows = [{ id: 7, email: 'holder@example.test', passwordHash, passwordHistory: [], defaultOrganizationId: 3 }];
+    const token = jwt.sign({ userId: '7', email: 'holder@example.test', organizationId: '3', type: 'access' }, process.env.JWT_SECRET as string, { expiresIn: '5m' });
+
+    const res = await request(app)
+      .post('/api/auth/password/change')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currentPassword: 'Current-Passphrase!1', newPassword: 'Str0ng-Passphrase!42-new' });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const row = logAction.mock.calls.map(c => c[0] as any).find(r => r.action === 'user_password_changed');
+    expect(row, 'the change was a log line, not an audit event').toBeTruthy();
+    expect(row.details.outcome).toBe('success');
+    expect(row.details.reason).toBe('changed by the account holder');
+    expect(String(row.resourceId)).toBe('7');
+    expect(JSON.stringify(row)).not.toContain('Str0ng-Passphrase!42-new');
+    expect(JSON.stringify(row)).not.toContain('Current-Passphrase!1');
+  });
+});
+
+/* ── An account added through user administration (VSR-001 F-41) ────────────
+   POST /api/tenant-users creates an account with no default organisation: its
+   organisation is its membership, which is where its sign-in lands. Every
+   event below took its tenant from users.default_organization_id alone, so for
+   such an account it named no organisation and was written to the platform's
+   chain, not to the organisation's. That organisation's ledger never showed
+   its colleague set a password, ask for a reset, get a password wrong, be
+   locked out, or be refused while suspended. Found on 2026-09-27 by executing
+   the validation package with its identities created the way a customer
+   creates them. */
+describe('an account added through user administration: its events reach its organisation (F-41)', () => {
+  const colleague = { id: 7, email: 'colleague@example.test', defaultOrganizationId: null };
+  const soon = () => new Date(Date.now() + 60_000);
+  /** The organisation the first audit row with this action was written to. */
+  const tenantOf = (action: string) =>
+    logAction.mock.calls.map((c) => c[0] as { action: string; tenantId?: unknown }).find((r) => r.action === action)?.tenantId;
+  const setPassword = () =>
+    request(app).post('/api/auth/reset-password').send({ token: 'activation-token', newPassword: 'Str0ng-Passphrase!42' });
+
+  beforeEach(() => {
+    dbState.membershipRows = [{ organizationId: 3, role: 'member' }];
+  });
+
+  it('setting its password through the activation link', async () => {
+    dbState.selectRows = [{ ...colleague, resetToken: 'x', resetTokenExpiresAt: soon() }];
+    const res = await setPassword();
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(tenantOf('user_password_changed')).toBe(3);
+  });
+
+  it('an expired link', async () => {
+    dbState.selectRows = [{ ...colleague, resetToken: 'x', resetTokenExpiresAt: new Date(Date.now() - 1_000) }];
+    expect((await setPassword()).status).toBe(400);
+    expect(tenantOf('user_password_reset_failed')).toBe(3);
+  });
+
+  it('a link another request used first', async () => {
+    dbState.selectRows = [{ ...colleague, resetToken: 'x', resetTokenExpiresAt: soon() }];
+    dbState.returningRows = [];
+    expect((await setPassword()).status).toBe(400);
+    expect(tenantOf('user_password_reset_failed')).toBe(3);
+  });
+
+  it('asking for a reset', async () => {
+    dbState.selectRows = [colleague];
+    const res = await request(app).post('/api/auth/forgot-password').send({ email: colleague.email });
+    expect(res.status).toBe(200);
+    expect(tenantOf('user_password_reset_requested')).toBe(3);
+  });
+
+  it('a wrong password', async () => {
+    vi.mocked(isAccountLocked).mockResolvedValueOnce({ locked: false } as never);
+    dbState.selectRows = [{ ...colleague, status: 'active', passwordHash: await bcrypt.hash('Right-Passphrase!1', 4) }];
+    const res = await request(app).post('/api/auth/login').send({ email: colleague.email, password: 'Wrong-Passphrase!1' });
+    expect(res.status).toBe(401);
+    expect(tenantOf('user_login')).toBe(3);
+  });
+
+  it('a sign-in refused because the account is locked', async () => {
+    vi.mocked(isAccountLocked).mockResolvedValueOnce({ locked: true } as never);
+    dbState.selectRows = [{ ...colleague, status: 'active', passwordHash: 'x' }];
+    const res = await request(app).post('/api/auth/login').send({ email: colleague.email, password: 'Any-Passphrase!1' });
+    expect(res.status).toBe(423);
+    expect(tenantOf('user_login')).toBe(3);
+  });
+
+  it('a sign-in refused because the address is not yet confirmed', async () => {
+    vi.mocked(isAccountLocked).mockResolvedValueOnce({ locked: false } as never);
+    dbState.selectRows = [{ ...colleague, status: 'pending_verification', passwordHash: await bcrypt.hash('Right-Passphrase!1', 4) }];
+    const res = await request(app).post('/api/auth/login').send({ email: colleague.email, password: 'Right-Passphrase!1' });
+    expect(res.status).toBe(403);
+    expect(tenantOf('user_login')).toBe(3);
+  });
+
+  it('a sign-in refused because the account was taken out of use (the entry OQ-PROJ-18 reads)', async () => {
+    vi.mocked(isAccountLocked).mockResolvedValueOnce({ locked: false } as never);
+    dbState.selectRows = [{ ...colleague, status: 'suspended', passwordHash: await bcrypt.hash('Right-Passphrase!1', 4) }];
+    const res = await request(app).post('/api/auth/login').send({ email: colleague.email, password: 'Right-Passphrase!1' });
+    expect(res.status).toBe(403);
+    expect(tenantOf('user_login')).toBe(3);
+  });
+
+  it('changing its password while signed in', async () => {
+    const passwordHash = await bcrypt.hash('Current-Passphrase!1', 4);
+    dbState.selectRows = [{ ...colleague, passwordHash, passwordHistory: [] }];
+    const token = jwt.sign({ userId: '7', email: colleague.email, organizationId: '3', type: 'access' }, process.env.JWT_SECRET as string, { expiresIn: '5m' });
+    const res = await request(app)
+      .post('/api/auth/password/change')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currentPassword: 'Current-Passphrase!1', newPassword: 'Str0ng-Passphrase!42-new' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(tenantOf('user_password_changed')).toBe(3);
+  });
+
+  it('keeps the default organisation when the account is a member there', async () => {
+    dbState.membershipRows = [{ organizationId: 3, role: 'member' }, { organizationId: 5, role: 'admin' }];
+    dbState.selectRows = [{ ...colleague, defaultOrganizationId: 5, resetToken: 'x', resetTokenExpiresAt: soon() }];
+    expect((await setPassword()).status).toBe(200);
+    expect(tenantOf('user_password_changed')).toBe(5);
   });
 });

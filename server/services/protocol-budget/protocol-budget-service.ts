@@ -11,6 +11,7 @@
 
 import { pool } from '../../db';
 import { computeProtocolBudget, type ProtocolBudgetSummary } from './protocol-budget-logic';
+import { requireProtocolForWriteTx } from '../protocol-development/protocol-development-service';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -29,6 +30,7 @@ const PAYERS = ['sponsor', 'institution', 'other'];
 export async function addBudgetItemTx(client: Queryable, orgId: number, userId: number, protocolDocumentId: number, input: { category?: string; description: string; unitCost: number; quantityPerSubject?: number; payer?: string }): Promise<{ id: number }> {
   if (input.category && !CATEGORIES.includes(input.category)) throw new ProtocolBudgetError('BAD_INPUT', `Invalid category "${input.category}".`);
   if (input.payer && !PAYERS.includes(input.payer)) throw new ProtocolBudgetError('BAD_INPUT', `Invalid payer "${input.payer}".`);
+  await requireProtocolForWriteTx(client, orgId, protocolDocumentId, { signedContent: false });
   const { rows } = await client.query(
     `INSERT INTO protocol_budget_items (organization_id, protocol_document_id, category, description, unit_cost, quantity_per_subject, payer, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
@@ -38,6 +40,10 @@ export async function addBudgetItemTx(client: Queryable, orgId: number, userId: 
 }
 
 export async function setBudgetParamsTx(client: Queryable, orgId: number, userId: number, protocolDocumentId: number, input: { targetEnrollment?: number; sponsorPaymentPerSubject?: number | null; indirectRatePct?: number | null }): Promise<{ id: number }> {
+  // The row is keyed on the document id alone (uq_protocol_budget_params_doc),
+  // so a write that did not prove the document was this organisation's could
+  // claim another tenant's row (SEC-C-3).
+  await requireProtocolForWriteTx(client, orgId, protocolDocumentId, { signedContent: false });
   const { rows } = await client.query(
     `INSERT INTO protocol_budget_params (organization_id, protocol_document_id, target_enrollment, sponsor_payment_per_subject, indirect_rate_pct, created_by)
      VALUES ($1,$2,$3,$4,$5,$6)

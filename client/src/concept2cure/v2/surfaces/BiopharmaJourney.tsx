@@ -293,8 +293,8 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!loading && !error && !empty) notifySurfaceActionReady('program-journey');
-  }, [loading, error, empty]);
+    if (!loading) notifySurfaceActionReady('program-journey');
+  }, [loading]);
 
   /* WHAT ANA SEES HERE — published above the honest-state early returns so one
      call covers every branch. Two never-fabricate rules this surface holds: no
@@ -512,7 +512,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
             <div className="pj-deliv">
               {stage.deliv.map((d, i) => (
                 <div key={i} className="pj-deliv-row">
-                  <span className="dot">{I.circle || I.clock}</span>{d[0]}
+                  <span className="dot">{I.clock}</span>{d[0]}
                 </div>
               ))}
             </div>

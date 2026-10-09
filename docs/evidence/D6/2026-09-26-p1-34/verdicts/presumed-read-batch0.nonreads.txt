@@ -1,0 +1,17 @@
+act_on_screen | self | - | AnaToolExecutor.ts:17134 | view-only screen directive and in-turn program focus
+add_amendment_change | confirm | - | protocol-amendments-service.ts:151 | INSERT protocol_amendment_changes + governed-action row
+add_capa_action | confirm | - | protocol-deviations-service.ts:171 | INSERT protocol_capa_actions; deviation -> capa_pending + governed-action row
+add_ctq_factor | confirm | - | rbm/rbm-actuator.ts:82 | INSERT rbm_risk_items
+add_other_support_entry | confirm | - | other-support-service.ts:92 | INSERT other_support_entries + governed-action row
+add_protocol_budget_item | confirm | - | protocol-budget-service.ts:33 | INSERT protocol_budget_items + governed-action row
+add_protocol_milestone | confirm | - | protocol-milestones-service.ts:31 | INSERT protocol_milestones + governed-action row
+add_protocol_review_comment | confirm | - | protocol-reviews-service.ts:203 | INSERT protocol_review_comments + governed-action row
+add_soa_assessment | confirm | - | protocol-soa-service.ts:31 | INSERT protocol_soa_assessments + governed-action row
+approve_no_cost_extension | refuse | - | AnaToolExecutor.ts:12476 | none; the handler already refuses (e-signed route)
+approve_qms_document | refuse | - | AnaToolExecutor.ts:13645 | none; the handler already refuses (e-signed route)
+approve_rbm_assessment | refuse | - | AnaToolExecutor.ts:3406 | none; the handler already refuses (signed route)
+approve_rbm_plan | refuse | - | AnaToolExecutor.ts:3428 | none; the handler already refuses (signed route)
+assemble_briefing_book | conditional | run_premortem !== false with numeric package_id and assessment_id -> confirm; else read | submission-twin-service.ts:506 | INSERT submission_twin_challenges
+assemble_crl_premortem_artifact | self | - | AnaToolExecutor.ts:6951 | scratch .docx under tmp/docbuilder when export is true
+assemble_ectd_module_from_artifacts | self | - | docx/masterDocumentBuilder.ts:373 | scratch .docx/.pdf under tmp/docbuilder, not filed
+assess_claim_evidence_integrity | confirm | - | submission-twin-service.ts:219 | INSERT submission_twin_evidence_links on every call

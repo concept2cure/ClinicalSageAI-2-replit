@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents/27/approve",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "password": "[REDACTED]",
+      "mfaToken": "[REDACTED]",
+      "meaning": "APPROVED",
+      "reason": "OQ-006 step 06c: self-approval must be refused"
+    }
+  },
+  "response": {
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 385,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "You authored this document, so you cannot also approve it. A second person has to review and sign it (21 CFR Part 11 §11.10(d)).",
+      "details": {
+        "code": "QMS_SELF_APPROVAL"
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+$ git rev-parse --short HEAD  # plus the webhook-notifications.ts change
+f47aa229
+ ✓ server/services/automation/__tests__/webhook-notifications.test.ts > webhook delivery (IAM-13 / P1-6) > delivers through safeFetch with redirects refused, never through bare fetch 87ms
+ ✓ server/services/automation/__tests__/webhook-notifications.test.ts > webhook delivery (IAM-13 / P1-6) > a refusal by the fetcher (private address, redirect) is a failed delivery, not a thrown error 4ms
+ ✓ server/services/automation/__tests__/webhook-notifications.test.ts > webhook delivery (IAM-13 / P1-6) > a non-2xx response is recorded by status alone; the destination body is never echoed 3ms
+ ✓ server/services/automation/__tests__/webhook-notifications.test.ts > webhook delivery (IAM-13 / P1-6) > a 2xx response is a success with the status code 2ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+exit=0

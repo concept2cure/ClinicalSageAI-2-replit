@@ -1,0 +1,5 @@
+# GREEN — artifact-status: same tests, fix applied
+ ✓ tests/artifact-status-audit-outcome.test.ts > PUT …/status carries its audit-row outcome > a status change whose row was lost still changes the status, and says the row is missing 38ms
+ ✓ tests/artifact-status-audit-outcome.test.ts > PUT …/status carries its audit-row outcome > a written row says so, and says it is not the chained audit_logs row 7ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)

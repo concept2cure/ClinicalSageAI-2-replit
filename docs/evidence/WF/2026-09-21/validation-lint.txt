@@ -1,0 +1,26 @@
+  331:3   warning  Async function 'step' has too many lines (180). Maximum allowed is 100                   max-lines-per-function
+  331:3   warning  Async function 'step' has a complexity of 28. Maximum allowed is 15                      complexity
+  360:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  461:11  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  470:13  warning  The value assigned to 'text' is not used in subsequent statements                        no-useless-assignment
+  486:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  492:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  516:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  521:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  525:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  572:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  611:1   warning  File has too many lines (540). Maximum allowed is 500                                    max-lines
+
+/home/user/ClinicalSageAI-2-replit/tests/validation/lib/harness.selftest.mjs
+  50:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/home/user/ClinicalSageAI-2-replit/tests/validation/oq/qms/run.mjs
+  105:1   warning  Async function 'approveSigned' has a complexity of 22. Maximum allowed is 15  complexity
+  164:42  warning  Async arrow function has a complexity of 16. Maximum allowed is 15            complexity
+
+/home/user/ClinicalSageAI-2-replit/tests/validation/run-all.mjs
+  19:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 30 problems (0 errors, 30 warnings)
+
+exit=0

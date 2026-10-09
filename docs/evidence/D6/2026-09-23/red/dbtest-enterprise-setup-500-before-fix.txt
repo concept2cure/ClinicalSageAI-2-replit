@@ -1,0 +1,6 @@
+# RED: the enterprise /mfa/setup case of tests/db/sign-in-posture.dbtest.ts WITH F-26's guard in mfaService but WITHOUT this session's catch in server/routes/authEnterprise.ts (removed for this run, restored after). 2026-09-23T10:36:23Z. Database: c2c_d6_repro
+
+ × tests/db/sign-in-posture.dbtest.ts > the enterprise router refuses setup over an enrolled authenticator, and says so (F-26) > 409 MFA_ALREADY_ENABLED, no secret handed out, the enrolled secret untouched 154ms
+   → {"error":"Failed to setup MFA"}: expected 500 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 7 skipped (8)

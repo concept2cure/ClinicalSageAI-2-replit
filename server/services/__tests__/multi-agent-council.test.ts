@@ -15,6 +15,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 // Shared mock handles (hoisted so the vi.mock factories can close over them).
 const h = vi.hoisted(() => ({
@@ -60,22 +62,26 @@ const MESSAGES = [
   { role: 'user' as const, content: 'Draft section X.' },
 ];
 
+function freshService(): MultiAgentCouncilService {
+  vi.clearAllMocks();
+  h.isFeatureAvailable.mockReturnValue(true);
+  h.intelligencePrefix.mockResolvedValue('');
+  h.analyze.mockImplementation((s: string) => ({
+    detected: [],
+    blocked: false,
+    sanitized: s,
+    riskScore: 0,
+  }));
+  h.auditLog.mockResolvedValue(undefined);
+  h.route.mockResolvedValue(VALID_RESPONSE);
+  return new MultiAgentCouncilService({} as any);
+}
+
 describe('MultiAgentCouncilService — gateway integration', () => {
   let svc: MultiAgentCouncilService;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    h.isFeatureAvailable.mockReturnValue(true);
-    h.intelligencePrefix.mockResolvedValue('');
-    h.analyze.mockImplementation((s: string) => ({
-      detected: [],
-      blocked: false,
-      sanitized: s,
-      riskScore: 0,
-    }));
-    h.auditLog.mockResolvedValue(undefined);
-    h.route.mockResolvedValue(VALID_RESPONSE);
-    svc = new MultiAgentCouncilService({} as any);
+    svc = freshService();
   });
 
   const call = (operation: string, options?: Record<string, unknown>) =>
@@ -103,13 +109,6 @@ describe('MultiAgentCouncilService — gateway integration', () => {
         jsonMode: false,
         callerModule: 'multi-agent-council',
       })
-    );
-  });
-
-  it('routes JSON agents as structured_output (jsonMode on)', async () => {
-    await call('CRITIC', { responseFormat: 'json' });
-    expect(h.route).toHaveBeenCalledWith(
-      expect.objectContaining({ taskType: 'structured_output', jsonMode: true })
     );
   });
 
@@ -159,5 +158,352 @@ describe('MultiAgentCouncilService — gateway integration', () => {
   it('does not fetch an intelligence prefix when no org/project context is given', async () => {
     await call('DRAFTER');
     expect(h.intelligencePrefix).not.toHaveBeenCalled();
+  });
+});
+
+describe('MultiAgentCouncilService — task routing and governance refusals', () => {
+  let svc: MultiAgentCouncilService;
+
+  beforeEach(() => {
+    svc = freshService();
+  });
+
+  const call = (operation: string, options?: Record<string, unknown>) =>
+    (svc as any).executeLLMWithFailover(operation, [...MESSAGES], 'corr-1', options);
+
+  it('routes the reviewing agents as regulatory_review, with jsonMode on (not structured_output)', async () => {
+    // structured_output may be served by any model; regulatory_review only by
+    // one approved for high-risk regulatory work.
+    await call('CRITIC', { responseFormat: 'json' });
+    expect(h.route).toHaveBeenCalledWith(
+      expect.objectContaining({ taskType: 'regulatory_review', jsonMode: true })
+    );
+  });
+
+  it.each([
+    ['DRAFTER', 'document_drafting'],
+    ['STATISTICIAN', 'regulatory_review'],
+    ['CRITIC', 'regulatory_review'],
+    ['SYNTHESIZER', 'document_drafting'],
+  ])('%s is routed as %s whatever its output format', async (operation, taskType) => {
+    await call(operation, { responseFormat: 'json' });
+    await call(operation, { responseFormat: 'text' });
+    for (const [req] of h.route.mock.calls) expect(req.taskType).toBe(taskType);
+  });
+
+  it('a governance refusal is final and not audited as an outage', async () => {
+    const refusal = Object.assign(new Error('MODEL_NOT_APPROVED_FOR_HIGH_RISK: regulatory_review'), {
+      code: 'MODEL_NOT_APPROVED_FOR_HIGH_RISK',
+    });
+    h.route.mockImplementationOnce(async () => {
+      throw refusal;
+    });
+    await expect(call('CRITIC', { responseFormat: 'json' })).rejects.toMatchObject({
+      code: 'MODEL_NOT_APPROVED_FOR_HIGH_RISK',
+      recoverable: false,
+    });
+    expect(h.auditLog).not.toHaveBeenCalledWith('CIRCUIT_BREAKER_OPENED', expect.anything(), expect.anything(), expect.anything());
+  });
+
+  it('a tenant placement refusal is final, named for what it is, and not audited as an outage (D6)', async () => {
+    // Until 2026-09-26 it fell through to the outage branch: three retries, three
+    // "All LLM providers unavailable" records, and "the system will retry".
+    const refusal = Object.assign(
+      new Error("DENY_TENANT_POLICY: this request was not sent to any AI service, because your organization's data-placement policy does not permit it (no self-hosted lane)."),
+      { name: 'GatewayPolicyError', reasonCode: 'DENY_TENANT_POLICY', stage: 'selection' },
+    );
+    h.route.mockImplementation(async () => {
+      throw refusal;
+    });
+    (svc as any).RETRY_DELAY_MS = 0;
+    await expect(
+      (svc as any).withRetry(() => call('DRAFTER', { responseFormat: 'text' }), 'DRAFTER'),
+    ).rejects.toMatchObject({ code: 'TENANT_PLACEMENT_DENIED', recoverable: false, message: refusal.message });
+    expect(h.route).toHaveBeenCalledTimes(1);
+    expect(h.auditLog).not.toHaveBeenCalledWith('CIRCUIT_BREAKER_OPENED', expect.anything(), expect.anything(), expect.anything());
+  });
+
+  it('withRetry does not retry an error marked unrecoverable, and does retry a recoverable one', async () => {
+    const { CouncilError } = await import('../multi-agent-council');
+    (svc as any).RETRY_DELAY_MS = 0;
+    const final = vi.fn(async () => {
+      throw new CouncilError('refused', 'MODEL_NOT_APPROVED_FOR_HIGH_RISK', undefined, undefined, false);
+    });
+    await expect((svc as any).withRetry(final, 'CRITIC')).rejects.toMatchObject({ recoverable: false });
+    expect(final).toHaveBeenCalledTimes(1);
+
+    const transient = vi.fn(async () => {
+      throw new CouncilError('down', 'ALL_PROVIDERS_UNAVAILABLE', undefined, undefined, true);
+    });
+    await expect((svc as any).withRetry(transient, 'CRITIC')).rejects.toMatchObject({ recoverable: true });
+    expect(transient).toHaveBeenCalledTimes(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The reviewing agents' results. The model extracts claims and issues; it does
+// not decide them, and an unreadable reply is not a clean review.
+// ---------------------------------------------------------------------------
+
+interface Binding {
+  id: string;
+  binding_code: string;
+  binding_name: string;
+  binding_type: 'SQL' | 'ATOM_QUERY' | 'API';
+  query_templates: Record<string, string>;
+}
+
+function councilWith(bindings: Binding[], sqlRows: Record<string, unknown[]> = {}, session: Record<string, unknown> = {}) {
+  const inserted: Array<{ sql: string; params: unknown[] }> = [];
+  const pool = {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
+      // Before the session read: an execution or verification row selects its
+      // tenant FROM lumen.council_sessions inside its INSERT.
+      if (/^\s*INSERT/.test(sql)) {
+        inserted.push({ sql, params });
+        return { rows: [] };
+      }
+      if (/FROM lumen\.council_sessions/.test(sql)) {
+        return { rows: [{ id: 's1', section_path: '2.7.3', statistician_agent_id: 'a2', critic_agent_id: 'a3', organization_id: 42, ...session }] };
+      }
+      if (/FROM lumen\.agent_registry/.test(sql)) {
+        return {
+          rows: [{ id: params[0], agent_code: 'X', agent_role: 'X', temperature: 0, max_tokens: 2000, system_prompt_template: 'Review {{draft_text}}' }],
+        };
+      }
+      if (/FROM lumen\.data_bindings/.test(sql)) return { rows: bindings };
+      if (/SELECT id FROM lumen\.agent_executions/.test(sql)) return { rows: [{ id: 'e1' }] };
+      if (sql in sqlRows) return { rows: sqlRows[sql] };
+      throw new Error(`unexpected query: ${sql}`);
+    }),
+  };
+  const svc = new MultiAgentCouncilService(pool as any);
+  (svc as any).RETRY_DELAY_MS = 0;
+  return { svc: svc as any, inserted };
+}
+
+const ENROLMENT: Binding = {
+  id: 'b1',
+  binding_code: 'EDC',
+  binding_name: 'EDC',
+  binding_type: 'SQL',
+  query_templates: { enrolled_subjects: 'SELECT n FROM enrolled', deaths: 'SELECT n FROM deaths' },
+};
+const API_BINDING: Binding = {
+  id: 'b2',
+  binding_code: 'CTMS',
+  binding_name: 'CTMS',
+  binding_type: 'API',
+  query_templates: { sites_activated: '/sites' },
+};
+
+function statisticianSays(verifications: unknown[]) {
+  h.route.mockResolvedValue({ ...VALID_RESPONSE, content: JSON.stringify({ verifications }) });
+}
+
+describe('Statistician — only bound data decides a claim', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    h.isFeatureAvailable.mockReturnValue(true);
+    h.intelligencePrefix.mockResolvedValue('');
+    h.auditLog.mockResolvedValue(undefined);
+  });
+
+  it('a claim that matches the data is VERIFIED; one that differs is a DISCREPANCY corrected to the data', async () => {
+    const { svc } = councilWith([ENROLMENT], {
+      'SELECT n FROM enrolled': [{ n: 412 }],
+      'SELECT n FROM deaths': [{ n: 3 }],
+    });
+    statisticianSays([
+      { claim: '412 enrolled subjects', claimedValue: '412', source: 'EDC', status: 'VERIFIED' },
+      { claim: '2 deaths', claimedValue: '2', source: 'EDC', status: 'VERIFIED' },
+    ]);
+
+    const r = await svc.executeStatistician('s1', 'draft');
+
+    expect(r.verifications.map((v: any) => [v.status, v.actualValue, v.correction])).toEqual([
+      ['VERIFIED', '412', undefined],
+      ['DISCREPANCY', '3', '3'],
+    ]);
+    expect(r.discrepancyCount).toBe(1);
+  });
+
+  it("the model's own VERIFIED is not a verdict: no matching binding means UNVERIFIABLE", async () => {
+    const { svc } = councilWith([ENROLMENT]);
+    statisticianSays([{ claim: 'median age 54', claimedValue: '54', source: 'demographics', status: 'VERIFIED' }]);
+
+    const r = await svc.executeStatistician('s1', 'draft');
+
+    expect(r.verifications[0]).toMatchObject({ status: 'UNVERIFIABLE', actualValue: null });
+    expect(r.discrepancyCount).toBe(0);
+  });
+
+  it("the model's own correction is not a figure: it is dropped when no data answered", async () => {
+    const { svc } = councilWith([]);
+    statisticianSays([
+      { claim: '2 deaths', claimedValue: '2', source: 'EDC', status: 'DISCREPANCY', correction: '5' },
+    ]);
+
+    const r = await svc.executeStatistician('s1', 'draft');
+
+    expect(r.verifications[0].status).toBe('UNVERIFIABLE');
+    expect(r.verifications[0].correction).toBeUndefined();
+    expect(r.discrepancyCount).toBe(0);
+  });
+
+  it('a binding that returns nothing is UNVERIFIABLE, not a DISCREPANCY corrected to an empty string', async () => {
+    const { svc } = councilWith([ENROLMENT, API_BINDING], { 'SELECT n FROM enrolled': [] });
+    statisticianSays([
+      { claim: '412 enrolled subjects', claimedValue: '412', source: 'EDC', status: 'VERIFIED' },
+      { claim: '31 sites activated', claimedValue: '31', source: 'CTMS', status: 'VERIFIED' },
+    ]);
+
+    const r = await svc.executeStatistician('s1', 'draft');
+
+    for (const v of r.verifications) {
+      expect(v.status).toBe('UNVERIFIABLE');
+      expect(v.correction).toBeUndefined();
+    }
+    expect(r.discrepancyCount).toBe(0);
+    expect(h.auditLog).not.toHaveBeenCalledWith('DATA_DISCREPANCY_DETECTED', expect.anything(), expect.anything(), expect.anything());
+  });
+
+  it('a count of 0 read from the data is a value, and verifies a claim of 0', async () => {
+    const { svc } = councilWith([ENROLMENT], { 'SELECT n FROM deaths': [{ n: 0 }] });
+    statisticianSays([{ claim: '0 deaths', claimedValue: '0', source: 'EDC', status: 'UNVERIFIABLE' }]);
+
+    const r = await svc.executeStatistician('s1', 'draft');
+
+    expect(r.verifications[0]).toMatchObject({ status: 'VERIFIED', actualValue: '0' });
+  });
+
+  it.each([
+    ['prose', 'All numbers look right to me.'],
+    ['JSON without a verifications list', '{"summary":"fine"}'],
+    ['an empty reply', ''],
+  ])('an unreadable reply (%s) fails, and is not recorded as zero claims', async (_what, content) => {
+    const { svc, inserted } = councilWith([ENROLMENT]);
+    h.route.mockResolvedValue({ ...VALID_RESPONSE, content });
+
+    await expect(svc.executeStatistician('s1', 'draft')).rejects.toMatchObject({
+      code: 'UNREADABLE_AGENT_OUTPUT',
+      recoverable: true,
+    });
+    expect(inserted).toEqual([]);
+  });
+
+  it('an empty verifications list is a real answer — a draft with no numerical claims', async () => {
+    const { svc } = councilWith([ENROLMENT]);
+    statisticianSays([]);
+
+    const r = await svc.executeStatistician('s1', 'draft');
+
+    expect(r).toMatchObject({ totalClaims: 0, discrepancyCount: 0 });
+  });
+});
+
+describe('Critic — an unreadable review is not "no issues"', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    h.isFeatureAvailable.mockReturnValue(true);
+    h.intelligencePrefix.mockResolvedValue('');
+    h.auditLog.mockResolvedValue(undefined);
+  });
+
+  const STATS = { verifications: [], totalClaims: 0, discrepancyCount: 0 };
+
+  it('unreadable → fails and records nothing', async () => {
+    const { svc, inserted } = councilWith([]);
+    h.route.mockResolvedValue({ ...VALID_RESPONSE, content: 'Looks good overall.' });
+
+    await expect(svc.executeCritic('s1', 'draft', STATS)).rejects.toMatchObject({ code: 'UNREADABLE_AGENT_OUTPUT' });
+    expect(inserted).toEqual([]);
+  });
+
+  it('a readable review keeps its issues and its assessment; an unknown assessment is the cautious REVISE', async () => {
+    const { svc } = councilWith([]);
+    const issue = { type: 'compliance', severity: 'HIGH', location: '2.7.3', description: 'd', suggestion: 's' };
+    h.route.mockResolvedValue({ ...VALID_RESPONSE, content: JSON.stringify({ issues: [issue], overall_assessment: 'PASS' }) });
+    expect(await svc.executeCritic('s1', 'draft', STATS)).toEqual({ issues: [issue], overallAssessment: 'PASS' });
+
+    h.route.mockResolvedValue({ ...VALID_RESPONSE, content: JSON.stringify({ issues: [], overall_assessment: 'LGTM' }) });
+    expect((await svc.executeCritic('s1', 'draft', STATS)).overallAssessment).toBe('REVISE');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The council runs for one tenant, and says so everywhere (D6, 2026-09-29).
+// Until then initializeSession wrote no organization, every gateway call passed
+// organizationId: undefined (so the ledger bound the tenant only from ambient
+// scope), and the three lumen tables it writes had no tenant column at all.
+// ---------------------------------------------------------------------------
+describe('the council is bound to its tenant', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    h.isFeatureAvailable.mockReturnValue(true);
+    h.intelligencePrefix.mockResolvedValue('');
+    h.auditLog.mockResolvedValue(undefined);
+    h.analyze.mockImplementation((s: string) => ({ detected: [], blocked: false, sanitized: s, riskScore: 0 }));
+  });
+
+  function sessionPool() {
+    const inserted: Array<{ sql: string; params: unknown[] }> = [];
+    const pool = {
+      query: vi.fn(async (sql: string, params: unknown[] = []) => {
+        if (/^\s*INSERT/.test(sql)) {
+          inserted.push({ sql, params });
+          return { rows: [] };
+        }
+        if (/FROM lumen\.agent_registry/.test(sql)) {
+          return { rows: ['DRAFTER', 'STATISTICIAN', 'CRITIC', 'SYNTHESIZER'].map((r, i) => ({ id: `a${i}`, agent_code: r, agent_role: r })) };
+        }
+        return { rows: [] };
+      }),
+    };
+    return { svc: new MultiAgentCouncilService(pool as any) as any, inserted };
+  }
+
+  it('a session is created for an organization, and records it', async () => {
+    const { svc, inserted } = sessionPool();
+    await svc.initializeSession('2.5', {}, [], { organizationId: 42 });
+
+    const row = inserted.find(i => /INSERT INTO lumen\.council_sessions/.test(i.sql))!;
+    expect(row.sql).toMatch(/organization_id/);
+    expect(row.params).toContain(42);
+  });
+
+  it('a session with no organization is refused, and nothing is written', async () => {
+    const { svc, inserted } = sessionPool();
+    await expect(svc.initializeSession('2.5', {}, [], {} as never)).rejects.toThrow(/organization/i);
+    expect(inserted).toHaveLength(0);
+  });
+
+  it("every agent's model call names the session's organization", async () => {
+    const { svc } = councilWith([], {}, { organization_id: 42 });
+    h.route.mockResolvedValue({ ...VALID_RESPONSE, content: JSON.stringify({ verifications: [] }) });
+    await svc.executeStatistician('s1', 'draft');
+
+    expect(h.route).toHaveBeenCalled();
+    for (const [request] of h.route.mock.calls) expect(request).toMatchObject({ organizationId: 42 });
+  });
+
+  it('all four agents pass it, not only the one exercised above', () => {
+    const src = readFileSync(resolve(__dirname, '..', 'multi-agent-council.ts'), 'utf8');
+    const calls = [...src.matchAll(/this\.executeLLMWithFailover\([\s\S]*?\n\s{4}\);/g)].map(m => m[0]);
+    expect(calls).toHaveLength(4);
+    for (const call of calls) expect(call).toMatch(/organizationId: session\.organization_id/);
+  });
+
+  it("an execution row and a verification row take their tenant from the session's row", async () => {
+    const { svc, inserted } = councilWith([ENROLMENT], { 'SELECT n FROM enrolled': [{ n: 412 }], 'SELECT n FROM deaths': [{ n: 3 }] });
+    statisticianSays([{ claim: '2 deaths', claimedValue: '2', source: 'EDC', status: 'VERIFIED' }]);
+    await svc.executeStatistician('s1', 'draft');
+
+    const tables = ['agent_executions', 'data_verifications'];
+    for (const table of tables) {
+      const row = inserted.find(i => new RegExp(`INSERT INTO lumen\\.${table}`).test(i.sql));
+      expect(row, table).toBeDefined();
+      expect(row!.sql, table).toMatch(/organization_id[\s\S]*SELECT s\.organization_id[\s\S]*FROM lumen\.council_sessions s/);
+    }
   });
 });

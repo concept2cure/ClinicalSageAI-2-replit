@@ -1,0 +1,7 @@
+  ✓  1 [chromium] › oq/_mutant.oq.spec.ts:58:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › negative control — /projects (Projects) bounces a visitor with no session (1.7s)
+  ✘  2 [chromium] › oq/_mutant.oq.spec.ts:74:5 › OQ — 21 CFR 11.10(d): the launch catalog is closed to an unauthenticated visitor › /projects (Projects) renders for an authenticated session (950ms)
+    Error: /projects bounced an AUTHENTICATED session to login
+    test-results/e2e/oq-_mutant.oq-OQ-—-21-CFR--0f10c-or-an-authenticated-session-chromium/test-failed-1.png
+  1 failed
+  1 passed (3.6s)
+Tier 5 smoke failed. Ensure Playwright is installed (npm i -D @playwright/test && npx playwright install) and DATABASE_URL points at a provisioned DB.

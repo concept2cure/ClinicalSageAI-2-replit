@@ -1,0 +1,9 @@
+ × server/utils/__tests__/logger.test.ts > maskPersonalData — e-mail and IP addresses in log values (DP-26) > keeps the first character and the domain of an address 4ms
+ × server/utils/__tests__/logger.test.ts > maskPersonalData — e-mail and IP addresses in log values (DP-26) > keeps the network part of an IP address 1ms
+ × server/utils/__tests__/logger.test.ts > maskPersonalData — e-mail and IP addresses in log values (DP-26) > leaves other strings alone, including long ones 1ms
+ × server/utils/__tests__/logger.test.ts > redactContext — masks personal data under ordinary keys, redacts sensitive keys entirely > masks an address or an IP wherever it is a string value, at any depth 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/utils/__tests__/logger.test.ts > maskPersonalData — e-mail and IP addresses in log values (DP-26) > keeps the first character and the domain of an address
+TypeError: maskPersonalData is not a function
+ FAIL  server/utils/__tests__/logger.test.ts > maskPersonalData — e-mail and IP addresses in log values (DP-26) > keeps the network part of an IP address
+exit=1

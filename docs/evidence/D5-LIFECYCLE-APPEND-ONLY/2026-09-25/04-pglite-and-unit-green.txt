@@ -1,0 +1,56 @@
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > authoring → in_review requires content 2ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > in_review → approved requires a review sign-off 2ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > approved → placed requires an approval signature AND a complete placement 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > packaged → submitted requires packaging validation 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > approved cannot transition back to authoring (must supersede) 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > approved can be superseded 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > submitted cannot go back to packaged (terminal-forward) 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > legal back-transitions > in_review can request revision back to authoring 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > placement completeness > requires registryId, module, and section 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > audit event > captures from/to, actor, version, and placement for a transition 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > the chain verifier recomputes (VR-03) > an intact trail verifies, and reports that its hashes were recomputed 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > the chain verifier recomputes (VR-03) > an event whose actor was edited with its hashes left in place is broken, at that event 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > the chain verifier recomputes (VR-03) > an event with no hash at all is broken when hashes are recomputed 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > the chain verifier recomputes (VR-03) > without a hasher it says so: linkage only, never a claim that hashes were checked 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > a signature is its own trail event > records the sign-off at the current stage, naming the signer and the signature 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > progress + wiring > progress increases monotonically across the forward spine 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > progress + wiring > every stage has a subsystem binding (no orphaned stage) 0ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > negative control — without the guard, a raw rewrite of the trail succeeds > rewrites the first event's actor, and nothing refuses it 2262ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > runs the spine authoring → approved with gates, re-verified signatures and a verified audit chain, and refuses to place without a sequence 123ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > scopes reads to the tenant — another org cannot see the document 10ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > instantiates the type's blueprint outline at creation (blueprints reach the document) 17ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > refuses a sign-off with no password, and with a wrong one 26ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > records the server role, never the one in the request body 22ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > approving signs: no password, no approval — and the stage does not move 31ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a signatureRef in the body is never cited: the approval carries a server-minted reference 29ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a role without signing authority cannot sign, even re-verified 18ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a viewer can create, sign and advance nothing 18ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > no user, no write: the actor is the authenticated user or nothing — never "unknown" 13ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > an illegal jump is refused by the gate and costs the signer no credential check 10ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the writer's refusals keep their status > a frozen sequence is a 409 in the orchestrator's shape, not a 500 43ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the writer's refusals keep their status > a sequence that does not exist is a 404 28ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > a review sign-off is recorded once: a second is refused before the ceremony, and the first stands 24ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > a review sign-off outside review is refused, before the ceremony 7ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > an approval is not recorded by /sign: approving is the transition, which signs 16ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > a revision ends the review round: the next round needs its own sign-off, and the first stays in the trail 68ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > reading a document recomputes its hashes: an event edited in place reads as broken, at that event 35ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > is on the applier, after the table it guards 2039ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > replays cleanly: the deploy re-runs it, and it installs each trigger once 1612ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > the trail only grows > refuses rewriting a recorded event's actor 1491ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > the trail only grows > refuses removing a recorded event 1671ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > the trail only grows > refuses replacing the trail with something that is not an array 1464ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > the trail only grows > allows appending an event 1479ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > an approval is written once > records it with its transition, then refuses replacing or removing it 1582ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > an approval is written once > refuses an approval recorded with no trail event 1559ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > a review sign-off closes only with a recorded revision > refuses replacing it 1569ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > a review sign-off closes only with a recorded revision > refuses clearing it without the revision transition 1549ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > a review sign-off closes only with a recorded revision > clears it on in_review → authoring, in the statement that records the transition 1747ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > a stage change is its own recorded event > refuses a stage change with no event 1451ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > a stage change is its own recorded event > refuses a stage change whose last event names another stage 1447ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > frozen columns > refuses changing the source binding, the tenant or the identity 1507ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > frozen columns > allows a content hash to change during authoring, and refuses it after 1537ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > frozen columns > freezes a withdrawn document entirely 1571ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > nothing is deleted > refuses DELETE 1577ms
+ ✓ tests/regulatory/canonical-documents-append-only.pglite.test.ts > with the guard (20260925) > nothing is deleted > refuses TRUNCATE 1516ms
+ Test Files  3 passed (3)
+      Tests  54 passed (54)

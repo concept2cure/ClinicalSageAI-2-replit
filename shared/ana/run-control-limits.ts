@@ -24,3 +24,26 @@ export const MAX_INTERJECTION_CHARS = 2_000;
  * human who is not coming back.
  */
 export const MAX_PAUSE_MS = 10 * 60_000;
+
+/**
+ * What AnA does between steps when nobody is watching the turn (row 74).
+ *
+ *   manual  she takes the step the message asked for, then waits for the
+ *           person before each further step that would run without one.
+ *   auto    she keeps going until she judges the task done, within the
+ *           ceilings below.
+ *
+ * Named "run policy", never "mode": `mode` is the engine/effort pair
+ * (ANA_MODES, prefs.anaMode). A turn that sends no policy keeps today's
+ * effort-bounded behaviour. Declared here, beside the pause ceiling, because
+ * the server enforces it and the client has to state it.
+ */
+export const ANA_RUN_POLICIES = ['manual', 'auto'] as const;
+export type AnaRunPolicy = (typeof ANA_RUN_POLICIES)[number];
+
+/**
+ * The absolute round ceiling of an Auto turn. A `roundCap` in the loop
+ * (server/services/ana/agentic-loop.ts resolveRoundBudget): progress-earned
+ * extension stops here, and a demonstration promoted mid-turn cannot lift it.
+ */
+export const AUTO_MAX_ROUNDS = 20;

@@ -1,0 +1,46 @@
+
+> concept2cure-riai@1.0.0 ci:tenant-isolation:no-regression
+> node scripts/ci/check-tenant-isolation.mjs --strict-no-regression
+
+[ci:tenant-isolation] WARN — 11 candidate violation(s) (28 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit):
+
+  server/mcp/__tests__/mcp-connector.dbtest.ts  (2)
+    L48  tables=[users]
+      `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, 'not-a-real-hash')
+    L83  tables=[users]
+      await owner.query(`DELETE FROM users WHERE email LIKE $1`, [`${PREFIX}-%@example.test`]);
+
+  server/routes/admin/licensing-history.ts  (1)
+    L382  tables=[audit_logs,users]
+      `SELECT a.id, a.occurred_at, a.created_at, a.tenant_id, a.user_id,
+
+  server/routes/module-access-requests.ts  (1)
+    L261  tables=[]
+      `${SELECT_REQUEST}
+
+  server/services/advancedRAGPipeline.ts  (1)
+    L818  tables=[rag_chunks,rag_documents]
+      `SELECT rc.content FROM rag_chunks rc
+
+  server/services/deep-research-orchestrator.ts  (1)
+    L419  tables=[deep_research_jobs]
+      `SELECT id, uuid, organization_id, project_id, user_id, status, query, progress,
+
+  server/services/kernel-adaptive-policy.ts  (1)
+    L85  tables=[]
+      `SELECT strategy, AVG(quality_score)::float AS avg_quality, COUNT(*)::int AS samples
+
+  server/services/kernel-observability.ts  (4)
+    L53  tables=[]
+      `SELECT
+    L63  tables=[]
+      `SELECT
+    L72  tables=[]
+      `SELECT
+    … 1 more
+
+Total: 11 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] FAIL — 2 NEW finding(s) above baseline of 9:
+  server/mcp/__tests__/mcp-connector.dbtest.ts#fd01e43209c6:users
+  server/mcp/__tests__/mcp-connector.dbtest.ts#36c096e160f7:users
+tenant-isolation exit 1

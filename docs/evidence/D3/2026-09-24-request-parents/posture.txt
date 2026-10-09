@@ -1,0 +1,24 @@
+# Posture of the database these runs used — read from the catalog, 2026-09-24
+# The from-blank PostgreSQL 16 install of ../2026-09-24-update-boundary/ (install-fresh + deploy-migrate).
+
+app_service                  superuser=false bypassrls=false
+
+# The tables each case writes, and whether RLS could have refused it:
+complaints                   rls=false force=false policies=0 org_column=none
+cro_clients                  rls=true force=true policies=1 org_column=organization_id
+cro_studies                  rls=true force=true policies=1 org_column=organization_id
+gspr_program_mappings        rls=true force=true policies=1 org_column=organization_id
+gspr_requirements            rls=false force=false policies=0 org_column=none
+mdr_events                   rls=false force=false policies=0 org_column=none
+notification_preferences     rls=false force=false policies=0 org_column=none
+project_tasks                rls=true force=true policies=1 org_column=organization_id
+user_intelligence_profiles   rls=true force=true policies=1 org_column=organization_id
+
+# The foreign keys the pin cases write through (Postgres checks them without RLS):
+  cro_studies: FOREIGN KEY (client_id) REFERENCES cro_clients(id)
+  gspr_program_mappings: FOREIGN KEY (program_id) REFERENCES regulatory_programs(id) ON DELETE CASCADE
+  mdr_events: FOREIGN KEY (source_complaint_id) REFERENCES complaints(id) ON DELETE SET NULL
+  project_tasks: FOREIGN KEY (parent_task_id) REFERENCES project_tasks(id)
+
+gspr_requirements rows       0
+# (0 on a deployed database: the GSPR catalog reaches no deployed database — ledger L197.)

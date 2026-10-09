@@ -1,0 +1,6 @@
+# GREEN: as committed
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > sets NODE_EXTRA_CA_CERTS in the production stage, after assets are copied in 1ms
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > names a committed file that .dockerignore does not drop 1ms
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > matches the SHA-256 recorded in checksums.txt 1ms
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > is loaded by Node as extra CAs, and supplies roots Node does not already have 94ms
+      Tests  4 passed (4)

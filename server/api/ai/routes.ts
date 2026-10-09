@@ -1,7 +1,10 @@
 import { Request, Response, Router } from 'express';
 import { aiComplete } from '../../lib/unified-ai-client';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('ai-routes');
 
 // Enhanced AI compliance scoring algorithm
 const calculateComplianceScore = (content: string, templateType: string): number => {
@@ -541,12 +544,8 @@ Keep responses practical and regulatory-focused.
       followUpSuggestions,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
-    console.error('Contextual AI guidance error:', error);
-    res.status(500).json({
-      error: 'Failed to generate AI guidance',
-      message: error.message,
-    });
+  } catch (error) {
+    return serverError(res, log, 'generating AI guidance', error);
   }
 });
 

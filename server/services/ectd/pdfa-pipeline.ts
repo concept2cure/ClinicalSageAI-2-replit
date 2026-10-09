@@ -197,8 +197,40 @@ async function convertToPdfA1bWithGhostscript(pdfBytes: Uint8Array): Promise<Uin
   const dir = os.tmpdir();
   const inputPath = path.join(dir, `pdfa-in-${token}.pdf`);
   const outputPath = path.join(dir, `pdfa-out-${token}.pdf`);
+  const preludePath = path.join(dir, `pdfa-def-${token}.ps`);
+
+  // PDF/A-1b requires an OutputIntent (ISO 19005-1 §6.2.2, veraPDF clause
+  // 6.2.3.3). Ghostscript does not add one on its own: with -dPDFA=1 and no
+  // prelude it emits a file that carries the pdfaid:part identifier — so the
+  // guard in finalizePdfA that checks for that identifier is satisfied — yet
+  // veraPDF rejects it. That is exactly the "converted: true, agency rejects"
+  // failure the gate exists to prevent, found by scripts/ops/
+  // check-pdfa-toolchain.sh (W2, 2026-09-20). The prelude below is the
+  // standard pdfmark sequence that embeds the sRGB ICC profile as the intent.
+  // No profile on the host means no compliant conversion is possible, and the
+  // function says so by throwing; the caller returns the input unchanged with
+  // converted: false rather than a conversion it cannot stand behind.
+  const icc = await resolveSrgbIccProfile();
+  if (!icc) {
+    throw new Error(
+      'PDF/A-1b conversion needs an sRGB ICC profile for the OutputIntent and none was found ' +
+        '(set PDFA_SRGB_ICC, or install Ghostscript, which ships one). Refusing to produce a file ' +
+        'that would carry a PDF/A identifier without an OutputIntent.',
+    );
+  }
+  const prelude = [
+    '%!',
+    '[ /_objdef {icc_PDFA} /type /stream /OBJ pdfmark',
+    '[ {icc_PDFA} << /N 3 >> /PUT pdfmark',
+    `[ {icc_PDFA} (${escapePostScriptString(icc)}) (r) file /PUT pdfmark`,
+    '[ /_objdef {OutputIntent_PDFA} /type /dict /OBJ pdfmark',
+    '[ {OutputIntent_PDFA} << /Type /OutputIntent /S /GTS_PDFA1 /DestOutputProfile {icc_PDFA} /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) >> /PUT pdfmark',
+    '[ {Catalog} << /OutputIntents [ {OutputIntent_PDFA} ] >> /PUT pdfmark',
+    '',
+  ].join('\n');
 
   await fs.writeFile(inputPath, Buffer.from(pdfBytes));
+  await fs.writeFile(preludePath, prelude, 'utf8');
   try {
     await execFileAsync(
       resolveGsBinary(),
@@ -211,7 +243,11 @@ async function convertToPdfA1bWithGhostscript(pdfBytes: Uint8Array): Promise<Uin
         '-dNOPAUSE',
         '-dQUIET',
         '-dBATCH',
+        // SAFER mode (the default since 9.50) blocks file reads outside the
+        // permitted set; the prelude reads the ICC profile, so permit exactly it.
+        `--permit-file-read=${icc}`,
         `-sOutputFile=${outputPath}`,
+        preludePath,
         inputPath,
       ],
       { timeout: 120000, maxBuffer: 64 * 1024 * 1024 }
@@ -222,7 +258,35 @@ async function convertToPdfA1bWithGhostscript(pdfBytes: Uint8Array): Promise<Uin
     // Best-effort cleanup; ignore unlink errors.
     await fs.unlink(inputPath).catch(() => {});
     await fs.unlink(outputPath).catch(() => {});
+    await fs.unlink(preludePath).catch(() => {});
   }
+}
+
+/**
+ * The sRGB ICC profile embedded as the PDF/A OutputIntent. PDFA_SRGB_ICC wins;
+ * otherwise the copies Ghostscript installs. Null when none is readable.
+ */
+export async function resolveSrgbIccProfile(): Promise<string | null> {
+  const candidates = [
+    process.env.PDFA_SRGB_ICC,
+    '/usr/share/color/icc/ghostscript/srgb.icc',
+    '/usr/share/ghostscript/iccprofiles/srgb.icc',
+    '/usr/local/share/ghostscript/iccprofiles/srgb.icc',
+  ].filter((p): p is string => !!p);
+  for (const p of candidates) {
+    try {
+      await fs.access(p);
+      return p;
+    } catch {
+      /* try the next */
+    }
+  }
+  return null;
+}
+
+/** PostScript literal string escaping for the two characters that end or escape one. */
+function escapePostScriptString(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 }
 
 /**

@@ -1,0 +1,7 @@
+[terraform-preflight-proof] ok — preflight step found in job "migrate" (6078 bytes of shell)
+[terraform-preflight-proof] ok — rendered family matches the pipeline's ECS_API_TASK_FAMILY (c2c-production-api)
+::error::Task definition c2c-production-api (container api) is missing required production env: STORAGE_PROVIDER
+::error::The app refuses to boot without each of these. Add them to the task definition (terraform/environments/production) before deploying.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+
+[terraform-preflight-proof] 1 check(s) failed.

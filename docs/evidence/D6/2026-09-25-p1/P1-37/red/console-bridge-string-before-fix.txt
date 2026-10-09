@@ -1,0 +1,5 @@
+ × server/utils/__tests__/consoleBridge.test.ts > consoleBridge — redaction (production) > masks an e-mail or IP address inside a string argument (P1-37 follow-up, 202
+   → expected 'login failed for alice@example.com fr…' to contain 'a***@example.com'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)

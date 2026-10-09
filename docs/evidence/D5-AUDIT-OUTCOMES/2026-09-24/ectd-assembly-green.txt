@@ -1,0 +1,33 @@
+# GREEN — ectd-assembly: same tests, fix applied
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count 626ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed) 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/validate — spine-backed programs validate leaf placement > reports placement findings from the sequence's leaves, not the empty section store 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — spine leaf state drives the blockers > names the placed-document count and defers readiness to compile-time verification 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > falls back to the program code when no agency number is recorded — never invents one 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > says "unassigned" when the program has neither a number nor a code 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > an empty or whitespace application_number is not a recorded number 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > refuses a region that is not the region the sequence was created for 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > names the sequence each compilation covered and whether it carries a leaf manifest 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — a program's readiness comes from what is placed > counts required sections covered by placed leaves, and names the sequence and its region 8ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly 1ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > both rows written: the result says so 153ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing 67ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row 65ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a refused assembly throws an error that carries whether the refusal was recorded 14ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success 69ms
+ Test Files  2 passed (2)
+      Tests  30 passed (30)

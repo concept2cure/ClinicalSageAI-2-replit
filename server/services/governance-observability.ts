@@ -196,14 +196,31 @@ class GovernanceMetricsService {
       this.checkDecisionRecordTableHealth(),
     ]);
 
-    const totalOps = this.counters.persistenceWrites + this.counters.queryExecuted;
+    /* A failure rate whose denominator counts only the operations that
+       SUCCEEDED is not a failure rate. With every governance write failing,
+       persistenceWrites stays 0, totalOps stays 0, and the guard below
+       returned 0 -- so this endpoint reported `healthy` and `failureRate: 0`
+       for a ledger that had recorded nothing at all. Measured on the
+       reference deployment: persistenceFailures 33, persistenceWrites 0,
+       status healthy. The worse it got, the better it read.
+
+       Attempts = successes + failures, on both counters. */
+    const totalAttempts =
+      this.counters.persistenceWrites + this.counters.persistenceFailures +
+      this.counters.queryExecuted + this.counters.queryFailures;
     const totalFailures = this.counters.persistenceFailures + this.counters.queryFailures;
-    const failureRate = totalOps > 0 ? totalFailures / totalOps : 0;
+    const failureRate = totalAttempts > 0 ? totalFailures / totalAttempts : 0;
 
     const uptimeMs = Date.now() - new Date(this.counters.startedAt).getTime();
 
+    /* Every attempt failing is not a degraded ledger, it is a ledger that is
+       not recording -- the same state as an unreachable database, and it must
+       read the same way. Below that, any failure at all keeps the rate
+       threshold, which is what it is for. */
+    const nothingRecorded = totalFailures > 0 && totalAttempts === totalFailures;
+
     let status: 'healthy' | 'degraded' | 'unhealthy';
-    if (!dbOk) status = 'unhealthy';
+    if (!dbOk || nothingRecorded) status = 'unhealthy';
     else if (failureRate > 0.1 || !tableOk || !decisionTableOk) status = 'degraded';
     else status = 'healthy';
 

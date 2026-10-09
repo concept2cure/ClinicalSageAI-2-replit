@@ -97,14 +97,16 @@ export function runWithSystemTenantScope<T>(caller: string, fn: () => T): T {
  *
  * This scope deliberately carries NO role. It exists to say "this query is
  * intentionally tenant-less", which is exactly what the instrumentation wants
- * to distinguish from "somebody forgot". `public.users` carries no RLS policy
- * (verified: relrowsecurity = false, zero rows in pg_policy), so the lookup
- * succeeds on its own merits rather than by bypassing anything.
+ * to distinguish from "somebody forgot". It satisfies no other table's tenant
+ * policy: a role-less tenantId '0' matches no organization.
  *
- * That also makes the failure mode safe: if `users` is ever brought under a
- * tenant policy, this scope will NOT bypass it. Login would start failing —
- * loudly, and before any data crosses a tenant boundary — instead of silently
- * returning another tenant's row.
+ * `public.users` is the exception, by name. Since 2026-09-28 it carries row
+ * security that limits a tenant scope to its own organization's members
+ * (migrations/20260928_users_membership_rls.sql;
+ * docs/evidence/D3/2026-09-28-users-rls/), and that policy admits the two
+ * tenantId '0' scopes, this one included, to the whole table. Sign-in, password
+ * reset, email OTP and token refresh look an account up before any tenant
+ * exists; that is what this scope is for.
  *
  * Nesting is safe: AsyncLocalStorage gives the innermost scope, so a request
  * that goes on to authenticate runs its remaining work in the real tenant scope

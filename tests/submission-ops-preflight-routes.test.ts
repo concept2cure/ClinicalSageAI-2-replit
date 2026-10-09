@@ -74,6 +74,10 @@ const poolQuery = vi.fn(async (sql: string, _params: unknown[] = []) => {
       rows: dbState.contentRows.map((r) => ({
         section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, sort_order: r.sortOrder, artifact_db_id: r.artifactDbId,
         title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
+        // 2026-09-23 (W5/D7, round-2 skeptic): the approval facts the fingerprint
+        // now covers — a filable row is approved AT its version, as the status route writes it.
+        status: r.filable == null ? null : r.filable ? 'approved' : 'review',
+        approved_version_id: r.filable ? r.version : null, published_version_id: null,
       })),
     };
   }
@@ -140,7 +144,7 @@ beforeEach(() => {
 /** What the stored bundles below were built from; the package still holds it
  *  unless a test edits dbState.contentRows. */
 const CONTENT: PackageContentRow[] = [
-  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
+  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text'), filable: true },
 ];
 const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
 const IDS = { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc' };
@@ -298,15 +302,21 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
   it('a bundle fingerprinted under an OLDER scheme says so, rather than claiming it records none', async () => {
     // A version bump makes every stored descriptor unproven at once; telling
     // the operator it "records no fingerprint" would be false for all of them.
-    dbState.pkg = pkgWith({ regulatory: IDS, bundle: { ...BUNDLE, contentFingerprint: 'v2:' + 'a'.repeat(64) } });
-    const res = await preflight();
-    expect(res.status).toBe(200);
-    const finding = res.body.data.findings.find((f: any) => f.ruleId === 'BUNDLE-CONTENT-UNPROVEN');
-    expect(finding.message).toMatch(/fingerprinted under an older scheme than v3/);
-    expect(finding.message).toMatch(/re-assemble/);
-    expect(finding.message).not.toMatch(/records no content fingerprint/);
-    // Nothing was read: an unproven descriptor is not compared against anything.
-    expect(poolQuery.mock.calls.some((c) => /FROM c2c_package_sections/.test(String(c[0])))).toBe(false);
+    // 2026-09-23 (W5/D7, round-2 skeptic): the scheme is v4 (each artifact's
+    // approval is covered), so every bundle assembled under v3 — i.e. before
+    // this change — is in this state; it names the recovery, re-assembling.
+    for (const stored of ['v2:' + 'a'.repeat(64), 'v3:' + 'b'.repeat(64)]) {
+      poolQuery.mockClear();
+      dbState.pkg = pkgWith({ regulatory: IDS, bundle: { ...BUNDLE, contentFingerprint: stored } });
+      const res = await preflight();
+      expect(res.status).toBe(200);
+      const finding = res.body.data.findings.find((f: any) => f.ruleId === 'BUNDLE-CONTENT-UNPROVEN');
+      expect(finding.message, stored).toMatch(/fingerprinted under an older scheme than v4/);
+      expect(finding.message).toMatch(/re-assemble/);
+      expect(finding.message).not.toMatch(/records no content fingerprint/);
+      // Nothing was read: an unproven descriptor is not compared against anything.
+      expect(poolQuery.mock.calls.some((c) => /FROM c2c_package_sections/.test(String(c[0])))).toBe(false);
+    }
   });
 
   it('a content read that fails is an error, never a pass', async () => {

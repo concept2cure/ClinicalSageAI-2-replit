@@ -14,7 +14,7 @@
  * @module server/services/study-design/sap-projection
  */
 
-import { primaryEndpoints, type StudyDesign } from './study-design-types';
+import { confirmatoryEndpoints, primaryEndpoints, type StudyDesign } from './study-design-types';
 import type { SectionStatus } from './protocol-projection';
 import { renderEstimandSection } from '../estimand-sap-section';
 
@@ -198,7 +198,7 @@ function statisticalMethods(design: StudyDesign): Body {
 }
 
 function multiplicity(design: StudyDesign): Body {
-  const confirmatory = (design.endpoints ?? []).filter(e => e.role === 'primary' || e.role === 'key_secondary');
+  const confirmatory = confirmatoryEndpoints(design);
   const m = design.statisticalPlan?.multiplicity;
   const lines: string[] = [];
   const gaps: string[] = [];

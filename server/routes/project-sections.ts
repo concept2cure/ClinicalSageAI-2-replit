@@ -39,6 +39,13 @@ const router = Router();
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// People are named through public.actor_name, never a join on users: since
+// users took row-level security (2026-09-28) a tenant scope reads only current
+// members, so a join dropped the name of anyone who had left and an INNER join
+// dropped their comments and assigned work altogether. actor_name names members
+// and actors in this organization's audit trail, nobody else
+// (migrations/20260929_actor_names.sql; docs/evidence/D3/2026-09-29-actor-names/).
+
 // SECURITY: tenant context must come from the verified request, never
 // default to a hard-coded org. The previous `|| 1` fallback meant a
 // request with no tenant context silently acted as organization 1 — a
@@ -221,8 +228,8 @@ router.get('/', async (req: Request, res: Response) => {
              (SELECT COUNT(*) FROM concept2cure_artifacts ca
               WHERE ca.project_id = ps.project_id AND ca.ctd_section = ps.section_code AND ca.organization_id = ps.organization_id) as artifact_count
       FROM project_sections ps
-      LEFT JOIN users u_assigned ON u_assigned.id = ps.assigned_to
-      LEFT JOIN users u_reviewer ON u_reviewer.id = ps.reviewer_id
+      LEFT JOIN LATERAL public.actor_name(ps.assigned_to) u_assigned ON TRUE
+      LEFT JOIN LATERAL public.actor_name(ps.reviewer_id) u_reviewer ON TRUE
       WHERE ps.project_id = $1 AND ps.organization_id = $2
     `;
     const params: any[] = [projectId, orgId];
@@ -311,15 +318,15 @@ router.get('/summary', async (req: Request, res: Response) => {
     // Team workload
     const workload = await pool.query(
       `SELECT
-         u.id as user_id,
+         ps.assigned_to as user_id,
          u.name as user_name,
          COUNT(*) as assigned_sections,
          COUNT(*) FILTER (WHERE ps.status NOT IN ('approved', 'signed', 'locked')) as active_sections,
          SUM(ps.estimated_hours) FILTER (WHERE ps.status NOT IN ('approved', 'signed', 'locked')) as pending_hours
        FROM project_sections ps
-       JOIN users u ON u.id = ps.assigned_to
+       LEFT JOIN LATERAL public.actor_name(ps.assigned_to) u ON TRUE
        WHERE ps.project_id = $1 AND ps.organization_id = $2 AND ps.assigned_to IS NOT NULL
-       GROUP BY u.id, u.name
+       GROUP BY ps.assigned_to, u.name
        ORDER BY active_sections DESC`,
       [projectId, orgId]
     );
@@ -546,7 +553,7 @@ router.get('/milestones', async (req: Request, res: Response) => {
                 ELSE 'on_track'
               END as status_label
        FROM project_milestones pm
-       LEFT JOIN users u ON u.id = pm.created_by
+       LEFT JOIN LATERAL public.actor_name(pm.created_by) u ON TRUE
        WHERE pm.project_id = $1 AND pm.organization_id = $2
        ORDER BY pm.target_date ASC`,
       [projectId, orgId]
@@ -650,7 +657,7 @@ router.get('/timeline', async (req: Request, res: Response) => {
       `SELECT section_code, title, module, status, deadline, assigned_to,
               u.name as assigned_to_name
        FROM project_sections ps
-       LEFT JOIN users u ON u.id = ps.assigned_to
+       LEFT JOIN LATERAL public.actor_name(ps.assigned_to) u ON TRUE
        WHERE ps.project_id = $1 AND ps.organization_id = $2 AND ps.deadline IS NOT NULL
        ORDER BY ps.deadline ASC`,
       [projectId, orgId]
@@ -747,8 +754,8 @@ router.get('/:code', async (req: Request, res: Response) => {
               u_assigned.name as assigned_to_name,
               u_reviewer.name as reviewer_name
        FROM project_sections ps
-       LEFT JOIN users u_assigned ON u_assigned.id = ps.assigned_to
-       LEFT JOIN users u_reviewer ON u_reviewer.id = ps.reviewer_id
+       LEFT JOIN LATERAL public.actor_name(ps.assigned_to) u_assigned ON TRUE
+       LEFT JOIN LATERAL public.actor_name(ps.reviewer_id) u_reviewer ON TRUE
        WHERE ps.project_id = $1 AND ps.organization_id = $2 AND ps.section_code = $3`,
       [projectId, orgId, code]
     );
@@ -1191,7 +1198,7 @@ router.get('/:code/comments', async (req: Request, res: Response) => {
     const result = await pool.query(
       `SELECT sc.*, u.name as author_name
        FROM section_comments sc
-       JOIN users u ON u.id = sc.author_id
+       LEFT JOIN LATERAL public.actor_name(sc.author_id) u ON TRUE
        WHERE sc.project_id = $1 AND sc.organization_id = $2 AND sc.section_code = $3
        ORDER BY sc.created_at ASC`,
       [projectId, orgId, code]
@@ -1224,7 +1231,7 @@ router.get('/:code/history', async (req: Request, res: Response) => {
     const result = await pool.query(
       `SELECT ssl.*, u.name as changed_by_name
        FROM section_status_log ssl
-       LEFT JOIN users u ON u.id = ssl.changed_by
+       LEFT JOIN LATERAL public.actor_name(ssl.changed_by) u ON TRUE
        WHERE ssl.project_id = $1 AND ssl.organization_id = $2 AND ssl.section_code = $3
        ORDER BY ssl.created_at DESC`,
       [projectId, orgId, code]

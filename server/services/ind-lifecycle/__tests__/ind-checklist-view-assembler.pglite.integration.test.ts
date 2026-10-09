@@ -128,7 +128,9 @@ describe('assembleOrgIndChecklists', () => {
     // Sections — real coauthor status mapped into the surface vocabulary, enriched
     // from the canonical blueprint (title / module / CFR ref / AI-draftable).
     const sec = Object.fromEntries(ind.sections.map((x: any) => [x.code, x]));
-    expect(sec['m1.2']).toMatchObject({ title: 'Cover Letter', module: 'M1', status: 'signed', ai: true });
+    // 2026-09-23 (W5/D7, co-author final pass): finalized (frozen) → locked,
+    // not signed — no e-signature is implied by a freeze.
+    expect(sec['m1.2']).toMatchObject({ title: 'Cover Letter', module: 'M1', status: 'locked', ai: true });
     expect(sec['m1.2'].ref).toContain('312.23');
     expect(sec['m1.6.2'].status).toBe('qa_review');   // review → qa_review
     expect(sec['m1.7'].status).toBe('drafting');      // draft → drafting
@@ -308,5 +310,82 @@ describe('assembleOrgIndChecklists — a missing authoring store degrades sectio
         `CREATE TABLE coauthor_documents (id serial PRIMARY KEY, organization_id int, module_number text, status text, module_name text);`,
       );
     }
+  });
+});
+
+/* upsertLeaf stores a section code exactly as written, and the writers do not
+   agree on a spelling: the Vault filing dialog stores judgeSectionCode's
+   canonical form ('1.1.1'), a person may type 'M1.2' or '3.2.s.4', and the
+   server-side writers store 'm'-prefixed codes. The checklist must read all of
+   them as the section they name. */
+describe('assembleOrgIndChecklists — a section is the same section however it was spelled', () => {
+  async function seedSpelled(org: number, leaves: Array<[string, string, string?]>): Promise<void> {
+    const s = await pglite.query(
+      `INSERT INTO submissions (organization_id, title, product_name, application_type) VALUES ($1,'BX-301','BX-301','ind') RETURNING id`,
+      [org],
+    );
+    const subId = (s.rows[0] as { id: number }).id;
+    const q = await pglite.query(`INSERT INTO ectd_sequences (organization_id, submission_id) VALUES ($1,$2) RETURNING id`, [org, subId]);
+    const seqId = (q.rows[0] as { id: number }).id;
+    for (const [code, status, name] of leaves) {
+      const d = await pglite.query(
+        `INSERT INTO coauthor_documents (organization_id, module_number, status, module_name) VALUES ($1,$2,$3,$4) RETURNING id`,
+        [org, code, status, name ?? code],
+      );
+      await pglite.query(
+        `INSERT INTO submission_leaves (organization_id, sequence_id, section_code, document_table, document_id) VALUES ($1,$2,$3,'coauthor_documents',$4)`,
+        [org, seqId, code, (d.rows[0] as { id: number }).id],
+      );
+    }
+  }
+
+  it('completes a form and enriches a blueprint section whatever the stored spelling', async () => {
+    await seedSpelled(ORG, [['1.1.1', 'approved'], ['M1.2', 'finalized'], ['3.2.s.4', 'draft']]);
+    const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
+    const done = Object.fromEntries(ind.forms.map((f: any) => [f.id, f.done]));
+    expect(done.FDA_1571).toBe(true);
+    const sec = Object.fromEntries(ind.sections.map((x: any) => [x.code, x]));
+    // Shown under the blueprint's own spelling, with the blueprint's title and
+    // reference — not as an unrecognised code titled by its file name.
+    expect(sec['m1.2']).toMatchObject({ title: 'Cover Letter', module: 'M1', status: 'locked' });
+    expect(sec['m3.2.S.4']).toMatchObject({ title: 'Control of Drug Substance', module: 'M3', status: 'drafting' });
+    // A form's section is the form, not a stray section beside it.
+    expect(Object.keys(sec).sort()).toEqual(['m1.2', 'm3.2.S.4']);
+  });
+
+  /* 2026-09-23 (W5/D7, co-author final pass). coauthor 'finalized' is what a
+     FROZEN authoring document files as, and any org member may freeze, with no
+     signature. The checklist showed it as 'signed' — a Form 1571 reported
+     signed that nobody signed. It is now 'locked': complete (whether a frozen,
+     unsigned form counts as done is the founder's policy decision and is left
+     as it was), but it claims no signature. 'signed' stays for a status that
+     records one; and a signature or approval on the same section outranks a
+     bare lock, so the section never shows less than the truth. */
+  it("maps finalized to 'locked', never 'signed'; a signed or approved copy of the same section outranks it", async () => {
+    await seedSpelled(ORG, [
+      ['1.1.1', 'finalized'],
+      ['m1.2', 'finalized'], ['1.2', 'approved'],
+      ['m2.3', 'signed'], ['2.3', 'finalized'],
+      ['m2.4', 'finalized'],
+    ]);
+    const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
+    const sec = Object.fromEntries(ind.sections.map((x: any) => [x.code, x.status]));
+    expect(sec).toEqual({ 'm1.2': 'approved', 'm2.3': 'signed', 'm2.4': 'locked' });
+    // Policy unchanged: a frozen form still counts complete (founder decision).
+    const done = Object.fromEntries(ind.forms.map((f: any) => [f.id, f.done]));
+    expect(done.FDA_1571).toBe(true);
+  });
+
+  it('two spellings of one section are one section, at the more advanced status', async () => {
+    await seedSpelled(ORG, [['m1.2', 'draft'], ['1.2', 'approved']]);
+    const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
+    expect(ind.sections).toHaveLength(1);
+    expect(ind.sections[0]).toMatchObject({ code: 'm1.2', status: 'approved' });
+  });
+
+  it('a section the blueprint does not model keeps the document’s own name, never an invented title', async () => {
+    await seedSpelled(ORG, [['3.2.S.4.2', 'draft', 'Analytical Procedures']]);
+    const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
+    expect(ind.sections).toEqual([expect.objectContaining({ code: 'm3.2.S.4.2', title: 'Analytical Procedures', module: 'M3' })]);
   });
 });

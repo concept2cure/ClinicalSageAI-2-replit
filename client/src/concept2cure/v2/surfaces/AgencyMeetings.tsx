@@ -181,8 +181,8 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!loading && !error) notifySurfaceActionReady('agency-meetings');
-  }, [loading, error]);
+    if (!loading) notifySurfaceActionReady('agency-meetings');
+  }, [loading]);
 
   const addMeeting = (r: Meeting) => {
     const row = { ...r, _new: true };
@@ -638,7 +638,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
             <MtgStat tone={stTone[m.status]}>{m.status}</MtgStat>
           </div>
           <div className="mtg-goal">
-            {I.target || I.flag} {m.goal}
+            {I.target} {m.goal}
           </div>
           <div className="mtg-clockline">
             <span>

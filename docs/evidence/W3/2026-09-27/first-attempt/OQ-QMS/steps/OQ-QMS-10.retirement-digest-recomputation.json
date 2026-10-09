@@ -1,0 +1,39 @@
+{
+  "method": "tests/validation/lib/qms-digest.mjs computeQmsDocumentRetirementDigest — re-implementation of server/services/qms/document-approval-signature.ts computeQmsDocumentRetirementDigest (the approval recipe over the stored row with metadata.retired removed)",
+  "digestInput": {
+    "kind": "qms-document-version-content",
+    "id": 3,
+    "organizationId": 1,
+    "docNumber": "SOP-OQ-B-20260927235436",
+    "version": "1.0",
+    "title": "OQ-006 Second SOP 20260927235436",
+    "docType": "sop",
+    "category": null,
+    "artifactId": null,
+    "nextReviewDate": "2026-10-02",
+    "metadata": {}
+  },
+  "recomputed": "852defbb943825e6b7a5b7bb4220a0743893c922638250ae94ee5f7d651d75b5",
+  "reportedBySignature": "852defbb943825e6b7a5b7bb4220a0743893c922638250ae94ee5f7d651d75b5",
+  "storedOnDocument": "852defbb943825e6b7a5b7bb4220a0743893c922638250ae94ee5f7d651d75b5",
+  "match": true,
+  "signatureRow": {
+    "id": 3,
+    "document_id": null,
+    "version_id": null,
+    "signed_target": "qms-document:3",
+    "signature_type": "qms-document-retirement",
+    "signature_purpose": "OQ-006 step 10: superseded by validation (signed)",
+    "signer_id": 3,
+    "signer_name": "OQ Second Signer",
+    "signer_title": null,
+    "signer_email": "oq-signer@validation.local",
+    "signature_meaning": "APPROVED",
+    "signature_hash": "ac82058be50eddf20916dbc25537862c8d51efa43f2be2924e32d5451e92a199",
+    "binding_basis": "qms-document-version-content-sha256",
+    "second_factor_verified": true,
+    "is_valid": true,
+    "signed_at": "2026-09-27T23:56:30.688Z",
+    "ip_address": "127.0.0.1"
+  }
+}

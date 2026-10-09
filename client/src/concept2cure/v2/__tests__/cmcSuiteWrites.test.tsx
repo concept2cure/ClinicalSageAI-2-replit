@@ -220,10 +220,15 @@ describe('CmQcTesting — recording and second-person review', () => {
     analyst: 7, reviewedBy: null,
   };
   const bySomeoneElse = { ...byMe, id: 91, sampleId: 'S-2', analyst: 12 };
+  /* A QC result is filed per application, so the register reads the OPEN
+     program's rows, not the organisation's (288411a4, REGISTER_SCOPE). The
+     read is answered only at that path: a register that lists every program
+     again shows no rows here, and these tests fail. */
+  const QC_READ = `/api/cmc/qc-testing?projectId=${encodeURIComponent(PROJECT)}`;
 
   it('records the signed-in user as the analyst on a new result', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
-      if (m === 'GET' && u === '/api/cmc/qc-testing') return res({ success: true, data: [] });
+      if (m === 'GET' && u === QC_READ) return res({ success: true, data: [] });
       if (m === 'POST') return res({ success: true, data: byMe });
       return res({});
     });
@@ -245,11 +250,12 @@ describe('CmQcTesting — recording and second-person review', () => {
 
   it('refuses to let the analyst review their own result, and says why', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
-      if (m === 'GET' && u === '/api/cmc/qc-testing') return res({ success: true, data: [byMe, bySomeoneElse] });
+      if (m === 'GET' && u === QC_READ) return res({ success: true, data: [byMe, bySomeoneElse] });
       return res({});
     });
     render(<CmQcTesting />);
     await screen.findByText('S-1');
+    expect(callsTo('GET', '/api/cmc/qc-testing')).toHaveLength(0);
 
     const mine = screen.getByText('S-1').closest('tr')!;
     const mineReview = within(mine).getByRole('button', { name: /Review/i }) as HTMLButtonElement;
@@ -262,7 +268,7 @@ describe('CmQcTesting — recording and second-person review', () => {
 
   it('a review PUTs the disposition and the reviewer, never the analyst', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
-      if (m === 'GET' && u === '/api/cmc/qc-testing') return res({ success: true, data: [bySomeoneElse] });
+      if (m === 'GET' && u === QC_READ) return res({ success: true, data: [bySomeoneElse] });
       if (m === 'PUT') return res({ success: true, data: { ...bySomeoneElse, passFailStatus: 'pass', reviewedBy: 7 } });
       return res({});
     });

@@ -1,0 +1,8 @@
+{
+  "status": 503,
+  "code": "GATEWAY_UNAVAILABLE",
+  "hasDraftKey": false,
+  "hasDegradedKey": false,
+  "bodyMentionsTemplate": false,
+  "pass": true
+}

@@ -1,0 +1,25 @@
+Every other guard that imports the reachability parser, run with the parser before this change and after it.
+Outputs compared byte for byte (diff of the two captures).
+
+## ci:migration-reachability — before and after: identical
+[ci:migration-reachability] 1345 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined
+[ci:migration-reachability] ✅ no new unreachable table references.
+
+## ci:column-reachability — before and after: identical
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+
+## ci:insert-columns-declared — before and after: identical
+
+✅ no new violations. 47 baselined and awaiting burn-down.
+
+## ci:duplicate-table-ddl — before and after: identical
+[ci:duplicate-table-ddl] scanned 596 non-archived .sql files; 1375 distinct tables; 13 defined more than once; 15 baselined
+[ci:duplicate-table-ddl] ✅ no new duplicate table definitions.
+
+## ci:model-migration-agreement — before and after: identical
+
+✅ no new divergence. 28 baselined and awaiting burn-down.
+
+## ci:insert-columns-declared:selftest (after)
+
+✅ parser agrees with every case whose truth was established against a real database.

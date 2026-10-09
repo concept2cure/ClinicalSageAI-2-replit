@@ -1,0 +1,256 @@
+$ NODE_OPTIONS='--max-old-space-size=4096' npx vitest run --config vitest.config.ts server/__tests__/security/mcp-client-registration.contract.test.ts --reporter=verbose
+HEAD=5c978992 (server/mcp/index.ts and server/mcp/config.ts unmodified; the new test file is the only change)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "message": "[database] RLS enforcement mode resolved",
+    "mode": "on"
+  }
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+  }
+  }
+  }
+  }
+  }
+  }
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins 1913ms
+   → Cannot read properties of undefined (reading 'redirectOriginAllowlist')
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > is null when the variable is unset; production + null is the open state, development + null is not 1ms
+   → Cannot read properties of undefined (reading 'redirectOriginAllowlist')
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > throws on a malformed allowlist instead of resolving to an open or partial one (fail closed) 4ms
+   → expected "https://claude.ai/callback" to be refused: expected [Function] to throw an error
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > keeps the existing behaviour and shape of the rest of the config 1ms
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + foreign origin → 400 invalid_redirect_uri, the SDK handler never runs, and the body is not logged 2ms
+   → clientRegistrationGuard is not a function
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + a listed origin (any path, host case-insensitive) → next() is called 1ms
+   → clientRegistrationGuard is not a function
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > matches by origin, never by prefix: a look-alike host or a different port is refused 1ms
+   → clientRegistrationGuard is not a function
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > one bad entry refuses the whole registration 1ms
+   → clientRegistrationGuard is not a function
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > production posture: an http redirect is refused even with no allowlist, and even for loopback 1ms
+   → clientRegistrationGuard is not a function
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > development posture: http://localhost and http://127.0.0.1 pass; any other http host does not 1ms
+   → clientRegistrationGuard is not a function
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > a fragment is refused whatever the posture 1ms
+   → clientRegistrationGuard is not a function
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > not an absolute URL, or not a string → invalid_redirect_uri 1ms
+   → clientRegistrationGuard is not a function
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > missing, empty or non-array redirect_uris, or no JSON object at all → invalid_client_metadata 1ms
+   → clientRegistrationGuard is not a function
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > installs the /register route layer with the guard BEFORE the SDK router layer 10ms
+   → no POST /register route layer on the connector router: expected -1 to be greater than or equal to 0
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > end to end: a foreign origin is refused by the guard; a listed origin reaches the SDK handler and is registered 39ms
+   → expected 201 to be 400 // Object.is equality
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > no path spelling reaches the SDK handler around the guard 8ms
+   → /register/: expected 201 not to be 201 // Object.is equality
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > rate-limits registration attempts per IP (20 per hour), counting refused attempts too 7ms
+   → attempt 1: expected 201 to be 400 // Object.is equality
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: openInProduction is true and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request 1ms
+   → Cannot read properties of undefined (reading 'openInProduction')
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > an allowlist, or a non-production posture, emits no such warning 5ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+TypeError: Cannot read properties of undefined (reading 'redirectOriginAllowlist')
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:70:35
+     68|     const { resolveMcpConfig } = await mods();
+     69|     const cfg = resolveMcpConfig(PROD_ALLOWLISTED);
+     70|     expect(cfg.clientRegistration.redirectOriginAllowlist).toEqual(['h…
+       |                                   ^
+     71|     expect(cfg.clientRegistration.requireHttpsRedirects).toBe(true);
+     72|     expect(cfg.clientRegistration.openInProduction).toBe(false);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > is null when the variable is unset; production + null is the open state, development + null is not
+TypeError: Cannot read properties of undefined (reading 'redirectOriginAllowlist')
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:78:36
+     76|     const { resolveMcpConfig } = await mods();
+     77|     const prod = resolveMcpConfig(PROD_OPEN);
+     78|     expect(prod.clientRegistration.redirectOriginAllowlist).toBeNull();
+       |                                    ^
+     79|     expect(prod.clientRegistration.requireHttpsRedirects).toBe(true);
+     80|     expect(prod.clientRegistration.openInProduction).toBe(true);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > throws on a malformed allowlist instead of resolving to an open or partial one (fail closed)
+AssertionError: expected "https://claude.ai/callback" to be refused: expected [Function] to throw an error
+- Expected:
+null
++ Received:
+undefined
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:107:9
+    105|         () => resolveMcpConfig({ ...PROD_OPEN, MCP_CLIENT_REDIRECT_ALL…
+    106|         `expected "${value}" to be refused`,
+    107|       ).toThrow(/MCP_CLIENT_REDIRECT_ALLOWLIST/);
+       |         ^
+    108|     }
+    109|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + foreign origin → 400 invalid_redirect_uri, the SDK handler never runs, and the body is not logged
+TypeError: clientRegistrationGuard is not a function
+ ❯ guardApp server/__tests__/security/mcp-client-registration.contract.test.ts:46:58
+     44|   const reached = vi.fn();
+     45|   const app = express();
+     46|   app.post('/register', express.json({ limit: '16kb' }), clientRegistr…
+       |                                                          ^
+     47|     reached();
+     48|     res.status(201).json({ reached: 'sdk' });
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:124:30
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + a listed origin (any path, host case-insensitive) → next() is called
+TypeError: clientRegistrationGuard is not a function
+ ❯ guardApp server/__tests__/security/mcp-client-registration.contract.test.ts:46:58
+     44|   const reached = vi.fn();
+     45|   const app = express();
+     46|   app.post('/register', express.json({ limit: '16kb' }), clientRegistr…
+       |                                                          ^
+     47|     reached();
+     48|     res.status(201).json({ reached: 'sdk' });
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:138:30
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > matches by origin, never by prefix: a look-alike host or a different port is refused
+TypeError: clientRegistrationGuard is not a function
+ ❯ guardApp server/__tests__/security/mcp-client-registration.contract.test.ts:46:58
+     44|   const reached = vi.fn();
+     45|   const app = express();
+     46|   app.post('/register', express.json({ limit: '16kb' }), clientRegistr…
+       |                                                          ^
+     47|     reached();
+     48|     res.status(201).json({ reached: 'sdk' });
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:149:30
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > one bad entry refuses the whole registration
+TypeError: clientRegistrationGuard is not a function
+ ❯ guardApp server/__tests__/security/mcp-client-registration.contract.test.ts:46:58
+     44|   const reached = vi.fn();
+     45|   const app = express();
+     46|   app.post('/register', express.json({ limit: '16kb' }), clientRegistr…
+       |                                                          ^
+     47|     reached();
+     48|     res.status(201).json({ reached: 'sdk' });
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:159:30
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > production posture: an http redirect is refused even with no allowlist, and even for loopback
+TypeError: clientRegistrationGuard is not a function
+ ❯ guardApp server/__tests__/security/mcp-client-registration.contract.test.ts:46:58
+     44|   const reached = vi.fn();
+     45|   const app = express();
+     46|   app.post('/register', express.json({ limit: '16kb' }), clientRegistr…
+       |                                                          ^
+     47|     reached();
+     48|     res.status(201).json({ reached: 'sdk' });
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:167:30
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > development posture: http://localhost and http://127.0.0.1 pass; any other http host does not
+TypeError: clientRegistrationGuard is not a function
+ ❯ guardApp server/__tests__/security/mcp-client-registration.contract.test.ts:46:58
+     44|   const reached = vi.fn();
+     45|   const app = express();
+     46|   app.post('/register', express.json({ limit: '16kb' }), clientRegistr…
+       |                                                          ^
+     47|     reached();
+     48|     res.status(201).json({ reached: 'sdk' });
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:181:30
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > a fragment is refused whatever the posture
+TypeError: clientRegistrationGuard is not a function
+ ❯ guardApp server/__tests__/security/mcp-client-registration.contract.test.ts:46:58
+     44|   const reached = vi.fn();
+     45|   const app = express();
+     46|   app.post('/register', express.json({ limit: '16kb' }), clientRegistr…
+       |                                                          ^
+     47|     reached();
+     48|     res.status(201).json({ reached: 'sdk' });
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:195:32
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > not an absolute URL, or not a string → invalid_redirect_uri
+TypeError: clientRegistrationGuard is not a function
+ ❯ guardApp server/__tests__/security/mcp-client-registration.contract.test.ts:46:58
+     44|   const reached = vi.fn();
+     45|   const app = express();
+     46|   app.post('/register', express.json({ limit: '16kb' }), clientRegistr…
+       |                                                          ^
+     47|     reached();
+     48|     res.status(201).json({ reached: 'sdk' });
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:204:30
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > missing, empty or non-array redirect_uris, or no JSON object at all → invalid_client_metadata
+TypeError: clientRegistrationGuard is not a function
+ ❯ guardApp server/__tests__/security/mcp-client-registration.contract.test.ts:46:58
+     44|   const reached = vi.fn();
+     45|   const app = express();
+     46|   app.post('/register', express.json({ limit: '16kb' }), clientRegistr…
+       |                                                          ^
+     47|     reached();
+     48|     res.status(201).json({ reached: 'sdk' });
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:214:30
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > installs the /register route layer with the guard BEFORE the SDK router layer
+AssertionError: no POST /register route layer on the connector router: expected -1 to be greater than or equal to 0
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:236:82
+    234|     const registerIdx = stack.findIndex((l) => l.route?.path === '/reg…
+    235|     const sdkIdx = stack.findIndex((l) => l.name === 'router');
+    236|     expect(registerIdx, 'no POST /register route layer on the connecto…
+       |                                                                                  ^
+    237|     expect(sdkIdx, 'no SDK router layer on the connector router').toBe…
+    238|     expect(registerIdx).toBeLessThan(sdkIdx);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > end to end: a foreign origin is refused by the guard; a listed origin reaches the SDK handler and is registered
+AssertionError: expected 201 to be 400 // Object.is equality
+- Expected
++ Received
+- 400
++ 201
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:250:28
+    248|
+    249|     const refused = await register(app, { client_name: 'Evil', redirec…
+    250|     expect(refused.status).toBe(400);
+       |                            ^
+    251|     expect(refused.body).toEqual({ error: 'invalid_redirect_uri', erro…
+    252|     expect(refused.headers['cache-control']).toBe('no-store');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > no path spelling reaches the SDK handler around the guard
+AssertionError: /register/: expected 201 not to be 201 // Object.is equality
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:272:36
+    270|     for (const path of ['/register/', '/REGISTER', '/register?x=1', '/…
+    271|       const res = await register(app, { redirect_uris: ['https://attac…
+    272|       expect(res.status, path).not.toBe(201);
+       |                                    ^
+    273|       if (res.status === 400) expect(res.body.error, path).toBe('inval…
+    274|     }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > rate-limits registration attempts per IP (20 per hour), counting refused attempts too
+AssertionError: attempt 1: expected 201 to be 400 // Object.is equality
+- Expected
++ Received
+- 400
++ 201
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:283:46
+    281|     for (let i = 0; i < 20; i++) {
+    282|       const res = await register(app, { redirect_uris: ['https://attac…
+    283|       expect(res.status, `attempt ${i + 1}`).toBe(400);
+       |                                              ^
+    284|     }
+    285|     const blocked = await register(app, { redirect_uris: ['https://att…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: openInProduction is true and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request
+TypeError: Cannot read properties of undefined (reading 'openInProduction')
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:293:38
+    291|     const warn = vi.spyOn(logger, 'warn');
+    292|     const config = resolveMcpConfig(PROD_OPEN);
+    293|     expect(config.clientRegistration.openInProduction).toBe(true);
+       |                                      ^
+    294|
+    295|     const app = express();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+ Test Files  1 failed (1)
+      Tests  17 failed | 2 passed (19)
+   Start at  01:48:58
+   Duration  2.65s (transform 1.07s, setup 107ms, import 176ms, tests 2.00s, environment 0ms)
+exit=1

@@ -13,7 +13,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import { runQualification, qualifyV3, qualifyV4 } from '../index';
-import { validateBackboneFile } from '../qualify';
+import { validateBackboneFile, unresolvedModifiedFiles } from '../qualify';
 import { isXmllintAvailable } from '../../xml-validator';
 import type { Region } from '../../../submission-gateways/types';
 
@@ -50,6 +50,8 @@ describe.skipIf(!XMLLINT)('eCTD v3.2.2 qualification', () => {
       // A superseding operation must reference the leaf it replaces: the m1
       // replace leaf carries a modified-file pointer at the prior sequence.
       expect(r.lifecycle.operationsWithModifiedFile).toContain('replace');
+      // …and every pointer names a leaf ID the 0000 package actually carries.
+      expect(r.lifecycle.modifiedFileUnresolved).toEqual([]);
       expect(r.lifecycle.nextPackagePassed).toBe(true);
       expect(r.passed).toBe(true);
     } finally {
@@ -505,4 +507,53 @@ describe.skipIf(!XMLLINT)('POSITIVE CONTROL: a real generated package declares a
       await fs.rm(work, { recursive: true, force: true });
     }
   }, 30000);
+});
+
+/**
+ * The resolution check itself, shown failing on each shape it exists to catch.
+ * 2026-09-29 (W5/D7): the report used to check only that a pointer was present,
+ * and every pointer the packager wrote was a file path.
+ */
+describe('unresolvedModifiedFiles — a pointer must name a leaf the prior package carries', () => {
+  async function amendment(indexLeaf: string, regionalLeaf = ''): Promise<{ work: string; prior: string; next: string }> {
+    const work = await tmp();
+    const prior = path.join(work, '0000');
+    const next = path.join(work, '0001');
+    await fs.mkdir(path.join(prior, 'm1/us'), { recursive: true });
+    await fs.mkdir(path.join(next, 'm1/us'), { recursive: true });
+    await fs.writeFile(path.join(prior, 'index.xml'), '<ectd><leaf operation="new" xlink:href="m3/a.pdf" ID="leaf-3-2-S-1-a"/></ectd>');
+    await fs.writeFile(path.join(prior, 'm1/us/us-regional.xml'), '<r><leaf operation="new" xlink:href="1-2/c.pdf" ID="leaf-1-2-c"/></r>');
+    await fs.writeFile(path.join(next, 'index.xml'), `<ectd>${indexLeaf}</ectd>`);
+    await fs.writeFile(path.join(next, 'm1/us/us-regional.xml'), `<r>${regionalLeaf}</r>`);
+    return { work, prior, next };
+  }
+  const check = (d: { prior: string; next: string }) =>
+    unresolvedModifiedFiles(d.next, d.prior, ['index.xml', 'm1/us/us-regional.xml'], '0000');
+
+  it('passes a pointer to a leaf ID the prior backbone carries, from index.xml and from the regional backbone', async () => {
+    const d = await amendment(
+      '<leaf operation="delete" modified-file="../0000/index.xml#leaf-3-2-S-1-a" ID="x"/>',
+      '<leaf operation="replace" modified-file="../../../0000/m1/us/us-regional.xml#leaf-1-2-c" ID="y"/>',
+    );
+    try { expect(await check(d)).toEqual([]); } finally { await fs.rm(d.work, { recursive: true, force: true }); }
+  });
+
+  it('FAILS a file-path pointer, which names no leaf', async () => {
+    const d = await amendment('<leaf operation="replace" modified-file="../0000/m3/a.pdf" ID="x"/>');
+    try {
+      const out = await check(d);
+      expect(out).toHaveLength(1);
+      expect(out[0]).toContain('../0000/m3/a.pdf');
+    } finally { await fs.rm(d.work, { recursive: true, force: true }); }
+  });
+
+  it('FAILS an ID no leaf of the prior backbone carries', async () => {
+    const d = await amendment('<leaf operation="replace" modified-file="../0000/index.xml#leaf-9-9-ghost" ID="x"/>');
+    try { expect((await check(d))[0]).toMatch(/names ID leaf-9-9-ghost, which no leaf/); } finally { await fs.rm(d.work, { recursive: true, force: true }); }
+  });
+
+  it('FAILS a Module 1 pointer that climbs out of the regional backbone too few folders', async () => {
+    const d = await amendment('', '<leaf operation="replace" modified-file="../0000/m1/us/us-regional.xml#leaf-1-2-c" ID="y"/>');
+    try { expect((await check(d))[0]).toMatch(/is not \.\.\/\.\.\/\.\.\/0000/); } finally { await fs.rm(d.work, { recursive: true, force: true }); }
+  });
 });

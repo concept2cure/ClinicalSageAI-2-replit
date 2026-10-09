@@ -1,0 +1,13 @@
+
+=== projects ===
+<repo>/tests/validation/lib/harness.mjs:113
+    throw new Error(
+          ^
+
+Error: dev-login failed (404): {"success":false,"error":{"code":"NOT_FOUND","message":"Not found"}}. The server must run with NODE_ENV=development and ALLOW_DEV_AUTH=1 (server/auth/dev-auth-policy.ts).
+    at devLogin (<repo>/tests/validation/lib/harness.mjs:113:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createRun (<repo>/tests/validation/lib/harness.mjs:297:16)
+    at async <repo>/tests/validation/oq/projects/run.mjs:10:13
+
+Node.js v22.22.2

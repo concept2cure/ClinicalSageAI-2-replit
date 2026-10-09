@@ -8,6 +8,7 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 const apiUpload = vi.hoisted(() => vi.fn());
@@ -483,6 +484,28 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
     await waitFor(() =>
       expect(note).toHaveBeenCalledWith(expect.stringMatching(/filed at m1\.1 in sequence 0000/)),
     );
+  });
+
+  it('is reachable and operable from the keyboard, and names the form it files', async () => {
+    // The control was a <label> around a display:none file input: a label is
+    // not focusable and display:none removes the input from the tab order and
+    // the accessibility tree, so no keyboard or screen-reader user could file a
+    // form. Tab to it and press Enter, the way such a user would.
+    mockProgramListing();
+    const user = userEvent.setup();
+    const { container } = render(<IndFormsPanel note={vi.fn()} />);
+    await screen.findByText(/FDA 1571/);
+    const attach = screen.getByRole('button', { name: /^Attach completed form: FDA 1571/ });
+    const picker = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const pick = vi.spyOn(picker, 'click');
+    for (let i = 0; i < 100 && document.activeElement !== attach; i++) await user.tab();
+    expect(document.activeElement).toBe(attach);
+    await user.keyboard('{Enter}');
+    expect(pick).toHaveBeenCalledTimes(1);
+    // One control per form, each named for its own form rather than five
+    // identical "Attach completed form" buttons in one table.
+    const names = screen.getAllByRole('button', { name: /^Attach completed form: / }).map((b) => b.getAttribute('aria-label'));
+    expect(new Set(names).size).toBe(names.length);
   });
 
   it('reports a refusal in the server’s own words and claims nothing was filed', async () => {

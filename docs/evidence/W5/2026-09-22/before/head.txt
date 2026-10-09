@@ -1,0 +1,1 @@
+0d45e1fc3 wip(ci): column-reachability gate — not yet wired, findings under verification

@@ -1,0 +1,5 @@
+### MUTATION 1: one-filing-one-editing-copy binding fix disabled (resolveBinding holder check + in-tx fallback)
+ × server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 131ms
+   → {"error":"DOCUMENT_ALIAS_CONFLICT","message":"c2c_documents doc_ind_33333333 is already recorded as a different document. Nothing was created."}: expected 409 to be 201 // Object.is equality
+ FAIL  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+      Tests  1 failed | 7 skipped (8)

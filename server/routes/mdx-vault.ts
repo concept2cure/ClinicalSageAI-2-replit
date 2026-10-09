@@ -124,8 +124,10 @@ router.get('/vault', async (req: Request, res: Response) => {
 
      EXISTS rather than a JOIN: an artifact must not be duplicated or dropped
      by the bridge, and the org predicate is repeated on `projects` so a
-     mis-anchored row (the anchor is deliberately FK-free — see the migration)
-     can never pull another tenant's project into the predicate. */
+     mis-anchored row can never pull another tenant's project into the
+     predicate. (The anchor is held to the project's organization by a key since
+     migrations/20260926b_program_same_org_keys.sql, but NOT VALID: a row written
+     before it may still name another organization's program.) */
   /* a.organization_id lives in the SQL literal below (not this array) so the
      tenant-isolation CI gate can verify the scope statically. */
   const filters: string[] = [`a.status != 'archived'`];
@@ -258,7 +260,18 @@ router.get('/vault', async (req: Request, res: Response) => {
       category:     d.classification,
       family:       'Uploaded files',
       ctdSection:   null,
-      status:       d.processing_status === 'INDEXED' ? 'final' : 'draft',
+      /* An ingested file has NO authoring lifecycle, so neither 'draft' nor
+         'final' is true of it — and this line asserted both, wrongly, in turn.
+         `processing_status` is an INGEST PIPELINE stage (PENDING → EXTRACTING →
+         VECTORIZING → INDEXED), not an approval state; mapping INDEXED to
+         'final' claims a document is approved because its text was chunked.
+         Nothing ever wrote INDEXED either (no code in the repo advances the
+         column off its PENDING default), so in practice every uploaded file
+         reported 'draft' — a working copy nobody was working on.
+         This file already reasons this way two fields down, where `lockedAt` is
+         null because "reporting a lock it does not have would render an
+         e-signature state nobody set". Same rule, same answer. */
+      status:       'uploaded' as const,
       /* `version` is TEXT here and a number on the artifact side; the surface
          renders `v${version}`, so the numeric prefix is what it can use. */
       version:      Number.parseInt(String(d.version ?? '1'), 10) || 1,

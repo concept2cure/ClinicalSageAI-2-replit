@@ -1,0 +1,24 @@
+{
+    "step": "00-readyz-no-provider",
+    "method": "GET",
+    "path": "/readyz",
+    "request": null,
+    "status": 503,
+    "response": {
+        "ready": false,
+        "failed": [
+            "ana"
+        ],
+        "dependencies": {
+            "database": "ok",
+            "schema": "ok",
+            "ana": "down",
+            "redis": "skipped",
+            "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / KIMI_API_KEY) \u2014 without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE."
+    }
+}

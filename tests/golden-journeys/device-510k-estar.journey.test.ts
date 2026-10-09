@@ -142,6 +142,7 @@ const R = new JourneyRecorder(
   [
     'migrations/0000_sweet_joseph.sql (extractTableDdl)',
     'migrations/20260527_mutation_primitives.sql',
+    'migrations/20260929_actor_names.sql',
     'migrations/20260609_audit_hmac_seal.sql',
     'migrations/20260524_program_workbench_schema.sql',
     // regulatory_programs.application_number (WO-9 Click 1): the column the
@@ -173,6 +174,7 @@ let deviceProjectId = 0;
 const BASELINE_TABLES = [
   'organizations',
   'users',
+  'organization_users',
   'client_workspaces',
   'projects',
   'audit_logs',
@@ -196,6 +198,10 @@ beforeAll(async () => {
       // audit_logs chain columns + the c2c_ana_actions ledger the scaffold's
       // governed action writes to.
       'migrations/20260527_mutation_primitives.sql',
+      // public.actor_name (D3, 2026-09-29): the program list names its lead
+      // through it since users took row-level security; after mutation
+      // primitives, which adds the audit_logs.actor_id it reads.
+      'migrations/20260929_actor_names.sql',
       'migrations/20260609_audit_hmac_seal.sql',
       // regulatory_programs — the uuid program spine intake writes.
       'migrations/20260524_program_workbench_schema.sql',

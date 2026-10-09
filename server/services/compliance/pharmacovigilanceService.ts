@@ -1278,6 +1278,7 @@ async function writePvAudit(entry: {
     const tenantId = Number.isFinite(Number(entry.organizationId)) ? Number(entry.organizationId) : null;
     const target = `case:${entry.recordId}`;
     const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
+      tenant_id: tenantId,
       action: entry.action,
       actor_id: actorId,
       target,

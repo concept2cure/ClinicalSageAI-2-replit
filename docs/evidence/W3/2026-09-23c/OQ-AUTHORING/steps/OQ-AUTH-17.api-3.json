@@ -1,0 +1,32 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/docs/b46d9b7b-708d-4b03-92a0-718cb2a91225/submit",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "workflow_steps": [
+        {
+          "role": "QA",
+          "approver_email": "oq-runner@validation.local"
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 24,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "message": "Document submitted for review",
+      "workflowId": "44a3e7ac-84f2-4b93-adb7-22bc50c02b6b",
+      "steps": 1,
+      "canonical": {
+        "bridged": false,
+        "reason": "no project context — authoring document is not project-scoped"
+      }
+    }
+  }
+}

@@ -50,7 +50,9 @@ describe('describeToolPlan', () => {
       { id: '5', name: 'draft_clinical_overview_m2_5', input: {} },
     ]);
     expect(plan.map(p => p.label)).toEqual([
-      'Reading the vault document',
+      // Not "the vault document": this tool reads the Artifacts Center, and the
+      // Vault is a different store (vault-named-tools-honesty.test.ts).
+      'Reading an Artifacts Center document',
       'Saving the document to the vault',
       'Opening the Trial Master File',
       'Finding the reports that fit your programs',

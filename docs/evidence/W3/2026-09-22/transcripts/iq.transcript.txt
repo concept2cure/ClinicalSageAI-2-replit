@@ -1,0 +1,19 @@
+IQ-001 Installation Qualification
+  IQ-01  pass
+  IQ-02  pass
+  IQ-03  pass
+  IQ-04  deviation
+  IQ-05  pass
+  IQ-06  pass
+  IQ-07  pass
+  IQ-08  pass
+  IQ-09  deviation
+  IQ-10  deviation
+  IQ-11  pass
+  IQ-12  deviation
+  IQ-13  pass
+  IQ-14  pass
+  IQ-15  pass
+
+IQ-001: 11 pass, 0 fail, 4 deviation → docs/evidence/W3/2026-09-22/IQ
+IQ_EXIT=0

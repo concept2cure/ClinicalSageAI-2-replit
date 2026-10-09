@@ -1,0 +1,35 @@
+$ node scripts/ci/check-unapproved-model-pins.mjs --self-test
+  ✓ control — an Opus pin
+  ✓ control — an embedding model
+  ✓ control — a comment names a model
+  ✓ control — a test file
+  ✓ control — the gateway registry
+  ✓ control — a baselined pin, with its reason
+  ✓ a new pin in an unlisted file
+  ✓ a Sonnet pin
+  ✓ a constant pin
+  ✓ a second pin in a baselined file
+  ✓ a baseline that was not tightened
+  ✓ a baseline entry with no reason
+
+✓ self-test: 12 cases, every violation caught and the controls clean
+
+$ node scripts/ci/check-unapproved-model-pins.mjs   # first run against the repo, with the baseline for the 14 classified .ts sites only
+✗ unapproved-model-pins: 9 problem(s)
+
+  server/api/cmc/audit-risk-monitor.js: 10 pin(s), baseline allows 0 — server/api/cmc/audit-risk-monitor.js:142 (gpt-4o), server/api/cmc/audit-risk-monitor.js:165 (gpt-4o), server/api/cmc/audit-risk-monitor.js:196 (gpt-4o), server/api/cmc/audit-risk-monitor.js:228 (gpt-4o), server/api/cmc/audit-risk-monitor.js:342 (gpt-4o), server/api/cmc/audit-risk-monitor.js:363 (gpt-4o), server/api/cmc/audit-risk-monitor.js:394 (gpt-4o), server/api/cmc/audit-risk-monitor.js:493 (gpt-4o), server/api/cmc/audit-risk-monitor.js:521 (gpt-4o), server/api/cmc/audit-risk-monitor.js:618 (gpt-4o)
+  server/api/cmc/change-impact-simulator.js: 2 pin(s), baseline allows 0 — server/api/cmc/change-impact-simulator.js:108 (gpt-4o), server/api/cmc/change-impact-simulator.js:200 (gpt-4o)
+  server/api/cmc/cmc-copilot.js: 5 pin(s), baseline allows 0 — server/api/cmc/cmc-copilot.js:112 (gpt-4o), server/api/cmc/cmc-copilot.js:215 (gpt-4o), server/api/cmc/cmc-copilot.js:421 (gpt-4o), server/api/cmc/cmc-copilot.js:503 (gpt-4o), server/api/cmc/cmc-copilot.js:579 (gpt-4o)
+  server/api/cmc/global-compliance.js: 6 pin(s), baseline allows 0 — server/api/cmc/global-compliance.js:144 (gpt-4o), server/api/cmc/global-compliance.js:170 (gpt-4o), server/api/cmc/global-compliance.js:200 (gpt-4o), server/api/cmc/global-compliance.js:293 (gpt-4o), server/api/cmc/global-compliance.js:383 (gpt-4o), server/api/cmc/global-compliance.js:406 (gpt-4o)
+  server/api/cmc/manufacturing-tuner.js: 5 pin(s), baseline allows 0 — server/api/cmc/manufacturing-tuner.js:128 (gpt-4o), server/api/cmc/manufacturing-tuner.js:168 (gpt-4o), server/api/cmc/manufacturing-tuner.js:202 (gpt-4o), server/api/cmc/manufacturing-tuner.js:302 (gpt-4o), server/api/cmc/manufacturing-tuner.js:466 (gpt-4o)
+  server/api/cmc/preclinical-translator.js: 6 pin(s), baseline allows 0 — server/api/cmc/preclinical-translator.js:147 (gpt-4o), server/api/cmc/preclinical-translator.js:168 (gpt-4o), server/api/cmc/preclinical-translator.js:204 (gpt-4o), server/api/cmc/preclinical-translator.js:234 (gpt-4o), server/api/cmc/preclinical-translator.js:334 (gpt-4o), server/api/cmc/preclinical-translator.js:445 (gpt-4o)
+  server/services/indCopilot.js: 4 pin(s), baseline allows 0 — server/services/indCopilot.js:552 (gpt-4o), server/services/indCopilot.js:608 (gpt-4o), server/services/indCopilot.js:957 (gpt-4o), server/services/indCopilot.js:1164 (gpt-4o-mini)
+  server/services/unifiedDocumentIngestion.js: 1 pin(s), baseline allows 0 — server/services/unifiedDocumentIngestion.js:853 (gpt-4o)
+  server/utils/document-generator.js: 1 pin(s), baseline allows 0 — server/utils/document-generator.js:68 (gpt-4o)
+
+A pinned unapproved model serves any non-high-risk request, whatever it drafts. For
+regulatory drafting or review, drop the pin and pass taskType document_drafting or
+regulatory_review. Otherwise add the file to scripts/ci/unapproved-model-pins-baseline.json with the reason it is safe.
+(exit 1)
+
+The first sweep grepped .ts files only. The gate scans .js as well, and failed on 43 pins in 9 .js files that the sweep never saw. They were classified in a second workflow before any was added to the baseline.

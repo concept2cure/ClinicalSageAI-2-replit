@@ -97,6 +97,52 @@ import { useAuth } from '@/services/portal/authService';
    answer was "the request failed".
    ═══════════════════════════════════════════════════════════════════ */
 
+/* ── Register scope ──
+   WHY THIS MAP EXISTS. Every register card files into the OPEN program (the
+   create path threads `cmcProjectUuid()`), but the list read used to send the
+   bare path with no project filter. So a staffer filed a drug substance against
+   program X and the register then listed all 27 programs' substances: the two
+   halves of one card disagreeing about scope. Measured 2026-09-28 —
+   /api/cmc/qc-testing returned 189 rows org-wide against 7 for the open
+   program.
+
+   The split is per record type, because CMC records genuinely divide that way:
+   a drug substance, a batch, a stability study or a QC result is filed per
+   application (3.2.S / 3.2.P are per-dossier), while a raw-material
+   specification or a validated analytical method is an organisation asset
+   reused across programs. To move one, change its entry here — nothing else
+   reads this decision.
+
+   'program-unscoped-store' is the honest third state. The record belongs to a
+   program, but its table has NO project_id column (public.drug_substances,
+   drug_products, analytical_methods, stability_studies are org-scoped only —
+   the shared/cmc-schema shapes drizzle.config.ts never provisioned), so the
+   list CANNOT be narrowed. The card says so rather than implying the rows on
+   screen are this program's. The project-scoped truth for those record types
+   lives in cmc_source_objects, which is what the Module 3 composer and the ICH
+   engines read. */
+export type RegisterScope = 'program' | 'organization' | 'program-unscoped-store';
+
+export const REGISTER_SCOPE: Record<string, RegisterScope> = {
+  // Per-application records — filed against one dossier.
+  '/api/cmc/qc-testing': 'program',
+  '/api/cmc/comparability-studies': 'program',
+  // Organisation assets — reused across programs by design.
+  '/api/cmc/change-control': 'organization',
+  '/api/cmc/process-validation': 'organization',
+  // Per-application, but the store cannot express it. See the note above.
+  '/api/cmc/drug-substances': 'program-unscoped-store',
+  '/api/cmc/drug-products': 'program-unscoped-store',
+  '/api/cmc/stability-studies': 'program-unscoped-store',
+  '/api/cmc/analytical-methods': 'program-unscoped-store',
+};
+
+/** The path to read, narrowed to the open program when the register is scoped. */
+export function scopedRegisterPath(path: string, projectId: string | undefined): string {
+  if (REGISTER_SCOPE[path] !== 'program' || !projectId) return path;
+  return `${path}?projectId=${encodeURIComponent(projectId)}`;
+}
+
 /* ── Shared status vocabulary ──
    Each CMC table carries its own status wording (validated / released / pass /
    implemented / …). They collapse onto three meanings; anything unrecognised
@@ -216,12 +262,43 @@ interface RegisterCardProps<T> {
  * optimistically shows a row the database rejected is the worst of the three
  * states, because it looks like the honest one.
  */
+/**
+ * What the rows on screen are scoped to, stated rather than implied.
+ *
+ * A register that files into the open program but lists the whole organisation
+ * has to say which it is showing. Saying nothing reads as "this program's",
+ * which is the claim that was wrong.
+ */
+const SCOPE_NOTE: Record<RegisterScope | 'program-none', { testId: string; text: string; title?: string }> = {
+  program: { testId: 'register-scope-program', text: '· this program' },
+  'program-none': { testId: 'register-scope-no-program', text: '· all programs — open one to narrow' },
+  organization: { testId: 'register-scope-organization', text: '· all programs' },
+  'program-unscoped-store': {
+    testId: 'register-scope-unscopeable',
+    text: '· all programs — this register cannot be narrowed',
+    title:
+      "These records are filed per program, but this register's table records no " +
+      'program, so the list cannot be narrowed. The per-program record is what the ' +
+      'Module 3 build reads.',
+  },
+};
+
+function RegisterScopeNote({ scope, hasProgram }: { scope: RegisterScope; hasProgram: boolean }) {
+  const note = SCOPE_NOTE[scope === 'program' && !hasProgram ? 'program-none' : scope];
+  return <span className="s" data-testid={note.testId} title={note.title}>{note.text}</span>;
+}
+
 export function RegisterCard<T>({
   path, title, meta, icon, loadingTitle, emptyTitle, emptyHint,
   errorTitle, errorHint, columns, rowKey, style, create, rowActions, onWrite,
 }: RegisterCardProps<T>) {
-  const live = useLiveRows<T>(path);
   const projectId = cmcProjectUuid();
+  /* Read the register at the scope its record type actually has — see
+     REGISTER_SCOPE. useLiveRows keys its refetch on the path it is given, so
+     the narrowed path is also what re-runs when the open program changes. */
+  const scopedPath = scopedRegisterPath(path, projectId);
+  const live = useLiveRows<T>(scopedPath);
+  const scope = REGISTER_SCOPE[path] ?? 'organization';
   const [toast, fireToast] = useToast();
   const [creating, setCreating] = React.useState(false);
   const [acting, setActing] = React.useState<{ action: RegisterRowAction<T>; row: T } | null>(null);
@@ -306,6 +383,7 @@ export function RegisterCard<T>({
       <div className="pj-card-h">
         <span className="t">{title}</span>
         <span className="s">{meta(rows)}</span>
+        <RegisterScopeNote scope={scope} hasProgram={Boolean(projectId)} />
         {create && (
           <button
             className="nda-open cm-reg-add"

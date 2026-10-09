@@ -21,13 +21,17 @@ import {
   listAmendments,
   getAmendment,
   getAmendmentReadiness,
+  getAmendmentSubstantiality,
 } from '../services/protocol-amendments/protocol-amendments-service';
 import {
   recordAmendmentCreated, recordAmendmentChangeAdded, recordAmendmentStatus,
 } from '../services/protocol-amendments-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
+// A viewer reads a protocol and changes nothing on it (11.10(d), (g)).
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -130,6 +134,20 @@ router.get('/amendments/:id/readiness', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   try { res.json(await getAmendmentReadiness(orgId, id)); } catch (err) { fail(res, err); }
+});
+
+/* Substantiality under EU CTR 536/2014 Article 2(2)(13) (authorisation: Article 15), derived from what changed
+   rather than from what the sponsor declared. Read-only: it writes nothing and
+   records no governed action, because reading an assessment is not a governed
+   action. It never returns a finding of non-substantiality -- see the module
+   note on services/protocol-amendments/substantiality.ts -- so a caller must
+   not present its output as one. */
+router.get('/amendments/:id/substantiality', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  try { res.json(await getAmendmentSubstantiality(orgId, id)); } catch (err) { fail(res, err); }
 });
 
 // ─── Change line items ───────────────────────────────────────────────────────

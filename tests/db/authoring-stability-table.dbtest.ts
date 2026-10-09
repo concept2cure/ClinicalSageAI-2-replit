@@ -91,6 +91,8 @@ let userId: number;
 let app: express.Express;
 let docId: string;
 let auth: string;
+/** The project the document is created in: a document belongs to a project (PF-07). */
+let programId: string;
 
 /**
  * A REAL signed token, not a stubbed req.user.
@@ -213,6 +215,18 @@ beforeAll(async () => {
     [orgId, userId],
   );
 
+  /* A document is created in a project of its organization (PF-07): POST
+     /api/authoring/docs refuses one that names none, 400 PROJECT_REQUIRED.
+     Upserted on (organization_id, code), so a re-run reuses it. */
+  const program = await owner.query(
+    `INSERT INTO regulatory_programs (organization_id, name, code, program_type, product_type, primary_agency, product_name)
+       VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', $4)
+     ON CONFLICT (organization_id, code) DO UPDATE SET name = EXCLUDED.name, deleted_at = NULL
+     RETURNING id`,
+    [orgId, 'dbtest-w11 program', 'DBTEST-W11-STABILITY', 'C2C-101'],
+  );
+  programId = String(program.rows[0].id);
+
   await cleanupProbeRows();
   app = await buildApp();
   auth = await bearer();
@@ -220,6 +234,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await cleanupProbeRows().catch(() => undefined);
+  await owner?.query('DELETE FROM regulatory_programs WHERE organization_id = $1 AND code = $2', [orgId, 'DBTEST-W11-STABILITY']).catch(() => undefined);
   await owner?.end().catch(() => undefined);
 });
 
@@ -228,7 +243,7 @@ describe('BP-W1-1 wave gate — a stability table reaches Word as a table', () =
     const doc = await request(app)
       .post('/api/authoring/docs')
       .set('Authorization', auth)
-      .send({ title: PROBE_TITLE, module: 'M3', product_code: 'C2C-101' });
+      .send({ title: PROBE_TITLE, module: 'M3', product_code: 'C2C-101', client_program_id: programId });
     expect(doc.status).toBe(201);
     docId = doc.body?.document?.id ?? doc.body?.id;
     expect(docId, 'document id').toBeTruthy();

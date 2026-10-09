@@ -101,6 +101,10 @@ export interface QualificationReport {
     /** Of those, the superseding operations that carried a modified-file pointer
      *  at the leaf they supersede (a replace/delete must reference its target). */
     operationsWithModifiedFile: string[];
+    /** Each modified-file in the amendment that does not name a leaf the prior
+     *  package carries (its backbone + '#' + an ID on one of its leaves), with
+     *  why. Empty when every pointer resolves; v4.0 has no modified-file. */
+    modifiedFileUnresolved: string[];
     nextPackagePassed: boolean;
     checksum: ChecksumVerification;
   };
@@ -289,6 +293,55 @@ export async function validateBackboneFile(packageDir: string, relPath: string):
 }
 
 /**
+ * Every modified-file in an amendment must name a leaf the prior package
+ * carries: `../` once per folder the carrying backbone sits below the sequence
+ * root, plus one more, then `<prior sequence>/<backbone>#<leaf ID>` — with that
+ * ID on a `<leaf>` in that backbone of the prior package. Returns one line per
+ * pointer that does not, so the report states it.
+ *
+ * 2026-09-29 (W5/D7): the report checked only that a pointer was PRESENT, and
+ * every pointer the packager wrote named a file path, which resolves to no
+ * leaf. Checked against the prior package's own bytes, not a derived name.
+ */
+export async function unresolvedModifiedFiles(
+  amendmentDir: string,
+  priorDir: string,
+  backboneRelPaths: string[],
+  priorSequence: string,
+): Promise<string[]> {
+  const out: string[] = [];
+  const priorXml = new Map<string, string | null>();
+  const readPrior = async (rel: string): Promise<string | null> => {
+    if (!priorXml.has(rel)) {
+      priorXml.set(rel, await fs.readFile(path.join(priorDir, rel), 'utf8').catch(() => null));
+    }
+    return priorXml.get(rel) ?? null;
+  };
+  for (const rel of backboneRelPaths) {
+    const xml = await fs.readFile(path.join(amendmentDir, rel), 'utf8').catch(() => null);
+    if (xml == null) continue; // backbone absent (e.g. a region without that file)
+    const ups = rel.split('/').length; // index.xml → 1; m1/us/us-regional.xml → 3
+    for (const tag of xml.match(/<leaf\b[^>]*>/g) ?? []) {
+      const mf = /\bmodified-file="([^"]*)"/.exec(tag)?.[1];
+      if (!mf) continue;
+      const m = /^((?:\.\.\/)+)([^/]+)\/([^#]+)#(.+)$/.exec(mf);
+      if (!m || m[1].length / 3 !== ups || m[2] !== priorSequence) {
+        out.push(`${rel}: modified-file="${mf}" is not ${'../'.repeat(ups)}${priorSequence}/<backbone>#<leaf ID>`);
+        continue;
+      }
+      const target = await readPrior(m[3]);
+      if (target == null) {
+        out.push(`${rel}: modified-file="${mf}" names ${m[3]}, which the ${priorSequence} package does not contain`);
+        continue;
+      }
+      const carried = (target.match(/<leaf\b[^>]*>/g) ?? []).some((t) => /\bID="([^"]*)"/.exec(t)?.[1] === m[4]);
+      if (!carried) out.push(`${rel}: modified-file="${mf}" names ID ${m[4]}, which no leaf in ${priorSequence}/${m[3]} carries`);
+    }
+  }
+  return out;
+}
+
+/**
  * Read the leaf `operation` attributes (and modified-file presence) ACTUALLY
  * emitted into a package's backbones. The qualification report states what the
  * packager produced rather than a hardcoded claim — so "test replace/delete/
@@ -465,6 +518,12 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
     `Lifecycle backbone operations emitted: ${observedOps.join(', ') || '(none)'}; ` +
       `superseding operations carrying a modified-file pointer: ${opsWithModifiedFile.join(', ') || '(none)'}.`,
   );
+  const unresolved = await unresolvedModifiedFiles(lcDir, pkgDir, ['index.xml', regionalRel], '0000');
+  notes.push(
+    unresolved.length
+      ? `modified-file pointers that name no leaf of the 0000 package: ${unresolved.join('; ')}.`
+      : 'Every modified-file pointer names a leaf ID the 0000 package carries, at the traversal its backbone needs.',
+  );
 
   const passed = validators.every((v) => v.passed) && checksum.ok;
   return {
@@ -480,10 +539,11 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
       nextSequence: '0001',
       operations: lifecycleOps,
       operationsWithModifiedFile: opsWithModifiedFile,
-      nextPackagePassed: lcPassed,
+      modifiedFileUnresolved: unresolved,
+      nextPackagePassed: lcPassed && unresolved.length === 0,
       checksum: lcChecksum,
     },
-    passed: passed && lcPassed,
+    passed: passed && lcPassed && unresolved.length === 0,
     ranAt: '(stamped by caller)',
     notes,
   };
@@ -587,6 +647,7 @@ export async function qualifyV4(workDir: string): Promise<QualificationReport> {
       nextSequence: '0001',
       operations: v4Ops.filter((o) => o !== 'create'),
       operationsWithModifiedFile: v4Linked,
+      modifiedFileUnresolved: [],
       nextPackagePassed: lcPassed,
       checksum: lcChecksum,
     },

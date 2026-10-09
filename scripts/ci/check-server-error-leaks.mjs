@@ -107,6 +107,43 @@ const LEAK_PATTERNS = [
 ];
 
 /**
+ * How far BEFORE `.status(5xx)` to look for an alias of the caught error's text.
+ *
+ * Added 2026-09-29 (row D2, `docs/evidence/D2/2026-09-29-correspondence-work-items/`).
+ * Every pattern above reads the error INSIDE the response body, so one local
+ * variable defeated the gate entirely:
+ *
+ *     const message = e instanceof Error ? e.message : 'Unknown error';
+ *     return res.status(500).json({ error: 'Failed to ingest correspondence', detail: message });
+ *
+ * That handler shipped Drizzle's "Failed query: insert into … params: …" to the
+ * client, the user's e-mail among the params, while this gate read green; 28
+ * five-hundreds in 8 files had the same shape. So a `const|let|var NAME = …`
+ * whose initialiser matches LEAK_PATTERNS, declared within this many characters
+ * before the status call, makes NAME itself a leak when the body uses it as a
+ * VALUE (`detail: NAME`, `{ NAME }`, `error: NAME`) — never as a key.
+ */
+const ALIAS_LOOKBACK = 1500;
+const ALIAS_DECL = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=;\n]+)?=\s*([^;\n]+)/g;
+
+/** Names in `before` bound to the caught error's text. */
+function errorTextAliases(before) {
+  const names = new Set();
+  ALIAS_DECL.lastIndex = 0;
+  let d;
+  while ((d = ALIAS_DECL.exec(before)) !== null) {
+    if (LEAK_PATTERNS.some((re) => re.test(d[2]))) names.add(d[1]);
+  }
+  return names;
+}
+
+/** Does `body` use `name` as a value — not as an object key, not as a property? */
+function usesAsValue(body, name) {
+  const esc = name.replace(/[$]/g, '\\$');
+  return new RegExp(`(?<![\\w$.])${esc}(?![\\w$])(?!\\s*:(?!:))`).test(body);
+}
+
+/**
  * How far past `.status(5xx)` to read. A response body is written as one
  * expression; 600 characters covers every multi-line form in this tree with
  * room to spare, and stopping there keeps an unrelated later statement out of
@@ -185,7 +222,11 @@ for (const root of SCAN_ROOTS) {
       // widening the baseline, which is how a real leak gets in.
       const body = window.slice(0, responseStatementEnd(window));
       if (!/\.json\s*\(|\.send\s*\(/.test(body)) continue;
-      const hit = LEAK_PATTERNS.find((re) => re.test(body));
+      const hit =
+        LEAK_PATTERNS.find((re) => re.test(body)) ||
+        [...errorTextAliases(src.slice(Math.max(0, m.index - ALIAS_LOOKBACK), m.index))].find((n) =>
+          usesAsValue(body.replace(/\.status\(\s*5\d\d\s*\)/, ''), n),
+        );
       if (!hit) continue;
       const line = src.slice(0, m.index).split('\n').length;
       findings.push({ site: `${rel}:${line}`, status: m[1] });

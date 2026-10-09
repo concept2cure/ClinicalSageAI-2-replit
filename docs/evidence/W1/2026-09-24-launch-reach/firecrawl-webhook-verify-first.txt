@@ -1,0 +1,13 @@
+# RED — old route, the launch posture (no FIRECRAWL_WEBHOOK_SECRET), a pool failing 42P01 as production's does
+ × server/routes/__tests__/firecrawl-webhooks-verify-first.test.ts > POST /api/firecrawl-webhooks — verify first, write nothing for a stranger > an unsigned request answers 401, not 500 103ms
+   → expected 500 to be 401 // Object.is equality
+ × server/routes/__tests__/firecrawl-webhooks-verify-first.test.ts > POST /api/firecrawl-webhooks — verify first, write nothing for a stranger > an unsigned request never reaches the database 6ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/routes/__tests__/firecrawl-webhooks-verify-first.test.ts > POST /api/firecrawl-webhooks — verify first, write nothing for a stranger > a badly signed request, with a secret configured, is refused the same way 6ms
+   → expected 500 to be 401 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed (3)
+
+# GREEN — verify first
+ Test Files  3 passed (3)
+      Tests  31 passed (31)

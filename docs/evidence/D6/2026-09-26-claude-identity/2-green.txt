@@ -1,0 +1,18 @@
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /draft passes the tenant the auth chain attached
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /quick passes it too, and files its provenance under the tenant
+ ✓ server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/draft > answers a context-window refusal with 413 TOKEN_LIMIT_EXCEEDED and the actionable sentence
+ ✓ server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/draft > still answers a fault of ours with 500 INTERNAL_ERROR and withholds the internals
+ ✓ server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > returns 200 with the failed section marked and the summary counting it
+ ✓ server/routes/__tests__/ana-intelligence-gateway-errors.test.ts > POST /api/claude/batch > answers a whole-batch gateway refusal with 413, not 500
+ ✓ server/routes/__tests__/ana-intelligence-quick-provenance.test.ts > POST /api/claude/quick provenance > the audit row names the model the gateway served and hashes the content returned
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > files the tool calls, an error result as a failed step, the answer, and what the door cannot report
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > a turn with no organization is not recorded, and says why
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status with ana:done
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was aborted
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a failed turn and emits its status with ana:error
+ Test Files  4 passed (4)
+      Tests  16 passed (16)

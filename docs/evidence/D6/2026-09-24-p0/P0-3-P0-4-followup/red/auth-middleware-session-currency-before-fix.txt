@@ -1,0 +1,50 @@
+$ npx vitest run server/__tests__/security/auth-middleware-session-currency.test.ts   # HEAD=5c978992, sources unchanged
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > still answers 503 SESSION_UNCHECKED when the standing cannot be read (never a pass)
+{
+  "timestamp": "2026-09-25T01:46:42.172Z",
+  "level": "error",
+  "message": "[auth] Account standing could not be read",
+  "context": {}
+}
+
+ × server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > answers 401 SESSION_ENDED for a bearer issued before password_changed_at; the handler never runs and the membership is never read 52ms
+   → expected true to be false // Object.is equality
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > admits a bearer issued after the change 2ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > admits a bearer issued in the same second as the change (whole-second rule: the sign-in that follows a change is current) 2ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > admits a bearer for an account that never changed its password 5ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > outside production, admits a bearer that carries no iat (fixtures build claims by hand); production refuses it — pinned on the rule in account-standing 3ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > still answers 401 ACCOUNT_INACTIVE for an account out of use, before the password rule (F-29 unchanged) 2ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > still answers 503 SESSION_UNCHECKED when the standing cannot be read (never a pass) 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > answers 401 SESSION_ENDED for a bearer issued before password_changed_at; the handler never runs and the membership is never read
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/__tests__/security/auth-middleware-session-currency.test.ts:139:30
+    137|     const r = await drive(accessTokenIssuedAt(changed - 3600));
+    138|
+    139|     expect(r.reachedHandler).toBe(false);
+       |                              ^
+    140|     expect(r.status).toBe(401);
+    141|     expect(r.body).toEqual({ error: 'This session has ended. Sign in a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  01:46:40
+   Duration  2.14s (transform 976ms, setup 95ms, import 1.67s, tests 77ms, environment 0ms)
+
+exit=1

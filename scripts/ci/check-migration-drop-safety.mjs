@@ -22,6 +22,24 @@
  *
  * Both are invisible: the deploy is green either way.
  *
+ * A same-file `DROP CONSTRAINT IF EXISTS x; ADD CONSTRAINT x …` re-creates what
+ * it drops, so it removes nothing — but it has a third failure mode of its own:
+ *
+ *   NARROWED — file A replaces constraint x with its definition, file B (after
+ *              A) replaces x again with a wider one. ADD CONSTRAINT validates
+ *              every existing row, so on each deploy A re-imposes its narrower
+ *              definition over rows B admitted, the ADD fails, and from the
+ *              first such row on every deploy stops at A. This one is loud —
+ *              the deploy fails — but it fails on production data, never on a
+ *              fresh database, so no test that starts empty ever sees it.
+ *              Found 2026-09-25 on three constraints at once (span-lineage
+ *              kinds, c2c doc types, orchestrator run status); reproduced by
+ *              tests/schema-contract/check-constraint-replay.pglite.test.ts.
+ *              A's replacement must be conditional on the constraint's CURRENT
+ *              definition: a pg_constraint lookup by that name that reads
+ *              pg_get_constraintdef, so it only replaces a definition that does
+ *              not yet admit what A adds.
+ *
  * ── The rule this encodes ────────────────────────────────────────────────────
  * The repo already follows it, unwritten. From the set's own comment on
  * migrations/20260823_drop_dead_c2c_cmc_changes.sql:
@@ -215,6 +233,18 @@ function dynamicDropsIn(raw) {
   return [...kinds].sort();
 }
 
+/**
+ * Constraints whose replacement this file makes conditional on the current
+ * definition — the NARROWED guard. Read from the raw text (the constraint name
+ * in `conname = '…'` is a string literal, which stripNoise removes), comments
+ * excluded so a header that merely describes the guard does not count as one.
+ */
+function guardedConstraintsIn(raw) {
+  const code = raw.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
+  if (!/\bpg_get_constraintdef\s*\(/i.test(code)) return new Set();
+  return new Set([...code.matchAll(/\bconname\s*=\s*'([^']+)'/gi)].map(m => m[1].toLowerCase()));
+}
+
 let baseline = { allow: [] };
 if (fs.existsSync(BASELINE)) {
   baseline = JSON.parse(fs.readFileSync(BASELINE, 'utf8'));
@@ -240,6 +270,7 @@ for (const file of C2C_MIGRATION_FILES) {
     drops: dropsIn(sql),
     creates: createsIn(sql),
     dynamic: dynamicDropsIn(raw),
+    guarded: guardedConstraintsIn(raw),
   });
 }
 
@@ -294,14 +325,30 @@ for (const [file, creates] of installFreshCreators) {
 }
 
 const violations = [];
-for (const [file, { drops, creates }] of parsed) {
+let replacementsChecked = 0;
+for (const [file, { drops, creates, guarded }] of parsed) {
   for (const obj of drops) {
     // `DROP … IF EXISTS` immediately followed by `ADD`/`CREATE` of the same name
-    // is this repo's idempotent re-create idiom (see the DROP CONSTRAINT /
-    // ADD CONSTRAINT pairs in db/migrations/20260725_*_port.sql). A file that
-    // re-creates what it drops removes nothing, so replay is not a hazard —
-    // whichever such file runs last simply defines the object.
-    if (creates.has(obj)) continue;
+    // is this repo's idempotent re-create idiom. A file that re-creates what it
+    // drops removes nothing, so it is neither UNDONE nor REPEATED. It is not
+    // automatically safe, though: "whichever such file runs last simply defines
+    // the object" is true of the end state and false of the step before it —
+    // see NARROWED in the header.
+    if (creates.has(obj)) {
+      if (!obj.startsWith('constraint:')) continue;
+      const at = C2C_MIGRATION_FILES.indexOf(file);
+      const later = (creatorsOf.get(obj) ?? []).filter(
+        c => parsed.has(c) && C2C_MIGRATION_FILES.indexOf(c) > at
+      );
+      if (!later.length) continue;
+      replacementsChecked += 1;
+      if (guarded.has(obj.split('.').pop())) continue;
+      for (const creator of later) {
+        if (allowed.has(`${file}|${obj}|${creator}`)) continue;
+        violations.push({ file, object: obj, creator, mode: 'NARROWED' });
+      }
+      continue;
+    }
     const creators = (creatorsOf.get(obj) ?? []).filter(c => c !== file);
     for (const creator of creators) {
       if (allowed.has(`${file}|${obj}|${creator}`)) continue;
@@ -324,9 +371,23 @@ if (missing.length) {
 }
 
 if (violations.length) {
-  console.error(`${TAG} FAIL — ${violations.length} replay-unsafe DROP(s).\n`);
+  console.error(`${TAG} FAIL — ${violations.length} replay-unsafe DROP(s) or replacement(s).\n`);
   for (const v of violations) {
     console.error(`  ${v.object}`);
+    if (v.mode === 'NARROWED') {
+      console.error(`    replaced by : ${v.file}  (unconditionally)`);
+      console.error(`    redefined by: ${v.creator}  (later in the set)`);
+      console.error(
+        `    effect      : NARROWED — every deploy re-imposes this file's definition before the\n` +
+          `                  later one, and ADD CONSTRAINT validates every existing row. From the\n` +
+          `                  first row only the later definition admits, every deploy fails here.\n` +
+          `    fix         : amend this file in place (RULE 1) so the replacement runs only while\n` +
+          `                  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = '<table>'::regclass\n` +
+          `                    AND conname = '<name>' AND pg_get_constraintdef(oid) LIKE '%''<value it adds>''%')`
+      );
+      console.error('');
+      continue;
+    }
     console.error(`    dropped by : ${v.file}`);
     console.error(`    created by : ${v.creator}`);
     const carriesData = v.object.startsWith('column:') || v.object.startsWith('table:');
@@ -392,6 +453,7 @@ console.log(
       (n, p) => n + p.drops.size,
       0
     )} DROP(s), none re-created by the set` +
+    `; ${replacementsChecked} constraint replacement(s) a later file redefines, all conditional` +
     (allowed.size ? `, ${allowed.size} reviewed exception(s)` : '') +
     `; ${dynamicTotal} dynamic DROP(s) in ${
       [...parsed.values()].filter(p => p.dynamic.length).length

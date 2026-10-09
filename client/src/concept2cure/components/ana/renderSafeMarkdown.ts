@@ -20,6 +20,7 @@
 
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { isInlineFigureImage } from '@shared/authoring/figure-refs';
 
 const SANITIZE_CONFIG = {
   ALLOWED_TAGS: [
@@ -80,14 +81,17 @@ const SANITIZE_CONFIG = {
  * editor and whose exported DOCX and PDF all show it. Same silent-loss class
  * as the stripped figure above, and the same fix.
  *
- * API image references are rewritten `src` → `data-authsrc` during
- * sanitization: every API route authenticates by Authorization header only,
- * so a bare <img src="/api/…"> would fire an unauthenticated request and
- * paint a broken glyph. The companion renderer (v2/editor/AuthoredHtml)
- * resolves data-authsrc through the app's authenticated fetch — the same
- * path the editor's node view uses — and states a failure instead of hiding
- * it. External http(s) and data:image URIs pass through DOMPurify's default
- * URI policy untouched, matching what the editor itself displays.
+ * Every image src except an inline PNG, JPEG or GIF is rewritten `src` →
+ * `data-authsrc` during sanitization, so nothing is left for the browser to
+ * fetch natively. The companion renderer (v2/editor/AuthoredHtml) resolves
+ * data-authsrc through the editor's own resolver, the same path the node view
+ * uses. A governed reference is fetched with the app's authenticated request
+ * (every API route authenticates by Authorization header only, so a bare
+ * <img src="/api/…"> could not load it). Anything that is not a figure
+ * (@shared/authoring/figure-refs) is refused and stated as a figure that must
+ * be uploaded. External http(s) and other data: URIs used to pass through
+ * untouched, so every reader's browser fetched a host the content chose
+ * (periodic review 2026-09-28, editor family, SEC-B-2).
  */
 const AUTHORING_SANITIZE_CONFIG = {
   ALLOWED_TAGS: [
@@ -106,13 +110,6 @@ const AUTHORING_SANITIZE_CONFIG = {
 
 /** The attribute AuthoredHtml resolves through the authenticated fetch. */
 export const AUTH_IMG_ATTR = 'data-authsrc';
-
-/** The ONE same-app route a stored figure reference may point at (POST
- *  /api/authoring/images returns it; GET serves it). Everything under /api/
- *  that is NOT this prefix must never reach the authenticated resolver — a
- *  bare '/api/' test let any API path one author stored in section HTML be
- *  fetched with the NEXT VIEWER's credentials when the document rendered. */
-export const AUTHORING_IMAGE_URL_PREFIX = '/api/authoring/images/';
 
 // Bounded LRU so the chat panel doesn't recompute identical markdown
 // every render during streaming. 200 entries ≈ one long conversation.
@@ -166,12 +163,12 @@ export function sanitizeChatHtml(html: string): string {
 
 /**
  * Sanitize authored section HTML for read-only rendering (document view,
- * batch-draft cards). Keeps figures; rewrites same-app API image references
- * to `data-authsrc` so nothing fires an unauthenticated image request — see
+ * batch-draft cards). Keeps figures; moves every image src but an inline
+ * PNG, JPEG or GIF to `data-authsrc` so nothing fires an image request — see
  * AUTHORING_SANITIZE_CONFIG above for the full rationale. Render the result
  * with `AuthoredHtml` (v2/editor/AuthoredHtml), which resolves the references
  * with auth and states failures; a bare dangerouslySetInnerHTML of this
- * output shows figures only for external/data sources.
+ * output shows only the inline figures.
  */
 export function sanitizeAuthoringHtml(html: string): string {
   if (!html) return '';
@@ -179,14 +176,14 @@ export function sanitizeAuthoringHtml(html: string): string {
   // instance-global, so the try/finally keeps chat sanitization unaffected.
   DOMPurify.addHook('afterSanitizeAttributes', (node) => {
     if (node.tagName === 'IMG') {
-      const src = node.getAttribute('src') ?? '';
-      if (src.startsWith(AUTHORING_IMAGE_URL_PREFIX)) {
+      const src = node.getAttribute('src');
+      // Only an inline figure stays live. The resolver decides the rest: it
+      // fetches a governed reference and refuses anything else, so an
+      // external address, a non-figure data: URI or a path that walks out of
+      // the image store is never requested (periodic review 2026-09-28,
+      // editor family, SEC-B-1, SEC-B-2).
+      if (src !== null && !isInlineFigureImage(src)) {
         node.setAttribute(AUTH_IMG_ATTR, src);
-        node.removeAttribute('src');
-      } else if (src.startsWith('/api/')) {
-        // Any OTHER same-app API path is not a figure reference: never leave
-        // it for the browser to fire as a native (cookie-carrying) request,
-        // and never hand it to the authenticated resolver either.
         node.removeAttribute('src');
       }
     }

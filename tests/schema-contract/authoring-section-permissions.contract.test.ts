@@ -53,6 +53,17 @@ const UNRELATED = { id: '5a1c2a10-0000-4000-8000-000000000002', organizationId: 
 const QA = { id: '5a1c2a10-0000-4000-8000-000000000003', organizationId: 1, email: 'qa@perms.example' };
 const OUTSIDER = { id: '5a1c2a10-0000-4000-8000-000000000099', organizationId: 2, email: 'outsider@other.example' };
 
+// The project both documents are authored IN. PF-07 (founder decision
+// 2026-09-26): a document belongs to a project, so POST /docs refuses a create
+// that names none (400 PROJECT_REQUIRED), and LX-20 refuses one naming a
+// project its organization does not own as a live regulatory_programs row
+// (404). The subject here is the section-permission gate, not where a document
+// lives, so both documents go into one real project of org 1 — the AUTHOR's
+// organization, and the tenant every same-tenant probe below runs in. The
+// OUTSIDER (org 2) is still a different tenant from the document, which is all
+// probe 6 depends on.
+const PROJECT_ID = '5a1c2a10-7e0f-4c2d-9b1a-0000000000a1';
+
 async function mint(u: { id: string; organizationId: number; email: string }, roles?: string[]) {
   const claims: Record<string, unknown> = {
     userId: u.id,
@@ -101,10 +112,27 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
+      // The project the documents belong to (PF-07). createDocument checks the
+      // anchor against the real regulatory_programs table (LX-20:
+      // programInOrganization — this org, not soft-deleted), so the table is
+      // built from its own migration rather than hand-mirrored.
+      'migrations/20260524_program_workbench_schema.sql',
+      // A create inside a project asks which governed filing it contributes to
+      // (resolveGovernedDocument reads c2c_documents for an IND × FDA project).
+      // The system-of-record table, with the c2c_ana_actions table its
+      // section-version FK names, from the files that create them — so the
+      // binding read answers "this project has no governed document yet"
+      // against a real table rather than a swallowed 42P01. The documents stay
+      // unbound, as they were before PF-07.
+      'migrations/20260527_mutation_primitives.sql',
+      'migrations/20260528_phase9_document_schema.sql',
       // doc_permissions is created by the loop-tables migration (with BOTH
       // composite tenant-parent FKs) and brought up to the canonical shape by
       // 20260727 below.
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // authoring_documents.client_program_id — the column the project anchor is
+      // written to. Guarded on the loop tables above, so it follows them.
+      'migrations/20260727_authoring_document_program_scope.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
       // (content/chain hashes, origin, input manifest) and installs the
@@ -133,6 +161,15 @@ beforeAll(async () => {
   h.db = jdb.db;
   h.pool = jdb.pool;
 
+  // The live project of org 1 that both documents are created in (PF-07). Only
+  // the NOT NULL columns; the rest take the migration's defaults.
+  await jdb.pool.query(
+    `INSERT INTO regulatory_programs
+       (id, organization_id, name, code, program_type, product_type, primary_agency, product_name)
+     VALUES ($1, $2, 'Perms IND', 'PERMS-IND', 'ind', 'drug', 'FDA', 'PERMS-001')`,
+    [PROJECT_ID, AUTHOR.organizationId],
+  );
+
   tokens.set(AUTHOR.id, await mint(AUTHOR));
   tokens.set(UNRELATED.id, await mint(UNRELATED));
   tokens.set(QA.id, await mint(QA, ['QA']));
@@ -153,9 +190,9 @@ afterAll(async () => {
 describe('G-01: object-level section-permission enforcement', () => {
   it('enforces least privilege on section edits and closes the OR-branch over-grant', async () => {
     // Creator makes doc1 (auto-granted AUTHOR) + a section; doc2 exists for the
-    // cross-document grant probe.
+    // cross-document grant probe. Both are created in the project (PF-07).
     const d1 = await asUser(AUTHOR)(request(app).post('/api/authoring/docs')).send({
-      title: 'Perms doc 1', module: 'M2',
+      title: 'Perms doc 1', module: 'M2', client_program_id: PROJECT_ID,
     });
     expect(d1.status).toBe(201);
     const docId1 = d1.body.document.id as string;
@@ -167,19 +204,19 @@ describe('G-01: object-level section-permission enforcement', () => {
     const sectionId1 = s1.body.section.id as string;
 
     const d2 = await asUser(AUTHOR)(request(app).post('/api/authoring/docs')).send({
-      title: 'Perms doc 2', module: 'M2',
+      title: 'Perms doc 2', module: 'M2', client_program_id: PROJECT_ID,
     });
     expect(d2.status).toBe(201);
     const docId2 = d2.body.document.id as string;
 
     // 1. Creator can edit their own section (auto-grant).
     const edit = await asUser(AUTHOR)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v2 by author' });
+      .send({ content: 'v2 by author', changeReason: 'contract test edit' });
     expect(edit.status).toBe(200);
 
     // 2. Unrelated same-tenant user is denied.
     const denied = await asUser(UNRELATED)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v3 by unrelated' });
+      .send({ content: 'v3 by unrelated', changeReason: 'contract test edit' });
     expect(denied.status).toBe(403);
 
     // 3. A grant on ANOTHER document must NOT authorise this section (OR-bug fix).
@@ -198,7 +235,7 @@ describe('G-01: object-level section-permission enforcement', () => {
       [docId2, UNRELATED.email],
     );
     const stillDenied = await asUser(UNRELATED)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v3 via cross-doc grant' });
+      .send({ content: 'v3 via cross-doc grant', changeReason: 'contract test edit' });
     expect(stillDenied.status).toBe(403);
 
     // 4. A bare QA role does NOT override the object grant.
@@ -212,7 +249,7 @@ describe('G-01: object-level section-permission enforcement', () => {
     // the two agree, and a job title is not an authorization to alter a
     // regulated record.
     const qaEdit = await asUser(QA)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v4 by qa' });
+      .send({ content: 'v4 by qa', changeReason: 'contract test edit' });
     expect(qaEdit.status).toBe(403);
 
     // 5. Commenting is gated by the SAME section permission as editing.
@@ -229,7 +266,7 @@ describe('G-01: object-level section-permission enforcement', () => {
 
     // 6. A cross-tenant caller is denied.
     const crossTenant = await asUser(OUTSIDER)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v5 by outsider' });
+      .send({ content: 'v5 by outsider', changeReason: 'contract test edit' });
     expect(crossTenant.status).toBe(403);
 
     // 7. An APPROVED document is read-only even to the author.
@@ -238,7 +275,7 @@ describe('G-01: object-level section-permission enforcement', () => {
       [docId1],
     );
     const frozenEdit = await asUser(AUTHOR)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v6 after approval' });
+      .send({ content: 'v6 after approval', changeReason: 'contract test edit' });
     expect(frozenEdit.status).toBe(403);
   }, T);
 });

@@ -42,6 +42,7 @@
 
 import {
   REGION_IDENTITY,
+  canonicalRegionOf,
   getRegionIdentity,
   type CanonicalRegion,
 } from '../../shared/regulatory/region-identity.js';
@@ -109,18 +110,32 @@ export interface Module3RegionalStatus {
   authoredRegions: string[];
 }
 
-/** Accepts a canonical code ('US'), a gateway slug ('fda') or either case. */
+/**
+ * Resolve a region written in any of the platform's vocabularies — canonical code
+ * ('UK'), gateway slug ('uk', 'fda'), rule region ('eu') or agency name ('MHRA',
+ * 'Health_Canada') — to the canonical code, keeping GLOBAL and passing an unknown
+ * value through upper-cased so the classifier can name it.
+ *
+ * Amended 2026-09-24: this used to carry its own resolution loop, reading canonical
+ * codes and gateway slugs only. Agency names fell through untouched, so
+ * classifyModule3Regional('MHRA') was 'not-applicable' — "3.2.R does not apply" —
+ * and the gate PASSED it, for TGA, NMPA, Swissmedic and ANVISA alike;
+ * 'Health_Canada' was reported not-applicable for a region whose template EXISTS;
+ * and 'EMA' resolved only because 'ema' is also EU's gateway slug. No live caller
+ * passed an agency name (the gate receives gateway slugs, the orchestrator step
+ * canonical codes), so this was latent — but it was an exported classifier giving
+ * the one answer that makes a gate stand down. region-identity has since gained
+ * canonicalRegionOf, which resolves all four vocabularies beside the table it
+ * reads; this now delegates to it rather than keeping a partial private copy.
+ */
 export function normalizeSubmissionRegion(region: string): string {
   const upper = String(region ?? '')
     .trim()
     .toUpperCase();
-  if (upper === 'GLOBAL' || getRegionIdentity(upper)) return upper;
-  // A gateway slug — 'fda' → 'US'. Read off REGION_IDENTITY, not a second table.
-  const lower = upper.toLowerCase();
-  for (const identity of Object.values(REGION_IDENTITY)) {
-    if (identity.gatewaySlug === lower) return identity.code;
-  }
-  return upper;
+  if (upper === 'GLOBAL') return 'GLOBAL';
+  // undefined means "not a region this platform knows": pass it through named,
+  // so the classifier reports it as unrecognised rather than guessing.
+  return canonicalRegionOf(region) ?? upper;
 }
 
 function authoredRegions(): string[] {

@@ -8,7 +8,7 @@
  * All queries are tenant-scoped (organizationId) and project-scoped.
  */
 
-import { db } from '../../db';
+import { db, getPool } from '../../db';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -33,6 +33,30 @@ import type {
   CmcContradictionSnapshot,
 } from '../../../shared/types/orchestration';
 
+/**
+ * The payload could not be assembled, because a read it depends on failed or
+ * the project is not in the organisation. `failedReads` names each one; the
+ * underlying causes are logged, not returned, since they carry SQL.
+ */
+export class CrossObjectReadError extends Error {
+  readonly failedReads: string[];
+
+  constructor(failedReads: string[]) {
+    super(
+      `The project could not be assessed: ${failedReads.join(', ')} could not be read. Nothing was assessed.`,
+    );
+    this.name = 'CrossObjectReadError';
+    this.failedReads = failedReads;
+  }
+}
+
+/** A read failed: log its cause, and fail the payload naming the read. */
+function readFailed(read: string, err: unknown): CrossObjectReadError {
+  if (err instanceof CrossObjectReadError) return err;
+  logger.warn('Resolver query failed', { read, error: err instanceof Error ? err.message : err });
+  return new CrossObjectReadError([read]);
+}
+
 // ---------------------------------------------------------------------------
 // Main Resolver
 // ---------------------------------------------------------------------------
@@ -52,7 +76,32 @@ export async function assembleCrossObjectPayload(
 ): Promise<CrossObjectReasoningPayload> {
   const { organizationId, projectId } = scope;
 
-  // Run all queries in parallel for speed
+  // Run all queries in parallel for speed. Every one must succeed: each
+  // resolver used to answer a failed read with an empty result, so a project
+  // nothing could be read from was assessed as an empty one, and the readiness
+  // review reported "No critical issues found" for it (VSR-001 F-23). Rows that
+  // are absent are an answer; a read that failed is not, so the payload fails
+  // and names every read that did.
+  const settled = await Promise.allSettled([
+    resolveProjectSnapshot(organizationId, projectId),
+    resolveDocuments(organizationId, projectId, scope.module),
+    resolveArtifacts(organizationId, projectId, scope.module),
+    resolveValidations(organizationId, projectId),
+    resolveTasks(organizationId, projectId, scope.module),
+    resolveModulePlacements(organizationId, projectId),
+    resolveRecentActions(organizationId, projectId),
+    resolveEvidence(organizationId, projectId),
+    resolveCmcSignals(organizationId, projectId),
+    resolveLastSignalAt(organizationId, projectId),
+  ] as const);
+  const failedReads = settled.flatMap((r) =>
+    r.status === 'rejected'
+      ? r.reason instanceof CrossObjectReadError
+        ? r.reason.failedReads
+        : ['an unnamed read']
+      : [],
+  );
+  if (failedReads.length > 0) throw new CrossObjectReadError(failedReads);
   const [
     projectSnap,
     documents,
@@ -64,18 +113,18 @@ export async function assembleCrossObjectPayload(
     evidence,
     cmcSignals,
     lastSignalAt,
-  ] = await Promise.all([
-    resolveProjectSnapshot(organizationId, projectId),
-    resolveDocuments(organizationId, projectId, scope.module),
-    resolveArtifacts(organizationId, projectId, scope.module),
-    resolveValidations(organizationId, projectId),
-    resolveTasks(organizationId, projectId, scope.module),
-    resolveModulePlacements(organizationId, projectId),
-    resolveRecentActions(organizationId, projectId),
-    resolveEvidence(organizationId, projectId),
-    resolveCmcSignals(organizationId, projectId),
-    resolveLastSignalAt(organizationId, projectId),
-  ]);
+  ] = settled.map((r) => (r as PromiseFulfilledResult<unknown>).value) as [
+    ProjectSnapshot,
+    DocumentSnapshot[],
+    ArtifactSnapshot[],
+    ValidationSnapshot[],
+    TaskSnapshot[],
+    ModulePlacementSnapshot[],
+    ActionHistoryEntry[],
+    EvidenceSnapshot[],
+    CmcSignalSnapshot,
+    string | null,
+  ];
 
   return {
     project: projectSnap,
@@ -112,22 +161,14 @@ async function resolveProjectSnapshot(
       .where(and(eq(projects.id, projectId), eq(projects.organizationId, orgId)))
       .limit(1);
 
-    if (!project) {
-      return {
-        id: projectId,
-        name: 'Unknown Project',
-        status: 'unknown',
-        progress: 0,
-        totalDocuments: 0,
-        totalTasks: 0,
-        blockedTasks: 0,
-        overdueTasks: 0,
-      };
-    }
+    // Not a project this organisation holds: nothing about it can be read, so
+    // it is refused rather than assessed as an empty "Unknown Project".
+    if (!project) throw new CrossObjectReadError(['project']);
 
-    // Count related entities
+    // Count related entities. count(*) is a bigint, which the driver returns
+    // as a string: cast it, so the snapshot carries the number its type says.
     const [artifactCounts] = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql<number>`count(*)::int` })
       .from(concept2cureArtifacts)
       .where(
         and(
@@ -151,17 +192,7 @@ async function resolveProjectSnapshot(
       overdueTasks: 0,
     };
   } catch (err) {
-    logger.warn('Failed to resolve project snapshot', { error: err instanceof Error ? err.message : err });
-    return {
-      id: projectId,
-      name: 'Project',
-      status: 'active',
-      progress: 0,
-      totalDocuments: 0,
-      totalTasks: 0,
-      blockedTasks: 0,
-      overdueTasks: 0,
-    };
+    throw readFailed('project', err);
   }
 }
 
@@ -197,8 +228,7 @@ async function resolveDocuments(
       routedTo: (a as any).ctdSection,
     }));
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('documents', err);
   }
 }
 
@@ -232,8 +262,7 @@ async function resolveArtifacts(
       lastModified: a.updatedAt?.toISOString(),
     }));
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('artifacts', err);
   }
 }
 
@@ -278,8 +307,7 @@ async function resolveValidations(
         };
       });
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('validations', err);
   }
 }
 
@@ -313,8 +341,51 @@ async function resolveTasks(
       isOverdue: false,
     }));
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('tasks', err);
+  }
+}
+
+/**
+ * Module 3's approved-section count, against the set the composer produces.
+ *
+ * The join is the platform's two project spines meeting: `projects.id` is the
+ * integer this resolver works in, `projects.regulatory_program_id` is the
+ * program uuid, and `cmc_module3_sections.project_id` is TEXT holding that
+ * uuid. Returns null when the project has no program anchor or no composed
+ * sections — the caller then reports NOT ASSESSED rather than a zero.
+ */
+async function resolveModule3SectionCompleteness(
+  orgId: number,
+  projectId: number,
+): Promise<{ total: number; approved: number; missing: string[] } | null> {
+  try {
+    const { rows } = await getPool().query<{ section_key: string; approval_state: string; stale: boolean }>(
+      `SELECT s.section_key, s.approval_state, s.stale
+         FROM projects p
+         JOIN cmc_module3_sections s
+           ON s.project_id = p.regulatory_program_id::text
+          AND s.organization_id = p.organization_id
+        WHERE p.id = $1 AND p.organization_id = $2
+        ORDER BY s.section_key`,
+      [projectId, orgId],
+    );
+    if (rows.length === 0) return null;
+
+    const missing: string[] = [];
+    let approved = 0;
+    for (const r of rows) {
+      if (r.approval_state === 'approved' && !r.stale) approved += 1;
+      else if (r.stale) missing.push(`${r.section_key} — approved then went stale; re-approval required`);
+      else missing.push(`${r.section_key} — not approved (${r.approval_state ?? 'draft'})`);
+    }
+    return { total: rows.length, approved, missing };
+  } catch (err) {
+    // Not assessed beats a guessed percentage. The caller reports null.
+    logger.warn('Module 3 section completeness could not be read', {
+      projectId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
   }
 }
 
@@ -346,16 +417,44 @@ async function resolveModulePlacements(
     const expectedModules = ['Module 1', 'Module 2', 'Module 3', 'Module 4', 'Module 5'];
     const result: ModulePlacementSnapshot[] = [];
 
+    /* Module 3 is the one module this platform has a deterministic denominator
+       for: composeModule3FromCanonicalSources produces a fixed section set per
+       project (3.1, 3.2.S.1-7, 3.2.P.1-8, 3.2.A, 3.2.R, 3.3), and the export
+       gate enforces approval over exactly that set. Measuring against it is
+       what stops the dashboard and the gate disagreeing. */
+    const m3 = await resolveModule3SectionCompleteness(orgId, projectId);
+
     for (const mod of expectedModules) {
       const items = moduleGroups.get(mod) || [];
       const published = items.filter((a) => !!a.publishedVersionId);
+
+      if (mod === 'Module 3' && m3) {
+        result.push({
+          module: mod,
+          documentCount: items.length,
+          artifactCount: items.length,
+          completenessPercent: m3.total > 0 ? Math.round((m3.approved / m3.total) * 100) : 0,
+          assessedAgainst: `${m3.approved} of ${m3.total} composed Module 3 sections approved`,
+          hasValidation: true,
+          missingItems: m3.missing,
+        });
+        continue;
+      }
+
+      /* Every other module: no required-section list exists to measure against,
+         so completeness is NOT ASSESSED. It used to be documentCount * 20 — a
+         figure with no denominator, published as a percentage and fed into the
+         readiness score and AnA's prompt. A null says what is true. */
       result.push({
         module: mod,
         documentCount: items.length,
         artifactCount: items.length,
-        completenessPercent: items.length > 0 ? Math.min(100, items.length * 20) : 0,
+        completenessPercent: null,
         hasValidation: false,
-        missingItems: items.length === 0 ? [`No documents assigned to ${mod}`] : [],
+        missingItems:
+          items.length === 0
+            ? [`No documents assigned to ${mod}`]
+            : [`Completeness not assessed — no required-section list for ${mod}`],
       });
     }
 
@@ -374,8 +473,7 @@ async function resolveModulePlacements(
 
     return result;
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('module placements', err);
   }
 }
 
@@ -418,8 +516,7 @@ async function resolveRecentActions(
         };
       });
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('recent actions', err);
   }
 }
 
@@ -434,23 +531,13 @@ async function resolveRecentActions(
  * Cast both sides to text so the query is type-safe regardless of which
  * project flavor (legacy integer or CMC UUID) the caller supplied. Returns
  * an empty signal set when the project has no CMC rows — readiness treats
- * that as "CMC not in scope," not as a failure.
+ * that as "CMC not in scope," not as a failure. A query that fails is a
+ * failure, and fails the payload.
  */
 async function resolveCmcSignals(
   orgId: number,
   projectId: number,
 ): Promise<CmcSignalSnapshot> {
-  const empty: CmcSignalSnapshot = {
-    sourceObjectCount: 0,
-    sourceTypeBreakdown: {},
-    sectionCount: 0,
-    staleSectionCount: 0,
-    contradictions: [],
-    contradictionCounts: {
-      critical: 0, high: 0, medium: 0, low: 0, open: 0, resolved: 0,
-    },
-  };
-
   try {
     const projectIdParam = String(projectId);
 
@@ -534,11 +621,7 @@ async function resolveCmcSignals(
       contradictionCounts: counts,
     };
   } catch (err) {
-    logger.warn(
-      'CMC signal query failed',
-      { error: err instanceof Error ? err.message : err },
-    );
-    return empty;
+    throw readFailed('CMC signals', err);
   }
 }
 
@@ -579,11 +662,7 @@ async function resolveLastSignalAt(
     if (ts instanceof Date) return ts.toISOString();
     return new Date(String(ts)).toISOString();
   } catch (err) {
-    logger.warn(
-      'Last-signal query failed',
-      { error: err instanceof Error ? err.message : err },
-    );
-    return null;
+    throw readFailed('last signal', err);
   }
 }
 
@@ -619,8 +698,7 @@ async function resolveEvidence(
       };
     });
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('evidence', err);
   }
 }
 
@@ -684,6 +762,10 @@ export function summarizePayloadForAI(payload: CrossObjectReasoningPayload): str
   if (payload.moduleMap.length > 0) {
     lines.push('### Module Coverage');
     for (const m of payload.moduleMap) {
+      if (m.completenessPercent === null) {
+        lines.push(`- ${m.module}: ${m.documentCount} docs, completeness not assessed`);
+        continue;
+      }
       const status = m.completenessPercent >= 80 ? 'OK' : m.completenessPercent > 0 ? 'Partial' : 'Empty';
       lines.push(`- ${m.module}: ${m.documentCount} docs, ${m.completenessPercent}% [${status}]`);
       if (m.missingItems.length > 0) {

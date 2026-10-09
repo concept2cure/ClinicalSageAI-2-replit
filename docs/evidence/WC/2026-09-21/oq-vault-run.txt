@@ -1,0 +1,15 @@
+  OQ-VAULT-00  pass
+  OQ-VAULT-01  pass
+  OQ-VAULT-02  pass
+  OQ-VAULT-03  pass
+  OQ-VAULT-04  pass
+  OQ-VAULT-05  pass
+  OQ-VAULT-06  pass
+  OQ-VAULT-07  pass
+  OQ-VAULT-08  FAIL  (verify-chain expected ok, got 409)
+  OQ-VAULT-08b  FAIL  (ledger surface did not grow (0 → 0) although ingest and filing were audited)
+  OQ-VAULT-09  FAIL  (page text does not contain "OQ-002 Protocol 20260921011458")
+  OQ-VAULT-10  pass
+
+OQ-002 Vault: 9 pass, 3 fail, 0 deviation, 0 not-executed → docs/evidence/WC/2026-09-21/oq/OQ-VAULT
+exit=1

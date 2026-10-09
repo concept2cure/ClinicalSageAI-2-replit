@@ -1,0 +1,20 @@
+# State: shared/schema.ts declares users.email_otp_resends; no migration file carries the ALTER yet. 2026-09-26T13:17Z
+# Question: does either gate refuse a column that exists only in the drizzle model?
+
+$ git diff --stat -- shared/schema.ts migrations/
+ shared/schema.ts | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+$ npm run --silent ci:column-reachability
+[ci:column-reachability] OK — 2134 column add(s) on no applier, 0 queried by the server.
+exit=0
+
+$ npm run --silent ci:model-migration-agreement
+[ci:model-migration] Drizzle models vs migration lineage
+  models parsed              : 701
+  tables CREATEd by both     : 393
+  divergent tables           : 12
+  baselined (known, unfixed) : 28
+
+✅ no new divergence. 28 baselined and awaiting burn-down.
+exit=0

@@ -25,14 +25,16 @@
  *                GET /api/submissions/shadow-review/:runId/findings
  *   Cross-region POST /api/submissions/:id/cross-region
  *   Dispatch     GET /api/submissions/sequences/:seqId/dispatch-readiness
- *                POST /api/submissions/:id/dispatch-qc  (AI advisory)
+ *                POST /api/submissions/:id/dispatch-qc  (deterministic verdict; model narrates)
  */
 import React from 'react';
 import { I } from '../icons';
+import { AnaActivity } from '../AnaActivity';
 import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyState } from '../dataConnect';
 import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
+import { PlacementReasonField, placementReasonOk } from './filingTarget';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -224,7 +226,70 @@ interface LeafRow {
   lifecycleOp: string; // new|replace|append|delete
   documentTable: string | null;
   documentId: number | null;
+  /** The uuid half of the polymorphic reference — set for uuid-keyed stores
+   *  (vault_documents), where documentId is null. */
+  documentUuid?: string | null;
   documentType: string | null;
+  /** What the leaf's pointer resolves to, computed by the server from the SAME
+   *  resolver the dispatch gate uses (server/services/ectd/leaf-document-resolver).
+   *  Absent on a server that predates it; the column then falls back to the
+   *  pointer alone. */
+  sourceDocument?: LeafSourceResolution | null;
+}
+
+interface LeafSourceResolution {
+  status: 'resolved' | 'no_pointer' | 'unplaceable_table' | 'missing' | 'content_changed';
+  keyKind: 'integer' | 'uuid' | null;
+  pinnedSha256: string | null;
+  storedSha256: string | null;
+  pin: 'match' | 'mismatch' | 'unpinned' | 'unverifiable';
+  reason: string | null;
+}
+
+/* The Builder's "Source document" cell. "unlinked" is reserved for a leaf that
+   carries NO pointer. A leaf that carries one is named by its store and key —
+   a vault leaf by its uuid (documentId is null there; the column used to test
+   documentId alone, and six vault leaves the platform had just filed read
+   "unlinked": MDX demo pack, 2026-09-21, finding F5) — and, when the server
+   has resolved it, by the verdict: the pin verified, no pin taken, the content
+   changed since filing, or the document not found. Server words, never a
+   client guess. */
+const SOURCE_VERDICT: Record<LeafSourceResolution['status'], { chip: string; tone: string } | null> = {
+  resolved: null, // the pin verdict says it
+  no_pointer: null,
+  unplaceable_table: { chip: 'store not placeable', tone: 'tone-err' },
+  missing: { chip: 'not found in this organization', tone: 'tone-err' },
+  content_changed: { chip: 'content changed since filing', tone: 'tone-warn' },
+};
+function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
+  const key = leaf.documentUuid ?? (leaf.documentId != null ? String(leaf.documentId) : null);
+  if (!leaf.documentTable || key == null) return <>unlinked</>;
+  const isUuid = leaf.documentUuid != null;
+  /* The source row, named rather than related. The key stays — it is how an
+     auditor ties this leaf to its source — but it is qualified by a store name
+     a reader can act on instead of by a relation name (documentSourceLabel).
+     A uuid is shown short with the full value on hover. */
+  const label = documentSourceLabel(leaf.documentTable, isUuid ? `${key.slice(0, 8)}…` : key);
+  const r = leaf.sourceDocument ?? null;
+  const verdict = r
+    ? SOURCE_VERDICT[r.status] ??
+      (r.pin === 'match'
+        ? { chip: 'source verified', tone: 'tone-ok' }
+        : r.pin === 'unpinned'
+          ? { chip: 'no content pin', tone: 'tone-idle' }
+          : null)
+    : null;
+  return (
+    <>
+      <span className="sc-mono" title={isUuid ? key : undefined}>{label}</span>
+      {verdict && (
+        <>
+          {' '}
+          <span className={`rd-chip ${verdict.tone}`} title={r?.reason ?? undefined}>{verdict.chip}</span>
+        </>
+      )}
+    </>
+  );
 }
 
 // GET /api/coauthor/documents → { documents } (coauthor_documents rows).
@@ -250,6 +315,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   const [docId, setDocId] = React.useState<number | null>(null);
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
+  const [reason, setReason] = React.useState('');
   const [saving, setSaving] = React.useState(false);
   const doc = docRows.find((d) => d.id === docId) ?? null;
 
@@ -264,7 +330,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   }
 
   const place = async () => {
-    if (!doc || !section.trim() || saving) return;
+    if (!doc || !section.trim() || !placementReasonOk(reason) || saving) return;
     setSaving(true);
     const r = await mutateVerbatim<LeafRow>('PUT', `/api/submissions/sequences/${seqId}/leaves`, {
       sectionCode: section.trim(),
@@ -272,6 +338,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
       lifecycleOp: op,
       documentTable: 'coauthor_documents',
       documentId: doc.id,
+      reason: reason.trim(),
     });
     setSaving(false);
     if (r.data && typeof r.data.id === 'number') {
@@ -281,6 +348,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
       });
       setDocId(null);
       setSection('');
+      setReason('');
     } else {
       onDone({ tone: 'err', text: `The leaf was not placed — ${r.error ?? 'the request failed'}.` });
     }
@@ -349,10 +417,11 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
               ))}
             </select>
           </div>
+          <PlacementReasonField value={reason} onChange={setReason} idPrefix="sc-leaf" disabled={saving} variant="inline" />
           <button
             type="button"
             className="sp-primary sc-btn"
-            disabled={!doc || !section.trim() || saving}
+            disabled={!doc || !section.trim() || !placementReasonOk(reason) || saving}
             onClick={place}
           >
             {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
@@ -424,15 +493,7 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
                   </td>
                   <td>{l.granularity ?? '—'}</td>
                   <td>
-                    {l.documentTable && l.documentId != null ? (
-                      /* The source row, named rather than related. The id stays —
-                         it is how an auditor ties this leaf to its source — but
-                         it is qualified by a store name a reader can act on
-                         instead of by a relation name (documentSourceLabel). */
-                      <span className="sc-mono">{documentSourceLabel(l.documentTable, l.documentId)}</span>
-                    ) : (
-                      'unlinked'
-                    )}
+                    <LeafSourceCell leaf={l} />
                   </td>
                 </tr>
               ))}
@@ -462,12 +523,15 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
 
 // GET /sequences/:seqId/dispatch-readiness → assessSequenceDispatchReadiness
 // (server/services/ectd/assess-dispatch-readiness.ts). Server-computed inputs;
-// findings' `code` is the validation-rule id (traceable to /validation-rules).
+// Each finding arrives with the corpus rule it is an instance of (or null when
+// the corpus names none) — the same enriched shape the dispatch-readiness
+// surface renders, so the two views cannot tell a finding's rule differently.
 interface ReadinessFinding {
   severity: 'error' | 'warning' | 'info';
   code: string;
   sectionCode: string | null;
   message: string;
+  rule?: { id: string; title: string; regions: string[]; severity: string; enforcementStatement: string } | null;
 }
 interface ReadinessAssessment {
   sequenceId: number;
@@ -477,7 +541,38 @@ interface ReadinessAssessment {
   unacknowledgedShadowCriticals: number;
   shadowReviewRunCount: number;
   shadowReviewMissing: boolean;
+  /** The DISPATCH-step verdict: every gate, including the §11.70 requirement
+   *  that a release signature already exists. Governs dispatch, never freeze. */
   gate: { cleared: boolean; blockers: string[] };
+  /** The FREEZE-step verdict. Same gates, minus the REQUIREMENT for a release
+   *  signature — which `assess-dispatch-readiness.ts` computes separately
+   *  precisely because requiring one to freeze inverts the order the product
+   *  works in. An `invalid` signature still blocks it, so this is not the
+   *  weaker gate, only the correctly-scoped one.
+   *
+   *  Declared here, and not merely read, because it was the absence of a
+   *  declaration that hid the defect: the server returned `freezeGate` and the
+   *  client typed only `gate`, so reading the wrong field was not a type error.
+   *  Both fields are now on the interface; picking the wrong one is a choice a
+   *  reviewer can see, not a gap the compiler stays silent about. */
+  freezeGate: { cleared: boolean; blockers: string[] };
+  /** The DISPATCH verdict as it will stand once the operator's dispatch
+   *  signature is recorded — what the Dispatch button asks. On the submissions
+   *  spine the release signature IS that dispatch signature, so gating the
+   *  button on `gate` (which requires it to exist already) hid the only control
+   *  that creates it. The server decides when signing resolves the requirement
+   *  (signingNowResolvesRelease: the resolver's spine precedence lives there),
+   *  and this client never re-derives it. */
+  dispatchGateOnSigning: { cleared: boolean; blockers: string[] };
+  /** §11.70 state. Informational — the blocking happens in the gates. */
+  releaseSignature?: {
+    required: boolean;
+    verdict: string;
+    runId?: string | null;
+    signatureId?: number | null;
+    detail?: string | null;
+    cleared: boolean;
+  };
   readiness: { errors: number; warnings: number; infos: number; findings: ReadinessFinding[] };
   leafCount: number;
 }
@@ -515,12 +610,14 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
     phase: 'idle' | 'running' | 'done' | 'error';
     data?: ExplainResponse;
     error?: string;
+    /** When the running request began, for the live record's clock. */
+    since?: number;
   }>({ phase: 'idle' });
   React.useEffect(() => setExplain({ phase: 'idle' }), [seq.id]);
 
   const runExplain = async () => {
     if (findings.length === 0 || explain.phase === 'running') return;
-    setExplain({ phase: 'running' });
+    setExplain({ phase: 'running', since: Date.now() });
     const r = await mutateVerbatim<ExplainResponse>(
       'POST',
       `/api/submissions/${sub.id}/validation/explain`,
@@ -564,8 +661,8 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
               Sequence {seq.sequenceNumber} · {a.leafCount} {a.leafCount === 1 ? 'leaf' : 'leaves'} ·{' '}
               {a.readiness.errors} {a.readiness.errors === 1 ? 'error' : 'errors'} ·{' '}
               {a.readiness.warnings} {a.readiness.warnings === 1 ? 'warning' : 'warnings'} ·{' '}
-              {a.readiness.infos} info · computed server-side from the canonical leaves. Each
-              finding&#39;s code is a rule id in the validation corpus.
+              {a.readiness.infos} info · computed server-side from the canonical leaves, each
+              shown as the validation-corpus rule it is an instance of.
             </div>
             {findings.length === 0 ? (
               <EmptyState
@@ -588,6 +685,11 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
                           </>
                         ) : null}
                       </span>
+                      <span className="sp-row-s">
+                        {f.rule
+                          ? `${f.rule.title} · ${f.rule.regions.map((r) => r.toUpperCase()).join(' · ')} · ${f.rule.severity} · ${f.rule.enforcementStatement}`
+                          : 'Not in the rule corpus, so no rule stands behind this finding.'}
+                      </span>
                       <span className="sp-row-s">{f.message}</span>
                     </span>
                   </div>
@@ -606,6 +708,17 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
                   {explain.phase === 'running' ? 'Explaining…' : 'Explain the findings (AI)'}
                 </button>
               </div>
+            )}
+            {/* The wait, in the same live record AnA shows everywhere else: what is
+            running, a pulse, and a clock — never a percentage, which the
+            request cannot know. Its polite live region is what a screen-reader
+            user hears; the button label alone said nothing to them. */}
+            {explain.phase === 'running' && (
+              <AnaActivity
+                streaming
+                phase={`Explaining ${findings.length} ${findings.length === 1 ? 'finding' : 'findings'} for ${seq.region}…`}
+                startedAt={explain.since}
+              />
             )}
             {explain.phase === 'error' && (
               <div className="sc-verdict tone-err sc-mt" role="status">
@@ -728,10 +841,13 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
   });
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const [running, setRunning] = React.useState(false);
+  /** When the running review began, for the live record's clock. */
+  const [runningSince, setRunningSince] = React.useState<number | null>(null);
 
   const runReview = async () => {
     if (running) return;
     setRunning(true);
+    setRunningSince(Date.now());
     setNotice(null);
     const r = await mutateVerbatim<{ runId: number; findingCount: number; summary: string }>(
       'POST',
@@ -789,6 +905,17 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
             {I.sparkles} {running ? 'Reviewing…' : 'Run shadow review'}
           </button>
         </div>
+        {/* The wait, in the same live record AnA shows everywhere else: what is
+            running, a pulse, and a clock — never a percentage, which the
+            request cannot know. Its polite live region is what a screen-reader
+            user hears; the button label alone said nothing to them. */}
+        {running && (
+          <AnaActivity
+            streaming
+            phase={`Reading sequence ${seq.sequenceNumber} through the ${lensL(lens)} lens…`}
+            startedAt={runningSince ?? undefined}
+          />
+        )}
         <VerdictNote notice={notice} />
         {runs.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
@@ -1044,13 +1171,25 @@ export function CrossRegionWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow }
 
 /* ═══ Dispatch — the deterministic gate + governed freeze/dispatch ══════════ */
 
-// POST /:id/dispatch-qc → runDispatchQc (AI advisory; server recomputes the
-// gate inputs from the sequence when sequenceId is supplied).
+// POST /:id/dispatch-qc → runDispatchQc. Since 2026-09-21 (VSR-001 F-9) the
+// verdict is the deterministic dispatch gate — with sequenceId, the SAME
+// composed gate the assessment above and freeze/dispatch enforce — and the
+// model, when a provider exists, only narrates it. `narrative` is prose;
+// nothing in it is a verdict.
 interface DispatchQcResult {
   clearedToDispatch: boolean;
   blockers: string[];
   warnings: string[];
   checklist: Array<{ item: string; pass: boolean }>;
+  verdictSource: 'assess-dispatch-readiness' | 'dispatch-gate';
+  narrative: {
+    source: 'model';
+    label: string;
+    promptVersion: string;
+    summary: string;
+    observations: string[];
+  } | null;
+  narrativeUnavailable: { code: string; message: string } | null;
 }
 
 export function DispatchWorkspace({
@@ -1069,6 +1208,14 @@ export function DispatchWorkspace({
     hasKeys<ReadinessAssessment>('gate', 'readiness'),
   );
   const a = live.data;
+  // Which governed step is open, each read from the verdict for THAT step. A
+  // missing field is not cleared: this is network data, so absence fails closed
+  // rather than throwing or falling back to another step's verdict.
+  const freezeOpen = a?.freezeGate?.cleared === true;
+  const dispatchOpen = a?.dispatchGateOnSigning?.cleared === true;
+  // The gate blocks, and its only blocker is the release signature that the
+  // dispatch e-signature itself records. See the header state that reads this.
+  const awaitingOwnSignature = !!a && !a.gate.cleared && dispatchOpen;
   const [qc, setQc] = React.useState<{
     phase: 'idle' | 'running' | 'done' | 'error';
     data?: DispatchQcResult;
@@ -1133,15 +1280,34 @@ export function DispatchWorkspace({
           />
         ) : (
           <>
-            <div className={`sc-gate ${a.gate.cleared ? 'ok' : 'blocked'}`} role="status">
-              {a.gate.cleared ? I.shieldCheck : I.lock}{' '}
+            {/* Three states, not two. `awaitingOwnSignature` is a gate whose
+                only blocker is the release signature the dispatch e-signature
+                itself records (dispatchGateOnSigning clears, `gate` does not).
+                Reporting that as "Dispatch blocked" sent the user looking for a
+                defect that does not exist; reporting it as clear would be false.
+                `?.` / `=== true`: network data, and missing fails closed. */}
+            <div
+              className={`sc-gate ${a.gate.cleared || awaitingOwnSignature ? 'ok' : 'blocked'}`}
+              role="status"
+            >
+              {a.gate.cleared || awaitingOwnSignature ? I.shieldCheck : I.lock}{' '}
               {a.gate.cleared
                 ? 'Dispatch gate clear'
-                : `Dispatch blocked — ${a.gate.blockers.length} ${
-                    a.gate.blockers.length === 1 ? 'blocker' : 'blockers'
-                  }`}
+                : awaitingOwnSignature
+                  ? 'Dispatch gate clear except for the release signature — the dispatch e-signature applies it'
+                  : `Dispatch blocked — ${a.gate.blockers.length} ${
+                      a.gate.blockers.length === 1 ? 'blocker' : 'blockers'
+                    }`}
             </div>
-            {!a.gate.cleared && (
+            {awaitingOwnSignature && (
+              <div className="scaf-note sc-mb">
+                This submission type requires a 21 CFR Part 11 release signature, and none is on record
+                for this sequence yet. When the sequence is dispatched, the dispatch e-signature is
+                recorded as that release signature, and the server checks the full gate again with it
+                on record before anything moves.
+              </div>
+            )}
+            {!a.gate.cleared && !awaitingOwnSignature && (
               <ol className="sc-blockers">
                 {a.gate.blockers.map((b, i) => (
                   <li key={i}>{b}</li>
@@ -1167,7 +1333,21 @@ export function DispatchWorkspace({
               </div>
             )}
             <div className="sc-disp-actions">
-              {a.gate.cleared && seq.status === 'validated' && (
+              {/* FREEZE reads `freezeGate`, not `gate`. `gate` is the dispatch
+                  verdict and for IND / NDA / BLA / MAA it requires a §11.70
+                  release signature to already exist. Freezing is how a sequence
+                  becomes signable in the first place, so gating this button on
+                  `gate` hid it until a release had been signed — for exactly
+                  the four types that need one, the sequence could never leave
+                  `validated` through this screen. The server has computed the
+                  two verdicts separately since composeDispatchGatesForStep
+                  landed; only the client was still reading the single one. */}
+              {/* `?.` because this is network data, not a local value: a
+                  payload without `freezeGate` must hide the button, not throw
+                  and white-screen the workspace (hostilePayloadProbe). Missing
+                  is treated as NOT cleared — fail closed. It never falls back
+                  to `gate`, which is the defect this line is fixing. */}
+              {freezeOpen && seq.status === 'validated' && (
                 <button
                   type="button"
                   className="sp-primary sc-btn"
@@ -1176,13 +1356,28 @@ export function DispatchWorkspace({
                   {I.lock} Freeze sequence (Part 11 e-signature)
                 </button>
               )}
-              {a.gate.cleared && seq.status === 'frozen' && (
+              {/* DISPATCH reads `dispatchGateOnSigning`, not `gate` — the same
+                  defect as Freeze, one step later (P11-28b). For IND / NDA / BLA
+                  / MAA `gate` requires a release signature to exist already, and
+                  on the submissions spine the signature it accepts is the one
+                  this click records (runGoverned signs, then dispatches). Gated
+                  on `gate`, the only control that creates the signature never
+                  rendered. The server says when signing resolves the
+                  requirement, and re-checks `gate` at transition with the new
+                  signature on record, so nothing the server enforces is relaxed
+                  here. When the signature is what this click supplies, the label
+                  says so: the signer is applying the release, not only moving a
+                  status (§11.50 — the meaning of the act must be clear). */}
+              {dispatchOpen && seq.status === 'frozen' && (
                 <button
                   type="button"
                   className="sp-primary sc-btn"
                   onClick={() => onGoverned(seq, 'dispatch')}
                 >
-                  {I.rocket} Dispatch sequence (Part 11 e-signature)
+                  {I.rocket}{' '}
+                  {awaitingOwnSignature
+                    ? 'Sign the release and dispatch (Part 11 e-signature)'
+                    : 'Dispatch sequence (Part 11 e-signature)'}
                 </button>
               )}
             </div>
@@ -1193,7 +1388,10 @@ export function DispatchWorkspace({
                 is configured for this organization.
               </div>
             )}
-            {a.gate.cleared &&
+            {/* A freeze instruction reads the FREEZE verdict. Gated on `gate`,
+                it was hidden for every IND / NDA / BLA / MAA sequence — a third
+                instance of the step-verdict defect, beside the two buttons. */}
+            {freezeOpen &&
               seq.status !== 'validated' &&
               seq.status !== 'frozen' &&
               seq.status !== 'dispatched' && (
@@ -1203,10 +1401,25 @@ export function DispatchWorkspace({
                   workspace first.
                 </div>
               )}
-            {!a.gate.cleared && (
+            {/* Say what is locked, for the step this sequence is at. This read
+                "Freeze and dispatch stay locked while the gate blocks" whenever
+                `gate` blocked — including beside a rendered Freeze button, once
+                Freeze read its own verdict: a sentence on screen contradicting
+                the control under it. */}
+            {((seq.status === 'validated' && !freezeOpen) ||
+              (seq.status === 'frozen' && !dispatchOpen) ||
+              (seq.status !== 'validated' &&
+                seq.status !== 'frozen' &&
+                seq.status !== 'dispatched' &&
+                !freezeOpen)) && (
               <div className="scaf-note sc-mt">
-                Freeze and dispatch stay locked while the gate blocks. The server enforces this
-                same gate atomically with the e-signature, so it cannot be bypassed from here.
+                {seq.status === 'validated'
+                  ? 'Freeze stays locked while the gate blocks.'
+                  : seq.status === 'frozen'
+                    ? 'Dispatch stays locked while the gate blocks.'
+                    : 'Freeze and dispatch stay locked while the gate blocks.'}{' '}
+                The server enforces this same gate atomically with the e-signature, so it cannot be
+                bypassed from here.
               </div>
             )}
             <div className="cm-pushbar sc-mt">
@@ -1217,33 +1430,53 @@ export function DispatchWorkspace({
                 onClick={runQc}
               >
                 {I.shieldCheck}{' '}
-                {qc.phase === 'running' ? 'Running dispatch QC…' : 'Run dispatch QC (AI advisory)'}
+                {qc.phase === 'running' ? 'Running dispatch QC…' : 'Run dispatch QC'}
               </button>
             </div>
             {qc.phase === 'error' && (
               <div className="sc-verdict tone-err sc-mt" role="status">
-                The dispatch QC advisory did not complete — {qc.error}. The deterministic gate
-                above is unaffected.
+                Dispatch QC did not complete — {qc.error}. The deterministic gate above is
+                unaffected.
               </div>
             )}
             {qc.phase === 'done' && qc.data && (
               <div className="sc-mt">
-                {/* The advisory's verdict is floored on the STRUCTURAL gate only —
-                    not the shadow-presence or external-validation gates the
-                    deterministic assessment merges in — so it could sit green
-                    under "Dispatch blocked" with no qualifier. It never outranks
-                    the gate, and says so; under a blocked gate it is never green. */}
+                {/* With a sequence the QC verdict IS the composed dispatch gate
+                    (verdictSource 'assess-dispatch-readiness'); it cannot disagree
+                    with the assessment above. The counts-only fallback covers
+                    less and says so in its warnings. Either way the tone follows
+                    the gate, never a model. */}
                 <div
                   className={`sc-verdict ${qc.data.clearedToDispatch && a?.gate.cleared ? 'tone-ok' : 'tone-warn'}`}
                   role="status"
                 >
-                  QC advisory: {qc.data.clearedToDispatch ? 'cleared to dispatch' : 'not cleared'}
+                  Dispatch QC: {qc.data.clearedToDispatch ? 'cleared to dispatch' : 'not cleared'}
                   {qc.data.blockers.length > 0 ? ` — ${qc.data.blockers.join(' ')}` : ''}
                   {qc.data.warnings.length > 0 ? ` Warnings: ${qc.data.warnings.join(' ')}` : ''}
                   {a && !a.gate.cleared
-                    ? ' The deterministic gate above still blocks dispatch; this advisory does not override it.'
-                    : ' Advisory only — the deterministic gate above decides.'}
+                    ? ' The deterministic gate above still blocks dispatch; this verdict does not override it.'
+                    : qc.data.verdictSource === 'dispatch-gate'
+                      ? ' Verdict from the count-based gate only; the sequence-level checks above were not part of it.'
+                      : ' Verdict from the deterministic sequence dispatch gate.'}
                 </div>
+                {qc.data.narrative ? (
+                  <div className="sc-verdict sc-mt" role="note">
+                    <span className="sp-row-s">{qc.data.narrative.label}</span>
+                    <p>{qc.data.narrative.summary}</p>
+                    {qc.data.narrative.observations.length > 0 && (
+                      <ul>
+                        {qc.data.narrative.observations.map((o, i) => (
+                          <li key={i}>{o}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ) : qc.data.narrativeUnavailable ? (
+                  <div className="sc-verdict sc-mt" role="note">
+                    No model narrative: {qc.data.narrativeUnavailable.message} The verdict above is
+                    unaffected.
+                  </div>
+                ) : null}
                 <div className="sp-list">
                   {qc.data.checklist.map((c, i) => (
                     <div key={i} className="sp-row">

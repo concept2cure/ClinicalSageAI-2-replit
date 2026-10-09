@@ -1,4 +1,9 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import express from 'express';
+import request from 'supertest';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import * as nodeCrypto from 'node:crypto';
 import { createMockRequest, createMockResponse } from '../setup';
 
 const mockGenerateDocxBuffer = vi.fn(async () => Buffer.from('docx-bytes'));
@@ -195,5 +200,106 @@ describe('Concept2Cure export governance gates', () => {
       '2026-03-24T12:00:00.000Z'
     );
     expect(res.send).toHaveBeenCalled();
+  });
+});
+
+/* ── Download of a rendered file is tenant-scoped (IAM-07 / P0-6) ──────────── */
+
+describe('GET /documents/download/:filename serves only the caller’s own tenant prefix', () => {
+  // The defect: the route resolved `generated_documents/<name>` — one flat
+  // directory for every tenant, names predictable (`<Title>_<type>_<YYYYMMDD>.docx`)
+  // — with no ownership check. Files are now written under
+  // `generated_documents/org-<id>/` and the route resolves only inside the
+  // caller's prefix; a file elsewhere is indistinguishable from a missing one.
+  const ROOT = path.resolve('generated_documents');
+  const ORG_A = 990001;
+  const ORG_B = 990002;
+  const NAME = `p06-${nodeCrypto.randomBytes(4).toString('hex')}.docx`;
+  const FLAT_ONLY = `p06-flat-${nodeCrypto.randomBytes(4).toString('hex')}.docx`;
+  const A_BYTES = 'tenant-a-bytes';
+
+  beforeAll(async () => {
+    await fs.mkdir(path.join(ROOT, `org-${ORG_A}`), { recursive: true });
+    await fs.writeFile(path.join(ROOT, `org-${ORG_A}`, NAME), A_BYTES);
+    // A legacy file with the SAME name at the flat location, and one that only
+    // exists flat: neither may be served to anyone.
+    await fs.writeFile(path.join(ROOT, NAME), 'legacy-flat-bytes');
+    await fs.writeFile(path.join(ROOT, FLAT_ONLY), 'legacy-flat-only-bytes');
+  });
+
+  afterAll(async () => {
+    await fs.rm(path.join(ROOT, `org-${ORG_A}`), { recursive: true, force: true });
+    await fs.rm(path.join(ROOT, `org-${ORG_B}`), { recursive: true, force: true });
+    await fs.rm(path.join(ROOT, NAME), { force: true });
+    await fs.rm(path.join(ROOT, FLAT_ONLY), { force: true });
+  });
+
+  function appAs(orgId: number | null) {
+    const app = express();
+    app.use((req, _res, next) => {
+      // What authenticateToken + tenantContextMiddleware leave behind; both are
+      // mocked to pass-through above, so the tenant is set here per case.
+      if (orgId !== null) (req as any).organizationId = orgId;
+      (req as any).userId = 1;
+      (req as any).userRole = 'user';
+      (req as any).userEmail = 'p06@example.test';
+      next();
+    });
+    app.use('/api/concept2cure', exportRouter);
+    return app;
+  }
+
+  const binary = (res: any, cb: (err: Error | null, body: Buffer) => void) => {
+    const chunks: Buffer[] = [];
+    res.on('data', (c: Buffer) => chunks.push(c));
+    res.on('end', () => cb(null, Buffer.concat(chunks)));
+  };
+
+  it('answers 404 to org B for a file org A generated, without naming the path', async () => {
+    const res = await request(appAs(ORG_B)).get(`/api/concept2cure/documents/download/${NAME}`);
+
+    expect(res.status).toBe(404);
+    const body = JSON.stringify(res.body);
+    expect(body).not.toContain(`org-${ORG_A}`);
+    expect(body).not.toContain(ROOT);
+    expect(body).not.toContain(A_BYTES);
+    expect(res.text).not.toContain(A_BYTES);
+    expect(res.text).not.toContain('legacy-flat');
+  });
+
+  it('still serves the owning organization (positive control)', async () => {
+    const res = await request(appAs(ORG_A))
+      .get(`/api/concept2cure/documents/download/${NAME}`)
+      .buffer(true)
+      .parse(binary);
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-disposition']).toBe(`attachment; filename="${NAME}"`);
+    expect((res.body as Buffer).toString('utf8')).toBe(A_BYTES);
+  });
+
+  it('never serves a legacy flat file, even to a tenant that would have owned it', async () => {
+    // Legacy flat files have no owner recorded anywhere, so they are unreachable
+    // by design rather than attributed to whoever asks first.
+    const res = await request(appAs(ORG_A)).get(
+      `/api/concept2cure/documents/download/${FLAT_ONLY}`
+    );
+    expect(res.status).toBe(404);
+    expect(res.text).not.toContain('legacy-flat');
+  });
+
+  it('refuses when no tenant context is attached rather than falling back to a shared directory', async () => {
+    const res = await request(appAs(null)).get(`/api/concept2cure/documents/download/${NAME}`);
+    expect([403, 404]).toContain(res.status);
+    expect(res.text).not.toContain(A_BYTES);
+  });
+
+  it('rejects a filename carrying separators before it reaches the filesystem', async () => {
+    // Express does not split a param on %2F, so this arrives as `../../.env`.
+    const res = await request(appAs(ORG_A)).get(
+      '/api/concept2cure/documents/download/..%2F..%2Fpackage.json'
+    );
+    expect(res.status).toBe(400);
+    expect(res.text).not.toContain('"name"');
   });
 });

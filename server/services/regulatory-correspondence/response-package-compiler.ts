@@ -34,6 +34,39 @@ export interface CompileResponseAssemblyInput {
   revisedArtifactIds?: string[];
 }
 
+/**
+ * The readiness state, from signals that exist.
+ *
+ * NOTHING SELECTED IS `draft`, NOT `review_ready`. The previous rule was
+ * `unresolvedGaps.length > 0 ? 'evidence_gap' : 'review_ready'`, and with no
+ * issues there are no gaps — so an empty response package, in which nothing was
+ * assessed at all, reported itself ready for review. That is the
+ * unassessed-reads-as-clean failure, in the one field a reviewer uses to decide
+ * whether to look.
+ *
+ * `approval_ready` and `send_ready` are deliberately NOT produced here and are
+ * not reachable anywhere else either (searched 2026-09-20). They are downstream
+ * governance states — something approved, something dispatched — and compiling
+ * a package is neither. Naming them from compilation would assert an approval
+ * nobody gave. They stay in the union for whatever sets them; that nothing does
+ * yet is a real gap, and a gap is better left visible than filled in by the
+ * wrong component.
+ */
+function resolveReadinessState(
+  selected: CorrespondenceIssue[],
+  revisedArtifacts: string[],
+  unresolvedGaps: string[],
+): CompiledResponseAssembly['readinessState'] {
+  if (selected.length === 0) return 'draft';
+  // A machine extraction a person has not confirmed is not ready for review;
+  // the thing that would be reviewed is still a proposal.
+  if (selected.some(i => i.humanReviewStatus === 'pending')) return 'draft';
+  if (unresolvedGaps.length > 0) return 'evidence_gap';
+  // Every issue closed, and something actually revised in response.
+  if (revisedArtifacts.length === 0) return 'evidence_gap';
+  return 'review_ready';
+}
+
 export function compileGovernedResponseAssembly(
   input: CompileResponseAssemblyInput,
 ): CompiledResponseAssembly {
@@ -43,15 +76,33 @@ export function compileGovernedResponseAssembly(
 
   const impactedSections = [...new Set(selected.flatMap(i => i.mappedCtdSections || []))];
   const revisedArtifacts = [...new Set(input.revisedArtifactIds || selected.flatMap(i => i.mappedArtifactIds || []))];
+
+  /*
+   * THE CHECKLIST USED TO BE A CONSTANT. `status` was `'missing' as const` for
+   * every item, so `unresolvedGaps` was always the whole list and
+   * `readinessState` was always `evidence_gap` — measured 2026-09-20: resolving
+   * the issue and attaching the artifacts did not move it, and three of the five
+   * declared states were unreachable.
+   *
+   * What the compiler can honestly say about an evidence item is whether the
+   * issue it belongs to has been CLOSED BY A PERSON — `resolved` or `waived`,
+   * both set through PATCH /issues/:id/review. It cannot say whether a specific
+   * uploaded artifact satisfies a specific regulator ask; there is no mapping
+   * from an evidence need to an artifact, and inventing one would be the
+   * fabrication this module's readiness signal exists to avoid.
+   */
+  const closed = (issue: CorrespondenceIssue) =>
+    issue.resolutionStatus === 'resolved' || issue.resolutionStatus === 'waived';
+
   const evidenceChecklist = selected.flatMap(issue =>
     (issue.structuredExtraction?.evidenceNeeds || ['Issue evidence attachment']).map(item => ({
       item: `${issue.id}: ${item}`,
-      status: 'missing' as const,
+      status: (closed(issue) ? 'satisfied' : 'missing') as 'missing' | 'satisfied',
     }))
   );
 
   const unresolvedGaps = evidenceChecklist.filter(e => e.status === 'missing').map(e => e.item);
-  const readinessState = unresolvedGaps.length > 0 ? 'evidence_gap' : 'review_ready';
+  const readinessState = resolveReadinessState(selected, revisedArtifacts, unresolvedGaps);
 
   return {
     issueMatrix: selected.map(issue => ({

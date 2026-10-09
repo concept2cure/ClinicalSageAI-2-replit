@@ -124,23 +124,32 @@ const READINESS_CLEAR = {
   shadowReviewRunCount: 1,
   shadowReviewMissing: false,
   gate: { cleared: true, blockers: [] },
+  // The server has returned the freeze and on-signing verdicts beside `gate`
+  // since composeDispatchGatesForStep; the Freeze and Dispatch buttons read
+  // them (daae5ad44, f07edd7c8). Without them this fixture modelled a payload
+  // the server no longer sends, and the Freeze button (rightly) never showed.
+  freezeGate: { cleared: true, blockers: [] },
+  dispatchGateOnSigning: { cleared: true, blockers: [] },
   readiness: { errors: 0, warnings: 1, infos: 0, findings: [
     { severity: 'warning', code: 'LEAF_SOURCE_UNRESOLVED', sectionCode: '2.7.3', message: 'Leaf source not materializable yet.' },
   ] },
   leafCount: 1,
 };
 
+const BLOCKED_GATE = {
+  cleared: false,
+  blockers: [
+    '2 open validation errors must be resolved before dispatch.',
+    '1 unacknowledged critical Shadow Review finding must be acknowledged.',
+  ],
+};
 const READINESS_BLOCKED = {
   ...READINESS_CLEAR,
   validationErrors: 2,
   unacknowledgedShadowCriticals: 1,
-  gate: {
-    cleared: false,
-    blockers: [
-      '2 open validation errors must be resolved before dispatch.',
-      '1 unacknowledged critical Shadow Review finding must be acknowledged.',
-    ],
-  },
+  gate: BLOCKED_GATE,
+  freezeGate: BLOCKED_GATE,
+  dispatchGateOnSigning: BLOCKED_GATE,
 };
 
 const SHADOW_RUNS = [
@@ -250,6 +259,51 @@ describe('sequence selector drives the per-sequence workspaces', () => {
     await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
     await openWorkspace('Builder');
     expect(await screen.findByText('No leaves in sequence 0000 yet')).toBeTruthy();
+  });
+});
+
+/* PX-1 (docs/evidence/reviews/2026-09-24/lenses.md): a placement's audit row
+   recorded what changed and never why. The Builder's placement form now takes
+   the reason, keeps Place disabled below the server's floor, and sends it. */
+describe('placing a Co-Author document carries its reason', () => {
+  const REASON = 'Clinical summary approved for sequence 0000';
+  beforeEach(() =>
+    mockApi((method, url) => {
+      if (method === 'GET' && url === '/api/coauthor/documents') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ documents: [{ id: 88, title: 'M2.7 Clinical Summary', moduleNumber: '2.7.3', status: 'draft' }] }),
+        };
+      }
+      if (method === 'PUT' && url === '/api/submissions/sequences/21/leaves') {
+        return { ok: true, status: 200, json: async () => ({ id: 612, sectionCode: '2.7.3' }) };
+      }
+      return undefined;
+    }),
+  );
+
+  it('keeps Place disabled without a reason, then sends it with the leaf', async () => {
+    render(<SubmissionCenter {...props()} />);
+    await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
+    await openWorkspace('Builder');
+    fireEvent.click(await screen.findByRole('button', { name: /Place a Co-Author document as a leaf/ }));
+    fireEvent.change(await screen.findByLabelText('Source document'), { target: { value: '88' } });
+    const place = screen.getByRole('button', { name: /Place leaf in the sequence/ }) as HTMLButtonElement;
+    expect((screen.getByLabelText('Section code') as HTMLInputElement).value).toBe('2.7.3');
+    expect(place.disabled, 'no reason given yet').toBe(true);
+
+    fireEvent.change(screen.getByLabelText(/^Reason for this placement/), { target: { value: REASON } });
+    expect(place.disabled).toBe(false);
+    fireEvent.click(place);
+
+    await waitFor(() =>
+      expect(apiRequest).toHaveBeenCalledWith(
+        'PUT',
+        '/api/submissions/sequences/21/leaves',
+        expect.objectContaining({ documentId: 88, sectionCode: '2.7.3', reason: REASON }),
+      ),
+    );
   });
 });
 
@@ -443,6 +497,52 @@ describe('governed freeze — the real e-sign chain, never bypassed', () => {
     expect(freezeCalled).toBe(0);
     // The refused credential does not stay in the field: a retry re-enters it.
     expect((screen.getByLabelText(/Password/) as HTMLInputElement).value).toBe('');
+  });
+  // The server re-verifies the second factor whenever the signer has one
+  // enrolled (§11.200; POST /api/c2c/actions/sign refuses REAUTH_TOTP_REQUIRED).
+  // The modal must therefore ask for the code before it sends anything — a
+  // signer with an authenticator must never be sent into a refusal they have no
+  // field to answer.
+  it('asks an MFA-enrolled signer for the code and forwards it with the sign request', async () => {
+    const calls: Array<{ method: string; url: string; body?: unknown }> = [];
+    mockApi((method, url, body) => {
+      if (method === 'POST' && (url === '/api/c2c/actions/sign' || url === '/api/submissions/sequences/21/freeze')) {
+        calls.push({ method, url, body });
+      }
+      if (method === 'POST' && url === '/api/c2c/actions/sign') {
+        return { ok: true, status: 200, json: async () => signBody };
+      }
+      if (method === 'POST' && url === '/api/submissions/sequences/21/freeze') {
+        return { ok: true, status: 200, json: async () => ({ ...SEQS[0], status: 'frozen' }) };
+      }
+      return undefined;
+    });
+    verifyPassword.mockResolvedValue({ valid: true, mfaRequired: true } as never);
+    render(<SubmissionCenter {...props()} />);
+    await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
+    await openWorkspace('Sequences');
+    fireEvent.click((await screen.findAllByRole('button', { name: /Frozen/ }))[0]);
+    fireEvent.change(await screen.findByLabelText('Reason for this action'), {
+      target: { value: 'Locking sequence 0000 for FDA filing.' },
+    });
+    fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'hunter22' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign and commit/ }));
+
+    // The code is asked for; nothing has been sent and nothing signed.
+    const code = await screen.findByLabelText(/Authenticator code/);
+    expect(calls).toHaveLength(0);
+    expect(document.body.textContent).not.toContain('Signature applied');
+
+    fireEvent.change(code, { target: { value: '246810' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign and commit/ }));
+
+    await waitFor(() => expect(document.body.textContent).toContain('Signature applied'));
+    expect(verifyMfa).toHaveBeenCalledWith('246810');
+    expect(calls[0]).toMatchObject({
+      url: '/api/c2c/actions/sign',
+      body: { reauth: { password: 'hunter22', totp: '246810' } },
+    });
+    verifyPassword.mockResolvedValue({ valid: true });
   });
 });
 

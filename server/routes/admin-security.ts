@@ -4,7 +4,8 @@
  * GET /api/admin/security-health
  *
  *   Runs the security self-test panel (server/services/securityHealth.ts)
- *   and returns the report as JSON. Admin role required — the report
+ *   and returns the report as JSON. Admin role required, on this route only
+ *   (see the note above it) — the report
  *   contains environment posture information (JWT secret length,
  *   ClamAV reachability, audit-chain status) that's not for end users.
  *
@@ -48,10 +49,17 @@ const router = Router();
  */
 const MAX_CACHED_AGE_MS = 5 * 60 * 1000;
 
-router.use(authMiddleware);
-router.use(requireAdminRole);
-
-router.get('/security-health', async (req: Request, res: Response) => {
+/*
+ * The gate is the route's, not the router's (VSR-001 F-31). This router is
+ * mounted at /api/admin, and router-level middleware runs for every request
+ * that enters a router, including requests it has no route for. When these two
+ * were `router.use`, every request under /api/admin — Master Administration,
+ * the Business Center, Access Management, both SCIM consoles and the SIEM feed,
+ * all mounted after this — had to come from an organisation admin before its
+ * own gate ran, so a platform administrator who was not one could reach none of
+ * them. Each of those routers carries its own authentication and role check.
+ */
+router.get('/security-health', authMiddleware, requireAdminRole, async (req: Request, res: Response) => {
   const pool = getPool();
   const forceFresh = req.query.fresh === '1';
 

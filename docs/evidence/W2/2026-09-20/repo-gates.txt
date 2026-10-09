@@ -1,0 +1,17 @@
+# repo gates — 2026-09-20T23:58:35Z
+
+$ npm run ci:migration-set-order
+[ci:migration-set-order] OK — 291 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+exit=0
+
+$ npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 291 migrations, 33 DROP(s), none re-created by the set, 2 reviewed exception(s); 16 dynamic DROP(s) in 16 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+
+$ npm run db:sync-manifest:check
+Manifest is in sync.
+exit=0
+
+$ npm run ci:node-runtime
+Node runtime contracts are pinned to Node 22 (17 fixed surfaces plus active workflows).
+exit=0

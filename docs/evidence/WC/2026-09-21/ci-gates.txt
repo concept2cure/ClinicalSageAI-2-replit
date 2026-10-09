@@ -1,0 +1,22 @@
+
+> concept2cure-riai@1.0.0 ci:launch-scope
+> node scripts/ci/check-launch-scope.mjs
+
+[ci:launch-scope] 6 apps · 41 surfaces · 21 modules · 36 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+exit=0
+
+> concept2cure-riai@1.0.0 ci:ana-surface-context
+> node scripts/ci/check-ana-surface-context.mjs
+
+
+[ci:ana-surface-context] OK — 114 of 120 routable surface ids publish screen state (baseline 114 exact), 6 exempt, 0 still blind.
+  111 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (document-authoring, ectd-coauthor, rbm) — surfaces that own the
+  conversation are grounded on that channel, because the shell draws no rail there.
+  122 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router
+  rewrites before the shell has an active id, so they are not routable and cannot be
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (77 surface file(s) hold a call).
+
+exit=0

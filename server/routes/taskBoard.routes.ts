@@ -94,7 +94,8 @@ function readManifestations(raw: unknown): SignatureManifestation[] {
       meaning: e.meaning,
       reason: typeof e.reason === 'string' ? e.reason : '',
       signedAt: e.signedAt,
-      method: typeof e.method === 'string' ? e.method : 'pin',
+      // Never a default factor: an entry that does not say how it was signed says so.
+      method: typeof e.method === 'string' ? e.method : 'not recorded',
     }];
   });
 }

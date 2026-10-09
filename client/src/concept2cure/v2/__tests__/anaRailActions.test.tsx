@@ -146,3 +146,144 @@ describe('AnaRail — real ANA action rendering', () => {
     expect(onNav).not.toHaveBeenCalled();
   });
 });
+
+/* "Show me the system" in chat, without Live Drive switched on. The server
+   fetches the script with start_product_demo and, because the moves can only
+   be offered, sends a `start_demo` chip. The chip must call the SAME startDemo
+   the Control menu's Demonstrations list calls — never a second path. */
+describe('AnaRail — the "Start demonstration" chip', () => {
+  const demoChip = {
+    label: 'Start demonstration: Sales demonstration',
+    actionType: 'start_demo',
+    demoId: 'sales-flagship',
+    demoTitle: 'Sales demonstration',
+    executed: true,
+  };
+  const message: AnaMessage = { role: 'ana', body: 'Here is the demonstration.', executedActions: [demoChip] };
+
+  function renderWithDrive(locked: { reason: string; requiredTier?: string | null } | null) {
+    const onStartDemo = vi.fn();
+    const onNav = vi.fn();
+    const onAct = vi.fn();
+    render(
+      <AnaRail
+        open
+        setOpen={() => {}}
+        surface={surface}
+        segment="biotech"
+        mode="standard"
+        setMode={() => {}}
+        messages={[message]}
+        onSend={vi.fn()}
+        onAct={onAct}
+        onNav={onNav}
+        liveDrive={{ on: false, locked, setOn: () => {}, onStartDemo }}
+      />,
+    );
+    return { onStartDemo, onNav, onAct };
+  }
+
+  it('invokes the rail\'s own startDemo with the script id and title', () => {
+    const { onStartDemo, onNav, onAct } = renderWithDrive(null);
+    fireEvent.click(screen.getByRole('button', { name: /Start demonstration: Sales demonstration/ }));
+    expect(onStartDemo).toHaveBeenCalledWith('sales-flagship', 'Sales demonstration');
+    expect(onNav).not.toHaveBeenCalled();
+    expect(onAct).not.toHaveBeenCalled();
+  });
+
+  it('is inert when Live Drive is locked for the workspace — same rule as the Control menu', () => {
+    const { onStartDemo } = renderWithDrive({ reason: 'not_entitled', requiredTier: 'professional' });
+    expect(screen.getByText('Start demonstration: Sales demonstration')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Start demonstration/ })).toBeNull();
+    expect(onStartDemo).not.toHaveBeenCalled();
+  });
+
+  it('is inert when the rail has no demo starter at all', () => {
+    renderRail([message]);
+    expect(screen.getByText('Start demonstration: Sales demonstration')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Start demonstration/ })).toBeNull();
+  });
+
+  it('a chip that cannot name its script is never a button', () => {
+    const onStartDemo = vi.fn();
+    render(
+      <AnaRail
+        open
+        setOpen={() => {}}
+        surface={surface}
+        segment="biotech"
+        mode="standard"
+        setMode={() => {}}
+        messages={[{ role: 'ana', body: 'x', executedActions: [{ label: 'Start demonstration', actionType: 'start_demo', executed: true }] }]}
+        onSend={vi.fn()}
+        onAct={vi.fn()}
+        onNav={vi.fn()}
+        liveDrive={{ on: false, locked: null, setOn: () => {}, onStartDemo }}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: /Start demonstration/ })).toBeNull();
+    expect(onStartDemo).not.toHaveBeenCalled();
+  });
+});
+
+/* Ask / Agent used to be a local flag that prefixed "[Agent] " to the message,
+   which the shell stripped before sending: both modes did exactly the same
+   thing. They are now the Live Drive preference, said as what it means. */
+describe('AnaRail — Ask / Agent is what AnA will actually do', () => {
+  function renderControl(
+    drive: { on: boolean; locked: { reason: string; requiredTier?: string | null } | null } | null,
+  ) {
+    const setOn = vi.fn();
+    const onSend = vi.fn();
+    render(
+      <AnaRail
+        open
+        setOpen={() => {}}
+        surface={surface}
+        segment="biotech"
+        mode="standard"
+        setMode={() => {}}
+        messages={[]}
+        onSend={onSend}
+        onAct={vi.fn()}
+        onNav={vi.fn()}
+        {...(drive ? { liveDrive: { ...drive, setOn } } : {})}
+      />,
+    );
+    fireEvent.click(screen.getByTitle('Control & engine'));
+    return { setOn, onSend };
+  }
+
+  it('reads Agent when AnA drives, and Ask switches her hands off', () => {
+    const { setOn } = renderControl({ on: true, locked: null });
+    expect(screen.getByTitle('Control & engine').textContent).toMatch(/^Agent/);
+    fireEvent.click(screen.getByRole('button', { name: /^Ask/ }));
+    expect(setOn).toHaveBeenCalledWith(false);
+  });
+
+  it('Agent switches Live Drive on from Ask', () => {
+    const { setOn } = renderControl({ on: false, locked: null });
+    expect(screen.getByTitle('Control & engine').textContent).toMatch(/^Ask/);
+    fireEvent.click(screen.getByRole('button', { name: /^Agent/ }));
+    expect(setOn).toHaveBeenCalledWith(true);
+  });
+
+  it('a locked workspace reads Ask even with the preference on, and Agent says why instead of switching', () => {
+    const { setOn } = renderControl({ on: true, locked: { reason: 'not_entitled', requiredTier: 'professional' } });
+    expect(screen.getByTitle('Control & engine').textContent).toMatch(/^Ask/);
+    const agentItem = screen.getByRole('button', { name: /^Agent/ });
+    expect(agentItem.textContent).toContain('Requires the professional plan');
+    fireEvent.click(agentItem);
+    expect(setOn).not.toHaveBeenCalled();
+  });
+
+  it('never rewrites what the person typed', () => {
+    const { onSend } = renderControl({ on: true, locked: null });
+    const box = screen.getByPlaceholderText(/Describe a task for AnA to carry out/);
+    fireEvent.change(box, { target: { value: '/power two-arm superiority' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    // The text exactly as typed; the second argument is its attachments (none).
+    expect(onSend).toHaveBeenCalledTimes(1);
+    expect(onSend.mock.calls[0][0]).toBe('/power two-arm superiority');
+  });
+});

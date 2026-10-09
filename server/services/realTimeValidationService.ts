@@ -19,12 +19,38 @@ import { db } from '../db';
 import { coauthorValidationHistory } from '../../shared/schema';
 import { eq, and, desc, gte } from 'drizzle-orm';
 
+/**
+ * Whether the AI content analysis actually covered the content.
+ *
+ * Until 2026-09-23 this was not recorded at all, and three stacked `catch`
+ * blocks turned an AI failure into "no issues found": a refusal, an outage or
+ * an unparseable reply produced `isValid: true`, and run_validation set the
+ * target's status to 'validated' and offered "Promote to document — Validation
+ * passed". The analysis also only ever saw the first 3,000 characters, and
+ * said nothing about the rest. A validation that did not look is not a pass.
+ */
+export interface AiAnalysisCoverage {
+  status: 'complete' | 'partial' | 'not_run';
+  analysedChars: number;
+  totalChars: number;
+  /** Why it is not complete, in words safe to show the author. */
+  note?: string;
+}
+
 interface ValidationResult {
   isValid: boolean;
   issues: ValidationIssue[];
   suggestions: Suggestion[];
   complianceScore: number;
+  aiAnalysis: AiAnalysisCoverage;
 }
+
+/**
+ * How much of a document the AI analysis is given. Content beyond this is not
+ * analysed, and the result says so (`aiAnalysis.status: 'partial'`) rather than
+ * reporting the whole document validated.
+ */
+export const AI_ANALYSIS_MAX_CHARS = 60_000;
 
 interface ValidationIssue {
   type: 'error' | 'warning' | 'info';
@@ -42,6 +68,7 @@ interface Suggestion {
   reasoning: string;
 }
 import { ai } from '../lib/unified-ai-client';
+import { classifyGatewayError } from './ai-gateway/gateway-error-map';
 
 class RealTimeValidationService extends EventEmitter {
   private validationCache: Map<string, ValidationResult>;
@@ -291,13 +318,23 @@ class RealTimeValidationService extends EventEmitter {
       }
     }
 
-    // 3. AI-powered content analysis
+    // 3. AI-powered content analysis. A failure here is recorded, not
+    //    swallowed: it makes the result not-valid (see aiAnalysis above).
+    let aiAnalysis: AiAnalysisCoverage;
     try {
-      const aiAnalysis = await this.analyzeContentWithAI(content, documentType);
-      issues.push(...aiAnalysis.issues);
-      suggestions.push(...aiAnalysis.suggestions);
+      const analysed = await this.analyzeContentWithAI(content, documentType);
+      issues.push(...analysed.issues);
+      suggestions.push(...analysed.suggestions);
+      aiAnalysis = analysed.coverage;
     } catch (error) {
+      const { message } = classifyGatewayError(error);
       console.error('AI analysis failed:', error);
+      aiAnalysis = {
+        status: 'not_run',
+        analysedChars: 0,
+        totalChars: content.length,
+        note: `The AI content analysis did not run: ${message}`,
+      };
     }
 
     // 4. Citation and reference validation
@@ -347,24 +384,33 @@ class RealTimeValidationService extends EventEmitter {
     }
 
     return {
-      isValid: issues.filter(i => i.type === 'error').length === 0,
+      // Valid only when nothing is wrong AND the analysis looked at all of it.
+      isValid: issues.filter(i => i.type === 'error').length === 0 && aiAnalysis.status === 'complete',
       issues,
       suggestions,
       complianceScore,
+      aiAnalysis,
     };
   }
 
   /**
-   * Analyze content using AI
+   * Analyze content using AI.
+   *
+   * Routed as `regulatory_review`, so only a model approved for high-risk
+   * regulatory work serves it; it used to pin `gpt-4o`, which the approved-models
+   * registry does not approve for that. Throws on any failure — the caller
+   * records it as `not_run` — and never answers "no issues" for content it did
+   * not analyse.
    */
   private async analyzeContentWithAI(
     content: string,
     documentType: string
-  ): Promise<{ issues: ValidationIssue[]; suggestions: Suggestion[] }> {
-    try {
-      const completion = await this.ai.chat(
+  ): Promise<{ issues: ValidationIssue[]; suggestions: Suggestion[]; coverage: AiAnalysisCoverage }> {
+    const analysed = content.slice(0, AI_ANALYSIS_MAX_CHARS);
+    const completion = await this.ai.chat(
         {
-          model: 'gpt-4o',
+          taskType: 'regulatory_review',
+          callerModule: 'realTimeValidationService.analyzeContentWithAI',
           messages: [
             {
               role: 'system',
@@ -380,14 +426,19 @@ class RealTimeValidationService extends EventEmitter {
             },
             {
               role: 'user',
-              content: content.substring(0, 3000),
+              content: analysed,
             },
           ],
         },
         { jsonMode: true, temperature: 0.3, maxTokens: 1000 }
       );
 
-      const result = JSON.parse(completion.content || '{}');
+      // An unparseable reply throws here, and is recorded as not_run: "no
+      // issues" is an answer, and nothing was answered.
+      const result = JSON.parse(completion.content ?? '');
+      if (!result || typeof result !== 'object' || !Array.isArray(result.issues)) {
+        throw new Error('the AI analysis returned no issues list');
+      }
 
       // Map AI results to our format
       const issues: ValidationIssue[] = (result.issues || []).map((issue: any) => ({
@@ -406,11 +457,23 @@ class RealTimeValidationService extends EventEmitter {
         reasoning: sug.reasoning || '',
       }));
 
-      return { issues, suggestions };
-    } catch (error) {
-      console.error('AI analysis error:', error);
-      return { issues: [], suggestions: [] };
-    }
+      const partial = content.length > analysed.length;
+      return {
+        issues,
+        suggestions,
+        coverage: {
+          status: partial ? 'partial' : 'complete',
+          analysedChars: analysed.length,
+          totalChars: content.length,
+          ...(partial
+            ? {
+                note:
+                  `The AI content analysis covered the first ${analysed.length.toLocaleString('en-US')} of ` +
+                  `${content.length.toLocaleString('en-US')} characters; the rest was not analysed.`,
+              }
+            : {}),
+        },
+      };
   }
 
   /**

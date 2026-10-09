@@ -1,0 +1,360 @@
+# GREEN, HEAD b50d45577 + the S3 working tree after the review fixes (sha256 of every S3 file in tree.sha256): the nine S3 test files and 179 neighbour suites, one invocation, 2026-09-28.
+# Neighbours: every existing test that imports agentic-loop, run-control, run-status, the gateway's route, AnaToolExecutor's loop paths,
+# cross-artifact-consistency or project_knowledge_search, and every reader of stream.ts (source pins and route harnesses, live-drive-turn included,
+# untouched), plus the run-control pglite integration suite and all 35 ai-gateway suites. The list is the one the build pass ran at HEAD.
+# Trimmed: every test line of the nine S3 files; the summary; then the per-file count of passing+skipped tests for all 188 files,
+# and its diff against the same count taken at HEAD before any S3 edit (the unchanged-suite proof). ANSI stripped.
+
+$ npx vitest run --config vitest.config.ts server/routes/__tests__/chat-path-parity.test.ts server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts server/routes/ana-ri/__tests__/live-drive-turn.test.ts server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts server/routes/ana-ri/__tests__/stream-model-override.test.ts server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts server/routes/ana-ri/__tests__/turn-records.pglite.test.ts server/services/__tests__/chat-thread-program-key.test.ts server/services/__tests__/memory-context-assembler-mode.test.ts server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts server/services/ai-gateway/__tests__/content-blocks-carried.test.ts server/services/ai-gateway/__tests__/context-window-admission.test.ts server/services/ai-gateway/__tests__/drive-regressions.test.ts server/services/ai-gateway/__tests__/effort.test.ts server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts server/services/ai-gateway/__tests__/finish-reason.test.ts server/services/ai-gateway/__tests__/flagship-opus-5-5.test.ts server/services/ai-gateway/__tests__/gateway-abort.test.ts server/services/ai-gateway/__tests__/gateway-citations.test.ts server/services/ai-gateway/__tests__/gateway-inline-system.test.ts server/services/ai-gateway/__tests__/gateway-model-declined.test.ts server/services/ai-gateway/__tests__/gateway-openai-stream.test.ts server/services/ai-gateway/__tests__/gateway-server-tools.test.ts server/services/ai-gateway/__tests__/gateway-stream-tool-input.test.ts server/services/ai-gateway/__tests__/gateway-structured-output.test.ts server/services/ai-gateway/__tests__/gateway-terminal-round-cache.test.ts server/services/ai-gateway/__tests__/gateway.test.ts server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts server/services/ai-gateway/__tests__/ledger-migration.test.ts server/services/ai-gateway/__tests__/ledger-provenance.test.ts server/services/ai-gateway/__tests__/local-provider-tools.test.ts server/services/ai-gateway/__tests__/openai-stream.test.ts server/services/ai-gateway/__tests__/openai-tool-calls.test.ts server/services/ai-gateway/__tests__/promptInjection.test.ts server/services/ai-gateway/__tests__/reasoning.test.ts server/services/ai-gateway/__tests__/retry-policy-529.test.ts server/services/ai-gateway/__tests__/seed-provenance.test.ts server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts server/services/ai-gateway/__tests__/sensitive-placement-integration.test.ts server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts server/services/ai-gateway/__tests__/server-tool-placement.test.ts server/services/ai-gateway/__tests__/server-tool-policy.test.ts server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts server/services/ana-ri/__tests__/persona-client-files.test.ts server/services/ana-ri/__tests__/persona-cmc-capabilities.test.ts server/services/ana-ri/__tests__/response-register.test.ts server/services/ana/__tests__/addons-tools.test.ts server/services/ana/__tests__/advanced-modeling-cover-letter-tools.test.ts server/services/ana/__tests__/adverse-event-provenance.test.ts server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts server/services/ana/__tests__/agentic-loop-rounds.test.ts server/services/ana/__tests__/ana-cannot-sign.test.ts server/services/ana/__tests__/ana-document-surgery-loop.e2e.test.ts server/services/ana/__tests__/analytical-method-tools.test.ts server/services/ana/__tests__/authoring-plan-generator.test.ts server/services/ana/__tests__/batch-draft-sections.test.ts server/services/ana/__tests__/biotech-program.test.ts server/services/ana/__tests__/briefing-book-core.test.ts server/services/ana/__tests__/capa-mdr-tools.test.ts server/services/ana/__tests__/chem-tools.test.ts server/services/ana/__tests__/client-journey.test.ts server/services/ana/__tests__/clinical-regulatory-evidence-tools.test.ts server/services/ana/__tests__/coding-tools.test.ts server/services/ana/__tests__/confirmed-write-role-gate.test.ts server/services/ana/__tests__/correspondence-response-package-tool.test.ts server/services/ana/__tests__/council-tool-claim-counts.test.ts server/services/ana/__tests__/council-tool.test.ts server/services/ana/__tests__/crl-premortem-tool.test.ts server/services/ana/__tests__/cs-tools.test.ts server/services/ana/__tests__/csr-template-tool.test.ts server/services/ana/__tests__/dailymed-tool.test.ts server/services/ana/__tests__/deadline-radar.test.ts server/services/ana/__tests__/deep-investigation.test.ts server/services/ana/__tests__/deepening-tools.test.ts server/services/ana/__tests__/deficiency-tool.test.ts server/services/ana/__tests__/device-submission-tools.test.ts server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts server/services/ana/__tests__/document-catalog-tools-id-space.test.ts server/services/ana/__tests__/document-intake-tools.test.ts server/services/ana/__tests__/document-passage-tools.test.ts server/services/ana/__tests__/document-placement-tools.test.ts server/services/ana/__tests__/document-spine.test.ts server/services/ana/__tests__/dossier-reconciliation.test.ts server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts server/services/ana/__tests__/drive-program-resolution.test.ts server/services/ana/__tests__/etmf-tools.test.ts server/services/ana/__tests__/eu-data-tools.test.ts server/services/ana/__tests__/evidence-tools-provenance.test.ts server/services/ana/__tests__/executor-agentic-loop.test.ts server/services/ana/__tests__/extended-regulatory-tools.test.ts server/services/ana/__tests__/fcoi-tools.test.ts server/services/ana/__tests__/finalize-protocol-tool.test.ts server/services/ana/__tests__/gateway-region-enum-parity.test.ts server/services/ana/__tests__/governed-write-gate.test.ts server/services/ana/__tests__/grants-tools.test.ts server/services/ana/__tests__/ha-tools.test.ts server/services/ana/__tests__/heor-market-access-tools.test.ts server/services/ana/__tests__/iacuc-tools.test.ts server/services/ana/__tests__/ibc-tools.test.ts server/services/ana/__tests__/ind-module-tool.test.ts server/services/ana/__tests__/inspection-tools.test.ts server/services/ana/__tests__/intelligence-flow-sessions.test.ts server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts server/services/ana/__tests__/irb-tools.test.ts server/services/ana/__tests__/ivd-lifecycle-tools.test.ts server/services/ana/__tests__/kb-lookup-tools.test.ts server/services/ana/__tests__/license-status-tool.test.ts server/services/ana/__tests__/lifecycle-tools.test.ts server/services/ana/__tests__/lost-tool-input.test.ts server/services/ana/__tests__/model-call-linkage.test.ts server/services/ana/__tests__/navigation-tools.test.ts server/services/ana/__tests__/new-tool-handlers.test.ts server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts server/services/ana/__tests__/nonclinical-tools.test.ts server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts server/services/ana/__tests__/pharmacovigilance-reporting-tools.test.ts server/services/ana/__tests__/platform-command-bridge.test.ts server/services/ana/__tests__/predicate-intelligence-tools.test.ts server/services/ana/__tests__/preprint-tools.test.ts server/services/ana/__tests__/protocol-design-tools.test.ts server/services/ana/__tests__/qms-change-tools.test.ts server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts server/services/ana/__tests__/rag-provenance.test.ts server/services/ana/__tests__/read-vault-document-citable.test.ts server/services/ana/__tests__/reconciliation-tools.test.ts server/services/ana/__tests__/record-literature-tool.test.ts server/services/ana/__tests__/regulatory-currency-tools.test.ts server/services/ana/__tests__/research-compliance-tools.test.ts server/services/ana/__tests__/revise-qms-document-role.test.ts server/services/ana/__tests__/rim-tools.test.ts server/services/ana/__tests__/risk-watch.test.ts server/services/ana/__tests__/run-control-tenant-scope.test.ts server/services/ana/__tests__/run-control.pglite.integration.test.ts server/services/ana/__tests__/run-control.test.ts server/services/ana/__tests__/run-status.test.ts server/services/ana/__tests__/scan-regulatory-deficiencies.test.ts server/services/ana/__tests__/self-drive-regressions.test.ts server/services/ana/__tests__/server-tool-steps.test.ts server/services/ana/__tests__/session-briefing.test.ts server/services/ana/__tests__/shelf-life-tool.test.ts server/services/ana/__tests__/statistical-design-tools.test.ts server/services/ana/__tests__/submission-center-tools.test.ts server/services/ana/__tests__/submission-intelligence-tools.test.ts server/services/ana/__tests__/tool-authorization-enforcement.test.ts server/services/ana/__tests__/tool-authorization.test.ts server/services/ana/__tests__/tool-plan-labels.test.ts server/services/ana/__tests__/tool-registry-consistency.test.ts server/services/ana/__tests__/tool-run-cancelled.test.ts server/services/ana/__tests__/tool-selection.test.ts server/services/ana/__tests__/tool-surface-context.test.ts server/services/ana/__tests__/tool-telemetry.test.ts server/services/ana/__tests__/trial-feasibility-tool.test.ts server/services/ana/__tests__/turn-plan-and-context.test.ts server/services/ana/__tests__/turn-record-loop.test.ts server/services/ana/__tests__/turn-record.pglite.test.ts server/services/ana/__tests__/vault-named-tools-honesty.test.ts server/services/ana/__tests__/verify-docx-against-source.test.ts server/services/ana/__tests__/verify-docx-claim-scope.test.ts server/services/ana/se-discussion/__tests__/se-discussion-author.test.ts server/services/bioequivalence/__tests__/biowaiver-fail-closed.test.ts server/services/cerv2/__tests__/section-version.test.ts server/services/docx/__tests__/template-default-text.test.ts server/services/ectd/__tests__/dispatch-gate.test.ts server/services/ectd/__tests__/dispatch-readiness.test.ts server/services/intelligence/__tests__/cross-artifact-consistency.test.ts server/services/living-record/__tests__/fact-change-audit-outcome.test.ts server/services/living-record/__tests__/source-tracer-broken-trail.test.ts server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts tests/artifact-change-invalidates-bundles.contract.test.ts tests/lineage/founder-path-lineage.pglite.test.ts tests/schema-contract/chat-thread-access.contract.test.ts tests/services/agentic-loop.test.ts tests/ui/shell-kit-lazy.test.ts server/services/ana/__tests__/agentic-loop-rounds-control.test.ts server/services/ana/__tests__/executor-agentic-loop-options.test.ts server/services/ai-gateway/__tests__/model-call-scope.test.ts server/services/ana/__tests__/tool-authorization-rule-zero.test.ts server/services/ana/__tests__/run-hold.test.ts server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts server/routes/ana-ri/__tests__/stream-run-hold.test.ts server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts server/services/ana/__tests__/project-knowledge-search-model-free.test.ts
+
+## The S3 files
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'budget_exhausted' after round 2 withdraws tools from the round-2 model call and names itself
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'approval_timeout' after round 2 withdraws tools from the round-2 model call and names itself
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'halt' ends the loop as cancelled with no further model call
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > a thrashing round still reports duplicate_thrash, not the budget
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > is asked once per executed round, with that round
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > hands the checkpoint the pending calls as its second argument
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > replan: the pending calls never run, the model reads one redirected result per call, the count is unchanged
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the redirected result says the step did not run and asks the model to follow the person
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the checkpoint is shown the pending step, not handed it: changing what it was shown changes nothing that runs
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > abort still stops before the round, exactly as before
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds progress-earned extension
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds a ceiling that rises mid-turn (the demo promotion)
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > without it, the same demo-promoted Auto budget would have reached 34
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > an always-novel Auto loop stops at 20
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > a repeating Auto loop is cut for thrashing well before 20
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > also bounds a base ceiling above it
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, null) → {"maxRounds":6,"progressExtension":2}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, manual) → {"maxRounds":6,"progressExtension":2}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, auto) → {"maxRounds":6,"progressExtension":14,"roundCap":20}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, auto) → {"maxRounds":10,"progressExtension":10,"roundCap":20}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (fast, auto) → {"maxRounds":4,"progressExtension":16,"roundCap":20}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, null) → {"maxRounds":10,"progressExtension":4}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > takes an explicit base ceiling (the demo base) and never lowers it
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > adds no roundCap key outside Auto
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, capped': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, extended': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'thrash': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'ends early': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'demo floor': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > a one-argument checkpoint that never replans behaves as before
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn cut at its round ceiling says max_rounds
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn stopped after its first round says cancelled, not no_more_tools
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > an answer with no tools reports a zero-round loop
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > answers TOOL_NOT_OFFERED without dispatching, and lists no other tools
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > an offered name with no handler lists only the offered tools, never the whole registry
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > without an allowlist the unknown-tool answer is what it always was
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent: start and end per call, fired inside the worker, with the round and latency
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent reports a refused call too, so a caller can list what did not run
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onModelResponse: once per gateway call, first call included, with its round
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > stopWhen is the caller’s > ends the turn with a closing answer and its own reason
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > bounds a round to the lanes asked for
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > is 4 when not asked, as before
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 0 lanes is refused before any model call is spent
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > -1 lanes is refused before any model call is spent
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 1.5 lanes is refused before any model call is spent
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > NaN lanes is refused before any model call is spent
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the dispatch runs inside the refusal scope, and the gateway sends nothing for it
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the loop's own model calls are not refused
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolModelCalls 'refuse' alone also tells the tool (ctx.modelCalls), so it asks for its model-free path
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolContext.modelCalls 'refuse' alone also opens the refusal scope, so the gateway enforces it
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > with neither, the tool is handed exactly the context the caller passed: no modelCalls
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > without the option a tool may call a model, as before
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > the scope > is empty outside, and names the run and tool inside
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > the scope > follows async continuations started inside it
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > rejects with a terminal policy error and never reaches a provider, the placement lookup or the rate bucket
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > is the exported SubAgentToolModelCallError, a GatewayPolicyError whose name is not overridden
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > refuses a call made from an async continuation started inside the scope
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > a caller that already stopped still reads as a cancel, not a refusal (the abort check comes first)
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > a reranker-style caller that catches the refusal keeps its fallback and completes
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > reaches the provider as before
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > a call made after the scoped work finished is not refused
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > each route() sees its own caller's scope, however their awaits interleave
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > the capture hazard, pinned: a timer armed inside the scope keeps it after the scope returned
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > the capture hazard, pinned: a memoized promise first created inside the scope refuses its later, unscoped callers too
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > save_document_to_vault (confirm) → SUB_AGENT_READ_ONLY, and no proposal is built
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > approve_qms_document (refuse) → SUB_AGENT_READ_ONLY, and no proposal is built
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > convene_drafting_council (self) → SUB_AGENT_READ_ONLY, and no proposal is built
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > execute_platform_command (command) → SUB_AGENT_READ_ONLY, and no proposal is built
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_self: the handler never runs, not even with a confirmation in the context
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_confirm: the handler never runs, not even with a confirmation in the context
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_command: the handler never runs, not even with a confirmation in the context
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a tool nobody classified is refused as not-a-read, not proposed
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a read runs
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a real read tool runs (check_numerical_integrity)
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > deeper still is refused the same way
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth undefined: a confirm tool is still proposed, not refused
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth 0: a confirm tool is still proposed, not refused
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth undefined: an unclassified probe is proposed as before
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth 0: an unclassified probe is proposed as before
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > a self-class tool runs at depth 0
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run that is not paused passes straight through: no frame, no wait
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run already cancelled reports cancelled, with no frame
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then resumed: one paused frame, one resumed frame, both carrying the round and nothing else
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then cancelled: cancelled, and no resumed frame
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended some other way: the turn carries on, with no resumed frame (as the stream did)
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > nobody comes back: resumed as abandoned once, at the ceiling, and the resumed frame is sent
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > the pause clock starts when the hold is entered, before the first read (as pauseStart did)
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a dropped client stops the run and reports disconnected
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > two separate pauses each get their own clock
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > three concurrent callers: one paused frame and one resumed frame
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > heldMs is the one interval the run was held, not the sum of every waiter’s
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > the abandoned-pause resume runs once however many are waiting
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an aborted signal releases its own waiter as cancelled while the others keep waiting
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > a waiter whose read was issued before another saw the resume does not announce a second pause
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an announcement rides the paused frame
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > ends the held run once, reports expired, aborts expiredSignal, sends one hold_expired frame, and never resumes
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > two callers entering 60s apart both return expired by the FIRST caller’s deadline
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a caller entering after expiry returns expired at once, without reading the row
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > when a Continue wins the race (endHeld writes nothing), it re-reads and carries on
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a waiter held on its wake is released the moment the hold expires
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > the last waiter leaving by its own signal closes the pause, and a later hold starts its own clock
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a dropped client closes the pause: held time stops at the disconnect
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > one waiter leaving by its signal does NOT close the pause the others are still waiting on
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a wake that rejects is thrown out of the hold, as `await runHandle.wake()` threw out of the checkpoint
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > expiry 'end': a failed end write is thrown, not read as a Continue; the turn is not expired and the pause closes
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > pauses a running run and records no control event — nobody pressed pause
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > a second hold of the same run writes nothing
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > never revives a cancelled run
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > the person's resume is theirs: running again, with exactly one event, by the owner
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > ends a paused run as finished, 'hold_expired', with no control event
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > writes nothing to a run that is not paused — a resume that landed first wins
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > a late resume afterwards is refused as TERMINAL
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > the turn's own endRun afterwards changes nothing
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > wakes what is waiting on the run in this process, without aborting it
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun when the write fails > throws the error rather than answering false, which would read as a Continue that landed first
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > checkDossierConsistency when the project artifacts cannot be read > marks the report unavailable instead of returning a clean empty report
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > checkDossierConsistency when the project artifacts cannot be read > a read that succeeds and finds nothing is still an ordinary report, not unavailable
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > the check_dossier_consistency tool > answers with an error, never a clean verdict, when nothing could be compared
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > the check_dossier_consistency tool > still reports a verdict when the documents were read
+ ✓ server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > under modelCalls 'refuse', retrieves with no model call: basic strategy, no reranking
+ ✓ server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > inside a model-call refusal scope, with no ctx flag, takes the same model-free path (what the gateway enforces decides)
+ ✓ server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > otherwise asks for exactly what it always did
+
+## Summary
+ Test Files  187 passed | 1 skipped (188)
+      Tests  3105 passed | 2 skipped (3107)
+exit=0
+
+## Per file: passing + skipped tests (final tree)
+     13 server/routes/__tests__/chat-path-parity.test.ts
+      3 server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts
+      4 server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts
+     10 server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts
+      4 server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts
+     29 server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts
+     27 server/routes/ana-ri/__tests__/live-drive-turn.test.ts
+      5 server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts
+      7 server/routes/ana-ri/__tests__/stream-model-override.test.ts
+      4 server/routes/ana-ri/__tests__/stream-run-hold.test.ts
+      7 server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts
+      7 server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts
+     13 server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+      5 server/services/__tests__/chat-thread-program-key.test.ts
+      6 server/services/__tests__/memory-context-assembler-mode.test.ts
+      7 server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts
+      3 server/services/ai-gateway/__tests__/content-blocks-carried.test.ts
+      3 server/services/ai-gateway/__tests__/context-window-admission.test.ts
+     32 server/services/ai-gateway/__tests__/drive-regressions.test.ts
+     44 server/services/ai-gateway/__tests__/effort.test.ts
+     12 server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts
+      6 server/services/ai-gateway/__tests__/finish-reason.test.ts
+      9 server/services/ai-gateway/__tests__/flagship-opus-5-5.test.ts
+     10 server/services/ai-gateway/__tests__/gateway-abort.test.ts
+      6 server/services/ai-gateway/__tests__/gateway-citations.test.ts
+      9 server/services/ai-gateway/__tests__/gateway-inline-system.test.ts
+      7 server/services/ai-gateway/__tests__/gateway-model-declined.test.ts
+      3 server/services/ai-gateway/__tests__/gateway-openai-stream.test.ts
+     11 server/services/ai-gateway/__tests__/gateway-server-tools.test.ts
+      5 server/services/ai-gateway/__tests__/gateway-stream-tool-input.test.ts
+     13 server/services/ai-gateway/__tests__/gateway-structured-output.test.ts
+      6 server/services/ai-gateway/__tests__/gateway-terminal-round-cache.test.ts
+     37 server/services/ai-gateway/__tests__/gateway.test.ts
+     25 server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts
+      3 server/services/ai-gateway/__tests__/ledger-migration.test.ts
+      9 server/services/ai-gateway/__tests__/ledger-provenance.test.ts
+      9 server/services/ai-gateway/__tests__/local-provider-tools.test.ts
+     12 server/services/ai-gateway/__tests__/model-call-scope.test.ts
+     10 server/services/ai-gateway/__tests__/openai-stream.test.ts
+     27 server/services/ai-gateway/__tests__/openai-tool-calls.test.ts
+     20 server/services/ai-gateway/__tests__/promptInjection.test.ts
+     31 server/services/ai-gateway/__tests__/reasoning.test.ts
+      8 server/services/ai-gateway/__tests__/retry-policy-529.test.ts
+      4 server/services/ai-gateway/__tests__/seed-provenance.test.ts
+      7 server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts
+      1 server/services/ai-gateway/__tests__/sensitive-placement-integration.test.ts
+     13 server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts
+     10 server/services/ai-gateway/__tests__/server-tool-placement.test.ts
+      8 server/services/ai-gateway/__tests__/server-tool-policy.test.ts
+     22 server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts
+      6 server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+     19 server/services/ana-ri/__tests__/persona-client-files.test.ts
+     30 server/services/ana-ri/__tests__/persona-cmc-capabilities.test.ts
+     42 server/services/ana-ri/__tests__/response-register.test.ts
+     24 server/services/ana/__tests__/addons-tools.test.ts
+     12 server/services/ana/__tests__/advanced-modeling-cover-letter-tools.test.ts
+      3 server/services/ana/__tests__/adverse-event-provenance.test.ts
+     13 server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts
+     30 server/services/ana/__tests__/agentic-loop-rounds-control.test.ts
+     17 server/services/ana/__tests__/agentic-loop-rounds.test.ts
+     27 server/services/ana/__tests__/ana-cannot-sign.test.ts
+      2 server/services/ana/__tests__/ana-document-surgery-loop.e2e.test.ts
+      3 server/services/ana/__tests__/analytical-method-tools.test.ts
+      3 server/services/ana/__tests__/authoring-plan-generator.test.ts
+      6 server/services/ana/__tests__/batch-draft-sections.test.ts
+     12 server/services/ana/__tests__/biotech-program.test.ts
+     17 server/services/ana/__tests__/briefing-book-core.test.ts
+      6 server/services/ana/__tests__/capa-mdr-tools.test.ts
+      6 server/services/ana/__tests__/chem-tools.test.ts
+     21 server/services/ana/__tests__/client-journey.test.ts
+      9 server/services/ana/__tests__/clinical-regulatory-evidence-tools.test.ts
+     12 server/services/ana/__tests__/coding-tools.test.ts
+      9 server/services/ana/__tests__/confirmed-write-role-gate.test.ts
+      5 server/services/ana/__tests__/correspondence-response-package-tool.test.ts
+      1 server/services/ana/__tests__/council-tool-claim-counts.test.ts
+     12 server/services/ana/__tests__/council-tool.test.ts
+      4 server/services/ana/__tests__/crl-premortem-tool.test.ts
+      7 server/services/ana/__tests__/cs-tools.test.ts
+      5 server/services/ana/__tests__/csr-template-tool.test.ts
+      2 server/services/ana/__tests__/dailymed-tool.test.ts
+      6 server/services/ana/__tests__/deadline-radar.test.ts
+     19 server/services/ana/__tests__/deep-investigation.test.ts
+     43 server/services/ana/__tests__/deepening-tools.test.ts
+      5 server/services/ana/__tests__/deficiency-tool.test.ts
+     10 server/services/ana/__tests__/device-submission-tools.test.ts
+     11 server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts
+     10 server/services/ana/__tests__/document-catalog-tools-id-space.test.ts
+     15 server/services/ana/__tests__/document-intake-tools.test.ts
+     17 server/services/ana/__tests__/document-passage-tools.test.ts
+     16 server/services/ana/__tests__/document-placement-tools.test.ts
+     10 server/services/ana/__tests__/document-spine.test.ts
+      6 server/services/ana/__tests__/dossier-reconciliation.test.ts
+      9 server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts
+     25 server/services/ana/__tests__/drive-program-resolution.test.ts
+      6 server/services/ana/__tests__/etmf-tools.test.ts
+      4 server/services/ana/__tests__/eu-data-tools.test.ts
+      3 server/services/ana/__tests__/evidence-tools-provenance.test.ts
+     23 server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+      8 server/services/ana/__tests__/executor-agentic-loop.test.ts
+     18 server/services/ana/__tests__/extended-regulatory-tools.test.ts
+      8 server/services/ana/__tests__/fcoi-tools.test.ts
+      5 server/services/ana/__tests__/finalize-protocol-tool.test.ts
+     11 server/services/ana/__tests__/gateway-region-enum-parity.test.ts
+     41 server/services/ana/__tests__/governed-write-gate.test.ts
+     36 server/services/ana/__tests__/grants-tools.test.ts
+      7 server/services/ana/__tests__/ha-tools.test.ts
+      9 server/services/ana/__tests__/heor-market-access-tools.test.ts
+      7 server/services/ana/__tests__/iacuc-tools.test.ts
+      7 server/services/ana/__tests__/ibc-tools.test.ts
+      6 server/services/ana/__tests__/ind-module-tool.test.ts
+      7 server/services/ana/__tests__/inspection-tools.test.ts
+     18 server/services/ana/__tests__/intelligence-flow-sessions.test.ts
+     21 server/services/ana/__tests__/intelligence-flow-suggested-actions.test.ts
+      7 server/services/ana/__tests__/irb-tools.test.ts
+      7 server/services/ana/__tests__/ivd-lifecycle-tools.test.ts
+     13 server/services/ana/__tests__/kb-lookup-tools.test.ts
+      3 server/services/ana/__tests__/license-status-tool.test.ts
+      5 server/services/ana/__tests__/lifecycle-tools.test.ts
+      5 server/services/ana/__tests__/lost-tool-input.test.ts
+      8 server/services/ana/__tests__/model-call-linkage.test.ts
+     20 server/services/ana/__tests__/navigation-tools.test.ts
+     62 server/services/ana/__tests__/new-tool-handlers.test.ts
+     42 server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts
+      5 server/services/ana/__tests__/nonclinical-tools.test.ts
+      5 server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+      7 server/services/ana/__tests__/pharmacovigilance-reporting-tools.test.ts
+      6 server/services/ana/__tests__/platform-command-bridge.test.ts
+      3 server/services/ana/__tests__/predicate-intelligence-tools.test.ts
+      3 server/services/ana/__tests__/preprint-tools.test.ts
+      3 server/services/ana/__tests__/project-knowledge-search-model-free.test.ts
+     32 server/services/ana/__tests__/protocol-design-tools.test.ts
+     17 server/services/ana/__tests__/qms-change-tools.test.ts
+     13 server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts
+      2 server/services/ana/__tests__/rag-provenance.test.ts
+      4 server/services/ana/__tests__/read-vault-document-citable.test.ts
+      7 server/services/ana/__tests__/reconciliation-tools.test.ts
+      5 server/services/ana/__tests__/record-literature-tool.test.ts
+      7 server/services/ana/__tests__/regulatory-currency-tools.test.ts
+      9 server/services/ana/__tests__/research-compliance-tools.test.ts
+      8 server/services/ana/__tests__/revise-qms-document-role.test.ts
+      7 server/services/ana/__tests__/rim-tools.test.ts
+      6 server/services/ana/__tests__/risk-watch.test.ts
+      5 server/services/ana/__tests__/run-control-tenant-scope.test.ts
+     56 server/services/ana/__tests__/run-control.pglite.integration.test.ts
+      3 server/services/ana/__tests__/run-control.test.ts
+     10 server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts
+     25 server/services/ana/__tests__/run-hold.test.ts
+     14 server/services/ana/__tests__/run-status.test.ts
+      5 server/services/ana/__tests__/scan-regulatory-deficiencies.test.ts
+     32 server/services/ana/__tests__/self-drive-regressions.test.ts
+     20 server/services/ana/__tests__/server-tool-steps.test.ts
+      5 server/services/ana/__tests__/session-briefing.test.ts
+      3 server/services/ana/__tests__/shelf-life-tool.test.ts
+     25 server/services/ana/__tests__/statistical-design-tools.test.ts
+     66 server/services/ana/__tests__/submission-center-tools.test.ts
+      5 server/services/ana/__tests__/submission-intelligence-tools.test.ts
+     18 server/services/ana/__tests__/tool-authorization-enforcement.test.ts
+     16 server/services/ana/__tests__/tool-authorization-rule-zero.test.ts
+     51 server/services/ana/__tests__/tool-authorization.test.ts
+      7 server/services/ana/__tests__/tool-plan-labels.test.ts
+    767 server/services/ana/__tests__/tool-registry-consistency.test.ts
+      9 server/services/ana/__tests__/tool-run-cancelled.test.ts
+     15 server/services/ana/__tests__/tool-selection.test.ts
+      3 server/services/ana/__tests__/tool-surface-context.test.ts
+     16 server/services/ana/__tests__/tool-telemetry.test.ts
+      3 server/services/ana/__tests__/trial-feasibility-tool.test.ts
+     25 server/services/ana/__tests__/turn-plan-and-context.test.ts
+      9 server/services/ana/__tests__/turn-record-loop.test.ts
+     14 server/services/ana/__tests__/turn-record.pglite.test.ts
+      3 server/services/ana/__tests__/vault-named-tools-honesty.test.ts
+      5 server/services/ana/__tests__/verify-docx-against-source.test.ts
+      4 server/services/ana/__tests__/verify-docx-claim-scope.test.ts
+      8 server/services/ana/se-discussion/__tests__/se-discussion-author.test.ts
+      9 server/services/bioequivalence/__tests__/biowaiver-fail-closed.test.ts
+      8 server/services/cerv2/__tests__/section-version.test.ts
+      3 server/services/docx/__tests__/template-default-text.test.ts
+     11 server/services/ectd/__tests__/dispatch-gate.test.ts
+     35 server/services/ectd/__tests__/dispatch-readiness.test.ts
+      4 server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts
+      8 server/services/intelligence/__tests__/cross-artifact-consistency.test.ts
+      6 server/services/living-record/__tests__/fact-change-audit-outcome.test.ts
+      3 server/services/living-record/__tests__/source-tracer-broken-trail.test.ts
+      3 server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts
+      7 tests/artifact-change-invalidates-bundles.contract.test.ts
+     14 tests/lineage/founder-path-lineage.pglite.test.ts
+      9 tests/schema-contract/chat-thread-access.contract.test.ts
+     18 tests/services/agentic-loop.test.ts
+      3 tests/ui/shell-kit-lazy.test.ts
+
+## Diff against HEAD (before any S3 edit), same count, same neighbour list. Only the nine new files appear:
+>       4 server/routes/ana-ri/__tests__/stream-run-hold.test.ts
+>      12 server/services/ai-gateway/__tests__/model-call-scope.test.ts
+>      30 server/services/ana/__tests__/agentic-loop-rounds-control.test.ts
+>      23 server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+>       3 server/services/ana/__tests__/project-knowledge-search-model-free.test.ts
+>      10 server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts
+>      25 server/services/ana/__tests__/run-hold.test.ts
+>      16 server/services/ana/__tests__/tool-authorization-rule-zero.test.ts
+>       4 server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts
+
+## HEAD baseline totals (same 179 neighbour files, before any S3 edit)
+ Test Files  178 passed | 1 skipped (179)
+      Tests  2978 passed | 2 skipped (2980)
+
+## Other checks on the final tree
+npx tsc --noEmit -p . : exit=0, 0 errors
+npm run --silent ci:pushed-lint-warnings:
+[ci:eslint-warning-ratchet] --since b50d4557733d8360e65cd744e583446083e989a0 (b50d45577) -- 8 lintable file(s) changed; linting both versions of each...
+
+    -1  server/services/ana/agentic-loop.ts  (1 -> 0)
+
+[ci:eslint-warning-ratchet] net -1 warning(s) across the files changed since b50d4557733d8360e65cd744e583446083e989a0.
+exit=0
+npx eslint --format json on the 12 new files (3 modules, 9 tests): exit 0; 12 files linted (none ignored); 0 errors; 0 warnings
+npm run ci:gateway-bypass: exit 0 (no new bypasses; 8 baselined sites tolerated)
+npm run ci:ai-tenant-binding: exit 0

@@ -44,12 +44,23 @@
  */
 
 import { pool } from '../../db/runtime';
-import { documentClassification, processingStatus } from '../../../shared/schema/vault';
+import { documentClassification } from '../../../shared/schema/vault';
 
-/** Enum domains read from the schema rather than restated, so a value can never
+/** Enum domain read from the schema rather than restated, so a value can never
  *  pass a caller's membership check and then fail the cast in Postgres. */
 export const VAULT_CLASSIFICATIONS = documentClassification.enumValues as readonly string[];
-export const VAULT_PROCESSING_STATUSES = processingStatus.enumValues as readonly string[];
+
+/*
+ * processing_status is deliberately NOT part of this read model (2026-09-24).
+ * It names ingest stages — PENDING → EXTRACTING → VECTORIZING → INDEXED — and
+ * nothing in the repository advances the column off its PENDING default:
+ * vault-ingest extracts and indexes INSIDE the upload request, records the
+ * outcome in the catalog tier, and writes PENDING here on every write
+ * (routes/mdx-vault.ts reached the same conclusion and stopped reporting it).
+ * Exposed, it told every API client that every document was still waiting for
+ * work that had already run — or already failed — and its filter returned no
+ * rows for INDEXED. Report ingest state from where it is recorded, or not at all.
+ */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -86,7 +97,7 @@ function rethrow(err: unknown): never {
  *  adding a column here is a disclosure decision, not a convenience. */
 const DOCUMENT_COLUMNS = `d.id, d.program_id, d.document_code, d.document_title,
          d.document_type, d.version, d.file_name, d.file_size, d.mime_type,
-         d.content_hash, d.classification, d.processing_status,
+         d.content_hash, d.classification,
          d.page_count, d.word_count, d.language,
          d.retention_policy, d.retention_until,
          d.folder_id, d.evidence_kind, d.ctd_section, d.placement_status,
@@ -114,7 +125,6 @@ export interface VaultDocumentSummary {
   mimeType: string;
   contentHash: string;
   classification: string;
-  processingStatus: string;
   pageCount: number | null;
   wordCount: number | null;
   language: string | null;
@@ -143,7 +153,6 @@ function project(r: Record<string, unknown>): VaultDocumentSummary {
     mimeType: String(r.mime_type),
     contentHash: String(r.content_hash),
     classification: String(r.classification),
-    processingStatus: String(r.processing_status),
     pageCount: (r.page_count as number) ?? null,
     wordCount: (r.word_count as number) ?? null,
     language: (r.language as string) ?? null,
@@ -166,7 +175,6 @@ export interface ListVaultDocumentsQuery {
   organizationId: number;
   programId?: string;
   classification?: string;
-  processingStatus?: string;
   documentType?: string;
   ctdSection?: string;
   limit: number;
@@ -191,10 +199,6 @@ export async function listVaultDocuments(
   if (q.classification !== undefined) {
     params.push(q.classification);
     where += ` AND d.classification = $${params.length}::vault.document_classification`;
-  }
-  if (q.processingStatus !== undefined) {
-    params.push(q.processingStatus);
-    where += ` AND d.processing_status = $${params.length}::vault.processing_status`;
   }
   if (q.documentType !== undefined) {
     params.push(q.documentType);

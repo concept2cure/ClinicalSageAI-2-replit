@@ -1,0 +1,4 @@
+# server/services/ai-gateway plus every test that reaches the embedding seam (enhancedEmbeddingService, revectorize-corpus, document-chunking, embedding-provider, unified-ai-client, openai-service)
+ Test Files  114 passed (114)
+      Tests  1161 passed (1161)
+exit=0

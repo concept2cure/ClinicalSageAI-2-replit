@@ -1,0 +1,92 @@
+# quality-gating-not-assessed.pglite.integration.test.ts (28 cases) against the HEAD routes
+# Six failures read "invalid message format": HEAD's malformed ANY((…)) query leaves the file's shared PGlite unable to
+# parse the next message, so the cases after it fail in beforeEach rather than on their own assertion. Each of the six,
+# run alone against HEAD on a fresh PGlite (-t), fails on its own assertion: see the end of this file.
+   → expected true to be null
+   → expected true to be null
+   → expected 200 to be 404 // Object.is equality
+   → expected 200 to be 404 // Object.is equality
+   → expected 500 to be 200 // Object.is equality
+   → expected 500 to be 200 // Object.is equality
+   → expected 500 to be 200 // Object.is equality
+   → expected { valid: true, …(3) } to deeply equal ObjectContaining{…}
+   → expected 500 to be 200 // Object.is equality
+   → invalid message format
+   → invalid message format
+   → expected 500 to be 200 // Object.is equality
+   → expected 500 to be 200 // Object.is equality
+   → expected 500 to be 200 // Object.is equality
+   → expected 500 to be 200 // Object.is equality
+   → expected 500 to be 200 // Object.is equality
+   → expected 500 to be 200 // Object.is equality
+   → expected 500 to be 200 // Object.is equality
+   → invalid message format
+   → invalid message format
+   → Cannot read properties of undefined (reading '0')
+   → Cannot read properties of undefined (reading '0')
+   → expected { error: 'Failed to validate section' } to deeply equal ObjectContaining{…}
+   → expected 500 to be 200 // Object.is equality
+   → invalid message format
+   → invalid message format
+   → expected 1 to be 2 // Object.is equality
+   → expected { hard: +0, soft: +0, info: 1 } to deeply equal { hard: 1, soft: +0, info: +0 }
+ FAIL  a section no gating rule covers is not assessed, never passed > /api/tenant-quality-validation/validate-section: valid null, assessed false — not valid: true
+ FAIL  a section no gating rule covers is not assessed, never passed > /api/quality/validation/validate-section: valid null, assessed false — not valid: true
+ FAIL  a section no gating rule covers is not assessed, never passed > /api/tenant-quality-validation/validate-section: a plan this organization does not have is 404, not "not assessed"
+ FAIL  a section no gating rule covers is not assessed, never passed > /api/quality/validation/validate-section: a plan this organization does not have is 404, not "not assessed"
+ FAIL  a section no gating rule covers is not assessed, never passed > batch-validate with no rules at all: nothing assessed, and the batch does not say the sections meet requirements
+ FAIL  a section no gating rule covers is not assessed, never passed > batch-validate, one section assessed and passing, one not: undecided, and it says one was not assessed
+ FAIL  a section no gating rule covers is not assessed, never passed > control: every section assessed and passing — the batch is valid and says so
+ FAIL  a rule that names nothing checkable is not assessed, never passed > validate-section, a rule that names no factor
+ FAIL  a rule that names nothing checkable is not assessed, never passed > validate-section, a rule that names only a retired factor
+ FAIL  a rule that names nothing checkable is not assessed, never passed > validate-section, a rule that has a list that cannot be read
+ FAIL  a rule that names nothing checkable is not assessed, never passed > validate-section, a rule that names a factor with no validation criteria
+ FAIL  a rule that names nothing checkable is not assessed, never passed > validate-section, a rule that names a factor that does not exist
+ FAIL  a rule that lists CTQ factors is assessed against them > /api/quality/validation/validate-section: a missing high-risk term fails the section — 200, not 500
+ FAIL  a rule that lists CTQ factors is assessed against them > batch-validate: the same section fails its hard gate, and the batch says so
+ FAIL  a rule that lists CTQ factors is assessed against them > an empty batch is refused, not answered with a verdict about nothing
+ FAIL  the plan dashboard never computes a figure from nothing > no CTQ factor linked: completeness and the risk shares are null — not 0%
+ FAIL  a rule that names nothing checkable is not assessed, never passed > batch-validate, a rule that names no factor
+ FAIL  a rule that names nothing checkable is not assessed, never passed > batch-validate, a rule that names only a retired factor
+ FAIL  a rule that names nothing checkable is not assessed, never passed > batch-validate, a rule that names a factor with no validation criteria
+ FAIL  a rule that names nothing checkable is not assessed, never passed > batch-validate, a rule that names a factor that does not exist
+ FAIL  a rule that names nothing checkable is not assessed, never passed > batch-validate, a rule that has a list that cannot be read
+ FAIL  a rule that lists CTQ factors is assessed against them > /api/tenant-quality-validation/validate-section: a missing high-risk term fails the section — 200, not 500
+ FAIL  a rule that lists CTQ factors is assessed against them > batch-validate: a section that fails a soft gate fails the batch
+ FAIL  a rule that lists CTQ factors is assessed against them > batch-validate: a rule with no threshold recorded is the column default — a hard gate, not an informational one
+ FAIL  a rule that lists CTQ factors is assessed against them > factor ids stored as strings are read: both routes assess the factor, and the plan returns it
+ FAIL  a rule that lists CTQ factors is assessed against them > GET /plans/:id returns the rule with its factor
+ FAIL  the plan dashboard never computes a figure from nothing > control: two factors linked, one active — 50% complete, half high risk; a string id counts
+ FAIL  the plan dashboard never computes a figure from nothing > a rule with no threshold recorded counts as a hard gate
+ Test Files  1 failed (1)
+      Tests  28 failed (28)
+
+# client: qmpWorkspace.test.tsx against the HEAD QmpWorkspace.tsx
+   → Unable to find an element with the text: Not assessed. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more fle
+   → Unable to find an element with the text: 33% complete. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more fle
+   → Unable to find an element with the text: Not assessed. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more fle
+ FAIL  QmpWorkspace — real quality backend > a plan with no risk factor linked reads "Not assessed" — never 0% complete — and says so to AnA
+ FAIL  QmpWorkspace — real quality backend > shows whole percents, and tells AnA the same figure
+ FAIL  QmpWorkspace — figures belong to the plan they were read for > switching plans drops the last plan’s figure, and a slower answer for it never replaces the new one
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+
+# The six contaminated cases, each run alone against the HEAD routes on a fresh PGlite:
+## -t "/api/quality/validation/validate-section: a missing high-risk term fails the section — 200, not 500"
+   → expected 500 to be 200 // Object.is equality
+      Tests  1 failed | 27 skipped (28)
+## -t "an empty batch is refused, not answered with a verdict about nothing"
+   → expected 500 to be 400 // Object.is equality
+      Tests  1 failed | 27 skipped (28)
+## -t "batch-validate: the same section fails its hard gate, and the batch says so"
+   → expected 500 to be 200 // Object.is equality
+      Tests  1 failed | 27 skipped (28)
+## -t "no CTQ factor linked: completeness and the risk shares are null — not 0%"
+   → expected +0 to be null
+      Tests  1 failed | 27 skipped (28)
+## -t "validate-section, a rule that names a factor that does not exist"
+   → expected 500 to be 200 // Object.is equality
+      Tests  1 failed | 27 skipped (28)
+## -t "validate-section, a rule that names a factor with no validation criteria"
+   → expected 500 to be 200 // Object.is equality
+      Tests  1 failed | 27 skipped (28)

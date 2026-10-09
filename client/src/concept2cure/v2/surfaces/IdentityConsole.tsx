@@ -30,20 +30,42 @@ import { EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
 interface ScimTenant { id: number; organizationId: number; label: string | null; enabled: boolean; createdAt?: string; updatedAt?: string; }
 interface ScimRule { id: number; organizationId: number; cidr: string; label: string | null; enabled: boolean; }
 
-async function rawJson<T = any>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<{ ok: boolean; status: number; body: T | null }> {
+interface RawResult<T> { ok: boolean; status: number; body: T | null; message: string | null }
+type ReadState = 'loading' | 'ready' | 'forbidden' | 'error';
+
+/** Never throws. `apiRequest` THROWS on a non-2xx (other than 401), so the
+ *  status and the server's sentence are read off the ApiRequestError. This
+ *  used to catch it bare and report every refusal as status 0: the 403 branch
+ *  below could never run, a refused directory read "didn't respond", and a
+ *  refused write toasted "HTTP 0" (launch sweep findings 20 and 114). */
+async function rawJson<T = any>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<RawResult<T>> {
   try {
     const res = await apiRequest(method, path, body);
-    if (res.status === 204) return { ok: true, status: 204, body: null };
+    if (res.status === 204) return { ok: true, status: 204, body: null, message: null };
     const parsed = (await res.json().catch(() => null)) as T | null;
-    return { ok: res.ok, status: res.status, body: parsed };
-  } catch { return { ok: false, status: 0, body: null }; }
+    return { ok: res.ok, status: res.status, body: parsed, message: null };
+  } catch (e) {
+    if (e instanceof ApiRequestError) return { ok: false, status: e.status, body: null, message: e.message || null };
+    return { ok: false, status: 0, body: null, message: null };
+  }
+}
+
+const refused = (r: RawResult<unknown>) => r.status === 401 || r.status === 403;
+const readStateOf = (r: RawResult<unknown>): ReadState => (refused(r) ? 'forbidden' : r.ok ? 'ready' : 'error');
+
+/** A failed write, said as what the server answered: its refusal in its own
+ *  words, no response as no response — never "HTTP 0". */
+function failText(r: RawResult<unknown>, verb: string): string {
+  if (r.status === 0) return `Couldn’t ${verb} — the server didn’t respond. Try again.`;
+  if (refused(r)) return `Couldn’t ${verb} — this account is not a platform administrator.`;
+  return r.message ? `Couldn’t ${verb}: ${r.message}` : `Couldn’t ${verb} (HTTP ${r.status}).`;
 }
 
 const TOKEN_FORM: C2CFormConfig = {
@@ -78,8 +100,14 @@ const SSO_ENDPOINTS: Array<[string, string]> = [
 
 export function IdentityConsole(_props: SurfaceViewProps) {
   const [tenants, setTenants] = useState<ScimTenant[]>([]);
-  const [tenantState, setTenantState] = useState<'loading' | 'ready' | 'forbidden' | 'error'>('loading');
+  const [tenantState, setTenantState] = useState<ReadState>('loading');
   const [rules, setRules] = useState<ScimRule[]>([]);
+  /* The allowlist read has its own state. It was never checked: a refused or
+     failed read left `rules` at [] and the card said "No allowlist rules —
+     the allowlist is not enforced", a statement about the organisation's
+     network access posture made from a read that never succeeded (findings
+     18 and 110). */
+  const [ruleState, setRuleState] = useState<ReadState>('loading');
   const [dialog, setDialog] = useState<'token' | 'rule' | null>(null);
   // One-time secrets, shown exactly once from the server response.
   const [revealed, setRevealed] = useState<{ id: number; token: string } | null>(null);
@@ -87,23 +115,27 @@ export function IdentityConsole(_props: SurfaceViewProps) {
 
   const load = useCallback(async () => {
     setTenantState('loading');
+    setRuleState('loading');
     const [t, r] = await Promise.all([
       rawJson<{ tenants?: ScimTenant[] }>('GET', '/api/admin/scim-tenants'),
       rawJson<{ rules?: ScimRule[] }>('GET', '/api/admin/scim-ip-allowlist'),
     ]);
-    if (t.status === 403 || t.status === 401) { setTenantState('forbidden'); return; }
-    if (!t.ok) { setTenantState('error'); return; }
-    setTenants(Array.isArray(t.body?.tenants) ? t.body!.tenants! : []);
-    setRules(Array.isArray(r.body?.rules) ? r.body!.rules! : []);
-    setTenantState('ready');
+    /* A 2xx whose body is not the list is a read that did not succeed. */
+    const tState = readStateOf(t) === 'ready' && !Array.isArray(t.body?.tenants) ? 'error' : readStateOf(t);
+    const rState = readStateOf(r) === 'ready' && !Array.isArray(r.body?.rules) ? 'error' : readStateOf(r);
+    setTenants(tState === 'ready' ? t.body!.tenants! : []);
+    setRules(rState === 'ready' ? r.body!.rules! : []);
+    setRuleState(rState);
+    setTenantState(tState);
   }, []);
   useEffect(() => { void load(); }, [load]);
 
   const issueToken = useCallback(async (v: Record<string, string>) => {
-    const { ok, status, body } = await rawJson<ScimTenant & { token?: string }>('POST', '/api/admin/scim-tenants', {
+    const issued = await rawJson<ScimTenant & { token?: string }>('POST', '/api/admin/scim-tenants', {
       organizationId: Number(v.organizationId), label: v.label || undefined,
     });
-    if (!ok || !body?.token) { fireToast(status === 400 ? 'Couldn’t issue — organizationId (integer) is required.' : `Couldn’t issue the token (HTTP ${status}).`, 'error'); return; }
+    const { ok, status, body } = issued;
+    if (!ok || !body?.token) { fireToast(status === 400 ? 'Couldn’t issue — organizationId (integer) is required.' : failText(issued, 'issue the token'), 'error'); return; }
     setDialog(null);
     setRevealed({ id: body.id, token: body.token });
     fireToast('SCIM token issued — copy it now; it will not be shown again.');
@@ -111,33 +143,35 @@ export function IdentityConsole(_props: SurfaceViewProps) {
   }, [load, fireToast]);
 
   const rotate = useCallback(async (id: number) => {
-    const { ok, status, body } = await rawJson<ScimTenant & { token?: string }>('POST', `/api/admin/scim-tenants/${id}/rotate`);
-    if (!ok || !body?.token) { fireToast(`Couldn’t rotate (HTTP ${status}).`, 'error'); return; }
+    const rotated = await rawJson<ScimTenant & { token?: string }>('POST', `/api/admin/scim-tenants/${id}/rotate`);
+    const { ok, body } = rotated;
+    if (!ok || !body?.token) { fireToast(failText(rotated, 'rotate the token'), 'error'); return; }
     setRevealed({ id, token: body.token });
     fireToast('Token rotated — the previous token is now invalid. Copy the new one now.');
     void load();
   }, [load, fireToast]);
 
   const toggleTenant = useCallback(async (t: ScimTenant) => {
-    const { ok, status } = await rawJson('PATCH', `/api/admin/scim-tenants/${t.id}`, { enabled: !t.enabled });
-    if (!ok) { fireToast(`Couldn’t update (HTTP ${status}).`, 'error'); return; }
+    const updated = await rawJson('PATCH', `/api/admin/scim-tenants/${t.id}`, { enabled: !t.enabled });
+    if (!updated.ok) { fireToast(failText(updated, 'update the token'), 'error'); return; }
     fireToast((t.enabled ? 'Disabled' : 'Enabled') + ' SCIM tenant #' + t.id + '.');
     void load();
   }, [load, fireToast]);
 
   const revoke = useCallback(async (id: number) => {
-    const { ok, status } = await rawJson('DELETE', `/api/admin/scim-tenants/${id}`);
-    if (!ok) { fireToast(`Couldn’t revoke (HTTP ${status}).`, 'error'); return; }
+    const revoked = await rawJson('DELETE', `/api/admin/scim-tenants/${id}`);
+    if (!revoked.ok) { fireToast(failText(revoked, 'revoke the token'), 'error'); return; }
     fireToast('SCIM tenant #' + id + ' revoked.');
     if (revealed?.id === id) setRevealed(null);
     void load();
   }, [load, revealed, fireToast]);
 
   const addRule = useCallback(async (v: Record<string, string>) => {
-    const { ok, status, body } = await rawJson<ScimRule>('POST', '/api/admin/scim-ip-allowlist', {
+    const added = await rawJson<ScimRule>('POST', '/api/admin/scim-ip-allowlist', {
       organizationId: Number(v.organizationId), cidr: v.cidr, label: v.label || undefined,
     });
-    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t add — a valid organizationId and CIDR are required.' : `Couldn’t add the rule (HTTP ${status}).`, 'error'); return; }
+    const { ok, status, body } = added;
+    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t add — a valid organizationId and CIDR are required.' : failText(added, 'add the rule'), 'error'); return; }
     setDialog(null);
     fireToast('Allowlist rule added · ' + body.cidr);
     void load();
@@ -177,19 +211,20 @@ export function IdentityConsole(_props: SurfaceViewProps) {
     return {
       summary:
         `Enterprise identity: ${tenants.length} SCIM token(s) (${tenants.filter((t) => t.enabled).length} enabled), ` +
-        `${rules.length} allowlist rule(s), and the four SAML endpoints (metadata, initiate, callback, logout) listed.`,
+        (ruleState === 'ready' ? `${rules.length} allowlist rule(s)` : 'the IP allowlist could not be read (its rules are unknown, not absent)') +
+        ', and the four SAML endpoints (metadata, initiate, callback, logout) listed.',
       facts: {
         access: tenantState,
         scimTenantCount: tenants.length,
         scimTenantsEnabled: tenants.filter((t) => t.enabled).length,
-        allowlistRuleCount: rules.length,
+        allowlistRuleCount: ruleState === 'ready' ? rules.length : null,
         aTokenWasJustRevealed: revealed !== null,
       },
       availableActions: [
         'Issuing, rotating, disabling and revoking SCIM tokens and allowlist rules are platform-administrator acts performed on this screen',
       ],
     };
-  }, [tenantState, tenants, rules, revealed]);
+  }, [tenantState, ruleState, tenants, rules, revealed]);
   usePublishSurfaceContext('identity-console', anaContext);
 
   if (tenantState === 'forbidden') {
@@ -222,11 +257,11 @@ export function IdentityConsole(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">SCIM provisioning tokens</span>
-          <button className="nda-open" onClick={() => setDialog('token')}>{I.plus} Issue token</button>
+          {tenantState === 'ready' && <button className="nda-open" onClick={() => setDialog('token')}>{I.plus} Issue token</button>}
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {tenantState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.lock} title="Loading SCIM tenants…" /></div>
-            : tenantState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load SCIM tenants" hint="The SCIM tenant directory didn’t respond. Retry as a platform administrator." /></div>
+            : tenantState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load SCIM tenants" hint="The SCIM tenant directory couldn’t be read, so no tokens are shown. This is not an empty directory." retry={() => void load()} /></div>
             : tenants.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.lock} title="No SCIM tokens issued" hint="Issue a bearer token and configure your identity provider (Okta, Entra, OneLogin) to provision users against /scim/v2." /></div>
             : <table className="reg-tbl"><thead><tr><th>Id</th><th>Organization</th><th>Label</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
               <tbody>{tenants.map((t) => (
@@ -246,10 +281,13 @@ export function IdentityConsole(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">SCIM IP allowlist</span>
-          <button className="nda-open" onClick={() => setDialog('rule')}>{I.plus} Add rule</button>
+          {ruleState === 'ready' && <button className="nda-open" onClick={() => setDialog('rule')}>{I.plus} Add rule</button>}
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
-          {rules.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No allowlist rules" hint="Restrict SCIM provisioning to your IdP’s egress addresses. With no rules, the allowlist is not enforced." /></div>
+          {ruleState === 'loading' ? <div style={{ padding: 16 }}><EmptyState busy icon={I.layers} title="Loading the allowlist…" /></div>
+            : ruleState === 'forbidden' ? <div style={{ padding: 16 }}><EmptyState icon={I.lock} title="You don’t have access to the allowlist" hint="Its rules could not be read with this account, so nothing is said here about whether the allowlist is enforced." /></div>
+            : ruleState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the allowlist" hint="The rules could not be read, so nothing is said here about whether the allowlist is enforced." retry={() => void load()} /></div>
+            : rules.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No allowlist rules" hint="Restrict SCIM provisioning to your IdP’s egress addresses. With no rules, the allowlist is not enforced." /></div>
             : <table className="reg-tbl"><thead><tr><th>Id</th><th>Organization</th><th>CIDR</th><th>Label</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
               <tbody>{rules.map((r) => (
                 <tr key={r.id}>

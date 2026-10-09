@@ -1,0 +1,137 @@
+CI's Lint job (.github/workflows/ci.yml, jobs.lint), run locally before this push, over
+the tree of this commit: trunk 35d379a2 plus the two test fixes, this folder and
+the VSR-001 §16.7 bullet. Every step's run: is executed as CI runs it (bash -eo
+pipefail, the workflow's env, CI=true). The steps that only prepare a runner
+(checkout, Node setup, Install dependencies, the artifact upload) are not run.
+Numbers are positions in the job's steps list, not CI's display numbers.
+
+Full run:
+  3 ok      0s Guardrails — Node 22 runtime contracts
+  4 ok      0s Guardrails — Node 22 guard rejects simulated drift
+  6 ok      1s Guardrails — release-evidence manifest gate self-tests
+  7 ok      0s Guardrails — eCTD migration headers (reg audit)
+  8 ok      0s Guardrails — ban direct new Pool()
+  9 ok      0s Guardrails — migration prefix collisions (no regressions)
+ 10 ok      0s Guardrails — RLS allowlist TS↔SQL parity
+ 11 ok      0s Guardrails — duplicate CREATE TABLE across BOTH migration lineages
+ 12 ok      0s Guardrails — golden-journey migrations must be on a durable apply path
+ 13 ok      1s Guardrails — server SQL references a table no APPLIER creates
+ 14 ok      2s Guardrails — server SQL references a COLUMN no applier creates
+ 15 ok      1s Guardrails — server SQL references a table nothing creates
+ 16 ok      1s Guardrails — source files nothing can reach
+ 17 ok      7s Guardrails — no live credentials committed to the tree
+ 18 ok      1s Guardrails — requirements.txt pins must install on the declared Python
+ 19 ok      1s Guardrails — content cannot be saved without its data lineage
+ 20 ok      1s Guardrails — a store nothing writes may not gain readers
+ 21 ok      0s Guardrails — the document alias map holds no attributes
+ 22 ok      1s Guardrails — every artifact producer emits a provenance event
+ 23 ok      0s Guardrails — no direct Pool construction in runtime code
+ 24 ok      2s Guardrails — eCTD stub bundle + generated risk-code types
+ 25 ok      2s Guardrails — security patterns (tenant / identity / role trust)
+ 26 ok      0s Guardrails — proof surface must not shrink or overclaim
+ 27 ok    336s Proof tier — schema contracts + golden journeys + export contracts
+ 28 ok      0s Guardrails — i18n locale integrity (key/placeholder/markup parity)
+ 29 ok      0s Guardrails — surfaces are discoverable, or declared not to be
+ 30 ok      1s Guardrails — no ungated fixture fallback in client surfaces
+ 31 ok      0s Guardrails — every routable surface publishes screen state to AnA
+ 32 ok      1s Guardrails — launch scope is real and fixture-free (with selftest)
+ 33 ok      1s Guardrails — AnA document canvas path is wired (with selftest)
+ 34 ok      1s Guardrails — only the PQ runner calls evaluateModel (with selftest)
+ 35 ok      2s Guardrails — no new pin to an unapproved model (with selftest)
+ 36 ok      2s Guardrails — one source for the client address (with selftest)
+ 37 ok      0s Guardrails — validation traceability resolves (with selftest)
+ 38 ok      1s Guardrails — no API route or table name in user-visible copy
+ 39 ok      1s Guardrails — no clearance copy chosen by an empty collection
+ 40 ok      0s Guardrails — no control promising an action it only asks about
+ 41 ok      0s Guardrails — no success message before the response is checked
+ 42 ok      2s Guardrails — no invented signer or applicant identity
+ 43 ok      1s Guardrails — audit_logs fixtures accept the audit writer's columns
+ 44 ok      0s Guardrails — tenant column types (no TEXT-typed tenant cols)
+ 45 ok      0s Guardrails — org path params are checked against the caller
+ 46 ok      0s Guardrails — every biostat form field is one the server reads
+ 47 ok      0s Guardrails — no tenant-blind Drizzle models
+ 48 ok      1s Guardrails — no per-request table without a tenant key
+ 49 ok      3s Guardrails — the unkeyed-table gate can still fail
+ 50 ok      0s Guardrails — WCAG AA contrast on design tokens
+ 51 ok      0s Guardrails — theme aliases frozen to their light values
+ 52 ok      0s Guardrails — the generated text ramp matches the stylesheets
+ 53 ok      2s Guardrails — tenant-isolation in raw SQL (no regressions)
+ 54 ok      0s Guardrails — every tenant entry point considers entitlement
+ 55 ok      1s Guardrails — request values must not reach a path unconstrained
+ 56 ok      0s Guardrails — workflows must not invoke files that do not exist
+ 57 ok      0s Guardrails — required workflows keep a per-commit run on the canonical branch
+ 58 ok      0s Guardrails — concurrency guard rejects simulated drift
+ 59 ok      0s Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
+ 60 ok      0s Guardrails — tenant baseline ↔ justification parity
+ 61 ok      0s Guardrails — requestDb (RLS) adoption (no regressions)
+ 62 ok      0s Guardrails — no leaky dev-auth gates in prod paths
+ 63 ok      0s Guardrails — password hygiene
+ 64 ok      0s Guardrails — SAML SSO fail-closed (no auth bypass)
+ 65 ok      0s Guardrails — design-system non-negotiables (Lucide-only, no spring)
+ 66 ok      0s Guardrails — regulated-data delete audit coverage (Part 11)
+ 67 ok      1s Guardrails — no unreachable catch around an audit write (Part 11)
+ 68 ok      1s Guardrails — a sign ledger row comes from a signature ceremony (Part 11)
+ 69 ok      0s Guardrails — route mount authority audit (no regressions)
+ 70 ok      0s Guardrails — route ownership matrix artifact (required review evidence)
+ 71 ok      2s Guardrails — AI gateway bypass (no direct LLM clients)
+ 72 ok      0s Guardrails — jwt.verify pins algorithms (no alg-confusion)
+ 73 ok      0s Guardrails — legacy dependency quarantine (supabase-js, aws-sdk v2)
+ 74 ok      1s Guardrails — no mock data in prod routes (no regressions)
+ 75 ok      0s Guardrails — js/ts shadow guard (no new same-basename .js/.ts pairs)
+ 76 ok      1s Guardrails — DOCX runtime canonicality (approved runtimes only)
+ 77 ok      0s Guardrails — PDF runtime canonicality (approved entry points only)
+ 78 ok      0s Guardrails — cross-shell CSS collisions (ratchet, may only shrink)
+ 79 ok      0s Guardrails — CSS selector shadowing (allowlist, may only shrink)
+ 80 ok      1s Guardrails — chip tones must have a CSS rule
+ 81 ok      1s Guardrails — one toast implementation, and it can say "failed"
+ 82 ok      0s Guardrails — phantom design tokens (ratchet, may only shrink)
+ 83 ok      0s Guardrails — client reachability from main.tsx (ratchet, may only shrink)
+ 84 ok      2s Guardrails — every registered route + blueprint reaches the bundle
+ 85 ok      0s Guardrails — no route defined twice under a shared prefix
+ 86 ok      0s Guardrails — every rule pack declares what it was built from
+ 87 ok      2s Guardrails — every client /api call has a server route
+ 88 ok      1s Guardrails — every local import in every test file resolves
+ 89 ok      0s Guardrails — orphaned stylesheets (ratchet, may only shrink)
+ 90 ok      0s Guardrails — every test file is reachable by a runner
+ 91 ok      0s Guardrails — real-database tests never inherit the pg mock
+ 92 ok      1s Guardrails — embedding runtime canonicality (corpus policy)
+ 93 ok      0s Guardrails — editor extension integrity (@tiptap imports declared)
+ 94 ok      0s Guardrails — Reasoning Tier readiness suite (governed exports + GA evidence)
+ 95 ok      0s Guardrails — design-token cascade (ADVISORY)
+ 96 ok      1s Audit — repo health scan (no regressions)
+ 97 ok      1s Audit — orphaned endpoints (threshold 1184)
+ 99 ok    107s Run ESLint
+100 ok     99s Render ESLint findings (failure only)
+101 ok      1s Guardrails — ESLint warning ratchet (may only shrink)
+102 ok      2s Guardrails — CI guard self-tests
+103 ok    201s Run TypeScript check (no regression vs baseline)
+104 ok      2s Run beta-slice TypeScript check
+done: 100 ok, 0 failing
+
+Steps 1-27 again, after the VSR-001 §16.7 bullet was added (the full run had
+passed them before that edit):
+  3 ok      0s Guardrails — Node 22 runtime contracts
+  4 ok      0s Guardrails — Node 22 guard rejects simulated drift
+  6 ok      7s Guardrails — release-evidence manifest gate self-tests
+  7 ok      2s Guardrails — eCTD migration headers (reg audit)
+  8 ok      4s Guardrails — ban direct new Pool()
+  9 ok      0s Guardrails — migration prefix collisions (no regressions)
+ 10 ok      0s Guardrails — RLS allowlist TS↔SQL parity
+ 11 ok      1s Guardrails — duplicate CREATE TABLE across BOTH migration lineages
+ 12 ok      0s Guardrails — golden-journey migrations must be on a durable apply path
+ 13 ok      1s Guardrails — server SQL references a table no APPLIER creates
+ 14 ok      2s Guardrails — server SQL references a COLUMN no applier creates
+ 15 ok      1s Guardrails — server SQL references a table nothing creates
+ 16 ok      2s Guardrails — source files nothing can reach
+ 17 ok     10s Guardrails — no live credentials committed to the tree
+ 18 ok      1s Guardrails — requirements.txt pins must install on the declared Python
+ 19 ok      1s Guardrails — content cannot be saved without its data lineage
+ 20 ok      1s Guardrails — a store nothing writes may not gain readers
+ 21 ok      0s Guardrails — the document alias map holds no attributes
+ 22 ok      1s Guardrails — every artifact producer emits a provenance event
+ 23 ok      0s Guardrails — no direct Pool construction in runtime code
+ 24 ok      4s Guardrails — eCTD stub bundle + generated risk-code types
+ 25 ok      2s Guardrails — security patterns (tenant / identity / role trust)
+ 26 ok      0s Guardrails — proof surface must not shrink or overclaim
+ 27 ok    353s Proof tier — schema contracts + golden journeys + export contracts
+done: 24 ok, 0 failing

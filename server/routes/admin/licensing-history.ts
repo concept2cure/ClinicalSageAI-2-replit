@@ -44,12 +44,29 @@
  *
  * 3. HONEST ABOUT INTEGRITY. Per row: whether its chain position was re-derived
  *    and matched, and whether its seal verified. Verification is the canonical
- *    one (services/audit/audit-integrity-service → verifyAuditIntegrity), never
- *    a second implementation of the hashing, and it is FAIL-CLOSED in the same
- *    way: a row whose seal could not be checked reports `seal: 'unverified'`,
- *    not a pass. Where verification did not run at all, every row says
- *    `chain: 'not-checked'` and the response says why. No row is ever given a
- *    green tick this endpoint did not earn.
+ *    one (services/audit/audit-integrity-service → verifyAuditIntegrity, and
+ *    the per-tenant verifyAuditChain in services/audit/chain that it is built
+ *    on), never a second implementation of the hashing, and it is FAIL-CLOSED
+ *    in the same way: a row whose seal could not be checked reports
+ *    `seal: 'unverified'`, not a pass. Where verification did not run at all,
+ *    every row says `chain: 'not-checked'` and the response says why. No row is
+ *    ever given a green tick this endpoint did not earn.
+ *
+ *    The audit chain is ONE CHAIN PER TENANT, ordered by chain_seq
+ *    (services/audit/chain.ts). So a row's position is its place in ITS
+ *    tenant's chain — never its timestamp, which the writer stamps before it
+ *    takes the tenant's chain lock and which concurrent writers can therefore
+ *    order differently — and a break in one tenant's chain says nothing about
+ *    another's. The store-wide walk answers "is anything broken"; when it is,
+ *    each tenant on the page is walked on its own to place its rows.
+ *
+ *    2026-09-22 (tests/db/licensing-history.dbtest.ts): three ways this
+ *    endpoint gave a verdict the walk had not earned were reproduced against a
+ *    real database and closed — (a) a row AFTER a break in its tenant's chain
+ *    reported 'verified' because its timestamp sorted earlier; (b) every other
+ *    tenant's later rows reported 'after-break' for a break that was not in
+ *    their chain; (c) a row appended after the memoised walk reported
+ *    'verified' by a walk that never saw it.
  *
  * The whole router inherits `authMiddleware` + `requirePlatformAdmin` from the
  * mount in ./master-admin — no endpoint here does its own authorization, and
@@ -62,6 +79,7 @@ import { Router, Request, Response } from 'express';
 import { query } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { verifyAuditIntegrity } from '../../services/audit/audit-integrity-service';
+import { verifyAuditChain } from '../../services/audit/chain';
 
 const logger = createScopedLogger('admin-licensing-history');
 const router = Router();
@@ -109,6 +127,41 @@ export function clampOffset(raw: unknown): number {
   return Math.floor(n);
 }
 
+/** Largest value an audit_logs.tenant_id (INTEGER) can hold. */
+const MAX_TENANT_ID = 2_147_483_647;
+
+/** A filter value that cannot be applied. The request is refused, not widened. */
+export const INVALID = Symbol('invalid-filter');
+
+/**
+ * PURE: the workspace filter. Absent or blank → null (no filter); a workspace
+ * id, or 0 for platform-level decisions → that number; anything else → INVALID.
+ *
+ * Anything else used to be read as "no filter": `abc`, `-3`, `12abc` and a
+ * repeated parameter all returned every workspace's decisions to a caller who
+ * had asked for one, and `1.5` or an id past the INTEGER range reached the
+ * database and came back as the 500 that means "the record could not be read".
+ * A filter that cannot be applied is neither of those things.
+ */
+export function parseOrganizationFilter(raw: unknown): number | null | typeof INVALID {
+  if (raw === undefined) return null;
+  if (typeof raw !== 'string') return INVALID;
+  const s = raw.trim();
+  if (s === '') return null;
+  if (!/^\d{1,10}$/.test(s)) return INVALID;
+  const n = Number(s);
+  return n <= MAX_TENANT_ID ? n : INVALID;
+}
+
+/** PURE: the module filter. Absent or blank → null; one id up to 128 chars; else INVALID. */
+export function parseModuleFilter(raw: unknown): string | null | typeof INVALID {
+  if (raw === undefined) return null;
+  if (typeof raw !== 'string') return INVALID;
+  const s = raw.trim();
+  if (s === '') return null;
+  return s.length <= 128 ? s : INVALID;
+}
+
 /**
  * PURE: the recorded detail payload as an object, or null when it cannot be
  * interpreted.
@@ -145,26 +198,49 @@ export interface RowIntegrity {
   seal: SealState;
 }
 
-/** Ordering key for one audit row — the SAME order the chain writer appended in. */
+/**
+ * Ordering key for one audit row within ITS TENANT'S chain — the order the
+ * canonical verifier walks (services/audit/chain.ts AUDIT_CHAIN_ORDER_ASC_SQL):
+ * legacy rows (no chain_seq) first, in (occurred_at, id) order, then sequenced
+ * rows by chain_seq. Comparing positions is only meaningful within one tenant.
+ */
 export interface ChainPosition {
   occurredAt: number;
   id: string;
+  /** audit_logs.chain_seq; null/absent for a legacy (pre-sequence) row. */
+  chainSeq?: number | null;
 }
 
-/** PURE: is `a` strictly earlier than `b` in append order? */
+/**
+ * PURE: is `a` strictly earlier than `b` in their tenant's chain?
+ *
+ * chain_seq decides wherever both rows have one. The timestamp does not: the
+ * writer stamps occurred_at BEFORE it takes the tenant's chain lock, so two
+ * writers of one tenant can hold timestamps in one order and chain positions
+ * in the other — and at millisecond precision a tie falls to a random uuid.
+ * Ordering by time put a row that sits AFTER a break in its chain before it,
+ * and reported it verified.
+ */
 function earlier(a: ChainPosition, b: ChainPosition): boolean {
+  const as = a.chainSeq ?? null;
+  const bs = b.chainSeq ?? null;
+  if (as !== null && bs !== null) return as < bs;
+  // Every legacy row precedes every sequenced row of the same tenant.
+  if (as === null && bs !== null) return true;
+  if (as !== null && bs === null) return false;
   if (a.occurredAt !== b.occurredAt) return a.occurredAt < b.occurredAt;
   return a.id < b.id;
 }
 
 /**
- * PURE: what this deployment can honestly say about ONE row.
+ * PURE: what this deployment can honestly say about ONE row, given the
+ * verification of THAT ROW'S TENANT'S chain.
  *
  * `chainOk === null` means no verification ran — every row then reports
  * 'not-checked' and NOTHING reports 'verified'. When a break was found, rows
- * before it were genuinely re-derived and matched, the break row itself is
- * 'broken', and everything after it is 'after-break' because a broken link
- * makes every later link unprovable rather than wrong.
+ * before it in the chain were genuinely re-derived and matched, the break row
+ * itself is 'broken', and everything after it is 'after-break' because a
+ * broken link makes every later link unprovable rather than wrong.
  */
 export function rowIntegrity(
   row: { sha256Chain: string | null; hmacSeal: string | null; position: ChainPosition },
@@ -229,32 +305,64 @@ export interface IntegrityReport {
   checkedAt: string;
   chainOk: boolean | null;
   sealsValid: boolean | null;
-  breakAt: ChainPosition | null;
 }
 
-let cached: { at: number; report: IntegrityReport } | null = null;
+/**
+ * The memoised walk, and what it covered.
+ *
+ * `size` is the store's row count taken BEFORE the walk read the chain, so
+ * every row it counted was visible to the walk. audit_logs is append-only
+ * (its UPDATE/DELETE/TRUNCATE triggers refuse), so an unchanged count later
+ * means no row has been appended since — and only then may the walk vouch for
+ * the rows on a page. The count is read through the same scoped connection as
+ * the walk, so it counts exactly the rows that walk could see.
+ *
+ * Before the count was part of the key, a decision written inside the memo
+ * window was listed with chain 'verified' by a walk that never saw it —
+ * reproduced with a row tampered the moment it was written.
+ */
+let cached: { at: number; size: number; report: IntegrityReport } | null = null;
 
 /** Drop the memoised verification. Exported for tests, which must not share it. */
 export function clearIntegrityCache(): void {
   cached = null;
 }
 
+/** The verifier's client: every statement through the request's scoped pool. */
+const auditClient = {
+  query: (sql: string, params?: unknown[]) => query(sql, (params ?? []) as unknown[]),
+};
+
 async function verifyStore(): Promise<IntegrityReport> {
   const now = Date.now();
-  if (cached && now - cached.at < VERIFY_TTL_MS) return cached.report;
-
   const checkedAt = new Date().toISOString();
   let report: IntegrityReport;
+  let size: number | null = null;
 
   try {
-    // Cheap probe for "is this store larger than we walk in one pass" — it
-    // stops after VERIFY_MAX_ROWS rows and returns nothing when there are
-    // fewer, so the common case costs one bounded scan.
+    // One bounded scan answers both questions this walk needs first: is the
+    // store larger than we walk in one pass, and has anything been appended
+    // since the memoised walk. It stops after VERIFY_MAX_ROWS + 1 rows.
     // tenant-isolation-safe: intentional estate-wide integrity check behind the
-    // platform-admin router gate; restricting this probe to one organization
+    // platform-admin router gate; restricting this count to one organization
     // would let a platform administrator report a partial chain as complete.
-    const oversize = await query(`SELECT 1 FROM audit_logs OFFSET $1 LIMIT 1`, [VERIFY_MAX_ROWS]);
-    if (oversize.rows.length > 0) {
+    const sized = await query(
+      `SELECT count(*)::int AS n FROM (SELECT 1 FROM audit_logs LIMIT $1) bounded`,
+      [VERIFY_MAX_ROWS + 1],
+    );
+    const n = Number(sized.rows[0]?.n);
+    size = Number.isFinite(n) ? n : null;
+
+    if (
+      cached &&
+      size !== null &&
+      cached.size === size &&
+      now - cached.at < VERIFY_TTL_MS
+    ) {
+      return cached.report;
+    }
+
+    if (size !== null && size > VERIFY_MAX_ROWS) {
       report = {
         status: 'unavailable',
         reason: 'store-too-large',
@@ -262,37 +370,14 @@ async function verifyStore(): Promise<IntegrityReport> {
         checkedAt,
         chainOk: null,
         sealsValid: null,
-        breakAt: null,
       };
     } else {
-      const result = await verifyAuditIntegrity({
-        query: (sql: string, params?: unknown[]) => query(sql, (params ?? []) as unknown[]),
-      });
+      const result = await verifyAuditIntegrity(auditClient);
 
       // The seal half is fail-closed in exactly the way the service is: seals
       // that were not checked are NOT a pass, and are reported as their own
       // state rather than folded into "verified".
       const sealsValid = result.seals.checked ? result.seals.valid : null;
-
-      let breakAt: ChainPosition | null = null;
-      if (!result.chain.ok && result.chain.brokenAt) {
-        // Resolve the break row's append position so rows BEFORE it can still
-        // be reported as verified — they were.
-        try {
-          // tenant-isolation-safe: the id comes from the estate-wide canonical
-          // integrity verifier above, and this platform-admin-only lookup needs
-          // that exact row's global chain position, regardless of its tenant.
-          const pos = await query(`SELECT id, occurred_at FROM audit_logs WHERE id = $1`, [
-            result.chain.brokenAt.id,
-          ]);
-          const r = pos.rows[0];
-          if (r) {
-            breakAt = { id: String(r.id), occurredAt: new Date(r.occurred_at).getTime() };
-          }
-        } catch (err) {
-          logger.warn('chain break position lookup failed', err as Record<string, unknown>);
-        }
-      }
 
       const status: IntegrityReport['status'] = !result.chain.ok
         ? 'broken'
@@ -314,7 +399,6 @@ async function verifyStore(): Promise<IntegrityReport> {
         checkedAt,
         chainOk: result.chain.ok,
         sealsValid,
-        breakAt,
       };
     }
   } catch (err) {
@@ -328,12 +412,67 @@ async function verifyStore(): Promise<IntegrityReport> {
       checkedAt,
       chainOk: null,
       sealsValid: null,
-      breakAt: null,
     };
   }
 
-  cached = { at: now, report };
+  // A walk whose coverage is unknown is never reused.
+  cached = size === null ? null : { at: now, size, report };
   return report;
+}
+
+/** One tenant's chain, walked on its own: intact, or where its first break is. */
+interface TenantChain {
+  chainOk: boolean | null;
+  breakAt: ChainPosition | null;
+}
+
+/**
+ * Walk each tenant's chain on its own — the canonical verifyAuditChain with
+ * `{ tenantId }`, the same walker verifyAuditIntegrity runs across the store.
+ *
+ * Only called once the store-wide walk has found a break. That walk reports ONE
+ * break — the earliest by time across every tenant — so it cannot say which
+ * other tenants are intact, nor where a later break sits in another tenant's
+ * chain. Placing the store-wide break against every row by timestamp marked
+ * other tenants' intact rows 'after-break' and, within the broken tenant, a
+ * row after the break 'verified'. Each tenant's own first break places its
+ * own rows, by chain position.
+ *
+ * A tenant whose walk could not run reports nothing about its rows.
+ */
+async function verifyTenantChains(tenantIds: number[]): Promise<Map<number, TenantChain>> {
+  const out = new Map<number, TenantChain>();
+  for (const tenantId of tenantIds) {
+    try {
+      const result = await verifyAuditChain(auditClient, { tenantId });
+      if (result.ok) {
+        out.set(tenantId, { chainOk: true, breakAt: null });
+        continue;
+      }
+      let breakAt: ChainPosition | null = null;
+      if (result.brokenAt) {
+        // tenant-isolation-safe: the id comes from the canonical verifier's
+        // walk of this tenant's chain, on the platform-admin system scope.
+        const pos = await query(
+          `SELECT id, occurred_at, chain_seq FROM audit_logs WHERE id = $1`,
+          [result.brokenAt.id],
+        );
+        const r = pos.rows[0];
+        if (r) {
+          breakAt = {
+            id: String(r.id),
+            occurredAt: new Date(r.occurred_at).getTime(),
+            chainSeq: r.chain_seq == null ? null : Number(r.chain_seq),
+          };
+        }
+      }
+      out.set(tenantId, { chainOk: false, breakAt });
+    } catch (err) {
+      logger.warn('tenant chain verification failed', err as Record<string, unknown>);
+      out.set(tenantId, { chainOk: null, breakAt: null });
+    }
+  }
+  return out;
 }
 
 // ─── GET /licensing/history ──────────────────────────────────────────────────
@@ -361,15 +500,17 @@ router.get('/licensing/history', async (req: Request, res: Response) => {
      * the same parameter `client` for the same reason.
      */
     // security-allow: platform-wide view — this only narrows an all-workspaces read the master-admin guard already permits, and is never used as a tenancy scope
-    const orgRaw = req.query.organizationId;
-    const organizationId =
-      typeof orgRaw === 'string' && orgRaw.trim() !== '' && Number.isFinite(Number(orgRaw))
-        ? Number(orgRaw)
-        : null;
-
-    const modRaw = req.query.moduleId;
-    const moduleId =
-      typeof modRaw === 'string' && modRaw.trim() !== '' ? modRaw.trim().slice(0, 128) : null;
+    const organizationId = parseOrganizationFilter(req.query.organizationId);
+    const moduleId = parseModuleFilter(req.query.moduleId);
+    // A filter that cannot be applied is refused. Dropping it would answer a
+    // different question — every workspace's decisions — as if it were the one
+    // asked; passing it on would report a malformed request as a failed read.
+    if (organizationId === INVALID) {
+      return res.status(400).json({ error: 'The workspace filter is not a workspace id.' });
+    }
+    if (moduleId === INVALID) {
+      return res.status(400).json({ error: 'The module filter is not a single module id.' });
+    }
 
     // One statement: the page AND the size of the whole filtered set, so the
     // two cannot disagree about how much is being withheld. The window count
@@ -378,9 +519,11 @@ router.get('/licensing/history', async (req: Request, res: Response) => {
     // Selection is on the PRESENCE of masterAdminAction (invariant 1) minus the
     // two non-licensing actions. The module filter matches the recorded module
     // and, for a packaging change, the audited record itself.
+    // tenant-isolation-safe: estate-wide platform-admin read under the system scope (/api/admin/master); the optional workspace filter only narrows it, and users is joined for the actor's email alone
     const rowsRes = await query(
       `SELECT a.id, a.occurred_at, a.created_at, a.tenant_id, a.user_id,
               a.table_name, a.record_id, a.new_values, a.sha256_chain, a.hmac_seal,
+              a.chain_seq,
               u.email AS actor_email,
               o.name  AS organization_name,
               am.name AS module_name,
@@ -400,7 +543,23 @@ router.get('/licensing/history', async (req: Request, res: Response) => {
       [[...NON_LICENSING], organizationId, moduleId, limit, offset],
     );
 
+    // After the page read, so every row on the page was visible to the walk.
     const integrity = await verifyStore();
+
+    // A break somewhere in the store: place this page's rows against their OWN
+    // tenant's chain, one walk per tenant on the page.
+    const tenantChains =
+      integrity.chainOk === false
+        ? await verifyTenantChains(
+            Array.from(
+              new Set<number>(
+                rowsRes.rows
+                  .map((r: any) => Number(r.tenant_id))
+                  .filter((t: number) => Number.isSafeInteger(t)),
+              ),
+            ),
+          )
+        : null;
 
     let unreadable = 0;
     const entries = rowsRes.rows.map((r: any) => {
@@ -409,7 +568,11 @@ router.get('/licensing/history', async (req: Request, res: Response) => {
       const position: ChainPosition = {
         id: String(r.id),
         occurredAt: occurredAtRaw ? new Date(occurredAtRaw).getTime() : 0,
+        chainSeq: r.chain_seq == null ? null : Number(r.chain_seq),
       };
+      const tenantChain: TenantChain = tenantChains
+        ? (tenantChains.get(Number(r.tenant_id)) ?? { chainOk: null, breakAt: null })
+        : { chainOk: integrity.chainOk, breakAt: null };
 
       const details = toDetails(r.new_values);
       if (details === null) unreadable += 1;
@@ -461,8 +624,8 @@ router.get('/licensing/history', async (req: Request, res: Response) => {
             position,
           },
           {
-            chainOk: integrity.chainOk,
-            breakAt: integrity.breakAt,
+            chainOk: tenantChain.chainOk,
+            breakAt: tenantChain.breakAt,
             sealsValid: integrity.sealsValid,
           },
         ),

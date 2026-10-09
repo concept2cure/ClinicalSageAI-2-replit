@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { and, eq, ne } from 'drizzle-orm';
 import * as crypto from 'crypto';
 import { db, pool } from '../../db';
+import { currentTenantOrgUuid } from '../../db/currentTenant';
 import { concept2cureArtifacts } from '../../../shared/schema';
 import { interceptComplianceScan } from '../../services/intelligence/rim-interceptors.js';
 import { createScopedLogger } from '../../utils/logger';
@@ -141,12 +142,14 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     let evidenceBlock = '';
 
     if (data.projectId) {
+      // The session's tenant key, never the client's x-org-uuid header. Refused
+      // here, not inside the try below: that path treats a failure as "no
+      // sources", and a missing key is not an empty corpus.
+      const orgUuid = await currentTenantOrgUuid(pool);
+      if (!orgUuid) return sendError(res, 403, 'Tenant context required');
       try {
         const { getEmbeddingService } = await import('../../services/enhancedEmbeddingService.js');
         const embeddingService = getEmbeddingService(pool);
-        const orgUuid =
-          (req as any).tenantContext?.organizationUuid ||
-          (req.headers['x-org-uuid'] as string | undefined);
 
         // Build search query from section title + first 200 chars of content
         const searchQuery = [
@@ -157,12 +160,13 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
           .filter(Boolean)
           .join(' ');
 
-        const searchResults = await embeddingService.searchHybrid(
-          searchQuery,
-          RETRIEVAL_TOP_K,
-          RETRIEVAL_THRESHOLD,
-          orgUuid
-        );
+        // RETRIEVAL_THRESHOLD is a floor on semantic similarity, and the one
+        // recorded in ai_retrieval_runs below; it used to go in as the ranking weight.
+        const searchResults = await embeddingService.searchHybrid(searchQuery, {
+          limit: RETRIEVAL_TOP_K,
+          organizationUuid: orgUuid,
+          minSemanticScore: RETRIEVAL_THRESHOLD,
+        });
         sources = searchResults.map((r: any) => ({
           id: r.id,
           title: r.title,
@@ -1065,18 +1069,23 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     let evidenceBlock = '';
     let sourcesRetrieved = 0;
     if (data.projectId) {
+      // The session's tenant key, never the client's x-org-uuid header (see the
+      // edit-section route above for why it is refused outside the try).
+      const orgUuid = await currentTenantOrgUuid(pool);
+      if (!orgUuid) return sendError(res, 403, 'Tenant context required');
       try {
         const { getEmbeddingService } = await import('../../services/enhancedEmbeddingService.js');
         const embeddingService = getEmbeddingService(pool);
-        const orgUuid =
-          (req as any).tenantContext?.organizationUuid ||
-          (req.headers['x-org-uuid'] as string | undefined);
 
         const searchQuery = Object.values(data.variables)
           .filter(Boolean)
           .join(' ')
           .substring(0, 300);
-        const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65, orgUuid);
+        const searchResults = await embeddingService.searchHybrid(searchQuery, {
+          limit: 5,
+          organizationUuid: orgUuid,
+          minSemanticScore: 0.65,
+        });
         if (searchResults.length > 0) {
           sourcesRetrieved = searchResults.length;
           evidenceBlock =

@@ -119,7 +119,10 @@ describe('canonical document model', () => {
       ];
       expect(verifyAuditChain(chain).valid).toBe(true);
       chain[1].prevEventHash = 'tampered';
-      expect(verifyAuditChain(chain)).toEqual({ valid: false, brokenAt: 1 });
+      // No hasher passed, so only linkage ran, and the verdict says so
+      // (`hashesRecomputed`, added by VR-03 in f9adda6af): a linkage check must
+      // never be reported as tamper-evidence.
+      expect(verifyAuditChain(chain)).toEqual({ valid: false, brokenAt: 1, hashesRecomputed: false });
     });
   });
 });

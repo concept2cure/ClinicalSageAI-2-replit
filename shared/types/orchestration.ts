@@ -311,7 +311,21 @@ export interface ModulePlacementSnapshot {
   section?: string;
   documentCount: number;
   artifactCount: number;
-  completenessPercent: number;
+  /**
+   * Percent complete, or NULL when completeness was not assessed.
+   *
+   * This was `documentCount * 20`, capped at 100 — so five documents of any
+   * kind read as "100% complete" with `missingItems: []`, for a module that
+   * needs a whole CTD section tree. It is 30% of the readiness score and is
+   * rendered under the caption "Deterministic gate computed by the readiness
+   * engine", which is what made it a fabricated figure rather than a rough one.
+   *
+   * Null is the honest value for a module with no required-section list to
+   * measure against. Renderers must show "not assessed", never 0%.
+   */
+  completenessPercent: number | null;
+  /** What the percent was measured against, when it was measured at all. */
+  assessedAgainst?: string;
   hasValidation: boolean;
   validationScore?: number;
   missingItems: string[];

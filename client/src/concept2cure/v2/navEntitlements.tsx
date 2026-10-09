@@ -41,7 +41,10 @@ export type NavEntitlementSource =
   | 'included'
   | 'disabled'
   | 'tier'
-  | 'industry';
+  | 'industry'
+  /** Outside this release's launch catalog (shared/constants/launch-scope.ts).
+   *  Not a licence: no plan, toggle or access request changes it. */
+  | 'launch-scope';
 
 export interface NavSurfaceEntitlement {
   id: string;
@@ -56,8 +59,15 @@ export interface NavEntitlementsPayload {
   tier: string | null;
   industryMode: string | null;
   masterAdmin: boolean;
+  /** Whether the Master Administration guard would admit this viewer
+   *  (server: resolvePlatformAdmin). Optional so an older payload validates;
+   *  absent reads as false. */
+  platformAdmin?: boolean;
   /** False ⇒ the server computed no verdicts; render no lock state. */
   resolved: boolean;
+  /** Whether the deployment enforces the launch catalog. Optional so an
+   *  older server payload still validates; locks come from verdicts only. */
+  launchScope?: { enforced: boolean };
   surfaces: NavSurfaceEntitlement[];
 }
 
@@ -68,6 +78,13 @@ export interface NavEntitlementsValue {
   resolved: boolean;
   /** True when the viewer holds the platform-owner grant (everything unlocked). */
   masterAdmin: boolean;
+  /**
+   * True only when the server said the Master Administration guard admits this
+   * viewer. False until it answers and on any failure: this only decides
+   * whether the console is OFFERED, and offering it to someone it refuses is
+   * the failure this exists to prevent. Not the same set as `masterAdmin`.
+   */
+  platformAdmin: boolean;
   /** The organization's plan tier, when known. */
   tier: string | null;
 }
@@ -76,6 +93,7 @@ const EMPTY: NavEntitlementsValue = {
   verdictFor: () => null,
   resolved: false,
   masterAdmin: false,
+  platformAdmin: false,
   tier: null,
 };
 
@@ -116,9 +134,11 @@ export function NavEntitlementsProvider({ children }: { children: React.ReactNod
 
   const value = React.useMemo<NavEntitlementsValue>(() => {
     const payload = state.data;
+    // Independent of the catalog read, so it survives resolved:false.
+    const platformAdmin = payload?.platformAdmin === true;
     // Rule 1: anything short of a resolved payload yields no verdicts at all.
     if (!payload || payload.resolved !== true || !Array.isArray(payload.surfaces)) {
-      return EMPTY;
+      return platformAdmin ? { ...EMPTY, platformAdmin } : EMPTY;
     }
     const byId = new Map<string, NavSurfaceEntitlement>();
     for (const s of payload.surfaces) {
@@ -129,6 +149,7 @@ export function NavEntitlementsProvider({ children }: { children: React.ReactNod
       verdictFor: (id: string) => byId.get(id) ?? null,
       resolved: true,
       masterAdmin: payload.masterAdmin === true,
+      platformAdmin,
       tier: typeof payload.tier === 'string' ? payload.tier : null,
     };
   }, [state.data]);
@@ -264,8 +285,15 @@ export function currentRequestFor(
  * and anyone hovering, were told a different — and wrong — reason from the one
  * the panel gave them on activation.
  */
+/** True for the one lock nothing on the customer's side can lift. */
+export function isLaunchScopeLocked(verdict: NavSurfaceEntitlement | null): boolean {
+  return !!verdict && !verdict.entitled && verdict.source === 'launch-scope';
+}
+
 export function lockShortReason(verdict: NavSurfaceEntitlement): string {
   switch (verdict.source) {
+    case 'launch-scope':
+      return 'not in this release';
     case 'disabled':
       return 'turned off for this workspace';
     case 'industry':
@@ -296,6 +324,16 @@ export function lockNotice(
   opts: { isOrgAdmin: boolean },
 ): LockNotice {
   switch (verdict.source) {
+    case 'launch-scope':
+      /* Nothing to buy, switch on or request: the app exists and is not in
+         this release. Saying so beats offering a plan that changes nothing. */
+      return {
+        status: 'Not in this release',
+        body: 'This app is built but is not part of the current release. It is not a plan or permission matter — no upgrade, setting or request enables it.',
+        ctaLabel: null,
+        ctaTarget: null,
+        requestable: false,
+      };
     case 'disabled':
       return {
         status: 'Turned off for this workspace',

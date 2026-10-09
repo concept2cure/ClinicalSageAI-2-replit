@@ -1,0 +1,77 @@
+-- An exported, sealable regulatory artifact asserted a decision count it had
+-- never measured. Measured before and after.
+
+-- ── RED ─────────────────────────────────────────────────────────────────────
+
+-- server/services/ana/lineage-dossier.ts loadDecisions selected fourteen
+-- columns public.decision_records does not have:
+
+SELECT id, context_type FROM decision_records LIMIT 1;
+ERROR:  column "context_type" does not exist
+
+-- The real column list:
+id, organization_id, project_id, decision_code, title, domain_track,
+recommendation_type, recommendation_summary, recommendation_rationale,
+confidence_level, evidence_basis, action_state, approved_by, approved_at,
+rejection_reason, executed_artifact_id, executed_artifact_version,
+executed_workflow_run_id, related_assumption_ids, escalated_to,
+escalation_reason, notes, decision_context, decided_by, created_at, updated_at
+
+-- The shape it queried lives in exactly one place:
+-- tests/schema-contract/fixtures/drizzle-shaped-operating-system.sql, a fixture
+-- on no applier whose own header calls it dead. The predicate was broken too --
+-- related_artifact_id does not exist either -- so repairing the projection
+-- alone would still have matched nothing.
+
+-- isMissingTable matches only 42P01, so warnUnless42P01 logged and returned [],
+-- and summarizeDecisions manufactured seven zeros from it. What shipped, at
+-- HTTP 200, in a namespaced regulatory metadata file:
+
+<Decisions count="0" anaAuthored="0" humanAuthored="0" humanDecided="0"
+           approved="0" rejected="0" pending="0">
+
+-- with nothing marking those zeros as unmeasured. And the same zeros sealed
+-- into a Part 11 PDF: computeLineageConfidence merely withheld +15, leaving 80
+-- against DEFAULT_FINAL_CONFIDENCE_THRESHOLD of 70, so the run finalized with
+-- "Decisions (total) 0 - Approved 0 - Rejected 0 - Pending 0" under a
+-- disclosure line reading "Every figure links to its source record".
+
+-- Third defect, which would have kept the fixed query empty: the artifact link
+-- was never populated.
+SELECT count(*) AS total, count(executed_artifact_id) AS with_artifact,
+       count(decision_context->>'artifactId') AS with_ctx_artifact
+  FROM decision_records;
+412 | 0 | 0
+
+-- ── GREEN ───────────────────────────────────────────────────────────────────
+
+-- The query runs against the deployed shape. Live, same database:
+decisionSummary.unavailable = null
+decisions read              = 0
+XML Decisions element       = <Decisions count="0" anaAuthored="0" … >
+
+-- Those zeros are now measured. The distinction, forced live by renaming the
+-- table away mid-call:
+
+READ FAILED CASE
+  unavailable = "relation \"decision_records\" does not exist"
+  XML         = <Decisions unavailable="true"
+                           reason="relation &quot;decision_records&quot; does not exist" />
+  confidence  = 30   (sealing threshold is 70 -- the run can no longer seal)
+  table restored
+
+-- The governed-fabric writer now stamps decision_context.artifactId, so an
+-- artifact-scoped decision is linkable. 32 rows carry the key after one
+-- simulation run; its value is null for PROJECT-level export-gate decisions,
+-- which correctly have no artifact.
+
+-- Red-to-green on the contract: neutering summarizeDecisions so it drops the
+-- reason again fails exactly the two tests that exist to catch it --
+--   x carries the reason the read failed, alongside the zeros it did not measure
+--   x states the read failed instead of printing seven zeros
+-- (2 failed, 4 passed). Restored: 6 passed.
+
+-- Two existing fixtures asserted against approvedById / rejectedById, columns
+-- of the retired shape, so every real row fell through to `pending` including
+-- the rejected ones. They now assert on action_state, which is what the table
+-- records. 271 tests green across ana + report-os.

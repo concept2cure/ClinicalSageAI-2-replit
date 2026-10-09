@@ -1,0 +1,22 @@
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records the request for a real account 31ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records an attempt against an address with no account 5ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > still says exactly the same thing either way 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production, a forged Host does not become the link the victim is emailed 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records the change itself, which used to be only a logger line 380ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > refuses, and records, a token another request used first — no second success 351ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records a token that matched no account 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records an expired token 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > does not audit a change it refused before looking anything up 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password while signed in is audited too (IAM-17) > records user_password_changed for the account holder, in the account tenant, without the password 364ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > setting its password through the activation link 356ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > an expired link 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a link another request used first 350ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > asking for a reset 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a wrong password 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the account is locked 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the address is not yet confirmed 6ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the account was taken out of use (the entry OQ-PROJ-18 reads) 6ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > changing its password while signed in 361ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > keeps the default organisation when the account is a member there 356ms
+      Tests  21 passed (21)

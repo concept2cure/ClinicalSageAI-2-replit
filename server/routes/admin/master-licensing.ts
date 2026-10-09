@@ -52,6 +52,7 @@
 
 import { Router, Request, Response } from 'express';
 import { query } from '../../db';
+import { isGrantExpired } from '../../services/license-manager';
 import { createScopedLogger } from '../../utils/logger';
 /*
  * WO-16C #133. All five governed mutations on this router recorded their
@@ -93,6 +94,7 @@ import {
   MODE_CACHE_TTL_MS,
   currentEnforcementMode,
   parseMode,
+  refreshEnforcementMode,
   writeEnforcementMode,
   type EnforcementMode,
   type ResolvedEnforcementMode,
@@ -169,6 +171,25 @@ export function effectiveVerdict(row: {
   return { effective: false, source: 'tier' };
 }
 
+/** Largest value of a PostgreSQL `integer` — `organizations.id`'s type. */
+const PG_INT4_MAX = 2_147_483_647;
+
+/**
+ * PURE: a `:id` path segment as an organization id, or null when it cannot be
+ * one. The id routes answer 404 for null.
+ *
+ * `Number(raw)` + `Number.isFinite` let `1.5` and `99999999999` through to
+ * Postgres, which refused them (`invalid input syntax for type integer: "1.5"`,
+ * `value "99999999999" is out of range for type integer`) and the routes
+ * answered 500 — after the db.js wrapper had retried each refusal three times.
+ * Reproduced by tests/db/master-licensing-console.dbtest.ts (2026-09-22).
+ */
+export function parseOrganizationId(raw: unknown): number | null {
+  if (typeof raw !== 'string' || !/^[1-9]\d{0,9}$/.test(raw)) return null;
+  const n = Number(raw);
+  return n <= PG_INT4_MAX ? n : null;
+}
+
 /** The lowest tier named in a metadata `tiers` array, or null when unrestricted. */
 export function lowestTier(tiers: unknown): Tier | null {
   if (!Array.isArray(tiers)) return null;
@@ -182,18 +203,28 @@ export function lowestTier(tiers: unknown): Tier | null {
 router.get('/licensing', async (_req: Request, res: Response) => {
   try {
     const [modules, orgs] = await Promise.all([
+      // GROUP BY the primary key, never by `metadata`. On a deploy-shaped
+      // database `available_modules.metadata` is `json` (shared/schema.ts
+      // `json('metadata')`), and `json` has no equality operator, so grouping
+      // by it raised `could not identify an equality operator for type json`
+      // and this whole matrix answered 500 — reproduced by
+      // tests/db/master-licensing-console.dbtest.ts (2026-09-22). It passed
+      // wherever the table came from server/db/bootstrap/auth-schema.ts, which
+      // declares the column JSONB, so dev never saw it. Grouping by `am.id`
+      // makes every other `am.*` column functionally dependent and works for
+      // either column type.
       query(
         `SELECT am.module_id, am.name, am.category, am.metadata,
-                COUNT(*) FILTER (WHERE ms.enabled IS TRUE)  AS granted_orgs,
+                COUNT(*) FILTER (WHERE ms.enabled IS TRUE AND (ms.expires_at IS NULL OR ms.expires_at > now()))  AS granted_orgs,
                 COUNT(*) FILTER (WHERE ms.enabled IS FALSE) AS revoked_orgs
            FROM available_modules am
            LEFT JOIN module_subscriptions ms ON ms.module_id = am.module_id
-          GROUP BY am.module_id, am.name, am.category, am.metadata, am.sort_order
+          GROUP BY am.id
           ORDER BY am.sort_order NULLS LAST, am.module_id`,
       ),
       query(
         `SELECT o.id, o.name, o.slug, o.tier, o.industry_mode, o.status,
-                COUNT(*) FILTER (WHERE ms.enabled IS TRUE)  AS grants,
+                COUNT(*) FILTER (WHERE ms.enabled IS TRUE AND (ms.expires_at IS NULL OR ms.expires_at > now()))  AS grants,
                 COUNT(*) FILTER (WHERE ms.enabled IS FALSE) AS revocations
            FROM organizations o
            LEFT JOIN module_subscriptions ms ON ms.organization_id = o.id
@@ -242,8 +273,8 @@ router.get('/licensing', async (_req: Request, res: Response) => {
 
 router.get('/licensing/tenants/:id', async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(404).json({ error: 'Not found.' });
+    const id = parseOrganizationId(req.params.id);
+    if (id === null) return res.status(404).json({ error: 'Not found.' });
 
     const orgRes = await query(
       `SELECT id, name, slug, tier, industry_mode, status FROM organizations WHERE id = $1`,
@@ -253,9 +284,22 @@ router.get('/licensing/tenants/:id', async (req: Request, res: Response) => {
     const org = orgRes.rows[0];
     const orgTier = isTier(org.tier) ? org.tier : null;
     const orgIndustry = org.industry_mode ?? null;
+    /*
+     * The VERDICT uses the same fallbacks the customer's rail does
+     * (license-manager getLicenseInfo / getModuleCatalog): an unrecognised tier
+     * ranks as 'standard', a missing industry is 'biotech'. The console
+     * previously ranked an unknown tier as nothing — locking every tiered module
+     * (100 of 104 differed from the rail) — and a NULL industry as matching no
+     * industry list. The raw values are still what the response DISPLAYS; only
+     * the verdict borrows the rail's reading of them, because a console that
+     * answers differently from the customer's own screen is worse than useless.
+     * Reproduced 2026-09-22 by tests/db/master-licensing-console.dbtest.ts.
+     */
+    const verdictTier: Tier = orgTier ?? 'standard';
+    const verdictIndustry: string = orgIndustry || 'biotech';
 
     const rows = await query(
-      `SELECT am.module_id, am.name, am.category, am.metadata, ms.enabled
+      `SELECT am.module_id, am.name, am.category, am.metadata, ms.enabled, ms.expires_at
          FROM available_modules am
          LEFT JOIN module_subscriptions ms
            ON ms.module_id = am.module_id AND ms.organization_id = $1
@@ -275,16 +319,25 @@ router.get('/licensing/tenants/:id', async (req: Request, res: Response) => {
       },
       modules: rows.rows.map((m: any) => {
         const meta = m.metadata || {};
-        const subscriptionState: 'enabled' | 'disabled' | 'none' =
-          m.enabled === true ? 'enabled' : m.enabled === false ? 'disabled' : 'none';
+        // A lapsed grant is no override at all — the rail reads it that way
+        // through the same isGrantExpired, so the console does too. It used to
+        // read 'subscribed' here after the customer had lost the module.
+        const lapsed = m.enabled === true && isGrantExpired(m.expires_at);
+        const subscriptionState: 'enabled' | 'disabled' | 'none' = lapsed
+          ? 'none'
+          : m.enabled === true
+            ? 'enabled'
+            : m.enabled === false
+              ? 'disabled'
+              : 'none';
         const minTier = lowestTier(meta.tiers);
         const industries = Array.isArray(meta.industries) ? meta.industries : [];
         const verdict = effectiveVerdict({
           subscriptionState,
           minTier,
-          orgTier,
+          orgTier: verdictTier,
           industries,
-          orgIndustry,
+          orgIndustry: verdictIndustry,
         });
         return {
           moduleId: m.module_id,
@@ -423,8 +476,8 @@ router.patch('/licensing/modules/:moduleId', async (req: Request, res: Response)
 // change.
 router.post('/licensing/tenants/:id/provision', async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(404).json({ error: 'Not found.' });
+    const id = parseOrganizationId(req.params.id);
+    if (id === null) return res.status(404).json({ error: 'Not found.' });
 
     const reason = normalizeReason((req.body ?? {}).reason);
     if (!reason) {
@@ -458,19 +511,32 @@ router.post('/licensing/tenants/:id/provision', async (req: Request, res: Respon
     // Grants the tenant holds that its CURRENT tier does not include. Computed
     // in SQL against the same ladder provisioning uses, so the two cannot
     // disagree about what "above tier" means.
+    //
+    // "The same ladder" includes its fallback. provision_org_modules() ranks a
+    // tier module_tier_level() does not recognise as `standard` (20260823, the
+    // `IF v_level IS NULL` line), and organizations.tier is unconstrained text
+    // that the Stripe subscription webhook writes from metadata verbatim. This
+    // query used module_tier_level($2) bare, so for such a tenant the NULL
+    // level made EVERY tiered grant "above tier" — including the ones the call
+    // above had just granted. Reproduced 2026-09-22 by
+    // tests/db/master-licensing-console.dbtest.ts: a `starter` tenant was told
+    // 68 fresh grants were grants its plan does not include. The COALESCE is
+    // that fallback, spelled the same way.
     const retained = await query(
       `SELECT ms.module_id, am.name
          FROM module_subscriptions ms
          JOIN available_modules am ON am.module_id = ms.module_id
         WHERE ms.organization_id = $1
           AND ms.enabled IS TRUE
+          -- A lapsed grant gives the tenant nothing, so it is not "retained".
+          AND (ms.expires_at IS NULL OR ms.expires_at > now())
           AND jsonb_typeof(COALESCE(am.metadata::jsonb, '{}'::jsonb)->'tiers') = 'array'
           AND jsonb_array_length(COALESCE(am.metadata::jsonb, '{}'::jsonb)->'tiers') > 0
           AND NOT EXISTS (
                 SELECT 1
                   FROM jsonb_array_elements_text(COALESCE(am.metadata::jsonb, '{}'::jsonb)->'tiers') AS t
                  WHERE module_tier_level(t) IS NOT NULL
-                   AND module_tier_level($2) >= module_tier_level(t)
+                   AND COALESCE(module_tier_level($2), module_tier_level('standard')) >= module_tier_level(t)
               )
         ORDER BY am.name`,
       [id, org.tier ?? 'standard'],
@@ -543,8 +609,8 @@ router.post('/licensing/tenants/:id/provision', async (req: Request, res: Respon
 
 router.patch('/licensing/tenants/:id/tier', async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(404).json({ error: 'Not found.' });
+    const id = parseOrganizationId(req.params.id);
+    if (id === null) return res.status(404).json({ error: 'Not found.' });
 
     const body = (req.body ?? {}) as { tier?: unknown; reason?: unknown };
     if (!isTier(body.tier)) {
@@ -782,7 +848,16 @@ router.patch('/licensing/enforcement/mode', async (req: Request, res: Response) 
       return res.status(400).json({ error: 'A reason (min 3 chars) is required for this action.' });
     }
 
-    const previous = await currentEnforcementMode();
+    // A FRESH read of what is stored, not the gate's cached answer. The cache is
+    // per process and may be up to MODE_CACHE_TTL_MS old: after a change made
+    // through another server process, `currentEnforcementMode()` here still
+    // returned the mode that change had replaced, and the audit row below —
+    // the sole record of `previousMode` — named a mode that was not the one
+    // being overwritten. Reproduced 2026-09-22 by
+    // tests/db/master-licensing-console.dbtest.ts (stored 'report', recorded
+    // 'enforce'). refreshEnforcementMode never throws; on a read failure it
+    // serves the last known answer flagged `degraded`, as everywhere else.
+    const previous = await refreshEnforcementMode();
     const impact = impactOf(previous.mode);
 
     const resolved = await writeEnforcementMode({

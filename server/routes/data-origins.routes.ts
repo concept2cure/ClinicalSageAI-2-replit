@@ -21,7 +21,7 @@ import { Router, type Request, type Response } from 'express';
 
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
-import { pool } from '../db';
+import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import {
   getSelectionOrigins,
   summarizeDocumentAttribution,
@@ -168,39 +168,53 @@ router.post('/selection.pdf', async (req: Request, res: Response) => {
  */
 
 /**
- * Where each governed document's text lives. A whitelist, so the table and
- * column below can be interpolated: only these keys can ever reach the query,
- * and an unknown table is refused rather than guessed at.
+ * Where each governed document's text lives, and the column that names its
+ * organization. A whitelist, so the table and columns below can be
+ * interpolated: only these keys can ever reach the query, and an unknown table
+ * is refused rather than guessed at.
  *
  * `labeling_pi_sections` is deliberately absent. Its content is JSONB and the
  * lineage was recorded against the DERIVED heading+body string, so the length of
  * the JSON is not the length the spans describe — and a denominator that is
  * merely close would make every figure here quietly wrong.
+ *
+ * `authoring_sections` is the Authoring editor's table, and the only one it
+ * asks about. It was absent until 2026-09-23 (task #27), so every section showed
+ * no coverage at all. Its lineage is recorded against the saved `content` (the
+ * lineage gate in routes/authoring.router.ts, and services/authoring/
+ * authoring-documents.ts), the column read here; its organization column is
+ * `tenant_id`.
  */
-const CONTENT_COLUMNS: Readonly<Record<string, string>> = Object.freeze({
-  concept2cure_artifacts: 'content',
-  protocol_sections: 'content',
-  protocol_documents: 'synopsis',
-  biosketch_sections: 'content',
-  cerv2_510k_sections: 'content',
-  dms_plan_elements: 'content',
-  consent_form_elements: 'content',
-  coauthor_documents: 'content',
-  q_sub_section_bodies: 'content',
+interface ContentLocation {
+  content: string;
+  org: 'organization_id' | 'tenant_id';
+}
+const CONTENT_COLUMNS: Readonly<Record<string, ContentLocation>> = Object.freeze({
+  concept2cure_artifacts: { content: 'content', org: 'organization_id' },
+  protocol_sections: { content: 'content', org: 'organization_id' },
+  protocol_documents: { content: 'synopsis', org: 'organization_id' },
+  biosketch_sections: { content: 'content', org: 'organization_id' },
+  cerv2_510k_sections: { content: 'content', org: 'organization_id' },
+  dms_plan_elements: { content: 'content', org: 'organization_id' },
+  consent_form_elements: { content: 'content', org: 'organization_id' },
+  coauthor_documents: { content: 'content', org: 'organization_id' },
+  q_sub_section_bodies: { content: 'content', org: 'organization_id' },
+  authoring_sections: { content: 'content', org: 'tenant_id' },
 });
 
 /** null = no such document for this organization (or it holds no text yet). */
 async function resolveContentLength(
+  db: RequestSqlClient,
   orgId: number,
   documentTable: string,
   documentId: string,
 ): Promise<number | null> {
-  const column = CONTENT_COLUMNS[documentTable];
-  if (!column) return null;
-  const { rows } = await pool.query(
-    `SELECT COALESCE(char_length(${column}), 0)::int AS len
+  const location = CONTENT_COLUMNS[documentTable];
+  if (!location) return null;
+  const { rows } = await db.query(
+    `SELECT COALESCE(char_length(${location.content}), 0)::int AS len
        FROM ${documentTable}
-      WHERE id::text = $1 AND organization_id = $2
+      WHERE id::text = $1 AND ${location.org} = $2
       LIMIT 1`,
     [documentId, orgId],
   );
@@ -230,7 +244,12 @@ router.get('/document', async (req: Request, res: Response) => {
   }
 
   try {
-    const contentLength = await resolveContentLength(orgId, documentTable, documentId);
+    const contentLength = await resolveContentLength(
+      requestPgClient(req),
+      orgId,
+      documentTable,
+      documentId,
+    );
     if (contentLength === null) {
       return res.status(404).json({
         error: { code: 'NOT_FOUND', message: 'No such document in this organization.' },

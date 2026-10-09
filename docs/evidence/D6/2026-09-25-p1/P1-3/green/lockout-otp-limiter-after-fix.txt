@@ -1,0 +1,12 @@
+$ git diff --stat  # fix applied on top of 5f1e35b0
+ server/middleware/enterprise-security.ts |  4 +++
+ server/services/auth-security-service.ts | 58 +++++++++++++++++++-------------
+ server/services/emailOtpService.ts       | 15 +++++++--
+ 3 files changed, 52 insertions(+), 25 deletions(-)
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-v1-mount.test.ts > applySecurityMiddleware: the sign-in limit > is mounted on /api/auth and on /api/v1/auth, the two mounts of the auth router 4ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked 4131ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > a failure that cannot be recorded is an error, not "not locked" 17ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > createEmailOtp and the guess budget > re-issuing a code while one is pending keeps the attempts already spent 22ms
+ Test Files  11 passed (11)
+      Tests  98 passed (98)
+exit=0

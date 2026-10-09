@@ -1,0 +1,14 @@
+F-38 — GREEN: the same tests against 893a4750f as committed
+FDA backbone defaulted application-type to fdaat1 (NDA); an IND resolved to fdast9 (IND Safety Reports)
+
+vitest exit code: 0
+
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > refuses to file a 510(k) as a New Drug Application 17ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > refuses pma, de_novo, maa and cta for the same reason 19ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > never emits fdaat1 for anything that is not actually an NDA 62ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > an original IND is not declared an IND Safety Report 9ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > a follow-up sequence does not guess that it is an original 5ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > both refusals are ValidationErrors — the type every caller branches on to show the reason 9ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > the unresolved-submission-type refusal names terms that actually resolve 6ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)

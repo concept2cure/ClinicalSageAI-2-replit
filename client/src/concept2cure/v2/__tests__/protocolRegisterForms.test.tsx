@@ -6,11 +6,12 @@
  * (including the mandatory ≥8-char governed reason), onDone fires only after
  * the 201, and failures are surfaced with nothing persisted locally.
  *
- * Add objective, add eligibility criterion and finalize were the LAST three
- * still routed through that dialog — `onConfirm={() => {}}`, so a user
- * completed the full 21 CFR Part 11 ceremony and nothing was written. Their
- * endpoints existed the whole time with no caller. Same assertions apply to
- * them: the exact endpoint, the exact body, the reason floor.
+ * Add objective and add eligibility criterion were the last two still routed
+ * through that dialog — `onConfirm={() => {}}`, so a user completed the
+ * ceremony and nothing was written. Their endpoints existed the whole time
+ * with no caller. Same assertions apply to them: the exact endpoint, the exact
+ * body, the reason floor. (Finalize was a third; it is an electronic signature
+ * now and is tested in protocolDevWrites.test.ts, not here.)
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -126,28 +127,10 @@ describe('the three actions that used to route through a dead e-signature dialog
     expect(body).toMatchObject({ criterion: 'Age >= 18 years at consent', kind: 'inclusion' });
   });
 
-  it('finalize → POST /api/protocol-development/documents/:id/finalize with only the reason', async () => {
-    apiRequest.mockResolvedValue(ok({ documentId: 12, version: '2.0', actionId: 'a11' }));
-    const out = await submitProtocolRegister('finalize', 12, {
-      reason: 'All required sections complete; finalizing for IRB submission',
-    });
-    const [, path, body] = apiRequest.mock.calls[0];
-    expect(path).toBe('/api/protocol-development/documents/12/finalize');
-    expect(body).toEqual({ reason: 'All required sections complete; finalizing for IRB submission' });
-    expect(out).toMatchObject({ version: '2.0' });
-  });
-
   it('refuses every one of them below the reason floor — nothing is sent', async () => {
-    for (const kind of ['objective', 'eligibility', 'finalize'] as const) {
+    for (const kind of ['objective', 'eligibility'] as const) {
       await expect(submitProtocolRegister(kind, 12, { reason: 'short' })).rejects.toThrow(/at least 8/);
     }
     expect(apiRequest).not.toHaveBeenCalled();
-  });
-
-  it('a refused finalize says the protocol was not finalized, carrying the server’s reason', async () => {
-    apiRequest.mockResolvedValue(ok({ error: { code: 'GATE_FAILED', message: 'Section 6 is not complete.' } }, 409));
-    await expect(
-      submitProtocolRegister('finalize', 12, { reason: 'Finalizing ahead of the gate' }),
-    ).rejects.toThrow(/finalize the protocol .* Section 6 is not complete.*Nothing was persisted/);
   });
 });

@@ -17,7 +17,7 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
-import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
+import { recordAuditRow, setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
 import {
   saveAssessment, listAssessments, getAssessment, deleteAssessment,
@@ -50,7 +50,7 @@ function pathParam(req: Request, key: string): string {
 }
 const logger = createScopedLogger('ivd-assessments');
 
-/**
+/*
  * Report a §11.10(e) audit outcome on a response whose body is a stored row.
  *
  * WO-16C #133. The three audit writes in this router were
@@ -75,11 +75,11 @@ const logger = createScopedLogger('ivd-assessments');
  * pair as server/routes/device-projects.ts, server/routes/client-branding.ts,
  * the transparent proxy in server/routes/predicate-intelligence.ts and the 204
  * in server/routes/submissions.ts.
+ *
+ * The pair is written by the canonical `setAuditRowHeaders`
+ * (server/services/audit/audit-write-outcome.ts), which replaced this file's
+ * own copy.
  */
-function setAuditRowHeaders(res: Response, outcome: AuditRowOutcome): void {
-  res.setHeader('X-Audit-Row-Persisted', String(outcome.persisted));
-  if (!outcome.persisted) res.setHeader('X-Audit-Row-Code', outcome.code);
-}
 
 /* This file kept a private `fail()` that put `Error.message` in the response as
    `detail` — the exact disclosure server/lib/api-response.ts documents having

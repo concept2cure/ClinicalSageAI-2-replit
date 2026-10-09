@@ -20,6 +20,8 @@ import {
   START_DEEP_INVESTIGATION,
   CHECK_DEEP_INVESTIGATION,
 } from './agentic-workflow-tools.js';
+// AnA's declared plan for a turn — the only source of a "Step 2 of 5" count.
+import { UPDATE_PLAN } from './turn-plan.js';
 // Biotech program orchestrator — the biologics/advanced-therapy development
 // spine (discovery → IND → Phase 1/2/3 → BLA → post-approval). Handler is
 // registered from biotech-program.ts via the inject-and-sibling pattern.
@@ -80,6 +82,7 @@ import {
   READ_GOVERNED_DOCUMENT,
   GET_TMF_VIEW,
   SAVE_DOCUMENT_TO_VAULT,
+  DRAFT_AUTHORING_DOCUMENT,
   UPDATE_VAULT_DOCUMENT,
   COMPARE_VAULT_VERSIONS,
   SEED_TMF,
@@ -465,6 +468,15 @@ import {
   RESET_PROJECT_GOALS,
   RECONCILE_DOSSIER_NUMBERS,
 } from './discovery-cheminformatics-tool-defs.js';
+// Protocol ⇄ study-design loop (docs/design/PROTOCOL_INTELLIGENCE.md §"AnA's
+// part"): bind, read the derivation diff, apply accepted paths, read the two
+// deterministic verdict engines. Handlers live in AnaToolExecutor.ts beside the
+// other protocol-development handlers.
+import { PROTOCOL_DESIGN_TOOLS } from './protocol-design-tool-defs.js';
+// Tier 1 of docs/design/PROTOCOL_INDUSTRY_GAPS.md: trial schema, SPIRIT, CtQ, USDM,
+// DCT profile, WHO ICTRP, deviation trends, redline; Tier 2 dose escalation, enrollment, interim OC, MMRM,
+// external control, multiplicity; Tier 3 biospecimens, master protocol. All read-only.
+import { PROTOCOL_INDUSTRY_TOOLS } from './protocol-industry-tool-defs.js';
 import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
@@ -638,7 +650,7 @@ export const LOOKUP_FDA_GUIDANCE: AnaTool = {
 export const CHECK_REGULATORY_COMPLIANCE: AnaTool = {
   name: 'check_regulatory_compliance',
   description:
-    'Check a document section against specific regulatory requirements. Returns compliance status, gaps, and recommended remediation for each requirement.',
+    'Keyword scan of a document section: reports which expected topics the text MENTIONS for fda_510k or eu_mdr. It does not determine compliance — mentioning a topic is not meeting the requirement — and it returns not_assessed for frameworks it has no scan for (fda_pma, ich_e6, ich_e8, ich_e9, 21cfr_part11). Never present its output as a compliance verdict.',
   input_schema: {
     type: 'object',
     properties: {
@@ -900,7 +912,7 @@ export const GENERATE_DOCUMENT: AnaTool = {
       },
       template_path: {
         type: 'string',
-        description: 'Optional: path to a client-uploaded DOCX template to use as base',
+        description: 'Optional: a DOCX template in your organization\'s AnA workspace (one of your uploads, or a path an earlier document tool returned) to use as base; other paths are refused',
       },
       replacements: {
         type: 'object',
@@ -920,7 +932,7 @@ export const BUILD_FROM_TEMPLATE: AnaTool = {
     properties: {
       template_path: {
         type: 'string',
-        description: 'Path to the uploaded DOCX template file',
+        description: 'The DOCX template, in your organization\'s AnA workspace (one of your uploads, or a path an earlier document tool returned); other paths are refused',
       },
       replacements: {
         type: 'object',
@@ -1300,20 +1312,37 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
       product_name:    { type: 'string' },
       leaves: {
         type: 'array',
-        description: 'List of eCTD leaves. Each leaf is { ctd_section, operation, source_path, file_name, title }.',
+        // 2026-09-23 (W5/D7, round-2 skeptic): source_path was required on every
+        // leaf, delete included, and there was no modified_file, so every
+        // withdrawal declared here shipped the withdrawn document's bytes with no
+        // pointer at the filed copy. A delete now names the filed leaf through
+        // modified_file and carries no source_path; the packager refuses one that
+        // does, and the handler refuses any other leaf without one.
+        // 2026-09-23 (W5/D7, round-2 skeptic, second pass): a delete in 0000 was
+        // exempt from modified_file and packaged as a delete of a file on record
+        // nowhere; the packager now refuses every delete in 0000, and the
+        // descriptions say so.
+        description:
+          'List of eCTD leaves. Each leaf is { ctd_section, operation, source_path, file_name, title, modified_file }. ' +
+          'new / append / replace leaves carry the file to ship in source_path. A delete (withdrawal) ships no content: ' +
+          'omit source_path and give modified_file, which names the withdrawn leaf by the prior sequence\'s backbone and that leaf\'s ID ' +
+          '(e.g. ../0000/index.xml#leaf-3-2-S-2-file, the ID as that sequence\'s leaf manifest recorded it; never a file path). ' +
+          'replace / append in a follow-up sequence also require modified_file, naming the filed leaf they act on the same way. ' +
+          'Sequence 0000 cannot carry a delete: nothing is on file to withdraw.',
         items: {
           type: 'object',
           properties: {
-            ctd_section: { type: 'string' },
-            operation:   { type: 'string', enum: ['new', 'append', 'replace', 'delete'] },
-            source_path: { type: 'string' },
-            file_name:   { type: 'string' },
-            title:       { type: 'string' },
+            ctd_section:   { type: 'string' },
+            operation:     { type: 'string', enum: ['new', 'append', 'replace', 'delete'] },
+            source_path:   { type: 'string', description: 'The file to ship, in your organization\'s AnA workspace (a path an earlier document tool returned, or one of your uploads). Required for new / append / replace; must be omitted for delete.' },
+            file_name:     { type: 'string' },
+            title:         { type: 'string' },
+            modified_file: { type: 'string', description: 'The filed leaf this one acts on, from this sequence root: the prior sequence\'s backbone, \'#\', and the leaf ID it recorded (e.g. ../0000/index.xml#leaf-3-2-S-2-file, or ../0000/m1/us/us-regional.xml#leaf-1-2-cover for Module 1). Never a file path. Required for every delete, and for a replace / append after 0000 (a delete in sequence 0000 is refused).' },
           },
-          required: ['ctd_section', 'operation', 'source_path', 'file_name', 'title'],
+          required: ['ctd_section', 'operation', 'file_name', 'title'],
         },
       },
-      output_dir: { type: 'string', description: 'Where to write the zip. Defaults to tmp/submissions.' },
+      output_dir: { type: 'string', description: 'Where to write the zip: a directory in your organization\'s AnA workspace. Omit it to use a fresh one.' },
     },
     required: ['region', 'application_id', 'sequence', 'submission_type', 'sponsor_id', 'sponsor_name', 'product_name', 'leaves'],
   },
@@ -1833,6 +1862,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   SAVE_REPORT_DEFINITION,
   LIST_REPORT_DEFINITIONS,
   SAVE_DOCUMENT_TO_VAULT,
+  DRAFT_AUTHORING_DOCUMENT,
   UPDATE_VAULT_DOCUMENT,
   COMPARE_VAULT_VERSIONS,
   SEED_TMF,
@@ -2191,6 +2221,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   DRAFT_CLINICAL_OVERVIEW_M2_5,
   BATCH_DRAFT_SECTIONS,
   CONVENE_DRAFTING_COUNCIL,
+  UPDATE_PLAN,
   GET_CLIENT_JOURNEY,
   GET_BIOTECH_PROGRAM_STATUS,
   COMMIT_DOCUMENT_REVISION,
@@ -2684,6 +2715,11 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   START_WAR_GAME,
   // Onboarding — read-only look at what a document could contribute to setup.
   SUMMARIZE_ONBOARDING_READINESS,
+  // Protocol ⇄ study-design loop: bind, review the derivation, apply accepted
+  // paths, read the rule pack and the design gates. See protocol-design-tool-defs.ts.
+  ...PROTOCOL_DESIGN_TOOLS,
+  // The sixteen industry-gap engines, reached read-only. See protocol-industry-tool-defs.ts.
+  ...PROTOCOL_INDUSTRY_TOOLS,
 ];
 
 // Defensive registry guard: v2's cdiscTools.ts currently re-registers
@@ -2716,6 +2752,38 @@ export const ALL_ANA_TOOLS: AnaTool[] = ALL_ANA_TOOLS_RAW.filter(
 // enablement is confirmed.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The agency and literature domains AnA's hosted web tools may reach. Kept
+ * tight to sources AnA actually cites, so a regulatory lookup cannot drift into
+ * low-quality web content, and shared by web_search and web_fetch.
+ */
+export const REGULATORY_WEB_DOMAINS: readonly string[] = Object.freeze([
+  'fda.gov',
+  'www.fda.gov',
+  'accessdata.fda.gov',
+  'ema.europa.eu',
+  'www.ema.europa.eu',
+  'ich.org',
+  'www.ich.org',
+  'pmda.go.jp',
+  'www.pmda.go.jp',
+  'mhra.gov.uk',
+  'www.mhra.gov.uk',
+  'tga.gov.au',
+  'www.tga.gov.au',
+  'canada.ca',
+  'www.canada.ca',
+  'iso.org',
+  'www.iso.org',
+  'ecfr.gov',
+  'www.ecfr.gov',
+  'federalregister.gov',
+  'www.federalregister.gov',
+  'clinicaltrials.gov',
+  'pubmed.ncbi.nlm.nih.gov',
+  'ncbi.nlm.nih.gov',
+]);
+
 export const WEB_SEARCH_TOOL: AnthropicServerTool = {
   // The current variant, with dynamic filtering. It was pinned to the 2025
   // `web_search_20250305` — the basic one — long after the models in the
@@ -2725,45 +2793,27 @@ export const WEB_SEARCH_TOOL: AnthropicServerTool = {
   type: 'web_search_20260209',
   name: 'web_search',
   max_uses: 5,
-  // Keep the search surface tight to sources AnA actually cites. The allowlist
-  // prevents drift into low-quality web content during regulatory lookups.
-  allowed_domains: [
-    'fda.gov',
-    'www.fda.gov',
-    'accessdata.fda.gov',
-    'ema.europa.eu',
-    'www.ema.europa.eu',
-    'ich.org',
-    'www.ich.org',
-    'pmda.go.jp',
-    'www.pmda.go.jp',
-    'mhra.gov.uk',
-    'www.mhra.gov.uk',
-    'tga.gov.au',
-    'www.tga.gov.au',
-    'canada.ca',
-    'www.canada.ca',
-    'iso.org',
-    'www.iso.org',
-    'ecfr.gov',
-    'www.ecfr.gov',
-    'federalregister.gov',
-    'www.federalregister.gov',
-    'clinicaltrials.gov',
-    'pubmed.ncbi.nlm.nih.gov',
-    'ncbi.nlm.nih.gov',
-  ],
+  allowed_domains: REGULATORY_WEB_DOMAINS,
 };
 
+/**
+ * web_fetch reads the same agency set web_search may search, and no more.
+ * Until 2026-09-26 it had no allowed_domains, so the model could fetch any URL
+ * it wrote or found in a document — the one egress on the tool surface with no
+ * boundary (docs/evidence/D6/2026-09-26-egress-tools/).
+ */
 export const WEB_FETCH_TOOL: AnthropicServerTool = {
   type: 'web_fetch_20260209',
   name: 'web_fetch',
+  max_uses: 5,
+  allowed_domains: REGULATORY_WEB_DOMAINS,
 };
 
 export const CODE_EXECUTION_TOOL: AnthropicServerTool = {
   type: 'code_execution_20260120',
   name: 'code_execution',
 };
+
 
 /**
  * Returns the subset of Anthropic server tools that are enabled for this

@@ -1,0 +1,32 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5800/api/authoring/sections",
+    "body": {
+      "doc_id": "3668045d-4301-4771-b9ec-ef8df4447cb2",
+      "code": "2.7",
+      "title": "Clinical Summary",
+      "content": "<p>Initial 2.7 text.</p>"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "body": {
+      "success": true,
+      "section": {
+        "id": "98de1665-6e75-49d5-adbd-3062a4a3f687",
+        "doc_id": "3668045d-4301-4771-b9ec-ef8df4447cb2",
+        "code": "2.7",
+        "title": "Clinical Summary",
+        "content": "<p>Initial 2.7 text.</p>",
+        "order_index": 0,
+        "track_changes": false,
+        "tenant_id": 2,
+        "created_at": "2026-09-21T01:52:53.130Z",
+        "updated_at": "2026-09-21T01:52:53.130Z"
+      },
+      "message": "Section created successfully"
+    }
+  }
+}

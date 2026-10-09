@@ -1,0 +1,41 @@
+ack_training	server/services/ana/AnaToolExecutor.ts:13753	sql:INSERT INTO
+add_disclosure_interest	server/services/ana/AnaToolExecutor.ts:10077	gov:recordGovernedAction, verb:recordGovernedAction
+add_irb_site	server/services/ana/AnaToolExecutor.ts:10389	gov:recordGovernedAction, verb:recordGovernedAction
+add_protocol_objective	server/services/ana/AnaToolExecutor.ts:11506	gov:recordGovernedAction, verb:recordGovernedAction
+answer_intelligence_question	server/services/ana/AnaToolExecutor.ts:19109	verb:completeInterviewSession, verb:saveInterviewSessionState
+assign_committee_member	server/services/ana/AnaToolExecutor.ts:11742	gov:recordGovernedAction, verb:recordGovernedAction
+cast_committee_vote	server/services/ana/AnaToolExecutor.ts:11826	gov:recordGovernedAction, verb:recordGovernedAction
+classify_tmf_artifact	server/services/ana/AnaToolExecutor.ts:13059	gov:recordGovernedAction, verb:recordGovernedAction
+convene_drafting_council	server/services/ana/agentic-workflow-tools.ts:124	verb:executeCouncil
+create_clinical_study	server/services/ana/AnaToolExecutor.ts:9952	gov:recordGovernedAction, sql:INSERT INTO, verb:recordGovernedAction
+create_coverage_analysis	server/services/ana/AnaToolExecutor.ts:11880	gov:recordGovernedAction, verb:createAnalysisTx, verb:recordGovernedAction
+create_financial_disclosure	server/services/ana/AnaToolExecutor.ts:10042	gov:recordGovernedAction, verb:createDisclosureTx, verb:recordGovernedAction
+create_ibc_registration	server/services/ana/AnaToolExecutor.ts:10452	gov:recordGovernedAction, verb:createRegistrationTx, verb:recordGovernedAction
+create_labeling_document	server/services/ana/AnaToolExecutor.ts:14127	sql:INSERT INTO
+create_other_support	server/services/ana/AnaToolExecutor.ts:11087	verb:createDocumentTx
+create_protocol_template	server/services/ana/AnaToolExecutor.ts:10708	verb:createTemplateTx
+create_research_agreement	server/services/ana/AnaToolExecutor.ts:11326	verb:createAgreementTx
+create_tmf	server/services/ana/AnaToolExecutor.ts:13032	gov:recordGovernedAction, verb:createTmfTx, verb:recordGovernedAction
+execute_platform_command	server/services/ana/AnaToolExecutor.ts:5162	verb:executeCommands
+generate_ctgov_registration_draft	server/services/ana/AnaToolExecutor.ts:10803	gov:recordGovernedAction, verb:recordGovernedAction
+insert_document_content	server/services/ana/AnaToolExecutor.ts:7179	fs:mkdir, fs:writeFile, verb:writeFile
+log_nonconforming_product	server/services/ana/AnaToolExecutor.ts:14093	sql:INSERT INTO
+open_grant_closeout	server/services/ana/AnaToolExecutor.ts:12166	gov:recordGovernedAction, verb:recordGovernedAction
+qms_change_create	server/services/ana/AnaToolExecutor.ts:13798	verb:createChange, verb:recordAuditRow
+record_clinical_performance_study	server/services/ana/AnaToolExecutor.ts:8292	sql:INSERT INTO
+record_grant_expenditure	server/services/ana/AnaToolExecutor.ts:12343	gov:recordGovernedAction, verb:recordExpenditureTx, verb:recordGovernedAction
+record_subaward	server/services/ana/AnaToolExecutor.ts:12230	gov:recordGovernedAction, verb:createSubawardTx, verb:recordGovernedAction
+register_dea	server/services/ana/AnaToolExecutor.ts:12876	gov:recordGovernedAction, verb:createRegistrationTx, verb:recordGovernedAction
+report_protocol_deviation	server/services/ana/AnaToolExecutor.ts:10905	verb:createDeviationTx
+retire_qms_document	server/services/ana/AnaToolExecutor.ts:13707	gov:recordGovernedAction, sql:UPDATE qms_documents SET, verb:recordGovernedAction
+review_financial_disclosure	server/services/ana/AnaToolExecutor.ts:10112	gov:recordGovernedAction
+review_irb_submission	server/services/ana/AnaToolExecutor.ts:10421	gov:recordGovernedAction
+review_schedule_of_events_health	server/services/ana/AnaToolExecutor.ts:2428	verb:scheduleToolContext
+run_rbm_assessment	server/services/ana/AnaToolExecutor.ts:2915	sql:INSERT INTO
+scan_project_risks	server/services/ana/AnaToolExecutor.ts:2305	verb:scheduleToolContext
+set_funding_profile	server/services/ana/AnaToolExecutor.ts:11685	gov:recordGovernedAction, verb:recordGovernedAction, verb:upsertFundingProfileTx
+start_legacy_import	server/services/ana/AnaToolExecutor.ts:14289	sql:INSERT INTO, sql:UPDATE import_jobs SET
+update_biosketch_section	server/services/ana/AnaToolExecutor.ts:11164	verb:updateSectionTx
+update_grant_closeout	server/services/ana/AnaToolExecutor.ts:12193	gov:recordGovernedAction, verb:recordGovernedAction, verb:updateCloseoutTx
+update_q_sub_commitment_rolled_in	server/services/ana/AnaToolExecutor.ts:7754	sql:UPDATE regulatory_programs SET
+verify_memory_atom	server/services/ana/AnaToolExecutor.ts:13518	gov:recordGovernedAction, sql:UPDATE client_memory_entries S

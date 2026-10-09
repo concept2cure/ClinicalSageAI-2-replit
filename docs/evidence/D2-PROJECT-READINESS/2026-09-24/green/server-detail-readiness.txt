@@ -1,0 +1,10 @@
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > reports the governed section completion, not the frozen progress_percent
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > asks only about the projects on this page, and scopes to the caller org
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > uses the same status set as the readiness trigger
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > still returns the list when the governed store is absent
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > reports the governed section share, not the frozen progress_percent
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > agrees with the list for the same program
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a program with no governed sections has approved nothing: 0, as on its card
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a failed readiness read is null — not assessed — never the stored 0
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > scopes the aggregate to this program and the caller org
+      Tests  9 passed (9)

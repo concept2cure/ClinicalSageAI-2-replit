@@ -1,0 +1,17 @@
+{
+    "step": "05-member-role-403",
+    "method": "POST",
+    "path": "/api/mdx/qms/documents/16/approve",
+    "request": {
+        "password": "<redacted: local evidence credential>",
+        "meaning": "APPROVED",
+        "reason": "WB evidence: a member without signing authority must be refused"
+    },
+    "status": 403,
+    "response": {
+        "error": "Your role does not permit approving a controlled document (21 CFR Part 11 \u00a711.10(g)).",
+        "details": {
+            "code": "QMS_NO_SIGNING_AUTHORITY"
+        }
+    }
+}

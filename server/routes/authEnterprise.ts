@@ -28,11 +28,20 @@ import {
 
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { revokeToken, verifyLiveToken } from '../services/token-revocation';
+import { continuedSessionClaims, idleWindowSecondsOf, openSession } from '../services/session-inactivity';
+import { recordAuthEvent } from '../services/audit/auth-event-audit';
+import { ACCOUNT_INACTIVE_MESSAGE, isAccountActive, isActiveAccountStatus, isPendingVerificationStatus } from '../services/account-standing';
+import { EMAIL_UNVERIFIED_MESSAGE } from '../services/email-verification';
+import { runWithTenantScope } from '../db/tenantStore';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { authMiddleware } from '../auth';
 import * as emailOtpService from '../services/emailOtpService';
 import { sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
+import { mfaEnrolmentOf } from '../services/mfa-enrolment';
+import { padUnknownEmailTiming } from '../services/login-timing-pad';
+import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
 
 const router = Router();
 // SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
@@ -125,18 +134,20 @@ const enterpriseAuthLimiter = rateLimit({
       message: 'Too many authentication attempts. Please try again later.',
     },
   },
-  validate: { xForwardedForHeader: false },
 });
 
-/** Helper: extract and verify JWT from Authorization header */
-function extractJwtUser(
+/**
+ * Helper: extract and verify JWT from Authorization header. A signed-out
+ * session (AUTH-03) is no identity, the same as a bad token.
+ */
+async function extractJwtUser(
   req: Request
-): { userId: string; email: string; organizationId?: string } | null {
+): Promise<{ userId: string; email: string; organizationId?: string } | null> {
   const authHeader = req.headers.authorization;
   const token = authHeader?.replace('Bearer ', '');
   if (!token) return null;
   try {
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       organizationId?: string;
@@ -156,23 +167,23 @@ function extractJwtUser(
 }
 
 /** Helper: look up user's actual role in an organization */
-async function lookupOrgRole(userId: number, organizationId?: number): Promise<string> {
-  if (!organizationId) return 'user';
-  try {
-    const [membership] = await db
-      .select({ role: organizationUsers.role })
-      .from(organizationUsers)
-      .where(
-        and(
-          eq(organizationUsers.userId, userId),
-          eq(organizationUsers.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-    return membership?.role || 'user';
-  } catch {
-    return 'user';
-  }
+/**
+ * The account's role in this organisation, from its membership; null when it
+ * holds none. A failed read throws (the route answers 500) — it is not a role.
+ *
+ * 2026-09-28: this was `lookupOrgRole`, which answered 'user' for no
+ * membership AND for a failed read, so verify-mfa issued a session, and
+ * /refresh a fresh 24-hour token, in an organisation the account did not
+ * belong to (the per-request membership gate still refused its reads — the
+ * door should not have issued the token).
+ */
+async function membershipRoleOf(userId: number, organizationId: number): Promise<string | null> {
+  const [membership] = await db
+    .select({ role: organizationUsers.role })
+    .from(organizationUsers)
+    .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, organizationId)))
+    .limit(1);
+  return membership ? membership.role || 'member' : null;
 }
 
 /**
@@ -208,34 +219,18 @@ router.post('/check-email', enterpriseAuthLimiter, async (req: Request, res: Res
     const { email } = parsed.data;
 
     const normalizedEmail = email.trim().toLowerCase();
-    console.log('[Enterprise Auth] Checking email:', normalizedEmail);
 
-    // SECURITY FIX: Dev-mode bypass removed. Always check database.
-
-    // Check if user exists in database
-    const userResult = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, normalizedEmail))
-      .limit(1);
-
-    // SECURITY: Always return the same shape regardless of user existence
-    // to prevent user enumeration attacks
-    if (!userResult.length) {
-      // SECURITY: Return same shape whether user exists or not to prevent enumeration
-      return res.json({
-        authFlow: 'password',
-        mfaRequired: false,
-        email: normalizedEmail,
-      });
-    }
-
-    const user = userResult[0];
-
-    // SECURITY: Do not expose 'exists' flag — prevents email enumeration
-    res.json({
+    // One answer for every address, and no lookup behind it. This read the
+    // account and answered `mfaRequired: user.mfaEnabled` — false for an
+    // unknown address, true only for a real account with an authenticator — so
+    // a caller with no credentials could tell enrolled accounts apart (D6,
+    // 2026-09-23). The truthful answer does not depend on the account: every
+    // enterprise sign-in asks for a second factor after the password
+    // (verify-password always answers requiresMfa), an emailed code when no
+    // authenticator is enrolled.
+    return res.json({
       authFlow: 'password',
-      mfaRequired: user.mfaEnabled === true,
+      mfaRequired: true,
       email: normalizedEmail,
     });
   } catch (error: any) {
@@ -277,6 +272,18 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       .limit(1);
 
     if (!userResult.length) {
+      // The same bcrypt cost a wrong password pays, so the response time does
+      // not say whether the e-mail is enrolled (audit IAM-18 item 8; the main
+      // door pays it through the same module).
+      await padUnknownEmailTiming(password);
+      await recordAuthEvent({
+        action: 'user_login',
+        email: normalizedEmail,
+        outcome: 'failure',
+        reason: 'unknown_email',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password',
@@ -285,9 +292,60 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
 
     const user = userResult[0];
 
+    // 2026-09-28 (SEC-0928-2): every refusal below took its tenant from
+    // users.default_organization_id alone. An account added through
+    // POST /api/tenant-users has a membership and no default, so its refusals
+    // (address unconfirmed, out of use, locked, wrong password) named no
+    // organisation and were written to the platform's chain (tenant 0). They
+    // now name the organisation its sign-in lands in, as routes/auth.ts has
+    // since F-41 (f339a4459).
+    // An account out of use (suspended, deprovisioned) signs in nowhere: the
+    // main login refuses it before comparing the password (AUTH_ACCOUNT_INACTIVE);
+    // this step admitted it and minted the MFA-partial token (security audit
+    // 2026-09-24, IAM-18 item 5). Refused before the lockout and the password,
+    // so a suspended account spends neither.
+    // A signed-up account whose address is not yet confirmed (IAM-17) is told
+    // so, with the same code the main login uses.
+    if (isPendingVerificationStatus(user.status)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: await auditOrganizationOf(user),
+        email: user.email,
+        outcome: 'failure',
+        reason: 'email_unverified',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({ error: 'AUTH_EMAIL_UNVERIFIED', message: EMAIL_UNVERIFIED_MESSAGE });
+    }
+    if (!isActiveAccountStatus(user.status)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: await auditOrganizationOf(user),
+        email: user.email,
+        outcome: 'failure',
+        reason: 'account_inactive',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({ error: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
+    }
+
     // Check account lockout
     const lockStatus = await isAccountLocked(user.id);
     if (lockStatus.locked) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: await auditOrganizationOf(user),
+        email: user.email,
+        outcome: 'failure',
+        reason: 'account_locked',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(423).json({
         error: 'ACCOUNT_LOCKED',
         message: 'Account is temporarily locked due to too many failed attempts. Try again later.',
@@ -295,15 +353,30 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       });
     }
 
-    // Verify password using bcrypt
+    // Verify password using bcrypt. An account with no stored password
+    // (provisioned, never set) pays the comparison an unknown e-mail pays, so
+    // it is not told apart by timing either (IAM-18 item 8).
     const bcrypt = await import('bcryptjs');
-    const passwordValid = user.passwordHash
-      ? await bcrypt.compare(password, user.passwordHash)
-      : false;
+    let passwordValid = false;
+    if (user.passwordHash) {
+      passwordValid = await bcrypt.compare(password, user.passwordHash);
+    } else {
+      await padUnknownEmailTiming(password);
+    }
 
     if (!passwordValid) {
       // Record failed attempt
       const failResult = await recordFailedLogin(user.id);
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: await auditOrganizationOf(user),
+        email: user.email,
+        outcome: 'failure',
+        reason: failResult?.locked ? 'wrong_password_threshold_exceeded' : 'wrong_password',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password',
@@ -317,20 +390,40 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     // Check if password has expired
     const passwordExpired = await isPasswordExpired(user.id);
 
-    // Always require 2FA — email OTP for all users, TOTP for those who set it up
-    if (!user.defaultOrganizationId) {
+    // Always require 2FA — email OTP for all users, TOTP for those who set it up.
+    //
+    // The organisation this sign-in lands in: the account's membership in its
+    // default organisation when it holds one, otherwise its first membership —
+    // the rule the main login applies (routes/auth.ts). 2026-09-28: this read
+    // users.default_organization_id alone, so an account added through user
+    // administration (a membership, no default) was refused NO_ORGANIZATION
+    // here and nothing was recorded, and an account whose default was not a
+    // membership was issued a partial token naming it.
+    const membership = signInMembership(await membershipsOf(user.id), user.defaultOrganizationId);
+    if (!membership) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: await auditOrganizationOf(user),
+        email: user.email,
+        outcome: 'failure',
+        reason: 'no_organization',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(403).json({
         error: 'NO_ORGANIZATION',
         message: 'No organization assigned to this account',
       });
     }
+    const organizationId = membership.organizationId;
 
     // Issue partial token for MFA step
     const partialToken = jwt.sign(
       {
         userId: user.id.toString(),
         email: user.email,
-        organizationId: user.defaultOrganizationId.toString(),
+        organizationId: organizationId.toString(),
         role: 'pending_mfa',
         mfaPending: true,
       },
@@ -338,9 +431,23 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       { expiresIn: '5m' }
     );
 
-    const mfaMethod = (user as any).mfaMethod || 'email';
-    const hasTotpSetup = user.mfaEnabled === true && mfaMethod === 'totp';
+    // The rule the session reports too (mfa-enrolment.ts).
+    const hasTotpSetup = mfaEnrolmentOf(user).signInFactor === 'totp';
     let maskedEmail: string | undefined;
+
+    // Password verified, second factor requested: the same event /api/auth/login records.
+    // Against the organisation the partial token names, which verify-mfa
+    // records its events against too: one sign-in, one ledger.
+    await recordAuthEvent({
+      action: 'user_login_mfa_challenge',
+      userId: user.id,
+      tenantId: organizationId,
+      email: user.email,
+      outcome: 'success',
+      reason: hasTotpSetup ? 'mfa_challenge_totp' : 'mfa_challenge_email',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     if (!hasTotpSetup) {
       // Email OTP — generate and send
@@ -367,8 +474,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         displayName: user.name || user.email,
         role: 'user',
-        organizationId: user.defaultOrganizationId.toString(),
-        organizationName: 'Concept2Cure',
+        organizationId: organizationId.toString(),
       },
     });
   } catch (error: any) {
@@ -405,6 +511,13 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     try {
       decoded = verifyJwtWithRotation(partialToken) as any;
     } catch {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        outcome: 'failure',
+        reason: 'invalid_or_expired_challenge',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'TOKEN_EXPIRED',
         message: 'MFA session expired. Please re-enter your password.',
@@ -412,6 +525,13 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     }
 
     if (!decoded.mfaPending) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        outcome: 'failure',
+        reason: 'invalid_or_expired_challenge',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(400).json({
         error: 'INVALID_TOKEN',
         message: 'Token is not a valid MFA partial token',
@@ -421,45 +541,104 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     // Verify the MFA code using the same canonical MFA service as /api/auth/*
     const userId = parseInt(decoded.userId);
 
-    // Try email OTP first, then fall back to TOTP
-    let isValid = await emailOtpService.verifyEmailOtp(userId, code);
+    // A challenge issued before the account was suspended or deprovisioned does
+    // not become a session after it (the rule routes/auth.ts's /mfa/verify
+    // applies; audit IAM-18 item 5). Checked before the code, so an account out
+    // of use spends none.
+    if (!(await isAccountActive(userId))) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'account_inactive',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({ error: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
+    }
+
+    // The factor this account signs in with (mfa-enrolment.ts), read before any
+    // code is tried. An account with an authenticator never completes sign-in
+    // with an emailed code: the emailed code is the factor of accounts WITHOUT
+    // one, the rule /verify-password applies when it decides whether to mail
+    // one (audit IAM-08; P1-2 on routes/auth.ts, P1-38 here). Until 2026-09-26
+    // this door tried the emailed code first for every account.
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const authenticatorAccount = mfaEnrolmentOf(user ?? {}).signInFactor === 'totp';
+    let isValid = false;
     let verifiedMethod: 'email' | 'totp' | 'backup_code' = 'email';
 
-    if (!isValid) {
-      const detectedMethod = await mfaService.detectVerificationMethod(userId, code);
-      isValid = await mfaService.verifyToken(userId, code);
-      if (isValid && detectedMethod) {
-        verifiedMethod = detectedMethod;
-      } else if (isValid) {
-        verifiedMethod = 'totp';
-      }
+    if (!authenticatorAccount) {
+      isValid = await emailOtpService.verifyEmailOtp(userId, code);
     }
 
     if (!isValid) {
+      // The authenticator, or one of the recovery codes the enrolment issued.
+      // One call that verifies AND consumes the code, and says which method did.
+      // It was a non-consuming detectVerificationMethod followed by verifyToken:
+      // a second, independent verification of the same code (removed 2026-09-23).
+      // The login challenge is the one place a recovery code is redeemable
+      // (P1-2, 2026-09-25); signing keeps asking for the authenticator.
+      const method = await mfaService.verifyLoginSecondFactor(userId, code);
+      isValid = method !== null;
+      if (method) verifiedMethod = method === 'recovery' ? 'backup_code' : method;
+    }
+
+    if (!isValid) {
+      // The organisation comes from the partial token this server signed.
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'invalid_code',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'INVALID_MFA_CODE',
-        message: 'Invalid or expired verification code. Please try again.',
+        message: 'Invalid or expired verification code. Each code works once; if you just used it, wait for the next.',
       });
     }
 
     // MFA verified — issue full token with actual role
     const mfaOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
 
-    // Parallel: fetch role, user details, and org name concurrently
-    const [mfaActualRole, [mfaUserData], mfaOrgResult] = await Promise.all([
-      mfaOrgId ? lookupOrgRole(userId, mfaOrgId) : Promise.resolve('user'),
-      db.select().from(users).where(eq(users.id, userId)).limit(1),
+    // Parallel: fetch role and org name concurrently (the user row was read above).
+    const [mfaMembershipRole, mfaOrgResult] = await Promise.all([
+      mfaOrgId ? membershipRoleOf(userId, mfaOrgId) : Promise.resolve(null),
       mfaOrgId
         ? db
-            .select({ name: organizations.name })
+            .select({ name: organizations.name, settings: organizations.settings })
             .from(organizations)
             .where(eq(organizations.id, mfaOrgId))
             .limit(1)
         : Promise.resolve([]),
     ]);
-    const user = mfaUserData;
+    // A session only in an organisation the account belongs to — by now, not
+    // only when the partial token was minted (2026-09-28; see membershipRoleOf).
+    if (!mfaMembershipRole) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'no_membership',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({ error: 'NO_ORGANIZATION', message: 'No organization assigned to this account' });
+    }
+    const mfaActualRole = mfaMembershipRole;
     const mfaVerifyOrgName = mfaOrgResult[0]?.name || 'Organization';
 
+    // The session's id, start and idle window, registered against the
+    // account's concurrent-session limit (P1-1).
+    const session = await openSession(userId, mfaOrgResult[0]?.settings);
     const token = jwt.sign(
       {
         userId: decoded.userId,
@@ -467,10 +646,23 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         organizationId: decoded.organizationId,
         role: mfaActualRole,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
+
+    // The session is created here: the sign-in's success event.
+    await recordAuthEvent({
+      action: 'user_login',
+      userId,
+      tenantId: decoded.organizationId,
+      email: user?.email || decoded.email,
+      outcome: 'success',
+      reason: 'mfa_verified',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     res.json({
       success: true,
@@ -503,7 +695,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
  */
 router.post('/mfa/setup', async (req: Request, res: Response) => {
   try {
-    const decoded = extractJwtUser(req);
+    const decoded = await extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -517,6 +709,11 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
       otpauthUrl: result.otpauthUrl,
     });
   } catch (error) {
+    // Refused by mfaService.generateSecret while a factor is enrolled (F-26);
+    // the enterprise router answered that refusal with this 500.
+    if (error instanceof mfaService.MfaAlreadyEnabledError) {
+      return res.status(409).json({ error: 'MFA_ALREADY_ENABLED', message: error.message });
+    }
     console.error('[Enterprise Auth] mfa/setup error:', error);
     res.status(500).json({ error: 'Failed to setup MFA' });
   }
@@ -529,7 +726,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
  */
 router.post('/mfa/enable', async (req: Request, res: Response) => {
   try {
-    const decoded = extractJwtUser(req);
+    const decoded = await extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -548,7 +745,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     if (!result.success) {
       return res.status(400).json({
         error: 'INVALID_CODE',
-        message: 'Invalid verification code. MFA not enabled.',
+        message: 'Invalid verification code. MFA not enabled. Each code works once; if you just used it, wait for the next.',
       });
     }
 
@@ -570,7 +767,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
  */
 router.post('/mfa/disable', async (req: Request, res: Response) => {
   try {
-    const decoded = extractJwtUser(req);
+    const decoded = await extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -654,8 +851,28 @@ router.get(
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const signatureId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const result = await verifySignatureIntegrity(parseInt(signatureId, 10));
+      const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const signatureId = Number.parseInt(String(raw), 10);
+      if (!Number.isInteger(signatureId)) {
+        // Previously parseInt('abc') -> NaN went straight into the query.
+        return res.status(400).json({ error: 'Invalid signature id' });
+      }
+
+      /* The organization comes from the VERIFIED JWT — authMiddleware sets
+         req.user.organizationId from the token claim and re-checks that the
+         membership row still exists — never from the request, so a caller cannot
+         widen its own scope by asking for another tenant's signature id.
+         electronic_signatures.id is a serial, and this read used to select on it
+         alone: any authenticated user could count upwards and read another
+         tenant's signer_name, signed_at, signature_type and signature_meaning. */
+      const orgRaw = (req as unknown as { user?: { organizationId?: unknown } }).user
+        ?.organizationId;
+      const organizationId = Number.isFinite(Number(orgRaw)) ? Number(orgRaw) : null;
+      if (organizationId === null) {
+        return res.status(403).json({ error: 'Organization context required' });
+      }
+
+      const result = await verifySignatureIntegrity(signatureId, organizationId);
       res.json(result);
     } catch (error) {
       console.error('[Enterprise Auth] signature verification error:', error);
@@ -696,7 +913,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(existingToken) as any;
+    const decoded = (await verifyLiveToken(existingToken)) as any;
     // SECURITY: a pre-MFA (mfaPending / mfa_challenge) or refresh token must not
     // be exchanged for a full 24h access token here — that would let a
     // password-only session skip MFA. Require a genuine access token.
@@ -740,7 +957,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
 
     // Look up org details
     const [org] = await db
-      .select({ id: organizations.id, name: organizations.name })
+      .select({ id: organizations.id, name: organizations.name, settings: organizations.settings })
       .from(organizations)
       .where(eq(organizations.id, parseInt(organizationId)))
       .limit(1);
@@ -750,10 +967,16 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     // Issue new JWT scoped to the selected organization with actual role
     const jwtEmail = Array.isArray(email) ? email[0] : email;
     const token = jwt.sign(
-      { userId, email: jwtEmail, organizationId: String(organizationId), role: selectOrgRole, type: 'access' },
+      // The same session, with the selected organisation's idle window (P1-1).
+      { userId, email: jwtEmail, organizationId: String(organizationId), role: selectOrgRole, type: 'access', ...continuedSessionClaims(decoded), idl: idleWindowSecondsOf(org?.settings) },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
+    // Rotation, as at /refresh-token and POST /api/auth/refresh (IAM-04): the
+    // presented token is spent the moment its successor exists. Until 2026-09-26
+    // the switch revoked nothing, so the old organisation's token and the new
+    // one stayed live together for the rest of the session.
+    await revokeToken(existingToken, 'rotated');
 
     // AUDIT: this is a tenant-boundary crossing and it was previously silent.
     //
@@ -769,25 +992,34 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     // origin in metadata, because that is the direction a reviewer reads it from.
     // Fire-and-forget: an audit-sink outage must not break a legitimate switch,
     // and the failure is logged rather than swallowed.
+    //
+    // Written in the scope of the organisation being entered, with no role. The
+    // request runs in the pre-auth scope (tenant '0'), whose audit_logs policy
+    // refused this row under RLS like every other tenant-named auth event (F-19).
+    // Membership was validated above.
     void import('../services/audit/auditLogger')
       .then(({ logAuditEvent }) =>
-        logAuditEvent({
-          category: 'authorization',
-          severity: 'info',
-          action: 'organization_switch',
-          userId: String(userId),
-          organizationId: String(organizationId),
-          resourceType: 'organization',
-          resourceId: String(organizationId),
-          success: true,
-          metadata: {
-            fromOrganizationId: decoded.organizationId != null ? String(decoded.organizationId) : null,
-            toOrganizationId: String(organizationId),
-            roleInTarget: selectOrgRole,
-          },
-          ipAddress: req.ip,
-          userAgent: req.get('user-agent'),
-        })
+        runWithTenantScope(
+          { tenantId: String(organizationId), role: null, source: 'request', caller: 'auth audit: organization_switch' },
+          () =>
+            logAuditEvent({
+              category: 'authorization',
+              severity: 'info',
+              action: 'organization_switch',
+              userId: String(userId),
+              organizationId: String(organizationId),
+              resourceType: 'organization',
+              resourceId: String(organizationId),
+              success: true,
+              metadata: {
+                fromOrganizationId: decoded.organizationId != null ? String(decoded.organizationId) : null,
+                toOrganizationId: String(organizationId),
+                roleInTarget: selectOrgRole,
+              },
+              ipAddress: req.ip,
+              userAgent: req.get('user-agent'),
+            })
+        )
       )
       .catch(auditError => {
         console.warn(
@@ -807,7 +1039,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[Enterprise Auth] select-organization error:', error);
 
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         error: 'TOKEN_EXPIRED',
         message: 'Session expired. Please log in again.',
@@ -837,7 +1069,8 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = verifyJwtWithRotation(oldToken) as any;
+    // A rotation is not the user acting (P1-1): it is not the session's activity.
+    const decoded = (await verifyLiveToken(oldToken, undefined, { activity: false })) as any;
 
     // SECURITY: this endpoint re-mints a full 24h access token. A pre-MFA
     // (mfaPending / mfa_challenge) or refresh token presented here would let a
@@ -854,9 +1087,11 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
 
     // Re-query actual role from DB instead of trusting stale JWT claim
     const refreshOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
-    const refreshRole = refreshOrgId
-      ? await lookupOrgRole(parseInt(decoded.userId), refreshOrgId)
-      : 'user';
+    const refreshRole = refreshOrgId ? await membershipRoleOf(parseInt(decoded.userId), refreshOrgId) : 'user';
+    // No membership any more: no successor token (2026-09-28; see membershipRoleOf).
+    if (!refreshRole) {
+      return res.status(403).json({ error: 'NO_ORGANIZATION', message: 'No organization assigned to this account' });
+    }
 
     const newToken = jwt.sign(
       {
@@ -865,10 +1100,18 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
         organizationId: decoded.organizationId,
         role: refreshRole,
         type: 'access',
+        ...continuedSessionClaims(decoded),
       },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
+
+    // Security audit 2026-09-24, IAM-04: rotation. The presented token is spent
+    // the moment its successor exists. Before this nothing was revoked, so any
+    // live access token renewed itself for ever, a day at a time, and logging
+    // out of the successor left its predecessor live. Revoked after minting, so
+    // a failed mint spends nothing.
+    await revokeToken(oldToken, 'rotated');
 
     res.json({
       success: true,
@@ -897,7 +1140,7 @@ router.get('/session', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = verifyJwtWithRotation(token) as any;
+    const decoded = (await verifyLiveToken(token)) as any;
     // SECURITY: a pre-MFA / refresh token is not an authenticated session.
     if (requireAccessTokenReason(decoded)) {
       return res.json({ authenticated: false });
@@ -920,11 +1163,12 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /logout
  * End user session
  */
-router.post('/logout', (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    message: 'Logged out successfully',
-  });
+router.post('/logout', (_req: Request, res: Response) => {
+  // Answered by the canonical logout, which revokes the presented token (and a
+  // refresh token in the body) and records the event. This handler used to
+  // answer "Logged out successfully" and do neither (July 2026 audit, AUTH-03).
+  // A 307 keeps the method, the body and the Authorization header.
+  res.redirect(307, '/api/auth/logout');
 });
 
 export default router;

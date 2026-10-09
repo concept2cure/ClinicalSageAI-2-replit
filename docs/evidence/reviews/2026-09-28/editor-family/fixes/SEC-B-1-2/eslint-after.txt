@@ -1,0 +1,42 @@
+client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts errors=0 warnings=1
+    undefined:undefined warning null File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.
+client/src/concept2cure/components/ana/renderSafeMarkdown.ts errors=0 warnings=1
+    undefined:undefined warning null File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.
+client/src/concept2cure/v2/__tests__/imageEditing.test.ts errors=0 warnings=0
+client/src/concept2cure/v2/editor/AuthoredHtml.tsx errors=0 warnings=0
+client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx errors=0 warnings=0
+client/src/concept2cure/v2/editor/imageNode.ts errors=0 warnings=0
+server/routes/__tests__/authoring-section-figure-refs.test.ts errors=0 warnings=0
+server/routes/authoring.router.ts errors=0 warnings=28
+    117:53 warning complexity Arrow function has a complexity of 21. Maximum allowed is 15.
+    678:3 warning max-params Async arrow function has too many parameters (10). Maximum allowed is 5.
+    725:3 warning max-params Async arrow function has too many parameters (7). Maximum allowed is 5.
+    901:3 warning max-params Arrow function has too many parameters (7). Maximum allowed is 5.
+    973:5 warning no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    977:1 warning max-lines File has too many lines (4211). Maximum allowed is 500.
+    1673:74 warning max-lines-per-function Async arrow function has too many lines (248). Maximum allowed is 100.
+    1673:74 warning complexity Async arrow function has a complexity of 61. Maximum allowed is 15.
+    2402:74 warning complexity Async arrow function has a complexity of 21. Maximum allowed is 15.
+    3021:82 warning max-lines-per-function Async arrow function has too many lines (224). Maximum allowed is 100.
+    3021:82 warning complexity Async arrow function has a complexity of 32. Maximum allowed is 15.
+    3344:89 warning max-lines-per-function Async arrow function has too many lines (140). Maximum allowed is 100.
+    3344:89 warning complexity Async arrow function has a complexity of 26. Maximum allowed is 15.
+    3570:92 warning max-lines-per-function Async arrow function has too many lines (158). Maximum allowed is 100.
+    3874:72 warning max-lines-per-function Async arrow function has too many lines (131). Maximum allowed is 100.
+    3874:72 warning complexity Async arrow function has a complexity of 31. Maximum allowed is 15.
+    4090:72 warning max-lines-per-function Async arrow function has too many lines (121). Maximum allowed is 100.
+    4090:72 warning complexity Async arrow function has a complexity of 22. Maximum allowed is 15.
+    4912:80 warning max-lines-per-function Async arrow function has too many lines (114). Maximum allowed is 100.
+    4912:80 warning complexity Async arrow function has a complexity of 27. Maximum allowed is 15.
+    5023:9 warning max-depth Blocks are nested too deeply (5). Maximum allowed is 4.
+    5420:72 warning max-lines-per-function Async arrow function has too many lines (104). Maximum allowed is 100.
+    5420:72 warning complexity Async arrow function has a complexity of 19. Maximum allowed is 15.
+    5750:70 warning complexity Async arrow function has a complexity of 18. Maximum allowed is 15.
+    6135:92 warning complexity Async arrow function has a complexity of 23. Maximum allowed is 15.
+    6229:97 warning complexity Async arrow function has a complexity of 20. Maximum allowed is 15.
+    6379:82 warning complexity Async arrow function has a complexity of 16. Maximum allowed is 15.
+    6515:39 warning complexity Async arrow function has a complexity of 16. Maximum allowed is 15.
+server/services/authoring/__tests__/authoring-html-sanitizer.test.ts errors=0 warnings=0
+server/services/authoring/authoring-html-sanitizer.ts errors=0 warnings=0
+shared/__tests__/figure-refs.test.ts errors=0 warnings=0
+shared/authoring/figure-refs.ts errors=0 warnings=0

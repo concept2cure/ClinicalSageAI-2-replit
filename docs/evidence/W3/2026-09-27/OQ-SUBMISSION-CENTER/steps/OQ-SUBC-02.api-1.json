@@ -1,0 +1,34 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/submissions",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "programId": "accb8b6b-b4f5-400f-9276-0a4516db92cf",
+      "title": "bad",
+      "applicationType": "IND",
+      "clientType": "biotech",
+      "primaryRegion": "mars"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 18,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "VALIDATION",
+        "details": {
+          "formErrors": [],
+          "fieldErrors": {
+            "primaryRegion": [
+              "Invalid enum value. Expected 'fda' | 'ema' | 'eu' | 'pmda' | 'jp' | 'ca' | 'uk' | 'cn' | 'au' | 'ch' | 'br' | 'in' | 'kr' | 'sg', received 'mars'"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

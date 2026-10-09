@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5600/api/audit-trail/ledger?limit=200",
+    "anonymous": false,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 7,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": []
+    }
+  }
+}

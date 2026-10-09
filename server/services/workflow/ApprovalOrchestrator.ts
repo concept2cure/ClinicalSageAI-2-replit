@@ -13,6 +13,7 @@
  */
 
 import { db } from '../../db';
+import { resolveActorNames } from '../tenant/actor-names';
 import { eq, and, inArray } from 'drizzle-orm';
 import {
   documentWorkflows,
@@ -24,7 +25,6 @@ import {
   workflowDocumentVersions,
   documentAuditLogs,
 } from '../../../shared/schema/unified_workflow';
-import { users } from '../../../shared/schema';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -450,15 +450,12 @@ export class ApprovalOrchestrator {
           .filter(n => Number.isFinite(n) && n > 0),
       ),
     );
-    const initiatorRows = initiatorIds.length
-      ? await db
-          .select({ id: users.id, name: users.name })
-          .from(users)
-          .where(inArray(users.id, initiatorIds))
-      : [];
-    const initiatorById = new Map<number, string>(
-      initiatorRows.map(r => [r.id, r.name]),
-    );
+    // Through actor_name, so an initiator who has since left is still named
+    // (tenant/actor-names.ts; D3 2026-09-29).
+    const initiatorById = new Map<number, string>();
+    for (const [id, a] of await resolveActorNames(initiatorIds)) {
+      if (a.name) initiatorById.set(id, a.name);
+    }
 
     /* Resolve the current version row for every document in this batch,
        in one round-trip. `unified_documents.latest_version` holds the

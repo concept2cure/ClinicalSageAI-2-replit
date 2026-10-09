@@ -34,9 +34,10 @@
    with no rhythm between them. Matching the bar's inset puts the panel's
    content box where the bar's is; the remaining 16px to the label is
    `.pwt-btn`'s own padding, which is its hit area and should stay.
-   mdx only: `PathwayTabBar` renders inside `.mdx-shell` and nowhere else, so a
-   copy in `v2/styles/pathway-core-v2.css` would be a new cross-shell collision
-   for a class the v2 shell never mounts. */
+   mdx only: `PathwayTabBar` renders inside `.mdx-shell` and nowhere else. The
+   v2 shell once carried a fork of this whole sheet (pathway-core-v2.css and
+   pathway-panels-v2.css, 243 of 254 rules identical) for classes it never
+   mounts; that fork is gone and this file is the one place these rules live. */
 .mdx-shell .pwt-pane { padding: 16px 24px 0; }
 .mdx-shell .pwt-btn.active {
   color: var(--text-100); font-weight: 500;
@@ -50,7 +51,7 @@
   font-variant-numeric: tabular-nums;
   margin-left: 6px;
 }
-.mdx-shell .pwt-count.badge { background: var(--accent-100); color: var(--text-000); }
+.mdx-shell .pwt-count.badge { background: var(--accent-strong); color: var(--accent-on-strong); }
 .mdx-shell .pwt-sub { font-size: 10px; color: var(--text-400); font-weight: 400; letter-spacing: 0.01em; }
 
 /* ─── Audit pane ─────────────────────────────────────────── */
@@ -168,7 +169,6 @@
 .mdx-shell .audit-act:hover { background: var(--bg-100); }
 .mdx-shell .audit-act svg { width: 13px; height: 13px; }
 .mdx-shell .audit-act.primary { background: var(--text-100); color: var(--text-000); border-color: var(--text-100); }
-.mdx-shell .audit-act.primary:hover { filter: brightness(1.1); }
 
 /* ─── Correspondence pane ────────────────────────────────── */
 .mdx-shell .corr-pane { display: flex; flex-direction: column; height: 100%; min-height: 0; }
@@ -314,10 +314,10 @@
 .mdx-shell .ap-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .mdx-shell .ap-sign-btn {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px; background: var(--accent-100); color: var(--text-000);
+  padding: 7px 14px; background: var(--accent-strong); color: var(--accent-on-strong);
   border-radius: var(--radius-md); font-size: 12px; font-weight: 500;
 }
-.mdx-shell .ap-sign-btn:hover { background: var(--accent-200); }
+.mdx-shell .ap-sign-btn:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .mdx-shell .ap-sign-btn svg { width: 13px; height: 13px; }
 .mdx-shell .ap-decline-btn,
 .mdx-shell .ap-review-btn {
@@ -346,7 +346,7 @@
   border-radius: var(--radius-md); background: var(--bg-000);
   font-size: 13px; color: var(--text-100); width: 100%; box-sizing: border-box;
 }
-.mdx-shell .ap-sign-input:focus { border-color: var(--accent-100); outline: 0; box-shadow: 0 0 0 2px var(--accent-000); }
+.mdx-shell .ap-sign-input:focus { border-color: var(--accent-200); outline: 0; box-shadow: 0 0 0 2px var(--accent-000); }
 .mdx-shell .ap-sign-creds { display: flex; gap: 8px; flex-wrap: wrap; }
 .mdx-shell .ap-sign-creds .ap-sign-input { flex: 1; min-width: 180px; max-width: 280px; }
 .mdx-shell .ap-sign-confirm {
@@ -354,8 +354,7 @@
   border-radius: var(--radius-md); font-size: 12px; font-weight: 500;
   display: inline-flex; align-items: center; gap: 6px;
 }
-.mdx-shell .ap-sign-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
-.mdx-shell .ap-sign-confirm:not(:disabled):hover { filter: brightness(1.1); }
+.mdx-shell .ap-sign-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
 .mdx-shell .ap-sign-confirm svg { width: 13px; height: 13px; }
 .mdx-shell .ap-sign-cancel { padding: 8px 12px; font-size: 12px; color: var(--text-400); }
 .mdx-shell .ap-sign-cancel:hover { color: var(--text-100); }
@@ -453,10 +452,10 @@
 
 .mdx-shell .dd-foot-edit {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 14px; background: var(--accent-100); color: var(--text-000);
+  padding: 8px 14px; background: var(--accent-strong); color: var(--accent-on-strong);
   border-radius: var(--radius-md); font-size: 12px; font-weight: 500;
 }
-.mdx-shell .dd-foot-edit:hover { background: var(--accent-200); }
+.mdx-shell .dd-foot-edit:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .mdx-shell .dd-foot-edit svg { width: 13px; height: 13px; }
 
 /* ─── DossierDrawer · path bar + tabs ──────────────────────── */
@@ -496,13 +495,13 @@
   padding: 1px 5px;
   background: var(--bg-100);
   color: var(--text-300);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   min-width: 16px;
   text-align: center;
 }
 .mdx-shell .dd-tab[data-on="true"] .dd-tab-count {
-  background: var(--accent-100);
-  color: var(--text-000);
+  background: var(--accent-strong);
+  color: var(--accent-on-strong);
 }
 
 /* ─── DossierDrawer · Document tab ─────────────────────────── */
@@ -539,7 +538,7 @@
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .mdx-shell .dd-doc-edit:focus {
-  border-color: var(--accent-100);
+  border-color: var(--accent-200);
   box-shadow: 0 0 0 3px var(--accent-muted, rgba(217, 119, 87, 0.18));
 }
 
@@ -608,16 +607,16 @@
   font-size: 10.5px; color: var(--text-400);
   display: inline-flex; gap: 6px; flex-wrap: wrap; align-items: center;
 }
-.mdx-shell .dd-att-sub .mono { font-family: var(--font-mono); font-size: 9.5px; }
+.mdx-shell .dd-att-sub .mono { font-family: var(--font-mono); font-size: 10px; }
 
 .mdx-shell .dd-att-tag,
 .mdx-shell .dd-act-tag {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   padding: 2px 6px;
-  background: var(--accent-100);
-  color: var(--text-000);
-  border-radius: 8px;
+  background: var(--accent-strong);
+  color: var(--accent-on-strong);
+  border-radius: var(--radius-lg);
   text-transform: uppercase; letter-spacing: 0.05em;
   flex-shrink: 0;
 }
@@ -648,6 +647,11 @@
 .mdx-shell .dd-act-file { color: var(--text-300); }
 .mdx-shell .dd-act-sub { font-size: 10.5px; color: var(--text-400); margin-top: 2px; }
 /* audit and correspondence detail panes, the correspondence bar's left group (ledger L139) */
-.audit-det { display: flex; flex-direction: column; gap: 8px; }
-.corr-bar-l { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.corr-det { display: flex; flex-direction: column; gap: 8px; }
+.mdx-shell .audit-det { display: flex; flex-direction: column; gap: 8px; }
+.mdx-shell .corr-bar-l { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mdx-shell .corr-det { display: flex; flex-direction: column; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mdx-shell .dd-scrim,
+  .mdx-shell .dd-drawer { animation: none; }
+}

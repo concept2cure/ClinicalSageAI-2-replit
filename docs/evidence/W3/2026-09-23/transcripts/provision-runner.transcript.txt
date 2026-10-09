@@ -1,0 +1,6 @@
+User upserted: oq-runner@validation.local (id: 17)
+
+=== LOGIN CREDENTIALS ===
+Email   : oq-runner@validation.local
+Password: [REDACTED]
+=========================

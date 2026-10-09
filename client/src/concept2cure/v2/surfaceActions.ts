@@ -125,7 +125,76 @@ export type SurfaceActionOutcome =
  */
 export type SurfaceActionHandler = (
   params: Record<string, string>,
+  context: SurfaceActionContext,
 ) => { ok: true; detail?: string } | { ok: false; reason: string; retry?: boolean };
+
+/** A directive's program, as readDirectiveProgram accepts it. */
+export type DirectiveProgram = { id: string; name?: string; code?: string };
+
+/**
+ * What the server resolved for an operation, beside its params — today the
+ * program (SurfaceActionDirective.program). Params are what the model wrote;
+ * this is what the server found.
+ */
+export interface SurfaceActionContext {
+  program?: DirectiveProgram;
+}
+
+/**
+ * The program a drive directive or chip carries, when the server resolved one
+ * (navigate_to's `program`, and act_on_screen's for projects.open-program):
+ * `{ id, name?, code? }` with a non-empty string id, or null. It rides beside
+ * the registry's directive — program identity is tenant data, not registry
+ * state, so re-validation against the registry cannot vouch for it; the
+ * surfaces that read the open program validate it by fetching, as they do
+ * after any selection.
+ */
+export function readDirectiveProgram(raw: unknown): DirectiveProgram | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const p = (raw as { program?: unknown }).program;
+  if (!p || typeof p !== 'object') return null;
+  const { id, name, code } = p as { id?: unknown; name?: unknown; code?: unknown };
+  const idStr = typeof id === 'number' ? String(id) : typeof id === 'string' ? id.trim() : '';
+  if (!idStr) return null;
+  return {
+    id: idStr,
+    ...(typeof name === 'string' && name.trim() ? { name: name.trim() } : {}),
+    ...(typeof code === 'string' && code.trim() ? { code: code.trim() } : {}),
+  };
+}
+
+/** How many on-screen names a refusal lists before summarising the rest. */
+export const LISTED_CHOICES_MAX = 8;
+/**
+ * Longest name listed in full. The refusal reaches AnA as a screen report,
+ * which the server caps; eight long titles could run past it and end one
+ * mid-name. A shortened name is listed as its opening words with the ellipsis
+ * OUTSIDE the quotes, because the handlers resolve a unique partial name — the
+ * quoted part is what she can send back.
+ */
+export const LISTED_NAME_MAX = 80;
+
+/**
+ * The names a pick-by-name action could have used, for its refusal reason.
+ *
+ * AnA cannot see the screen she drives. A handler that refused "open the
+ * document X" with only "no document matching X" left her nothing to try next —
+ * a demonstration stop that says "open one of their real documents" failed on
+ * every guess, because the titles live on the screen and nowhere she could
+ * read. The refusal reaches her as a screen report, so naming what IS listed
+ * turns a dead end into a retry with a real name. Only what the person can see
+ * on that screen: this is their list, not a side channel to hidden data.
+ */
+export function listedChoices(names: ReadonlyArray<string>, noun = 'Listed'): string {
+  const unique = [...new Set(names.map(n => n.trim()).filter(Boolean))];
+  if (unique.length === 0) return '';
+  const shown = unique
+    .slice(0, LISTED_CHOICES_MAX)
+    .map(n => (n.length > LISTED_NAME_MAX ? `"${n.slice(0, LISTED_NAME_MAX).trimEnd()}"…` : `"${n}"`))
+    .join(', ');
+  const rest = unique.length - LISTED_CHOICES_MAX;
+  return ` ${noun}: ${shown}${rest > 0 ? ` and ${rest} more` : ''}.`;
+}
 
 interface Registration {
   surfaceId: string;
@@ -146,11 +215,51 @@ interface PendingEntry {
 export const PENDING_ACTION_TTL_MS = 20 * 1000;
 
 let pending: PendingEntry | null = null;
+let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Put a directive in the pending slot. Whatever held the slot is told it will
+ * not run (it was superseded), and the new entry reports its own expiry: a
+ * stash used to die silently on both counts, so the drive recorded — and AnA
+ * narrated — operations that never happened.
+ */
+function stash(entry: PendingEntry): void {
+  const previous = pending;
+  pending = entry;
+  if (pendingTimer) clearTimeout(pendingTimer);
+  pendingTimer = setTimeout(() => {
+    pendingTimer = null;
+    if (pending !== entry) return;
+    pending = null;
+    entry.onOutcome?.({
+      status: 'unavailable',
+      reason: `The ${entry.directive.surfaceId} screen did not become ready in time.`,
+    });
+  }, PENDING_ACTION_TTL_MS);
+  if (previous && previous !== entry) {
+    previous.onOutcome?.({
+      status: 'unavailable',
+      reason: `"${previous.directive.label}" was replaced by a newer action before its screen was ready.`,
+    });
+  }
+}
+
+/** Take the entry out of the pending slot (it is being resolved now). */
+function unstash(entry: PendingEntry): void {
+  if (pending !== entry) return;
+  pending = null;
+  if (pendingTimer) {
+    clearTimeout(pendingTimer);
+    pendingTimer = null;
+  }
+}
 
 /** Test hook: wipe all module state. */
 export function __resetSurfaceActionBus(): void {
   registration = null;
   pending = null;
+  if (pendingTimer) clearTimeout(pendingTimer);
+  pendingTimer = null;
 }
 
 /** The surface id currently holding registered handlers (null when none). */
@@ -220,9 +329,9 @@ export function useSurfaceActionHandlers(
     // Stable proxies delegate to the latest real handler at call time.
     const proxies: Record<string, SurfaceActionHandler> = {};
     for (const id of Object.keys(latest.current)) {
-      proxies[id] = (params) => {
+      proxies[id] = (params, context) => {
         const h = latest.current[id];
-        return h ? h(params) : { ok: false, reason: 'handler no longer present' };
+        return h ? h(params, context) : { ok: false, reason: 'handler no longer present' };
       };
     }
     return registerSurfaceActionHandlers(surfaceId, proxies);
@@ -233,19 +342,23 @@ export function useSurfaceActionHandlers(
  * Attempt the pending directive for `surfaceId`. Terminal outcomes (applied /
  * hard failure / unavailable-handler) consume the entry and report through
  * its deferred callback; a NOT-READY refusal (`retry: true`) leaves the entry
- * pending until the TTL kills it. An expired entry dies silently — nothing
- * was performed, so nothing is claimed.
+ * pending until the TTL expires it — and an expired entry REPORTS that it
+ * never ran, so no caller can go on believing it did.
  */
 function attemptPendingFor(surfaceId: string): void {
   const p = pending;
   if (!p || resolvedTargetSurface(p.directive) !== surfaceId) return;
   if (Date.now() - p.setAt > PENDING_ACTION_TTL_MS) {
-    pending = null;
+    unstash(p);
+    p.onOutcome?.({
+      status: 'unavailable',
+      reason: `The ${p.directive.surfaceId} screen did not become ready in time.`,
+    });
     return;
   }
   const res = performRaw(p.directive);
   if (res.kind === 'retry') return; // still pending — the ready signal re-attempts
-  pending = null;
+  unstash(p);
   p.onOutcome?.(res.outcome);
 }
 
@@ -276,7 +389,7 @@ function performRaw(
     };
   }
   try {
-    const res = handler(directive.params ?? {});
+    const res = handler(directive.params ?? {}, directive.program ? { program: directive.program } : {});
     if (res.ok) {
       return {
         kind: 'done',
@@ -300,7 +413,9 @@ function performRaw(
  * Re-validate an incoming drive/chip payload against the shared registry.
  * Same fail-closed rule as validateDriveDirective: the returned directive is
  * the registry's own resolution from actionId + params alone; anything
- * unknown, governed, or invalid returns null and nothing is performed.
+ * unknown, governed, or invalid returns null and nothing is performed. The
+ * program the server resolved rides beside it, shape-checked
+ * (readDirectiveProgram) — the registry cannot vouch for tenant data.
  */
 export function validateDriveAction(raw: unknown): SurfaceActionDirective | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -309,7 +424,9 @@ export function validateDriveAction(raw: unknown): SurfaceActionDirective | null
   const params =
     d.params && typeof d.params === 'object' ? (d.params as Record<string, unknown>) : {};
   const res = resolveSurfaceAction(d.actionId, params);
-  return res.ok ? res.directive : null;
+  if (!res.ok) return null;
+  const program = readDirectiveProgram(raw);
+  return program ? { ...res.directive, program } : res.directive;
 }
 
 /**
@@ -322,8 +439,8 @@ export function validateDriveAction(raw: unknown): SurfaceActionDirective | null
  * Returns the IMMEDIATE outcome ('applied' / 'failed' / 'unavailable', or
  * 'stashed' when the directive is waiting on a mount or a load). After a
  * stash, the terminal outcome arrives through `onDeferredOutcome` exactly
- * once — or never, if the stash expires unconsumed (the moment passed;
- * nothing was done, so nothing is claimed).
+ * once: applied, refused, or 'unavailable' when the stash expired unconsumed
+ * or was replaced by a newer one.
  */
 export function applySurfaceAction(
   directive: SurfaceActionDirective,
@@ -335,13 +452,14 @@ export function applySurfaceAction(
     const res = performRaw(directive);
     if (res.kind === 'done') return res.outcome;
     // Mounted but not ready — hold for the surface's ready signal.
-    pending = { directive, setAt: Date.now(), onOutcome: onDeferredOutcome };
+    stash({ directive, setAt: Date.now(), onOutcome: onDeferredOutcome });
     return { status: 'stashed' };
   }
   // Not mounted (or another surface is): stash one-shot and head there. A
-  // newer stash replaces an older one — the drive moved on, and so must we.
+  // newer stash replaces an older one — the drive moved on, and so must we —
+  // and the replaced one is told so rather than vanishing.
   // nav() applies the same alias resolution, so the nav-target id is correct.
-  pending = { directive, setAt: Date.now(), onOutcome: onDeferredOutcome };
+  stash({ directive, setAt: Date.now(), onOutcome: onDeferredOutcome });
   navigate(directive.surfaceId);
   return { status: 'stashed' };
 }

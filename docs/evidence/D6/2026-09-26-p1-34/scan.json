@@ -1,0 +1,4336 @@
+[
+ {
+  "tool": "ack_training",
+  "site": "server/services/ana/AnaToolExecutor.ts:13753",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "act_on_screen",
+  "site": "server/services/ana/AnaToolExecutor.ts:17103",
+  "signals": []
+ },
+ {
+  "tool": "add_amendment_change",
+  "site": "server/services/ana/AnaToolExecutor.ts:10876",
+  "signals": []
+ },
+ {
+  "tool": "add_biological_agent",
+  "site": "server/services/ana/AnaToolExecutor.ts:10492",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "add_capa_action",
+  "site": "server/services/ana/AnaToolExecutor.ts:10923",
+  "signals": []
+ },
+ {
+  "tool": "add_committee_agenda_item",
+  "site": "server/services/ana/AnaToolExecutor.ts:11798",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "add_coverage_item",
+  "site": "server/services/ana/AnaToolExecutor.ts:11949",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "add_ctq_factor",
+  "site": "server/services/ana/AnaToolExecutor.ts:3225",
+  "signals": []
+ },
+ {
+  "tool": "add_disclosure_interest",
+  "site": "server/services/ana/AnaToolExecutor.ts:10077",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "add_effort_line",
+  "site": "server/services/ana/AnaToolExecutor.ts:13224",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "add_eligibility_criterion",
+  "site": "server/services/ana/AnaToolExecutor.ts:11530",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "add_grant_budget_line",
+  "site": "server/services/ana/AnaToolExecutor.ts:12307",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "add_irb_site",
+  "site": "server/services/ana/AnaToolExecutor.ts:10389",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "add_labeling_symbol",
+  "site": "server/services/ana/AnaToolExecutor.ts:14204",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "add_labeling_translation",
+  "site": "server/services/ana/AnaToolExecutor.ts:14161",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "add_other_support_entry",
+  "site": "server/services/ana/AnaToolExecutor.ts:11104",
+  "signals": []
+ },
+ {
+  "tool": "add_personnel_training",
+  "site": "server/services/ana/AnaToolExecutor.ts:13143",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "add_protocol_budget_item",
+  "site": "server/services/ana/AnaToolExecutor.ts:10626",
+  "signals": []
+ },
+ {
+  "tool": "add_protocol_milestone",
+  "site": "server/services/ana/AnaToolExecutor.ts:10754",
+  "signals": []
+ },
+ {
+  "tool": "add_protocol_objective",
+  "site": "server/services/ana/AnaToolExecutor.ts:11506",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "add_protocol_review_comment",
+  "site": "server/services/ana/AnaToolExecutor.ts:10967",
+  "signals": []
+ },
+ {
+  "tool": "add_protocol_risk",
+  "site": "server/services/ana/AnaToolExecutor.ts:11399",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "add_risk_control",
+  "site": "server/services/ana/AnaToolExecutor.ts:8006",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "add_soa_assessment",
+  "site": "server/services/ana/AnaToolExecutor.ts:10666",
+  "signals": []
+ },
+ {
+  "tool": "adjust_multiplicity",
+  "site": "server/services/ana/AnaToolExecutor.ts:15609",
+  "signals": []
+ },
+ {
+  "tool": "advise_coa_selection",
+  "site": "server/services/ana/AnaToolExecutor.ts:2877",
+  "signals": []
+ },
+ {
+  "tool": "advise_ctd_structure",
+  "site": "server/services/ana/AnaToolExecutor.ts:2832",
+  "signals": []
+ },
+ {
+  "tool": "advise_data_integrity",
+  "site": "server/services/ana/AnaToolExecutor.ts:2086",
+  "signals": []
+ },
+ {
+  "tool": "advise_device_readiness",
+  "site": "server/services/ana/AnaToolExecutor.ts:2097",
+  "signals": []
+ },
+ {
+  "tool": "advise_estimand",
+  "site": "server/services/ana/AnaToolExecutor.ts:2795",
+  "signals": []
+ },
+ {
+  "tool": "advise_eu_technical_file_readiness",
+  "site": "server/services/ana/AnaToolExecutor.ts:2128",
+  "signals": []
+ },
+ {
+  "tool": "advise_gcp",
+  "site": "server/services/ana/AnaToolExecutor.ts:2860",
+  "signals": []
+ },
+ {
+  "tool": "advise_global_market_strategy",
+  "site": "server/services/ana/AnaToolExecutor.ts:2105",
+  "signals": []
+ },
+ {
+  "tool": "advise_global_submission_plan",
+  "site": "server/services/ana/AnaToolExecutor.ts:2145",
+  "signals": []
+ },
+ {
+  "tool": "advise_labeling_structure",
+  "site": "server/services/ana/AnaToolExecutor.ts:2584",
+  "signals": []
+ },
+ {
+  "tool": "advise_medical_information",
+  "site": "server/services/ana/AnaToolExecutor.ts:2785",
+  "signals": []
+ },
+ {
+  "tool": "advise_midd",
+  "site": "server/services/ana/AnaToolExecutor.ts:17701",
+  "signals": []
+ },
+ {
+  "tool": "advise_pharmacovigilance",
+  "site": "server/services/ana/AnaToolExecutor.ts:2818",
+  "signals": []
+ },
+ {
+  "tool": "advise_pma_readiness",
+  "site": "server/services/ana/AnaToolExecutor.ts:2137",
+  "signals": []
+ },
+ {
+  "tool": "advise_regulatory_pathway",
+  "site": "server/services/ana/AnaToolExecutor.ts:3445",
+  "signals": []
+ },
+ {
+  "tool": "advise_reporting_guideline",
+  "site": "server/services/ana/AnaToolExecutor.ts:2076",
+  "signals": []
+ },
+ {
+  "tool": "advise_risk_management",
+  "site": "server/services/ana/AnaToolExecutor.ts:2895",
+  "signals": []
+ },
+ {
+  "tool": "advise_rwe_design",
+  "site": "server/services/ana/AnaToolExecutor.ts:2546",
+  "signals": []
+ },
+ {
+  "tool": "advise_special_designation",
+  "site": "server/services/ana/AnaToolExecutor.ts:2846",
+  "signals": []
+ },
+ {
+  "tool": "advise_study_design",
+  "site": "server/services/ana/AnaToolExecutor.ts:2555",
+  "signals": []
+ },
+ {
+  "tool": "amend_fda_form",
+  "site": "server/services/ana/AnaToolExecutor.ts:418",
+  "signals": []
+ },
+ {
+  "tool": "amend_schedule_of_events",
+  "site": "server/services/ana/AnaToolExecutor.ts:2397",
+  "signals": [
+   "verb:scheduleToolContext"
+  ]
+ },
+ {
+  "tool": "ana_tool_pedigree",
+  "site": "server/services/ana/AnaToolExecutor.ts:2162",
+  "signals": []
+ },
+ {
+  "tool": "analyze_exposure_response",
+  "site": "server/services/ana/AnaToolExecutor.ts:17694",
+  "signals": []
+ },
+ {
+  "tool": "analyze_external_control_borrow",
+  "site": "server/services/ana/AnaToolExecutor.ts:15578",
+  "signals": []
+ },
+ {
+  "tool": "analyze_missing_data_impact",
+  "site": "server/services/ana/AnaToolExecutor.ts:5484",
+  "signals": []
+ },
+ {
+  "tool": "analyze_predicate_device",
+  "site": "server/services/ana/AnaToolExecutor.ts:4304",
+  "signals": []
+ },
+ {
+  "tool": "analyze_rmst",
+  "site": "server/services/ana/AnaToolExecutor.ts:15557",
+  "signals": []
+ },
+ {
+  "tool": "analyze_safety_signal",
+  "site": "server/services/ana/AnaToolExecutor.ts:15585",
+  "signals": []
+ },
+ {
+  "tool": "analyze_win_ratio",
+  "site": "server/services/ana/AnaToolExecutor.ts:15545",
+  "signals": []
+ },
+ {
+  "tool": "answer_intelligence_question",
+  "site": "server/services/ana/AnaToolExecutor.ts:19109",
+  "signals": [
+   "verb:completeInterviewSession",
+   "verb:saveInterviewSessionState"
+  ]
+ },
+ {
+  "tool": "apply_fact_change",
+  "site": "server/services/ana/AnaToolExecutor.ts:5964",
+  "signals": [
+   "verb:applyFactChange"
+  ]
+ },
+ {
+  "tool": "apply_protocol_design_derivation",
+  "site": "server/services/ana/AnaToolExecutor.ts:20436",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:applyDerivationTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "approve_import",
+  "site": "server/services/ana/AnaToolExecutor.ts:14420",
+  "signals": [
+   "gov:recordArtifactProvenance",
+   "sql:INSERT INTO",
+   "sql:UPDATE import_job_files SET",
+   "sql:UPDATE import_jobs\n          SET",
+   "verb:recordArtifactProvenance"
+  ]
+ },
+ {
+  "tool": "approve_no_cost_extension",
+  "site": "server/services/ana/AnaToolExecutor.ts:12476",
+  "signals": []
+ },
+ {
+  "tool": "approve_qms_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:13645",
+  "signals": []
+ },
+ {
+  "tool": "approve_rbm_assessment",
+  "site": "server/services/ana/AnaToolExecutor.ts:3406",
+  "signals": []
+ },
+ {
+  "tool": "approve_rbm_plan",
+  "site": "server/services/ana/AnaToolExecutor.ts:3428",
+  "signals": []
+ },
+ {
+  "tool": "assemble_briefing_book",
+  "site": "server/services/ana/AnaToolExecutor.ts:1249",
+  "signals": []
+ },
+ {
+  "tool": "assemble_crl_premortem_artifact",
+  "site": "server/services/ana/AnaToolExecutor.ts:1116",
+  "signals": []
+ },
+ {
+  "tool": "assemble_device_submission",
+  "site": "server/services/ana/AnaToolExecutor.ts:15865",
+  "signals": []
+ },
+ {
+  "tool": "assemble_ectd_module_from_artifacts",
+  "site": "server/services/ana/AnaToolExecutor.ts:14695",
+  "signals": []
+ },
+ {
+  "tool": "assess_abuse_liability",
+  "site": "server/services/ana/AnaToolExecutor.ts:18268",
+  "signals": []
+ },
+ {
+  "tool": "assess_accelerated_stability",
+  "site": "server/services/ana/AnaToolExecutor.ts:6163",
+  "signals": []
+ },
+ {
+  "tool": "assess_ai_ml_device",
+  "site": "server/services/ana/AnaToolExecutor.ts:18817",
+  "signals": []
+ },
+ {
+  "tool": "assess_analytical_method_validation",
+  "site": "server/services/ana/AnaToolExecutor.ts:16906",
+  "signals": []
+ },
+ {
+  "tool": "assess_analytical_similarity",
+  "site": "server/services/ana/AnaToolExecutor.ts:5555",
+  "signals": []
+ },
+ {
+  "tool": "assess_analytical_similarity_biosimilar",
+  "site": "server/services/ana/AnaToolExecutor.ts:18041",
+  "signals": []
+ },
+ {
+  "tool": "assess_api_gmp",
+  "site": "server/services/ana/AnaToolExecutor.ts:18543",
+  "signals": []
+ },
+ {
+  "tool": "assess_atmp_comparability",
+  "site": "server/services/ana/AnaToolExecutor.ts:17840",
+  "signals": []
+ },
+ {
+  "tool": "assess_batch_poolability",
+  "site": "server/services/ana/AnaToolExecutor.ts:16097",
+  "signals": []
+ },
+ {
+  "tool": "assess_benefit_risk",
+  "site": "server/services/ana/AnaToolExecutor.ts:16778",
+  "signals": []
+ },
+ {
+  "tool": "assess_benefit_risk_balance",
+  "site": "server/services/ana/AnaToolExecutor.ts:18920",
+  "signals": []
+ },
+ {
+  "tool": "assess_biomarker_analytical_validation",
+  "site": "server/services/ana/AnaToolExecutor.ts:18639",
+  "signals": []
+ },
+ {
+  "tool": "assess_biomarker_clinical_validation",
+  "site": "server/services/ana/AnaToolExecutor.ts:18646",
+  "signals": []
+ },
+ {
+  "tool": "assess_biosimilar_cmc",
+  "site": "server/services/ana/AnaToolExecutor.ts:18076",
+  "signals": []
+ },
+ {
+  "tool": "assess_biowaiver",
+  "site": "server/services/ana/AnaToolExecutor.ts:17664",
+  "signals": []
+ },
+ {
+  "tool": "assess_bla_filing_risk",
+  "site": "server/services/ana/AnaToolExecutor.ts:5609",
+  "signals": []
+ },
+ {
+  "tool": "assess_boxed_warning",
+  "site": "server/services/ana/AnaToolExecutor.ts:18144",
+  "signals": []
+ },
+ {
+  "tool": "assess_br_uncertainty",
+  "site": "server/services/ana/AnaToolExecutor.ts:18934",
+  "signals": []
+ },
+ {
+  "tool": "assess_carcinogenicity_need",
+  "site": "server/services/ana/AnaToolExecutor.ts:17745",
+  "signals": []
+ },
+ {
+  "tool": "assess_cardiovascular_safety_pharmacology",
+  "site": "server/services/ana/AnaToolExecutor.ts:18240",
+  "signals": []
+ },
+ {
+  "tool": "assess_cart_requirements",
+  "site": "server/services/ana/AnaToolExecutor.ts:17826",
+  "signals": []
+ },
+ {
+  "tool": "assess_cell_therapy_manufacturing",
+  "site": "server/services/ana/AnaToolExecutor.ts:17819",
+  "signals": []
+ },
+ {
+  "tool": "assess_claim_evidence_integrity",
+  "site": "server/services/ana/AnaToolExecutor.ts:6687",
+  "signals": []
+ },
+ {
+  "tool": "assess_cns_safety_pharmacology",
+  "site": "server/services/ana/AnaToolExecutor.ts:18247",
+  "signals": []
+ },
+ {
+  "tool": "assess_coa_fit_for_purpose",
+  "site": "server/services/ana/AnaToolExecutor.ts:18350",
+  "signals": []
+ },
+ {
+  "tool": "assess_coa_validation",
+  "site": "server/services/ana/AnaToolExecutor.ts:18336",
+  "signals": []
+ },
+ {
+  "tool": "assess_combination_product",
+  "site": "server/services/ana/AnaToolExecutor.ts:9818",
+  "signals": []
+ },
+ {
+  "tool": "assess_comparability",
+  "site": "server/services/ana/AnaToolExecutor.ts:5573",
+  "signals": []
+ },
+ {
+  "tool": "assess_comparability_protocol",
+  "site": "server/services/ana/AnaToolExecutor.ts:17980",
+  "signals": []
+ },
+ {
+  "tool": "assess_computer_system_validation",
+  "site": "server/services/ana/AnaToolExecutor.ts:18557",
+  "signals": []
+ },
+ {
+  "tool": "assess_concentration_qtc",
+  "site": "server/services/ana/AnaToolExecutor.ts:5313",
+  "signals": []
+ },
+ {
+  "tool": "assess_correlate_of_protection",
+  "site": "server/services/ana/AnaToolExecutor.ts:18865",
+  "signals": []
+ },
+ {
+  "tool": "assess_data_integrity",
+  "site": "server/services/ana/AnaToolExecutor.ts:18522",
+  "signals": []
+ },
+ {
+  "tool": "assess_ddi_risk",
+  "site": "server/services/ana/AnaToolExecutor.ts:5362",
+  "signals": []
+ },
+ {
+  "tool": "assess_device_constituent_controls",
+  "site": "server/services/ana/AnaToolExecutor.ts:18454",
+  "signals": []
+ },
+ {
+  "tool": "assess_device_cybersecurity",
+  "site": "server/services/ana/AnaToolExecutor.ts:18845",
+  "signals": []
+ },
+ {
+  "tool": "assess_device_evidence_structure",
+  "site": "server/services/ana/AnaToolExecutor.ts:9650",
+  "signals": []
+ },
+ {
+  "tool": "assess_dispatch_readiness",
+  "site": "server/services/ana/AnaToolExecutor.ts:9884",
+  "signals": []
+ },
+ {
+  "tool": "assess_dissolution_similarity",
+  "site": "server/services/ana/AnaToolExecutor.ts:17657",
+  "signals": []
+ },
+ {
+  "tool": "assess_dose_exposure_response",
+  "site": "server/services/ana/AnaToolExecutor.ts:18412",
+  "signals": []
+ },
+ {
+  "tool": "assess_essential_principles",
+  "site": "server/services/ana/AnaToolExecutor.ts:18790",
+  "signals": []
+ },
+ {
+  "tool": "assess_established_conditions",
+  "site": "server/services/ana/AnaToolExecutor.ts:18961",
+  "signals": []
+ },
+ {
+  "tool": "assess_expedited_program",
+  "site": "server/services/ana/AnaToolExecutor.ts:17993",
+  "signals": []
+ },
+ {
+  "tool": "assess_food_effect",
+  "site": "server/services/ana/AnaToolExecutor.ts:17932",
+  "signals": []
+ },
+ {
+  "tool": "assess_gcp_compliance",
+  "site": "server/services/ana/AnaToolExecutor.ts:18728",
+  "signals": []
+ },
+ {
+  "tool": "assess_gene_therapy_requirements",
+  "site": "server/services/ana/AnaToolExecutor.ts:17812",
+  "signals": []
+ },
+ {
+  "tool": "assess_gmlp",
+  "site": "server/services/ana/AnaToolExecutor.ts:18831",
+  "signals": []
+ },
+ {
+  "tool": "assess_immunogenicity",
+  "site": "server/services/ana/AnaToolExecutor.ts:5591",
+  "signals": []
+ },
+ {
+  "tool": "assess_immunogenicity_comparability",
+  "site": "server/services/ana/AnaToolExecutor.ts:18220",
+  "signals": []
+ },
+ {
+  "tool": "assess_immunogenicity_risk",
+  "site": "server/services/ana/AnaToolExecutor.ts:18185",
+  "signals": []
+ },
+ {
+  "tool": "assess_indication_extrapolation",
+  "site": "server/services/ana/AnaToolExecutor.ts:18055",
+  "signals": []
+ },
+ {
+  "tool": "assess_inspection_readiness",
+  "site": "server/services/ana/AnaToolExecutor.ts:18721",
+  "signals": []
+ },
+ {
+  "tool": "assess_interchangeability",
+  "site": "server/services/ana/AnaToolExecutor.ts:18062",
+  "signals": []
+ },
+ {
+  "tool": "assess_intercurrent_event_strategy",
+  "site": "server/services/ana/AnaToolExecutor.ts:18481",
+  "signals": []
+ },
+ {
+  "tool": "assess_iso17511_traceability",
+  "site": "server/services/ana/AnaToolExecutor.ts:6126",
+  "signals": []
+ },
+ {
+  "tool": "assess_ivd_analytical_extensions",
+  "site": "server/services/ana/AnaToolExecutor.ts:15736",
+  "signals": []
+ },
+ {
+  "tool": "assess_lot_consistency",
+  "site": "server/services/ana/AnaToolExecutor.ts:18879",
+  "signals": []
+ },
+ {
+  "tool": "assess_mdr_reportability",
+  "site": "server/services/ana/AnaToolExecutor.ts:6288",
+  "signals": []
+ },
+ {
+  "tool": "assess_metabolite_safety",
+  "site": "server/services/ana/AnaToolExecutor.ts:18584",
+  "signals": []
+ },
+ {
+  "tool": "assess_nitrosamine_risk",
+  "site": "server/services/ana/AnaToolExecutor.ts:18117",
+  "signals": []
+ },
+ {
+  "tool": "assess_nonclinical_program",
+  "site": "server/services/ana/AnaToolExecutor.ts:5285",
+  "signals": []
+ },
+ {
+  "tool": "assess_nonclinical_safety",
+  "site": "server/services/ana/AnaToolExecutor.ts:5259",
+  "signals": []
+ },
+ {
+  "tool": "assess_orphan_designation",
+  "site": "server/services/ana/AnaToolExecutor.ts:18007",
+  "signals": []
+ },
+ {
+  "tool": "assess_otc_labeling",
+  "site": "server/services/ana/AnaToolExecutor.ts:18172",
+  "signals": []
+ },
+ {
+  "tool": "assess_output_confidence",
+  "site": "server/services/ana/AnaToolExecutor.ts:943",
+  "signals": []
+ },
+ {
+  "tool": "assess_pathway_eligibility",
+  "site": "server/services/ana/AnaToolExecutor.ts:9604",
+  "signals": []
+ },
+ {
+  "tool": "assess_pathway_readiness",
+  "site": "server/services/ana/AnaToolExecutor.ts:9360",
+  "signals": []
+ },
+ {
+  "tool": "assess_pediatric_extrapolation",
+  "site": "server/services/ana/AnaToolExecutor.ts:17775",
+  "signals": []
+ },
+ {
+  "tool": "assess_pediatric_requirements",
+  "site": "server/services/ana/AnaToolExecutor.ts:17796",
+  "signals": []
+ },
+ {
+  "tool": "assess_plr_structure",
+  "site": "server/services/ana/AnaToolExecutor.ts:18137",
+  "signals": []
+ },
+ {
+  "tool": "assess_postapproval_comparability",
+  "site": "server/services/ana/AnaToolExecutor.ts:18982",
+  "signals": []
+ },
+ {
+  "tool": "assess_pregnancy_lactation_labeling",
+  "site": "server/services/ana/AnaToolExecutor.ts:18158",
+  "signals": []
+ },
+ {
+  "tool": "assess_process_validation",
+  "site": "server/services/ana/AnaToolExecutor.ts:17973",
+  "signals": []
+ },
+ {
+  "tool": "assess_project_optimus_alignment",
+  "site": "server/services/ana/AnaToolExecutor.ts:18384",
+  "signals": []
+ },
+ {
+  "tool": "assess_protein_binding",
+  "site": "server/services/ana/AnaToolExecutor.ts:18605",
+  "signals": []
+ },
+ {
+  "tool": "assess_pv_causality",
+  "site": "server/services/ana/AnaToolExecutor.ts:18288",
+  "signals": []
+ },
+ {
+  "tool": "assess_qms",
+  "site": "server/services/ana/AnaToolExecutor.ts:9837",
+  "signals": []
+ },
+ {
+  "tool": "assess_qtc_risk",
+  "site": "server/services/ana/AnaToolExecutor.ts:17904",
+  "signals": []
+ },
+ {
+  "tool": "assess_rare_disease_endpoint",
+  "site": "server/services/ana/AnaToolExecutor.ts:18694",
+  "signals": []
+ },
+ {
+  "tool": "assess_readability",
+  "site": "server/services/ana/AnaToolExecutor.ts:3543",
+  "signals": []
+ },
+ {
+  "tool": "assess_recorded_batch_poolability",
+  "site": "server/services/ana/AnaToolExecutor.ts:16625",
+  "signals": []
+ },
+ {
+  "tool": "assess_recorded_process_capability",
+  "site": "server/services/ana/AnaToolExecutor.ts:16524",
+  "signals": []
+ },
+ {
+  "tool": "assess_recorded_stability_trend",
+  "site": "server/services/ana/AnaToolExecutor.ts:16472",
+  "signals": []
+ },
+ {
+  "tool": "assess_regulatory_landscape",
+  "site": "server/services/ana/AnaToolExecutor.ts:3645",
+  "signals": []
+ },
+ {
+  "tool": "assess_respiratory_safety_pharmacology",
+  "site": "server/services/ana/AnaToolExecutor.ts:18254",
+  "signals": []
+ },
+ {
+  "tool": "assess_rolling_submission",
+  "site": "server/services/ana/AnaToolExecutor.ts:18021",
+  "signals": []
+ },
+ {
+  "tool": "assess_rwe_bias_risk",
+  "site": "server/services/ana/AnaToolExecutor.ts:17877",
+  "signals": []
+ },
+ {
+  "tool": "assess_rwe_regulatory_acceptability",
+  "site": "server/services/ana/AnaToolExecutor.ts:17884",
+  "signals": []
+ },
+ {
+  "tool": "assess_scientific_validity",
+  "site": "server/services/ana/AnaToolExecutor.ts:6135",
+  "signals": []
+ },
+ {
+  "tool": "assess_shelf_life_stability",
+  "site": "server/services/ana/AnaToolExecutor.ts:6154",
+  "signals": []
+ },
+ {
+  "tool": "assess_signal_priority",
+  "site": "server/services/ana/AnaToolExecutor.ts:18309",
+  "signals": []
+ },
+ {
+  "tool": "assess_site_risk",
+  "site": "server/services/ana/AnaToolExecutor.ts:2975",
+  "signals": []
+ },
+ {
+  "tool": "assess_small_population_design",
+  "site": "server/services/ana/AnaToolExecutor.ts:18680",
+  "signals": []
+ },
+ {
+  "tool": "assess_statistical_defensibility",
+  "site": "server/services/ana/AnaToolExecutor.ts:5449",
+  "signals": []
+ },
+ {
+  "tool": "assess_stored_cer",
+  "site": "server/services/ana/AnaToolExecutor.ts:9868",
+  "signals": []
+ },
+ {
+  "tool": "assess_structural_alerts",
+  "site": "server/services/ana/AnaToolExecutor.ts:18103",
+  "signals": []
+ },
+ {
+  "tool": "assess_study_onboarding",
+  "site": "server/services/ana/AnaToolExecutor.ts:13339",
+  "signals": []
+ },
+ {
+  "tool": "assess_submission_package",
+  "site": "server/services/ana/AnaToolExecutor.ts:15833",
+  "signals": []
+ },
+ {
+  "tool": "assess_substantial_equivalence",
+  "site": "server/services/ana/AnaToolExecutor.ts:18776",
+  "signals": []
+ },
+ {
+  "tool": "assess_trial_feasibility",
+  "site": "server/services/ana/AnaToolExecutor.ts:3812",
+  "signals": []
+ },
+ {
+  "tool": "assess_vaccine_platform",
+  "site": "server/services/ana/AnaToolExecutor.ts:18886",
+  "signals": []
+ },
+ {
+  "tool": "assign_committee_member",
+  "site": "server/services/ana/AnaToolExecutor.ts:11742",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "assign_protocol_reviewer",
+  "site": "server/services/ana/AnaToolExecutor.ts:10952",
+  "signals": [
+   "verb:assignReviewerTx"
+  ]
+ },
+ {
+  "tool": "author_docx_native",
+  "site": "server/services/ana/AnaToolExecutor.ts:6880",
+  "signals": [
+   "fs:mkdir",
+   "fs:writeFile",
+   "verb:writeFile"
+  ]
+ },
+ {
+  "tool": "batch_draft_sections",
+  "site": "server/services/ana/AnaToolExecutor.ts:14969",
+  "signals": []
+ },
+ {
+  "tool": "benchmark_precedent_trials",
+  "site": "server/services/ana/AnaToolExecutor.ts:15821",
+  "signals": []
+ },
+ {
+  "tool": "bind_protocol_to_study_design",
+  "site": "server/services/ana/AnaToolExecutor.ts:20383",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "build_abbreviation_list",
+  "site": "server/services/ana/AnaToolExecutor.ts:3553",
+  "signals": []
+ },
+ {
+  "tool": "build_device_blueprint",
+  "site": "server/services/ana/AnaToolExecutor.ts:9719",
+  "signals": []
+ },
+ {
+  "tool": "build_effects_table",
+  "site": "server/services/ana/AnaToolExecutor.ts:18913",
+  "signals": []
+ },
+ {
+  "tool": "build_from_template",
+  "site": "server/services/ana/AnaToolExecutor.ts:6503",
+  "signals": []
+ },
+ {
+  "tool": "build_global_device_strategy",
+  "site": "server/services/ana/AnaToolExecutor.ts:9742",
+  "signals": []
+ },
+ {
+  "tool": "build_pathway_manifest",
+  "site": "server/services/ana/AnaToolExecutor.ts:9385",
+  "signals": []
+ },
+ {
+  "tool": "build_postmarket_report",
+  "site": "server/services/ana/AnaToolExecutor.ts:6182",
+  "signals": []
+ },
+ {
+  "tool": "build_sae_line_listing",
+  "site": "server/services/ana/AnaToolExecutor.ts:17411",
+  "signals": []
+ },
+ {
+  "tool": "calculate_safety_margin",
+  "site": "server/services/ana/AnaToolExecutor.ts:17731",
+  "signals": []
+ },
+ {
+  "tool": "calculate_ttc",
+  "site": "server/services/ana/AnaToolExecutor.ts:18096",
+  "signals": []
+ },
+ {
+  "tool": "cast_committee_vote",
+  "site": "server/services/ana/AnaToolExecutor.ts:11826",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "catalog_project_document",
+  "site": "server/services/ana/document-catalog-tools.ts:626",
+  "signals": []
+ },
+ {
+  "tool": "categorize_clia_complexity",
+  "site": "server/services/ana/AnaToolExecutor.ts:8444",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "certify_other_support",
+  "site": "server/services/ana/AnaToolExecutor.ts:11141",
+  "signals": []
+ },
+ {
+  "tool": "characterize_pk",
+  "site": "server/services/ana/AnaToolExecutor.ts:5334",
+  "signals": []
+ },
+ {
+  "tool": "check_consistency",
+  "site": "server/services/ana/AnaToolExecutor.ts:9332",
+  "signals": []
+ },
+ {
+  "tool": "check_dataset_conformance",
+  "site": "server/services/ana/AnaToolExecutor.ts:17359",
+  "signals": []
+ },
+ {
+  "tool": "check_deep_investigation",
+  "site": "server/services/ana/agentic-workflow-tools.ts:288",
+  "signals": []
+ },
+ {
+  "tool": "check_dossier_consistency",
+  "site": "server/services/ana/AnaToolExecutor.ts:5687",
+  "signals": []
+ },
+ {
+  "tool": "check_ectd_cross_references",
+  "site": "server/services/ana/AnaToolExecutor.ts:9042",
+  "signals": []
+ },
+ {
+  "tool": "check_grounding",
+  "site": "server/services/ana/AnaToolExecutor.ts:987",
+  "signals": []
+ },
+ {
+  "tool": "check_guidance_freshness",
+  "site": "server/services/ana/AnaToolExecutor.ts:17534",
+  "signals": []
+ },
+ {
+  "tool": "check_numerical_integrity",
+  "site": "server/services/ana/AnaToolExecutor.ts:4792",
+  "signals": []
+ },
+ {
+  "tool": "check_regulatory_compliance",
+  "site": "server/services/ana/AnaToolExecutor.ts:4215",
+  "signals": []
+ },
+ {
+  "tool": "check_regulatory_currency",
+  "site": "server/services/ana/AnaToolExecutor.ts:15769",
+  "signals": []
+ },
+ {
+  "tool": "check_submission_status",
+  "site": "server/services/ana/AnaToolExecutor.ts:8716",
+  "signals": []
+ },
+ {
+  "tool": "classify_atmp",
+  "site": "server/services/ana/AnaToolExecutor.ts:17805",
+  "signals": []
+ },
+ {
+  "tool": "classify_bcs",
+  "site": "server/services/ana/AnaToolExecutor.ts:17643",
+  "signals": []
+ },
+ {
+  "tool": "classify_biomarker",
+  "site": "server/services/ana/AnaToolExecutor.ts:18618",
+  "signals": []
+ },
+ {
+  "tool": "classify_combination_product",
+  "site": "server/services/ana/AnaToolExecutor.ts:18433",
+  "signals": []
+ },
+ {
+  "tool": "classify_coverage_item",
+  "site": "server/services/ana/AnaToolExecutor.ts:11984",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "classify_cyp_phenotype",
+  "site": "server/services/ana/AnaToolExecutor.ts:17918",
+  "signals": []
+ },
+ {
+  "tool": "classify_ddi_risk",
+  "site": "server/services/ana/AnaToolExecutor.ts:17897",
+  "signals": []
+ },
+ {
+  "tool": "classify_device",
+  "site": "server/services/ana/AnaToolExecutor.ts:9674",
+  "signals": []
+ },
+ {
+  "tool": "classify_expedited_reporting",
+  "site": "server/services/ana/AnaToolExecutor.ts:18281",
+  "signals": []
+ },
+ {
+  "tool": "classify_gmp_deviation",
+  "site": "server/services/ana/AnaToolExecutor.ts:18536",
+  "signals": []
+ },
+ {
+  "tool": "classify_immunogenicity_clinical_impact",
+  "site": "server/services/ana/AnaToolExecutor.ts:18199",
+  "signals": []
+ },
+ {
+  "tool": "classify_impurity",
+  "site": "server/services/ana/AnaToolExecutor.ts:17959",
+  "signals": []
+ },
+ {
+  "tool": "classify_ivd_device",
+  "site": "server/services/ana/AnaToolExecutor.ts:8345",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "classify_medical_device",
+  "site": "server/services/ana/AnaToolExecutor.ts:18762",
+  "signals": []
+ },
+ {
+  "tool": "classify_mutagenic_impurity",
+  "site": "server/services/ana/AnaToolExecutor.ts:18089",
+  "signals": []
+ },
+ {
+  "tool": "classify_pediatric_age",
+  "site": "server/services/ana/AnaToolExecutor.ts:17761",
+  "signals": []
+ },
+ {
+  "tool": "classify_post_approval_change",
+  "site": "server/services/ana/AnaToolExecutor.ts:18954",
+  "signals": []
+ },
+ {
+  "tool": "classify_post_submission_change",
+  "site": "server/services/ana/AnaToolExecutor.ts:9626",
+  "signals": []
+ },
+ {
+  "tool": "classify_protocol_deviation",
+  "site": "server/services/ana/AnaToolExecutor.ts:18742",
+  "signals": []
+ },
+ {
+  "tool": "classify_samd",
+  "site": "server/services/ana/AnaToolExecutor.ts:18810",
+  "signals": []
+ },
+ {
+  "tool": "classify_submission_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:9069",
+  "signals": []
+ },
+ {
+  "tool": "classify_tmf_artifact",
+  "site": "server/services/ana/AnaToolExecutor.ts:13059",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "classify_tox_findings",
+  "site": "server/services/ana/AnaToolExecutor.ts:4956",
+  "signals": []
+ },
+ {
+  "tool": "clone_protocol_template",
+  "site": "server/services/ana/AnaToolExecutor.ts:10720",
+  "signals": []
+ },
+ {
+  "tool": "code_drug",
+  "site": "server/services/ana/AnaToolExecutor.ts:15949",
+  "signals": []
+ },
+ {
+  "tool": "code_meddra",
+  "site": "server/services/ana/AnaToolExecutor.ts:16003",
+  "signals": []
+ },
+ {
+  "tool": "code_whodrug",
+  "site": "server/services/ana/AnaToolExecutor.ts:16030",
+  "signals": []
+ },
+ {
+  "tool": "commit_document_revision",
+  "site": "server/services/ana/document-spine.ts:414",
+  "signals": [
+   "verb:commitCanonicalRevision"
+  ]
+ },
+ {
+  "tool": "commit_intelligence_flow",
+  "site": "server/services/ana/AnaToolExecutor.ts:19244",
+  "signals": [
+   "verb:commitInterviewSession"
+  ]
+ },
+ {
+  "tool": "compare_document_versions",
+  "site": "server/services/ana/AnaToolExecutor.ts:4368",
+  "signals": []
+ },
+ {
+  "tool": "compare_global_pathways",
+  "site": "server/services/ana/AnaToolExecutor.ts:18028",
+  "signals": []
+ },
+ {
+  "tool": "compare_proposed_design_to_precedent",
+  "site": "server/services/ana/AnaToolExecutor.ts:13943",
+  "signals": []
+ },
+ {
+  "tool": "compare_recorded_dissolution",
+  "site": "server/services/ana/AnaToolExecutor.ts:16321",
+  "signals": []
+ },
+ {
+  "tool": "compare_statistical_scenarios",
+  "site": "server/services/ana/AnaToolExecutor.ts:5409",
+  "signals": []
+ },
+ {
+  "tool": "compare_submission_against_precedent",
+  "site": "server/services/ana/AnaToolExecutor.ts:6648",
+  "signals": []
+ },
+ {
+  "tool": "compare_vault_versions",
+  "site": "server/services/ana/AnaToolExecutor.ts:19889",
+  "signals": []
+ },
+ {
+  "tool": "compile_correspondence_response_package",
+  "site": "server/services/ana/AnaToolExecutor.ts:2264",
+  "signals": []
+ },
+ {
+  "tool": "compose_510k_summary",
+  "site": "server/services/ana/AnaToolExecutor.ts:16873",
+  "signals": []
+ },
+ {
+  "tool": "compose_correspondence_cover_letter",
+  "site": "server/services/ana/AnaToolExecutor.ts:16853",
+  "signals": []
+ },
+ {
+  "tool": "compose_e2b_icsr",
+  "site": "server/services/ana/AnaToolExecutor.ts:17447",
+  "signals": []
+ },
+ {
+  "tool": "compute_analytical_performance",
+  "site": "server/services/ana/AnaToolExecutor.ts:15651",
+  "signals": []
+ },
+ {
+  "tool": "compute_assurance",
+  "site": "server/services/ana/AnaToolExecutor.ts:15698",
+  "signals": []
+ },
+ {
+  "tool": "compute_diagnostic_accuracy",
+  "site": "server/services/ana/AnaToolExecutor.ts:15616",
+  "signals": []
+ },
+ {
+  "tool": "compute_fih_dose",
+  "site": "server/services/ana/AnaToolExecutor.ts:4934",
+  "signals": []
+ },
+ {
+  "tool": "compute_lifecycle_operations",
+  "site": "server/services/ana/AnaToolExecutor.ts:8901",
+  "signals": []
+ },
+ {
+  "tool": "compute_sample_size",
+  "site": "server/services/ana/AnaToolExecutor.ts:4884",
+  "signals": []
+ },
+ {
+  "tool": "control_mutagenic_impurity",
+  "site": "server/services/ana/AnaToolExecutor.ts:18124",
+  "signals": []
+ },
+ {
+  "tool": "convene_committee_meeting",
+  "site": "server/services/ana/AnaToolExecutor.ts:11774",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "convene_drafting_council",
+  "site": "server/services/ana/agentic-workflow-tools.ts:124",
+  "signals": [
+   "verb:executeCouncil"
+  ]
+ },
+ {
+  "tool": "convert_docx_to_pdf",
+  "site": "server/services/ana/AnaToolExecutor.ts:7005",
+  "signals": []
+ },
+ {
+  "tool": "convert_to_rps_v4",
+  "site": "server/services/ana/AnaToolExecutor.ts:8968",
+  "signals": []
+ },
+ {
+  "tool": "create_biosketch",
+  "site": "server/services/ana/AnaToolExecutor.ts:11148",
+  "signals": [
+   "verb:createBiosketchTx"
+  ]
+ },
+ {
+  "tool": "create_calendar_event",
+  "site": "server/services/ana/AnaToolExecutor.ts:4035",
+  "signals": [
+   "verb:createCalendarEvent"
+  ]
+ },
+ {
+  "tool": "create_clinical_investigator",
+  "site": "server/services/ana/AnaToolExecutor.ts:10008",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createInvestigatorTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_clinical_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:9952",
+  "signals": [
+   "gov:recordGovernedAction",
+   "sql:INSERT INTO",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_coi_disclosure",
+  "site": "server/services/ana/AnaToolExecutor.ts:13259",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createDisclosureTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_complaint",
+  "site": "server/services/ana/AnaToolExecutor.ts:6349",
+  "signals": [
+   "verb:createComplaint"
+  ]
+ },
+ {
+  "tool": "create_consent_form",
+  "site": "server/services/ana/AnaToolExecutor.ts:10995",
+  "signals": [
+   "verb:createConsentFormTx"
+  ]
+ },
+ {
+  "tool": "create_coverage_analysis",
+  "site": "server/services/ana/AnaToolExecutor.ts:11880",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createAnalysisTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_dms_plan",
+  "site": "server/services/ana/AnaToolExecutor.ts:11040",
+  "signals": [
+   "verb:createPlanTx"
+  ]
+ },
+ {
+  "tool": "create_effort_certification",
+  "site": "server/services/ana/AnaToolExecutor.ts:13195",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createCertificationTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_export_control_review",
+  "site": "server/services/ana/AnaToolExecutor.ts:11264",
+  "signals": [
+   "verb:createReviewTx"
+  ]
+ },
+ {
+  "tool": "create_financial_disclosure",
+  "site": "server/services/ana/AnaToolExecutor.ts:10042",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createDisclosureTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_grant_proposal",
+  "site": "server/services/ana/AnaToolExecutor.ts:12047",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createProposalTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_ha_interaction",
+  "site": "server/services/ana/AnaToolExecutor.ts:10143",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createInteractionTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_iacuc_protocol",
+  "site": "server/services/ana/AnaToolExecutor.ts:10241",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createProtocolTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_ibc_registration",
+  "site": "server/services/ana/AnaToolExecutor.ts:10452",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createRegistrationTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_inspection",
+  "site": "server/services/ana/AnaToolExecutor.ts:12788",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createInspectionTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_invention_disclosure",
+  "site": "server/services/ana/AnaToolExecutor.ts:11196",
+  "signals": [
+   "verb:createDisclosureTx"
+  ]
+ },
+ {
+  "tool": "create_irb_submission",
+  "site": "server/services/ana/AnaToolExecutor.ts:10348",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createSubmissionTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_labeling_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:14127",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "create_lifecycle_obligation",
+  "site": "server/services/ana/AnaToolExecutor.ts:12968",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createObligationTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_monitoring_action",
+  "site": "server/services/ana/AnaToolExecutor.ts:3364",
+  "signals": [
+   "verb:createAction"
+  ]
+ },
+ {
+  "tool": "create_nonclinical_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:10557",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createStudyTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_other_support",
+  "site": "server/services/ana/AnaToolExecutor.ts:11087",
+  "signals": [
+   "verb:createDocumentTx"
+  ]
+ },
+ {
+  "tool": "create_per_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:8395",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "create_protocol_amendment",
+  "site": "server/services/ana/AnaToolExecutor.ts:10857",
+  "signals": [
+   "verb:createAmendmentTx"
+  ]
+ },
+ {
+  "tool": "create_protocol_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:11448",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createProtocolDocumentTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_protocol_template",
+  "site": "server/services/ana/AnaToolExecutor.ts:10708",
+  "signals": [
+   "verb:createTemplateTx"
+  ]
+ },
+ {
+  "tool": "create_q_sub",
+  "site": "server/services/ana/AnaToolExecutor.ts:7691",
+  "signals": [
+   "verb:createQSubmission"
+  ]
+ },
+ {
+  "tool": "create_qms_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:13583",
+  "signals": [
+   "gov:recordGovernedAction",
+   "sql:INSERT INTO",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_regulatory_commitment",
+  "site": "server/services/ana/AnaToolExecutor.ts:10179",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createCommitmentTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_research_agreement",
+  "site": "server/services/ana/AnaToolExecutor.ts:11326",
+  "signals": [
+   "verb:createAgreementTx"
+  ]
+ },
+ {
+  "tool": "create_rim_product",
+  "site": "server/services/ana/AnaToolExecutor.ts:12696",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createProductTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_risk_item",
+  "site": "server/services/ana/AnaToolExecutor.ts:7956",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "create_software_lifecycle_item",
+  "site": "server/services/ana/AnaToolExecutor.ts:8061",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "create_tmf",
+  "site": "server/services/ana/AnaToolExecutor.ts:13032",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createTmfTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "create_udi_record",
+  "site": "server/services/ana/AnaToolExecutor.ts:7907",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "cross_region_gap_analysis",
+  "site": "server/services/ana/AnaToolExecutor.ts:9270",
+  "signals": []
+ },
+ {
+  "tool": "define_estimand",
+  "site": "server/services/ana/AnaToolExecutor.ts:18474",
+  "signals": []
+ },
+ {
+  "tool": "define_kri",
+  "site": "server/services/ana/AnaToolExecutor.ts:3248",
+  "signals": []
+ },
+ {
+  "tool": "describe_capabilities",
+  "site": "server/services/ana/AnaToolExecutor.ts:3575",
+  "signals": []
+ },
+ {
+  "tool": "design_ada_assay_strategy",
+  "site": "server/services/ana/AnaToolExecutor.ts:18192",
+  "signals": []
+ },
+ {
+  "tool": "design_adaptive_design",
+  "site": "server/services/ana/AnaToolExecutor.ts:18495",
+  "signals": []
+ },
+ {
+  "tool": "design_adme_program",
+  "site": "server/services/ana/AnaToolExecutor.ts:18570",
+  "signals": []
+ },
+ {
+  "tool": "design_backfill_strategy",
+  "site": "server/services/ana/AnaToolExecutor.ts:18405",
+  "signals": []
+ },
+ {
+  "tool": "design_bayesian_device",
+  "site": "server/services/ana/AnaToolExecutor.ts:15640",
+  "signals": []
+ },
+ {
+  "tool": "design_be_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:17650",
+  "signals": []
+ },
+ {
+  "tool": "design_bioanalytical_method",
+  "site": "server/services/ana/AnaToolExecutor.ts:17925",
+  "signals": []
+ },
+ {
+  "tool": "design_biosimilar_clinical",
+  "site": "server/services/ana/AnaToolExecutor.ts:18048",
+  "signals": []
+ },
+ {
+  "tool": "design_capa",
+  "site": "server/services/ana/AnaToolExecutor.ts:18529",
+  "signals": []
+ },
+ {
+  "tool": "design_cdx_codevelopment",
+  "site": "server/services/ana/AnaToolExecutor.ts:18632",
+  "signals": []
+ },
+ {
+  "tool": "design_core_battery",
+  "site": "server/services/ana/AnaToolExecutor.ts:18233",
+  "signals": []
+ },
+ {
+  "tool": "design_device_clinical_evidence",
+  "site": "server/services/ana/AnaToolExecutor.ts:18783",
+  "signals": []
+ },
+ {
+  "tool": "design_dose_finding",
+  "site": "server/services/ana/AnaToolExecutor.ts:15527",
+  "signals": []
+ },
+ {
+  "tool": "design_external_control",
+  "site": "server/services/ana/AnaToolExecutor.ts:18673",
+  "signals": []
+ },
+ {
+  "tool": "design_followup_safety_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:18261",
+  "signals": []
+ },
+ {
+  "tool": "design_genotox_battery",
+  "site": "server/services/ana/AnaToolExecutor.ts:17738",
+  "signals": []
+ },
+ {
+  "tool": "design_group_sequential",
+  "site": "server/services/ana/AnaToolExecutor.ts:15508",
+  "signals": []
+ },
+ {
+  "tool": "design_human_factors_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:18447",
+  "signals": []
+ },
+ {
+  "tool": "design_informed_consent",
+  "site": "server/services/ana/AnaToolExecutor.ts:18735",
+  "signals": []
+ },
+ {
+  "tool": "design_mass_balance_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:18577",
+  "signals": []
+ },
+ {
+  "tool": "design_mmrm",
+  "site": "server/services/ana/AnaToolExecutor.ts:15501",
+  "signals": []
+ },
+ {
+  "tool": "design_monitoring_plan",
+  "site": "server/services/ana/AnaToolExecutor.ts:18714",
+  "signals": []
+ },
+ {
+  "tool": "design_mrmc_reader_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:15569",
+  "signals": []
+ },
+ {
+  "tool": "design_nab_assay",
+  "site": "server/services/ana/AnaToolExecutor.ts:18206",
+  "signals": []
+ },
+ {
+  "tool": "design_natural_history_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:18666",
+  "signals": []
+ },
+ {
+  "tool": "design_organ_impairment_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:17911",
+  "signals": []
+ },
+ {
+  "tool": "design_pacmp",
+  "site": "server/services/ana/AnaToolExecutor.ts:18968",
+  "signals": []
+ },
+ {
+  "tool": "design_pccp",
+  "site": "server/services/ana/AnaToolExecutor.ts:18824",
+  "signals": []
+ },
+ {
+  "tool": "design_pediatric_investigation",
+  "site": "server/services/ana/AnaToolExecutor.ts:17768",
+  "signals": []
+ },
+ {
+  "tool": "design_popk_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:17680",
+  "signals": []
+ },
+ {
+  "tool": "design_propensity_analysis",
+  "site": "server/services/ana/AnaToolExecutor.ts:17863",
+  "signals": []
+ },
+ {
+  "tool": "design_purge_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:18110",
+  "signals": []
+ },
+ {
+  "tool": "design_pv_system",
+  "site": "server/services/ana/AnaToolExecutor.ts:18316",
+  "signals": []
+ },
+ {
+  "tool": "design_randomized_dose_comparison",
+  "site": "server/services/ana/AnaToolExecutor.ts:18391",
+  "signals": []
+ },
+ {
+  "tool": "design_reaction_phenotyping",
+  "site": "server/services/ana/AnaToolExecutor.ts:18598",
+  "signals": []
+ },
+ {
+  "tool": "design_rems",
+  "site": "server/services/ana/AnaToolExecutor.ts:18151",
+  "signals": []
+ },
+ {
+  "tool": "design_repeat_dose_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:17724",
+  "signals": []
+ },
+ {
+  "tool": "design_repro_tox_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:17752",
+  "signals": []
+ },
+ {
+  "tool": "design_samd_clinical_validation",
+  "site": "server/services/ana/AnaToolExecutor.ts:18838",
+  "signals": []
+ },
+ {
+  "tool": "design_stability_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:17945",
+  "signals": []
+ },
+ {
+  "tool": "design_sterile_controls",
+  "site": "server/services/ana/AnaToolExecutor.ts:18550",
+  "signals": []
+ },
+ {
+  "tool": "design_target_trial",
+  "site": "server/services/ana/AnaToolExecutor.ts:17849",
+  "signals": []
+ },
+ {
+  "tool": "design_toxicokinetics",
+  "site": "server/services/ana/AnaToolExecutor.ts:18591",
+  "signals": []
+ },
+ {
+  "tool": "design_vaccine_clinical_program",
+  "site": "server/services/ana/AnaToolExecutor.ts:18872",
+  "signals": []
+ },
+ {
+  "tool": "design_vaccine_cmc",
+  "site": "server/services/ana/AnaToolExecutor.ts:18858",
+  "signals": []
+ },
+ {
+  "tool": "design_value_tree",
+  "site": "server/services/ana/AnaToolExecutor.ts:18927",
+  "signals": []
+ },
+ {
+  "tool": "detect_evidence_contradictions",
+  "site": "server/services/ana/AnaToolExecutor.ts:2176",
+  "signals": []
+ },
+ {
+  "tool": "detect_evidence_gaps",
+  "site": "server/services/ana/AnaToolExecutor.ts:2183",
+  "signals": []
+ },
+ {
+  "tool": "detect_safety_signal",
+  "site": "server/services/ana/AnaToolExecutor.ts:18302",
+  "signals": []
+ },
+ {
+  "tool": "determine_assay_cutoff",
+  "site": "server/services/ana/AnaToolExecutor.ts:6144",
+  "signals": []
+ },
+ {
+  "tool": "determine_meaningful_change",
+  "site": "server/services/ana/AnaToolExecutor.ts:18343",
+  "signals": []
+ },
+ {
+  "tool": "determine_primary_mode_of_action",
+  "site": "server/services/ana/AnaToolExecutor.ts:18426",
+  "signals": []
+ },
+ {
+  "tool": "dispatch_qc_check",
+  "site": "server/services/ana/AnaToolExecutor.ts:9292",
+  "signals": []
+ },
+ {
+  "tool": "draft_510k_substantial_equivalence",
+  "site": "server/services/ana/AnaToolExecutor.ts:14777",
+  "signals": []
+ },
+ {
+  "tool": "draft_authoring_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:19788",
+  "signals": []
+ },
+ {
+  "tool": "draft_clinical_overview_m2_5",
+  "site": "server/services/ana/AnaToolExecutor.ts:14856",
+  "signals": []
+ },
+ {
+  "tool": "draft_clinical_summary_m2_7",
+  "site": "server/services/ana/AnaToolExecutor.ts:5379",
+  "signals": []
+ },
+ {
+  "tool": "draft_fda_ir_response",
+  "site": "server/services/ana/AnaToolExecutor.ts:15044",
+  "signals": [
+   "verb:executeAgenticLoop",
+   "verb:executeTools"
+  ]
+ },
+ {
+  "tool": "draft_monitoring_plan",
+  "site": "server/services/ana/AnaToolExecutor.ts:3348",
+  "signals": []
+ },
+ {
+  "tool": "draft_nonclinical_overview_m2_4",
+  "site": "server/services/ana/AnaToolExecutor.ts:5010",
+  "signals": []
+ },
+ {
+  "tool": "draft_nonclinical_summaries_m2_6",
+  "site": "server/services/ana/AnaToolExecutor.ts:5232",
+  "signals": []
+ },
+ {
+  "tool": "draft_quality_overall_summary_m2_3",
+  "site": "server/services/ana/AnaToolExecutor.ts:5200",
+  "signals": []
+ },
+ {
+  "tool": "draft_safety_narrative",
+  "site": "server/services/ana/AnaToolExecutor.ts:3470",
+  "signals": []
+ },
+ {
+  "tool": "edit_spreadsheet",
+  "site": "server/services/ana/AnaToolExecutor.ts:4686",
+  "signals": [
+   "verb:applyWorkbookEdits",
+   "verb:saveDerivedUpload"
+  ]
+ },
+ {
+  "tool": "establish_governed_fact",
+  "site": "server/services/ana/AnaToolExecutor.ts:5849",
+  "signals": []
+ },
+ {
+  "tool": "estimate_recorded_shelf_life",
+  "site": "server/services/ana/AnaToolExecutor.ts:16416",
+  "signals": []
+ },
+ {
+  "tool": "estimate_sample_size",
+  "site": "server/services/ana/AnaToolExecutor.ts:18509",
+  "signals": []
+ },
+ {
+  "tool": "estimate_shelf_life",
+  "site": "server/services/ana/AnaToolExecutor.ts:16796",
+  "signals": []
+ },
+ {
+  "tool": "evaluate_kris_qtls",
+  "site": "server/services/ana/AnaToolExecutor.ts:3011",
+  "signals": []
+ },
+ {
+  "tool": "evaluate_pbpk_model",
+  "site": "server/services/ana/AnaToolExecutor.ts:17687",
+  "signals": []
+ },
+ {
+  "tool": "execute_platform_command",
+  "site": "server/services/ana/AnaToolExecutor.ts:5162",
+  "signals": [
+   "verb:executeCommands"
+  ]
+ },
+ {
+  "tool": "execute_research_agreement",
+  "site": "server/services/ana/AnaToolExecutor.ts:11393",
+  "signals": []
+ },
+ {
+  "tool": "execute_subaward",
+  "site": "server/services/ana/AnaToolExecutor.ts:12303",
+  "signals": []
+ },
+ {
+  "tool": "explain_design_risk",
+  "site": "server/services/ana/AnaToolExecutor.ts:13972",
+  "signals": []
+ },
+ {
+  "tool": "explain_report_blockers",
+  "site": "server/services/ana/AnaToolExecutor.ts:20224",
+  "signals": []
+ },
+ {
+  "tool": "explain_resolution_plan",
+  "site": "server/services/ana/AnaToolExecutor.ts:6076",
+  "signals": []
+ },
+ {
+  "tool": "explain_validation_findings",
+  "site": "server/services/ana/AnaToolExecutor.ts:9250",
+  "signals": []
+ },
+ {
+  "tool": "export_protocol_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:10790",
+  "signals": []
+ },
+ {
+  "tool": "extract_document_structure",
+  "site": "server/services/ana/AnaToolExecutor.ts:4347",
+  "signals": []
+ },
+ {
+  "tool": "extract_submission_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:9095",
+  "signals": []
+ },
+ {
+  "tool": "fetch_fda_guidance_list",
+  "site": "server/services/ana/AnaToolExecutor.ts:17512",
+  "signals": []
+ },
+ {
+  "tool": "fetch_ich_guideline_updates",
+  "site": "server/services/ana/AnaToolExecutor.ts:17524",
+  "signals": []
+ },
+ {
+  "tool": "fetch_template_and_fill",
+  "site": "server/services/ana/AnaToolExecutor.ts:6785",
+  "signals": []
+ },
+ {
+  "tool": "file_chat_upload_to_vault",
+  "site": "server/services/ana/document-catalog-tools.ts:620",
+  "signals": []
+ },
+ {
+  "tool": "finalize_biosketch",
+  "site": "server/services/ana/AnaToolExecutor.ts:11189",
+  "signals": []
+ },
+ {
+  "tool": "finalize_committee_determination",
+  "site": "server/services/ana/AnaToolExecutor.ts:11853",
+  "signals": []
+ },
+ {
+  "tool": "finalize_dms_plan",
+  "site": "server/services/ana/AnaToolExecutor.ts:11080",
+  "signals": []
+ },
+ {
+  "tool": "finalize_export_control_determination",
+  "site": "server/services/ana/AnaToolExecutor.ts:11319",
+  "signals": []
+ },
+ {
+  "tool": "finalize_grant_closeout",
+  "site": "server/services/ana/AnaToolExecutor.ts:12228",
+  "signals": []
+ },
+ {
+  "tool": "finalize_protocol_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:11572",
+  "signals": []
+ },
+ {
+  "tool": "find_grant_opportunities",
+  "site": "server/services/ana/AnaToolExecutor.ts:11713",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "fire_notification",
+  "site": "server/services/ana/AnaToolExecutor.ts:9905",
+  "signals": [
+   "verb:createNotification"
+  ]
+ },
+ {
+  "tool": "forecast_enrollment",
+  "site": "server/services/ana/AnaToolExecutor.ts:15676",
+  "signals": []
+ },
+ {
+  "tool": "format_references",
+  "site": "server/services/ana/AnaToolExecutor.ts:17385",
+  "signals": []
+ },
+ {
+  "tool": "fulfill_regulatory_commitment",
+  "site": "server/services/ana/AnaToolExecutor.ts:12586",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "gateway_configuration_status",
+  "site": "server/services/ana/AnaToolExecutor.ts:8872",
+  "signals": []
+ },
+ {
+  "tool": "generate_citation",
+  "site": "server/services/ana/AnaToolExecutor.ts:4281",
+  "signals": []
+ },
+ {
+  "tool": "generate_ctgov_registration_draft",
+  "site": "server/services/ana/AnaToolExecutor.ts:10803",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "generate_declaration_of_conformity",
+  "site": "server/services/ana/AnaToolExecutor.ts:6172",
+  "signals": []
+ },
+ {
+  "tool": "generate_define_xml",
+  "site": "server/services/ana/AnaToolExecutor.ts:17592",
+  "signals": []
+ },
+ {
+  "tool": "generate_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:6433",
+  "signals": []
+ },
+ {
+  "tool": "generate_dsur_structure",
+  "site": "server/services/ana/AnaToolExecutor.ts:17569",
+  "signals": []
+ },
+ {
+  "tool": "generate_psur_structure",
+  "site": "server/services/ana/AnaToolExecutor.ts:17562",
+  "signals": []
+ },
+ {
+  "tool": "generate_rbm_plan",
+  "site": "server/services/ana/AnaToolExecutor.ts:3048",
+  "signals": []
+ },
+ {
+  "tool": "generate_rbm_report",
+  "site": "server/services/ana/AnaToolExecutor.ts:3179",
+  "signals": []
+ },
+ {
+  "tool": "generate_report",
+  "site": "server/services/ana/AnaToolExecutor.ts:20186",
+  "signals": []
+ },
+ {
+  "tool": "generate_schedule_of_events",
+  "site": "server/services/ana/AnaToolExecutor.ts:2351",
+  "signals": [
+   "verb:scheduleToolContext"
+  ]
+ },
+ {
+  "tool": "generate_se_matrix",
+  "site": "server/services/ana/AnaToolExecutor.ts:6264",
+  "signals": []
+ },
+ {
+  "tool": "generate_sop",
+  "site": "server/services/ana/AnaToolExecutor.ts:5627",
+  "signals": []
+ },
+ {
+  "tool": "generate_spl",
+  "site": "server/services/ana/AnaToolExecutor.ts:17323",
+  "signals": []
+ },
+ {
+  "tool": "generate_spl_xml",
+  "site": "server/services/ana/AnaToolExecutor.ts:17548",
+  "signals": []
+ },
+ {
+  "tool": "generate_statistical_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:5509",
+  "signals": []
+ },
+ {
+  "tool": "generate_stf",
+  "site": "server/services/ana/AnaToolExecutor.ts:9017",
+  "signals": []
+ },
+ {
+  "tool": "get_billing_credits",
+  "site": "server/services/ana/AnaToolExecutor.ts:20067",
+  "signals": []
+ },
+ {
+  "tool": "get_biocompatibility_endpoints",
+  "site": "server/services/ana/AnaToolExecutor.ts:9705",
+  "signals": []
+ },
+ {
+  "tool": "get_biotech_program_status",
+  "site": "server/services/ana/biotech-program.ts:554",
+  "signals": []
+ },
+ {
+  "tool": "get_client_journey",
+  "site": "server/services/ana/agentic-workflow-tools.ts:206",
+  "signals": []
+ },
+ {
+  "tool": "get_csr_template",
+  "site": "server/services/ana/AnaToolExecutor.ts:5075",
+  "signals": []
+ },
+ {
+  "tool": "get_ctd_module_home",
+  "site": "server/services/ana/AnaToolExecutor.ts:5669",
+  "signals": []
+ },
+ {
+  "tool": "get_device_labeling",
+  "site": "server/services/ana/AnaToolExecutor.ts:9849",
+  "signals": []
+ },
+ {
+  "tool": "get_device_reviewer_checklist",
+  "site": "server/services/ana/AnaToolExecutor.ts:9690",
+  "signals": []
+ },
+ {
+  "tool": "get_document_template",
+  "site": "server/services/ana/AnaToolExecutor.ts:9498",
+  "signals": []
+ },
+ {
+  "tool": "get_document_versions",
+  "site": "server/services/ana/AnaToolExecutor.ts:19506",
+  "signals": []
+ },
+ {
+  "tool": "get_electrical_standards",
+  "site": "server/services/ana/AnaToolExecutor.ts:9778",
+  "signals": []
+ },
+ {
+  "tool": "get_market_submission_spec",
+  "site": "server/services/ana/AnaToolExecutor.ts:9472",
+  "signals": []
+ },
+ {
+  "tool": "get_nonclinical_template",
+  "site": "server/services/ana/AnaToolExecutor.ts:5050",
+  "signals": []
+ },
+ {
+  "tool": "get_org_capabilities",
+  "site": "server/services/ana/AnaToolExecutor.ts:20083",
+  "signals": []
+ },
+ {
+  "tool": "get_plan_usage",
+  "site": "server/services/ana/AnaToolExecutor.ts:20052",
+  "signals": []
+ },
+ {
+  "tool": "get_portfolio_readiness",
+  "site": "server/services/ana/AnaToolExecutor.ts:20148",
+  "signals": []
+ },
+ {
+  "tool": "get_predicate_defense_preview",
+  "site": "server/services/ana/AnaToolExecutor.ts:6274",
+  "signals": []
+ },
+ {
+  "tool": "get_rbm_attention",
+  "site": "server/services/ana/AnaToolExecutor.ts:3195",
+  "signals": []
+ },
+ {
+  "tool": "get_regulatory_timeline",
+  "site": "server/services/ana/AnaToolExecutor.ts:9754",
+  "signals": []
+ },
+ {
+  "tool": "get_session_briefing",
+  "site": "server/services/ana/AnaToolExecutor.ts:2491",
+  "signals": []
+ },
+ {
+  "tool": "get_sterilization_requirements",
+  "site": "server/services/ana/AnaToolExecutor.ts:9795",
+  "signals": []
+ },
+ {
+  "tool": "get_submission_ack",
+  "site": "server/services/ana/AnaToolExecutor.ts:8744",
+  "signals": []
+ },
+ {
+  "tool": "get_submission_readiness_twin",
+  "site": "server/services/ana/AnaToolExecutor.ts:16705",
+  "signals": []
+ },
+ {
+  "tool": "get_submission_requirements",
+  "site": "server/services/ana/AnaToolExecutor.ts:9580",
+  "signals": []
+ },
+ {
+  "tool": "get_tmf_view",
+  "site": "server/services/ana/AnaToolExecutor.ts:19623",
+  "signals": []
+ },
+ {
+  "tool": "get_usage_and_license_status",
+  "site": "server/services/ana/AnaToolExecutor.ts:429",
+  "signals": []
+ },
+ {
+  "tool": "global_ri_advanced_therapy",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_bcs_biowaiver",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_bioequivalence_criteria",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_cmc_specifications",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_companion_diagnostic",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_controlled_substance",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_device_classification",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_dossier_classifier",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_establishment_registration",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_evidence_standard",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_exclusivity",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_expanded_access",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_expedited_programs",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_fee_estimate",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_import_export",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_lifecycle_schedule",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_pediatric_plan",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_post_approval_change",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_process_validation",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_promotional_compliance",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_regulatory_pathway",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_reliance_pathways",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_safety_reporting",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_special_designations",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_stability_conditions",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_ri_strategy_brief",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "global_search",
+  "site": "server/services/ana/AnaToolExecutor.ts:14245",
+  "signals": []
+ },
+ {
+  "tool": "guidance_change_radar",
+  "site": "server/services/ana/AnaToolExecutor.ts:15806",
+  "signals": []
+ },
+ {
+  "tool": "guidance_for_anda",
+  "site": "server/services/ana/AnaToolExecutor.ts:17671",
+  "signals": []
+ },
+ {
+  "tool": "import_citi_records",
+  "site": "server/services/ana/AnaToolExecutor.ts:11610",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:importCitiRecordsTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "import_ris_references",
+  "site": "server/services/ana/AnaToolExecutor.ts:17373",
+  "signals": []
+ },
+ {
+  "tool": "ind_generate_section",
+  "site": "server/services/ana/AnaToolExecutor.ts:6542",
+  "signals": []
+ },
+ {
+  "tool": "ind_get_status",
+  "site": "server/services/ana/AnaToolExecutor.ts:6563",
+  "signals": []
+ },
+ {
+  "tool": "insert_clause_template",
+  "site": "server/services/ana/AnaToolExecutor.ts:7362",
+  "signals": [
+   "fs:mkdir",
+   "fs:writeFile",
+   "verb:writeFile"
+  ]
+ },
+ {
+  "tool": "insert_document_content",
+  "site": "server/services/ana/AnaToolExecutor.ts:7179",
+  "signals": [
+   "fs:mkdir",
+   "fs:writeFile",
+   "verb:writeFile"
+  ]
+ },
+ {
+  "tool": "inspect_uploaded_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:4422",
+  "signals": []
+ },
+ {
+  "tool": "ivd_knowledge_lookup",
+  "site": "server/services/ana/AnaToolExecutor.ts:2119",
+  "signals": []
+ },
+ {
+  "tool": "link_program_clinical_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:7828",
+  "signals": []
+ },
+ {
+  "tool": "lint_references",
+  "site": "server/services/ana/AnaToolExecutor.ts:17397",
+  "signals": []
+ },
+ {
+  "tool": "list_app_screens",
+  "site": "server/services/ana/AnaToolExecutor.ts:16926",
+  "signals": []
+ },
+ {
+  "tool": "list_cmc_registers",
+  "site": "server/services/ana/AnaToolExecutor.ts:16128",
+  "signals": []
+ },
+ {
+  "tool": "list_demo_scripts",
+  "site": "server/services/ana/AnaToolExecutor.ts:17186",
+  "signals": []
+ },
+ {
+  "tool": "list_fda_forms",
+  "site": "server/services/ana/AnaToolExecutor.ts:410",
+  "signals": []
+ },
+ {
+  "tool": "list_governed_documents",
+  "site": "server/services/ana/AnaToolExecutor.ts:19534",
+  "signals": []
+ },
+ {
+  "tool": "list_governed_facts",
+  "site": "server/services/ana/AnaToolExecutor.ts:5815",
+  "signals": []
+ },
+ {
+  "tool": "list_intelligence_flows",
+  "site": "server/services/ana/AnaToolExecutor.ts:19317",
+  "signals": []
+ },
+ {
+  "tool": "list_platform_commands",
+  "site": "server/services/ana/AnaToolExecutor.ts:5143",
+  "signals": []
+ },
+ {
+  "tool": "list_project_documents",
+  "site": "server/services/ana/document-catalog-tools.ts:624",
+  "signals": []
+ },
+ {
+  "tool": "list_protocol_templates",
+  "site": "server/services/ana/AnaToolExecutor.ts:10744",
+  "signals": []
+ },
+ {
+  "tool": "list_regulatory_capabilities",
+  "site": "server/services/ana/AnaToolExecutor.ts:9808",
+  "signals": []
+ },
+ {
+  "tool": "list_report_definitions",
+  "site": "server/services/ana/AnaToolExecutor.ts:20316",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "list_report_types",
+  "site": "server/services/ana/AnaToolExecutor.ts:20100",
+  "signals": []
+ },
+ {
+  "tool": "list_screen_actions",
+  "site": "server/services/ana/AnaToolExecutor.ts:17071",
+  "signals": []
+ },
+ {
+  "tool": "list_validation_rules",
+  "site": "server/services/ana/AnaToolExecutor.ts:9415",
+  "signals": []
+ },
+ {
+  "tool": "list_vault_documents",
+  "site": "server/services/ana/AnaToolExecutor.ts:19388",
+  "signals": []
+ },
+ {
+  "tool": "load_nonclinical_program",
+  "site": "server/services/ana/AnaToolExecutor.ts:5100",
+  "signals": []
+ },
+ {
+  "tool": "log_cs_transaction",
+  "site": "server/services/ana/AnaToolExecutor.ts:12911",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction",
+   "verb:recordTransactionTx"
+  ]
+ },
+ {
+  "tool": "log_inspection_finding",
+  "site": "server/services/ana/AnaToolExecutor.ts:12822",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "log_nonconforming_product",
+  "site": "server/services/ana/AnaToolExecutor.ts:14093",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "log_study_ae",
+  "site": "server/services/ana/AnaToolExecutor.ts:13414",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "log_study_deviation",
+  "site": "server/services/ana/AnaToolExecutor.ts:13361",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "lookup_fda_guidance",
+  "site": "server/services/ana/AnaToolExecutor.ts:4120",
+  "signals": []
+ },
+ {
+  "tool": "lookup_icd10_code",
+  "site": "server/services/ana/AnaToolExecutor.ts:3517",
+  "signals": []
+ },
+ {
+  "tool": "lookup_ich_guideline",
+  "site": "server/services/ana/AnaToolExecutor.ts:4186",
+  "signals": []
+ },
+ {
+  "tool": "lookup_published_label",
+  "site": "server/services/ana/AnaToolExecutor.ts:16055",
+  "signals": []
+ },
+ {
+  "tool": "lookup_regulatory_pathway",
+  "site": "server/services/ana/AnaToolExecutor.ts:9431",
+  "signals": []
+ },
+ {
+  "tool": "lookup_regulatory_precedents",
+  "site": "server/services/ana/AnaToolExecutor.ts:6613",
+  "signals": []
+ },
+ {
+  "tool": "lookup_submission_deficiencies",
+  "site": "server/services/ana/AnaToolExecutor.ts:2193",
+  "signals": []
+ },
+ {
+  "tool": "medical_writing_guidance",
+  "site": "server/services/ana/AnaToolExecutor.ts:2000",
+  "signals": []
+ },
+ {
+  "tool": "medical_writing_review",
+  "site": "server/services/ana/AnaToolExecutor.ts:3560",
+  "signals": []
+ },
+ {
+  "tool": "mine_precedents",
+  "site": "server/services/ana/AnaToolExecutor.ts:4750",
+  "signals": []
+ },
+ {
+  "tool": "model_budget_impact",
+  "site": "server/services/ana/AnaToolExecutor.ts:17283",
+  "signals": []
+ },
+ {
+  "tool": "model_budget_impact_mix",
+  "site": "server/services/ana/AnaToolExecutor.ts:17308",
+  "signals": []
+ },
+ {
+  "tool": "model_cost_effectiveness",
+  "site": "server/services/ana/AnaToolExecutor.ts:17295",
+  "signals": []
+ },
+ {
+  "tool": "model_cost_effectiveness_nmb",
+  "site": "server/services/ana/AnaToolExecutor.ts:17315",
+  "signals": []
+ },
+ {
+  "tool": "model_markov_cohort",
+  "site": "server/services/ana/AnaToolExecutor.ts:16814",
+  "signals": []
+ },
+ {
+  "tool": "narrate_statistical_result",
+  "site": "server/services/ana/AnaToolExecutor.ts:2027",
+  "signals": []
+ },
+ {
+  "tool": "navigate_to",
+  "site": "server/services/ana/AnaToolExecutor.ts:16961",
+  "signals": []
+ },
+ {
+  "tool": "ocr_document_pages",
+  "site": "server/services/ana/AnaToolExecutor.ts:4571",
+  "signals": []
+ },
+ {
+  "tool": "open_device_capa",
+  "site": "server/services/ana/AnaToolExecutor.ts:6393",
+  "signals": [
+   "verb:createCapaRecord"
+  ]
+ },
+ {
+  "tool": "open_grant_closeout",
+  "site": "server/services/ana/AnaToolExecutor.ts:12166",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "override_import_mapping",
+  "site": "server/services/ana/AnaToolExecutor.ts:14375",
+  "signals": [
+   "sql:UPDATE import_job_files SET"
+  ]
+ },
+ {
+  "tool": "package_ectd_for_region",
+  "site": "server/services/ana/AnaToolExecutor.ts:8581",
+  "signals": []
+ },
+ {
+  "tool": "pair_companion_diagnostic",
+  "site": "server/services/ana/AnaToolExecutor.ts:8483",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "pdf_overlay",
+  "site": "server/services/ana/AnaToolExecutor.ts:6592",
+  "signals": []
+ },
+ {
+  "tool": "place_into_sequence",
+  "site": "server/services/ana/AnaToolExecutor.ts:9153",
+  "signals": [
+   "verb:upsertLeaf"
+  ]
+ },
+ {
+  "tool": "place_project_document",
+  "site": "server/services/ana/document-placement-tools.ts:258",
+  "signals": []
+ },
+ {
+  "tool": "plan_aggregate_safety_report",
+  "site": "server/services/ana/AnaToolExecutor.ts:18295",
+  "signals": []
+ },
+ {
+  "tool": "plan_annual_report",
+  "site": "server/services/ana/AnaToolExecutor.ts:18975",
+  "signals": []
+ },
+ {
+  "tool": "plan_bayesian_borrowing",
+  "site": "server/services/ana/AnaToolExecutor.ts:18687",
+  "signals": []
+ },
+ {
+  "tool": "plan_biomarker_qualification",
+  "site": "server/services/ana/AnaToolExecutor.ts:18625",
+  "signals": []
+ },
+ {
+  "tool": "plan_biosimilar_ip_strategy",
+  "site": "server/services/ana/AnaToolExecutor.ts:18069",
+  "signals": []
+ },
+ {
+  "tool": "plan_br_communication",
+  "site": "server/services/ana/AnaToolExecutor.ts:18941",
+  "signals": []
+ },
+ {
+  "tool": "plan_coa_development",
+  "site": "server/services/ana/AnaToolExecutor.ts:18364",
+  "signals": []
+ },
+ {
+  "tool": "plan_combination_cgmp",
+  "site": "server/services/ana/AnaToolExecutor.ts:18440",
+  "signals": []
+ },
+ {
+  "tool": "plan_device_submission",
+  "site": "server/services/ana/AnaToolExecutor.ts:18797",
+  "signals": []
+ },
+ {
+  "tool": "plan_enrichment_strategy",
+  "site": "server/services/ana/AnaToolExecutor.ts:18653",
+  "signals": []
+ },
+ {
+  "tool": "plan_essential_documents",
+  "site": "server/services/ana/AnaToolExecutor.ts:18749",
+  "signals": []
+ },
+ {
+  "tool": "plan_fda_meeting",
+  "site": "server/services/ana/AnaToolExecutor.ts:18000",
+  "signals": []
+ },
+ {
+  "tool": "plan_immunogenicity_sampling",
+  "site": "server/services/ana/AnaToolExecutor.ts:18213",
+  "signals": []
+ },
+ {
+  "tool": "plan_ind_module_authoring",
+  "site": "server/services/ana/AnaToolExecutor.ts:2723",
+  "signals": []
+ },
+ {
+  "tool": "plan_labeling_authoring",
+  "site": "server/services/ana/AnaToolExecutor.ts:2599",
+  "signals": []
+ },
+ {
+  "tool": "plan_lifecycle_management",
+  "site": "server/services/ana/AnaToolExecutor.ts:18989",
+  "signals": []
+ },
+ {
+  "tool": "plan_multiplicity_control",
+  "site": "server/services/ana/AnaToolExecutor.ts:18488",
+  "signals": []
+ },
+ {
+  "tool": "plan_orphan_drug_designation",
+  "site": "server/services/ana/AnaToolExecutor.ts:2637",
+  "signals": []
+ },
+ {
+  "tool": "plan_rare_disease_program",
+  "site": "server/services/ana/AnaToolExecutor.ts:18701",
+  "signals": []
+ },
+ {
+  "tool": "plan_submission",
+  "site": "server/services/ana/AnaToolExecutor.ts:9228",
+  "signals": []
+ },
+ {
+  "tool": "plan_vaccine_special_populations",
+  "site": "server/services/ana/AnaToolExecutor.ts:18893",
+  "signals": []
+ },
+ {
+  "tool": "position_coa_endpoint",
+  "site": "server/services/ana/AnaToolExecutor.ts:18357",
+  "signals": []
+ },
+ {
+  "tool": "predict_change_impact",
+  "site": "server/services/ana/AnaToolExecutor.ts:6745",
+  "signals": []
+ },
+ {
+  "tool": "prepare_award_closeout",
+  "site": "server/services/ana/AnaToolExecutor.ts:12522",
+  "signals": []
+ },
+ {
+  "tool": "prepare_fda_form",
+  "site": "server/services/ana/AnaToolExecutor.ts:414",
+  "signals": []
+ },
+ {
+  "tool": "prepare_meeting_package",
+  "site": "server/services/ana/AnaToolExecutor.ts:12638",
+  "signals": []
+ },
+ {
+  "tool": "preview_fact_impact",
+  "site": "server/services/ana/AnaToolExecutor.ts:5931",
+  "signals": []
+ },
+ {
+  "tool": "prioritize_monitoring_queries",
+  "site": "server/services/ana/AnaToolExecutor.ts:3084",
+  "signals": []
+ },
+ {
+  "tool": "project_csr_evidence",
+  "site": "server/services/ana/AnaToolExecutor.ts:14040",
+  "signals": []
+ },
+ {
+  "tool": "project_events",
+  "site": "server/services/ana/AnaToolExecutor.ts:15687",
+  "signals": []
+ },
+ {
+  "tool": "project_knowledge_search",
+  "site": "server/services/ana/AnaToolExecutor.ts:527",
+  "signals": []
+ },
+ {
+  "tool": "project_knowledge_search_multi",
+  "site": "server/services/ana/AnaToolExecutor.ts:619",
+  "signals": []
+ },
+ {
+  "tool": "qms_change_create",
+  "site": "server/services/ana/AnaToolExecutor.ts:13798",
+  "signals": [
+   "verb:createChange",
+   "verb:recordAuditRow"
+  ]
+ },
+ {
+  "tool": "qms_change_link",
+  "site": "server/services/ana/AnaToolExecutor.ts:13881",
+  "signals": [
+   "verb:recordAuditRow"
+  ]
+ },
+ {
+  "tool": "qms_change_transition",
+  "site": "server/services/ana/AnaToolExecutor.ts:13834",
+  "signals": [
+   "verb:recordAuditRow",
+   "verb:transitionChange"
+  ]
+ },
+ {
+  "tool": "query_rim_patterns_by_domain",
+  "site": "server/services/ana/AnaToolExecutor.ts:769",
+  "signals": []
+ },
+ {
+  "tool": "raise_monitoring_signal",
+  "site": "server/services/ana/AnaToolExecutor.ts:3310",
+  "signals": []
+ },
+ {
+  "tool": "rasterize_page",
+  "site": "server/services/ana/AnaToolExecutor.ts:6575",
+  "signals": []
+ },
+ {
+  "tool": "read_governed_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:19569",
+  "signals": []
+ },
+ {
+  "tool": "read_project_document",
+  "site": "server/services/ana/document-catalog-tools.ts:625",
+  "signals": []
+ },
+ {
+  "tool": "read_spreadsheet",
+  "site": "server/services/ana/AnaToolExecutor.ts:4656",
+  "signals": []
+ },
+ {
+  "tool": "read_uploaded_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:4473",
+  "signals": []
+ },
+ {
+  "tool": "read_vault_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:19463",
+  "signals": []
+ },
+ {
+  "tool": "read_vigilance_timeline",
+  "site": "server/services/ana/AnaToolExecutor.ts:6329",
+  "signals": []
+ },
+ {
+  "tool": "recall_rim_patterns",
+  "site": "server/services/ana/AnaToolExecutor.ts:738",
+  "signals": []
+ },
+ {
+  "tool": "recall_session_context",
+  "site": "server/services/ana/AnaToolExecutor.ts:696",
+  "signals": []
+ },
+ {
+  "tool": "reconcile_device_documents",
+  "site": "server/services/ana/AnaToolExecutor.ts:6045",
+  "signals": []
+ },
+ {
+  "tool": "reconcile_dossier_numbers",
+  "site": "server/services/ana/AnaToolExecutor.ts:17485",
+  "signals": []
+ },
+ {
+  "tool": "reconcile_extracted_figures",
+  "site": "server/services/ana/AnaToolExecutor.ts:5763",
+  "signals": []
+ },
+ {
+  "tool": "record_analytical_performance_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:8242",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "record_clinical_performance_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:8292",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "record_cost_share_contribution",
+  "site": "server/services/ana/AnaToolExecutor.ts:12395",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordCostShareContributionTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "record_endpoint_result",
+  "site": "server/services/ana/AnaToolExecutor.ts:13466",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "record_grant_award",
+  "site": "server/services/ana/AnaToolExecutor.ts:12080",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createAwardTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "record_grant_expenditure",
+  "site": "server/services/ana/AnaToolExecutor.ts:12343",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordExpenditureTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "record_grant_opportunity",
+  "site": "server/services/ana/AnaToolExecutor.ts:12482",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createOpportunityTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "record_kri_reading",
+  "site": "server/services/ana/AnaToolExecutor.ts:3270",
+  "signals": [
+   "verb:recordKriReading"
+  ]
+ },
+ {
+  "tool": "record_literature",
+  "site": "server/services/ana/AnaToolExecutor.ts:1766",
+  "signals": [
+   "verb:recordLiteratureEntries"
+  ]
+ },
+ {
+  "tool": "record_subaward",
+  "site": "server/services/ana/AnaToolExecutor.ts:12230",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createSubawardTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "record_validation_finding",
+  "site": "server/services/ana/AnaToolExecutor.ts:8779",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "register_animal_cohort",
+  "site": "server/services/ana/AnaToolExecutor.ts:10281",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "register_controlled_substance",
+  "site": "server/services/ana/AnaToolExecutor.ts:12657",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createSubstanceTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "register_dea",
+  "site": "server/services/ana/AnaToolExecutor.ts:12876",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:createRegistrationTx",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "register_ldt",
+  "site": "server/services/ana/AnaToolExecutor.ts:8530",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "register_supplier",
+  "site": "server/services/ana/AnaToolExecutor.ts:14056",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "regulatory_deadline_radar",
+  "site": "server/services/ana/AnaToolExecutor.ts:2233",
+  "signals": []
+ },
+ {
+  "tool": "remember_document_in_project",
+  "site": "server/services/ana/AnaToolExecutor.ts:1506",
+  "signals": [
+   "verb:ingestProjectDocument"
+  ]
+ },
+ {
+  "tool": "render_signature_manifestation",
+  "site": "server/services/ana/AnaToolExecutor.ts:872",
+  "signals": []
+ },
+ {
+  "tool": "report_protocol_deviation",
+  "site": "server/services/ana/AnaToolExecutor.ts:10905",
+  "signals": [
+   "verb:createDeviationTx"
+  ]
+ },
+ {
+  "tool": "request_no_cost_extension",
+  "site": "server/services/ana/AnaToolExecutor.ts:12448",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "research_compliance_briefing",
+  "site": "server/services/ana/AnaToolExecutor.ts:12542",
+  "signals": []
+ },
+ {
+  "tool": "reset_project_goals",
+  "site": "server/services/ana/AnaToolExecutor.ts:2451",
+  "signals": [
+   "verb:scheduleToolContext"
+  ]
+ },
+ {
+  "tool": "resolve_regulatory_structure",
+  "site": "server/services/ana/AnaToolExecutor.ts:9454",
+  "signals": []
+ },
+ {
+  "tool": "resolve_submission_plan",
+  "site": "server/services/ana/AnaToolExecutor.ts:5650",
+  "signals": []
+ },
+ {
+  "tool": "resolve_validation_finding",
+  "site": "server/services/ana/AnaToolExecutor.ts:8834",
+  "signals": [
+   "sql:UPDATE submission_validation_findings\n  "
+  ]
+ },
+ {
+  "tool": "resume_intelligence_flow",
+  "site": "server/services/ana/AnaToolExecutor.ts:19204",
+  "signals": []
+ },
+ {
+  "tool": "retire_qms_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:13707",
+  "signals": [
+   "gov:recordGovernedAction",
+   "sql:UPDATE qms_documents\n          SET",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_amendment",
+  "site": "server/services/ana/AnaToolExecutor.ts:10893",
+  "signals": []
+ },
+ {
+  "tool": "review_biosketch_completeness",
+  "site": "server/services/ana/AnaToolExecutor.ts:11177",
+  "signals": []
+ },
+ {
+  "tool": "review_commitment_portfolio",
+  "site": "server/services/ana/AnaToolExecutor.ts:10215",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_consent_completeness",
+  "site": "server/services/ana/AnaToolExecutor.ts:11023",
+  "signals": []
+ },
+ {
+  "tool": "review_cost_share",
+  "site": "server/services/ana/AnaToolExecutor.ts:12430",
+  "signals": []
+ },
+ {
+  "tool": "review_coverage_analysis",
+  "site": "server/services/ana/AnaToolExecutor.ts:12019",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_cs_balance",
+  "site": "server/services/ana/AnaToolExecutor.ts:12947",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_deviation",
+  "site": "server/services/ana/AnaToolExecutor.ts:10937",
+  "signals": []
+ },
+ {
+  "tool": "review_dms_plan_completeness",
+  "site": "server/services/ana/AnaToolExecutor.ts:11068",
+  "signals": []
+ },
+ {
+  "tool": "review_expiring_training",
+  "site": "server/services/ana/AnaToolExecutor.ts:11651",
+  "signals": []
+ },
+ {
+  "tool": "review_export_control",
+  "site": "server/services/ana/AnaToolExecutor.ts:11307",
+  "signals": []
+ },
+ {
+  "tool": "review_financial_disclosure",
+  "site": "server/services/ana/AnaToolExecutor.ts:10112",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_grant_budget",
+  "site": "server/services/ana/AnaToolExecutor.ts:12378",
+  "signals": []
+ },
+ {
+  "tool": "review_grant_reporting",
+  "site": "server/services/ana/AnaToolExecutor.ts:12117",
+  "signals": []
+ },
+ {
+  "tool": "review_ha_interaction",
+  "site": "server/services/ana/AnaToolExecutor.ts:12614",
+  "signals": []
+ },
+ {
+  "tool": "review_iacuc_protocol",
+  "site": "server/services/ana/AnaToolExecutor.ts:10317",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_ibc_registration",
+  "site": "server/services/ana/AnaToolExecutor.ts:10526",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_informed_consent",
+  "site": "server/services/ana/AnaToolExecutor.ts:2870",
+  "signals": []
+ },
+ {
+  "tool": "review_inspection_readiness",
+  "site": "server/services/ana/AnaToolExecutor.ts:12854",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_invention_disclosure",
+  "site": "server/services/ana/AnaToolExecutor.ts:11235",
+  "signals": []
+ },
+ {
+  "tool": "review_irb_submission",
+  "site": "server/services/ana/AnaToolExecutor.ts:10421",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_label_currency",
+  "site": "server/services/ana/AnaToolExecutor.ts:12765",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_lifecycle_calendar",
+  "site": "server/services/ana/AnaToolExecutor.ts:13010",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_other_support",
+  "site": "server/services/ana/AnaToolExecutor.ts:11129",
+  "signals": []
+ },
+ {
+  "tool": "review_protocol_budget",
+  "site": "server/services/ana/AnaToolExecutor.ts:10650",
+  "signals": []
+ },
+ {
+  "tool": "review_protocol_completeness",
+  "site": "server/services/ana/AnaToolExecutor.ts:11555",
+  "signals": []
+ },
+ {
+  "tool": "review_protocol_design_derivation",
+  "site": "server/services/ana/AnaToolExecutor.ts:20407",
+  "signals": []
+ },
+ {
+  "tool": "review_protocol_design_gates",
+  "site": "server/services/ana/AnaToolExecutor.ts:20496",
+  "signals": []
+ },
+ {
+  "tool": "review_protocol_portfolio",
+  "site": "server/services/ana/AnaToolExecutor.ts:11855",
+  "signals": [
+   "gov:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "review_protocol_portfolio_analytics",
+  "site": "server/services/ana/AnaToolExecutor.ts:11663",
+  "signals": []
+ },
+ {
+  "tool": "review_protocol_regulatory_rules",
+  "site": "server/services/ana/AnaToolExecutor.ts:20472",
+  "signals": []
+ },
+ {
+  "tool": "review_protocol_review_status",
+  "site": "server/services/ana/AnaToolExecutor.ts:10983",
+  "signals": []
+ },
+ {
+  "tool": "review_protocol_risk_register",
+  "site": "server/services/ana/AnaToolExecutor.ts:11430",
+  "signals": []
+ },
+ {
+  "tool": "review_protocol_timeline",
+  "site": "server/services/ana/AnaToolExecutor.ts:10778",
+  "signals": []
+ },
+ {
+  "tool": "review_research_agreement",
+  "site": "server/services/ana/AnaToolExecutor.ts:11381",
+  "signals": []
+ },
+ {
+  "tool": "review_schedule_of_events_health",
+  "site": "server/services/ana/AnaToolExecutor.ts:2428",
+  "signals": [
+   "verb:scheduleToolContext"
+  ]
+ },
+ {
+  "tool": "review_send_readiness",
+  "site": "server/services/ana/AnaToolExecutor.ts:10598",
+  "signals": []
+ },
+ {
+  "tool": "review_soa_matrix",
+  "site": "server/services/ana/AnaToolExecutor.ts:10690",
+  "signals": []
+ },
+ {
+  "tool": "review_tmf_completeness",
+  "site": "server/services/ana/AnaToolExecutor.ts:13092",
+  "signals": []
+ },
+ {
+  "tool": "review_training_gate",
+  "site": "server/services/ana/AnaToolExecutor.ts:13176",
+  "signals": []
+ },
+ {
+  "tool": "review_training_matrix",
+  "site": "server/services/ana/AnaToolExecutor.ts:11640",
+  "signals": []
+ },
+ {
+  "tool": "revise_qms_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:13653",
+  "signals": [
+   "gov:recordGovernedAction",
+   "sql:UPDATE qms_documents\n          SET",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "run_cdisc_pipeline",
+  "site": "server/services/ana/AnaToolExecutor.ts:16838",
+  "signals": []
+ },
+ {
+  "tool": "run_central_monitoring",
+  "site": "server/services/ana/AnaToolExecutor.ts:3114",
+  "signals": []
+ },
+ {
+  "tool": "run_compliance_checklist",
+  "site": "server/services/ana/AnaToolExecutor.ts:13132",
+  "signals": []
+ },
+ {
+  "tool": "run_in_container",
+  "site": "server/services/ana/AnaToolExecutor.ts:7614",
+  "signals": [
+   "fs:mkdir",
+   "fs:writeFile",
+   "verb:writeFile"
+  ]
+ },
+ {
+  "tool": "run_monte_carlo_simulation",
+  "site": "server/services/ana/AnaToolExecutor.ts:15714",
+  "signals": []
+ },
+ {
+  "tool": "run_probabilistic_sensitivity",
+  "site": "server/services/ana/AnaToolExecutor.ts:16826",
+  "signals": []
+ },
+ {
+  "tool": "run_python_script",
+  "site": "server/services/ana/AnaToolExecutor.ts:7102",
+  "signals": [
+   "fs:mkdir",
+   "fs:writeFile",
+   "verb:writeFile"
+  ]
+ },
+ {
+  "tool": "run_rbm_assessment",
+  "site": "server/services/ana/AnaToolExecutor.ts:2915",
+  "signals": [
+   "sql:INSERT INTO"
+  ]
+ },
+ {
+  "tool": "run_shadow_review",
+  "site": "server/services/ana/AnaToolExecutor.ts:9204",
+  "signals": []
+ },
+ {
+  "tool": "run_submission_premortem",
+  "site": "server/services/ana/AnaToolExecutor.ts:1021",
+  "signals": []
+ },
+ {
+  "tool": "save_document_as_template",
+  "site": "server/services/ana/AnaToolExecutor.ts:10732",
+  "signals": [
+   "verb:saveDocumentAsTemplateTx"
+  ]
+ },
+ {
+  "tool": "save_document_to_vault",
+  "site": "server/services/ana/AnaToolExecutor.ts:19670",
+  "signals": [
+   "gov:enforceAuthorLineage",
+   "gov:recordArtifactProvenance",
+   "gov:recordGovernedAction",
+   "orm:.update(c",
+   "sql:INSERT INTO",
+   "verb:createHash",
+   "verb:recordArtifactProvenance",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "save_report_definition",
+  "site": "server/services/ana/AnaToolExecutor.ts:20275",
+  "signals": [
+   "verb:createDefinition"
+  ]
+ },
+ {
+  "tool": "scan_document_citations",
+  "site": "server/services/ana/AnaToolExecutor.ts:5889",
+  "signals": []
+ },
+ {
+  "tool": "scan_patient_profiles",
+  "site": "server/services/ana/AnaToolExecutor.ts:3149",
+  "signals": []
+ },
+ {
+  "tool": "scan_project_risks",
+  "site": "server/services/ana/AnaToolExecutor.ts:2305",
+  "signals": [
+   "verb:scheduleToolContext"
+  ]
+ },
+ {
+  "tool": "scan_regulatory_deficiencies",
+  "site": "server/services/ana/AnaToolExecutor.ts:1381",
+  "signals": []
+ },
+ {
+  "tool": "score_predicate_adequacy",
+  "site": "server/services/ana/AnaToolExecutor.ts:15920",
+  "signals": []
+ },
+ {
+  "tool": "score_rwe_data_source",
+  "site": "server/services/ana/AnaToolExecutor.ts:17856",
+  "signals": []
+ },
+ {
+  "tool": "screen_compound_liabilities",
+  "site": "server/services/ana/AnaToolExecutor.ts:3843",
+  "signals": []
+ },
+ {
+  "tool": "screen_promotional_language",
+  "site": "server/services/ana/AnaToolExecutor.ts:3463",
+  "signals": []
+ },
+ {
+  "tool": "screen_restricted_party",
+  "site": "server/services/ana/AnaToolExecutor.ts:13316",
+  "signals": []
+ },
+ {
+  "tool": "screen_signal_panel",
+  "site": "server/services/ana/AnaToolExecutor.ts:6114",
+  "signals": []
+ },
+ {
+  "tool": "screen_subaward",
+  "site": "server/services/ana/AnaToolExecutor.ts:12268",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "search_all_documents",
+  "site": "server/services/ana/AnaToolExecutor.ts:20015",
+  "signals": []
+ },
+ {
+  "tool": "search_chembl_compound",
+  "site": "server/services/ana/AnaToolExecutor.ts:3721",
+  "signals": []
+ },
+ {
+  "tool": "search_clinical_evidence",
+  "site": "server/services/ana/AnaToolExecutor.ts:1570",
+  "signals": []
+ },
+ {
+  "tool": "search_clinical_regulatory_evidence",
+  "site": "server/services/ana/AnaToolExecutor.ts:13916",
+  "signals": []
+ },
+ {
+  "tool": "search_connected_repositories",
+  "site": "server/services/ana/AnaToolExecutor.ts:1959",
+  "signals": []
+ },
+ {
+  "tool": "search_crm",
+  "site": "server/services/ana/AnaToolExecutor.ts:4007",
+  "signals": []
+ },
+ {
+  "tool": "search_device_adverse_events",
+  "site": "server/services/ana/AnaToolExecutor.ts:1633",
+  "signals": []
+ },
+ {
+  "tool": "search_device_recalls",
+  "site": "server/services/ana/AnaToolExecutor.ts:3964",
+  "signals": []
+ },
+ {
+  "tool": "search_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:4387",
+  "signals": []
+ },
+ {
+  "tool": "search_document_passages",
+  "site": "server/services/ana/document-passage-tools.ts:162",
+  "signals": []
+ },
+ {
+  "tool": "search_drug_adverse_events",
+  "site": "server/services/ana/AnaToolExecutor.ts:1675",
+  "signals": []
+ },
+ {
+  "tool": "search_drug_approvals",
+  "site": "server/services/ana/AnaToolExecutor.ts:3676",
+  "signals": []
+ },
+ {
+  "tool": "search_drug_labels",
+  "site": "server/services/ana/AnaToolExecutor.ts:3925",
+  "signals": []
+ },
+ {
+  "tool": "search_ema_epar",
+  "site": "server/services/ana/AnaToolExecutor.ts:1866",
+  "signals": []
+ },
+ {
+  "tool": "search_eu_ctis",
+  "site": "server/services/ana/AnaToolExecutor.ts:1911",
+  "signals": []
+ },
+ {
+  "tool": "search_eudamed",
+  "site": "server/services/ana/AnaToolExecutor.ts:1821",
+  "signals": []
+ },
+ {
+  "tool": "search_grants_gov",
+  "site": "server/services/ana/AnaToolExecutor.ts:13296",
+  "signals": []
+ },
+ {
+  "tool": "search_ivd_knowledge",
+  "site": "server/services/ana/AnaToolExecutor.ts:9519",
+  "signals": []
+ },
+ {
+  "tool": "search_large_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:1445",
+  "signals": []
+ },
+ {
+  "tool": "search_literature",
+  "site": "server/services/ana/AnaToolExecutor.ts:1717",
+  "signals": []
+ },
+ {
+  "tool": "search_medicare_coverage",
+  "site": "server/services/ana/AnaToolExecutor.ts:4077",
+  "signals": []
+ },
+ {
+  "tool": "search_preprints",
+  "site": "server/services/ana/AnaToolExecutor.ts:3769",
+  "signals": []
+ },
+ {
+  "tool": "search_project_documents",
+  "site": "server/services/ana/document-catalog-tools.ts:630",
+  "signals": []
+ },
+ {
+  "tool": "search_regulatory_correspondence",
+  "site": "server/services/ana/AnaToolExecutor.ts:4055",
+  "signals": []
+ },
+ {
+  "tool": "seed_tmf",
+  "site": "server/services/ana/AnaToolExecutor.ts:19939",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction",
+   "verb:seedReferenceModelTx"
+  ]
+ },
+ {
+  "tool": "select_505_pathway",
+  "site": "server/services/ana/AnaToolExecutor.ts:18014",
+  "signals": []
+ },
+ {
+  "tool": "select_atmp_pathway",
+  "site": "server/services/ana/AnaToolExecutor.ts:17833",
+  "signals": []
+ },
+ {
+  "tool": "select_coa_type",
+  "site": "server/services/ana/AnaToolExecutor.ts:18329",
+  "signals": []
+ },
+ {
+  "tool": "select_combination_submission_pathway",
+  "site": "server/services/ana/AnaToolExecutor.ts:18461",
+  "signals": []
+ },
+ {
+  "tool": "select_device_pathway",
+  "site": "server/services/ana/AnaToolExecutor.ts:18769",
+  "signals": []
+ },
+ {
+  "tool": "select_dose",
+  "site": "server/services/ana/AnaToolExecutor.ts:17708",
+  "signals": []
+ },
+ {
+  "tool": "select_dose_finding_design",
+  "site": "server/services/ana/AnaToolExecutor.ts:18377",
+  "signals": []
+ },
+ {
+  "tool": "select_exposure_response_dose",
+  "site": "server/services/ana/AnaToolExecutor.ts:4978",
+  "signals": []
+ },
+ {
+  "tool": "select_missing_data_strategy",
+  "site": "server/services/ana/AnaToolExecutor.ts:18502",
+  "signals": []
+ },
+ {
+  "tool": "select_pediatric_dose",
+  "site": "server/services/ana/AnaToolExecutor.ts:17789",
+  "signals": []
+ },
+ {
+  "tool": "select_pediatric_formulation",
+  "site": "server/services/ana/AnaToolExecutor.ts:17782",
+  "signals": []
+ },
+ {
+  "tool": "select_rp2d",
+  "site": "server/services/ana/AnaToolExecutor.ts:18398",
+  "signals": []
+ },
+ {
+  "tool": "select_rwe_design",
+  "site": "server/services/ana/AnaToolExecutor.ts:17870",
+  "signals": []
+ },
+ {
+  "tool": "select_tox_species",
+  "site": "server/services/ana/AnaToolExecutor.ts:17717",
+  "signals": []
+ },
+ {
+  "tool": "set_coverage_qualifying_determination",
+  "site": "server/services/ana/AnaToolExecutor.ts:11913",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "set_funding_profile",
+  "site": "server/services/ana/AnaToolExecutor.ts:11685",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction",
+   "verb:upsertFundingProfileTx"
+  ]
+ },
+ {
+  "tool": "set_grant_milestone_status",
+  "site": "server/services/ana/AnaToolExecutor.ts:12136",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "set_program_metadata",
+  "site": "server/services/ana/AnaToolExecutor.ts:7860",
+  "signals": []
+ },
+ {
+  "tool": "set_protocol_budget_params",
+  "site": "server/services/ana/AnaToolExecutor.ts:10639",
+  "signals": []
+ },
+ {
+  "tool": "set_protocol_milestone_status",
+  "site": "server/services/ana/AnaToolExecutor.ts:10766",
+  "signals": []
+ },
+ {
+  "tool": "set_qtl",
+  "site": "server/services/ana/AnaToolExecutor.ts:3291",
+  "signals": []
+ },
+ {
+  "tool": "set_registration_status",
+  "site": "server/services/ana/AnaToolExecutor.ts:12728",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction",
+   "verb:upsertRegistrationTx"
+  ]
+ },
+ {
+  "tool": "set_soa_cell",
+  "site": "server/services/ana/AnaToolExecutor.ts:10678",
+  "signals": []
+ },
+ {
+  "tool": "set_specifications",
+  "site": "server/services/ana/AnaToolExecutor.ts:17966",
+  "signals": []
+ },
+ {
+  "tool": "simulate_reviewer_challenges",
+  "site": "server/services/ana/AnaToolExecutor.ts:6713",
+  "signals": []
+ },
+ {
+  "tool": "simulate_study_design",
+  "site": "server/services/ana/AnaToolExecutor.ts:458",
+  "signals": []
+ },
+ {
+  "tool": "size_diagnostic_study",
+  "site": "server/services/ana/AnaToolExecutor.ts:15626",
+  "signals": []
+ },
+ {
+  "tool": "start_deep_investigation",
+  "site": "server/services/ana/agentic-workflow-tools.ts:236",
+  "signals": []
+ },
+ {
+  "tool": "start_intelligence_flow",
+  "site": "server/services/ana/AnaToolExecutor.ts:19043",
+  "signals": [
+   "verb:createInterviewSession"
+  ]
+ },
+ {
+  "tool": "start_legacy_import",
+  "site": "server/services/ana/AnaToolExecutor.ts:14289",
+  "signals": [
+   "sql:INSERT INTO",
+   "sql:UPDATE import_jobs\n          SET"
+  ]
+ },
+ {
+  "tool": "start_product_demo",
+  "site": "server/services/ana/AnaToolExecutor.ts:17214",
+  "signals": []
+ },
+ {
+  "tool": "start_war_game",
+  "site": "server/services/ana/AnaToolExecutor.ts:19327",
+  "signals": []
+ },
+ {
+  "tool": "stress_test_protocol",
+  "site": "server/services/ana/AnaToolExecutor.ts:13994",
+  "signals": []
+ },
+ {
+  "tool": "structure_benefit_risk_framework",
+  "site": "server/services/ana/AnaToolExecutor.ts:18906",
+  "signals": []
+ },
+ {
+  "tool": "structure_smpc",
+  "site": "server/services/ana/AnaToolExecutor.ts:18165",
+  "signals": []
+ },
+ {
+  "tool": "submit_invention_disclosure",
+  "site": "server/services/ana/AnaToolExecutor.ts:11248",
+  "signals": [
+   "verb:submitDisclosureTx"
+  ]
+ },
+ {
+  "tool": "suggest_predicate_devices",
+  "site": "server/services/ana/AnaToolExecutor.ts:6256",
+  "signals": []
+ },
+ {
+  "tool": "suggest_reports",
+  "site": "server/services/ana/AnaToolExecutor.ts:20258",
+  "signals": []
+ },
+ {
+  "tool": "summarize_onboarding_readiness",
+  "site": "server/services/ana/AnaToolExecutor.ts:1622",
+  "signals": []
+ },
+ {
+  "tool": "summarize_rim_intelligence",
+  "site": "server/services/ana/AnaToolExecutor.ts:805",
+  "signals": []
+ },
+ {
+  "tool": "surgical_docx_xml_edit",
+  "site": "server/services/ana/AnaToolExecutor.ts:7268",
+  "signals": [
+   "fs:mkdir",
+   "fs:writeFile",
+   "verb:writeFile"
+  ]
+ },
+ {
+  "tool": "trace_design_recommendation",
+  "site": "server/services/ana/AnaToolExecutor.ts:14016",
+  "signals": []
+ },
+ {
+  "tool": "trace_fact_to_source",
+  "site": "server/services/ana/AnaToolExecutor.ts:6009",
+  "signals": []
+ },
+ {
+  "tool": "trace_provenance",
+  "site": "server/services/ana/AnaToolExecutor.ts:9315",
+  "signals": []
+ },
+ {
+  "tool": "transmit_submission",
+  "site": "server/services/ana/AnaToolExecutor.ts:8660",
+  "signals": []
+ },
+ {
+  "tool": "triage_capa_mdr_queue",
+  "site": "server/services/ana/AnaToolExecutor.ts:6311",
+  "signals": []
+ },
+ {
+  "tool": "triage_compliance_attention",
+  "site": "server/services/ana/AnaToolExecutor.ts:12556",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "triage_signal",
+  "site": "server/services/ana/AnaToolExecutor.ts:3329",
+  "signals": []
+ },
+ {
+  "tool": "update_biosketch_section",
+  "site": "server/services/ana/AnaToolExecutor.ts:11164",
+  "signals": [
+   "verb:updateSectionTx"
+  ]
+ },
+ {
+  "tool": "update_consent_element",
+  "site": "server/services/ana/AnaToolExecutor.ts:11010",
+  "signals": [
+   "verb:updateElementTx"
+  ]
+ },
+ {
+  "tool": "update_dms_plan_element",
+  "site": "server/services/ana/AnaToolExecutor.ts:11055",
+  "signals": [
+   "verb:updateElementTx"
+  ]
+ },
+ {
+  "tool": "update_export_control_review",
+  "site": "server/services/ana/AnaToolExecutor.ts:11286",
+  "signals": [
+   "verb:updateReviewTx"
+  ]
+ },
+ {
+  "tool": "update_grant_closeout",
+  "site": "server/services/ana/AnaToolExecutor.ts:12193",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction",
+   "verb:updateCloseoutTx"
+  ]
+ },
+ {
+  "tool": "update_invention_disclosure",
+  "site": "server/services/ana/AnaToolExecutor.ts:11215",
+  "signals": [
+   "verb:updateDisclosureTx"
+  ]
+ },
+ {
+  "tool": "update_monitoring_action",
+  "site": "server/services/ana/AnaToolExecutor.ts:3386",
+  "signals": [
+   "verb:updateAction"
+  ]
+ },
+ {
+  "tool": "update_plan",
+  "site": null,
+  "signals": [
+   "NO_STATIC_SITE"
+  ]
+ },
+ {
+  "tool": "update_protocol_section",
+  "site": "server/services/ana/AnaToolExecutor.ts:11480",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction",
+   "verb:updateSectionTx"
+  ]
+ },
+ {
+  "tool": "update_q_sub_commitment_rolled_in",
+  "site": "server/services/ana/AnaToolExecutor.ts:7754",
+  "signals": [
+   "sql:UPDATE regulatory_programs\n        SET"
+  ]
+ },
+ {
+  "tool": "update_research_agreement",
+  "site": "server/services/ana/AnaToolExecutor.ts:11354",
+  "signals": [
+   "verb:updateAgreementTx"
+  ]
+ },
+ {
+  "tool": "update_tmf_artifact_status",
+  "site": "server/services/ana/AnaToolExecutor.ts:19978",
+  "signals": [
+   "gov:recordGovernedAction",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "update_vault_document",
+  "site": "server/services/ana/AnaToolExecutor.ts:19796",
+  "signals": [
+   "gov:enforceAuthorLineage",
+   "gov:recordArtifactProvenance",
+   "gov:recordGovernedAction",
+   "orm:.update(c",
+   "sql:INSERT INTO",
+   "verb:createHash",
+   "verb:recordArtifactProvenance",
+   "verb:recordGovernedAction"
+  ]
+ },
+ {
+  "tool": "validate_adam_dataset",
+  "site": "server/services/ana/AnaToolExecutor.ts:17585",
+  "signals": []
+ },
+ {
+  "tool": "validate_analytical_method",
+  "site": "server/services/ana/AnaToolExecutor.ts:17952",
+  "signals": []
+ },
+ {
+  "tool": "validate_cdisc_dataset",
+  "site": "server/services/ana/AnaToolExecutor.ts:17346",
+  "signals": []
+ },
+ {
+  "tool": "validate_cross_references",
+  "site": "server/services/ana/AnaToolExecutor.ts:4264",
+  "signals": []
+ },
+ {
+  "tool": "validate_docx",
+  "site": "server/services/ana/AnaToolExecutor.ts:7475",
+  "signals": []
+ },
+ {
+  "tool": "validate_ectd_package",
+  "site": "server/services/ana/AnaToolExecutor.ts:9123",
+  "signals": []
+ },
+ {
+  "tool": "validate_market_formatting",
+  "site": "server/services/ana/AnaToolExecutor.ts:9557",
+  "signals": []
+ },
+ {
+  "tool": "validate_sdtm_dataset",
+  "site": "server/services/ana/AnaToolExecutor.ts:17578",
+  "signals": []
+ },
+ {
+  "tool": "validate_spl",
+  "site": "server/services/ana/AnaToolExecutor.ts:17334",
+  "signals": []
+ },
+ {
+  "tool": "validate_spl_structure",
+  "site": "server/services/ana/AnaToolExecutor.ts:17555",
+  "signals": []
+ },
+ {
+  "tool": "validate_udi",
+  "site": "server/services/ana/AnaToolExecutor.ts:9766",
+  "signals": []
+ },
+ {
+  "tool": "value_dossier_guidance",
+  "site": "server/services/ana/AnaToolExecutor.ts:2059",
+  "signals": []
+ },
+ {
+  "tool": "verify_docx_against_source",
+  "site": "server/services/ana/AnaToolExecutor.ts:7514",
+  "signals": []
+ },
+ {
+  "tool": "verify_memory_atom",
+  "site": "server/services/ana/AnaToolExecutor.ts:13518",
+  "signals": [
+   "gov:recordGovernedAction",
+   "sql:UPDATE client_memory_entries\n          S"
+  ]
+ },
+ {
+  "tool": "write_kit_section",
+  "site": "server/services/ana/AnaToolExecutor.ts:14526",
+  "signals": [
+   "verb:writeKitSectionTx"
+  ]
+ },
+ {
+  "tool": "write_q_sub_section",
+  "site": "server/services/ana/AnaToolExecutor.ts:8112",
+  "signals": [
+   "gov:enforceAuthorLineage",
+   "sql:INSERT INTO",
+   "sql:ON CONFLICT"
+  ]
+ }
+]

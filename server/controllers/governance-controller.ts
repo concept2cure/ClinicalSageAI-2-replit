@@ -6,9 +6,6 @@
  */
 
 import {
-  getRecentGovernedDecisions,
-  getGovernedDecisionSummary,
-  getArtifactDecisionTrace,
   getProjectReviewQueue,
   hasUnresolvedGovernedDecisions,
   getDecisionTimeline,
@@ -20,53 +17,13 @@ import { createScopedLogger } from '../utils/logger';
 
 const log = createScopedLogger('governance-controller');
 
-export async function handleGetDecisions(organizationId: number, projectId: string, limit: number) {
+export async function handleGetReviewQueue(organizationId: number, projectId: number | string) {
   try {
-    const entries = await getRecentGovernedDecisions({
-      organizationId: String(organizationId),
-      projectId,
-      limit,
-    });
-    governanceMetrics.recordQueryExecuted();
-    return { entries, count: entries.length };
-  } catch (error) {
-    governanceMetrics.recordQueryFailure('getDecisions', error);
-    log.warn('Failed to get decisions', { organizationId, projectId, error });
-    throw error;
-  }
-}
-
-export async function handleGetSummary(organizationId: number, projectId: string, since?: string) {
-  try {
-    const result = await getGovernedDecisionSummary({
-      organizationId: String(organizationId),
-      projectId,
-    });
-    governanceMetrics.recordQueryExecuted();
-    return result;
-  } catch (error) {
-    governanceMetrics.recordQueryFailure('getSummary', error);
-    log.warn('Failed to get summary', { organizationId, projectId, error });
-    throw error;
-  }
-}
-
-export async function handleGetArtifactTrace(projectId: string, artifactId: string) {
-  try {
-    const result = await getArtifactDecisionTrace(projectId, artifactId);
-    governanceMetrics.recordQueryExecuted();
-    return result;
-  } catch (error) {
-    governanceMetrics.recordQueryFailure('getArtifactTrace', error);
-    log.warn('Failed to get artifact trace', { projectId, artifactId, error });
-    throw error;
-  }
-}
-
-export async function handleGetReviewQueue(organizationId: number, projectId: number) {
-  try {
-    const queue = await getProjectReviewQueue(projectId, organizationId);
-    const unresolved = await hasUnresolvedGovernedDecisions(projectId, organizationId);
+    // The transition log keys on the project as the platform addresses it —
+    // a program uuid or a legacy numeric id rendered as text.
+    const projectRef = String(projectId);
+    const queue = await getProjectReviewQueue(projectRef, organizationId);
+    const unresolved = await hasUnresolvedGovernedDecisions(projectRef, organizationId);
     governanceMetrics.recordQueryExecuted();
     return { queue, unresolved };
   } catch (error) {

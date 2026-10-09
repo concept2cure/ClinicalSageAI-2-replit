@@ -861,6 +861,40 @@ function kvTable(title: string, data: Record<string, any>): GeneratedTable {
   };
 }
 
+/**
+ * A recorded value rendered for prose, or '' when nothing is recorded.
+ *
+ * `val` stringifies with String(), which turns a recorded OBJECT into the
+ * literal '[object Object]' — a value that reads as present and says nothing.
+ * A field whose register shape may be an object (physicochemical properties,
+ * biological activity) is read through this instead, which renders it the way
+ * kvTable does and treats an empty object as nothing recorded.
+ */
+function textVal(sources: CanonicalSource[], field: string): string {
+  for (const s of sources) {
+    const v = s.sourcePayload?.[field];
+    if (v === undefined || v === null || v === '') continue;
+    if (typeof v === 'object') {
+      const json = JSON.stringify(v);
+      if (json === '{}' || json === '[]') continue;
+      return json;
+    }
+    return String(v);
+  }
+  return '';
+}
+
+/** 'a', 'a and b', 'a, b and c' — an Oxford-free list for a sentence. */
+function joinList(items: readonly string[]): string {
+  if (items.length <= 1) return items[0] ?? '';
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+/** First letter upper-cased, for a phrase that starts a sentence. */
+function cap(text: string): string {
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
+}
+
 /** A stored date rendered as a day, or '' when nothing is recorded. */
 function dayOf(v: unknown): string {
   if (v === undefined || v === null || v === '') return '';
@@ -2094,14 +2128,86 @@ function characterizationRendering(
 type SectionGenerator = (matched: CanonicalSource[]) => { narrative: string; tables: GeneratedTable[] };
 
 const SECTION_GENERATORS: Record<string, SectionGenerator> = {
+  /* ICH M4Q §3.2.S.1 is exactly three sub-parts — S.1.1 Nomenclature,
+     S.1.2 Structure, S.1.3 General Properties. This generator used to close
+     with the flat sentence "This section provides general information
+     including nomenclature, molecular structure, and general properties of
+     the drug substance" over a two-row table of name and manufacturer, so it
+     asserted its entire required content and delivered none of it.
+
+     Worse, it was not a gap in the record: the write-through already captures
+     inn, cas, molecularFormula, molecularWeight, structure,
+     physicochemicalProperties and biologicalActivity
+     (cmc-write-through.ts mapDrugSubstancePayload) and stores them on the
+     drug_substance source object. The section was discarding facts it held
+     and claiming them in prose instead.
+
+     Now each sub-part is named only where the record establishes it, and said
+     to be not established by this section where it does not — the same
+     posture §3.2.S.4.3 and §3.2.S.5 take. kvTable drops empty values, so an
+     unrecorded field produces no row rather than an empty one. */
   '3.2.S.1': (m) => {
     const name = val(m, 'name');
     const mfr = val(m, 'manufacturer');
+    const inn = val(m, 'inn');
+    const cas = val(m, 'cas');
+    const formula = val(m, 'molecularFormula');
+    const weight = val(m, 'molecularWeight');
+    const structure = val(m, 'structure');
+    const physchem = textVal(m, 'physicochemicalProperties');
+    const bioactivity = textVal(m, 'biologicalActivity');
+
+    /* Each sub-part is established by the fields M4Q lists under it. The
+       substance name alone is the identifier the section is ABOUT, not its
+       nomenclature: S.1.1 wants the INN, the CAS number or both. */
+    const nomenclature = [inn && 'INN', cas && 'CAS number'].filter(Boolean) as string[];
+    const structureParts = [
+      structure && 'structural formula',
+      formula && 'molecular formula',
+      weight && 'molecular weight',
+    ].filter(Boolean) as string[];
+    const properties = [
+      physchem && 'physicochemical properties',
+      bioactivity && 'biological activity',
+    ].filter(Boolean) as string[];
+
+    const established: string[] = [];
+    const missing: string[] = [];
+    (nomenclature.length ? established : missing).push(
+      nomenclature.length ? `nomenclature (${nomenclature.join(', ')})` : 'nomenclature (§3.2.S.1.1)',
+    );
+    (structureParts.length ? established : missing).push(
+      structureParts.length ? `structure (${structureParts.join(', ')})` : 'molecular structure (§3.2.S.1.2)',
+    );
+    (properties.length ? established : missing).push(
+      properties.length ? `general properties (${properties.join(', ')})` : 'general properties (§3.2.S.1.3)',
+    );
+
     return {
-      narrative: `The drug substance is ${name || '[name not provided]'}` +
+      narrative:
+        `The drug substance is ${name || '[name not provided]'}` +
         (mfr ? `, manufactured by ${mfr}.` : '.') +
-        ` This section provides general information including nomenclature, molecular structure, and general properties of the drug substance.`,
-      tables: [kvTable('Drug Substance General Information', { 'Drug Substance Name': name, 'Manufacturer': mfr })],
+        (established.length
+          ? ` This section provides ${joinList(established)} from the recorded drug-substance register.`
+          : '') +
+        (missing.length
+          ? ` ${cap(joinList(missing))} ${missing.length === 1 ? 'is' : 'are'} not recorded and ${
+              missing.length === 1 ? 'is' : 'are'
+            } not established by this section.`
+          : ''),
+      tables: [
+        kvTable('Drug Substance General Information', {
+          'Drug Substance Name': name,
+          INN: inn,
+          'CAS Number': cas,
+          'Molecular Formula': formula,
+          'Molecular Weight': weight,
+          'Structural Formula': structure,
+          'Physicochemical Properties': physchem,
+          'Biological Activity': bioactivity,
+          Manufacturer: mfr,
+        }),
+      ],
     };
   },
 
@@ -2945,4 +3051,67 @@ export function impactedSectionsForSourceType(changedSourceType: CmcSourceType):
      the two files import each other. */
   const appendices = appendixSectionsRequiringSourceType(changedSourceType);
   return [...new Set([...core, ...appendices])];
+}
+
+/**
+ * The side of the dossier a change control declares it changes. Null is the
+ * real and common state: the writer does not require it.
+ */
+export type ChangeControlScope = 'drug_substance' | 'drug_product' | 'both' | null;
+
+/**
+ * §3.2.S.2 — Manufacture (Drug Substance). The drug-substance counterpart of
+ * §3.2.P.3, which is the one section `change_control` names in its
+ * requiredSourceTypes.
+ */
+const DRUG_SUBSTANCE_MANUFACTURE_SECTION = '3.2.S.2';
+
+/**
+ * Which sections a change control stales, given the side it declares.
+ *
+ * ── The defect ──────────────────────────────────────────────────────────────
+ * Staleness was computed from the source TYPE alone, and exactly one rule
+ * names `change_control`: §3.2.P.3, Manufacture of the Drug Product. So a
+ * change control for a new API synthetic route, a new drug-substance
+ * manufacturing site or a drug-substance specification change marked §3.2.P.3
+ * stale and left §3.2.S.2, §3.2.S.4 and §3.2.S.7 reading "approved and
+ * current". The export gate refuses on stale-after-approval, so the project
+ * exported a §3.2.S nobody had re-approved after the change that invalidated
+ * it. The `affects` column the change record already carries never reached the
+ * canonical payload, so the rule could not have branched on it.
+ *
+ * ── Why an unrecorded scope stales BOTH ─────────────────────────────────────
+ * A stale section costs a re-approval. A section that should have gone stale
+ * and did not costs a filing of content nobody reviewed after the change. So
+ * the unknown case takes the conservative side, which is the wider one — the
+ * same fail-closed posture the export gate itself takes. It is not silent
+ * either: the caller puts the scope, recorded or not, in `stale_reason`.
+ *
+ * `requiredSourceTypes` is deliberately NOT edited to add `change_control` to
+ * §3.2.S.2. That list is the composition contract — what a section is BUILT
+ * from — and §3.2.S.2 is not built from change controls. Staleness is a
+ * different question and gets its own rule.
+ */
+export function impactedSectionsForChangeControl(scope: ChangeControlScope): string[] {
+  const drugProductSections = impactedSectionsForSourceType('change_control');
+  const drugSubstanceSections = [DRUG_SUBSTANCE_MANUFACTURE_SECTION];
+
+  switch (scope) {
+    case 'drug_product':
+      return [...new Set(drugProductSections)];
+    case 'drug_substance':
+      return [...new Set(drugSubstanceSections)];
+    case 'both':
+    case null:
+    default:
+      return [...new Set([...drugProductSections, ...drugSubstanceSections])];
+  }
+}
+
+/** The recorded scope of a change-control payload, or null when it holds none. */
+export function changeControlScopeOf(payload: unknown): ChangeControlScope {
+  const affects = (payload as { affects?: unknown } | null)?.affects;
+  return affects === 'drug_substance' || affects === 'drug_product' || affects === 'both'
+    ? affects
+    : null;
 }

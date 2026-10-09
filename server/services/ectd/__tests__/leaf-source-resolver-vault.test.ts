@@ -35,8 +35,8 @@ const store = vi.hoisted(() => ({
   objects: new Map<string, { bytes: Buffer; orgId: number }>(),
   gets: [] as Array<{ vaultVersionId: string; orgId: number }>,
 }));
-vi.mock('../../storage', () => ({
-  getStorageProvider: () => ({
+vi.mock('../../storage', () => {
+  const fake = {
     name: 'test',
     async get(vaultVersionId: string, orgId: number) {
       store.gets.push({ vaultVersionId, orgId });
@@ -45,8 +45,16 @@ vi.mock('../../storage', () => ({
       if (!hit || hit.orgId !== orgId) return null;
       return { bytes: hit.bytes, sizeBytes: hit.bytes.length, sha256: '', mime: 'application/pdf', filename: 'v.pdf' };
     },
-  }),
-}));
+  };
+  // The resolver reads a vault row from its recorded store; here there is one.
+  return {
+    getStorageProvider: () => fake,
+    getStorageProviderFor: (recorded: string | null) => {
+      if (recorded === 'unopenable') throw new Error("storage provider 'unopenable' cannot be opened");
+      return fake;
+    },
+  };
+});
 
 import { materializeLeafSources, leafSourceKey } from '../leaf-source-resolver';
 
@@ -78,6 +86,8 @@ async function seedVaultDoc(opts: {
   bytesOwnedBy?: number;
   /** Do not register bytes at all (a lost object). */
   withholdBytes?: boolean;
+  /** vault.documents.storage_provider, the store the bytes were written to. */
+  storageProvider?: string | null;
 }): Promise<string> {
   const id = nextUuid();
   const versionId = `ver-${id}`;
@@ -87,14 +97,15 @@ async function seedVaultDoc(opts: {
   }
   await harness.pglite.query(
     `INSERT INTO vault.documents
-       (id, program_id, storage_version_id, content_hash, file_name, deleted_at)
-     VALUES ($1::uuid, $2::uuid, $3, $4, $5, NULL)`,
+       (id, program_id, storage_version_id, content_hash, file_name, deleted_at, storage_provider)
+     VALUES ($1::uuid, $2::uuid, $3, $4, $5, NULL, $6)`,
     [
       id,
       opts.program ?? PROGRAM,
       opts.noStorageVersion ? null : versionId,
       opts.contentHash === undefined ? sha(bytes) : opts.contentHash,
       'csr-201.pdf',
+      opts.storageProvider ?? null,
     ],
   );
   return id;
@@ -118,6 +129,7 @@ beforeAll(async () => {
       id UUID PRIMARY KEY,
       program_id UUID NOT NULL,
       storage_version_id TEXT,
+      storage_provider TEXT,
       content_hash TEXT,
       file_name TEXT,
       deleted_at TIMESTAMPTZ
@@ -226,6 +238,13 @@ describe('every refusal is explained, never a silent drop', () => {
   it('bytes the provider will not return for this org are refused', async () => {
     const id = await seedVaultDoc({ withholdBytes: true });
     expect(await reasonOf({ documentUuid: id })).toMatch(/not retrievable/i);
+  });
+
+  it('bytes in a store this server cannot open are refused, and no other store is asked', async () => {
+    const id = await seedVaultDoc({ storageProvider: 'unopenable' });
+    const before = store.gets.length;
+    expect(await reasonOf({ documentUuid: id })).toMatch(/store this server cannot open/i);
+    expect(store.gets.length, 'the configured store must not answer for another one').toBe(before);
   });
 
   it('bytes that do not match the recorded hash are REFUSED, not staged', async () => {

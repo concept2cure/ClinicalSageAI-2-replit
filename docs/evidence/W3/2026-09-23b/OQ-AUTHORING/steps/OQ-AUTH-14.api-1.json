@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/docs/39ae0064-3fb9-4ea7-a3dd-507572beb02c/e-sign",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "pin": "[REDACTED]",
+      "meaning": "REVIEWER",
+      "intent": "OQ-003 step 14: reviewed for validation"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 112,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "signatureId": "cb227298-78f7-4d41-8ac1-df705e2d32e0",
+      "documentHash": "c2f09ccb3ab88796c1142308f5a9ea4a83015442b4eeb2d6d3542c38424e1ccf",
+      "signedAt": "2026-09-23T05:19:56.528Z"
+    }
+  }
+}

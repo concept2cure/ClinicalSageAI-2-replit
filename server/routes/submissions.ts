@@ -23,6 +23,7 @@ import {
   createAuditedUnplacedExport,
 } from '../services/export/governedExportConsequence';
 import { createRateLimiter } from '../middleware/rateLimiter';
+import { GATEWAY_ERROR_HTTP_STATUS } from '../services/ai-gateway/gateway-error-map';
 import {
   createSubmission,
   listSubmissions,
@@ -33,6 +34,7 @@ import {
   listLeaves,
   upsertLeaf,
   removeLeaf,
+  SUBMISSION_ERROR_STATUS,
 } from '../services/submission-service/submission-service';
 import {
   isPlaceableDocumentTable,
@@ -50,6 +52,7 @@ import {
   runConsistencyCheck,
   listConsistencyFindings,
 } from '../services/truth-engine/truth-engine-service';
+import { setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import {
   runShadowReview,
   listShadowReviewRuns,
@@ -57,6 +60,7 @@ import {
 } from '../services/shadow-review/shadow-review-service';
 import { generateSection } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
+import { requireGovernedReason } from './governed-reason';
 
 const logger = createScopedLogger('submissions-routes');
 const router = Router();
@@ -81,18 +85,11 @@ function ctxOf(req: Request): Ctx | null {
 }
 
 const CODE_STATUS: Record<string, number> = {
-  NOT_FOUND: 404,
-  INVALID_STATE: 409,
-  GOVERNED_REQUIRED: 403,
-  DISPATCH_BLOCKED: 422,
+  ...SUBMISSION_ERROR_STATUS,
   NO_AUTHORED_CONTENT: 422,
-  FORBIDDEN: 403,
-  VALIDATION: 400,
-  RATE_LIMITED: 429,
-  OVERLOADED: 503,
-  TOKEN_LIMIT_EXCEEDED: 413,
-  INVALID_AI_RESPONSE: 502,
-  PROVIDER_UNAVAILABLE: 503,
+  // The gateway's own table, not a copy: a copy missed PLACEMENT_REFUSED (a
+  // tenant placement refusal, 403) and answered it as a 500 (D6).
+  ...GATEWAY_ERROR_HTTP_STATUS,
 };
 
 function fail(res: Response, err: unknown): void {
@@ -167,6 +164,13 @@ const idParam = (v: string | string[] | undefined) => {
 
 // ── Schemas ───────────────────────────────────────────────────────────────
 const createSubmissionSchema = z.object({
+  /* The project this submission belongs to (regulatory_programs.id). Required:
+     every chain of governed records starts at a project, and a submission with
+     none reaches its project only by a name match (LX-22). Without the field
+     here the plain z.object stripped the id the Submission Center form had made
+     the user pick. Tenancy is checked by createSubmission (404 for another
+     organization's project), not here. */
+  programId: z.string().uuid(),
   title: z.string().min(1).max(500),
   productName: z.string().max(500).optional(),
   applicationType: z.string().min(1).max(64),
@@ -904,13 +908,24 @@ router.post('/sequences/:seqId/transition', limiter, requireRole(AUTHOR), async 
 });
 
 // ── Builder leaves ──────────────────────────────────────────────────────────
+// Each leaf carries `sourceDocument`: what the leaf's document pointer resolves
+// to in this organization, from the SAME resolver the dispatch-readiness
+// assessment (and so the freeze / dispatch gate) uses. The Builder used to
+// decide "linked" on the client from `documentId != null`, which is null for
+// every vault leaf (uuid-keyed) — six leaves the platform had just filed read
+// "Source document: unlinked" (MDX demo pack, 2026-09-21, finding F5). The
+// resolution is computed here, once, so the column and the gate cannot
+// disagree.
 router.get('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   try {
-    res.json(await listLeaves(seqId, ctx));
+    const leaves = await listLeaves(seqId, ctx);
+    const { resolveLeafDocuments } = await import('../services/ectd/leaf-document-resolver');
+    const sourceDocuments = await resolveLeafDocuments(leaves, ctx.organizationId);
+    res.json(leaves.map((leaf, i) => ({ ...leaf, sourceDocument: sourceDocuments[i] })));
   } catch (err) {
     fail(res, err);
   }
@@ -923,8 +938,16 @@ router.put('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req,
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   const parsed = upsertLeafSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  /* A placement decides what content goes into a regulator-facing sequence.
+     Its audit row recorded what changed and never why: no dialog asked and the
+     schema had no field (PX-1, docs/evidence/reviews/2026-09-24/lenses.md). The
+     person placing it now gives the reason, and it is recorded, never replaced. */
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) {
+    return res.status(400).json({ error: { code: 'REASON_REQUIRED', message: reason.error }, field: 'reason' });
+  }
   try {
-    res.json(await upsertLeaf({ sequenceId: seqId, ...parsed.data }, ctx));
+    res.json(await upsertLeaf({ sequenceId: seqId, ...parsed.data, reason: reason.reason }, ctx));
   } catch (err) {
     fail(res, err);
   }
@@ -955,10 +978,7 @@ router.delete('/sequences/:seqId/leaves/:leafId', limiter, requireRole(AUTHOR), 
        proxy, which forwards an upstream body verbatim and therefore also reports
        through headers. */
     const removal = await removeLeaf(leafId, seqId, ctx);
-    res.set('X-Audit-Row-Persisted', String(removal.auditTrail.persisted));
-    if (!removal.auditTrail.persisted) {
-      res.set('X-Audit-Row-Code', removal.auditTrail.code);
-    }
+    setAuditRowHeaders(res, removal.auditTrail);
     res.status(204).end();
   } catch (err) {
     fail(res, err);
@@ -1031,11 +1051,14 @@ router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) 
   }
 });
 
-// ── Dispatch QC gate (AI; does NOT transmit) ─────────────────────────────────
-// When `sequenceId` is supplied the gate inputs are computed SERVER-SIDE from the
-// canonical core (never the client numbers) — the AI advisory then floors on real
-// values. Without a sequenceId it falls back to the supplied numbers (advisory
-// only); prefer GET /sequences/:seqId/dispatch-readiness for the tamper-proof gate.
+// ── Dispatch QC (deterministic verdict + optional model narrative; does NOT transmit)
+// VSR-001 F-9: the verdict is computed by the platform's deterministic gates and
+// the model, when configured, only narrates under `narrative` (null without a
+// provider — never a 502). When `sequenceId` is supplied the full server-side
+// assessment (assessSequenceDispatchReadiness — the gate freeze/dispatch enforce)
+// IS the verdict and the client numbers are ignored. Without one the verdict is
+// the hard gate over the supplied counts, with a warning naming what was not
+// checked; prefer GET /sequences/:seqId/dispatch-readiness for the full gate.
 const dispatchQcSchema = z.object({
   region: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
   sequenceId: z.number().int().positive().optional(),
@@ -1053,13 +1076,14 @@ router.post('/:id/dispatch-qc', limiter, requireRole(AUTHOR), async (req, res) =
   try {
     await getSubmission(id, ctx);
     let input = parsed.data;
+    let assessment = null;
     if (parsed.data.sequenceId) {
       // Authoritative, tamper-proof gate inputs from server state.
       const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
-      const a = await assessSequenceDispatchReadiness({ sequenceId: parsed.data.sequenceId, organizationId: ctx.organizationId });
-      input = { ...parsed.data, validationErrors: a.validationErrors, unresolvedShadowCriticals: a.unacknowledgedShadowCriticals };
+      assessment = await assessSequenceDispatchReadiness({ sequenceId: parsed.data.sequenceId, organizationId: ctx.organizationId });
+      input = { ...parsed.data, validationErrors: assessment.validationErrors, unresolvedShadowCriticals: assessment.unacknowledgedShadowCriticals };
     }
-    res.json(await runDispatchQc(input, { ...ctx, submissionId: id }));
+    res.json(await runDispatchQc(input, { ...ctx, submissionId: id }, { assessment }));
   } catch (err) {
     fail(res, err);
   }
@@ -1093,7 +1117,11 @@ router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) =
   const parsed = consistencySchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    res.json(await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx));
+    // The body stays the findings array the Submission Center reads; the check's
+    // §11.10(e) row is reported in the header pair, as the leaf removal above does.
+    const { findings, auditTrail } = await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx);
+    setAuditRowHeaders(res, auditTrail);
+    res.json(findings);
   } catch (err) {
     fail(res, err);
   }
@@ -1408,6 +1436,15 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
     } finally {
       await result.cleanup();
     }
+    // 2026-09-23 (W5/D7, residual repair): the leaves no technical-file slot
+    // claims are returned and reported BY NAME (they were visible only folded
+    // into `skipped`); `unmappedTechnicalDocumentation` lists the Annex II/III
+    // ones, which are why `ready` is false. IV.* conformity / registration
+    // leaves are listed in unmappedLeaves and do not count.
+    // 2026-09-23 (W5/D7, final pass): `matchedByTitleOnly` names each placed
+    // source a slot matched by its title alone (a Vault-built CER, say). It
+    // does not change `ready`; it is reported so it is never mistaken for a
+    // keyed placement.
     const report = {
       ready: result.ready,
       fileCount: result.bundle.fileCount,
@@ -1415,6 +1452,9 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       skipped: result.skipped.length,
       unresolved: result.unresolvedLeaves.length,
       unfinalized: result.unfinalized,
+      unmapped: result.unmappedLeaves.length,
+      unmappedTechnicalDocumentation: result.unmappedLeaves.filter((u) => u.inTechnicalDocumentation).map((u) => u.source),
+      matchedByTitleOnly: result.matchedByTitleOnly,
     };
     const consequence = await deliverTechnicalFile(ctx, {
       bytes,
@@ -1439,6 +1479,8 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       materialized: result.materialized,
       skipped: result.skipped,
       unresolvedLeaves: result.unresolvedLeaves,
+      unmappedLeaves: result.unmappedLeaves,
+      matchedByTitleOnly: result.matchedByTitleOnly,
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,
@@ -1494,6 +1536,9 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       orgId: ctx.organizationId,
       context: 'submissions.technical-file.export',
     });
+    // 2026-09-23 (W5/D7, residual repair): unmapped leaves by name — see the
+    // sequence assemble route above. (Final pass, same date: and the
+    // title-only placements, likewise.)
     const report = {
       ready: result.ready,
       fileCount: result.fileCount,
@@ -1502,6 +1547,9 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       skipped: result.skipped.length,
       unresolved: result.unresolvedLeaves.length,
       unfinalized: result.unfinalized,
+      unmapped: result.unmappedLeaves.length,
+      unmappedTechnicalDocumentation: result.unmappedLeaves.filter((u) => u.inTechnicalDocumentation).map((u) => u.source),
+      matchedByTitleOnly: result.matchedByTitleOnly,
     };
     const consequence = await deliverTechnicalFile(ctx, {
       bytes: result.buffer,
@@ -1527,6 +1575,8 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       leafCount: result.leafCount,
       skipped: result.skipped,
       unresolvedLeaves: result.unresolvedLeaves,
+      unmappedLeaves: result.unmappedLeaves,
+      matchedByTitleOnly: result.matchedByTitleOnly,
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,
@@ -1552,8 +1602,9 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   const parsed = assembleSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  const assembly = await import('../services/ectd/assemble-from-core');
   try {
-    const { assembleSequence } = await import('../services/ectd/assemble-from-core');
+    const { assembleSequence, assembledTransmitBlockers } = assembly;
     const result = await assembleSequence({
       sequenceId: seqId,
       organizationId: ctx.organizationId,
@@ -1576,8 +1627,25 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
       materialized: result.materialized,
       skipped: result.skipped,
       unresolvedLeaves: result.unresolvedLeaves,
+      // 2026-09-22 (W5/D7): assembled is not ready-to-send. A draft leaf is IN
+      // the package; transmit refuses it, so the response says so.
+      unfinalized: result.unfinalized,
+      unfinalizedSections: result.unfinalizedSections,
+      transmitBlockers: assembledTransmitBlockers(result),
+      // What happened to the ECTD_ASSEMBLE row (§11.10(e)): an assembly that
+      // went unrecorded says so here, not only in a server log.
+      auditTrail: result.auditTrail,
     });
   } catch (err) {
+    // A refused assembly is a refusal, not an outage. It carries no `code`, so
+    // fail() answered it 500 "Request failed." and dropped the ECTD_ASSEMBLE_BLOCKED
+    // row's outcome, which IS the record that the refusal happened.
+    if (err instanceof assembly.EctdAssemblyBlockedError) {
+      return res.status(422).json({
+        error: { code: 'ECTD_ASSEMBLE_BLOCKED', message: err.message },
+        auditTrail: err.auditTrail,
+      });
+    }
     fail(res, err);
   }
 });

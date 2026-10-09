@@ -1,0 +1,17 @@
+{
+    "step": "07-self-approval-403",
+    "method": "POST",
+    "path": "/api/mdx/qms/documents/17/approve",
+    "request": {
+        "password": "<redacted: local evidence credential>",
+        "meaning": "APPROVED",
+        "reason": "WB evidence: the author must not approve their own SOP"
+    },
+    "status": 403,
+    "response": {
+        "error": "You authored this document, so you cannot also approve it. A second person has to review and sign it (21 CFR Part 11 \u00a711.10(d)).",
+        "details": {
+            "code": "QMS_SELF_APPROVAL"
+        }
+    }
+}

@@ -1699,7 +1699,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             placeholder: 'e.g., English, Spanish, French, Mandarin',
             required: false,
             helpText:
-              'Per 21 CFR 50.25(a) and 45 CFR 46.116, consent must be in a language understandable to the subject.',
+              'Per 21 CFR 50.20 and 45 CFR 46.116(a)(3), the information given to the subject must be in language understandable to the subject or the legally authorized representative.',
           },
           {
             id: 'reconsent_triggers',
@@ -1707,7 +1707,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             type: 'multi_select',
             required: false,
             helpText:
-              'Per ICH E6(R2) Section 4.8.2, subjects should be re-consented when significant new information arises that may affect willingness to participate.',
+              'Subjects are told of significant new findings that may relate to their willingness to continue (45 CFR 46.116(c)(5); 21 CFR 50.25(b)(5)). Whether and how enrolled subjects are informed or re-consented is the IRB\'s determination (45 CFR 46.109(b); 21 CFR 56.109(b)); ICH E6(R3) 2.8.2 asks that new information be assessed to decide whether re-consent is needed. These are the events that trigger that assessment, not an automatic re-consent.',
             options: [
               { value: 'protocol_amendment', label: 'Protocol Amendment' },
               { value: 'new_safety_info', label: 'New Safety Information' },

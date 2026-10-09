@@ -105,7 +105,11 @@ const SUMMARIES: Record<string, string> = {
   'GET /api/ind-lifecycle/amendments/{amendmentId}': 'Fetch one tracked IND amendment (org-scoped)',
   'POST /api/ind-lifecycle/submission/{id}/icsr-transmissions': 'Prepare + persist an E2B(R3) ICSR transmission (FAERS/EudraVigilance)',
   'GET /api/ind-lifecycle/submission/{id}/icsr-transmissions': "List a submission's ICSR transmissions",
-  'POST /api/ind-lifecycle/icsr-transmissions/{txId}/transmit': 'Transmit a prepared ICSR to its agency gateway; only a real gateway receipt marks it transmitted (422 not-ready with gaps, 503 gateway not configured, 502 transport failure — row stays prepared)',
+  // 2026-09-23 (W5/D7, MDN close): said "502 transport failure — row stays
+  // prepared" for every 502; a TRANSMISSION_UNCONFIRMED 502 leaves the row
+  // 'transmission_unconfirmed' (the agency may hold the report). The
+  // per-code responses are in OPERATION_RESPONSES below.
+  'POST /api/ind-lifecycle/icsr-transmissions/{txId}/transmit': 'Transmit a prepared ICSR to its agency gateway; only a real gateway receipt marks it transmitted (422 not-ready, 503 not configured, 502 GATEWAY_TRANSMIT_FAILED — row prepared again; 502 TRANSMISSION_UNCONFIRMED — row transmission_unconfirmed, not sent again; 409 INVALID_STATE)',
   'POST /api/ind-lifecycle/icsr-transmissions/{txId}/acknowledge': 'Record an agency ACK (AA/AE/AR) against a transmission',
   'POST /api/ind-lifecycle/submission/{id}/cross-references': 'Record an external file dependency (m1.4)',
   'GET /api/ind-lifecycle/submission/{id}/cross-references': "List a submission's cross-references",
@@ -116,6 +120,32 @@ const SUMMARIES: Record<string, string> = {
   'GET /api/ind-lifecycle/portfolio': 'IND portfolio (all submissions)',
   'GET /api/ind-lifecycle/portfolio/drift': 'Org-wide drift sweep',
   'GET /api/ind-lifecycle/portfolio/drift/csv': 'Org-wide drift sweep (CSV export)',
+};
+
+/**
+ * Responses documented per operation, beyond the uniform ones. 2026-09-23
+ * (W5/D7, MDN close): the ICSR transmit's codes, from registers.routes.ts
+ * (ICSR_TX_CODE_STATUS) and ind-icsr-transmission-persistence.ts.
+ */
+const OPERATION_RESPONSES: Record<string, Record<string, { description: string }>> = {
+  'POST /api/ind-lifecycle/icsr-transmissions/{txId}/transmit': {
+    '200': { description: "Transmitted: the agency's receipt was recorded; the row is 'transmitted'." },
+    '409': {
+      description:
+        "INVALID_STATE: the row is not 'prepared' — another transmit holds it ('transmitting'), or it was already " +
+        "sent ('transmitted', 'transmission_unconfirmed', …). Nothing is sent.",
+    },
+    '422': { description: "NOT_READY: the message has mandatory-element gaps (returned). Nothing was sent; the row is 'prepared'." },
+    '502': {
+      description:
+        "GATEWAY_TRANSMIT_FAILED: nothing was delivered, or the agency refused it — the row is 'prepared' again " +
+        "(it stays 'transmitting' when an agency receipt arrived but could not be recorded, or the release failed; " +
+        "details.status says which). TRANSMISSION_UNCONFIRMED (deliveryUnconfirmed: true): the message was sent and " +
+        "the agency may hold it — the row is 'transmission_unconfirmed' (or stays 'transmitting' if recording that " +
+        "failed) and is not sent again until the agency's acknowledgement is recorded. The body's error code says which.",
+    },
+    '503': { description: "GATEWAY_NOT_CONFIGURED: no gateway (or a simulated receipt). Nothing was sent; the row is 'prepared'." },
+  },
 };
 
 const ERROR_RESPONSES = {
@@ -142,7 +172,7 @@ export function buildIndLifecycleOpenApi(): Record<string, unknown> {
       tags: ['ind-lifecycle'],
       security: [{ bearerAuth: [] }],
       ...(params.length ? { parameters: params } : {}),
-      responses: { '200': { description: 'Success' }, '201': { description: 'Created' }, ...ERROR_RESPONSES },
+      responses: { '200': { description: 'Success' }, '201': { description: 'Created' }, ...ERROR_RESPONSES, ...OPERATION_RESPONSES[key] },
     };
   }
 

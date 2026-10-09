@@ -104,107 +104,13 @@ export const SC_LENSES = [
    ever did, including the tests. A dead sample programme is one import away from
    being live again, so it goes rather than sits. */
 
-export const SC_SEQUENCES_RAW = [
-  {
-    seq: '0000',
-    type: 'original',
-    status: 'validated',
-    region: 'fda',
-    leaves: 342,
-    updated: '2 days ago',
-  },
-  {
-    seq: '0001',
-    type: 'amendment',
-    status: 'assembling',
-    region: 'fda',
-    leaves: 18,
-    updated: '4 hr ago',
-  },
-];
+/* SC_SEQUENCES_RAW / SC_FINDINGS_RAW / SC_SHADOW_RAW / SC_CROSSREGION_RAW are
+   deleted (2026-09-25, honest-state lens). They were the kit's sample sequences,
+   findings, shadow-review notes and cross-region rows; nothing in client/src
+   imported them. Same policy as the note above: a dead sample programme is one
+   import away from being live again, so it goes rather than sits. The Sc*
+   interfaces stay — they are the row shapes the live surfaces type against. */
 
-export const SC_FINDINGS_RAW = [
-  {
-    id: 'V-01',
-    rule: 'define.xml — ADaM ADTTE dataset',
-    severity: 'critical',
-    status: 'open',
-    loc: 'm5/datasets/adam',
-    msg: 'Referenced dataset not present in the sequence; blocks technical validation.',
-  },
-  {
-    id: 'V-02',
-    rule: 'STF study-tagging — CSR-201',
-    severity: 'major',
-    status: 'open',
-    loc: 'm5/5.3.5.1',
-    msg: 'Study tagging file missing a leaf reference for the pivotal CSR.',
-  },
-  {
-    id: 'V-03',
-    rule: 'Hyperlink integrity',
-    severity: 'minor',
-    status: 'fixed',
-    loc: 'm2/2.5',
-    msg: '2 of 214 cross-document links unresolved (now repaired).',
-  },
-  {
-    id: 'V-04',
-    rule: 'PDF version / fonts embedded',
-    severity: 'info',
-    status: 'accepted',
-    loc: 'm3',
-    msg: '3 PDFs use PDF 1.7; acceptable for FDA eCTD.',
-  },
-];
-
-export const SC_SHADOW_RAW = [
-  {
-    id: 'S-01',
-    severity: 'critical',
-    msg: '§2.5 efficacy claim (ORR 38.6%) not reconciled with the locked CSR-201 dataset — a filing reviewer would issue an IR.',
-    ref: 'm2/2.5',
-  },
-  {
-    id: 'S-02',
-    severity: 'major',
-    msg: 'Pediatric plan rationale for the 12–17 exclusion is thin vs. recent oncology precedent.',
-    ref: 'm1/1.9',
-  },
-  {
-    id: 'S-03',
-    severity: 'minor',
-    msg: 'Nonclinical genotoxicity bridge would benefit from an explicit weight-of-evidence paragraph.',
-    ref: 'm2/2.6.5',
-  },
-];
-
-export const SC_CROSSREGION_RAW = [
-  {
-    region: 'eu',
-    item: 'Module 1 regional — EU application form + SPC/PL',
-    status: 'gap',
-    note: 'FDA 356h has no EU equivalent; SmPC/PL not started.',
-  },
-  {
-    region: 'eu',
-    item: 'GMP certificates / manufacturer authorisations',
-    status: 'gap',
-    note: 'EU requires QP declaration; not in the FDA sequence.',
-  },
-  {
-    region: 'jp',
-    item: 'Japanese translations (Module 1 + labeling)',
-    status: 'gap',
-    note: 'Not started; PMDA requires Japanese.',
-  },
-  {
-    region: 'eu',
-    item: 'Module 2–5 scientific content',
-    status: 'reuse',
-    note: 'Reusable from the FDA sequence with regional wrappers.',
-  },
-];
 export const SC_SEQ_STATUS: Record<string, ToneMap> = SC_SEQ_STATUS_RAW;
 export const SC_TRANSITIONS: Record<string, string[]> = SC_TRANSITIONS_RAW;
 export const SC_LIFECYCLE_OPS: Record<string, ToneMap> = SC_LIFECYCLE_OPS_RAW;

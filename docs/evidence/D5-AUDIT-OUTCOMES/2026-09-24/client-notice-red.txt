@@ -1,0 +1,14 @@
+# RED — client-notice: tests run against the unfixed implementation (client/src/lib/queryClient.ts client/src/concept2cure/v2/GlobalMutationErrors.tsx stashed at 872c47182)
+ × client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > finds the outcome at the top level, under meta, under details, and nested in data 6ms
+ × client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > reads the header pair a 204 or a proxied body carries 2ms
+ × client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > stays silent for a persisted row, a true header, and an unrelated `persisted: false` 1ms
+ × client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > terminates on a cyclic body 1ms
+ × client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a saved change with no audit row > shows a notice that says the change was saved and the audit entry was not written 46ms
+ × client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a saved change with no audit row > shows one notice for a repeated request, and removes it on dismiss 7ms
+ × client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a 200 PATCH carrying auditTrail.persisted=false raises it, and the caller still reads the body 1013ms
+ × client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a 204 DELETE carrying the header raises it 1003ms
+ × client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > an upload whose row was lost raises it 1002ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a persisted row, and a GET, raise nothing 22ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  9 failed | 1 passed (10)

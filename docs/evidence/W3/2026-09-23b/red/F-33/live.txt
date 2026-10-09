@@ -1,0 +1,18 @@
+Live. One session (the run identity), five requests, reading X-RateLimit-Remaining (the 'api'
+bucket, 600 a minute). /reviews/my-queue is answered by the first of the fifteen routers stacked
+at /api/concept2cure; /projects/:id by the fifteenth (it answers 400 for this id; the limiter
+counts before the route answers).
+
+Before the fix: a server started at 2dd78265d.
+{"path":"/api/concept2cure/reviews/my-queue","status":200,"limit":"600","remaining":"599"}
+{"path":"/api/concept2cure/reviews/my-queue","status":200,"limit":"600","remaining":"598"}
+{"path":"/api/concept2cure/projects/00000000-0000-0000-0000-000000000000","status":400,"limit":"600","remaining":"583"}
+{"path":"/api/concept2cure/projects/00000000-0000-0000-0000-000000000000","status":400,"limit":"600","remaining":"568"}
+{"path":"/api/concept2cure/reviews/my-queue","status":200,"limit":"600","remaining":"567"}
+
+After the fix: a server started on the working tree committed with this file.
+{"path":"/api/concept2cure/reviews/my-queue","status":200,"limit":"600","remaining":"599"}
+{"path":"/api/concept2cure/reviews/my-queue","status":200,"limit":"600","remaining":"598"}
+{"path":"/api/concept2cure/projects/00000000-0000-0000-0000-000000000000","status":400,"limit":"600","remaining":"597"}
+{"path":"/api/concept2cure/projects/00000000-0000-0000-0000-000000000000","status":400,"limit":"600","remaining":"596"}
+{"path":"/api/concept2cure/reviews/my-queue","status":200,"limit":"600","remaining":"595"}

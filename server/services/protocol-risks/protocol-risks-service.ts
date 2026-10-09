@@ -11,6 +11,7 @@
 
 import { pool } from '../../db';
 import { scoreRisk, summarizeRiskRegister, type RiskLikelihood, type RiskImpact, type RiskRegisterSummary } from './protocol-risks-logic';
+import { requireProtocolForWriteTx } from '../protocol-development/protocol-development-service';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -44,6 +45,7 @@ export async function addRiskTx(client: Queryable, orgId: number, userId: number
   if (input.impact && !IMPACT.includes(input.impact)) throw new ProtocolRiskError('BAD_INPUT', `Invalid impact "${input.impact}".`);
   const likelihood = (input.likelihood ?? 'possible') as RiskLikelihood;
   const impact = (input.impact ?? 'moderate') as RiskImpact;
+  await requireProtocolForWriteTx(client, orgId, input.protocolDocumentId, { signedContent: false });
   const { rows } = await client.query(
     `INSERT INTO protocol_risks (organization_id, protocol_document_id, category, description, likelihood, impact, mitigation, owner, status, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'open',$9) RETURNING id`,

@@ -1296,8 +1296,11 @@ Both spellings, side by side, and both now package correctly.
 Two are regulatory decisions, not code ones, so this session did not guess:
 
 - **The IND annual report files at `m1.13`, which is a CONTAINER in FDA's
-  published Module 1 table.** The published leaves are `1.13.1`…`1.13.8`
-  ("summary for nonclinical studies", "summary of safety information", …). A
+  published Module 1 table.** The published leaves are `1.13.1`…`1.13.15`
+  ("summary for nonclinical studies", "summary of safety information", …).
+  *(Corrected 2026-09-22: this first said `1.13.8`. The vendored table,
+  `controlled-vocab/cv-v4-data.ts`, publishes `us_1.13.1` through `us_1.13.15`
+  and no bare `us_1.13`.)* A
   leaf at bare `1.13` has no published home. Which of those an annual report
   belongs at is JM's call. Same shape for `m1.5`, `m1.7`, `m1.9`.
 - **`IND_SAFETY_REPORT_SECTION = 'm1.12.4'`** (`ind-sequence-validation.ts:58`),
@@ -1305,6 +1308,12 @@ Two are regulatory decisions, not code ones, so this session did not guess:
   comments and advice"**. A 21 CFR 312.32 fifteen-day safety report filed there
   would reach FDA labelled as a request for advice. Worth confirming against
   FDA's current M1 table before anything is filed.
+
+*(Withdrawn 2026-09-22 — the paragraph below was wrong when written. The journey
+had already been fixed by `85c7adac7`, 2026-09-08 07:20, nine hours before this
+section's own commit and an ancestor of it; it passes at the tip. The red result
+came from a stale local run under `tests/golden-journeys/__reports__/`, which git
+ignores, so nothing in the tree contradicted it. Kept as written, below.)*
 
 One more, arriving from upstream while this click was being verified and left
 for its author: **the device 510(k) eSTAR golden journey is red.** A new control
@@ -1385,3 +1394,434 @@ sandbox's egress policy, the runtime dependency §13 and §14 both note.
 Gates at the tip: typecheck clean on both configurations,
 `ci:migration-set-order` OK (261 migrations), `ci:migration-drop-safety` OK,
 `db:sync-manifest:check` in sync.
+
+---
+
+## 18. After the pause — what 678 commits did to this path, and three defects they surfaced (2026-09-22)
+
+Between `d2e61aebc` (2026-09-08, the end of §17) and `0d45e1fc3` (2026-09-22),
+678 commits landed from other sessions. This section records what they mean for
+Clicks 1–3 and what the catch-up found. Nothing below is a new click.
+
+### What changed around this path
+
+- **Every Click 1–3 construct survived and is still wired.** Twelve of the fifteen
+  files this work owns are byte-identical to `d2e61aebc`.
+- **`d0da50de0` made the `upsertLeaf` vocabulary a property of the submission
+  type.** eSTAR and IRB packages no longer hit the CTD gate §16 added. The CTD
+  branch is that gate byte for byte, and an unknown type resolves to CTD.
+- **`0e47244ec` moved the section judgement into `filingTarget.tsx`**, shared by
+  this surface and a new Vault filing dialog.
+- **Nobody built Clicks 4–6.** `ectd-compile.ts` has no commit in the range.
+- **Work beside Click 5, by session `…015weqdG`:** `50e78caa4` stopped requiring 28
+  sections an initial IND does not need — the dispatch gate would have hard-blocked
+  this demo's IND on them. `3c101fc96` corrected the validator's IND Module 1 set,
+  whose codes named headings that mean other things.
+
+### Defects found and fixed — each test failed first on unmodified code
+
+1. **The "Attach completed form" control could not be reached from the keyboard.**
+   It was a `<label>` around a `display:none` file input. A label is not focusable,
+   and `display:none` removes the input from both the tab order and the
+   accessibility tree. It is now a `<button>` that opens that row's picker (the
+   Vault's pattern), named for its form. The test tabs to the control and presses
+   Enter. Side effect worth knowing: the existing "no program, no attach control"
+   assertion had always passed vacuously, because the control was never a button.
+   It now fails if the control appears without a program (shown by mutation).
+2. **The IND checklist matched section codes by their stored spelling.**
+   `upsertLeaf` stores a code exactly as written, and writers disagree: the Vault
+   dialog stores `1.1.1`, server writers store `m1.12.4`, a person types `M1.2`.
+   Meanwhile the blueprint and `FORM_SECTIONS` are keyed `m` + canonical. So a
+   Form 1571 leaf at `1.1.1` read as not done and also appeared as a stray section,
+   and a section placed the way this dialog's own placeholder suggests
+   (`3.2.S.4.2`) lost its blueprint title and CFR reference. Placements are now
+   keyed by `m` + `normalizeCtdCode`. This was checked, not assumed: for all 107
+   blueprint codes, `m` + canonical reproduces the blueprint's spelling exactly,
+   with no collisions. The dispatch gate and the packager already normalised, so
+   Clicks 4–5 were not affected.
+3. **This dialog said "Files as 3.2.S.4.2" and stored whatever was typed**
+   (`m3.2.s.4.2`), while the Vault dialog, sharing the same judgement, sends the
+   canonical code. It now files at the code it announces.
+4. **The Freeze tooltip said freeze needs "a clear dispatch gate".** That became
+   false when §15 scoped the release signature to dispatch. Corrected at both copy
+   sites.
+
+### A survey claim refuted on verification — recorded so nobody acts on it
+
+"`authoring_documents` has no durable apply path." It has one:
+`scripts/db/authoring-subsystem.mjs` is applied by `deploy-migrate.mjs:345`,
+install-fresh and apply-c2c, and the deploy fails closed if any of its tables is
+missing.
+
+### Corrections to §16
+
+The `1.13.x` range was wrong: it runs to `1.13.15`, not `1.13.8`. The eSTAR
+paragraph is withdrawn: that journey was already green. Both are marked where
+they stand.
+
+### Still open — JM's calls
+
+- **`m1.13`** is still a container the product files leaves at directly.
+- **`m1.12.4` now has three meanings in this repository:**
+  - FDA's, "request for comments and advice";
+  - `IND_SAFETY_REPORT_SECTION`;
+  - "Financial Disclosure" in the BX-204 dossier-map seed (FDA files that at 1.3.4).
+
+  That seed mislabels two more Module 1 rows. All three are in the work-order index.
+- **Clinical hold: two go/no-go gates disagree.** The index records why copying the
+  check from one gate into the other is not the fix: a complete response to a hold
+  (21 CFR 312.42(e)) must still be sendable. This is Click 5.
+- **Sequence numbering for Click 4.** The work order titles it "Compile sequence
+  0001". eCTD numbers an original submission `0000`, which is what the seed
+  creates. Which number is meant is a decision for when Click 4 is named.
+- **§15's follow-on** — a journey that drives a sequence to a signed release and
+  asserts dispatch clears — is still unwritten.
+
+**Numbering:** `docs/work-orders/WO-9-pilot-surface-lock.md` is a different work
+order. This lane is claimed in that index's §0 under its own description.
+
+### RULE 2 now governs the next click
+
+`CLAUDE.md` RULE 2, binding since 2026-09-20, allows no new capability outside the
+launch catalog (`shared/constants/launch-scope.ts`) until rows D1–D10 of
+`docs/LAUNCH_DEFINITION_OF_DONE.md` are green. It also requires each session to
+name the row it moves and the evidence it will file under `docs/evidence/`.
+
+For this path, the catalog splits it:
+
+- **Inside:** the placement dialog (Authoring), `ectd-compile` (Click 4, Submission
+  Center) and `dispatch-readiness` (Click 5, Submission Readiness). Clicks 4–6 lead
+  to D7 ("one real sequence"). Click 3 is the act D10 names: a regulatory user
+  filing a governed document into a sequence.
+- **Outside:** the IND forms panel (Click 2) and the IND checklist. Both render only
+  inside the `ind-lifecycle` surfaces, which are behind a flag that is off in
+  production.
+
+The fixes in this section repair existing surfaces and add no capability. Whether
+Clicks 4–6 proceed under RULE 2, and against which row, is JM's decision.
+
+Checks run on `4cc0df494`, the merged tree this section was pushed on:
+
+- `ci:typecheck:no-regression`: 0 errors, baseline 0.
+- `ci:eslint-ratchet`: the warning count did not grow.
+- Every pre-push gate passed.
+- Golden journeys: 9 of 9 green.
+- This path's suites: 577 server tests and 234 client tests.
+
+## 19. Clicks 4–6 built — what can be clicked, what is blocked, and the one decision left (2026-09-23)
+
+**Row and evidence.** JM's "Continue to enhance and complete" (2026-09-22) is the
+decision §18 left open. This work moves **D7, one real sequence** (workstream W5).
+The failing-first runs are filed under `docs/evidence/W5/2026-09-23-ind-ectd/`.
+D7 is **not green**: its remaining rows are licensed agency files and FDA ESG
+credentials (§ "Blocked", below).
+
+**Numbering.** eCTD numbers an original `0000`, and the seed creates it. The work
+order's "0001 / 0002" are read as `0000` (the original, Click 4) and `0001` (the
+first lifecycle sequence, Click 6).
+
+### Click 4 — compile (`EctdCompile.tsx` → `POST /api/ectd-compile/:projectIdent/compile`)
+
+A compile returns the package it assembled, not only its backbone. Commits:
+`5da80b2c2`, `20bafbe7a`, `6ffa59afa`, `201280252`.
+
+- **Files.** Every file in the ZIP, including `m1/us/us-regional.xml`, which
+  `index.xml` now references (`f0eb87baa`), and the MD5 index.
+- **Leaf hierarchy.** Both backbones render as a hierarchy you can open and
+  close, including Module 1 from the regional file.
+- **PDF/A.** The outcome is stated. An FDA form shipped as FDA issued, with its
+  security intact (`leaf-pdf-security.ts`), is named on its own line, not
+  counted as a conversion failure.
+- **Leaf manifest.** Written to `ectd_compilations.leaf_manifest`. The compile
+  says whether it was recorded.
+- **Blocked: the ICH stylesheet view.** The ICH/FDA DTDs and stylesheet are not
+  vendored. Egress to fda.gov and ich.org is refused by this environment's
+  policy, and nothing was routed around it. The product renders the hierarchy
+  itself; the stylesheet view waits for the vendored files.
+- **Blocked: PDF/A conversion.** Ghostscript is absent from this sandbox, so the
+  compile names every leaf that was not converted.
+
+### Click 5 — dispatch readiness (`DispatchReadiness.tsx`)
+
+- Every finding, and every one of the four gates, renders as a named corpus rule
+  (`validation-rule-corpus.ts`), with:
+  - its region and severity;
+  - its enforcement statement: enforced here, guaranteed by packager
+    construction, or requires the agency validator.
+- There is no percentage and no bare pass/fail.
+- The invariant holds: every `findingCode` the assessor can emit is catalogued.
+  The source scan fails if one is not.
+- Commits: `be4164e09`, `bda0b217f`.
+
+### Click 6 — the lifecycle sequence, the export, and the agency validator's report
+
+Built and pushed:
+
+- **Start the next sequence.** Submission Center → Sequences → "Start sequence
+  0001" (`44880f611`). The number follows the highest in the submission's own
+  region. The type is the author's to state; `original` is never offered.
+- **What a follow-up sequence does to the filed state.** The compile shows every
+  act (operation, section, file, `modified-file`) and every declared act left
+  out, with the reason. It names the filed sequence the prior state folds up to.
+  All of it is read from the leaf manifest the compile records, which is the
+  record the next sequence is diffed against (`50ecbb688`).
+- **Export.** The compile surface's download pins the compiled sequence number.
+- **The agency validator's report.** A LORENZ eValidator JSON report is imported
+  against the compilation whose package it covered (`a280f5790`), through the
+  compile surface's own validate route; no new route. The import:
+  - reads the report fail closed (`a38139c6b`);
+  - stores it with its sha256, who imported it and when, in the same
+    transaction as its §11.10(e) audit row;
+  - never replaces a report silently: the surface asks first, and the replaced
+    report stays listed;
+  - renders every finding in the product, stating that the product did not run
+    the validator.
+
+  An imported report does not clear the dispatch gate. The product cannot bind
+  it to the bytes a later transmit would assemble.
+
+Defects found on this path and fixed, each test failing first:
+
+1. **A withdrawal shipped the document it withdrew**, inside the withdrawing
+   sequence, at a path in that sequence.
+   - Fixed at its source, in the lifecycle operator (`59893f059`, the parallel D7
+     session). This session's copy was removed (`a23adc73e`).
+   - `lifecycle-declared-acts.pglite.test.ts` pins it end to end.
+2. **A withdrawal was never recorded.** The leaf manifest omitted a backbone-only
+   `delete`, so the prior-state fold could not drop the leaf, and a leaf withdrawn
+   in 0001 stayed on file for every later sequence.
+   - The fold's own test held a `delete` that the packager could not produce.
+   - The two single-sequence loaders now leave a withdrawn leaf out, so the AnA
+     lifecycle tool does not read it as on file.
+3. **The compile called a package ready that transmit refuses.** It read neither
+   the declared acts assembly left out nor unapproved leaf documents. It now
+   reports both, in transmit's words. A withdrawal no longer counts as a
+   placement.
+4. **The eValidator JSON parser failed open.** An envelope it did not know, or a
+   severity it could not map, read as a clean pass.
+5. **`drug-nda-ectd.journey` was red on origin (`3b3864261`).** `cd76c7b67` made
+   freeze refuse an unapproved leaf document, and the journey froze a draft. The
+   fixture now files an approved document (`a2cb4d136`).
+
+### Open — JM's decision
+
+**How does 0000 become the filed state that 0001's `replace` and `delete` bind
+against?**
+
+- The prior-state loader counts a sequence only when its `dispatch_status` is
+  `sent` or `acknowledged`, and only a real gateway transmit writes those.
+- FDA ESG credentials are one of D7's blocked rows.
+- Until this is decided, a compile of 0001 says "No filed sequence is on record".
+  It leaves every declared `replace` and `delete` out of the package, named, and
+  the compile blocks.
+
+### Blocked — outside code
+
+- The ICH/FDA DTDs and the ICH stylesheet: egress refused.
+- FDA ESG test-environment credentials and certificates.
+- Ghostscript and an sRGB ICC profile in the runtime image, for PDF/A.
+- The eValidator run itself: JM runs it and hands over the JSON. Whether the
+  current parser reads LORENZ eValidator Basic's JSON is known only from that
+  file. A shape it does not read is refused on import, not guessed.
+
+### Not done
+
+- The screen recording of all six clicks (JM).
+- eValidator returning zero errors on the exported package (JM's run).
+- `docs/reports/wo9-demo-proof-<date>.md`, which is written from the recording.
+
+Checks run on `a2cb4d136`, the merged tree:
+
+- `ci:typecheck:no-regression`: 0 errors.
+- ESLint ratchet: no file's warning count grew.
+- Every pre-push gate passed.
+- Golden journeys: 11 of 11 green.
+- Suites: v2 client, UI contract and route suites, 342 files and 3,878 tests;
+  eCTD, gateway and submission-service suites, 121 files and 1,148 tests.
+
+## 20. Clicks 1–6 clicked on a database built the way a deploy builds one (2026-09-28/29)
+
+**Row and evidence.** This moves **D7, one real sequence** (workstream W5).
+Evidence is filed under:
+
+- `docs/evidence/W5/2026-09-28-ind-ectd/`: the seed defects.
+- `docs/evidence/W5/2026-09-29-ind-ectd/`: the click-through, the exported
+  packages' backbones, and `before/` with every failing-first run.
+
+D7 is still **not green** (§ "Blocked", below).
+
+**JM's decision on §19's open question** (2026-09-23): *rehearsal binding*.
+
+- A follow-up sequence compiles and exports against the latest recorded compile
+  of each earlier sequence, whether or not it was filed.
+- Every screen, record and download says "rehearsal — prior not filed".
+- Transmit still binds only against filed sequences.
+- Delivered in `84e935e9b` and after.
+
+### How it was clicked
+
+The demo ran in headless Chromium, signed in as the demo admin, driving the
+product's own controls. The database was built from empty:
+
+1. Postgres 16 with pgvector 0.6.0 (the Ubuntu archive package).
+2. `install-fresh` (exit 0).
+3. `deploy-migrate` (323/323 files applied).
+4. **One** `npm run db:seed`.
+
+The Form FDA 1571 attached in Click 2 is a stand-in file for these sandbox runs,
+not a sponsor-completed form. JM's recording uses his own.
+
+| Click | What the product did |
+|---|---|
+| 1 | BX-512 opened from Projects. Identity is read from the program record: IND 000512. |
+| 2 | 1571 built and checked ("2 required field(s) missing"), then the completed form filed at m1.1 in 0000. |
+| 3 | The approved 3.2.S.4 document placed at 3.2.S.4.2 in 0000 (server-confirmed leaf). |
+| 4 | 0000 compiled, recorded, and downloaded as `000512-0000-fda.zip`. |
+| 5 | Dispatch readiness: four gates and eight findings, each a named corpus rule. |
+| 6 | 0001 started as an amendment. The 3.2.S.4.2 leaf withdrawn. A rehearsal compile shows the lifecycle. Downloaded as `000512-0001-fda-rehearsal.zip`. |
+
+**Read from the two downloaded ZIPs**, not from the request that built them
+(`clicks-1-6-transcript.txt`):
+
+- 0001's `index.xml` carries
+  `<leaf operation="delete" modified-file="../0000/index.xml#leaf-3-2-S-4-2-3-2-s-4-2-coauthor-documents-52" …>`.
+  That ID is the one on the leaf 0000 filed.
+- The delete carries no `xlink:href` and no checksum.
+- Every line of `util/index-md5.txt` re-verifies against the zipped bytes, in
+  both packages (4 lines for 0000, 2 for 0001).
+- Both `us-regional.xml` files carry `<application-number application-type="fdaat4">000512</application-number>`.
+  The 0001 file declares submission type Original Application (`fdast1`) and
+  sub-type Amendment (`fdasst4`).
+
+A 0000 compile recorded before this work carries no leaf IDs. Compiling 0001
+against it leaves the withdrawal out, saying why, and blocks transmit; it never
+guesses a pointer (`c6-0001-legacy-prior-act-left-out.png`).
+
+### Defects found by clicking, each fixed with its test failing first
+
+1. **Click 3's filing snapshot failed with a 500** on the earlier demo database.
+   - Cause: that database was built without pgvector. `install-fresh` therefore
+     skipped `coauthor_documents` (its `embedding` column is `vector(1536)`).
+   - This was the environment, not code. The repository says the only repair is
+     an empty database, so the demo was rebuilt with pgvector
+     (`2026-09-28/c3-placement-refused-snapshot-500.png`).
+2. **Every re-seed added a second, empty BX-512 submission** (`8c21ea5a7`).
+   - The spine resolver preferred the empty one, so the filed 0000 dropped out
+     of compile.
+   - Seed 111 found its submission by `program_id` only, which the migration
+     never backfilled for seeded rows.
+3. **On a fresh database the IND spine and its authoring document were skipped**
+   (`8c21ea5a7`).
+   - The seed ran its parts in string order, so `111-`/`112-` ran before
+     `80-programs`.
+   - Two fresh databases compared: string order gave ✓94 ⚠7, numeric ✓99 ⚠4, with
+     no new skips.
+4. **`modified-file` named a file, not a leaf** (`09c4c15d9`).
+   - It read `../0000/m3/…/x.pdf`; eCTD v3.2.2 wants
+     `../0000/index.xml#<leaf ID>`, and FDA's Module 1 form is
+     `../../../0000/m1/us/us-regional.xml#…`.
+   - A delete also carried the withdrawn file's checksum and href.
+   - Fix: the packager assigns each leaf's ID once per backbone and records it in
+     the leaf manifest (`leafId`, `backbone`). The operator names that ID.
+   - A manifest without IDs yields no pointer, never a path.
+   - The packager refuses a `modified-file` that names no leaf, and a follow-up
+     replace or append with none.
+   - The qualification harness now resolves every pointer against the prior
+     package's own backbones.
+   - Egress to ich.org, fda.gov and esubmission.ema.europa.eu is refused here, so
+     the format was confirmed from FDA example text surfaced by search and the
+     repo's transcription of the Module 1 addendum. JM's eValidator run is the
+     external check.
+5. **The compile surface told three untruths about a withdrawal-only sequence**
+   (`ffeb09de1`):
+   - it offered no package download;
+   - it called a well-formed, leafless `us-regional.xml` "not well-formed XML";
+   - it would have called a real package a working document.
+6. **"Download package" returned a 500 on a clean build** (`954c2588f`).
+   - The governed export was registered with `projectId` = the submission id,
+     and `concept2cure_artifacts.project_id` is a foreign key to `projects.id`.
+   - Where the ids happened to coincide, the record was filed under an unrelated
+     project.
+   - It is now recorded against the project that anchors the submission's
+     program (`resolveProgramProjectAnchor`).
+   - Without an anchor it is delivered audited-unplaced, like CER and eSTAR
+     (`X-Export-Registry`).
+7. **The downloaded package said `UNASSIGNED-SEQ-6`** where the program records
+   IND 000512 (`b801a6630`).
+   - The export took the number only from its request.
+   - Now one rule (`recordedApplicationId`) serves compile and export.
+   - A supplied number must be well-formed and agree with the record: otherwise
+     400 or 409.
+
+### Console errors on the demo path
+
+The only console errors in the final run are `ERR_CERT_AUTHORITY_INVALID` on
+fonts.googleapis.com, because this sandbox's egress proxy certificate is not
+trusted by headless Chromium.
+
+The earlier "[auth] API request error … Failed to fetch" and "[TenantContext]
+Failed to load tenant data" lines came from the driver. It hard-navigated while
+the post-login requests were in flight. A sign-in with no driver navigation
+logs nothing (diagnostic run, 2026-09-29).
+
+The app does log an aborted fetch as an error when a user reloads mid-request.
+That belongs to the auth/tenant lane (handoff).
+
+### Open — JM's decision: how a document is revised for a `replace`
+
+The work order's lifecycle sequence needs a `replace` as well as the `delete`
+shown above. The product cannot yet produce a genuine one:
+
+- A declared replace binds to the filed leaf by section plus file name, so the
+  new version must be the same source re-placed with new content.
+- Every governed source rules that out:
+  - an approved authoring document is frozen (no route takes it back to draft);
+  - a new Vault version is a new record;
+  - a new form upload is a new file.
+- Today, a new version filed as `replace` is left out ("no filed leaf named … to
+  supersede"). Filing it as `new` would leave the old version current at the
+  agency.
+
+This is a product decision, not a defect fix, and it touches Part 11. It is
+asked of JM separately.
+
+### Observations — not changed here
+
+- The compile surface's "Submission" selector reads "initial" on a follow-up
+  sequence. The package itself declares the amendment correctly.
+- `us-regional.xml` carries an empty `<applicant-info/>`. Without the FDA DTD
+  (egress refused) it cannot be validated here; expect eValidator to name it.
+- The FDA builder can emit a leaf listed in both `fda.forms` and the Module 1
+  leaves twice in one backbone. This is not on the demo path.
+
+### Handoffs to other lanes
+
+- `tests/golden-journeys/haq-correction.journey.test.ts` fails on origin
+  ("expected 'clinical' to be 'regulatory'"), independent of this work.
+- Seed parts in other lanes skip under both run orders:
+  - `50-postmarket.mjs`: "admin is not defined";
+  - `124-investigator-brochure.mjs`: an ON CONFLICT with no matching constraint.
+- The auth and tenant clients log an aborted fetch as an error (above).
+
+### Blocked — outside code
+
+- The ICH/FDA DTDs and the ICH stylesheet: egress refused (checksums.txt stays
+  empty).
+- FDA ESG test credentials and certificates.
+- Ghostscript and an sRGB ICC profile, for PDF/A.
+- The eValidator run itself: JM runs it and hands over the JSON.
+
+### Not done
+
+- JM's screen recording of the six clicks.
+- eValidator returning zero errors on the exported packages.
+- `docs/reports/wo9-demo-proof-<date>.md`, which is written from that recording.
+
+Checks run on the pushed tree:
+
+- `ci:typecheck:no-regression`: 0 errors.
+- ESLint ratchet: flat.
+- Every pre-push gate passed.
+- The eCTD, gateway, submission-service, AnA, route and compile-surface suites
+  pass: 325 files and 4,552 tests on `09c4c15d9`; 125 files on `b801a6630`.
+  Every other golden journey is green; haq-correction fails as it does on origin.

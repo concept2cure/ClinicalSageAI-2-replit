@@ -1,0 +1,7 @@
+$ npm run check:security-patterns
+check-security-patterns: 0 violations across 2843 file(s).
+exit=0
+$ npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 145 baselined site(s) across 89 file(s); no file gained one.
+[ci:server-error-leaks] 1 site(s) fixed since the baseline — shrink it with --write-baseline.
+exit=0

@@ -1,0 +1,17 @@
+# Posture of the database these runs used — read from the catalog, 2026-09-24
+# PostgreSQL 16, provisioned from an empty database by scripts/db/provision-test-db.sh
+# (install-fresh + deploy-migrate) at 0521402e; PROVISION_EXIT=0, 'Schema migration complete — safe to roll services'
+# Read AFTER all three mutations were reverted, immediately before the final green run.
+
+server_version            16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+public base tables        973
+app_service               superuser=false bypassrls=false
+electronic_signatures         rls=true force=true owner=postgres
+  policy                      tenant_isolation_policy USING ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))
+submission_orchestrator_runs  rls=true force=true owner=postgres
+  policy                      tenant_isolation_policy USING ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))
+electronic_signatures trigger trg_electronic_signatures_immutable (UPDATE, DELETE) enabled=true
+
+# Permanent fixture rows (by design — see README):
+  signatures in fixture orgs: 3  (2 fixtures + 1 planted by mutation A, undeletable under §11.70)
+  permanent signers: 2

@@ -19,7 +19,6 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../db';
 import { authenticateToken } from '../middleware/auth.js';
-import { recordArtifactProvenance } from '../services/provenance/artifact-provenance';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
@@ -539,151 +538,33 @@ router.get('/gdpr/:orgId/data-subject/:dataSubjectId/export', async (req: Reques
 });
 
 /**
- * DELETE /gdpr/:orgId/data-subject/:dataSubjectId
- * Execute right-to-erasure workflows (GDPR Art. 17)
+ * DELETE /gdpr/:orgId/data-subject/:dataSubjectId — retired 2026-09-28; erases nothing.
+ *
+ * This was a second right-to-erasure path beside AnA's `erase_personal_data`.
+ * It took no re-authentication and wrote no electronic signature, it overwrote
+ * the content of regulated artifacts (GxP record retention, 21 CFR 11.10(c)),
+ * and it could not succeed on the real schema — `COALESCE(metadata,
+ * '{}'::jsonb)` on the json column fails — so every call rolled back and
+ * answered 500. No client calls it.
+ *
+ * The one erasure is the e-signature-tier governed action: POST
+ * /api/ana-ri/governed-action with command `erase_personal_data`
+ * (server/routes/ana-ri/utility.ts → erasePersonalData in
+ * server/services/ana-ri/command-executor.ts). It re-verifies the signer, signs
+ * before redacting, retains regulated records under GDPR Art. 17(3)(b) and
+ * records the request; ana-governed-command-signature.pglite.integration.test.ts
+ * and governedActionConfirmTier.test.ts pin it.
  */
-router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, res: Response) => {
-  const client = await pool.connect();
-  try {
-    const orgId = parseInt(String(req.params.orgId), 10);
-    if (!enforceOrgScope(req, res, orgId)) return;
-    const dataSubjectIdRaw = String(req.params.dataSubjectId);
-    const userId = Number.parseInt(dataSubjectIdRaw, 10);
-    const reason = req.body?.reason || 'Data subject erasure request (Art. 17)';
-
-    if (!orgId || !dataSubjectIdRaw || !Number.isFinite(userId)) {
-      return res.status(400).json({ error: 'orgId and numeric dataSubjectId are required' });
-    }
-    if (!enforceSubjectAccess(req, res, userId)) return;
-
-    /* Every statement below runs inside ONE transaction and none of them may
-       swallow its own failure.
-
-       Three of the redaction UPDATEs and the DSR completion INSERT used to end
-       `.catch(() => ({ rows: [] }))`. That reads as resilience and is the
-       opposite. Once any statement in a Postgres transaction fails, the
-       transaction is ABORTED: every following statement errors 25P02, each
-       catch turned that into an empty result, and `COMMIT` on an aborted
-       transaction performs a ROLLBACK and returns WITHOUT throwing — node-pg
-       does not error on it.
-
-       So a single failure on the conversations UPDATE rolled back the `users`
-       redaction that had already succeeded, skipped the artifacts and comments,
-       never wrote the statutory DSR record, and still returned
-
-           { success: true, data: { redactedUser: true, ... } }
-
-       because `userResult.rows.length` had been captured before the rollback.
-       An Article 17 erasure reported as completed with nothing erased and no
-       completion record is the worst outcome this endpoint has.
-
-       The author knew the failure mode — the comment below moves the provenance
-       write outside the transaction precisely because "a failed write inside
-       the transaction would have poisoned it" — but the four in-transaction
-       swallows were left. They are gone; the outer catch rolls back and returns
-       500, which is the honest answer to "did the erasure happen". */
-    await client.query('BEGIN');
-
-    const userResult = await client.query(
-      `UPDATE users
-       SET email = CONCAT('erased+', id, '@redacted.local'),
-           name = CONCAT('[ERASED USER ', id, ']'),
-           title = NULL,
-           department = NULL,
-           preferences = '{}'::jsonb,
-           updated_at = NOW()
-       WHERE id = $2
-         AND EXISTS (
-           SELECT 1 FROM organization_users ou
-           WHERE ou.user_id = users.id AND ou.organization_id = $1
-         )
-       RETURNING id`,
-      [orgId, userId]
-    );
-
-    const conversationsResult = await client.query(
-      `UPDATE concept2cure_conversations
-       SET title = '[ERASED CONVERSATION]',
-           summary = '[REDACTED PER GDPR ART.17]',
-           updated_at = NOW()
-       WHERE organization_id = $1 AND created_by_id = $2
-       RETURNING id`,
-      [orgId, userId]
-    );
-
-    const artifactsResult = await client.query(
-      `UPDATE concept2cure_artifacts
-       SET title = CONCAT('[ERASED] ', COALESCE(title, 'artifact')),
-           content = '[REDACTED PER GDPR ART.17]',
-           metadata = COALESCE(metadata, '{}'::jsonb) || '{"gdpr_erased": true}'::jsonb,
-           updated_at = NOW()
-       WHERE organization_id = $1 AND created_by_id = $2
-       RETURNING id, artifact_id`,
-      [orgId, userId]
-    );
-
-    const commentsResult = await client.query(
-      `UPDATE concept2cure_thread_comments
-       SET body = '[REDACTED PER GDPR ART.17]',
-           updated_at = NOW()
-       WHERE org_id = $1 AND author_id = $2
-       RETURNING id`,
-      [orgId, userId]
-    );
-
-    await client.query(
-      `INSERT INTO gdpr_data_subject_requests
-        (organization_id, data_subject_id, request_type, status, response_deadline, completed_at, response_details)
-       VALUES ($1, $2, 'erasure', 'completed', NOW(), NOW(), $3)`,
-      [
-        orgId,
-        dataSubjectIdRaw,
-        `Erasure completed at ${new Date().toISOString()}. Reason: ${reason}`,
-      ]
-    );
-
-    await client.query('COMMIT');
-
-    // Uniform provenance: record the Art.17 erasure of each artifact as a
-    // 'transformation' event — AFTER commit, on the pool, best-effort. A mandated
-    // erasure must never be blocked or rolled back because a provenance row could
-    // not be written, and a failed write inside the transaction would have
-    // poisoned it; recording here keeps the erasure unconditional.
-    for (const erased of (artifactsResult.rows as Array<{ id?: number }>)) {
-      if (typeof erased.id !== 'number') continue;
-      try {
-        await recordArtifactProvenance(pool, {
-          artifactId: erased.id,
-          organizationId: orgId,
-          eventType: 'transformation',
-          eventAction: 'gdpr_erase',
-          actorId: typeof userId === 'number' ? userId : null,
-          details: { reason, gdprErased: true },
-          backendService: 'routes/global-compliance',
-        });
-      } catch { /* erasure is already committed; provenance is best-effort */ }
-    }
-
-    return res.json({
-      success: true,
-      legalBasis: {
-        article17: 'Right to erasure',
-      },
-      data: {
-        dataSubjectId: dataSubjectIdRaw,
-        organizationId: orgId,
-        redactedUser: userResult.rows.length > 0,
-        redactedConversations: conversationsResult.rows.length,
-        redactedArtifacts: artifactsResult.rows.length,
-        redactedComments: commentsResult.rows.length,
-      },
-    });
-  } catch (err: any) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return serverError(res, logger, 'deleting data subject', err);
-  } finally {
-    client.release();
-  }
+router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', (req: Request, res: Response) => {
+  // Answer only for the caller's own organization, as every sibling route does,
+  // so the path cannot be used to probe another organization's id.
+  if (!enforceOrgScope(req, res, parseInt(String(req.params.orgId), 10))) return;
+  return res.status(410).json({
+    error: 'ERASURE_IS_A_GOVERNED_ACTION',
+    message:
+      'Nothing was erased. A data-subject erasure is an electronically signed governed action: ' +
+      'request erase_personal_data through AnA, which re-verifies the signer and records the signature and the request.',
+  });
 });
 
 /**

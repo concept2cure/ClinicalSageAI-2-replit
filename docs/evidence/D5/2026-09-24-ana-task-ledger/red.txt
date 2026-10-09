@@ -1,0 +1,9 @@
+== without the fix
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts the task on the board with its task.create ledger row 330ms
+ × server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts nothing on the board when its ledger row cannot be written, and says so 23ms
+   → a board row committed without its task.create ledger row: expected [ { '?column?': 1 } ] to have a length of +0 but got 1
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > moves the board row with its task.transition ledger row 21ms
+ × server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > leaves the board row where it was when its ledger row cannot be written, and says so 17ms
+   → the board status changed without its task.transition ledger row: expected 'review' to be 'in-progress' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 2 passed (4)

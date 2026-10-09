@@ -1,0 +1,43 @@
+# HEAD 7fbe51c5 + this change (uncommitted), 2026-09-26T13:17Z
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/services/audit/__tests__/auth-event-audit.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/audit/__tests__/auth-event-audit.test.ts > a write that is not persisted > does not fail the request that caused it
+{
+  "timestamp": "2026-09-26T13:17:55.117Z",
+  "level": "warn",
+  "message": "[auth] Audit log write failed (non-fatal)",
+  "context": {
+    "err": "refused",
+    "action": "user_login_mfa_challenge"
+  }
+}
+
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a number, from the user record) 6ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a string, from the signed MFA challenge) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > leaves the request in the pre-auth scope it arrived in 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (absent) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (null) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (empty) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (zero) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (negative) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (not an id) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > a write that is not persisted > does not fail the request that caused it 4ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > never shows a refused sign-in the way it shows a successful one 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > states the outcome even for an event it has no sentence for 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > is written into the row the ledger reads 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > names a resend refused at the per-challenge limit 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_sso 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_validation_failed 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_org_not_resolved 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_no_email 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_user_not_in_organisation 0ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  13:17:54
+   Duration  611ms (transform 150ms, setup 119ms, import 65ms, tests 29ms, environment 0ms)
+
+exit=0

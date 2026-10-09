@@ -1,0 +1,30 @@
+# RED: scripts/ci/check-client-ip-single-source.mjs run against the tree at HEAD dbf41866e, before the sweep
+# (git archive of server/ and shared/ into a scratch directory; findViolations(root) on it). 2026-09-23T09:26:45Z
+
+26 violation(s)
+  server/api/ai/phase3-routes.js:127 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/api/cmc/module3OperatingSystemRoutes.ts:795 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/lib/rate-limiting.ts:313 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/lib/rate-limiting.ts:320 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/middleware/enterprise-security.ts:420 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/middleware/enterprise-security.ts:1008 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/middleware/rateLimiter.ts:148 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/middleware/redisRateLimiter.ts:371 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/ana-features.ts:2253 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/ana-ri/seal-verified.ts:57 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/ana-ri/stream.ts:266 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/ana-ri/utility.ts:480 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/c2c/actions.ts:661 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/c2c/shared.ts:77 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/csp-report.ts:43 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/esignature.ts:312 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/financial-disclosures.ts:65 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/licensing.ts:118 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/mdx-qms.ts:500 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/orchestration.ts:671 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/scim.ts:324 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/scim.ts:325 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/well-known.ts:18 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/routes/well-known.ts:19 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/startup/audit-trail.ts:71 — reads a forwarding header; use clientIpOf / req.ip / req.protocol
+  server/utils/api-security.js:32 — reads a forwarding header; use clientIpOf / req.ip / req.protocol

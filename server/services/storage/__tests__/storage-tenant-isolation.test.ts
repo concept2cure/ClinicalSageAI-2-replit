@@ -200,3 +200,31 @@ describe('a tampered or misplaced sidecar cannot widen a read', () => {
     await expect(provider.get(a.vaultVersionId, ORG_A)).resolves.toBeNull();
   });
 });
+
+/*
+ * INJ-PATH-002. `get` refused a traversing name on the way out; `put` wrote
+ * one on the way in. The name comes from file_uploads.original_name, which
+ * AnA's edit_spreadsheet sets from the model's new_file_name.
+ */
+describe('put writes only inside the version directory', () => {
+  const escaped = path.join(VAULT_ROOT, String(ORG_B), 'planted.txt');
+  afterEach(() => fs.rmSync(escaped, { force: true }));
+
+  it.each([
+    ['a traversal into another tenant', `../../../${ORG_B}/planted.txt`],
+    ['an absolute path', '/tmp/planted.txt'],
+    ['the ownership sidecar', '_meta.json'],
+    ['a windows-style traversal', '..\\..\\planted.txt'],
+    ['a bare parent', '..'],
+  ])('refuses %s and writes nothing', async (_label, filename) => {
+    await expect(
+      provider.put({ orgId: ORG_A, projectId: 'proj-1', filename, bytes: Buffer.from('x'), mime: 'text/plain' }),
+    ).rejects.toThrow(/single plain name/);
+    expect(fs.existsSync(escaped)).toBe(false);
+  });
+
+  it('still stores an ordinary name', async () => {
+    const a = await put(ORG_A, 'fine');
+    expect((await provider.get(a.vaultVersionId, ORG_A))?.filename).toBe('secret.txt');
+  });
+});

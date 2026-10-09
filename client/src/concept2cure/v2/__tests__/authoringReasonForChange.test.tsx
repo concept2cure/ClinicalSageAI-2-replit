@@ -136,6 +136,31 @@ describe('the editor asks why, once per section', () => {
     expect(saveBtn().getAttribute('title')).toMatch(/say why/i);
   });
 
+  /* 2026-09-28, coverage-gap sweep GA-1. The 8-character rule was stated in
+     the placeholder, which is gone after the first keystroke, and the reason
+     Save stayed inert was a `title` on a disabled button, which a keyboard
+     never reaches. Neither field nor button had an accessible description. */
+  it('states the requirement in text the field and Save both point to', async () => {
+    const describedBy = (el: Element) =>
+      (el.getAttribute('aria-describedby') ?? '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((id) => document.getElementById(id)?.textContent ?? '')
+        .join(' ')
+        .trim();
+    await openDirty();
+    fireEvent.change(reasonField(), { target: { value: 'abc' } });
+    expect(reasonField().getAttribute('aria-required')).toBe('true');
+    expect(describedBy(reasonField()), 'the rule must outlive the placeholder').toMatch(/at least 8 characters/i);
+    expect(saveBtn().disabled).toBe(true);
+    expect(describedBy(saveBtn()), 'why Save is inert must be in the DOM, not only a title').toMatch(/at least 8 characters/i);
+
+    fireEvent.change(reasonField(), { target: { value: 'Corrected the potency limit.' } });
+    await waitFor(() => expect(saveBtn().disabled).toBe(false));
+    expect(describedBy(reasonField())).toMatch(/recorded with the revision/i);
+    expect(describedBy(reasonField())).not.toMatch(/at least 8 characters/i);
+  });
+
   it('carries the stated reason on the save', async () => {
     await openDirty();
     fireEvent.change(reasonField(), { target: { value: 'Corrected the potency limit.' } });

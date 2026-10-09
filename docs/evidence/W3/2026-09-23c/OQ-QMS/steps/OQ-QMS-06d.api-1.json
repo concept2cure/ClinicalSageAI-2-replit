@@ -1,0 +1,72 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents/3/approve",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "password": "[REDACTED]",
+      "mfaToken": "[REDACTED]",
+      "meaning": "APPROVED",
+      "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+      "effectiveDate": "2026-09-23"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 410,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": 3,
+        "organization_id": 1,
+        "doc_number": "SOP-OQ-B-20260923163039",
+        "title": "OQ-006 Second SOP 20260923163039",
+        "doc_type": "sop",
+        "category": null,
+        "version": "1.0",
+        "status": "effective",
+        "effective_date": "2026-09-23T00:00:00.000Z",
+        "next_review_date": "2026-09-28T00:00:00.000Z",
+        "author_id": 1,
+        "approver_id": 2,
+        "approved_at": "2026-09-23T16:32:00.701Z",
+        "superseded_by_id": null,
+        "artifact_id": null,
+        "metadata": {
+          "approval": {
+            "at": "2026-09-23T16:32:00.701+00:00",
+            "by": 2,
+            "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+            "meaning": "APPROVED",
+            "bindingBasis": "qms-document-version-content-sha256",
+            "contentDigest": "d5ef40d46f7ef48da0ea16a17bdbdfcb7ad3dee56c6d8afafdaeab5ebac52936",
+            "twoPersonRule": "enforced"
+          }
+        },
+        "created_at": "2026-09-23T16:31:01.540Z",
+        "updated_at": "2026-09-23T16:32:00.700Z",
+        "deleted_at": null
+      },
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": true
+        },
+        "signature": {
+          "id": 3,
+          "signedAt": "2026-09-23T16:32:00.701Z",
+          "actionId": "act_ae9fa5f50d6c4aab9fd937a6b447c4f7",
+          "auditId": "d339c80c-16c7-4616-bb36-7fff8dad6b59",
+          "sha256Chain": "9ef9fb4c036c783a1d3030f222510721c1ad2b57b4986a755d11d5ab9171ac44",
+          "meaning": "APPROVED",
+          "boundPayloadDigest": "d5ef40d46f7ef48da0ea16a17bdbdfcb7ad3dee56c6d8afafdaeab5ebac52936",
+          "bindingBasis": "qms-document-version-content-sha256",
+          "authenticationMethod": "password+totp",
+          "secondFactorVerified": true
+        }
+      }
+    }
+  }
+}

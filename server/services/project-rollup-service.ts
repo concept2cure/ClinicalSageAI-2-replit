@@ -78,6 +78,10 @@ function worstRisk(a: string, b: string): 'low' | 'medium' | 'high' | 'critical'
   return RISK_LEVELS[Math.max(ai >= 0 ? ai : 1, bi >= 0 ? bi : 1)];
 }
 
+// People are named through public.actor_name, not a join on users: since users
+// took row-level security (D3, 2026-09-28) a tenant scope reads only current
+// members, so the join dropped the name of anyone who had left
+// (docs/evidence/D3/2026-09-29-actor-names/).
 export class ProjectRollupService {
   constructor(private pool: Pool) {}
 
@@ -88,7 +92,7 @@ export class ProjectRollupService {
     // Fetch root project
     const rootResult = await this.pool.query(
       `SELECT p.*, u.name as owner_name
-       FROM projects p LEFT JOIN users u ON p.owner_id = u.id
+       FROM projects p LEFT JOIN LATERAL public.actor_name(p.owner_id) u ON TRUE
        WHERE p.id = $1 AND p.organization_id = $2`,
       [projectId, organizationId]
     );
@@ -101,7 +105,7 @@ export class ProjectRollupService {
 
     const descendantsResult = await this.pool.query(
       `SELECT p.*, u.name as owner_name
-       FROM projects p LEFT JOIN users u ON p.owner_id = u.id
+       FROM projects p LEFT JOIN LATERAL public.actor_name(p.owner_id) u ON TRUE
        WHERE p.organization_id = $1
          AND (p.path LIKE $2 || '/%' OR p.path = $2 OR p.parent_project_id = $3)
        ORDER BY p.depth ASC, p.name ASC`,

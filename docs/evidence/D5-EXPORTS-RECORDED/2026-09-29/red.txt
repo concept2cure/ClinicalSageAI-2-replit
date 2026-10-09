@@ -1,0 +1,11 @@
+# RED — exports-recorded tests against exports.ts / templates.ts at 12c57bd76 (files delivered with no record)
+ × server/routes/c2c/__tests__/exports-recorded.test.ts > POST /api/concept2cure/artifacts/export-docx > records EXPORT_GENERATED with the SHA-256 of the delivered bytes, then delivers them 52ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/routes/c2c/__tests__/exports-recorded.test.ts > POST /api/concept2cure/artifacts/export-docx > delivers nothing when the record does not persist 16ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/c2c/__tests__/exports-recorded.test.ts > POST /api/c2c/templates/:id/render > records EXPORT_GENERATED with the SHA-256 of the delivered bytes, then delivers them 10ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/routes/c2c/__tests__/exports-recorded.test.ts > POST /api/c2c/templates/:id/render > delivers nothing when the record does not persist 9ms
+   → expected 200 to be 503 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)

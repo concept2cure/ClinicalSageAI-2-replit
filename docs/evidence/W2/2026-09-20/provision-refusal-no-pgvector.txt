@@ -1,0 +1,25 @@
+# 2026-09-20T19:18:41Z — vector.control moved aside on the server to simulate a missing postgresql-16-pgvector package
+# DATABASE_OWNER_URL=postgres@127.0.0.1/clinicalsage_novector (empty database, no extension)
+▶ 0/4 Connections
+  owner: postgres@127.0.0.1:5432/clinicalsage_novector
+  app:   postgres@127.0.0.1:5432/clinicalsage_novector
+  runtime role: not minted (APP_SERVICE_DB_PASSWORD unset) — the app connects as the owner
+
+▶ 1/4 Preflight (owner connection, nothing written except CREATE EXTENSION vector)
+  server PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1), database clinicalsage_novector, connected as postgres
+
+✗ pgvector is NOT available on this PostgreSQL server — refusing to provision.
+  pg_available_extensions has no row for "vector": the extension package is
+  not installed on the server, so CREATE EXTENSION vector cannot succeed for
+  any role. Eleven tables in shared/schema.ts and the CSR-knowledge and
+  governed-content trees need the vector type; provisioning without it
+  produces a database that install-fresh cannot repair later (see its header
+  on why a second run over a partly-installed database emits nothing).
+
+  Install it on the server for PostgreSQL 16, then run this again:
+      apt-get install -y postgresql-16-pgvector      # Debian / Ubuntu
+      (RDS / Aurora: pgvector ships with the engine — CREATE EXTENSION vector
+       as the master user; Neon: enable it from the console)
+
+  Nothing was written to the database.
+exit=4

@@ -64,8 +64,20 @@ function chain(rows: () => Array<Record<string, unknown>>): any {
 // two reads answer different questions about the same table and a single fixture
 // would let one silently stand in for the other.
 let maxStorageGb: number | null = 5;
+// A THIRD decision, read through the raw `pool`: the account's standing
+// (services/account-standing.ts, VSR-001 F-29). Both gates refuse an account
+// that is not 'active' before any scope opens. Modelled on its own for the same
+// reason as the two above; `Error` stands for a read that fails.
+let accountStatus: string | Error = 'active';
 
 vi.mock('../../db', () => ({
+  pool: {
+    query: async (sql: string) => {
+      if (!/SELECT status FROM users/.test(sql)) throw new Error(`unmodelled pool query: ${sql}`);
+      if (accountStatus instanceof Error) throw accountStatus;
+      return { rows: [{ status: accountStatus }] };
+    },
+  },
   db: {
     select: (projection?: Record<string, unknown>) =>
       projection && 'status' in projection
@@ -114,6 +126,10 @@ interface DriveResult {
   scoped: boolean;
   /** tenantId the downstream handler observed, or null when unscoped. */
   tenantId: string | null;
+  /** orgUuid the downstream handler's scope carried — what app.current_org_id is set to. */
+  orgUuid: string | null;
+  /** req.tenantContext.organizationUuid as published to the handler. */
+  ctxOrgUuid: string | null;
   /** True when next() (the downstream handler) was reached at all. */
   reachedHandler: boolean;
   /** The JSON body the middleware answered with, if it answered. */
@@ -140,12 +156,14 @@ function drive(
     let reachedHandler = false;
     let scoped = false;
     let tenantId: string | null = null;
+    let orgUuid: string | null = null;
+    let ctxOrgUuid: string | null = null;
     let body: any;
 
     const settle = () => {
       if (settled) return;
       settled = true;
-      resolve({ status, scoped, tenantId, reachedHandler, body });
+      resolve({ status, scoped, tenantId, orgUuid, ctxOrgUuid, reachedHandler, body });
     };
 
     const res = {
@@ -179,6 +197,8 @@ function drive(
       const scope = getTenantScope();
       scoped = !!scope;
       tenantId = scope?.tenantId ?? null;
+      orgUuid = scope?.orgUuid ?? null;
+      ctxOrgUuid = (req as { tenantContext?: { organizationUuid?: string | null } }).tenantContext?.organizationUuid ?? null;
       settle();
     };
 
@@ -187,6 +207,7 @@ function drive(
 }
 
 beforeEach(() => {
+  accountStatus = 'active';
   membershipRows = [{ role: 'editor', orgUuid: null }];
   organizationRows = [{ status: 'active', paymentStatus: 'active' }];
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -245,6 +266,95 @@ describe('authenticateToken opens a tenant scope on the member path', () => {
     expect(r.status).toBe(403);
     expect(r.reachedHandler).toBe(false);
     expect(r.scoped).toBe(false);
+  });
+});
+
+// VSR-001 F-29. An account suspended by an administrator or deprovisioned by the
+// identity provider kept every session it held: neither gate read its standing.
+// Pinned on real PostgreSQL by tests/db/account-standing.dbtest.ts; here, that
+// both gates refuse before a scope opens, and fail closed on an unreadable one.
+describe('an account taken out of use opens nothing on either gate', () => {
+  for (const status of ['suspended', 'inactive']) {
+    it(`authenticateToken refuses a ${status} account, before a scope opens`, async () => {
+      accountStatus = status;
+      const { authenticateToken } = await importRealMiddlewareAuth();
+      const r = await drive(authenticateToken, 'Bearer x');
+      expect(r.status).toBe(401);
+      expect(r.body?.error?.code).toBe('ACCOUNT_INACTIVE');
+      expect(r.reachedHandler).toBe(false);
+      expect(r.scoped).toBe(false);
+    });
+
+    it(`authMiddleware (global /api gate) refuses a ${status} account, before a scope opens`, async () => {
+      accountStatus = status;
+      const { authMiddleware } = await import('../../auth');
+      const r = await drive(authMiddleware as Middleware, 'Bearer x');
+      expect(r.status).toBe(401);
+      expect(r.body?.code).toBe('ACCOUNT_INACTIVE');
+      expect(r.reachedHandler).toBe(false);
+      expect(r.scoped).toBe(false);
+    });
+  }
+
+  it('both answer 503, never a pass, when the standing cannot be read', async () => {
+    accountStatus = new Error('users unreadable');
+    const { authenticateToken } = await importRealMiddlewareAuth();
+    const { authMiddleware } = await import('../../auth');
+    for (const mw of [authenticateToken, authMiddleware as Middleware]) {
+      const r = await drive(mw, 'Bearer x');
+      expect(r.status).toBe(503);
+      expect(r.reachedHandler).toBe(false);
+    }
+  });
+});
+
+// The vault.* write and read policies (core.can_write_program → identity.
+// current_org_id()) key on the organization's UUID in app.current_org_id, which
+// the pool sets from the scope's orgUuid. authenticateToken resolved it through
+// enforceOrgMembership; the global gate did not, so under the non-owner runtime
+// role every vault ingest behind /api was refused by RLS ("new row violates
+// row-level security policy for table documents") and every vault read came
+// back empty.
+describe('both gates carry the organization uuid into the scope', () => {
+  const ORG_UUID = 'cec579dd-c9c5-44d7-b96f-be0cb408fd34';
+
+  it('authenticateToken', async () => {
+    membershipRows = [{ role: 'editor', orgUuid: ORG_UUID }];
+    const { authenticateToken } = await importRealMiddlewareAuth();
+
+    const r = await drive(authenticateToken, 'Bearer x');
+
+    expect(r.status).toBe(200);
+    expect(r.orgUuid).toBe(ORG_UUID);
+  });
+
+  it('authMiddleware (global /api gate)', async () => {
+    membershipRows = [{ role: 'editor', orgUuid: ORG_UUID }];
+    const { authMiddleware } = await import('../../auth');
+
+    const r = await drive(authMiddleware as unknown as Middleware, 'Bearer x');
+
+    expect(r.status).toBe(200);
+    expect(r.orgUuid).toBe(ORG_UUID);
+    expect(r.ctxOrgUuid).toBe(ORG_UUID);
+  });
+
+  // The live path of /api/vault/ingest: the global authenticateToken gate opens
+  // the scope with the uuid, then the route-level authMiddleware rebuilds
+  // req.tenantContext. The route re-opens its scope from req.tenantContext after
+  // multer, so a rebuilt context without the uuid re-opened a scope without it.
+  it('authMiddleware behind authenticateToken leaves the published context carrying it', async () => {
+    membershipRows = [{ role: 'editor', orgUuid: ORG_UUID }];
+    const { authenticateToken } = await importRealMiddlewareAuth();
+    const { authMiddleware } = await import('../../auth');
+    const chained: Middleware = (req, res, next) =>
+      authenticateToken(req, res, () => (authMiddleware as unknown as Middleware)(req, res, next));
+
+    const r = await drive(chained, 'Bearer x');
+
+    expect(r.status).toBe(200);
+    expect(r.orgUuid).toBe(ORG_UUID);
+    expect(r.ctxOrgUuid).toBe(ORG_UUID);
   });
 });
 

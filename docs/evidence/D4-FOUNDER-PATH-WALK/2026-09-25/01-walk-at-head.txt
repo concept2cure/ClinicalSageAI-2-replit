@@ -1,0 +1,56 @@
+[founder-path] project
+  green  program-recorded — regulatory_programs holds the project, owned by org A
+  green  creation-audited-with-its-keys — the chained c2c.project.create row names the project and the submission spine it created
+  green  filing-scaffolded-in-project — the project’s governed filing (c2c_documents) is keyed to the project
+[founder-path] capture
+  green  source-recorded — cre_evidence_sources holds X under checksum = sha256(X), in org A
+  green  source-in-project — the source carries the project’s key
+  green  data-room-lists-source — the project’s Data Room (GET /api/c2c/projects/:id/sources) lists it by id and checksum
+  RED    bytes-durable — baselined DR-ANA-11 → LX-02; observed null
+[founder-path] ana-draft
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  green  document-in-project — the authoring document carries the project’s key
+  green  genesis-revision-per-section — every section has a genesis doc_revisions row hashing its content
+  RED    model-recorded — baselined AC-01, DR-ANA-13 → LX-06; observed undefined
+  RED    turn-recorded — baselined AC-01, DR-ANA-13 → LX-06; observed [null,null]
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+[founder-path] edit-save
+  green  save-accepted — the save is accepted
+  green  revision-chained — doc_revisions grows by the edit, chained to the genesis row and hashing the saved text
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+[founder-path] seal
+  green  seal-hash-verifies — frozen_documents holds the freeze and the approval seal, each hashing its own content
+  green  signature-binds-seal — the APPROVER signature names the freeze it covered, by version and content hash
+  RED    seal-binds-revision-and-lineage — baselined AC-04, AC-10 → LX-08 then LX-09; observed {"heads":2,"bound":0,"lineageDigests":0}
+[founder-path] file-to-vault
+  green  vault-row-in-project — vault.documents holds the filed bytes in the same project, under their content hash
+  green  filing-names-document — the chained file_to_vault audit row links the vault row to the authoring document
+  RED    filing-names-sealed-version — baselined SUB-7, AC-14 → LX-10; observed false
+[founder-path] place
+  green  filing-copy-names-seal — the filing copy is aliased to the authoring document and names the seal it was taken under
+  green  coauthor-leaf-pins-copy — the coauthor leaf pins the filing copy and the sha256 of its text
+  green  vault-leaf-pins-bytes — the vault leaf pins the Vault document and its content hash
+  RED    placement-audit-names-document-and-pin — baselined SUB-10 → LX-11; observed [false,false]
+[founder-path] transmit
+  green  transmitted — the transmittal records the sha256 of exactly the bytes that left, and the ledger names it
+  RED    reachable-from-the-product — baselined SUB-1 → LX-13; observed 0
+  RED    bytes-retained — baselined SUB-2 → LX-12; observed false
+  RED    transmittal-names-sequence — baselined SUB-2 → LX-12; observed {"sequenceIdColumn":false,"programId":null}
+  RED    transmit-record-names-bundle — baselined SUB-2 → LX-12; observed false
+[founder-path] walk-back
+  green  audit-ledger-verifies — the tenant’s chained audit ledger — which several steps below read keys from — verifies
+  green  transmittal-to-sequence — the transmittal resolves to exactly one sequence
+  green  sequence-to-pinned-leaves — the sequence’s leaves each name a document and pin its digest
+  green  leaves-to-project — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+  green  sequence-to-project — the sequence’s submission reaches the same project (the project-creation record names it)
+  green  filing-copy-leaf-to-seal — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+  RED    vault-leaf-to-seal — baselined SUB-7 → LX-10; observed 0
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+[founder-path] walk-forward
+  green  project-to-its-records — from the project: its Data Room source, its authoring document, its Vault copy and its submission
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  green  document-to-transmittal — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+  RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
+ Test Files  1 passed (1)
+      Tests  12 passed (12)

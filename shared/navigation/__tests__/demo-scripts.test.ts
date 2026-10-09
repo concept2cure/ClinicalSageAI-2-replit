@@ -114,3 +114,92 @@ describe('the registered scripts (the totality gate)', () => {
     }
   });
 });
+
+/* ── The launch catalog (docs/LAUNCH_DEFINITION_OF_DONE.md, D2) ──────────────
+   Under LAUNCH_SCOPE_ENFORCE=on every surface outside shared/constants/
+   launch-scope.ts renders "Not in this release". A demonstration stop that
+   navigates there is a demonstration that visibly fails in front of the
+   person it was written to impress, so the three Live Drive scripts are held
+   to the catalog here, through the same resolution the shell applies: the
+   registry target's path, then DEEP_LINK_ALIASES, then the surface id. */
+import { DEEP_LINK_ALIASES } from '../../../client/src/concept2cure/v2/registryModel';
+import { LAUNCH_APPS, LAUNCH_SURFACE_IDS } from '../../constants/launch-scope';
+import { findNavigationTarget } from '../index';
+import { findSurfaceAction } from '../surface-actions';
+
+/** The surface id the shell mounts for a registry target, or null. */
+function surfaceFor(targetId: string): string | null {
+  const t = findNavigationTarget(targetId);
+  if (!t) return null;
+  const path = t.path ?? t.id;
+  return DEEP_LINK_ALIASES[path] ?? path;
+}
+
+describe('the Live Drive scripts stay inside the launch catalog', () => {
+  const LIVE_DRIVE_SCRIPTS = ['training-orientation', 'training-submission-day', 'sales-flagship'] as const;
+
+  it('the three scripts exist', () => {
+    for (const id of LIVE_DRIVE_SCRIPTS) expect(findDemoScript(id), id).toBeDefined();
+  });
+
+  it('every navigate stop lands on a launch surface (never "Not in this release")', () => {
+    const outside: string[] = [];
+    for (const id of LIVE_DRIVE_SCRIPTS) {
+      const script = findDemoScript(id)!;
+      script.steps.forEach((step, i) => {
+        if (!step.navigate) return;
+        const surface = surfaceFor(step.navigate.target);
+        if (!surface || !LAUNCH_SURFACE_IDS.has(surface)) {
+          outside.push(`${id} stop ${i + 1}: navigate '${step.navigate.target}' → ${surface ?? 'unresolved'}`);
+        }
+      });
+    }
+    expect(outside, outside.join('\n')).toEqual([]);
+  });
+
+  it('every act operates a registered action whose screen is a launch surface', () => {
+    const outside: string[] = [];
+    for (const id of LIVE_DRIVE_SCRIPTS) {
+      const script = findDemoScript(id)!;
+      script.steps.forEach((step, i) => {
+        if (!step.act) return;
+        const action = findSurfaceAction(step.act.actionId);
+        const surface = action ? surfaceFor(action.surfaceId) : null;
+        if (!action || !surface || !LAUNCH_SURFACE_IDS.has(surface)) {
+          outside.push(`${id} stop ${i + 1}: act '${step.act.actionId}' → ${surface ?? 'unresolved'}`);
+        }
+      });
+    }
+    expect(outside, outside.join('\n')).toEqual([]);
+  });
+
+  it('the orientation walks all six launch apps and ends at the audit trail', () => {
+    const script = findDemoScript('training-orientation')!;
+    const surfaces = script.steps.map((s) => (s.navigate ? surfaceFor(s.navigate.target) : null));
+    for (const app of LAUNCH_APPS) {
+      expect(
+        surfaces.some((s) => s !== null && app.surfaces.includes(s)),
+        `training-orientation never reaches the ${app.label} app`,
+      ).toBe(true);
+    }
+    expect(surfaces.includes('audit-trail')).toBe(true);
+  });
+
+  it('submission day runs Vault → Authoring → Submission Center → Readiness → Part 11', () => {
+    const script = findDemoScript('training-submission-day')!;
+    const surfaces = script.steps
+      .map((s) => (s.navigate ? surfaceFor(s.navigate.target) : null))
+      .filter((s): s is string => s !== null);
+    const appOf = (surface: string) =>
+      surface === 'part11-console' || surface === 'audit-trail'
+        ? 'part11'
+        : LAUNCH_APPS.find((a) => a.surfaces.includes(surface))?.id ?? surface;
+    const order = surfaces.map(appOf).filter((v, i, arr) => arr.indexOf(v) === i);
+    const idx = (app: string) => order.indexOf(app);
+    expect(idx('vault')).toBeGreaterThanOrEqual(0);
+    expect(idx('authoring')).toBeGreaterThan(idx('vault'));
+    expect(idx('submission-center')).toBeGreaterThan(idx('authoring'));
+    expect(idx('submission-readiness')).toBeGreaterThan(idx('submission-center'));
+    expect(idx('part11')).toBeGreaterThan(idx('submission-readiness'));
+  });
+});

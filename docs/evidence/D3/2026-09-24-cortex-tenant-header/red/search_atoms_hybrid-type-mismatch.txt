@@ -1,0 +1,10 @@
+# search_atoms_hybrid on the from-blank database (0521402e), run as the table owner, 2026-09-24.
+# Case 1: the table holds 0 atoms and the query matches nothing.
+atoms in lumen_data_atoms: 0
+$ SELECT count(*) FROM search_atoms_hybrid('qqqqnomatchqqqq', <1536-dim vector>, 0.7, 0.3, 5);
+ERROR:  structure of query does not match function result type
+DETAIL:  Returned type json does not match expected type jsonb in column 5.
+
+# Case 2: one matching active atom, inserted and rolled back in the same transaction.
+ERROR:  structure of query does not match function result type
+DETAIL:  Returned type json does not match expected type jsonb in column 5.

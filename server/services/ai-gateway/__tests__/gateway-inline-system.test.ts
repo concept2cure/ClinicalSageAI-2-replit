@@ -156,6 +156,22 @@ describe('the operator channel, downgraded', () => {
     );
   });
 
+  it('an app-authored turn folds under its own label, never as the person\'s words', async () => {
+    // A screen report is what the app saw on the person's screen. Folded as a
+    // "User interjection" on a fallback model, the model reads it as something
+    // the person typed — and answers them for words they never wrote.
+    const report: GatewayMessage = {
+      role: 'system',
+      inlineSystem: true,
+      foldLabel: 'App observation',
+      content: '[Screen report] Could not open Vault: the screen did not load.',
+    };
+    const params = await sentParams(INCAPABLE, [PERSONA, ASK, WORKING, RESULTS, report]);
+    const folded = params.messages[2].content as string;
+    expect(folded).toContain('[App observation]: [Screen report] Could not open Vault');
+    expect(folded).not.toContain('User interjection');
+  });
+
   it('a model that does not declare the capability is treated as not having it', async () => {
     // Omitted, not false. A capability we have not confirmed for an entry is
     // one we do not use for it — the same rule the substrate entries follow.

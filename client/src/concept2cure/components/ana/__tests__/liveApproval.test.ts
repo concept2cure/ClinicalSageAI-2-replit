@@ -52,6 +52,7 @@ describe('a live approval becomes the sign-off the rail already renders', () => 
       command: 'freeze_document',
       params: { documentId: 7 },
       signatureRequired: true,
+      tier: 'esignature',
       message: 'AnA is waiting on this before she goes on.',
       runId: 'run_abc',
       toolUseId: 'tu_1',
@@ -62,6 +63,18 @@ describe('a live approval becomes the sign-off the rail already renders', () => 
     const p = pendingSignoffFromApproval(frame())!;
     expect(p.runId).toBe('run_abc');
     expect(p.toolUseId).toBe('tu_1');
+  });
+
+  it('carries the confirm tier the server names, and derives the tier when an older server names none', () => {
+    const c = pendingSignoffFromApproval(
+      frame({ data: { tier: 'confirm', reasonRequired: false, signatureRequired: false, retry: { command: 'create_task', params: { title: 'x' } } } }),
+    )!;
+    expect(c.tier).toBe('confirm');
+    expect(c.signatureRequired).toBe(false);
+    const legacy = pendingSignoffFromApproval(
+      frame({ data: { signatureRequired: true, retry: { command: 'freeze_document', params: {} } } }),
+    )!;
+    expect(legacy.tier).toBe('esignature');
   });
 
   it('is the reason-only tier when no signature is demanded', () => {

@@ -1,0 +1,41 @@
+$ npx vitest run server/services/__tests__/multi-agent-council.test.ts server/services/ana/__tests__/council-tool-claim-counts.test.ts server/services/ana/__tests__/council-tool.test.ts
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > delegates to the gateway and maps the response to CouncilLLMResult
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > routes prose agents as document_drafting (jsonMode off)
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > threads correlationId + operation into the gateway audit metadata
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > throws SERVICE_DEGRADED (without calling the gateway) when the feature is gated off
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > converts a gateway failure into a recoverable CouncilError and audits it
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > prepends the intelligence prefix to the system turn when org/project context is present
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > does not fetch an intelligence prefix when no org/project context is given
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > routes the reviewing agents as regulatory_review, with jsonMode on (not structured_output)
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > DRAFTER is routed as document_drafting whatever its output format
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > STATISTICIAN is routed as regulatory_review whatever its output format
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > CRITIC is routed as regulatory_review whatever its output format
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > SYNTHESIZER is routed as document_drafting whatever its output format
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > a governance refusal is final and not audited as an outage
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > withRetry does not retry an error marked unrecoverable, and does retry a recoverable one
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a claim that matches the data is VERIFIED; one that differs is a DISCREPANCY corrected to the data
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > the model's own VERIFIED is not a verdict: no matching binding means UNVERIFIABLE
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > the model's own correction is not a figure: it is dropped when no data answered
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a binding that returns nothing is UNVERIFIABLE, not a DISCREPANCY corrected to an empty string
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a count of 0 read from the data is a value, and verifies a claim of 0
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (prose) fails, and is not recorded as zero claims
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (JSON without a verifications list) fails, and is not recorded as zero claims
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (an empty reply) fails, and is not recorded as zero claims
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an empty verifications list is a real answer — a draft with no numerical claims
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Critic — an unreadable review is not "no issues" > unreadable → fails and records nothing
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Critic — an unreadable review is not "no issues" > a readable review keeps its issues and its assessment; an unknown assessment is the cautious REVISE
+ ✓ server/services/ana/__tests__/council-tool-claim-counts.test.ts > convene_drafting_council — claim counts > reports claims found, checked against data, and unverifiable
+ ✓ server/services/ana/__tests__/council-tool.test.ts > convene_drafting_council — tool definition > is registered in the enabled tool set
+ ✓ server/services/ana/__tests__/council-tool.test.ts > convene_drafting_council — tool definition > requires section_path and offers requirements + context
+ ✓ server/services/ana/__tests__/council-tool.test.ts > convene_drafting_council — tool definition > tells the model when to use it — and when not to
+ ✓ server/services/ana/__tests__/council-tool.test.ts > convene_drafting_council — executor handler > has a registered handler
+ ✓ server/services/ana/__tests__/council-tool.test.ts > convene_drafting_council — executor handler > rejects a missing section_path without touching the database
+ ✓ server/services/ana/__tests__/council-tool.test.ts > convene_drafting_council — transparency + pedigree > gets a calm, input-aware step label
+ ✓ server/services/ana/__tests__/council-tool.test.ts > convene_drafting_council — transparency + pedigree > classifies as model_assisted (LLM pipeline output — verify before relying)
+ ✓ server/services/ana/__tests__/council-tool.test.ts > council provisioning migration — idempotency guard > creates the schema and every table it owns, idempotently
+ ✓ server/services/ana/__tests__/council-tool.test.ts > council provisioning migration — idempotency guard > defers lumen.data_atoms to the canonical prerequisite, which the apply script installs first
+ ✓ server/services/ana/__tests__/council-tool.test.ts > council provisioning migration — idempotency guard > seeds all four council roles conflict-safely
+ ✓ server/services/ana/__tests__/council-tool.test.ts > council provisioning migration — idempotency guard > seeds every placeholder each agent template is rendered with
+ ✓ server/services/ana/__tests__/council-tool.test.ts > council provisioning migration — idempotency guard > is wired into the standard apply set
+ Test Files  3 passed (3)
+      Tests  38 passed (38)

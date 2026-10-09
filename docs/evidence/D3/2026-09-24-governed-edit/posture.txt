@@ -1,0 +1,14 @@
+# Posture of the database these runs used — read from the catalog, 2026-09-24
+# The from-blank PostgreSQL 16 install of ../2026-09-24-update-boundary/ (install-fresh + deploy-migrate).
+
+app_service                superuser=false bypassrls=false
+
+ai_ml_modifications        rls=false force=false policies=0 org_column=none
+ai_ml_pccp_plans           rls=true force=true policies=1 org_column=organization_id
+post_market_documents      rls=true force=true policies=1 org_column=organization_id
+regulatory_programs        rls=true force=true policies=1 org_column=organization_id
+
+# Foreign keys the re-parent cases write through (checked by Postgres without RLS):
+  ai_ml_modifications: FOREIGN KEY (plan_id) REFERENCES ai_ml_pccp_plans(id) ON DELETE CASCADE
+  ai_ml_pccp_plans: FOREIGN KEY (program_id) REFERENCES regulatory_programs(id) ON DELETE CASCADE
+  post_market_documents: FOREIGN KEY (program_id) REFERENCES regulatory_programs(id) ON DELETE CASCADE

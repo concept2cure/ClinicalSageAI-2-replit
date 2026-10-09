@@ -1,0 +1,13 @@
+# PF-07 slice A, red: trunk's source (after the B/C/D commit 824f699c) with only the new and changed test files copied in.
+# Each failure is a PF-07 case: a create with no project was accepted, or the refusal's code was absent.
+# Command: npx vitest run <the six files>
+
+ × tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+ × tests/authoring-program-scope.pglite.test.ts > authoring documents — program scoping (over HTTP, canonical DDL) > refuses a create that names no project with 400, and writes nothing (PF-07)
+ × server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_HAS_NO_PROGRAM for an org-wide document — nothing filed
+ × client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > with no project open, New document is disabled, says why, and nothing is posted
+ × client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when no project is open (PF-07)
+ × client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when the open id is not a project (PF-07)
+ × client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > with no project open, files nothing, reports no filing, and says why (PF-07)
+ Test Files  6 failed (6)
+      Tests  7 failed | 35 passed (42)

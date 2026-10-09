@@ -1,0 +1,17 @@
+### PATCH /api/protocol-development/sections/999999  (a section no organisation of this session owns)
+HTTP 404  {"error":{"code":"NOT_FOUND","message":"Section not found for this organization."}}
+
+### PATCH /api/protocol-development/documents/2  with a reason under the 8-character floor
+HTTP 400  {"error":{"code":"VALIDATION","details":{"formErrors":[],"fieldErrors":{"reason":["Provide a reason of at least 8 characters."]}}}}
+
+### POST /api/protocol-development/documents/2/visits/999999/remove  (a visit not on this protocol)
+HTTP 404  {"error":{"code":"NOT_FOUND","message":"Visit not found on this protocol for this organization."}}
+
+### PATCH /api/protocol-risks/risks/999999
+HTTP 404  {"error":{"code":"NOT_FOUND","message":"Risk not found for this organization."}}
+
+### PATCH /api/protocol-reviews/assignments/999999/disposition
+HTTP 404  {"error":{"code":"NOT_FOUND","message":"Review assignment not found for this organization."}}
+
+### unauthenticated PATCH of the same section
+HTTP 401  {"error":"Bearer token required"}

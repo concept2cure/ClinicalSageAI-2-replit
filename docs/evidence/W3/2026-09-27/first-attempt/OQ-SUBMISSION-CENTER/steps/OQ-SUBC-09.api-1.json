@@ -1,0 +1,102 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/submissions/capabilities",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 19,
+    "rateLimitRetries": 0,
+    "body": {
+      "environment": "production",
+      "gateways": [
+        {
+          "region": "fda",
+          "gateway": "esg",
+          "configured": false
+        },
+        {
+          "region": "ema",
+          "gateway": "cesp",
+          "configured": false
+        },
+        {
+          "region": "ema",
+          "gateway": "eudamed",
+          "configured": false
+        },
+        {
+          "region": "pmda",
+          "gateway": "pmda_gateway",
+          "configured": false
+        },
+        {
+          "region": "ca",
+          "gateway": "hc_cesg",
+          "configured": false
+        },
+        {
+          "region": "uk",
+          "gateway": "mhra_gateway",
+          "configured": false
+        },
+        {
+          "region": "cn",
+          "gateway": "nmpa_gateway",
+          "configured": false
+        },
+        {
+          "region": "au",
+          "gateway": "tga_ebs",
+          "configured": false
+        },
+        {
+          "region": "ch",
+          "gateway": "swissmedic_egateway",
+          "configured": false
+        },
+        {
+          "region": "br",
+          "gateway": "anvisa_gateway",
+          "configured": false
+        },
+        {
+          "region": "in",
+          "gateway": "cdsco_sugam",
+          "configured": false
+        },
+        {
+          "region": "kr",
+          "gateway": "mfds_dbio",
+          "configured": false
+        },
+        {
+          "region": "sg",
+          "gateway": "hsa_prism",
+          "configured": false
+        }
+      ],
+      "gatewaysConfigured": 0,
+      "workspaces": {
+        "portfolio": true,
+        "planner": true,
+        "builder": true,
+        "sequences": true,
+        "validation": true,
+        "shadow-review": true,
+        "cross-region": true,
+        "dispatch": true
+      },
+      "features": {
+        "assemble": true,
+        "deviceTechnicalFile": true,
+        "pathwayManifest": true,
+        "publishTransmit": false
+      }
+    }
+  }
+}

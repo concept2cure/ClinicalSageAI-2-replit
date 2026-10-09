@@ -50,6 +50,31 @@ export const RESOLVABLE_DOCUMENT_TABLES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * The tables whose document key is a UUID rather than an integer.
+ *
+ * `submission_leaves` addresses TWO key spaces: `document_id` (integer) for
+ * most stores and `document_uuid` for these. The write boundary (upsertLeaf's
+ * LEAF_UUID_KEYED_TABLES, derived from its uuid verifiers) already refuses a
+ * leaf whose key does not match its table; this is the same fact stated where
+ * the PURE modules can read it, so the readiness validator can say that a vault
+ * leaf without a uuid names nothing — and, before 2026-09-21, could not: it
+ * tested only the integer column, so every leaf filed from the vault (uuid set,
+ * integer null) was reported UNRESOLVED_DOCUMENT and no vault-built sequence
+ * could clear the dispatch gate. A drift guard pins this set to the write
+ * side's (leaf-document-resolver.pglite.test.ts).
+ */
+export const UUID_KEYED_DOCUMENT_TABLES: ReadonlySet<string> = new Set(['vault_documents']);
+
+/** Which key a leaf on `table` must carry: `uuid` for the uuid-keyed stores,
+ *  `integer` for every other placeable table, null for a table outside the
+ *  placeable set (its key space is unknown, so either key is accepted for the
+ *  completeness check and the table itself is reported separately). */
+export function documentTableKeyKind(table: unknown): 'integer' | 'uuid' | null {
+  if (!isPlaceableDocumentTable(table)) return null;
+  return UUID_KEYED_DOCUMENT_TABLES.has(table) ? 'uuid' : 'integer';
+}
+
+/**
  * Tables whose content lives in an EXTERNAL system / as a binary upload and is
  * not locally renderable through the deterministic-PDF path. A leaf backed by
  * one of these is surfaced as unresolved, never silently dropped — so it stays

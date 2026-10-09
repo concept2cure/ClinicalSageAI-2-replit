@@ -24,7 +24,7 @@ import { PLACEABLE_DOCUMENT_TABLE_LIST } from '../ectd/leaf-document-tables';
 export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
   name: 'compute_lifecycle_operations',
   description:
-    'Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged), and every replace/append/delete carries an ICH modified-file pointer at the prior leaf it acts on. Two ways to supply the prior state: (a) list prior_leaves by hand, each with its published href, plus prior_sequence_prefix; or (b) give application_number + prior_sequence_number and the prior sequence\'s stored leaf manifest is loaded automatically from your organization\'s compilation history (the prefix is derived for you). Nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.',
+    'Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged), and every replace/append/delete carries an ICH modified-file pointer at the prior leaf it acts on, naming that leaf by its sequence\'s backbone and its leaf ID (e.g. ../0000/index.xml#leaf-3-2-S-1-general). Two ways to supply the prior state: (a) list prior_leaves by hand, each with the leaf_id and backbone its sequence recorded, plus prior_sequence_prefix — a prior leaf listed without them gets no pointer, because a leaf is never named by its file path; or (b) give application_number + prior_sequence_number and the prior sequence\'s stored leaf manifest is loaded automatically from your organization\'s compilation history (the prefix is derived for you). Nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.',
   input_schema: {
     type: 'object',
     properties: {
@@ -40,14 +40,16 @@ export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
             md5: { type: 'string', description: 'Published content checksum.' },
             title: { type: 'string', description: 'Leaf title.' },
             source_path: { type: 'string', description: 'Path of the prior file (used for delete leaves).' },
-            href: { type: 'string', description: 'Published backbone-relative path of the prior leaf in its sequence (e.g. "m3/32-body-data/32s-drug-sub/general.pdf", optionally with a "#leafId" fragment). Used to build the modified-file pointer for a superseding op.' },
+            href: { type: 'string', description: 'Published backbone-relative path of the prior leaf in its sequence (e.g. "m3/32-body-data/32s-drug-sub/general.pdf"). A record of what was filed; the modified-file pointer names leaf_id and backbone, not this path.' },
+            leaf_id: { type: 'string', description: 'The ID the prior leaf carries in its sequence\'s backbone, as that sequence\'s leaf manifest recorded it (e.g. "leaf-3-2-S-1-general"). Required, with backbone, for a superseding op to carry a modified-file pointer.' },
+            backbone: { type: 'string', description: 'The backbone that carries the prior leaf, from its sequence root: "index.xml" for Modules 2-5, or the regional backbone for Module 1 (e.g. "m1/us/us-regional.xml").' },
           },
           required: ['ctd_section', 'file_name', 'md5'],
         },
       },
       prior_sequence_prefix: {
         type: 'string',
-        description: 'Relative traversal from the NEW sequence\'s backbone to the prior sequence root, e.g. "../0000/" when sequences are sibling folders under the application. Prepended to each prior leaf\'s href to form the cross-sequence modified-file value. Omit for an ungrouped/same-root lifecycle (the bare prior href is used).',
+        description: 'Relative traversal from the NEW sequence\'s backbone to the prior sequence root, e.g. "../0000/" when sequences are sibling folders under the application. Prepended to each prior leaf\'s backbone#leaf_id to form the cross-sequence modified-file value. Omit for an ungrouped/same-root lifecycle.',
       },
       application_number: {
         type: 'string',
@@ -571,7 +573,7 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
 export const VALIDATE_MARKET_FORMATTING: AnaTool = {
   name: 'validate_market_formatting',
   description:
-    "Enforce a market's FORMATTING rules against a set of files. Given a market spec id (e.g. 'us-ectd', 'eu-ectd') and a list of file descriptors (fileName, optional filePath, fileSizeBytes, fileFormat, encrypted), it deterministically reports every formatting violation — file-naming pattern, name/path length caps, accepted file types, per-file and total size limits, and encryption ban — with each finding's rule aligned to the validation-rule-corpus id. Read-only; it checks bytes-level conformance before a filing, it does not transmit. Use it to pre-flight an assembled package against the target market.",
+    "Check a market's FORMATTING rules (file-naming pattern, name/path length caps, accepted file types, per-file and total size limits, encryption ban) against a list of file descriptors, given a market spec id (e.g. 'us-ectd', 'eu-ectd'). It does NOT read file bytes: sizes and encryption you supply are treated as claims — a declared violation is reported, but a declared clean value never counts as checked, so those rules come back in notAssessed. The result carries verdict (conformant | conformant_with_warnings | nonconformant | not_assessed); when it is not_assessed, say which rules were not checked and do not call the files conformant. Read-only; it does not transmit.",
   input_schema: {
     type: 'object',
     properties: {

@@ -1,0 +1,52 @@
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/aiDraftAttribution.test.ts client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx client/src/concept2cure/v2/__tests__/findReplace.test.ts client/src/concept2cure/v2/__tests__/insertReferenceText.test.tsx client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts  client/src/concept2cure/v2/editor/__tests__/
+
+# passing / failing tests per file
+     13 client/src/concept2cure/v2/__tests__/aiDraftAttribution.test.ts ✓
+     15 client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx ✓
+     16 client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts ✓
+      5 client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx ✓
+     14 client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx ✓
+      9 client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx ✓
+      8 client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx ✓
+      9 client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx ✓
+     11 client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx ✓
+     11 client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx ✓
+     12 client/src/concept2cure/v2/__tests__/findReplace.test.ts ✓
+      1 client/src/concept2cure/v2/__tests__/insertReferenceText.test.tsx ✓
+      3 client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx ✓
+      4 client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx ✓
+      6 client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx ✓
+     11 client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx ✓
+      6 client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx ✓
+     20 client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts ✓
+     14 client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx ✓
+      7 client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx ✓
+      4 client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx ✓
+      6 client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx ✓
+     13 client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx ✓
+      1 client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx ×
+     17 client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx ✓
+     12 client/src/concept2cure/v2/editor/__tests__/citations.test.ts ✓
+     13 client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx ✓
+      8 client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx ✓
+      6 client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts ✓
+      6 client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx ✓
+      8 client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx ✓
+     12 client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts ✓
+      1 client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts ×
+     15 client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts ✓
+
+ × client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > captions a SELECTED FIGURE, keeping its identity across a rewording 180ms
+ × client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — a dropped image is caught > a normal img[src] still round-trips — not a false positive 44ms
+ Test Files  2 failed | 30 passed (32)
+      Tests  2 failed | 315 passed (317)
+exit=1
+
+# The 2 failures are NOT this lane's: both involve images and fail identically with this lane's two source files swapped back to their pre-change copies:
+ × client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — a dropped image is caught > a normal img[src] still round-trips — not a false positive 22ms
+ × client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > captions a SELECTED FIGURE, keeping its identity across a rewording 26ms
+ Test Files  2 failed (2)
+      Tests  2 failed | 32 passed (34)
+# Cause: another lane's in-progress client/src/concept2cure/v2/editor/imageNode.ts (working tree, modified 04:19 UTC). Both passed in the earlier whole-v2 run (green.v2-all.full.txt), made before that edit landed; the first run of the 27 editor-adjacent files at that time was 267/267 green (its output file was overwritten by this run)
+
+# Wider run: whole client/src/concept2cure/v2/ (304 files) — 3453 passed, 38 failed, all 38 in 4 files outside this lane (imageEditing.test.ts, authoredHtml.test.tsx, projectFilesViewer.test.tsx: other lanes' in-progress red tests; submissionCenterGovernedWorkspaces.test.tsx: fails identically without this lane's change). Output: green.v2-all.full.txt

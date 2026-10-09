@@ -218,6 +218,75 @@ describe('mandatory authoring object authorization middleware', () => {
     expect(editRes.statusCode).toBe(403);
   });
 
+  it('classes /docs/:id/e-sign as an approval action, so a FROZEN document can be signed (VSR-001 F-12)', async () => {
+    // A signature binds to the frozen snapshot, so the route only makes sense
+    // on a FROZEN document. actionFromPath matched `sign` as a whole segment
+    // only; the segment here is `e-sign`, which fell through to `edit` and was
+    // refused as an edit of an immutable document — no signature could ever be
+    // applied. Revert-proven: this case fails with the old alternatives list.
+    installQueryBehavior({ status: 'FROZEN', roles: ['APPROVER'] });
+    const approver = { ...author, id: 'approver-user', userId: 'approver-user', email: 'approver@example.com' };
+
+    const signReq = request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/e-sign`, user: approver });
+    const signRes = response();
+    const signNext = vi.fn();
+    await authoringObjectAuthorization(signReq, signRes, signNext);
+    expect(signNext).toHaveBeenCalledOnce();
+
+    // The same caller with no approval grant is still refused: the fix widens
+    // the action class, not who may act.
+    installQueryBehavior({ status: 'FROZEN', roles: ['REVIEWER'] });
+    const deniedReq = request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/e-sign`, user: approver });
+    const deniedRes = response();
+    const deniedNext = vi.fn();
+    await authoringObjectAuthorization(deniedReq, deniedRes, deniedNext);
+    expect(deniedNext).not.toHaveBeenCalled();
+    expect(deniedRes.statusCode).toBe(403);
+  });
+
+  /* 2026-09-28. Export, file-to-vault and send-to-packager read the document
+     and produce the record elsewhere (the export ledger, the project vault, the
+     eCTD packager); none writes the document. They fell through to `edit`, and
+     an edit of an immutable document is refused — so a FROZEN or APPROVED
+     document, the one a submission actually needs, could not be exported as its
+     filing artifact, filed to the vault as a sealed record, or sent to the
+     packager. They are now the `export` action: any status, and a grant that
+     produces the record (OWNER, AUTHOR, APPROVER). */
+  it.each(['export', 'file-to-vault', 'send-to-packager'])(
+    'lets the record be produced from a FROZEN document: POST /docs/:id/%s',
+    async route => {
+      for (const role of ['OWNER', 'AUTHOR', 'APPROVER']) {
+        installQueryBehavior({ status: 'FROZEN', roles: [role] });
+        const next = vi.fn();
+        const res = response();
+        await authoringObjectAuthorization(
+          request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/${route}`, user: author }),
+          res,
+          next,
+        );
+        expect(next, `${role} refused ${route} on a FROZEN document (${res.statusCode})`).toHaveBeenCalledOnce();
+      }
+    },
+  );
+
+  it.each(['export', 'file-to-vault', 'send-to-packager'])(
+    'still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/%s',
+    async route => {
+      for (const role of ['REVIEWER', 'VIEWER']) {
+        installQueryBehavior({ status: 'FROZEN', roles: [role] });
+        const next = vi.fn();
+        const res = response();
+        await authoringObjectAuthorization(
+          request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/${route}`, user: author }),
+          res,
+          next,
+        );
+        expect(next).not.toHaveBeenCalled();
+        expect(res.statusCode).toBe(403);
+      }
+    },
+  );
+
   it('blocks content mutation after the document becomes immutable', async () => {
     installQueryBehavior({ status: 'APPROVED', roles: ['OWNER', 'AUTHOR'] });
     const req = request({

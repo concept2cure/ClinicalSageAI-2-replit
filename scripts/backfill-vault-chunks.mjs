@@ -40,7 +40,9 @@ if (!Number.isInteger(orgId) || orgId <= 0) {
   process.exit(2);
 }
 
-const { backfillVaultChunks } = await import(
+// In the tenant's own scope: the pool refuses an unscoped query under
+// RLS_ENFORCE=on, and the vault's policies need the organization's UUID.
+const { backfillVaultChunksForTenant } = await import(
   '../server/services/vault/document-chunking-backfill.service.ts'
 );
 
@@ -48,7 +50,7 @@ console.log(
   `[backfill-vault-chunks] org=${orgId} limit=${limit} retryFailed=${retryFailed} mode=${apply ? 'APPLY' : 'dry-run'}`,
 );
 
-const r = await backfillVaultChunks(orgId, { apply, limit, retryFailed });
+const r = await backfillVaultChunksForTenant(orgId, { apply, limit, retryFailed });
 
 console.log('');
 console.log(`  examined         ${r.examined}`);

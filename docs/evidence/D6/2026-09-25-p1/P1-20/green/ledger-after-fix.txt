@@ -1,0 +1,5 @@
+$ # ledger route with the reader gate
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses a member (403) before reading anything: the ledger names every user in the or
+ Test Files  3 passed (3)
+      Tests  16 passed (16)
+exit=0

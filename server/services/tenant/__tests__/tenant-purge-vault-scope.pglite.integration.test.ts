@@ -14,8 +14,11 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { PURGE_PARENT_SCOPED, PURGE_CHILD_TABLES } from '../tenant-offboarding';
+import { exportTenantFull } from '../../tenant-export/tenant-full-export.service';
 
 const ORG = 11;
 const OTHER_ORG = 22;
@@ -38,6 +41,9 @@ beforeAll(async () => {
     CREATE TABLE vault.document_chunks (
       id UUID PRIMARY KEY, document_id UUID NOT NULL
     );
+    -- The export reads the organization row first, then every tenant-keyed table.
+    CREATE TABLE organizations (id INTEGER PRIMARY KEY, slug TEXT, name TEXT, status TEXT);
+    INSERT INTO organizations VALUES (${ORG}, 'o', 'Org', 'active'), (${OTHER_ORG}, 'x', 'Other', 'active');
   `);
 });
 
@@ -152,5 +158,93 @@ describe('vault purge scope', () => {
       // $1 is the only bind slot; anything else means a value was interpolated.
       expect(predicate).not.toMatch(/\$[2-9]/);
     }
+  });
+});
+
+/**
+ * The database's purge door deletes exactly what the predicate names (VR-07).
+ *
+ * vault.documents refuses DELETE from anyone but its owner, so the purge
+ * deletes versions through public.purge_tenant_vault_records, which carries a
+ * SQL copy of VAULT_DOCUMENT_TENANCY. Two copies of a predicate is how the
+ * export and the purge disagreed before; this runs both on the same fixture.
+ */
+describe("the database's purge door deletes exactly the predicate's rows (VR-07)", () => {
+  const DOOR = 'migrations/20260926_vault_documents_record_immutability.sql';
+
+  beforeAll(async () => {
+    await pglite.exec(`ALTER TABLE vault.documents
+      ADD COLUMN IF NOT EXISTS storage_version_id TEXT,
+      ADD COLUMN IF NOT EXISTS storage_provider TEXT`);
+    await pglite.exec(readFileSync(path.join(process.cwd(), DOOR), 'utf8'));
+  });
+  afterAll(async () => {
+    await pglite.query(`UPDATE organizations SET status = 'active'`);
+  });
+
+  it('for every tenant: removes the rows the predicate selects, returns one row per version, and spares the rest', async () => {
+    for (const org of [ORG, OTHER_ORG]) {
+      const all = await remaining('vault.documents');
+      const named = (
+        await pglite.query(`SELECT id FROM vault.documents WHERE ${PURGE_PARENT_SCOPED['vault.documents']} ORDER BY id`, [org])
+      ).rows.map((r) => String((r as { id: string }).id));
+      await pglite.query(`UPDATE organizations SET status = 'pending_deletion' WHERE id = $1`, [org]);
+      const returned = await pglite.query('SELECT * FROM public.purge_tenant_vault_records($1)', [org]);
+      expect(returned.rows, `org ${org}`).toHaveLength(named.length);
+      expect(await remaining('vault.documents'), `org ${org}`).toEqual(all.filter((id) => !named.includes(id)));
+    }
+    expect(await remaining('vault.document_chunks')).toEqual([]);
+  });
+
+  it('refuses an organization that is not pending deletion, and deletes nothing', async () => {
+    await pglite.query(`UPDATE organizations SET status = 'active' WHERE id = $1`, [ORG]);
+    await expect(pglite.query('SELECT * FROM public.purge_tenant_vault_records($1)', [ORG])).rejects.toThrow(
+      /VAULT_PURGE_REFUSED: .*not pending deletion/,
+    );
+    expect(await remaining('vault.documents')).toHaveLength(3);
+  });
+});
+
+/**
+ * The export that authorizes a purge must contain everything the purge
+ * destroys.
+ *
+ * The purge's vault predicate reaches documents through their programme,
+ * including a programme that has been soft-deleted (whose documents carry a NULL
+ * organization_id). The export read vault.documents by `organization_id` alone,
+ * so it never contained them — and an erasure could destroy documents the
+ * customer was never given back. Found by the 2026-09-24 re-verification; the
+ * purge predicate came from this file's own fix.
+ */
+describe('the export contains what the purge destroys', () => {
+  const exportedVaultIds = async (org: number): Promise<string[]> => {
+    const out = await exportTenantFull(pglite as never, org);
+    const t = out.tables.find((x) => x.table === 'vault.documents');
+    return (t?.rows ?? []).map((r) => String((r as { id: string }).id)).sort();
+  };
+  const purgedVaultIds = async (org: number): Promise<string[]> => {
+    const r = await pglite.query(
+      `SELECT id FROM vault.documents WHERE ${PURGE_PARENT_SCOPED['vault.documents']} ORDER BY id`,
+      [org],
+    );
+    return (r.rows as Array<{ id: string }>).map((x) => String(x.id)).sort();
+  };
+
+  it('exports the document on a soft-deleted programme that the purge will erase', async () => {
+    expect(await exportedVaultIds(ORG)).toContain(DOC_NULL_ORG_SOFT_DELETED_PROGRAM);
+  });
+
+  it('for every tenant: the purge set is a subset of the export set — exactly equal here', async () => {
+    for (const org of [ORG, OTHER_ORG]) {
+      const exported = await exportedVaultIds(org);
+      const purged = await purgedVaultIds(org);
+      for (const id of purged) expect(exported, `org ${org} purges ${id} it never exported`).toContain(id);
+      expect(exported).toEqual(purged);
+    }
+  });
+
+  it("never exports another tenant's document", async () => {
+    expect(await exportedVaultIds(ORG)).not.toContain(DOC_OTHER_TENANT);
+    expect(await exportedVaultIds(OTHER_ORG)).toEqual([DOC_OTHER_TENANT]);
   });
 });

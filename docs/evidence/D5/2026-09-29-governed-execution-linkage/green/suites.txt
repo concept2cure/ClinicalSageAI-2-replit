@@ -1,0 +1,4 @@
+# npx vitest run --config vitest.config.ts server/routes/ana-ri server/services/ana-ri server/services/ana server/mcp
+ Test Files  279 passed | 1 skipped (280)
+      Tests  3863 passed | 3 skipped (3866)
+exit=0

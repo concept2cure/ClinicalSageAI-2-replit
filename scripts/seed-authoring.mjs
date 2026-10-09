@@ -8,6 +8,7 @@
  *
  * Usage:
  *   BASE_URL="http://localhost:3000" \
+ *   PROGRAM_ID="<regulatory_programs UUID>" \
  *   PRODUCT_CODE="UAT-PROD" \
  *   TITLE="UAT Module 3" \
  *   LOCALE="en" \
@@ -21,6 +22,13 @@ const BASE_URL    = process.env.BASE_URL || "http://localhost:5000";
 const PRODUCT_CODE= process.env.PRODUCT_CODE || "UAT-PROD";
 const TITLE       = process.env.TITLE || "UAT Module 3";
 const LOCALE      = process.env.LOCALE || "en";
+// A document belongs to a project (PF-07): the server refuses a create that
+// names none, so the project is required here rather than discovered by a 400.
+const PROGRAM_ID  = process.env.PROGRAM_ID || "";
+if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(PROGRAM_ID)) {
+  console.error("PROGRAM_ID must be the regulatory_programs UUID of the project to seed into: a document belongs to a project.");
+  process.exit(2);
+}
 
 const SECTION_P5  = "3.2.P.5";
 const SECTION_P8  = "3.2.P.8";
@@ -41,7 +49,7 @@ async function j(url, opts={}) {
 }
 
 async function createDoc() {
-  const body = { product_code: PRODUCT_CODE, title: TITLE, locale: LOCALE };
+  const body = { product_code: PRODUCT_CODE, title: TITLE, locale: LOCALE, client_program_id: PROGRAM_ID };
   const response = await j(`${BASE_URL}/api/authoring/docs`, {
     method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body)
   });

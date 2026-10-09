@@ -57,6 +57,17 @@
 -- var, super-admin escape hatch.
 --
 -- Fully idempotent: re-running policies nothing new once every table is covered.
+--
+-- ── 2026-09-29: named non-public integer-keyed tables (D6) ───────────────────
+-- Amended in place (CLAUDE.md Rule 1). The two passes that select tenant tables
+-- read `public` only, so a table outside it with an integer tenant key got no
+-- policy while rls-coverage-check.sql (every schema) demanded one. The drafting
+-- council's three lumen tables now carry organization_id
+-- (migrations/20260724_lumen_council_provisioning.sql), and are named in
+-- `nonpublic_integer_tables` below, which both passes read beside `public`.
+-- An explicit list, not every schema: each entry is a table someone has
+-- checked is integer-keyed and tenant-owned. Evidence
+-- docs/evidence/D6/2026-09-29-council-tenant/.
 
 DO $$
 DECLARE
@@ -67,6 +78,14 @@ DECLARE
   healed_count  INT := 0;
   rebuilt_count INT := 0;
   remaining_pol INT := 0;
+  -- Integer-keyed tenant tables outside `public` that both passes treat as
+  -- `public` ones (see the 2026-09-29 note above). schema.table, each one
+  -- checked to be tenant-owned.
+  nonpublic_integer_tables TEXT[] := ARRAY[
+    'lumen.council_sessions',
+    'lumen.agent_executions',
+    'lumen.data_verifications'
+  ];
   -- Tables that carry a tenant column but must NOT be policied — the canonical
   -- RLS allowlist. This list MUST equal server/db/rlsAllowlist.ts → RLS_ALLOWLIST
   -- (the single source of truth) exactly, byte-for-byte with 0021's copy and
@@ -96,7 +115,7 @@ BEGIN
     SELECT DISTINCT ON (c.table_schema, c.table_name)
            c.table_schema, c.table_name, c.column_name, c.data_type
     FROM information_schema.columns c
-    WHERE c.table_schema = 'public'
+    WHERE (c.table_schema = 'public' OR c.table_schema || '.' || c.table_name = ANY (nonpublic_integer_tables))
       AND c.column_name IN ('organization_id', 'org_id', 'tenant_id')
       -- BASE TABLES only: ENABLE ROW LEVEL SECURITY errors on a view/matview, and
       -- a tenant-scoped view inherits isolation from its underlying tables.
@@ -269,7 +288,7 @@ BEGIN
       SELECT DISTINCT ON (c.table_schema, c.table_name)
         c.table_schema, c.table_name, c.column_name, c.data_type
       FROM information_schema.columns c
-      WHERE c.table_schema = 'public'
+      WHERE (c.table_schema = 'public' OR c.table_schema || '.' || c.table_name = ANY (nonpublic_integer_tables))
         AND c.column_name IN ('organization_id', 'org_id', 'tenant_id')
         AND EXISTS (
           SELECT 1 FROM information_schema.tables t

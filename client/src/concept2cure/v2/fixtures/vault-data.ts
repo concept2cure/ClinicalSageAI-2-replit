@@ -27,7 +27,8 @@ export interface VaultDoc {
   title: string;
   type: string;
   status: string;
-  pct: number;
+  /** Authoring completion, 0–100. Null for an upload, which has none. */
+  pct: number | null;
   owner: string;
   ver: string;
   updated: string;
@@ -40,7 +41,13 @@ export interface VaultDoc {
   docId?: string;
   sizeLabel?: string;
   hash?: string;
+  /** vault.documents.mime_type (uploads only). Filing into a submission is
+   *  offered only for a PDF. */
+  mimeType?: string | null;
   filing?: VaultDocFiling;
+  /** The version's recorded title, type and classification (uploads only):
+   *  what Edit details starts from. */
+  details?: { documentTitle: string | null; documentType: string | null; classification: string | null };
 }
 
 export interface VaultFolder {

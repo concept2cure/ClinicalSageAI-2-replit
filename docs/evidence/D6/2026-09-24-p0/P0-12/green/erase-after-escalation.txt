@@ -1,0 +1,9 @@
+$ git rev-parse --short HEAD  # plus the command-rbac.ts / part11-governance.ts change
+5c978992
+$ npx vitest run <the three red files + every suite that imports part11-governance or pins the GDPR commands>
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > covers the GDPR erasure — model output never runs it (audit 2026-09-24 DP-08/DP-09, P0-12) 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > requires an e-signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12) 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > demands a signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12) 0ms
+ Test Files  9 passed (9)
+      Tests  135 passed (135)
+exit=0

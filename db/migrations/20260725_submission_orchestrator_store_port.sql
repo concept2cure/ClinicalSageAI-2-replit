@@ -35,6 +35,20 @@
 -- push path already created the tables is a no-op. The root-lineage originals
 -- are left in place as the historical record.
 --
+-- AMENDED IN PLACE 2026-09-25 (CLAUDE.md RULE 1): the status CHECK replacement
+-- in the awaiting_async_status section below is now conditional. "Every
+-- statement is idempotent" did not hold for it. The applier replays this file
+-- on every deploy, after 20260725_esig_gate_columns_port.sql has widened the
+-- same constraint to 'awaiting-signature', and ADD CONSTRAINT validates every
+-- existing row — so from the first run held at the e-signature gate across a
+-- deploy (submission-package-orchestrator.ts records the status on the row
+-- while it waits), every deploy failed at this file. Reproduced on PGlite by
+-- tests/schema-contract/check-constraint-replay.pglite.test.ts. The constraint
+-- is now replaced only while it does not yet admit 'awaiting-async'; a fresh
+-- database still goes 0018's four statuses → here → the e-sig port's six.
+-- ci:migration-drop-safety now refuses an unconditional replacement of a
+-- constraint that a later file in the set also defines.
+--
 -- Rollback:
 --   DROP TABLE IF EXISTS submission_orchestrator_dependencies;
 --   DROP TABLE IF EXISTS submission_orchestrator_steps;
@@ -339,12 +353,25 @@ COMMIT;
 
 BEGIN;
 
-ALTER TABLE submission_orchestrator_runs
-  DROP CONSTRAINT IF EXISTS submission_orchestrator_runs_status_check;
+-- Never narrows what the e-sig gate port widened (see the 2026-09-25 amendment
+-- in this file's header).
+DO $mig$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = 'public.submission_orchestrator_runs'::regclass
+       AND conname = 'submission_orchestrator_runs_status_check'
+       AND pg_get_constraintdef(oid) LIKE '%''awaiting-async''%'
+  ) THEN
+    ALTER TABLE submission_orchestrator_runs
+      DROP CONSTRAINT IF EXISTS submission_orchestrator_runs_status_check;
 
-ALTER TABLE submission_orchestrator_runs
-  ADD CONSTRAINT submission_orchestrator_runs_status_check
-  CHECK (status IN ('running', 'awaiting-async', 'complete', 'failed', 'partial'));
+    ALTER TABLE submission_orchestrator_runs
+      ADD CONSTRAINT submission_orchestrator_runs_status_check
+      CHECK (status IN ('running', 'awaiting-async', 'complete', 'failed', 'partial'));
+  END IF;
+END
+$mig$;
 
 COMMIT;
 

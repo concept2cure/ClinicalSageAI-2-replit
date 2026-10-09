@@ -9,8 +9,7 @@
  * Usage: tsx server/bin/run-retention.ts   (or: npm run retention:run)
  */
 
-import dotenv from 'dotenv';
-dotenv.config();
+import '../config/load-env-files';
 
 import { runRetentionJob } from '../jobs/retentionCron';
 

@@ -1,0 +1,561 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/mdx/qms/documents",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 22,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": 1,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-20260922223720",
+          "title": "OQ-006 Document control SOP 20260922223720",
+          "doc_type": "sop",
+          "category": "validation",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": "2026-09-22T00:00:00.000Z",
+          "next_review_date": "2026-10-02T00:00:00.000Z",
+          "author_id": 2,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "approval": {
+              "at": "2026-09-22T22:37:22.572+00:00",
+              "by": 11,
+              "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "e506c5351d518abe90df7dc514c6b135d0efaabd08886b850946e2509f731200",
+              "twoPersonRule": "enforced"
+            },
+            "lastRevision": {
+              "at": "2026-09-22T22:37:28.269044+00:00",
+              "by": 2,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference"
+            }
+          },
+          "created_at": "2026-09-22T22:37:21.152Z",
+          "updated_at": "2026-09-22T22:37:28.269Z",
+          "deleted_at": null
+        },
+        {
+          "id": 5,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-20260922233000",
+          "title": "OQ-006 Document control SOP 20260922233000",
+          "doc_type": "sop",
+          "category": "validation",
+          "version": "1.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-10-02T00:00:00.000Z",
+          "author_id": 17,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {},
+          "created_at": "2026-09-22T23:30:01.385Z",
+          "updated_at": "2026-09-22T23:30:01.385Z",
+          "deleted_at": null
+        },
+        {
+          "id": 8,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-20260923021949",
+          "title": "OQ-006 Document control SOP 20260923021949",
+          "doc_type": "sop",
+          "category": "validation",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": "2026-09-23T00:00:00.000Z",
+          "next_review_date": "2026-10-03T00:00:00.000Z",
+          "author_id": 17,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "approval": {
+              "at": "2026-09-23T02:20:00.656+00:00",
+              "by": 11,
+              "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "acf3e92888b5a9e9ed987977e35e9fa317d6092fc153381d2e2da3ce6c89d63e",
+              "twoPersonRule": "enforced"
+            },
+            "lastRevision": {
+              "at": "2026-09-23T02:21:31.491946+00:00",
+              "by": 17,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference"
+            }
+          },
+          "created_at": "2026-09-23T02:19:50.359Z",
+          "updated_at": "2026-09-23T02:21:31.491Z",
+          "deleted_at": null
+        },
+        {
+          "id": 12,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-20260923022744",
+          "title": "OQ-006 Document control SOP 20260923022744",
+          "doc_type": "sop",
+          "category": "validation",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": "2026-09-23T00:00:00.000Z",
+          "next_review_date": "2026-10-03T00:00:00.000Z",
+          "author_id": 17,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "approval": {
+              "at": "2026-09-23T02:27:47.855+00:00",
+              "by": 11,
+              "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "85c719426416602260d8286db6a7fb13b5565b0a70cea98ee4a0a0ed161a2eec",
+              "twoPersonRule": "enforced"
+            },
+            "lastRevision": {
+              "at": "2026-09-23T02:29:01.480793+00:00",
+              "by": 17,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference"
+            }
+          },
+          "created_at": "2026-09-23T02:27:45.332Z",
+          "updated_at": "2026-09-23T02:29:01.480Z",
+          "deleted_at": null
+        },
+        {
+          "id": 16,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-20260923025144",
+          "title": "OQ-006 Document control SOP 20260923025144",
+          "doc_type": "sop",
+          "category": "validation",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": "2026-09-23T00:00:00.000Z",
+          "next_review_date": "2026-10-03T00:00:00.000Z",
+          "author_id": 17,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "approval": {
+              "at": "2026-09-23T02:51:47.963+00:00",
+              "by": 11,
+              "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "0c5ca462b7f05672482ffe5cc3cc715d0e796e5994ccc439fb179472f1dfde31",
+              "twoPersonRule": "enforced"
+            },
+            "lastRevision": {
+              "at": "2026-09-23T02:53:01.472435+00:00",
+              "by": 17,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference"
+            }
+          },
+          "created_at": "2026-09-23T02:51:45.400Z",
+          "updated_at": "2026-09-23T02:53:01.472Z",
+          "deleted_at": null
+        },
+        {
+          "id": 20,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-20260923044306",
+          "title": "OQ-006 Document control SOP 20260923044306",
+          "doc_type": "sop",
+          "category": "validation",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": "2026-09-23T00:00:00.000Z",
+          "next_review_date": "2026-10-03T00:00:00.000Z",
+          "author_id": 17,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "approval": {
+              "at": "2026-09-23T04:43:10.061+00:00",
+              "by": 11,
+              "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "fbeb3d6583e359d9e7bae4eadb367a45dd494b42bfe503b74796e849410f6c96",
+              "twoPersonRule": "enforced"
+            },
+            "lastRevision": {
+              "at": "2026-09-23T04:44:31.525214+00:00",
+              "by": 17,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference"
+            }
+          },
+          "created_at": "2026-09-23T04:43:07.481Z",
+          "updated_at": "2026-09-23T04:44:31.525Z",
+          "deleted_at": null
+        },
+        {
+          "id": 24,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-20260923052105",
+          "title": "OQ-006 Document control SOP 20260923052105",
+          "doc_type": "sop",
+          "category": "validation",
+          "version": "1.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-10-03T00:00:00.000Z",
+          "author_id": 17,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {},
+          "created_at": "2026-09-23T05:21:06.163Z",
+          "updated_at": "2026-09-23T05:21:06.163Z",
+          "deleted_at": null
+        },
+        {
+          "id": 3,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-B-20260922223720",
+          "title": "OQ-006 Second SOP 20260922223720",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "retired",
+          "effective_date": "2026-09-22T00:00:00.000Z",
+          "next_review_date": "2026-09-27T00:00:00.000Z",
+          "author_id": 2,
+          "approver_id": 11,
+          "approved_at": "2026-09-22T22:37:27.478Z",
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "retired": {
+              "at": "2026-09-22T22:37:29.331997+00:00",
+              "by": 2,
+              "reason": "OQ-006 step 10: superseded by validation"
+            },
+            "approval": {
+              "at": "2026-09-22T22:37:27.478+00:00",
+              "by": 11,
+              "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "46acf833ecb6995a53a5992e794533fde896e9eb6af448f1b25af73bc48b8625",
+              "twoPersonRule": "enforced"
+            }
+          },
+          "created_at": "2026-09-22T22:37:23.896Z",
+          "updated_at": "2026-09-22T22:37:29.331Z",
+          "deleted_at": null
+        },
+        {
+          "id": 7,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-B-20260922233000",
+          "title": "OQ-006 Second SOP 20260922233000",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "retired",
+          "effective_date": null,
+          "next_review_date": "2026-09-27T00:00:00.000Z",
+          "author_id": 17,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "retired": {
+              "at": "2026-09-22T23:30:04.807941+00:00",
+              "by": 17,
+              "reason": "OQ-006 step 10: superseded by validation"
+            }
+          },
+          "created_at": "2026-09-22T23:30:03.476Z",
+          "updated_at": "2026-09-22T23:30:04.807Z",
+          "deleted_at": null
+        },
+        {
+          "id": 10,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-B-20260923021949",
+          "title": "OQ-006 Second SOP 20260923021949",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "retired",
+          "effective_date": "2026-09-23T00:00:00.000Z",
+          "next_review_date": "2026-09-28T00:00:00.000Z",
+          "author_id": 17,
+          "approver_id": 11,
+          "approved_at": "2026-09-23T02:21:30.685Z",
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "retired": {
+              "at": "2026-09-23T02:21:32.556441+00:00",
+              "by": 17,
+              "reason": "OQ-006 step 10: superseded by validation"
+            },
+            "approval": {
+              "at": "2026-09-23T02:21:30.685+00:00",
+              "by": 11,
+              "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "2452b3f0778df4031e35942cf6cf823d023456c78d075086b0bea1ddb1fa2fbe",
+              "twoPersonRule": "enforced"
+            }
+          },
+          "created_at": "2026-09-23T02:20:31.458Z",
+          "updated_at": "2026-09-23T02:21:32.556Z",
+          "deleted_at": null
+        },
+        {
+          "id": 14,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-B-20260923022744",
+          "title": "OQ-006 Second SOP 20260923022744",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "retired",
+          "effective_date": "2026-09-23T00:00:00.000Z",
+          "next_review_date": "2026-09-28T00:00:00.000Z",
+          "author_id": 17,
+          "approver_id": 11,
+          "approved_at": "2026-09-23T02:29:00.671Z",
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "retired": {
+              "at": "2026-09-23T02:29:02.542793+00:00",
+              "by": 17,
+              "reason": "OQ-006 step 10: superseded by validation"
+            },
+            "approval": {
+              "at": "2026-09-23T02:29:00.671+00:00",
+              "by": 11,
+              "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "c5cf08fe9f39f1053d87f446e9c1af20b4d785de7e25d8d865f8c3f24ea6096f",
+              "twoPersonRule": "enforced"
+            }
+          },
+          "created_at": "2026-09-23T02:28:01.439Z",
+          "updated_at": "2026-09-23T02:29:02.542Z",
+          "deleted_at": null
+        },
+        {
+          "id": 18,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-B-20260923025144",
+          "title": "OQ-006 Second SOP 20260923025144",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "retired",
+          "effective_date": "2026-09-23T00:00:00.000Z",
+          "next_review_date": "2026-09-28T00:00:00.000Z",
+          "author_id": 17,
+          "approver_id": 11,
+          "approved_at": "2026-09-23T02:53:00.660Z",
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "retired": {
+              "at": "2026-09-23T02:53:02.551487+00:00",
+              "by": 17,
+              "reason": "OQ-006 step 10: superseded by validation"
+            },
+            "approval": {
+              "at": "2026-09-23T02:53:00.66+00:00",
+              "by": 11,
+              "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "d70c95717d3390661c64c2a62f5cba2a7d85518b0bb6d522adaa647a10efb9a4",
+              "twoPersonRule": "enforced"
+            }
+          },
+          "created_at": "2026-09-23T02:52:01.461Z",
+          "updated_at": "2026-09-23T02:53:02.551Z",
+          "deleted_at": null
+        },
+        {
+          "id": 22,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-B-20260923044306",
+          "title": "OQ-006 Second SOP 20260923044306",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "retired",
+          "effective_date": "2026-09-23T00:00:00.000Z",
+          "next_review_date": "2026-09-28T00:00:00.000Z",
+          "author_id": 17,
+          "approver_id": 11,
+          "approved_at": "2026-09-23T04:44:30.683Z",
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "retired": {
+              "at": "2026-09-23T04:44:32.620117+00:00",
+              "by": 17,
+              "reason": "OQ-006 step 10: superseded by validation"
+            },
+            "approval": {
+              "at": "2026-09-23T04:44:30.683+00:00",
+              "by": 11,
+              "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "64bdb99bc85391a589b25c8a121ce8621057a2988f7e66af3e0c19c9a06da5ae",
+              "twoPersonRule": "enforced"
+            }
+          },
+          "created_at": "2026-09-23T04:43:31.476Z",
+          "updated_at": "2026-09-23T04:44:32.620Z",
+          "deleted_at": null
+        },
+        {
+          "id": 4,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-C-20260922223720",
+          "title": "OQ-006 Self-approval SOP 20260922223720",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-10-22T00:00:00.000Z",
+          "author_id": 11,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {},
+          "created_at": "2026-09-22T22:37:25.784Z",
+          "updated_at": "2026-09-22T22:37:25.784Z",
+          "deleted_at": null
+        },
+        {
+          "id": 11,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-C-20260923021949",
+          "title": "OQ-006 Self-approval SOP 20260923021949",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-10-23T00:00:00.000Z",
+          "author_id": 11,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {},
+          "created_at": "2026-09-23T02:20:33.402Z",
+          "updated_at": "2026-09-23T02:20:33.402Z",
+          "deleted_at": null
+        },
+        {
+          "id": 15,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-C-20260923022744",
+          "title": "OQ-006 Self-approval SOP 20260923022744",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-10-23T00:00:00.000Z",
+          "author_id": 11,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {},
+          "created_at": "2026-09-23T02:28:03.356Z",
+          "updated_at": "2026-09-23T02:28:03.356Z",
+          "deleted_at": null
+        },
+        {
+          "id": 19,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-C-20260923025144",
+          "title": "OQ-006 Self-approval SOP 20260923025144",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-10-23T00:00:00.000Z",
+          "author_id": 11,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {},
+          "created_at": "2026-09-23T02:52:03.393Z",
+          "updated_at": "2026-09-23T02:52:03.393Z",
+          "deleted_at": null
+        },
+        {
+          "id": 23,
+          "organization_id": 1,
+          "doc_number": "SOP-OQ-C-20260923044306",
+          "title": "OQ-006 Self-approval SOP 20260923044306",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-10-23T00:00:00.000Z",
+          "author_id": 11,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {},
+          "created_at": "2026-09-23T04:43:33.462Z",
+          "updated_at": "2026-09-23T04:43:33.462Z",
+          "deleted_at": null
+        }
+      ],
+      "meta": {
+        "count": 18
+      }
+    }
+  }
+}

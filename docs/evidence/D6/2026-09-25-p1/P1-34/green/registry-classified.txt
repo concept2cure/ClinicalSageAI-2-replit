@@ -1,0 +1,38 @@
+# green: propose-only-tools.test.ts against the filled registry (HEAD 7fbe51c5 + this change, 2026-09-26)
+# command: NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/services/ana/__tests__/propose-only-tools.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the scan still sees the surface > finds the whole registered surface across the executor and every RegisterFn module 5ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the scan still sees the surface > flags the tools the finding was found through 2ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every handler with a write marker is classified — a new writer cannot ship unclassified 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > no name is in two maps 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every classified name is a registered tool — no stale entries 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every entry says why, in a sentence 15ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > the two gates compose: every governed content write is a proposal or a refusal 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every handler that already refuses inline is registered as a refusal — the registry is the single source 8ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > the command bridge is in no map — the command partition governs it 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > save_document_to_vault is a proposal 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > update_vault_document is a proposal 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > draft_authoring_document is a proposal 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > create_qms_document is a proposal 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > retire_qms_document is refused in chat 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > approve_import is refused in chat 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > ack_training is refused in chat 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > approve_qms_document is refused in chat 7ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > qms_change_transition is refused for the approve, reject and close targets and proposed for the rest 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > an unreadable transition target is refused, not proposed 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > the tools that already demand a reason-for-change of their own are at the reason tier, so the reason is the person’s 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > a read is neither 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a proposal mirrors buildHumanConfirmationRequiredResult with a {tool, input} retry 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a confirm-tier proposal asks for no reason and carries an object input even when the call had none 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > refuses to build a proposal for a tool that is not one — no silent confirm tier for an unknown name 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a refusal keeps refuseSignatureInChat’s keys and adds an error code every door reads as a refusal 0ms
+
+ Test Files  1 passed (1)
+      Tests  25 passed (25)
+   Start at  13:19:35
+   Duration  974ms (transform 242ms, setup 159ms, import 177ms, tests 56ms, environment 0ms)
+
+exit=0

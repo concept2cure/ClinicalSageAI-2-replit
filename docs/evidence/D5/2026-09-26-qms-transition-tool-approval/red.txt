@@ -1,0 +1,20 @@
+$ npx vitest run server/services/ana/__tests__/qms-change-tools.test.ts   # tests added, tool unchanged
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > raises a controlled change and persists it 29ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > requires change_number and title 2ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > advances a change through the lifecycle with a reason (Part 11) 5ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > refuses a transition without a reason-for-change 2ms
+ × server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > cannot approve a change from chat, and the change stays under assessment 10ms
+   → expected undefined to be 'CHANGE_APPROVAL_REQUIRES_SIGNATURE' // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > does not offer AnA an approval, and says where a change is approved 2ms
+   → expected [ Array(8) ] to not include 'approved'
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > rejects an illegal transition 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_link > links a change to a deviation 6ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > carries a recorded row out as auditTrail 2ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > create: says the record was not written when it was not 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > transition: says the record was not written when it was not 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > link: says the record was not written when it was not 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > opens a controlled revision (bumps version, back to draft, clears approval) 6ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > requires a reason to revise 1ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > requires a reason to retire — nothing is written and no placeholder reaches the ledger 2ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > retires a document (terminal) 5ms
+      Tests  2 failed | 14 passed (16)

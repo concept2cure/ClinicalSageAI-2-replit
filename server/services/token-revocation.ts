@@ -11,18 +11,61 @@
  *
  * Redis: ioredis via redis-manager.ts (already active for rate limiting/queues/locks)
  * DB: revoked_tokens table (migration 0015_document_artifact_bridge.sql)
- * TTL: 24 hours (matches JWT expiry)
+ * Expiry: the later of 24 hours and the token's own `exp` (revocationExpiryFor)
  *
  * @module server/services/token-revocation
  */
 
 import { createHash } from 'crypto';
+import jwt from 'jsonwebtoken';
 import { createScopedLogger } from '../utils/logger';
+import { runWithPreAuthScope } from '../db/tenantStore';
+import {
+  ACCOUNT_INACTIVE_MESSAGE,
+  accountIdOfClaims,
+  issuedAtOfClaims,
+  readAccountStandingBeforeTenant,
+  sessionPredatesPasswordChange,
+} from './account-standing';
+import { verifyJwtWithRotation, type JwtVerifyOptions } from '../utils/jwtVerify';
+import {
+  SESSION_IDLE_MESSAGE,
+  SESSION_LIFETIME_MESSAGE,
+  SESSION_SUPERSEDED_MESSAGE,
+  sessionInactivityReason,
+  type SessionCheckOptions,
+  type SessionInactivityReason,
+} from './session-inactivity';
 
 const log = createScopedLogger('token-revocation');
 
 const REDIS_KEY_PREFIX = 'c2c:revoked:';
-const TOKEN_TTL_SECONDS = 24 * 60 * 60; // 24 hours
+/** The floor of a revocation's life: the access token's own 24 hours. */
+const TOKEN_TTL_SECONDS = 24 * 60 * 60;
+
+/**
+ * When a revocation may lapse: the later of 24 hours and the token's own `exp`.
+ *
+ * Security audit 2026-09-24, IAM-04 (High): every entry used to live 24 hours,
+ * the access token's life, while a refresh token lives 7 days
+ * (routes/auth.ts REFRESH_TOKEN_EXPIRES_IN). A refresh token revoked at logout
+ * therefore came back to life after a day, for the remaining six. The `exp`
+ * claim is decoded, not verified: a token that does not verify is refused
+ * before the list is ever consulted, and anything unreadable gets the floor.
+ * The memory tier never expires and is unaffected.
+ */
+export function revocationExpiryFor(token: string, now: number = Date.now()): Date {
+  const floor = now + TOKEN_TTL_SECONDS * 1000;
+  let expMs: number | null = null;
+  try {
+    const decoded = jwt.decode(token);
+    const exp = decoded && typeof decoded === 'object' ? (decoded as { exp?: unknown }).exp : undefined;
+    if (typeof exp === 'number' && Number.isFinite(exp)) expMs = exp * 1000;
+  } catch {
+    /* not a JWT: the floor applies */
+  }
+  return new Date(expMs !== null && expMs > floor ? expMs : floor);
+}
 
 // Tier 3: In-memory emergency fallback
 const memoryBlacklist = new Set<string>();
@@ -62,6 +105,18 @@ async function getPool() {
   return null;
 }
 
+/**
+ * revoked_tokens carries no row-level security and no tenant column: a token is
+ * revoked or not, for everyone. The lookup runs where no tenant is known yet
+ * (the /api gate checks it before membership is resolved), and under
+ * RLS_ENFORCE=on the pool refuses an unscoped query, so every DB check used to
+ * fail silently and fall through to this instance's memory set. The pre-auth
+ * scope marks the query as intentionally tenant-less and grants no role.
+ */
+function tenantless<T>(caller: string, fn: () => Promise<T>): Promise<T> {
+  return runWithPreAuthScope(`auth:token-revocation-${caller}`, async () => await fn());
+}
+
 // ── Write: write-through to all available backends ──────────────────────────
 
 /**
@@ -71,7 +126,9 @@ async function getPool() {
 export async function revokeToken(token: string, reason = 'logout'): Promise<void> {
   revokeCount++;
   const hash = hashToken(token);
-  const expiresAt = new Date(Date.now() + TOKEN_TTL_SECONDS * 1000);
+  const now = Date.now();
+  const expiresAt = revocationExpiryFor(token, now);
+  const ttlSeconds = Math.ceil((expiresAt.getTime() - now) / 1000);
 
   // Always write to memory (guaranteed)
   memoryBlacklist.add(hash);
@@ -93,7 +150,7 @@ export async function revokeToken(token: string, reason = 'logout'): Promise<voi
   const redis = await getRedis();
   if (redis) {
     try {
-      await redis.setex(`${REDIS_KEY_PREFIX}${hash}`, TOKEN_TTL_SECONDS, '1');
+      await redis.setex(`${REDIS_KEY_PREFIX}${hash}`, ttlSeconds, '1');
     } catch (err) {
       redisFails++;
       log.warn('Redis revoke failed', { error: err instanceof Error ? err.message : String(err) });
@@ -104,11 +161,13 @@ export async function revokeToken(token: string, reason = 'logout'): Promise<voi
   const pool = await getPool();
   if (pool) {
     try {
-      await pool.query(
-        `INSERT INTO revoked_tokens (token_hash, revoked_at, expires_at, reason)
-         VALUES ($1, NOW(), $2, $3)
-         ON CONFLICT (token_hash) DO NOTHING`,
-        [hash, expiresAt.toISOString(), reason],
+      await tenantless('write', () =>
+        pool.query(
+          `INSERT INTO revoked_tokens (token_hash, revoked_at, expires_at, reason)
+           VALUES ($1, NOW(), $2, $3)
+           ON CONFLICT (token_hash) DO NOTHING`,
+          [hash, expiresAt.toISOString(), reason],
+        ),
       );
       dbAvailable = true;
     } catch (err) {
@@ -145,9 +204,8 @@ export async function isTokenRevoked(token: string): Promise<boolean> {
   const pool = await getPool();
   if (pool) {
     try {
-      const result = await pool.query(
-        `SELECT 1 FROM revoked_tokens WHERE token_hash = $1 AND expires_at > NOW() LIMIT 1`,
-        [hash],
+      const result = await tenantless('check', () =>
+        pool.query(`SELECT 1 FROM revoked_tokens WHERE token_hash = $1 AND expires_at > NOW() LIMIT 1`, [hash]),
       );
       dbAvailable = true;
       if (result.rows.length > 0) return true;
@@ -159,6 +217,89 @@ export async function isTokenRevoked(token: string): Promise<boolean> {
 
   // Tier 3: Memory (emergency)
   return memoryBlacklist.has(hash);
+}
+
+/**
+ * A signed, unexpired token whose session is over: it was signed out, its
+ * account was taken out of use (suspended or deprovisioned, VSR-001 F-29), or
+ * the account's password changed after it was issued (IAM-04). One error for
+ * all three, so every caller that already answers a signed-out session with
+ * 401 answers the others the same way. A password change is worded as a
+ * signed-out session: it is one, from the holder's side.
+ */
+export type SessionEndedReason = 'signed-out' | 'account-inactive' | 'password-changed' | SessionInactivityReason;
+
+function sessionEndedMessage(reason: SessionEndedReason): string {
+  if (reason === 'account-inactive') return ACCOUNT_INACTIVE_MESSAGE;
+  if (reason === 'idle') return SESSION_IDLE_MESSAGE;
+  if (reason === 'lifetime') return SESSION_LIFETIME_MESSAGE;
+  if (reason === 'superseded') return SESSION_SUPERSEDED_MESSAGE;
+  return 'This session has ended. Sign in again.';
+}
+
+export class SessionEndedError extends Error {
+  readonly reason: SessionEndedReason;
+  constructor(reason: SessionEndedReason = 'signed-out') {
+    super(sessionEndedMessage(reason));
+    this.name = 'SessionEndedError';
+    this.reason = reason;
+  }
+}
+
+/**
+ * Verify a bearer token and refuse it when its session was signed out.
+ *
+ * POST /api/auth/logout revokes the token and answers "Tokens invalidated.",
+ * but no authenticator read the revocation list (July 2026 audit, AUTH-03), so
+ * a signed-out token kept opening the /api gate, the session check, the users
+ * routes and the enterprise route that mints a fresh token from it, for the rest
+ * of its 24 hours. Every bearer verification goes through here.
+ *
+ * Throws what verifyJwtWithRotation throws for a bad or expired token, and
+ * SessionEndedError for a revoked one. Callers that already answer 401 for any
+ * verification error need no other change.
+ *
+ * Also SessionEndedError('account-inactive') for a token whose account has been
+ * suspended or deprovisioned since it was issued (VSR-001 F-29): the session
+ * probe, the users routes, the enterprise routes and the collaboration server
+ * all verify here, and each kept serving such an account until the token
+ * expired. A standing that cannot be read throws, and the caller refuses.
+ *
+ * And SessionEndedError('password-changed') for a token issued before the
+ * account's last password change (security audit 2026-09-24, IAM-04): a reset
+ * or change stamps users.password_changed_at, and until this check no
+ * authenticator compared it with the token's iat, so the sessions a holder
+ * most needs ended kept working. The standing and the stamp are one read
+ * (readAccountStanding).
+ *
+ * And SessionEndedError('idle' | 'lifetime' | 'superseded') for a session idle
+ * past its window, older than its lifetime, or ended by a later sign-in beyond
+ * the account's limit (security audit 2026-09-24, IAM-06; plan P1-1):
+ * this verification is recorded as the session's activity unless `session`
+ * says it is not the user acting (a socket's periodic re-check, a rotation).
+ * The token is revoked on the way out, so every authenticator answers alike.
+ */
+export async function verifyLiveToken<T = unknown>(
+  token: string,
+  options?: JwtVerifyOptions,
+  session?: SessionCheckOptions,
+): Promise<T> {
+  const decoded = verifyJwtWithRotation<T>(token, options);
+  if (await isTokenRevoked(token)) throw new SessionEndedError();
+  const accountId = accountIdOfClaims(decoded);
+  if (accountId !== null) {
+    const standing = await readAccountStandingBeforeTenant(accountId);
+    if (!standing.active) throw new SessionEndedError('account-inactive');
+    if (sessionPredatesPasswordChange(issuedAtOfClaims(decoded), standing.passwordChangedAtSeconds)) {
+      throw new SessionEndedError('password-changed');
+    }
+  }
+  const inactivity = await sessionInactivityReason(token, decoded, session);
+  if (inactivity) {
+    await revokeToken(token, inactivity);
+    throw new SessionEndedError(inactivity);
+  }
+  return decoded;
 }
 
 /**

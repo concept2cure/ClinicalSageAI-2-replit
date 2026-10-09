@@ -1,0 +1,9 @@
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "047 0 obj" 44ms
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "47 00 obj" 6ms
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "47 0%c\nobj" 6ms
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined inside an object stream 6ms
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when the appended trailer carries a different document ID (the R4 key changes) 6ms
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when the appended trailer drops the document ID 5ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > still accepts an update that keeps FDA's dictionary and document ID 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 1 passed (7)

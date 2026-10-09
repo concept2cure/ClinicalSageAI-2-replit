@@ -1,0 +1,6 @@
+# npx vitest run --config vitest.config.ts server/services/ana server/services/ai-gateway tests/schema-contract server/services/__tests__/multi-agent-council.test.ts
+ Test Files  403 passed | 1 skipped (404)
+      Tests  5487 passed | 3 skipped (5490)
+exit=0
+
+# an earlier, wider run (adding server/services/__tests__) failed in three files: CrossReferenceMapping.no-fabricated-content and conversation-os, which fail identically on trunk, and tests/schema-contract/c2c-apply-path.contract.test.ts, which this change broke (the FK to organizations ran before organizations exists on that path) and now passes (above).

@@ -16,21 +16,18 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { assertDomainTrack, DEFAULT_DOMAIN_TRACK, type DomainTrack } from './domain-track.js';
 
 const log = createScopedLogger('assumption-registry');
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type DomainTrack =
-  | 'clinical'
-  | 'nonclinical'
-  | 'cmc'
-  | 'biostatistics'
-  | 'regulatory'
-  | 'pharmacology'
-  | 'safety'
-  | 'labeling'
-  | 'commercial';
+/* The nine disciplines live in one place now — server/services/domain-track.ts
+   — because a second copy of them is what let a caller hand this service the
+   product-modality vocabulary and have every write rejected by the CHECK
+   constraint and swallowed. Re-exported so existing importers of
+   `DomainTrack` from this module keep working. */
+export type { DomainTrack } from './domain-track.js';
 
 export type AssumptionCategory =
   | 'efficacy'
@@ -137,7 +134,12 @@ export class AssumptionRegistryService {
       projectId: Number(input.projectId),
       assumptionCode: String(input.name || input.assumptionCode || `ASM-${Date.now()}`),
       title: String(input.description || input.name || 'Assumption'),
-      domainTrack: (input.domainTrack as DomainTrack) ?? 'regulatory',
+      // Absent stays the default; present-but-wrong is refused by create()
+      // rather than cast through `as DomainTrack`, which is the cast that let
+      // the modality vocabulary reach the INSERT.
+      domainTrack: input.domainTrack == null
+        ? DEFAULT_DOMAIN_TRACK
+        : assertDomainTrack(input.domainTrack, 'assumptionRegistryService.createAssumption'),
       category: (input.category as AssumptionCategory) ?? 'regulatory_pathway',
       assumedValue: String(input.textValue || input.numericValue || input.value || ''),
       unit: (input.unit as string) || undefined,
@@ -398,6 +400,12 @@ export class AssumptionRegistryService {
   async create(input: CreateAssumptionInput): Promise<AssumptionRecord> {
     log.info('Creating assumption', { code: input.assumptionCode, project: input.projectId });
 
+    /* Same boundary as decisionRecordService.create, for the same reason: the
+       column's CHECK names nine disciplines, and a caller passing the
+       product-modality vocabulary instead got a constraint violation buried in
+       its own catch block while this registry stayed empty. */
+    const domainTrack = assertDomainTrack(input.domainTrack, 'assumptionRegistryService.create');
+
     const result = await pool!.query(
       `
       INSERT INTO assumption_records (
@@ -414,7 +422,7 @@ export class AssumptionRegistryService {
         input.projectId,
         input.assumptionCode,
         input.title,
-        input.domainTrack,
+        domainTrack,
         input.category,
         input.assumedValue,
         input.unit ?? null,

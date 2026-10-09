@@ -14,6 +14,10 @@ import preclinicalTranslatorRouter from './preclinical-translator.js';
 import globalComplianceRouter from './global-compliance.js';
 import auditRiskMonitorRouter from './audit-risk-monitor.js';
 import cmcCopilotRouter from './cmc-copilot.js';
+import { serverError } from '../../lib/api-response.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('cmc-aggregator');
 
 const router = express.Router();
 
@@ -71,7 +75,7 @@ router.post('/test-event', requireAuth, async (req, res) => {
       patch,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'triggering the CMC event', error);
   }
 });
 

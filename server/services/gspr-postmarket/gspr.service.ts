@@ -159,6 +159,7 @@ export async function upsertMapping(
     .from(gsprProgramMappings)
     .where(
       and(
+        eq(gsprProgramMappings.organizationId, values.organizationId),
         eq(gsprProgramMappings.programId, values.programId),
         eq(gsprProgramMappings.requirementId, values.requirementId)
       )

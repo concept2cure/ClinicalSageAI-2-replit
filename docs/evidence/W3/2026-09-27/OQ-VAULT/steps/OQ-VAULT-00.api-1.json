@@ -1,0 +1,80 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/projects",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "name": "OQ-002 Vault program 20260928012206",
+      "programType": "ind",
+      "primaryAgency": "FDA",
+      "indication": "Validation exercise",
+      "priority": "medium"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 81,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": "72994d45-0062-4b98-9084-0ee15134139c",
+        "title": "OQ-002 Vault program 20260928012206",
+        "ws": "Biotech",
+        "code": "OVP2-BDJ4",
+        "stage": "Planning",
+        "readiness": 0,
+        "status": "active",
+        "lead": "JM Smith",
+        "blocker": null,
+        "due": "—",
+        "activity": "Updated Sep 28"
+      },
+      "program": {
+        "id": "72994d45-0062-4b98-9084-0ee15134139c",
+        "code": "OVP2-BDJ4",
+        "name": "OQ-002 Vault program 20260928012206",
+        "program_type": "ind",
+        "status": "active",
+        "phase": "planning",
+        "priority": "medium",
+        "description": null,
+        "product_name": "OQ-002 Vault program 20260928012206",
+        "indication": "Validation exercise",
+        "intended_use": null,
+        "primary_agency": "FDA",
+        "target_agencies": [
+          "FDA"
+        ],
+        "target_submission_date": null,
+        "actual_submission_date": null,
+        "approval_date": null,
+        "lead_user_id": 1,
+        "team_members": [],
+        "created_at": "2026-09-28T01:22:06.784Z",
+        "updated_at": "2026-09-28T01:22:06.784Z",
+        "application_number": null,
+        "product_type": "biologic",
+        "device_class": null,
+        "regulatory_path": null,
+        "product_code": null,
+        "sponsor_name": "Concept2Cure Therapeutics",
+        "predicate_devices": [],
+        "review_panel": null,
+        "regulation_number": null,
+        "device_flags": null,
+        "readiness": 0
+      },
+      "meta": {
+        "created": true,
+        "documentId": "doc_951cf5f9ec6f4ba4bd36287cec161d68",
+        "scaffoldedSections": 92,
+        "submissionId": 16,
+        "submissionCreated": true,
+        "projectAnchorId": 14,
+        "projectAnchorCreated": true
+      }
+    }
+  }
+}

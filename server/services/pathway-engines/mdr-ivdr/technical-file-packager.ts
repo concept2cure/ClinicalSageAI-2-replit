@@ -7,9 +7,11 @@
  *      canonical leaves into a file plan — each source leaf placed at its Annex
  *      II/III folder path, with the storage-specific `resolveFile` INJECTED so the
  *      plan stays unit-testable. Leaves with no resolvable file are skipped + reported.
- *   2. `materializeTechnicalFile` (fs + JSZip): writes the planned tree, a
- *      `manifest.json` table-of-contents, and an MD5 checksum file into a ZIP, and
- *      returns a content-addressed bundle (sha256 + size).
+ *      The plan's manifest is RECONCILED with what was placed (see below), and
+ *      its `ready` is the ONE technical-file readiness rule.
+ *   2. `materializeTechnicalFile` (fs + JSZip): writes the planned tree, the
+ *      plan's reconciled `manifest.json` table-of-contents, and an MD5 checksum
+ *      file into a ZIP, and returns a content-addressed bundle (sha256 + size).
  *
  * HONEST SCOPE: this is the technical-file PACKAGE (the dossier's folder tree +
  * manifest + checksums), not a EUDAMED registration payload and not a rendered
@@ -23,8 +25,10 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
-import type { TechnicalFileManifest } from '../technical-file-manifest';
+import type { TechnicalFileManifest, TechnicalFileManifestEntry } from '../technical-file-manifest';
 import type { CoreLeaf, LeafFileResolver } from '../../ectd/core-to-packager';
+import type { UnresolvedLeaf } from '../../ectd/leaf-source-resolver';
+import { ANNEX_II_III_KEY, assembleTechDoc, euOutlineKey, type TechDocInputLeaf, type TechDocSlotStatus } from './tech-doc-assembler';
 
 export interface TechnicalFilePlanFile {
   /** Path inside the ZIP, e.g. "03-annex-ii/device-description/desc.pdf". */
@@ -36,10 +40,188 @@ export interface TechnicalFilePlanFile {
   sectionId: string;
 }
 
+/** A leaf no slot of this regulation claims. */
+export interface TechnicalFileUnmappedLeaf {
+  source: string;
+  /**
+   * True when the leaf's key is in the rule packs' Annex II / Annex III tree
+   * ('II', 'II.*', 'III', 'III.*'): it is technical documentation the ZIP does
+   * not hold, and it makes the plan not ready. False for everything else (the
+   * conformity / registration group IV.*, eCTD codes): reported only.
+   */
+  inTechnicalDocumentation: boolean;
+  reason: string;
+}
+
+/*
+ * ANNEX_II_III_KEY — the Annex II / III key trees of the eu-mdr-2017-745 / eu-ivdr-2017-746
+ * outlines (migrations/20260810b_eu_mdr_ivdr_outlines.sql) — the same keys
+ * tech-doc-assembler's annexKey matchers claim: the key itself or a dotted
+ * descendant. 'IV' (conformity assessment and registration) is outside them.
+ *
+ * 2026-09-23 (W5/D7, residual repair) — the rule, stated: MDR / IVDR Annex II
+ * (technical documentation) and Annex III (technical documentation on
+ * post-market surveillance) are what this ZIP holds, so an unclaimed II/III
+ * leaf is a gap in it and counts against `ready`. The outlines' mandatory IV.1
+ * (EU declaration of conformity, Annex IV), IV.3 (EUDAMED registration) and
+ * IV.5 (PRRC, Article 15) are required of the manufacturer but are not Annex
+ * II/III content: they are reported as unmapped with inTechnicalDocumentation
+ * false and never counted against `ready`.
+ *
+ * 2026-09-23 (W5/D7, residual repair — round 3): the regex is defined once, in
+ * tech-doc-assembler.ts, and imported here; the assembler also places every
+ * outline-keyed leaf by its key rather than its title.
+ *
+ * 2026-09-23 (W5/D7, final pass): the regex is tested against
+ * euOutlineKey(sectionCode) — trimmed, annex numeral uppercased — here and in
+ * every assembler key matcher, so the two agree on what is an outline key.
+ */
+
+/** A manifest entry after the plan: `sources` are the ones placed in the ZIP. */
+export interface ReconciledTechnicalFileManifestEntry extends TechnicalFileManifestEntry {
+  /** Sources the entry named whose file could not be placed (absent when none). */
+  unresolvedSources?: string[];
+  /**
+   * 2026-09-23 (W5/D7, final pass): placed sources the slot matched by title
+   * alone (tech-doc-assembler `titleOnlyLeafIndices`; absent when none).
+   */
+  matchedByTitleOnly?: string[];
+}
+
+/**
+ * The manifest as the ZIP holds it — the one written to manifest.json and the
+ * one callers return. `ready` is the post-plan readiness.
+ */
+export interface ReconciledTechnicalFileManifest extends TechnicalFileManifest {
+  entries: ReconciledTechnicalFileManifestEntry[];
+  /** Leaves no slot claims; an Annex II/III one (`inTechnicalDocumentation`) makes the plan not ready. */
+  unmappedLeaves: TechnicalFileUnmappedLeaf[];
+  /** Leaf sources the caller could not materialize (`unresolvedLeaves`), counted into `ready`. */
+  unresolvedLeafCount: number;
+  /**
+   * 2026-09-23 (W5/D7, final pass): every placed source a slot matched by its
+   * title alone — no outline key, no document type, no code prefix of the
+   * slot's. It does not change `ready`: a Vault-built sequence (CTD codes, no
+   * document type, file-name titles) has no other signal, and refusing it
+   * would refuse that flow. It says which slot's presence — a required CER
+   * or PER included — rests on a title the platform did not verify, so a
+   * reviewer sees it in manifest.json, the response and the audit row.
+   */
+  matchedByTitleOnly: Array<{ sectionId: string; source: string }>;
+}
+
 export interface TechnicalFilePlan {
-  manifest: TechnicalFileManifest;
+  manifest: ReconciledTechnicalFileManifest;
   files: TechnicalFilePlanFile[];
+  /**
+   * Every source left out: a slot's source that did not resolve (sectionId =
+   * the slot) and every leaf no slot claims (sectionId = 'unmapped', also in
+   * `unmappedLeaves`).
+   */
   skipped: Array<{ sectionId: string; source: string; reason: string }>;
+  /** The 'unmapped' subset of `skipped`; an Annex II/III one makes the plan not ready. */
+  unmappedLeaves: TechnicalFileUnmappedLeaf[];
+}
+
+/**
+ * The ONE CoreLeaf → tech-doc projection input. packageTechnicalFile builds
+ * its manifest from `assembleTechDoc(techDocInputLeaves(leaves))` and
+ * buildTechnicalFilePlan projects the same leaves the same way, so the slot a
+ * manifest entry names and the leaves the plan places for it are one match.
+ */
+export function techDocInputLeaves(leaves: ReadonlyArray<CoreLeaf>): TechDocInputLeaf[] {
+  return leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined }));
+}
+
+const NOT_THIS_SLOTS_LEAVES =
+  "the manifest entry's sources are not the leaves this slot matches in the leaves given to the plan; nothing is placed for it by section code";
+
+/** Same sources, same order. */
+function sameSources(a: ReadonlyArray<string>, b: ReadonlyArray<string>): boolean {
+  return a.length === b.length && a.every((x, i) => x === b[i]);
+}
+
+/** A leaf no manifest section claimed, marked by whether it is Annex II/III technical documentation. */
+function unmappedLeafOf(leaf: CoreLeaf): TechnicalFileUnmappedLeaf {
+  // 2026-09-23 (W5/D7, final pass): read through euOutlineKey, as the slot
+  // matchers do — ' ii.9' is Annex II documentation, not an unkeyed code.
+  const inTechnicalDocumentation = ANNEX_II_III_KEY.test(euOutlineKey(leaf.sectionCode));
+  const label = `${leaf.sectionCode || leaf.title}: ${leaf.title}`;
+  return {
+    source: leaf.sectionCode || leaf.title,
+    inTechnicalDocumentation,
+    reason: inTechnicalDocumentation
+      ? `no technical-file section matched this leaf (${label}); it is Annex II/III technical documentation the ZIP does not hold`
+      : `no technical-file section matched this leaf (${label})`,
+  };
+}
+
+/**
+ * Place ONE manifest entry: exactly the leaves its slot matched in `leaves`
+ * (the slot's `leafIndices`), never a leaf re-found by its section code. An
+ * entry whose sources are not the slot's sources places nothing (`mismatch`).
+ * Appends to the shared files / skipped / claimed accumulators.
+ */
+function planEntry(
+  entry: TechnicalFileManifestEntry,
+  slot: TechDocSlotStatus | undefined,
+  acc: {
+    leaves: ReadonlyArray<CoreLeaf>;
+    resolveFile: LeafFileResolver;
+    seenPaths: Set<string>;
+    files: TechnicalFilePlanFile[];
+    skipped: TechnicalFilePlan['skipped'];
+    claimed: Set<number>;
+  },
+): { placed: string[]; lost: string[]; titleOnly: string[]; mismatch: boolean } {
+  const placed: string[] = [];
+  const lost: string[] = [];
+  const titleOnly: string[] = [];
+  const slotSources = slot?.sources ?? [];
+  if (!sameSources(slotSources, entry.sources)) {
+    // The entry does not describe these leaves: place nothing for it.
+    for (const source of entry.sources) {
+      acc.skipped.push({ sectionId: entry.id, source, reason: NOT_THIS_SLOTS_LEAVES });
+      lost.push(source);
+    }
+    return { placed, lost, titleOnly, mismatch: true };
+  }
+  for (const [k, index] of (slot?.leafIndices ?? []).entries()) {
+    const source = slotSources[k];
+    acc.claimed.add(index);
+    const resolved = acc.resolveFile(acc.leaves[index]);
+    if (!resolved) {
+      acc.skipped.push({ sectionId: entry.id, source, reason: 'no resolvable source file for the leaf document' });
+      lost.push(source);
+      continue;
+    }
+    acc.files.push({
+      targetPath: dedupePath(`${entry.path}/${resolved.fileName}`, acc.seenPaths),
+      sourcePath: resolved.sourcePath,
+      fileName: resolved.fileName,
+      md5: resolved.md5,
+      sectionId: entry.id,
+    });
+    placed.push(source);
+    if (slot?.titleOnlyLeafIndices.includes(index)) titleOnly.push(source);
+  }
+  return { placed, lost, titleOnly, mismatch: false };
+}
+
+/** The entry as placed: its placed sources, the ones lost, and the ones placed by title alone. */
+function reconciledEntry(
+  entry: TechnicalFileManifestEntry,
+  r: { placed: string[]; lost: string[]; titleOnly: string[] },
+): ReconciledTechnicalFileManifestEntry {
+  const status: TechnicalFileManifestEntry['status'] =
+    r.placed.length > 0 ? 'present' : entry.required ? 'missing' : 'optional-absent';
+  return {
+    ...entry,
+    status,
+    sources: r.placed,
+    ...(r.lost.length > 0 ? { unresolvedSources: r.lost } : {}),
+    ...(r.titleOnly.length > 0 ? { matchedByTitleOnly: r.titleOnly } : {}),
+  };
 }
 
 /** Insert a `-N` suffix before the extension to de-collide a duplicate path. */
@@ -62,58 +244,114 @@ function dedupePath(target: string, seen: Set<string>): string {
 
 /**
  * Build the technical-file plan from a manifest + the canonical leaves. Each
- * section's `sources` are re-associated to their leaf (by sectionCode or title)
- * and resolved to an on-disk file via the injected resolver. Pure + deterministic.
+ * section is filled with the leaves its slot MATCHED (tech-doc-assembler's
+ * `leafIndices` over these leaves), each resolved to an on-disk file via the
+ * injected resolver. Pure + deterministic.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic): the plan RECONCILES the manifest. The
+ * input manifest's status/ready is slot presence decided from the leaves before
+ * any was resolved; it was written to manifest.json unchanged, so a ZIP without
+ * the CER said ready: true and listed the CER 'present'. And the assembler then
+ * judged ready as `manifest.ready && skipped.length === 0`, where skipped also
+ * holds leaves no slot claims — so a complete MDR file whose program also holds
+ * the outline's mandatory IV.* sections was never ready. Now, in ONE place:
+ *   - an entry's `sources` are the ones placed; the rest are `unresolvedSources`;
+ *     an entry with none placed is 'missing' (required) / 'optional-absent';
+ *   - `ready` = the input's slot presence AND no required slot lost a source AND
+ *     no leaf source went unmaterialized (`unresolvedLeaves`, from the caller)
+ *     AND no Annex II/III leaf went unmapped;
+ *   - leaves no slot claims are `unmappedLeaves`, each marked
+ *     `inTechnicalDocumentation`. IV.* (conformity / registration) is reported
+ *     and does not count; an Annex II/III key does.
+ * The input manifest is not mutated.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic, second pass): two leaves left the ZIP
+ * while the plan said ready.
+ *   1. A slot's sources are section codes, one per matching leaf, and each was
+ *      looked up with `find`, so two II.3.b documents in one slot placed the
+ *      FIRST twice and the second never — then called it 'unmapped'. Each
+ *      source now takes the next leaf this entry has not used yet: the leaves
+ *      match one-to-one, in order.
+ *   2. Once unmapped leaves stopped counting, an authored Annex II section no
+ *      slot of this regulation takes (the IVDR outline's mandatory II.6.3
+ *      stability group) was left out and the plan said ready. An unmapped leaf
+ *      in the Annex II/III key tree now counts against ready; IV.* still does not.
+ *
+ * 2026-09-23 (W5/D7, residual repair): SUPERSEDES the lookup in point 1 above.
+ * Each source was still re-found from its section-code string (the next
+ * same-code leaf this entry had not used). The slots match by document type
+ * and title too, so when two leaves share a code and DIFFERENT slots claim
+ * them, a slot took whichever came first: with a bench report and the CER both
+ * at II.6.1.b the Annex XIV folder held the bench report, and with an IFU and
+ * the CER both at 1.11 the IFU was filed as the CER and the CER left the ZIP —
+ * each time with ready true. The plan now projects `leaves` through the one
+ * slot registry (assembleTechDoc) and places, for each entry, exactly the
+ * leaves its slot matched (`leafIndices`); no leaf is looked up by string. An
+ * entry whose `sources` are not that slot's sources (a manifest built from
+ * other leaves) places nothing, reports each source lost, and the plan is not
+ * ready.
  */
 export function buildTechnicalFilePlan(args: {
   manifest: TechnicalFileManifest;
   leaves: CoreLeaf[];
   resolveFile: LeafFileResolver;
+  /** Leaf sources the caller's materializer could not produce; any makes the plan not ready. */
+  unresolvedLeaves?: ReadonlyArray<UnresolvedLeaf>;
 }): TechnicalFilePlan {
   const files: TechnicalFilePlanFile[] = [];
   const skipped: TechnicalFilePlan['skipped'] = [];
   const seenPaths = new Set<string>();
-  /** Leaves some manifest section claimed (placed OR reported unresolvable). */
-  const claimed = new Set<CoreLeaf>();
+  /** Indices of the leaves some manifest section claimed (placed OR reported unresolvable). */
+  const claimed = new Set<number>();
+
+  // The slot projection of THESE leaves: which leaf each slot matched.
+  const projection = assembleTechDoc({ regulation: args.manifest.regulation, leaves: techDocInputLeaves(args.leaves) });
+  const slotById = new Map<string, TechDocSlotStatus>(projection.sections.map((s) => [s.id, s]));
+
+  const entries: ReconciledTechnicalFileManifestEntry[] = [];
+  let requiredSourceLost = false;
+  let entryMismatch = false;
+  const matchedByTitleOnly: ReconciledTechnicalFileManifest['matchedByTitleOnly'] = [];
 
   for (const entry of args.manifest.entries) {
-    for (const source of entry.sources) {
-      const leaf = args.leaves.find((l) => l.sectionCode === source || l.title === source);
-      if (!leaf) {
-        skipped.push({ sectionId: entry.id, source, reason: 'no matching leaf for source' });
-        continue;
-      }
-      claimed.add(leaf);
-      const resolved = args.resolveFile(leaf);
-      if (!resolved) {
-        skipped.push({ sectionId: entry.id, source, reason: 'no resolvable source file for the leaf document' });
-        continue;
-      }
-      const targetPath = dedupePath(`${entry.path}/${resolved.fileName}`, seenPaths);
-      files.push({
-        targetPath,
-        sourcePath: resolved.sourcePath,
-        fileName: resolved.fileName,
-        md5: resolved.md5,
-        sectionId: entry.id,
-      });
-    }
+    const r = planEntry(entry, slotById.get(entry.id), { leaves: args.leaves, resolveFile: args.resolveFile, seenPaths, files, skipped, claimed });
+    if (r.mismatch) entryMismatch = true;
+    if (entry.required && r.lost.length > 0) requiredSourceLost = true;
+    entries.push(reconciledEntry(entry, r));
+    for (const source of r.titleOnly) matchedByTitleOnly.push({ sectionId: entry.id, source });
   }
 
   // Every input leaf that NO section claimed is reported, never dropped: an
-  // authored section whose key matches no Annex II/III slot (e.g. the
-  // conformity/registration group IV.*) would otherwise vanish from the
-  // package with no trace in the plan.
-  for (const leaf of args.leaves) {
-    if (claimed.has(leaf)) continue;
-    skipped.push({
-      sectionId: 'unmapped',
-      source: leaf.sectionCode || leaf.title,
-      reason: `no technical-file section matched this leaf (${leaf.sectionCode || leaf.title}: ${leaf.title})`,
-    });
+  // authored section whose key matches no slot of this regulation would
+  // otherwise vanish from the package with no trace in the plan.
+  const unmappedLeaves: TechnicalFileUnmappedLeaf[] = [];
+  for (const [index, leaf] of args.leaves.entries()) {
+    if (claimed.has(index)) continue;
+    const unmapped = unmappedLeafOf(leaf);
+    skipped.push({ sectionId: 'unmapped', source: unmapped.source, reason: unmapped.reason });
+    unmappedLeaves.push(unmapped);
   }
 
-  return { manifest: args.manifest, files, skipped };
+  const unresolvedLeafCount = args.unresolvedLeaves?.length ?? 0;
+  const requiredPresent = entries.filter((e) => e.required && e.status === 'present').length;
+  const requiredMissing = entries.filter((e) => e.required && e.status === 'missing').length;
+  const manifest: ReconciledTechnicalFileManifest = {
+    ...args.manifest,
+    ready:
+      args.manifest.ready &&
+      requiredMissing === 0 &&
+      !requiredSourceLost &&
+      !entryMismatch &&
+      unresolvedLeafCount === 0 &&
+      !unmappedLeaves.some((u) => u.inTechnicalDocumentation),
+    totals: { ...args.manifest.totals, requiredPresent, requiredMissing },
+    entries,
+    unmappedLeaves,
+    unresolvedLeafCount,
+    matchedByTitleOnly,
+  };
+
+  return { manifest, files, skipped, unmappedLeaves };
 }
 
 export interface TechnicalFileBundle {
@@ -139,7 +377,9 @@ function buildMd5Index(entries: Array<{ relPath: string; md5: string }>): string
 /**
  * Materialize the plan into a ZIP on disk: the Annex II/III folder tree, a
  * `manifest.json` table-of-contents, and `checksums.md5.txt`. Returns a
- * content-addressed bundle (sha256 over the zip bytes).
+ * content-addressed bundle (sha256 over the zip bytes). manifest.json is the
+ * plan's RECONCILED manifest (2026-09-23, W5/D7 round-2 skeptic): it says what
+ * the ZIP holds and carries the post-plan `ready`.
  */
 export async function materializeTechnicalFile(
   plan: TechnicalFilePlan,

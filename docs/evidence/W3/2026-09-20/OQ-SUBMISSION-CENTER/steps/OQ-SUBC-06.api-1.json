@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/submissions/sequences/26/transition",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "status": "frozen"
+    }
+  },
+  "response": {
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 10,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "GOVERNED_REQUIRED",
+        "message": "Transition to frozen is irreversible and must go through the governed e-signature flow (POST /api/c2c/actions sign), not this endpoint."
+      }
+    }
+  }
+}

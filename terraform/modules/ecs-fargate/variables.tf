@@ -62,6 +62,22 @@ variable "api_container_port" {
   default = 5000
 }
 
+variable "trust_proxy_hops" {
+  description = <<-EOT
+    Proxies in front of the API that may report the client's address (Express
+    `trust proxy`; server/config/trust-proxy.ts). 1 = the load balancer, whose
+    last X-Forwarded-For entry no client can write. Set 2 only when the load
+    balancer accepts traffic from CloudFront alone; while it is open to the
+    internet, a direct client writes the second-to-last entry itself.
+  EOT
+  type        = number
+  default     = 1
+  validation {
+    condition     = var.trust_proxy_hops >= 0 && var.trust_proxy_hops <= 5 && floor(var.trust_proxy_hops) == var.trust_proxy_hops
+    error_message = "trust_proxy_hops must be a whole number of proxies from 0 to 5."
+  }
+}
+
 variable "api_desired_count" {
   type    = number
   default = 2
@@ -87,6 +103,24 @@ variable "api_secrets" {
   }))
   description = "Secrets injected into the API container"
   default     = []
+}
+
+variable "api_environment" {
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default     = []
+  description = "Plain (non-secret) environment variables for the API container, after the module's own."
+}
+
+variable "worker_environment" {
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default     = []
+  description = "Plain (non-secret) environment variables for the worker container, after NODE_ENV."
 }
 
 variable "worker_secrets" {

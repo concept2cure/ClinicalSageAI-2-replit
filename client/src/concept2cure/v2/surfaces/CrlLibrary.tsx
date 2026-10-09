@@ -328,8 +328,8 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!res.loading && !res.error) notifySurfaceActionReady('crl-library');
-  }, [res.loading, res.error]);
+    if (!res.loading) notifySurfaceActionReady('crl-library');
+  }, [res.loading]);
 
   const set = <K extends keyof CrlQuery>(k: K, v: CrlQuery[K]) => setQ({ ...q, [k]: v });
 

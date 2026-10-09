@@ -1,0 +1,22 @@
+# scripts/db/rls-coverage-check.sql with the child rule extended to every schema (ledger L203),
+# on the from-blank install BEFORE the non-public entries were applied: the fourteen children.
+
+ai.risk_assessments (child of ectd_v4.regulatory_submissions, row security off)
+ai.risk_assessments (child of global_dossier.dossier_instances, row security off)
+ai.risk_assessments (child of product_master.products, row security off)
+audit.config_bundles (child of core.programs, row security off)
+audit.dataset_snapshots (child of core.programs, row security off)
+audit.idempotency_keys (child of core.programs, row security off)
+audit.purge_requests (child of core.programs, row security off)
+core.entities (child of core.programs, row security off)
+ectd.project_folders (child of core.programs, row security off)
+global_dossier.content_versions (child of global_dossier.dossier_instances, row security off)
+global_dossier.dossier_branches (child of ectd_v4.regulatory_submissions, row security off)
+global_dossier.dossier_branches (child of global_dossier.dossier_instances, row security off)
+global_dossier.dossier_sync_events (child of global_dossier.dossier_instances, row security off)
+global_dossier.regulatory_comments (child of global_dossier.dossier_instances, row security off)
+manufacturing.rtrt_predictions (child of manufacturing.batch_execution_records, row security off)
+manufacturing.rtrt_predictions (child of manufacturing.digital_twins, row security off)
+manufacturing.rtrt_predictions (child of manufacturing.quality_test_results, row security off)
+precedent.csr_precedent_links (child of precedent.regulatory_precedents, row security off)
+regulatory_harmonization.export_job_audit_log (child of regulatory_harmonization.export_jobs, row security off)

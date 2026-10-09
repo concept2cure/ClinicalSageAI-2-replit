@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/submissions/sequences/1/leaves",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "sectionCode": "m1.3",
+      "title": "x",
+      "documentTable": "not_a_table",
+      "documentId": 1
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 14,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "VALIDATION",
+        "details": {
+          "formErrors": [],
+          "fieldErrors": {
+            "documentTable": [
+              "document_table \"not_a_table\" is not a placeable leaf source. Allowed: c2c_document_sections, coauthor_documents, ctd_onboarding_documents, rendered_leaf_files, unified_documents, vault_documents."
+            ]
+          }
+        }
+      }
+    }
+  }
+}

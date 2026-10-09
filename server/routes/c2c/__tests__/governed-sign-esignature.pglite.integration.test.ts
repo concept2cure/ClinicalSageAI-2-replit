@@ -151,6 +151,10 @@ CREATE TABLE IF NOT EXISTS ectd_sequences (
 CREATE TABLE IF NOT EXISTS submission_leaves (
   id serial PRIMARY KEY, sequence_id integer NOT NULL, section_code text NOT NULL,
   lifecycle_op text NOT NULL DEFAULT 'new', document_table text, document_id integer,
+  -- document_uuid (migrations/20260917b_submission_leaf_document_uuid.sql) and
+  -- document_content_sha256 (migrations/20260814e_submission_leaf_source_pin.sql):
+  -- the leaf-manifest digest the sign binds now reads both.
+  document_uuid uuid, document_content_sha256 text,
   checksum text, title text NOT NULL, organization_id integer NOT NULL,
   deleted_at timestamptz
 );`;
@@ -319,6 +323,42 @@ describe('governed sign → electronic_signatures (single write path)', () => {
     ).rejects.toThrow(/signer/i);
     const actions = (await pg.query(`SELECT count(*)::int AS n FROM c2c_ana_actions`)).rows[0] as { n: number };
     expect(actions.n).toBe(0);
+  });
+
+  // ── §11.50(a)(3): the meaning is a closed vocabulary (audit 2026-09-24 DP-17, P1-21) ──
+
+  it('FAIL CLOSED: a sign that declares no meaning is refused before anything is written', async () => {
+    await expect(
+      writeMutation('sign', signEnvelope('program:prog_4', { payload: { intent: 'freeze' } }) as any, SIGNER, ORG),
+    ).rejects.toMatchObject({ code: 'SIGNATURE_MEANING_REQUIRED' });
+    const actions = (await pg.query(`SELECT count(*)::int AS n FROM c2c_ana_actions`)).rows[0] as { n: number };
+    const sigs = (await pg.query(`SELECT count(*)::int AS n FROM electronic_signatures`)).rows[0] as { n: number };
+    expect(actions.n).toBe(0);
+    expect(sigs.n).toBe(0);
+  });
+
+  it('FAIL CLOSED: a free-text meaning is refused; only the closed vocabulary is a §11.50 meaning', async () => {
+    await expect(
+      writeMutation(
+        'sign',
+        signEnvelope('program:prog_4', { payload: { intent: 'freeze', meaning: 'approved because I felt like it' } }) as any,
+        SIGNER,
+        ORG,
+      ),
+    ).rejects.toMatchObject({ code: 'SIGNATURE_MEANING_UNKNOWN' });
+    const sigs = (await pg.query(`SELECT count(*)::int AS n FROM electronic_signatures`)).rows[0] as { n: number };
+    expect(sigs.n).toBe(0);
+  });
+
+  it("the task board's spelling of the vocabulary ('APPROVED') is accepted and stored as declared", async () => {
+    await writeMutation(
+      'sign',
+      signEnvelope('program:prog_4', { payload: { intent: 'checkpoint', meaning: 'APPROVED' } }) as any,
+      SIGNER,
+      ORG,
+    );
+    const sig = (await pg.query(`SELECT signature_meaning FROM electronic_signatures`)).rows[0] as { signature_meaning: string };
+    expect(sig.signature_meaning).toBe('APPROVED');
   });
 
   it('non-sign governed commands do not write electronic_signatures (regression)', async () => {

@@ -232,7 +232,7 @@ describe('structural fidelity — a dropped image is caught', () => {
   });
 
   it('a normal img[src] still round-trips — not a false positive', () => {
-    const stored = '<img src="/api/authoring/images/77" alt="Chromatogram">';
+    const stored = '<img src="/api/authoring/images/file_77_a" alt="Chromatogram">';
     const v = assessFidelity(stored, parse(stored, SHIPPED));
     expect(v.storedSignature.images).toBe(1);
     expect(v.parsedSignature.images).toBe(1);

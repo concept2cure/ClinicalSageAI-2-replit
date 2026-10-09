@@ -14,15 +14,49 @@ import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger.js';
+import { serverError } from '../lib/api-response';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { verifyLiveToken } from '../services/token-revocation';
+import {
+  ABSOLUTE_SESSION_HOURS,
+  continuedSessionClaims,
+  idleWindowSecondsOfClaims,
+  openSession,
+  refreshInactivityReason,
+  sessionEndCodeOf,
+  sessionEndMessageOf,
+  sessionStartSecondsOf,
+  unregisterSession,
+} from '../services/session-inactivity';
 import { requireAccessTokenReason } from '../middleware/tokenType';
-import auditService from '../services/auditService';
+import { recordAuthEvent } from '../services/audit/auth-event-audit';
+import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
+import { PASSWORD_HASH_COST, padUnknownEmailTiming } from '../services/login-timing-pad';
+import {
+  ACCOUNT_INACTIVE_MESSAGE,
+  ACCOUNT_STATUS_ACTIVE,
+  ACCOUNT_STATUS_PENDING_VERIFICATION,
+  isAccountActive,
+  isActiveAccountStatus,
+  isPendingVerificationStatus,
+  issuedAtOfClaims,
+  passwordChangedAtSecondsOf,
+  sessionPredatesPasswordChange,
+} from '../services/account-standing';
+import {
+  EMAIL_UNVERIFIED_MESSAGE,
+  VERIFICATION_LINK_INVALID_MESSAGE,
+  emailVerificationUrl,
+  mintEmailVerificationToken,
+  readEmailVerificationToken,
+} from '../services/email-verification';
 import {
   PASSWORD_RESET_TTL_MS,
   hashPasswordSetupToken,
   mintPasswordSetupToken,
   passwordSetupUrl,
   resolveAppBaseUrl,
+  PublicOriginNotConfiguredError,
 } from '../services/password-setup-token';
 
 // Scoped logger — every log line flows through the redaction walker in
@@ -30,46 +64,8 @@ import {
 // scrubbed even if they accidentally appear in a context object.
 const logger = createScopedLogger('auth');
 
-/**
- * Best-effort audit-log call for authentication events. 21 CFR Part 11
- * §11.10(e) requires an independent, tamper-evident audit trail for
- * every login attempt, logout, and credential-changing event. We swallow
- * errors here so a transient audit-pipeline failure never breaks the
- * auth path itself; auditService logs its own failures internally.
- */
-async function auditAuthEvent(entry: {
-  action: string;
-  userId?: number | string | null;
-  tenantId?: number | string | null;
-  email?: string;
-  outcome: 'success' | 'failure';
-  reason?: string;
-  ipAddress?: string;
-  userAgent?: string;
-}): Promise<void> {
-  const authAudit = await auditService.logAction({
-    tenantId: entry.tenantId ?? undefined,
-    userId: entry.userId ?? undefined,
-    action: entry.action,
-    resourceType: 'user',
-    resourceId: entry.userId?.toString() ?? entry.email ?? 'unknown',
-    ipAddress: entry.ipAddress,
-    userAgent: entry.userAgent,
-    details: {
-      outcome: entry.outcome,
-      reason: entry.reason,
-      email: entry.email,
-    },
-  });
-  if (!authAudit.persisted) {
-    logger.warn('Audit log write failed (non-fatal)', {
-      err: authAudit.error ?? 'no durable store accepted the row',
-      action: entry.action,
-    });
-  }
-}
 import { sql } from 'drizzle-orm';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, gt } from 'drizzle-orm';
 import {
   users,
   organizations,
@@ -80,8 +76,9 @@ import {
   primaryIndustryForIndustryMode,
   pathwaysForUseCases,
 } from '../services/industry-context/signup-profile';
-import { sendPasswordResetEmail, sendLoginOtpEmail } from '../services/emailService';
+import { isEmailConfigured, sendPasswordResetEmail, sendLoginOtpEmail, sendVerificationEmail, sendWelcomeEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
+import { mfaEnrolmentOf, sessionMfaFields } from '../services/mfa-enrolment';
 import * as emailOtpService from '../services/emailOtpService';
 import {
   validatePasswordPolicy,
@@ -95,6 +92,13 @@ import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 
 import { config } from '../config/environment';
 import { isDevAuthAllowed, devAuthDenialReason } from '../auth/dev-auth-policy';
+import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
+import {
+  drizzleWorkspaceStore,
+  ensureOrganizationDefaultWorkspace,
+} from '../services/c2c/organization-default-workspace';
+import { runWithTenantScope } from '../db/tenantStore';
+import { signInLimits } from '../middleware/sign-in-limits';
 
 const router = Router();
 
@@ -113,18 +117,10 @@ function getRefreshTokenSecret(): string {
 // ─── Rate Limiters ──────────────────────────────────────────────────────────
 // Separate limiters for different risk levels.
 
-/** Login: 10 attempts per 15 minutes per IP */
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' },
-  },
-  validate: { xForwardedForHeader: false },
-});
+// Password and second-factor steps: per ACCOUNT, failures only
+// (middleware/sign-in-limits.ts). They were 10 requests per client address,
+// successes included, so the eleventh colleague behind one office address was
+// refused (D6, 2026-09-29).
 
 /** Signup: 5 per hour per IP */
 const signupLimiter = rateLimit({
@@ -136,7 +132,18 @@ const signupLimiter = rateLimit({
     success: false,
     error: { code: 'RATE_LIMIT', message: 'Too many signup attempts. Please try again later.' },
   },
-  validate: { xForwardedForHeader: false },
+});
+
+/** Sign-up verification (verify, resend): 10 per hour per IP */
+const verificationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: { code: 'RATE_LIMIT', message: 'Too many attempts. Please try again later.' },
+  },
 });
 
 /** Password reset: 5 per hour per IP */
@@ -152,20 +159,6 @@ const passwordResetLimiter = rateLimit({
       message: 'Too many password reset requests. Please try again later.',
     },
   },
-  validate: { xForwardedForHeader: false },
-});
-
-/** MFA verify: 10 per 15 minutes per IP */
-const mfaLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many MFA attempts. Please try again later.' },
-  },
-  validate: { xForwardedForHeader: false },
 });
 
 // Development auth bypass fully removed — all authentication is enforced.
@@ -245,13 +238,17 @@ router.get('/session', async (req: Request, res: Response) => {
     }
 
     // Verify JWT token
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       organizationId: string;
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
+      iat?: number;
+      sid?: string;
+      sst?: number;
+      idl?: number;
     };
 
     // SECURITY: a pre-MFA (mfaPending / mfa_challenge) or refresh token is not an
@@ -324,6 +321,7 @@ router.get('/session', async (req: Request, res: Response) => {
       }
     }
 
+    const sessionStartedAt = new Date((sessionStartSecondsOf(decoded) ?? Math.floor(Date.now() / 1000)) * 1000);
     res.json({
       authenticated: true,
       user: {
@@ -336,19 +334,38 @@ router.get('/session', async (req: Request, res: Response) => {
         permissions: [],
         organizationId: decoded.organizationId,
         organizationName: orgName,
-        mfaEnabled: false,
-        mfaMethods: [],
-        mustChangePassword: false,
+        // The account as it is. These were the literals false / [] / false for
+        // every account until 2026-09-23 (VSR-001 §13.3 item 4).
+        ...sessionMfaFields(userData),
+        mustChangePassword: userData.mustChangePassword === true,
       },
+      // The session as its token states it (P1-1): id, start, the end of its
+      // lifetime, and the idle window the client's own timer mirrors.
       session: {
-        id: `session-${userData.id}`,
-        createdAt: new Date(),
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        id: decoded.sid ?? `session-${userData.id}`,
+        createdAt: sessionStartedAt,
+        expiresAt: new Date(sessionStartedAt.getTime() + ABSOLUTE_SESSION_HOURS * 60 * 60 * 1000),
         lastActivityAt: new Date(),
+        idleMinutes: idleWindowSecondsOfClaims(decoded) / 60,
+        lifetimeHours: ABSOLUTE_SESSION_HOURS,
       },
       tokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });
   } catch (error: any) {
+    if (error.name === 'SessionEndedError') {
+      // Signed out (AUTH-03), or its account taken out of use (F-29): the token
+      // is signed and unexpired, and its session is over.
+      if (error.reason === 'account-inactive') {
+        return res.status(401).json({
+          authenticated: false,
+          error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
+        });
+      }
+      return res.status(401).json({
+        authenticated: false,
+        error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' },
+      });
+    }
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({
         authenticated: false,
@@ -371,7 +388,7 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /api/auth/login
  * Login with email and password
  */
-router.post('/login', loginLimiter, async (req: Request, res: Response) => {
+router.post('/login', signInLimits.login, async (req: Request, res: Response) => {
   try {
     const { email, password, deviceInfo, rememberDevice } = req.body;
 
@@ -388,12 +405,16 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     const user = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
 
     if (!user.length) {
+      // The same bcrypt cost a wrong password pays, so the response time does
+      // not say whether the e-mail is enrolled (audit IAM-18 item 8; the
+      // enterprise door pays it through the same module).
+      await padUnknownEmailTiming(password);
       // Audit: unknown-email login attempt. Log with the attempted email
       // (no userId since none exists) so SOC tooling can correlate
       // credential-stuffing attempts. We deliberately store the email
       // (not just the hash) on the audit row — regulators want to see
       // the literal attacker-supplied value.
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         email: normalizedEmail,
         outcome: 'failure',
@@ -412,10 +433,10 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // ── Account Lockout Check ─────────────────────────────────────────────
     const lockStatus = await isAccountLocked(userData.id);
     if (lockStatus.locked) {
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: 'account_locked',
@@ -433,6 +454,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     }
 
     if (!userData.passwordHash) {
+      // An account with no stored password pays the comparison an unknown
+      // e-mail pays, so it is not told apart by timing either (IAM-18 item 8).
+      await padUnknownEmailTiming(password);
       logger.error('User has no password hash', { email: userData.email });
       return res.status(401).json({
         success: false,
@@ -444,10 +468,10 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     if (!isPasswordValid) {
       // Record failed attempt and potentially lock
       const failResult = await recordFailedLogin(userData.id);
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: failResult?.locked ? 'wrong_password_threshold_exceeded' : 'wrong_password',
@@ -461,26 +485,59 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       });
     }
 
+    // A signed-up account whose address is not yet confirmed signs in to
+    // nothing either (security audit 2026-09-24, IAM-17): the holder is told to
+    // open the link, after the password, so nobody else learns the account
+    // exists.
+    if (isPendingVerificationStatus(userData.status)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: userData.id,
+        tenantId: await auditOrganizationOf(userData),
+        email: userData.email,
+        outcome: 'failure',
+        reason: 'email_unverified',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_EMAIL_UNVERIFIED', message: EMAIL_UNVERIFIED_MESSAGE },
+      });
+    }
+
+    // An account taken out of use (suspended by an administrator, deprovisioned
+    // by the identity provider) signs in to nothing (VSR-001 F-29). Checked
+    // after the password, so only whoever holds it learns the account's state;
+    // a wrong password was refused and counted above, as for any account.
+    if (!isActiveAccountStatus(userData.status)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: userData.id,
+        tenantId: await auditOrganizationOf(userData),
+        email: userData.email,
+        outcome: 'failure',
+        reason: 'account_inactive',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
+      });
+    }
+
     // Successful password check — reset lockout counter
     await resetFailedLogins(userData.id);
-    // NOTE: the final "success" audit fires below after JWT issuance,
-    // so that MFA-required logins are recorded as challenge-issued, not
-    // session-created. See the audit call near `res.json({ success:
-    // true, accessToken, ... })`.
+    // NOTE: the "success" audit fires where the session is created: on the
+    // development path below, or on /mfa/verify for every other sign-in. This
+    // route records the MFA challenge it issues, so a sign-in is recorded as
+    // challenge-issued here and session-created there.
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
-    let organizationId = defaultOrganizationId;
-    let jwtRole = 'user';
 
     // Resolve all memberships and pick default org membership if available.
-    const memberships = await db
-      .select({
-        organizationId: organizationUsers.organizationId,
-        role: organizationUsers.role,
-      })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, userData.id))
-      .limit(25);
+    const memberships = await membershipsOf(userData.id);
 
     if (memberships.length === 0) {
       return res.status(403).json({
@@ -489,13 +546,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    if (!organizationId) {
-      organizationId = memberships[0]?.organizationId || null;
-    }
-    const selectedMembership =
-      memberships.find(m => m.organizationId === organizationId) || memberships[0];
-    organizationId = selectedMembership?.organizationId || null;
-    jwtRole = selectedMembership?.role || 'user';
+    const selectedMembership = signInMembership(memberships, defaultOrganizationId);
+    const organizationId = selectedMembership?.organizationId || null;
+    const jwtRole = selectedMembership?.role || 'user';
 
     if (!organizationId) {
       return res.status(403).json({
@@ -505,7 +558,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     }
 
     const [organization] = await db
-      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid })
+      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid, settings: organizations.settings })
       .from(organizations)
       .where(eq(organizations.id, organizationId))
       .limit(1);
@@ -525,15 +578,17 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     // ── Two-Factor Authentication ──────────────────────────────────────
     // Email OTP is the default 2FA method for all users (zero setup).
-    // Users with TOTP (authenticator app) enabled get that as primary.
-    const mfaMethod = (userData as any).mfaMethod || 'email';
-    const hasTotpSetup = userData.mfaEnabled === true && mfaMethod === 'totp';
+    // Users with TOTP (authenticator app) enabled get that as primary. The
+    // rule lives in mfa-enrolment.ts, which the session reads too.
+    const enrolment = mfaEnrolmentOf(userData);
+    const hasTotpSetup = enrolment.signInFactor === 'totp';
 
     // Dev-only MFA skip — gated behind isDevAuthAllowed() so it cannot be
     // reached in any environment that hasn't explicitly opted in via
     // NODE_ENV=development AND ALLOW_DEV_AUTH=1. Staging, beta, e2e, and
     // production never satisfy this.
     if (isDevAuthAllowed()) {
+      const session = await openSession(userData.id, organization?.settings);
       const accessToken = jwt.sign(
         {
           userId: userData.id.toString(),
@@ -542,12 +597,13 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
           organizationUuid: organization?.uuid || null,
           role: jwtRole,
           type: 'access',
+          ...session,
         },
         config.jwt.secret,
         { expiresIn: JWT_EXPIRES_IN }
       );
       const refreshToken = jwt.sign(
-        { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
+        { userId: userData.id.toString(), email: userData.email, type: 'refresh', ...session },
         getRefreshTokenSecret(),
         { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
       );
@@ -555,7 +611,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       // Audit: successful login (dev path, MFA bypassed). The bypass
       // itself is recorded as part of `reason` so an inspector can
       // distinguish dev-mode sessions from production logins.
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
         tenantId: organizationId,
@@ -582,9 +638,8 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
           organizationId: organizationId.toString(),
           organizationName: organization?.name || 'Organization',
           organizationUuid: organization?.uuid || null,
-          mfaEnabled: false,
-          mfaMethods: [],
-          mustChangePassword: false,
+          ...sessionMfaFields(userData),
+          mustChangePassword: userData.mustChangePassword === true,
         },
       });
     }
@@ -601,7 +656,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // Audit: password verified, MFA challenge issued. Recorded as a
     // separate event from the eventual session creation (which happens
     // on /mfa/verify). Inspectors can correlate the two via userId.
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_login_mfa_challenge',
       userId: userData.id,
       tenantId: organizationId,
@@ -618,7 +673,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         success: true,
         mfaRequired: true,
         challengeId: challengeToken,
-        mfaMethods: [{ type: 'totp', isEnabled: true, isPrimary: true }],
+        mfaMethods: enrolment.mfaMethods,
       });
     }
 
@@ -636,7 +691,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         success: true,
         mfaRequired: true,
         challengeId: challengeToken,
-        mfaMethods: [{ type: 'email', isEnabled: true, isPrimary: true }],
+        mfaMethods: enrolment.mfaMethods,
         maskedEmail,
       });
     }
@@ -715,7 +770,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
     }
 
     const [organization] = await db
-      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid })
+      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid, settings: organizations.settings })
       .from(organizations)
       .where(eq(organizations.id, organizationId))
       .limit(1);
@@ -732,6 +787,9 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         ? ['admin', 'user']
         : [jwtRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
 
+    // The session's id, start and idle window, into both tokens; registered
+    // against the account's concurrent-session limit (P1-1).
+    const session = await openSession(userData.id, organization?.settings);
     const accessToken = jwt.sign(
       {
         userId: userData.id.toString(),
@@ -740,13 +798,14 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         organizationUuid: organization?.uuid || null,
         role: jwtRole,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const refreshToken = jwt.sign(
-      { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
+      { userId: userData.id.toString(), email: userData.email, type: 'refresh', ...session },
       getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -770,9 +829,8 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         organizationId: organizationId.toString(),
         organizationName: organization?.name || 'Organization',
         organizationUuid: organization?.uuid || null,
-        mfaEnabled: false,
-        mfaMethods: [],
-        mustChangePassword: false,
+        ...sessionMfaFields(userData),
+        mustChangePassword: userData.mustChangePassword === true,
       },
     });
   } catch (error: any) {
@@ -810,8 +868,13 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     } = parsed.data;
     const email = parsed.data.email.trim().toLowerCase();
 
-    // Enforce enterprise password policy (NIST 800-63B)
-    const policyResult = validatePasswordPolicy(password);
+    // Enforce enterprise password policy (NIST 800-63B), against what the
+    // account will be: this address, this name, this organisation.
+    const policyResult = validatePasswordPolicy(password, {
+      email,
+      name: [firstName, lastName].filter(Boolean).join(' '),
+      organizationName: companyName,
+    });
     if (!policyResult.valid) {
       return res.status(400).json({
         success: false,
@@ -824,6 +887,36 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     }
 
     if (!requireDb(res)) return;
+
+    // Security audit 2026-09-24, IAM-17: the account cannot act until its
+    // address is confirmed by the link mailed to it (services/email-verification.ts).
+    // Only a development server with dev auth allowed skips that. A deployment
+    // that cannot mail the link, or has no public origin to build it on,
+    // refuses the sign-up rather than create an account nobody can activate;
+    // resolved before the address lookup, so the refusal is the same for every
+    // address.
+    const verificationRequired = !isDevAuthAllowed();
+    let verifyBaseUrl = '';
+    if (verificationRequired) {
+      if (!isEmailConfigured()) {
+        logger.error('Sign-up refused: e-mail is not configured, so the verification link cannot be sent');
+        return res.status(503).json({
+          success: false,
+          error: { code: 'AUTH_SIGNUP_UNAVAILABLE', message: 'Sign-up is not available right now. Try again later.' },
+        });
+      }
+      try {
+        verifyBaseUrl = resolveAppBaseUrl(req);
+      } catch (err) {
+        if (!(err instanceof PublicOriginNotConfiguredError)) throw err;
+        logger.error('Sign-up refused: no public origin configured for the verification link', { err: err.message });
+        return res.status(503).json({
+          success: false,
+          error: { code: 'AUTH_SIGNUP_UNAVAILABLE', message: 'Sign-up is not available right now. Try again later.' },
+        });
+      }
+    }
+
     const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (existing.length) {
       // SECURITY: Return generic message to prevent email enumeration
@@ -884,7 +977,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         .values({ name: companyName, slug, industryMode, stripeCustomerId, tier: 'free' })
         .returning();
 
-      const passwordHash = await bcrypt.hash(password, 12);
+      const passwordHash = await bcrypt.hash(password, PASSWORD_HASH_COST);
       const fullName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
       const [user] = await tx
         .insert(users)
@@ -893,70 +986,106 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
           passwordHash,
           name: fullName,
           defaultOrganizationId: org.id,
+          // Waits on the e-mail link (IAM-17); a development server skips it.
+          status: verificationRequired ? ACCOUNT_STATUS_PENDING_VERIFICATION : ACCOUNT_STATUS_ACTIVE,
         })
         .returning();
 
+      // Enter the new organisation's tenant before its first membership row.
+      // organization_users is written only in the membership's own
+      // organisation (or the platform scope), and signup runs in the pre-auth
+      // scope, so without this every sign-up answered 500 (D3, 2026-09-26;
+      // docs/evidence/D3/2026-09-26-memberships/). The same transaction-local
+      // switch the workspace step below makes, through the same binding; it
+      // stays set for the rest of this transaction.
+      const workspaceStore = drizzleWorkspaceStore(tx);
+      await workspaceStore.enterOrganizationScope(org.id);
       await tx.insert(organizationUsers).values({
         organizationId: org.id,
         userId: user.id,
         role: 'admin',
       });
 
+      // The organisation's own client workspace, SAME transaction.
+      // `projects.client_workspace_id` is NOT NULL, so without this row
+      // `ensureProgramProjectAnchor` skips with NO_CLIENT_WORKSPACE for every
+      // program this tenant ever creates, and its governed artifacts can never
+      // reach the registry (services/c2c/organization-default-workspace.ts).
+      // Inside the transaction, unlike provisionLaunchModules below: a module
+      // grant an administrator can re-run is not the same as the PM spine's
+      // NOT NULL parent, which every later write assumes.
+      await ensureOrganizationDefaultWorkspace(workspaceStore, {
+        orgId: org.id,
+        orgName: org.name,
+        orgSlug: org.slug,
+        userId: user.id,
+      });
+
       return { org, user };
     });
 
-    // Seed the governed org industry profile from the signup signals so the
-    // effective-context resolver has a real organization layer from day one.
-    // Best-effort: a failure here must never fail signup — the resolver
-    // fails open to biopharma defaults when the profile row is absent.
-    try {
-      await db
-        .insert(organizationIndustryProfiles)
-        .values({
-          organizationId: result.org.id,
-          primaryIndustry: primaryIndustryForIndustryMode(industryMode),
-          mdxSpecialization: mdxSpecialization ?? null,
-          defaultMarkets: defaultMarkets ?? [],
-          defaultPathways: pathwaysForUseCases(primaryUseCases),
-          // default_approval_rigor left null — the resolver derives a
-          // per-industry default (see defaultRigorForPrimaryIndustry).
-          updatedBy: result.user.id,
-        })
-        .onConflictDoNothing({ target: organizationIndustryProfiles.organizationId });
-    } catch (err) {
-      logger.warn('Org industry profile seed failed (non-fatal)', {
-        organizationId: result.org.id,
-        err: err instanceof Error ? err.message : String(err),
-      });
-    }
-
-    const token = jwt.sign(
+    // Launch catalog on by default (docs/LAUNCH_DEFINITION_OF_DONE.md, D2), and
+    // the governed industry profile — both under the NEW organisation's own
+    // tenant scope.
+    //
+    // Until 2026-09-22 both ran under the pre-auth scope every /api/auth request
+    // carries (tenant '0', no role). module_subscriptions and
+    // organization_industry_profiles are RLS-enabled and FORCED, so the policy's
+    // WITH CHECK refused every row: a self-serve organisation started with 0 of
+    // 21 launch modules and no industry profile, the failures were logged per
+    // module and as a warn, and signup answered 201. Proven on a deploy-shaped
+    // database as the non-superuser runtime role by
+    // tests/db/signup-launch-catalog.dbtest.ts, which drives this handler.
+    //
+    // The scope is the one establishRequestTenantScope would build for this
+    // organisation's admin on their next request — least privilege, never the
+    // system scope: nothing here needs to reach any other tenant.
+    //
+    // Outside the transaction on purpose: the grant writer holds its own
+    // connection, and an organisation that fails to provision must still exist
+    // so an administrator can provision it by hand. A failure does not fail the
+    // signup; provisionLaunchModules logs it as one error-level line with the
+    // remediation command.
+    await runWithTenantScope(
       {
-        userId: result.user.id.toString(),
-        email: result.user.email,
-        organizationId: result.org.id.toString(),
-        organizationUuid: result.org.uuid,
+        tenantId: String(result.org.id),
+        orgUuid: result.org.uuid ?? null,
         role: 'admin',
-        type: 'access',
+        source: 'request',
+        caller: 'POST /api/auth/signup (new-organisation provisioning)',
       },
-      config.jwt.secret,
-      { expiresIn: JWT_EXPIRES_IN }
+      async () => {
+        await provisionLaunchModules(result.org.id, { actorEmail: null });
+
+        // Seed the governed org industry profile from the signup signals so the
+        // effective-context resolver has a real organization layer from day one.
+        // Best-effort: a failure here must never fail signup — the resolver
+        // fails open to biopharma defaults when the profile row is absent.
+        try {
+          await db
+            .insert(organizationIndustryProfiles)
+            .values({
+              organizationId: result.org.id,
+              primaryIndustry: primaryIndustryForIndustryMode(industryMode),
+              mdxSpecialization: mdxSpecialization ?? null,
+              defaultMarkets: defaultMarkets ?? [],
+              defaultPathways: pathwaysForUseCases(primaryUseCases),
+              // default_approval_rigor left null — the resolver derives a
+              // per-industry default (see defaultRigorForPrimaryIndustry).
+              updatedBy: result.user.id,
+            })
+            .onConflictDoNothing({ target: organizationIndustryProfiles.organizationId });
+        } catch (err) {
+          logger.warn('Org industry profile seed failed (non-fatal)', {
+            organizationId: result.org.id,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        }
+      },
     );
 
-    // Send welcome email (non-blocking — don't fail signup if email fails)
-    try {
-      const { sendWelcomeEmail } = await import('../services/emailService.js');
-      const userName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
-      sendWelcomeEmail(email, userName).catch(err =>
-        logger.error('Welcome email failed (non-blocking)', { err: err?.message ?? String(err) })
-      );
-    } catch {
-      // Email service not available — continue
-    }
-
-    return res.status(201).json({
-      success: true,
-      token,
+    const userName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
+    const created = {
       organization: {
         id: result.org.id,
         name: result.org.name,
@@ -968,7 +1097,58 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         email: result.user.email,
         name: result.user.name,
       },
+    };
+
+    if (verificationRequired) {
+      // The account waits on its link; no session is handed out here. The
+      // mail is not awaited: the account exists whether or not the first
+      // attempt delivers, and POST /resend-verification sends it again.
+      const verifyUrl = emailVerificationUrl(verifyBaseUrl, mintEmailVerificationToken(result.user.id, email));
+      sendVerificationEmail(email, firstName || userName, verifyUrl).catch(err =>
+        logger.error('Sign-up verification email failed', { err: err instanceof Error ? err.message : String(err) })
+      );
+      await recordAuthEvent({
+        action: 'user_signup',
+        userId: result.user.id,
+        tenantId: result.org.id,
+        email,
+        outcome: 'success',
+        reason: 'verification_sent',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(201).json({ success: true, verification: { required: true, email }, ...created });
+    }
+
+    const signupSession = await openSession(result.user.id);
+    const token = jwt.sign(
+      {
+        userId: result.user.id.toString(),
+        email: result.user.email,
+        organizationId: result.org.id.toString(),
+        organizationUuid: result.org.uuid,
+        role: 'admin',
+        type: 'access',
+        ...signupSession,
+      },
+      config.jwt.secret,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+    sendWelcomeEmail(email, userName).catch(err =>
+      logger.error('Welcome email failed (non-blocking)', { err: err instanceof Error ? err.message : String(err) })
+    );
+    await recordAuthEvent({
+      action: 'user_signup',
+      userId: result.user.id,
+      tenantId: result.org.id,
+      email,
+      outcome: 'success',
+      reason: 'dev_no_verification',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
     });
+
+    return res.status(201).json({ success: true, token, verification: { required: false }, ...created });
   } catch (error: any) {
     logger.error('Signup error', { err: error?.message ?? String(error) });
     return res.status(500).json({
@@ -990,6 +1170,91 @@ export function isTokenBlacklisted(token: string): boolean {
 }
 
 /**
+ * POST /api/auth/verify-email  { token }
+ *
+ * The sign-up link's landing (security audit 2026-09-24, IAM-17). The token
+ * names the account and the address it was created with; the account moves
+ * from `pending_verification` to `active`, and only from there, so a link used
+ * twice does nothing the second time and a suspended account is not revived.
+ * The welcome mail goes out now, not at sign-up. No session is minted: the
+ * link proves the address, the password and second factor prove the person.
+ */
+router.post('/verify-email', verificationLimiter, async (req: Request, res: Response) => {
+  try {
+    const subject = readEmailVerificationToken(req.body?.token);
+    if (!subject) {
+      return res.status(400).json({ success: false, error: { code: 'AUTH_VERIFY_INVALID', message: VERIFICATION_LINK_INVALID_MESSAGE } });
+    }
+    if (!requireDb(res)) return;
+    const activated = await db
+      .update(users)
+      .set({ status: ACCOUNT_STATUS_ACTIVE })
+      .where(and(eq(users.id, subject.userId), eq(users.email, subject.email), eq(users.status, ACCOUNT_STATUS_PENDING_VERIFICATION)))
+      .returning({ id: users.id, name: users.name, defaultOrganizationId: users.defaultOrganizationId });
+    if (activated.length === 0) {
+      // Already confirmed: the same answer, nothing written. Anything else
+      // (no such account, another status) is the one refusal.
+      const [current] = await db.select({ status: users.status }).from(users).where(and(eq(users.id, subject.userId), eq(users.email, subject.email))).limit(1);
+      if (current && isActiveAccountStatus(current.status)) {
+        return res.json({ success: true, alreadyVerified: true });
+      }
+      return res.status(400).json({ success: false, error: { code: 'AUTH_VERIFY_INVALID', message: VERIFICATION_LINK_INVALID_MESSAGE } });
+    }
+    const [account] = activated;
+    await recordAuthEvent({
+      action: 'email_verified',
+      userId: account.id,
+      tenantId: await auditOrganizationOf(account),
+      email: subject.email,
+      outcome: 'success',
+      reason: 'link',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+    sendWelcomeEmail(subject.email, account.name || subject.email.split('@')[0]).catch(err =>
+      logger.error('Welcome email failed (non-blocking)', { err: err instanceof Error ? err.message : String(err) })
+    );
+    return res.json({ success: true });
+  } catch (error) {
+    logger.error('E-mail verification failed', { err: error instanceof Error ? error.message : String(error) });
+    return res.status(500).json({ success: false, error: { code: 'AUTH_010', message: 'Internal server error' } });
+  }
+});
+
+/**
+ * POST /api/auth/resend-verification  { email }
+ *
+ * Sends the sign-up link again to an account that is still waiting on it.
+ * Answers 202 whatever the address names (no account, an active one, a
+ * pending one), so it tells nobody which addresses are registered; the
+ * origin is resolved first for the same reason.
+ */
+router.post('/resend-verification', verificationLimiter, async (req: Request, res: Response) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!email || email.length > 320) {
+    return res.status(400).json({ success: false, error: { code: 'AUTH_001', message: 'Email is required' } });
+  }
+  if (!requireDb(res)) return;
+  try {
+    const baseUrl = resolveAppBaseUrl(req);
+    const [account] = await db
+      .select({ id: users.id, name: users.name, status: users.status })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    if (account && isPendingVerificationStatus(account.status) && isEmailConfigured()) {
+      const verifyUrl = emailVerificationUrl(baseUrl, mintEmailVerificationToken(account.id, email));
+      sendVerificationEmail(email, account.name || email.split('@')[0], verifyUrl).catch(err =>
+        logger.error('Sign-up verification email failed', { err: err instanceof Error ? err.message : String(err) })
+      );
+    }
+  } catch (err) {
+    logger.error('Resend of the sign-up verification link failed', { err: err instanceof Error ? err.message : String(err) });
+  }
+  return res.status(202).json({ success: true });
+});
+
+/**
  * POST /api/auth/logout
  * Logout and invalidate tokens
  */
@@ -997,10 +1262,13 @@ router.post('/logout', async (req: Request, res: Response) => {
   try {
     const { revokeToken } = await import('../services/token-revocation.js');
 
-    // Extract token from Authorization header and revoke it. We also
-    // try to decode the token (without verifying — it might be
-    // expired) so we can attribute the logout audit event to the
-    // user/tenant whose session ended.
+    // Extract token from Authorization header and revoke it. The logout audit
+    // event is attributed to the user and tenant whose session ended, read from
+    // the token only when the server signed it. Expiry is ignored, since a logout
+    // from an expired session still means something to an inspector. Claims
+    // from a token that does not verify are not attributed: the audit row is
+    // written in the scope of the tenant it names (recordAuthEvent), so a
+    // forged token would otherwise write into any organisation's audit chain.
     const authHeader = req.headers.authorization;
     let auditUserId: string | number | undefined;
     let auditOrgId: string | number | undefined;
@@ -1009,12 +1277,14 @@ router.post('/logout', async (req: Request, res: Response) => {
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
       try {
-        const decoded = jwt.decode(token) as Record<string, unknown> | null;
-        auditUserId = (decoded?.userId as string) ?? (decoded?.sub as string);
-        auditOrgId = decoded?.organizationId as string | undefined;
-        auditEmail = decoded?.email as string | undefined;
+        const verified = verifyJwtWithRotation<Record<string, unknown>>(token, { ignoreExpiration: true });
+        auditUserId = (verified?.userId as string) ?? (verified?.sub as string);
+        auditOrgId = verified?.organizationId as string | undefined;
+        auditEmail = verified?.email as string | undefined;
+        // The session's slot under the account's concurrent-session limit is free again (P1-1).
+        await unregisterSession(auditUserId, verified?.sid);
       } catch {
-        /* decode failed — log anonymous logout */
+        /* not a token this server signed: record an anonymous logout */
       }
       await revokeToken(token);
     }
@@ -1028,7 +1298,7 @@ router.post('/logout', async (req: Request, res: Response) => {
     // token was valid — a logout request from an expired session is
     // still a meaningful event for inspectors (e.g. shows the user
     // explicitly ended the session vs. just walking away).
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_logout',
       userId: auditUserId,
       tenantId: auditOrgId,
@@ -1080,6 +1350,10 @@ router.post('/refresh', async (req: Request, res: Response) => {
       userId: string;
       email: string;
       type: string;
+      iat?: number;
+      sid?: string;
+      sst?: number;
+      idl?: number;
     };
 
     if (decoded.type !== 'refresh') {
@@ -1107,6 +1381,45 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 
     const refreshUserData = refreshUser[0];
+    // A refresh token outlives the access token it came with; an account taken
+    // out of use gets no new session from it (VSR-001 F-29).
+    if (!isActiveAccountStatus(refreshUserData.status)) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
+      });
+    }
+    // Security audit 2026-09-24, IAM-04: a refresh token issued before the
+    // account's last password change mints nothing. The gate refuses the access
+    // tokens it minted for the same reason (middleware/auth.ts, verifyLiveToken);
+    // without this the client's next 401 would refresh and carry on, and the
+    // change would have ended no session at all.
+    if (
+      sessionPredatesPasswordChange(
+        issuedAtOfClaims(decoded),
+        passwordChangedAtSecondsOf(refreshUserData.passwordChangedAt),
+      )
+    ) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'This session has ended. Sign in again.' },
+      });
+    }
+    // Security audit 2026-09-24, IAM-06 (P1-1): a refresh is not activity. A
+    // session idle past its window, or older than its lifetime, mints nothing
+    // here either; without this the client's answer to the gate's refusal
+    // would have been a refresh, and the idle session would have carried on.
+    const inactivity = await refreshInactivityReason(decoded);
+    if (inactivity) {
+      const { revokeToken: revokeEndedRefresh } = await import('../services/token-revocation.js');
+      await revokeEndedRefresh(refreshToken, inactivity);
+      return res.status(401).json({
+        success: false,
+        error: { code: sessionEndCodeOf(inactivity), message: sessionEndMessageOf(inactivity) },
+      });
+    }
+    // The session continues: its id, start and window travel into the new pair.
+    const session = continuedSessionClaims(decoded);
     const refreshMemberships = await db
       .select({ organizationId: organizationUsers.organizationId, role: organizationUsers.role })
       .from(organizationUsers)
@@ -1143,13 +1456,14 @@ router.post('/refresh', async (req: Request, res: Response) => {
         organizationId: refreshOrgId.toString(),
         role: refreshMembershipRole.role,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const newRefreshToken = jwt.sign(
-      { userId: decoded.userId, email: decoded.email, type: 'refresh' },
+      { userId: decoded.userId, email: decoded.email, type: 'refresh', ...session },
       getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -1197,7 +1511,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       organizationId?: string;
@@ -1281,7 +1595,7 @@ router.get('/me', async (req: Request, res: Response) => {
       organizationName: meOrgName,
     });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         error: { code: 'AUTH_005', message: 'Session expired' },
       });
@@ -1303,7 +1617,7 @@ router.get('/me', async (req: Request, res: Response) => {
  * Accepts the challenge token (from login response) + TOTP code,
  * and returns the real JWT access/refresh tokens.
  */
-router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
+router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const { challengeId, code, method } = req.body;
 
@@ -1317,6 +1631,13 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     // Verify the challenge token
     const challenge = mfaService.verifyMfaChallengeToken(challengeId);
     if (!challenge) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        outcome: 'failure',
+        reason: 'invalid_or_expired_challenge',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         success: false,
         error: {
@@ -1328,23 +1649,66 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
 
     const userId = parseInt(challenge.userId);
 
-    // Verify the code — try email OTP first (default), then TOTP
+    // A challenge issued before the account was suspended or deprovisioned does
+    // not become a session after it (VSR-001 F-29). Checked before the code, so
+    // an account out of use spends none.
+    if (!(await isAccountActive(userId))) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId,
+        tenantId: challenge.organizationId,
+        email: challenge.email,
+        outcome: 'failure',
+        reason: 'account_inactive',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
+      });
+    }
+
+    // The factor this account signs in with (mfa-enrolment.ts). An account with
+    // an authenticator never completes sign-in with an emailed code: the emailed
+    // code is the factor of accounts WITHOUT one, and /mfa/resend mints none for
+    // an authenticator account (audit IAM-08, P1-2).
+    const [enrolmentRow] = await db
+      .select({ mfaEnabled: users.mfaEnabled, mfaMethod: users.mfaMethod })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    const authenticatorAccount = mfaEnrolmentOf(enrolmentRow ?? {}).signInFactor === 'totp';
     const verificationMethod = method || 'email';
     let isValid = false;
 
-    if (verificationMethod === 'email') {
+    if (verificationMethod === 'email' && !authenticatorAccount) {
       isValid = await emailOtpService.verifyEmailOtp(userId, code);
     }
 
-    // Fall back to TOTP verification (for users with authenticator apps)
+    // The authenticator, or one of the recovery codes the enrolment issued
+    // (redeemable here and nowhere else; each once).
     if (!isValid) {
-      isValid = await mfaService.verifyToken(userId, code);
+      isValid = (await mfaService.verifyLoginSecondFactor(userId, code)) !== null;
     }
 
     if (!isValid) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        userId,
+        tenantId: challenge.organizationId,
+        email: challenge.email,
+        outcome: 'failure',
+        reason: 'invalid_code',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         success: false,
-        error: { code: 'AUTH_004', message: 'Invalid or expired verification code' },
+        error: {
+          code: 'AUTH_004',
+          message: 'Invalid or expired verification code. Each code works once; if you just used it, wait for the next.',
+        },
       });
     }
 
@@ -1362,6 +1726,12 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
       });
     }
 
+    // The session's idle window is the organisation's setting, fixed now (P1-1).
+    const sessionOrgId = parseInt(String(challenge.organizationId ?? ''), 10);
+    const [sessionOrg] = Number.isFinite(sessionOrgId)
+      ? await db.select({ settings: organizations.settings }).from(organizations).where(eq(organizations.id, sessionOrgId)).limit(1)
+      : [];
+    const session = await openSession(challenge.userId, sessionOrg?.settings);
     const accessToken = jwt.sign(
       {
         userId: challenge.userId,
@@ -1370,13 +1740,14 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         organizationUuid: challenge.organizationUuid,
         role: challenge.role,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const refreshToken = jwt.sign(
-      { userId: challenge.userId, email: challenge.email, type: 'refresh' },
+      { userId: challenge.userId, email: challenge.email, type: 'refresh', ...session },
       getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -1403,6 +1774,19 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
       mfaOrgName = org?.name || 'Organization';
     }
 
+    // Audit: the session is created here, not at /login, which recorded only the
+    // challenge. Every sign-in outside development ends on this route.
+    await recordAuthEvent({
+      action: 'user_login',
+      userId,
+      tenantId: challenge.organizationId,
+      email: userData.email,
+      outcome: 'success',
+      reason: 'mfa_verified',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
     res.json({
       success: true,
       accessToken,
@@ -1419,9 +1803,10 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         organizationId: challenge.organizationId,
         organizationName: mfaOrgName,
         organizationUuid: challenge.organizationUuid,
-        mfaEnabled: true,
-        mfaMethods: [{ type: verificationMethod, isEnabled: true, isPrimary: true }],
-        mustChangePassword: false,
+        // The account's enrolment, not the request's claim: this said true for
+        // every account and echoed the `method` the request named.
+        ...sessionMfaFields(userData),
+        mustChangePassword: userData.mustChangePassword === true,
       },
       mfaRequired: false,
     });
@@ -1436,10 +1821,11 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/mfa/resend
- * Resend the email OTP code. Requires the active challenge token.
- * Rate limited to prevent abuse.
+ * Re-issue the email OTP code. Requires the active challenge token.
+ * Rate limited per IP, and at most emailOtpService.MAX_RESENDS re-issued codes
+ * per challenge (429 MFA_RESEND_LIMIT beyond it; a new sign-in starts again).
  */
-router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
+router.post('/mfa/resend', signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const { challengeId } = req.body;
 
@@ -1460,8 +1846,50 @@ router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
 
     const userId = parseInt(challenge.userId);
 
-    // Generate a new OTP and send it
-    const otp = await emailOtpService.createEmailOtp(userId);
+    // An authenticator account has no emailed code to resend: minting one here
+    // was the fallback that let such an account finish sign-in without the
+    // authenticator (audit IAM-08, P1-2). Recovery codes are its way back in.
+    const [enrolmentRow] = await db
+      .select({ mfaEnabled: users.mfaEnabled, mfaMethod: users.mfaMethod })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (mfaEnrolmentOf(enrolmentRow ?? {}).signInFactor === 'totp') {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'MFA_AUTHENTICATOR_REQUIRED',
+          message: 'This account signs in with an authenticator app. Enter a code from it, or one of your recovery codes.',
+        },
+      });
+    }
+
+    // Re-issue the challenge's code — at most MAX_RESENDS per challenge, counted
+    // on the users row by one conditional UPDATE (IAM-09, plan P1-3). A fresh
+    // budget of codes costs the password: createEmailOtp, at /login, is the
+    // only thing that starts the count again. Refused, the pending code and its
+    // expiry stand and nothing is mailed; the refusal is recorded against the
+    // account, in the organisation the server signed into the challenge.
+    const otp = await emailOtpService.reissueEmailOtp(userId);
+    if (otp === null) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_challenge',
+        userId,
+        tenantId: challenge.organizationId,
+        email: challenge.email,
+        outcome: 'failure',
+        reason: 'resend_limit',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(429).json({
+        success: false,
+        error: {
+          code: 'MFA_RESEND_LIMIT',
+          message: 'This sign-in has already received its limit of emailed codes. Sign in again to request a new one.',
+        },
+      });
+    }
     const maskedEmail = maskEmail(challenge.email);
 
     sendLoginOtpEmail(challenge.email, otp).catch(err => {
@@ -1483,6 +1911,32 @@ router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
 });
 
 /**
+ * A change to the account's second factor, recorded against the account
+ * (§11.10(e), §11.300): an enrolment started or refused, the factor switched on
+ * or off, a wrong code at either. None of the three routes below recorded
+ * anything, so an attempt to replace a factor left no trace (VSR-001 F-26).
+ * The tenant is the organisation in the server-signed access token.
+ */
+function recordSecondFactorChange(
+  req: Request,
+  account: { userId: string; email: string; organizationId?: string | number | null },
+  action: 'user_mfa_setup' | 'user_mfa_enable' | 'user_mfa_disable',
+  outcome: 'success' | 'failure',
+  reason?: string,
+): Promise<void> {
+  return recordAuthEvent({
+    action,
+    userId: Number(account.userId),
+    tenantId: account.organizationId ?? null,
+    email: account.email,
+    outcome,
+    reason,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+}
+
+/**
  * POST /api/auth/mfa/setup
  * Generate a TOTP secret and QR code URL for the authenticated user.
  * Requires a valid JWT (user must be logged in).
@@ -1499,9 +1953,10 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
+      organizationId?: string | number | null;
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
@@ -1518,7 +1973,24 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
 
     if (!requireDb(res)) return;
 
-    const result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
+    let result: mfaService.MfaSetupResult;
+    try {
+      result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
+    } catch (err) {
+      if (!(err instanceof mfaService.MfaAlreadyEnabledError)) throw err;
+      // Replacing an enrolled factor is the owner's act, with a current code:
+      // /mfa/disable, then enrol again. A session alone is not the owner.
+      await recordSecondFactorChange(req, decoded, 'user_mfa_setup', 'failure', 'already_enrolled');
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'MFA_ALREADY_ENABLED',
+          message:
+            'Two-step verification is already on for this account. To use a different authenticator, turn it off with a current code first.',
+        },
+      });
+    }
+    await recordSecondFactorChange(req, decoded, 'user_mfa_setup', 'success', 'secret_issued');
 
     res.json({
       success: true,
@@ -1528,7 +2000,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('MFA setup error', { err: error?.message ?? String(error) });
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired token' },
@@ -1558,9 +2030,10 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
+      organizationId?: string | number | null;
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
@@ -1588,14 +2061,17 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     const result = await mfaService.enableMfa(parseInt(decoded.userId), code);
 
     if (!result.success) {
+      await recordSecondFactorChange(req, decoded, 'user_mfa_enable', 'failure', 'invalid_code');
       return res.status(401).json({
         success: false,
         error: {
           code: 'AUTH_004',
-          message: 'Invalid verification code. Ensure your authenticator app is synced.',
+          message: 'Invalid verification code. Ensure your authenticator app is synced; each code works once, so if you just used it, wait for the next.',
         },
       });
     }
+
+    await recordSecondFactorChange(req, decoded, 'user_mfa_enable', 'success');
 
     res.json({
       success: true,
@@ -1604,7 +2080,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('MFA enable error', { err: error?.message ?? String(error) });
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired token' },
@@ -1633,9 +2109,10 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
+      organizationId?: string | number | null;
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
@@ -1663,11 +2140,14 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
     const disabled = await mfaService.disableMfa(parseInt(decoded.userId), code);
 
     if (!disabled) {
+      await recordSecondFactorChange(req, decoded, 'user_mfa_disable', 'failure', 'invalid_code');
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_004', message: 'Invalid verification code' },
       });
     }
+
+    await recordSecondFactorChange(req, decoded, 'user_mfa_disable', 'success');
 
     res.json({
       success: true,
@@ -1675,7 +2155,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('MFA disable error', { err: error?.message ?? String(error) });
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired token' },
@@ -1711,6 +2191,25 @@ async function handleForgotPassword(req: Request, res: Response) {
 
     if (!requireDb(res)) return;
 
+    // The origin the reset link is built on, resolved BEFORE the account
+    // lookup: in production it is APP_URL or nothing, never the Host header
+    // (password-reset poisoning), and a deployment without it refuses every
+    // address the same way, which reveals nothing about which exist.
+    let appBaseUrl: string;
+    try {
+      appBaseUrl = resolveAppBaseUrl(req);
+    } catch (err) {
+      if (!(err instanceof PublicOriginNotConfiguredError)) throw err;
+      logger.error('Password reset refused: no public origin configured', { err: err.message });
+      return res.status(503).json({
+        success: false,
+        error: {
+          code: 'AUTH_011',
+          message: 'Password reset is unavailable: this deployment has no public address configured.',
+        },
+      });
+    }
+
     // Always return the same response to prevent email enumeration
     const successResponse = {
       success: true,
@@ -1718,7 +2217,7 @@ async function handleForgotPassword(req: Request, res: Response) {
     };
 
     const user = await db
-      .select({ id: users.id, email: users.email })
+      .select({ id: users.id, email: users.email, defaultOrganizationId: users.defaultOrganizationId })
       .from(users)
       .where(eq(users.email, email.toLowerCase()))
       .limit(1);
@@ -1730,7 +2229,7 @@ async function handleForgotPassword(req: Request, res: Response) {
          that does not exist if only successes are logged. The RESPONSE is
          unchanged, so this leaks nothing: enumeration protection is a property
          of what we return, not of what we record. */
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_password_reset_requested',
         email: String(email).toLowerCase(),
         outcome: 'failure',
@@ -1757,16 +2256,17 @@ async function handleForgotPassword(req: Request, res: Response) {
       .where(eq(users.id, user[0].id));
 
     // Build the reset URL (frontend route)
-    const resetUrl = passwordSetupUrl(resolveAppBaseUrl(req), resetToken);
+    const resetUrl = passwordSetupUrl(appBaseUrl, resetToken);
 
     /* The reset email states "This request is logged per FDA 21 CFR Part
        11.10(e)". Until this call existed that sentence was false — the flow
        wrote no audit row of any kind, only a logger line on failure. The claim
        is the right one to make about a credential-changing event, so it is made
        true here rather than deleted from the email. */
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_password_reset_requested',
       userId: user[0].id,
+      tenantId: await auditOrganizationOf(user[0]),
       email: user[0].email,
       outcome: 'success',
       ipAddress: req.ip,
@@ -1803,19 +2303,6 @@ async function handleResetPassword(req: Request, res: Response) {
       });
     }
 
-    // Enforce enterprise password policy (NIST 800-63B)
-    const resetPolicyResult = validatePasswordPolicy(newPassword);
-    if (!resetPolicyResult.valid) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'AUTH_001',
-          message: resetPolicyResult.errors[0],
-          details: { errors: resetPolicyResult.errors },
-        },
-      });
-    }
-
     if (!requireDb(res)) return;
 
     // Hash the incoming token to compare against stored hash
@@ -1824,8 +2311,11 @@ async function handleResetPassword(req: Request, res: Response) {
     const user = await db
       .select({
         id: users.id,
+        email: users.email,
+        name: users.name,
         resetToken: users.resetToken,
         resetTokenExpiresAt: users.resetTokenExpiresAt,
+        defaultOrganizationId: users.defaultOrganizationId,
       })
       .from(users)
       .where(eq(users.resetToken, tokenHash))
@@ -1837,7 +2327,7 @@ async function handleResetPassword(req: Request, res: Response) {
          else in this flow would preserve that. No email is known here — the
          token is all the caller supplied — so the row is attributed to the
          token attempt rather than to a user we cannot identify. */
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_password_reset_failed',
         outcome: 'failure',
         reason: 'reset token matched no account',
@@ -1851,6 +2341,8 @@ async function handleResetPassword(req: Request, res: Response) {
     }
 
     const userData = user[0];
+    // Every event below names the account, so its organisation's ledger shows it (F-41).
+    const auditOrganizationId = await auditOrganizationOf(userData);
 
     // Check expiry
     if (!userData.resetTokenExpiresAt || new Date() > userData.resetTokenExpiresAt) {
@@ -1860,9 +2352,10 @@ async function handleResetPassword(req: Request, res: Response) {
         .set({ resetToken: null, resetTokenExpiresAt: null })
         .where(eq(users.id, userData.id));
 
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_password_reset_failed',
         userId: userData.id,
+        tenantId: auditOrganizationId,
         outcome: 'failure',
         reason: 'reset token had expired',
         ipAddress: req.ip,
@@ -1875,9 +2368,30 @@ async function handleResetPassword(req: Request, res: Response) {
     }
 
     // Hash new password and clear reset token
-    const passwordHash = await bcrypt.hash(newPassword, 12);
+    // Enforce enterprise password policy (NIST 800-63B), against the account
+    // the token names, once the token has proved it: a bad token is refused
+    // before a bad password is discussed.
+    const resetPolicyResult = validatePasswordPolicy(newPassword, { email: userData.email, name: userData.name });
+    if (!resetPolicyResult.valid) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'AUTH_001',
+          message: resetPolicyResult.errors[0],
+          details: { errors: resetPolicyResult.errors },
+        },
+      });
+    }
 
-    await db
+    const passwordHash = await bcrypt.hash(newPassword, PASSWORD_HASH_COST);
+
+    // Set the password only if the token is STILL this account's and unexpired,
+    // in the same statement that clears it: a reset token is used once. Until
+    // 2026-09-23 the row was read above and then written by id alone, so two
+    // requests carrying one token — both past the read during the bcrypt hash —
+    // both reported success and the later password silently won (D6, the class
+    // of VSR-001 §13.3 item 1).
+    const reset = await db
       .update(users)
       .set({
         passwordHash,
@@ -1886,7 +2400,30 @@ async function handleResetPassword(req: Request, res: Response) {
         passwordChangedAt: new Date(),
         mustChangePassword: false,
       })
-      .where(eq(users.id, userData.id));
+      .where(
+        and(
+          eq(users.id, userData.id),
+          eq(users.resetToken, tokenHash),
+          gt(users.resetTokenExpiresAt, new Date())
+        )
+      )
+      .returning({ id: users.id });
+
+    if (reset.length !== 1) {
+      await recordAuthEvent({
+        action: 'user_password_reset_failed',
+        userId: userData.id,
+        tenantId: auditOrganizationId,
+        outcome: 'failure',
+        reason: 'reset token was used or expired before this request completed',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
+      });
+    }
 
     /* THE CREDENTIAL CHANGE ITSELF. This was a `logger.info` and nothing more
        — a line in an application log, which is not an audit trail: not
@@ -1898,9 +2435,10 @@ async function handleResetPassword(req: Request, res: Response) {
 
        The logger line stays: operators read logs, inspectors read audit
        trails, and they are not substitutes for one another. */
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_password_changed',
       userId: userData.id,
+      tenantId: auditOrganizationId,
       outcome: 'success',
       reason: 'password reset via emailed token',
       ipAddress: req.ip,
@@ -1950,7 +2488,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       type?: string;
@@ -1977,7 +2515,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
     }
 
     // Enforce enterprise password policy
-    const changePolicyResult = validatePasswordPolicy(newPassword);
+    const changePolicyResult = validatePasswordPolicy(newPassword, { email: decoded.email });
     if (!changePolicyResult.valid) {
       return res.status(400).json({
         success: false,
@@ -2044,7 +2582,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
     }
 
     // Hash and store new password
-    const newHash = await bcrypt.hash(newPassword, 12);
+    const newHash = await bcrypt.hash(newPassword, PASSWORD_HASH_COST);
 
     // Maintain password history (last 5)
     const history = ((userData.passwordHistory as string[]) || []).slice(0, 4);
@@ -2060,14 +2598,26 @@ router.post('/password/change', async (req: Request, res: Response) => {
       })
       .where(eq(users.id, userData.id));
 
-    logger.info('Password changed', { userId: userData.id });
+    // The credential-changing event, in the account's tenant (21 CFR Part 11
+    // §11.10(e); security audit 2026-09-24, IAM-17): until 2026-09-26 this
+    // was a log line, while the reset path already wrote the event.
+    await recordAuthEvent({
+      action: 'user_password_changed',
+      userId: userData.id,
+      tenantId: await auditOrganizationOf(userData),
+      email: userData.email,
+      outcome: 'success',
+      reason: 'changed by the account holder',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     return res.json({
       success: true,
       message: 'Password changed successfully',
     });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_005', message: 'Session expired' },
@@ -2084,7 +2634,9 @@ router.post('/password/change', async (req: Request, res: Response) => {
 
 // ─── License Request ────────────────────────────────────────────────────────
 // Public endpoint: accepts a license / demo request from unauthenticated users.
-// Stores in DB (license_requests table) and optionally emails the sales team.
+// Stores in DB (license_requests table). It notifies no one: the platform owner
+// reads stored requests on Master Licensing → Enterprise requests
+// (server/routes/admin/master-enterprise-requests.ts). There is no email.
 
 const licenseRequestLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -2111,30 +2663,34 @@ router.post('/license-request', licenseRequestLimiter, async (req: Request, res:
 
     const { name, email, organization, message } = parsed.data;
 
-    // Persist to database (best-effort — table may not exist yet)
+    // Persist. The table is created by migrations/20260924_license_requests.sql,
+    // on the applier — never here.
+    //
+    // Until 2026-09-24 this block caught 42P01 and ran CREATE TABLE IF NOT
+    // EXISTS at request time. That succeeds only for a role that can CREATE in
+    // public: a superuser dev server, never production's runtime role, which is
+    // refused ("permission denied for schema public"). So in production every
+    // enterprise onboarding request answered 500 and was lost, and nothing on a
+    // developer machine could show it. It also carried an `else` that answered
+    // `success: true` without storing anything (unreachable through Drizzle,
+    // whose error text always names the table — but an error rendered as
+    // success all the same). Both are gone: stored, or an honest 500.
+    //
+    // On failure the prospect's contact is logged — the same two fields the
+    // success line below already logs — so a request that could not be stored
+    // is still recoverable by the team rather than lost. The response carries
+    // no database text; Onboarding.tsx tells the prospect it was NOT recorded.
     try {
       await db.execute(sql`INSERT INTO license_requests (name, email, organization, message, status, created_at)
               VALUES (${name}, ${email}, ${organization}, ${message}, 'pending', NOW())`);
-    } catch (dbErr: any) {
-      // If table doesn't exist, create it and retry once
-      if (dbErr?.message?.includes('license_requests') || dbErr?.code === '42P01') {
-        await db.execute(sql`CREATE TABLE IF NOT EXISTS license_requests (
-            id SERIAL PRIMARY KEY,
-            name VARCHAR(200) NOT NULL,
-            email VARCHAR(254) NOT NULL,
-            organization VARCHAR(300) NOT NULL,
-            message TEXT DEFAULT '',
-            status VARCHAR(20) DEFAULT 'pending',
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            reviewed_at TIMESTAMPTZ,
-            reviewed_by INTEGER
-          )`);
-        await db.execute(sql`INSERT INTO license_requests (name, email, organization, message, status, created_at)
-                VALUES (${name}, ${email}, ${organization}, ${message}, 'pending', NOW())`);
-      } else {
-        logger.error('License request DB error', { err: dbErr?.message ?? String(dbErr) });
-        // Still return success to the user — we log the request
-      }
+    } catch (dbErr) {
+      // Drizzle wraps the driver error as "Failed query: <sql>" and keeps
+      // PostgreSQL's reason and SQLSTATE on `.cause`; log those, not the SQL.
+      const cause = (dbErr as { cause?: unknown })?.cause ?? dbErr;
+      return serverError(res, logger, 'recording your enterprise onboarding request', cause, {
+        email,
+        organization,
+      });
     }
 
     logger.info('License request received', { email, organization });

@@ -147,7 +147,7 @@ class ContradictionConsequenceService {
       const { decisionLifecycleService } = await import('./decision-lifecycle-service.js');
 
       const { decision: decisionRecord, consequencePaths } =
-        decisionLifecycleService.recordContradictionConsequence({
+        await decisionLifecycleService.recordContradictionConsequence({
           projectId: String(projectId),
           organizationId,
           contradictionId: finding.id,
@@ -161,7 +161,7 @@ class ContradictionConsequenceService {
       decision = decisionRecord;
 
       // 2. Transition decision: recommended → confirmed → executed
-      decisionLifecycleService.transitionDecision(decision.id, 'confirmed', {
+      await decisionLifecycleService.transitionDecision(decision.id, 'confirmed', {
         actorId: executedBy,
         actorRole: opts?.actorRole,
       });
@@ -208,12 +208,13 @@ class ContradictionConsequenceService {
       }
 
       // 4. Complete decision transition
-      decisionLifecycleService.transitionDecision(decision.id, 'executed', {
+      await decisionLifecycleService.transitionDecision(decision.id, 'executed', {
         actorId: executedBy,
       });
 
       // 5. Create receipt
-      receipt = decisionLifecycleService.createReceipt({
+      receipt = await decisionLifecycleService.createReceipt({
+        organizationId,
         decisionId: decision.id,
         projectId: String(projectId),
         recommendation: {
@@ -530,7 +531,7 @@ class ContradictionConsequenceService {
       );
 
       if (linkedDecision) {
-        decisionLifecycleService.transitionDecision(linkedDecision.id, 'escalated', {
+        await decisionLifecycleService.transitionDecision(linkedDecision.id, 'escalated', {
           actorId: executedBy,
           escalatedToRole: 'ra_lead',
           reason: `Contradiction ${finding.id} requires escalation: ${finding.title}`,

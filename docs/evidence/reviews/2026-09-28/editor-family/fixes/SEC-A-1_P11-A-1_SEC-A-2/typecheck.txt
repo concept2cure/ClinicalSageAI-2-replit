@@ -1,0 +1,1 @@
+# Scoped tsc over the changed files, both tests and the Express type augmentations (tsconfig.fa.json): exit 0, no output. The whole-project typecheck is run by the pre-push hook.

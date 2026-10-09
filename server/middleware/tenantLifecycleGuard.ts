@@ -50,6 +50,7 @@ import {
   type TenantAccessPosture,
 } from '../services/tenant/tenant-lifecycle';
 import { tenantLifecycleDecisions } from './tenantLifecycleMetrics';
+import { requestFullPath } from './request-path';
 
 const logger = createScopedLogger('tenant-lifecycle-guard');
 
@@ -124,10 +125,6 @@ function resolveOrganizationId(req: Request): number | null {
   return Number.isSafeInteger(n) ? n : null;
 }
 
-function fullPath(req: Request): string {
-  return `${req.baseUrl || ''}${req.path || ''}`;
-}
-
 /** Attach the resolved posture so downstream handlers and the UI can read it. */
 function attachPosture(req: Request, posture: TenantAccessPosture): void {
   (req as Request & { tenantPosture?: TenantAccessPosture }).tenantPosture = posture;
@@ -161,7 +158,7 @@ function refuse(res: Response, status: number, code: string, message: string): v
  */
 function auditPlatformOverride(req: Request, posture: TenantAccessPosture): void {
   const actorId = String(req.user?.userId ?? req.user?.id ?? 'unknown');
-  const path = fullPath(req);
+  const path = requestFullPath(req);
 
   logger.warn('Platform actor overrode a tenant lifecycle refusal', {
     actorId,
@@ -222,7 +219,7 @@ export function enforceTenantLifecycle(req: Request, res: Response, next: NextFu
     return;
   }
 
-  const path = fullPath(req);
+  const path = requestFullPath(req);
   if (isLifecycleCarveOut(path)) {
     next();
     return;

@@ -1,0 +1,15 @@
+== mutant: one mark shared by every limiter (Symbol.for)
+ ✓ counts one per request when the third router of three answers it 34ms
+ ✓ refuses the request after the limit, not after the limit divided by the router's position 19ms
+ × two limiters are two policies: each still counts the request once 12ms
+   → the second limiter did not count the request: expected 5 to be 4 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)
+== mutant: no mark (the defect)
+ × counts one per request when the third router of three answers it 42ms
+   → expected 429 to be 200 // Object.is equality
+ × refuses the request after the limit, not after the limit divided by the router's position 28ms
+   → expected [ 200, 200, 429, 429, 429, 429, 429 ] to deeply equal [ 200, 200, 200, 200, 200, 200, 429 ]
+ ✓ two limiters are two policies: each still counts the request once 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)

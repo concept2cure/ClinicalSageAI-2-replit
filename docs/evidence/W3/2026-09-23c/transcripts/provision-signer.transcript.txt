@@ -1,0 +1,6 @@
+User upserted: oq-signer@validation.local (id: 2)
+
+=== LOGIN CREDENTIALS ===
+Email   : oq-signer@validation.local
+Password: [REDACTED]
+=========================

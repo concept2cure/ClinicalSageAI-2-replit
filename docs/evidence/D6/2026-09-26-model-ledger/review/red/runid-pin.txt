@@ -1,0 +1,3 @@
+# the runId pin (model-call-linkage.test.ts) applied to stream.ts at each revision
+HEAD 1500beca: both gw.route dispatches carry runId: [false, false]  (red)
+213fbebc:     both gw.route dispatches carry runId: [true, true]

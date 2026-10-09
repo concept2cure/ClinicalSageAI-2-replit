@@ -33,5 +33,11 @@
   "language": {
     "label": "Sprache",
     "select": "Sprache wählen"
+  },
+  "session": {
+    "stillThere": "Noch da?",
+    "signOutIn": "Sie werden wegen Inaktivität in {{seconds}} Sekunden abgemeldet.",
+    "staySignedIn": "Angemeldet bleiben",
+    "signOutNow": "Jetzt abmelden"
   }
 }

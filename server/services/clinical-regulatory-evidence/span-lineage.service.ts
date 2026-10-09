@@ -506,10 +506,25 @@ export async function replaceAuthorSpans(
     written++;
   }
 
-  // Retire author assertions for this document that the new text no longer
-  // contains. Ranges are compared as a set of (start, end) pairs; anything not
-  // in it describes characters that are gone or have moved.
-  const keep = spans.map((s) => `${s.charStart}:${s.charEnd}`);
+  /* Retire author assertions for this document that the new text no longer
+     contains — keyed on (start, end, ASSERTER), because that is what
+     recordAuthorSpan above upserts on (its lookup carries
+     `AND asserted_by = $6`).
+
+     On range alone the two disagreed, and a second author who edited a clause
+     to the SAME LENGTH got a new row for their range while the first author's
+     row — same range, different asserter — stayed live because its range was
+     still in the keep set. Two live author_assertion rows then named different
+     people as having asserted the same characters, over text only one of them
+     wrote, and the Data Origins panel reported whichever the ORDER BY reached
+     first. The source-span replacer below already keys on all three columns of
+     its own identity; this is the same rule.
+
+     COALESCE because a NULL in a SQL concatenation makes the whole expression
+     NULL, and `NULL <> ALL (...)` is NULL rather than true — which would stop
+     retiring instead of starting. author_assertion always carries an asserter,
+     but the machine replacer that shares this shape does not. */
+  const keep = spans.map((s) => `${s.charStart}:${s.charEnd}:${p.assertedBy}`);
   const { rowCount } = await exec.query(
     `UPDATE document_span_lineage
         SET deleted_at = NOW(), updated_at = NOW()
@@ -518,7 +533,7 @@ export async function replaceAuthorSpans(
         AND document_id = $3
         AND provenance_kind = 'author_assertion'
         AND deleted_at IS NULL
-        AND (char_start || ':' || char_end) <> ALL($4::text[])`,
+        AND (char_start || ':' || char_end || ':' || COALESCE(asserted_by, '')) <> ALL($4::text[])`,
     [orgId, ref.documentTable, ref.documentId, keep.length > 0 ? keep : ['']],
   );
 
@@ -752,10 +767,18 @@ export async function replaceMachineSpans(
       exec,
     );
     written++;
-    // Keyed by KIND as well as range: a clause that has just been accepted is
-    // written as accepted_machine_draft, and the machine_draft row at the same
-    // range must then be retired rather than left answering alongside it.
-    keep.push(`${kind}:${s.charStart}:${s.charEnd}`);
+    /* Keyed by KIND and ASSERTER as well as range. Kind, because a clause that
+       has just been accepted is written as accepted_machine_draft and the
+       machine_draft row at the same range must then be retired rather than left
+       answering alongside it. Asserter, because without it two different people
+       who each accepted the clause at that range both stayed live, each row
+       claiming to be the human who accepted it — the Part 11 attribution
+       question answered two contradictory ways for one clause.
+
+       `?? ''` mirrors the COALESCE in the predicate: machine_draft carries a
+       NULL asserter by constraint, and the two have to agree or those rows
+       stop matching the keep set. */
+    keep.push(`${kind}:${s.charStart}:${s.charEnd}:${s.assertedBy ?? ''}`);
   }
 
   const { rowCount } = await exec.query(
@@ -766,7 +789,7 @@ export async function replaceMachineSpans(
         AND document_id = $3
         AND provenance_kind IN ('accepted_machine_draft', 'machine_draft')
         AND deleted_at IS NULL
-        AND (provenance_kind || ':' || char_start || ':' || char_end) <> ALL($4::text[])`,
+        AND (provenance_kind || ':' || char_start || ':' || char_end || ':' || COALESCE(asserted_by, '')) <> ALL($4::text[])`,
     [orgId, ref.documentTable, ref.documentId, keep.length > 0 ? keep : ['']],
   );
 

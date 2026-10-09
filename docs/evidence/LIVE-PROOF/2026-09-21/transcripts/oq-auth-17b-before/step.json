@@ -1,0 +1,51 @@
+{
+  "run": {
+    "executedAt": "2026-09-21T16:26:52.611Z",
+    "baseUrl": "http://localhost:5200",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "ad69500f01f56af1b2b3a0c3b3c69feaaa384ba6"
+    },
+    "counts": {
+      "pass": 22,
+      "fail": 1,
+      "deviation": 1,
+      "not-executed": 0
+    }
+  },
+  "step": {
+    "id": "OQ-AUTH-17b",
+    "title": "The reviewer sees the pending review on the Review surface",
+    "urs": [
+      "URS-AUTH-013"
+    ],
+    "kind": "scripted",
+    "action": "GET /api/review/board (the read model behind /concept2cure/review) after the request-review and submit above",
+    "expected": "The queue lists the document for the reviewer",
+    "status": "fail",
+    "observed": {
+      "scope": "all",
+      "total": 0,
+      "threadItemId": null,
+      "threadDocumentId": null,
+      "generatedAt": "2026-09-21T16:26:59.741Z"
+    },
+    "startedAt": "2026-09-21T16:26:59.471Z",
+    "finishedAt": "2026-09-21T16:26:59.816Z",
+    "evidence": [
+      "steps/OQ-AUTH-17b.at-failure.png"
+    ],
+    "api": [
+      {
+        "file": "steps/OQ-AUTH-17b.api-1.json",
+        "method": "GET",
+        "url": "http://localhost:5200/api/review/board",
+        "status": 200
+      }
+    ],
+    "consoleErrors": [],
+    "note": "The Review board reads document_workflows / workflow_approvals (server/routes/review-board-routes.ts); authoring reviews are stored in authoring_reviews and authoring_workflow_steps (server/routes/authoring.router.ts:3476, 6259). If this step fails, a review requested in Authoring is not visible where a reviewer is told to look.",
+    "failure": "authoring review request is not on the Review board queue",
+    "rateLimitRetries": 0
+  }
+}

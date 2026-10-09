@@ -119,9 +119,22 @@ describe('eCTD submission agent does not claim to have transmitted', () => {
 
 describe('the review surface does not fabricate an electronic signature', () => {
   const src = read(REVIEW);
+  /* The decision dialog. VSR-001 F-6 (2026-09-21) moved the board onto the
+     authoring review store, and the dialog was renamed with it: ESignModal ->
+     DecisionModal, its opener ApproveSign -> RecordDecision. The slice is
+     asserted non-empty, because String.slice(-1, -1) is '' and every
+     `not.toContain` against '' passes — which is exactly how the
+     fixture-identity check below went vacuous when the names changed. */
+  const decisionModal = () => {
+    const start = src.indexOf('function DecisionModal');
+    const end = src.indexOf('function RecordDecision');
+    expect(start, 'DecisionModal not found in ' + REVIEW).toBeGreaterThan(-1);
+    expect(end, 'RecordDecision must follow DecisionModal').toBeGreaterThan(start);
+    return src.slice(start, end);
+  };
 
   it('does not attribute a signature to a hardcoded fixture identity', () => {
-    const modal = src.slice(src.indexOf('function ESignModal'), src.indexOf('function ApproveSign'));
+    const modal = decisionModal();
     expect(modal).not.toContain('Jordan Chen');
   });
 
@@ -154,27 +167,79 @@ describe('the review surface does not fabricate an electronic signature', () => 
   });
 
   it('records the decision on the server and claims only what came back', () => {
-    // f3515fcf8: the modal POSTs to the governed review router. The 11.50
-    // meaning the reviewer SELECTED travels verbatim — never inferred from the
-    // decision — and the only success path out of the modal (onSigned) fires
-    // behind the { success: true } guard, so "recorded" is a statement about
-    // the record, not about the click.
-    const modal = src.slice(src.indexOf('function ESignModal'), src.indexOf('function ApproveSign'));
-    expect(modal).toMatch(/apiRequest\(\s*'POST',\s*'\/api\/review\/workflows\/'/);
-    expect(modal).toContain("'/decision'");
-    expect(modal).toMatch(/\{ decision, meaning, reason/);
+    // f3515fcf8 made the modal POST to the governed review router; VSR-001 F-6
+    // (2026-09-21) moved that write onto the authoring workflow's OWN review
+    // transition, POST /api/authoring/documents/:id/review, so there is one
+    // review store (the board-only /api/review/workflows/:id/decision route is
+    // gone; client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx
+    // pins the chain end to end). The verdict the reviewer SELECTED travels
+    // verbatim — never inferred — and the only success path out of the modal
+    // (onRecorded) fires behind the { success: true } guard, so "recorded" is a
+    // statement about the record, not about the click.
+    const modal = decisionModal();
+    expect(modal).toMatch(/apiRequest\(\s*'POST',\s*'\/api\/authoring\/documents\/'/);
+    expect(modal).toContain("'/review'");
+    expect(modal).toMatch(/\{ review_status: decision, review_comments: reason/);
+    // It is a verdict, not a signature: this dialog puts no §11.50 meaning on
+    // the wire, neither selected nor inferred.
+    expect(modal).not.toMatch(/\bmeaning\s*[:,}]/);
     expect(modal).toMatch(/!res\.ok \|\| payload\?\.success !== true/);
-    expect(modal.indexOf("onSigned?.(")).toBeGreaterThan(modal.indexOf('success !== true'));
+    expect(modal.indexOf('success !== true')).toBeGreaterThan(-1);
+    expect(modal.indexOf("onRecorded?.(")).toBeGreaterThan(modal.indexOf('success !== true'));
     // A rejection is a record the author must act on: it cannot be written
-    // without substantive grounds.
-    expect(modal).toMatch(/decision === 'reject' && reason\.trim\(\)\.length < 8/);
+    // without substantive grounds. (The floor now covers a change request as
+    // well: every verdict other than approval needs the reason.)
+    expect(modal).toMatch(/needsReason = decision !== 'approved'/);
+    expect(modal).toMatch(/reasonOk = !needsReason \|\| reason\.trim\(\)\.length >= 8/);
+    // ...and the floor is enforced before the write, not merely displayed.
+    const guard = modal.indexOf('if (!reasonOk)');
+    expect(guard).toBeGreaterThan(-1);
+    expect(guard).toBeLessThan(modal.indexOf('apiRequest('));
   });
 
-  it('points at the path that does perform a binding signature', () => {
+  it('points at the path that does perform a binding signature, and says truly how it verifies the signer', () => {
     // Removing a false claim without saying where the real capability lives
     // just moves the confusion.
-    expect(src).toMatch(/authoring workspace/i);
-    expect(src).toMatch(/PIN-verified/i);
+    //
+    // HOW the signer is verified is a claim about the product too, so it is
+    // pinned to the implementation, not to whatever the copy last said. Both
+    // authoring signature routes, POST /api/authoring/docs/:docId/e-sign and
+    // /sign (server/routes/authoring.router.ts), call reverifyAuthoringSigner ->
+    // reverifySigner (server/services/part11/reverify-signer.ts): the account
+    // PASSWORD every time, and a 6-digit authenticator code on top of it only
+    // when that signer has MFA enrolled (isMfaEnabled reads users.mfa_enabled,
+    // per account). The dialog is the shared EsignModal, which asks for the
+    // password and then the code when the server says one is enrolled.
+    //
+    // There is no signing PIN. 6f79a000f (2026-09-23, VSR-001 §13.3 item 3)
+    // deleted verifyUserPin, POST /api/authoring/users/pin and
+    // services/part11/pin-verification.ts, and corrected this surface's copy
+    // from "PIN-verified" to "the signer's password is re-verified". This
+    // assertion still required /PIN-verified/, so it pinned the retired
+    // mechanism and failed on the copy that had been made true.
+    //
+    // Both places the surface tells the user where to sign are checked on
+    // their own: the persistent banner and the decision dialog's manifest.
+    // Whitespace is collapsed the way JSX renders it, so a copy line wrapped in
+    // the source reads as the sentence the user sees.
+    const disclosure = (anchor: string) => {
+      const start = src.indexOf(anchor);
+      expect(start, `${anchor} not found in ${REVIEW}`).toBeGreaterThan(-1);
+      const end = src.indexOf('</div>', start);
+      expect(end, `${anchor} is not closed`).toBeGreaterThan(start);
+      return src.slice(start, end).replace(/\s+/g, ' ');
+    };
+    const places: Array<[string, string]> = [
+      ['signature banner', disclosure('Decisions recorded on this surface are not electronic signatures')],
+      ['decision dialog manifest', disclosure('className="esign-manifest"')],
+    ];
+    for (const [where, text] of places) {
+      expect(text, where).toMatch(/authoring workspace/i);
+      expect(text, where).toMatch(/password is re-verified/i);
+      expect(text, where).not.toMatch(/\bpin\b/i);
+    }
+    // Nowhere on the surface: the PIN signs nothing.
+    expect(src).not.toMatch(/\bPIN\b/);
   });
 
   it('no longer labels the action as signing or sealing', () => {

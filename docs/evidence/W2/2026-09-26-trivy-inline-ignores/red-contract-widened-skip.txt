@@ -1,0 +1,10 @@
+$ npx vitest run tests/ci/trivy-steps-run-after-failures.contract.test.ts   # mutant: ci.yml config scan skip-dirs widened to node_modules,.claude/skills
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/ci.yml: every Trivy step runs unless the run was cancelled 17ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/deploy-aws.yml: every Trivy step runs unless the run was cancelled 3ms
+ × tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/ci.yml: the scans skip only the named directories and files 20ms
+   → .github/workflows/ci.yml › security › "Trivy config scan (Dockerfile/IaC)" skips directory .claude/skills: expected [ 'node_modules' ] to include '.claude/skills'
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/ci.yml: a job that runs a Trivy scan checks the exceptions first 4ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/deploy-aws.yml: the scans skip only the named directories and files 2ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/deploy-aws.yml: a job that runs a Trivy scan checks the exceptions first 1ms
+AssertionError: .github/workflows/ci.yml › security › "Trivy config scan (Dockerfile/IaC)" skips directory .claude/skills: expected [ 'node_modules' ] to include '.claude/skills'
+      Tests  1 failed | 5 passed (6)

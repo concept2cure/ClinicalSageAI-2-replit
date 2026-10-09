@@ -44,6 +44,13 @@ describe('convene_drafting_council — executor handler', () => {
     expect(getToolHandler('convene_drafting_council')).toBeTypeOf('function');
   });
 
+  it('refuses a call with no organization before touching the database (D6)', async () => {
+    const handler = getToolHandler('convene_drafting_council')!;
+    const result = JSON.parse(await handler({ section_path: '2.5' }, {}));
+    expect(result.error).toMatch(/organization/i);
+    expect(result.status).not.toBe('not_provisioned');
+  });
+
   it('rejects a missing section_path without touching the database', async () => {
     const handler = getToolHandler('convene_drafting_council')!;
     const result = JSON.parse(await handler({}, {}));

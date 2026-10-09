@@ -77,7 +77,12 @@ import {
    create failure could not be looked up in the logs — the reference the UI
    invited the user to quote pointed at nothing. */
 import { serverError } from '../../lib/api-response.js';
+import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 
+// People are named through public.actor_name, not a join on users: since users
+// took row-level security (D3, 2026-09-28) a tenant scope reads only current
+// members, so the join dropped the name of anyone who had left
+// (docs/evidence/D3/2026-09-29-actor-names/).
 const router = Router();
 
 /**
@@ -267,14 +272,16 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * this codebase, not a hypothetical. Keeping it separate means a database
  * without the phase-9 schema still gets its project list.
  *
- * On that failure the caller keeps the stored value. That is not a good answer
- * — it is the same 0 — but it is the pre-existing one, and it is logged rather
- * than passed off as a measurement.
+ * On that failure it answers null, not an empty map: "could not measure" and
+ * "measured, nothing approved" are different answers. The list keeps the stored
+ * value on null — not a good answer, it is the same 0, but it is the
+ * pre-existing one and it is logged. The detail read reports null, which
+ * ProjectHome renders as no figure.
  */
 async function readinessByProject(
   projectIds: string[],
   orgId: number,
-): Promise<Map<string, number>> {
+): Promise<Map<string, number> | null> {
   const out = new Map<string, number>();
   if (projectIds.length === 0) return out;
   try {
@@ -297,6 +304,7 @@ async function readinessByProject(
       err: err instanceof Error ? err.message : String(err),
       code: (err as { code?: string })?.code,
     });
+    return null;
   }
   return out;
 }
@@ -323,6 +331,58 @@ async function loadProgramForAuthz(
   if (rows.length === 0) return null;
   const leadUserId = (rows[0] as { lead_user_id: number | null }).lead_user_id;
   return { leadUserId: leadUserId == null ? null : Number(leadUserId) };
+}
+
+/**
+ * Write one hash-chained domain audit row for a program mutation.
+ *
+ * Takes the querier rather than reaching for the pool, so a caller inside a
+ * transaction passes its client and the audit row commits or rolls back with
+ * the change it describes. A mutation that left no audit trace is not a record
+ * a regulated tenant can defend.
+ *
+ * This is deliberately separate from the global tamper-proof interceptor in
+ * startup/audit-trail.ts. That one writes `audit.tamper_proof_log`; this writes
+ * `audit_logs`, the table GET /:id/activity reads. Columns and the seal follow
+ * the canonical write in services/auditService.ts.
+ */
+async function writeProgramAudit(
+  q: { query: (sql: string, params: unknown[]) => Promise<unknown> },
+  input: {
+    orgId: number;
+    userId: number | null;
+    programId: string;
+    action: string;
+    details: Record<string, unknown>;
+  },
+): Promise<void> {
+  const occurredAt = new Date().toISOString();
+  const target = `regulatory_program:${input.programId}`;
+  const payloadHash = hashPayload(input.details);
+  const { sha256Chain, hmacSeal } = await computeAuditChainSealed(q as never, {
+    // Name the tenant explicitly rather than letting the writer fall back to
+    // the connection's app.current_tenant_id: this runs inside the caller's
+    // transaction, and the row's chain must join the tenant it is about to be
+    // INSERTed against, not whatever the connection was last scoped to.
+    tenant_id: input.orgId,
+    action: input.action,
+    actor_id: input.userId,
+    target,
+    payload_hash: payloadHash,
+    occurred_at: occurredAt,
+  });
+  await q.query(
+    `INSERT INTO audit_logs
+       (id, tenant_id, user_id, action, table_name, record_id, actor_id, target,
+        target_type, target_id, payload_hash, sha256_chain, occurred_at, hmac_seal,
+        new_values)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::json)`,
+    [
+      randomUUID(), input.orgId, input.userId, input.action, 'regulatory_programs',
+      input.programId, input.userId, target, 'regulatory_program', input.programId,
+      payloadHash, sha256Chain, occurredAt, hmacSeal, JSON.stringify(input.details),
+    ],
+  );
 }
 
 /**
@@ -363,6 +423,94 @@ function allowProgramMutation(
  *  and none bucket into MDX / Biotech / Pharma (the surface's filter tabs). */
 const WS_CASE = workstreamSqlCase('p.program_type');
 
+// ── The program DETAIL — one projection, one serializer ──────────────────────
+//
+// GET /api/c2c/projects/:id and the create's 201 both answer through these, so
+// the read returns what the write stored by construction. Until 2026-09-21 the
+// read projected none of the device taxonomy intake had just written —
+// device_class, regulatory_path, product_code, predicate_devices, product_type,
+// and the metadata-held reviewPanel / regulationNumber / deviceFlags — so a
+// 510(k) IVD program's home showed no class, product code or predicate, and the
+// shell could not tell a device program from a drug one (MDX demo pack, F9).
+//
+// Columns verified against migrations/20260524_program_workbench_schema.sql
+// (the previous projection referenced sponsor_name / lead_indication /
+// filing_date / pdufa_date / completion_percentage, none of which exist on
+// regulatory_programs — the read 500'd with 42703 on a real schema).
+// application_number: migrations/20260907_regulatory_programs_application_number.sql.
+// sponsor_name is the organisation's name — the sponsor of record in this
+// data model (the same join biopharma/programs.ts makes).
+const PROGRAM_DETAIL_SQL = `
+  SELECT
+    p.id, p.code, p.name, p.program_type, p.status, p.phase, p.priority,
+    p.description, p.product_name, p.indication, p.intended_use,
+    p.primary_agency, p.target_agencies,
+    p.target_submission_date, p.actual_submission_date, p.approval_date,
+    p.lead_user_id, p.team_members,
+    p.created_at, p.updated_at,
+    p.application_number,
+    p.product_type, p.device_class, p.regulatory_path, p.product_code,
+    p.predicate_devices, p.metadata,
+    o.name AS sponsor_name
+  FROM regulatory_programs p
+  LEFT JOIN organizations o ON o.id = p.organization_id
+  WHERE p.id = $1 AND p.organization_id = $2 AND p.deleted_at IS NULL
+  LIMIT 1`;
+
+/** A json/jsonb column as the driver hands it back — parsed, or still a string. */
+function jsonColumn(v: unknown): unknown {
+  if (typeof v !== 'string') return v;
+  try { return JSON.parse(v); } catch { return null; }
+}
+
+/** The detail read model: the stored row plus the device fields intake keeps in
+ *  `metadata`, lifted to first-class keys. Nothing is invented: a program
+ *  without a device taxonomy answers null for each field, and `metadata` itself
+ *  is not exposed (it holds internal provenance such as createdVia). */
+export function serializeProgramDetail(row: Record<string, unknown>): Record<string, unknown> {
+  const { metadata: rawMetadata, predicate_devices: rawPredicates, ...rest } = row;
+  const metadata = jsonColumn(rawMetadata);
+  const meta = metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+    ? (metadata as Record<string, unknown>)
+    : {};
+  const predicates = jsonColumn(rawPredicates);
+  const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v : null);
+  return {
+    ...rest,
+    product_type: str(rest.product_type),
+    device_class: str(rest.device_class),
+    regulatory_path: str(rest.regulatory_path),
+    product_code: str(rest.product_code),
+    predicate_devices: Array.isArray(predicates) ? predicates : [],
+    review_panel: str(meta.reviewPanel),
+    regulation_number: str(meta.regulationNumber),
+    device_flags: Array.isArray(meta.deviceFlags)
+      ? meta.deviceFlags.filter((f): f is string => typeof f === 'string')
+      : null,
+  };
+}
+
+/**
+ * The detail row for one program in one organization, or null.
+ *
+ * `readiness` is the figure the list reports for the same program
+ * (readinessByProject), so a program reads the same on its card and on its own
+ * page. It used to return the raw `progress_percent` — written once as 0 and
+ * never updated — which ProjectHome drew as "Dossier readiness 0%" and told AnA,
+ * while the card beside it showed the real share. `progress_percent` is left
+ * out of the projection: a column nothing maintains is not offered to a reader.
+ * Null when the aggregate could not be read: not assessed, never 0.
+ */
+async function readProgramDetail(id: string, orgId: number): Promise<Record<string, unknown> | null> {
+  const { rows } = await pool.query(PROGRAM_DETAIL_SQL, [id, orgId]);
+  if (!rows.length) return null;
+  const measured = await readinessByProject([id], orgId);
+  return {
+    ...serializeProgramDetail(rows[0] as Record<string, unknown>),
+    readiness: measured?.get(id) ?? null,
+  };
+}
+
 // ── GET /api/c2c/projects ─────────────────────────────────────────────────────
 //
 // Portfolio list shaped to the v2 Projects surface's display contract
@@ -387,6 +535,10 @@ router.get('/', async (req: Request, res: Response) => {
 
   const limit = boundedInt((req.query as any).limit, 50, 1, 200);
   const offset = boundedInt((req.query as any).offset, 0, 0, Number.MAX_SAFE_INTEGER);
+  // Archived programs are closed out, not deleted — they stay retrievable, but
+  // a portfolio that keeps showing finished submissions beside live ones is the
+  // reason nobody archives anything.
+  const includeArchived = String((req.query as any).includeArchived ?? '') === 'true';
 
   try {
     // Fetch one row beyond the page so hasMore is a fact, not a second COUNT(*)
@@ -404,11 +556,12 @@ router.get('/', async (req: Request, res: Response) => {
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.organization_id = $1 AND p.deleted_at IS NULL
+          AND ($4::boolean OR p.status <> 'archived')
         ORDER BY p.updated_at DESC
         LIMIT $2 OFFSET $3`,
-      [orgId, limit + 1, offset],
+      [orgId, limit + 1, offset, includeArchived],
     );
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
@@ -421,9 +574,15 @@ router.get('/', async (req: Request, res: Response) => {
       (page as Array<{ id: string }>).map((p) => p.id),
       orgId,
     );
-    for (const p of page as Array<{ id: string; readiness: number }>) {
-      const r = real.get(p.id);
-      if (r != null) p.readiness = r;
+    /* A measurement that failed, or a program with no governed sections to
+       measure, is no figure: null, which the card renders as "not measured".
+       Both used to fall back to the stored progress_percent 0 — a failed read
+       rendered as a measured "0% ready", which the note above admits was "not
+       a good answer". A share over no sections is undefined, as a mean over
+       no programs is. (A program with its dossier spine and nothing approved
+       is a real, measured 0 and still reads 0%.) */
+    for (const p of page as Array<{ id: string; readiness: number | null }>) {
+      p.readiness = real?.get(p.id) ?? null;
     }
 
     return res.json({
@@ -689,14 +848,14 @@ router.post('/', async (req: Request, res: Response) => {
       // row, so every canonical-core surface (IndLifecycle checklist,
       // NdaCockpit, SubmissionCenter, DispatchReadiness) stayed permanently
       // empty for self-serve drug programs. Drug application types only;
-      // device/CER/MDR programs run on their own pathway stores. Title and
-      // product_name are set from the program's name/product_name so the
-      // ind-checklist-view-assembler's identity match (program ↔ submission by
-      // product_name/title) holds by construction. A failure here rolls the
-      // whole creation back — no program without its spine.
+      // device/CER/MDR programs run on their own pathway stores. The spine is
+      // anchored to THIS program (submissions.program_id, LX-22) and reused
+      // only if already anchored to it — never adopted from another project by
+      // product name. A failure here rolls the whole creation back — no
+      // program without its spine.
       if (applicationType) {
         submissionSpine = await ensureSubmissionSpine({
-          client, orgId, userId, name, productName, applicationType, productType, primaryAgency,
+          client, orgId, userId, programId: newId, name, productName, applicationType, productType, primaryAgency,
         });
       }
 
@@ -728,8 +887,6 @@ router.post('/', async (req: Request, res: Response) => {
       // the audit_logs table GET /:id/activity reads — which is why that feed
       // was empty for every project ever created here. Columns and the
       // hash-chain seal follow the canonical write in services/auditService.ts.
-      const occurredAt = new Date().toISOString();
-      const target = `regulatory_program:${newId}`;
       const auditDetails = {
         project_id: newId,
         name,
@@ -740,7 +897,7 @@ router.post('/', async (req: Request, res: Response) => {
         created_via: 'v2-new-project-wizard',
         // The audit row covers EVERY creation this transaction performed: the
         // linked canonical submission is part of the record, whether newly
-        // created here or matched to an existing spine by identity.
+        // created here or already anchored to this program (a replay).
         ...(submissionSpine
           ? {
               submission_id: submissionSpine.id,
@@ -762,26 +919,11 @@ router.post('/', async (req: Request, res: Response) => {
               project_anchor_skipped: projectAnchor.skipped ?? null,
             }),
       };
-      const payloadHash = hashPayload(auditDetails);
-      const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client, {
+      await writeProgramAudit(client, {
+        orgId, userId, programId: newId,
         action: 'c2c.project.create',
-        actor_id: userId,
-        target,
-        payload_hash: payloadHash,
-        occurred_at: occurredAt,
+        details: auditDetails,
       });
-      await client.query(
-        `INSERT INTO audit_logs
-           (id, tenant_id, user_id, action, table_name, record_id, actor_id, target,
-            target_type, target_id, payload_hash, sha256_chain, occurred_at, hmac_seal,
-            new_values)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::json)`,
-        [
-          randomUUID(), orgId, userId, 'c2c.project.create', 'regulatory_programs', newId,
-          userId, target, 'regulatory_program', newId, payloadHash, sha256Chain, occurredAt,
-          hmacSeal, JSON.stringify(auditDetails),
-        ],
-      );
 
       await client.query('COMMIT');
     } catch (e) {
@@ -806,20 +948,26 @@ router.post('/', async (req: Request, res: Response) => {
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.id = $1 AND p.organization_id = $2`,
       [newId, orgId],
     );
+    // The stored program through the SAME projection and serializer the read
+    // uses — so a client that just created a 510(k) sees its class, product
+    // code and predicate without a second round trip, and the create can never
+    // return a field the read then omits.
+    const program = await readProgramDetail(newId, orgId);
     return res.status(201).json({
       data: rows[0],
+      program,
       meta: {
         created: true,
         documentId: scaffold.documentId,
         scaffoldedSections: scaffold.sectionCount,
         ...(scaffold.skipped ? { scaffoldSkipped: scaffold.skipped, scaffoldDetail: scaffold.detail } : {}),
         // Surfaced so the spine linkage is never silent: present for drug
-        // programs (submissionCreated=false means an existing spine was
-        // matched by identity), absent for device/CER/MDR program types.
+        // programs (submissionCreated=false means a spine already anchored to
+        // this program was reused), absent for device/CER/MDR program types.
         ...(submissionSpine
           ? { submissionId: submissionSpine.id, submissionCreated: submissionSpine.created }
           : {}),
@@ -854,32 +1002,11 @@ router.get('/:id', async (req: Request, res: Response) => {
   if (!UUID_RE.test(id)) return send404(res);
 
   try {
-    // Columns verified against migrations/20260524_program_workbench_schema.sql
-    // (the previous projection referenced sponsor_name / lead_indication /
-    // filing_date / pdufa_date / completion_percentage, none of which exist on
-    // regulatory_programs — the read 500'd with 42703 on a real schema).
-    // application_number: migrations/20260907_regulatory_programs_application_number.sql.
-    // sponsor_name is the organisation's name — the sponsor of record in this
-    // data model (the same join biopharma/programs.ts makes).
-    const { rows } = await pool.query(
-      `SELECT
-         p.id, p.code, p.name, p.program_type, p.status, p.phase, p.priority,
-         p.description, p.product_name, p.indication, p.intended_use,
-         p.primary_agency, p.target_agencies,
-         p.target_submission_date, p.actual_submission_date, p.approval_date,
-         p.progress_percent, p.lead_user_id, p.team_members,
-         p.created_at, p.updated_at,
-         p.application_number,
-         o.name AS sponsor_name
-       FROM regulatory_programs p
-       LEFT JOIN organizations o ON o.id = p.organization_id
-       WHERE p.id = $1 AND p.organization_id = $2 AND p.deleted_at IS NULL
-       LIMIT 1`,
-      [id, orgId],
-    );
-
-    if (rows.length === 0) return send404(res);
-    return res.json(rows[0]);
+    // One projection and one serializer, shared with the create's 201 — see
+    // PROGRAM_DETAIL_SQL / serializeProgramDetail above.
+    const program = await readProgramDetail(id, orgId);
+    if (!program) return send404(res);
+    return res.json(program);
   } catch (err: unknown) {
     return serverError(res, logger, 'loading the project', err, { programId: String(req.params.id) });
   }
@@ -999,7 +1126,7 @@ router.get('/:id/team', async (req: Request, res: Response) => {
     const { rows } = await pool.query(
       `SELECT p.lead_user_id, p.team_members, u.name, u.email
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.id = $1 AND p.organization_id = $2
         LIMIT 1`,
       [req.params.id, orgId],
@@ -1167,6 +1294,8 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   const limit = Math.min(parseInt(String((req.query as any).limit ?? '5'), 10) || 5, 50);
+  // Guard the uuid comparisons below — a non-uuid id would raise 22P02 → 500.
+  if (!UUID_RE.test(String(req.params.id))) return send404(res);
 
   try {
     const check = await pool.query(
@@ -1186,10 +1315,20 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
       `SELECT
          al.id, al.action, al.table_name AS resource_type, al.record_id AS resource_id,
          COALESCE(al.actor_id, al.user_id) AS actor_id, al.new_values AS details,
+         COALESCE(u.name, u.email) AS actor_name,
          al.occurred_at, al.ip_address
        FROM audit_logs al
+       LEFT JOIN LATERAL public.actor_name(COALESCE(al.actor_id, al.user_id)) u ON TRUE
        WHERE al.tenant_id = $2
-         AND (al.record_id = $1 OR al.new_values->>'project_id' = $1)
+         AND (al.record_id = $1
+              OR al.target = 'regulatory_program:' || $1
+              OR al.new_values->>'project_id' = $1
+              OR al.new_values->>'programId' = $1
+              -- A governed action on one of the project's own filing documents
+              -- names its target (document:<id>), not the project (PF-17): the
+              -- scaffold that created the project's dossier was invisible here.
+              OR (al.target_type = 'document' AND al.target_id IN (
+                    SELECT d.id::text FROM c2c_documents d WHERE d.project_id = $1::uuid AND d.org_id = $2)))
        ORDER BY al.occurred_at DESC NULLS LAST
        LIMIT $3`,
       [req.params.id, orgId, limit],
@@ -1205,6 +1344,199 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
       return serverError(res, logger, 'reading the activity feed', err);
     }
     return serverError(res, logger, 'loading the project activity', err, { programId: String(req.params.id) });
+  }
+});
+
+// ── GET /api/c2c/projects/:id/records ────────────────────────────────────────
+//
+// From the project, every record anchored to it (PF-17): one read, each store
+// by its recorded project key — never by name. A store this database cannot
+// read is reported as unavailable with its reason, never as an empty list.
+
+type RecordSection = { available: boolean; rows: unknown[]; reason?: string };
+
+const PROJECT_RECORD_READS: ReadonlyArray<readonly [string, string]> = [
+  ['submissions', `SELECT id, title, application_type, primary_region, status, lifecycle_stage
+                     FROM submissions WHERE program_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+                    ORDER BY updated_at DESC NULLS LAST, id DESC LIMIT 200`],
+  ['sources', `SELECT id, title, source_type, checksum, created_at
+                 FROM cre_evidence_sources WHERE client_program_id = $1 AND organization_id = $2
+                ORDER BY created_at DESC LIMIT 200`],
+  ['authoringDocuments', `SELECT id, title, status, created_at
+                            FROM authoring_documents WHERE client_program_id = $1 AND tenant_id = $2
+                           ORDER BY created_at DESC LIMIT 200`],
+  ['vaultDocuments', `SELECT d.id, d.document_code, d.document_title, d.version, d.created_at
+                        FROM vault.documents d
+                        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $2
+                       WHERE d.program_id = $1 AND d.deleted_at IS NULL
+                       ORDER BY d.created_at DESC LIMIT 200`],
+  ['studyDesigns', `SELECT study_id AS id, protocol_title AS title, study_phase, protocol_status
+                      FROM cdisc_prm_studies WHERE program_id = $1 AND tenant_id = $2
+                     ORDER BY updated_at DESC NULLS LAST LIMIT 200`],
+  ['filingDocuments', `SELECT id, title, doc_type
+                         FROM c2c_documents WHERE project_id = $1 AND org_id = $2 LIMIT 200`],
+];
+
+async function readRecordSection(sql: string, programId: string, orgId: number): Promise<RecordSection> {
+  try {
+    const { rows } = await pool.query(sql, [programId, orgId]);
+    return { available: true, rows };
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code;
+    if (code === '42P01' || code === '42703') return { available: false, rows: [], reason: 'not provisioned in this environment' };
+    logger.warn('project records: a section could not be read', { programId, code, err: (err as Error)?.message });
+    return { available: false, rows: [], reason: 'could not be read' };
+  }
+}
+
+router.get('/:id/records', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+  const id = String(req.params.id);
+  if (!UUID_RE.test(id)) return send404(res);
+  try {
+    const check = await pool.query(
+      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [id, orgId],
+    );
+    if (check.rows.length === 0) return send404(res);
+    const records: Record<string, RecordSection> = {};
+    for (const [section, sql] of PROJECT_RECORD_READS) records[section] = await readRecordSection(sql, id, orgId);
+    return res.json({ projectId: id, records });
+  } catch (err: unknown) {
+    return serverError(res, logger, 'listing the project records', err, { programId: id });
+  }
+});
+
+// ── POST /api/c2c/projects/:id/adopt ─────────────────────────────────────────
+//
+// A conversation file becomes this project's Data Room source (PF-07; founder
+// decision 2026-09-26). A file attached in chat with no project open records no
+// source; adopting it is the one way into a project's Data Room: from no
+// project to this one, once, audited as c2c.project.adopt on the same
+// transaction as the source, never reversed. The file must be the caller's
+// organization's; the same bytes already in this project are that source, not
+// a second one, and adopting again writes nothing.
+
+router.post('/:id/adopt', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  const userId = resolveUserId(req);
+  if (!orgId || !userId) return send403(res);
+  const programId = String(req.params.id);
+  if (!UUID_RE.test(programId)) return send404(res);
+  const fileUploadId = typeof req.body?.fileUploadId === 'string' ? req.body.fileUploadId.trim() : '';
+  if (!fileUploadId) return send400(res, 'fileUploadId is required.');
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const program = await client.query(
+      `SELECT lead_user_id FROM regulatory_programs
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+      [programId, orgId],
+    );
+    if (program.rows.length === 0) { await client.query('ROLLBACK'); return send404(res); }
+    const lead = (program.rows[0] as { lead_user_id: number | null }).lead_user_id;
+    if (!allowProgramMutation(req, res, { leadUserId: lead == null ? null : Number(lead) }, 'POST /:id/adopt')) {
+      await client.query('ROLLBACK');
+      return;
+    }
+    const file = await client.query(
+      `SELECT id, original_name, mime_type, file_size, storage_path, checksum_sha256
+         FROM file_uploads WHERE id = $1 AND organization_id = $2`,
+      [fileUploadId, orgId],
+    );
+    const f = file.rows[0] as
+      | { id: string; original_name: string | null; mime_type: string | null; file_size: number | null; storage_path: string | null; checksum_sha256: string | null }
+      | undefined;
+    if (!f) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'File not found', code: 'FILE_NOT_FOUND' }); }
+    if (!f.checksum_sha256) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        error: 'This file has no recorded checksum, so its identity cannot be established. Upload it again with the project open.',
+        code: 'FILE_IDENTITY_UNKNOWN',
+      });
+    }
+    const existing = await findSourceByChecksum(orgId, f.checksum_sha256, {
+      sourceType: 'client_document', clientProgramId: programId, clientWorkspaceId: null,
+    });
+    if (existing) {
+      await client.query('ROLLBACK');
+      return res.json({ adopted: false, sourceId: existing.id, message: 'This file is already in the project’s Data Room.' });
+    }
+    const source = await createSource(orgId, {
+      sourceType: 'client_document',
+      visibilityClass: 'project_private',
+      clientProgramId: programId,
+      clientWorkspaceId: null,
+      title: f.original_name,
+      storedArtifactRef: f.storage_path,
+      checksum: f.checksum_sha256,
+      ingestionStatus: 'ingested',
+      provenance: { origin: 'adopt', fileUploadId: f.id, storagePath: f.storage_path, adoptedByUserId: userId, adoptedFrom: 'conversation' },
+      metadata: { originalName: f.original_name, mimeType: f.mime_type, fileSize: f.file_size },
+    }, client);
+    await writeProgramAudit(client, {
+      orgId, userId, programId,
+      action: 'c2c.project.adopt',
+      details: { file_upload_id: f.id, source_id: source.id, checksum: f.checksum_sha256, from: 'conversation' },
+    });
+    await client.query('COMMIT');
+    return res.status(201).json({ adopted: true, sourceId: source.id });
+  } catch (err: unknown) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, logger, 'adopting the file into the project', err, { programId });
+  } finally {
+    client.release();
+  }
+});
+
+// ── GET /api/c2c/projects/:id/conversation-files ─────────────────────────────
+//
+// The caller's own chat files that are in no project's Data Room (PF-07). A
+// file attached with no project open records no source; this is where a
+// project offers it, and POST /:id/adopt brings it in. Only the caller's own
+// uploads: a colleague's chat attachment is theirs to bring in. A file whose
+// bytes are already a source of some project is not listed — adopt is from no
+// project. One past the window, so a full one says so.
+
+const CONVERSATION_FILES_WINDOW = 50;
+
+router.get('/:id/conversation-files', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  const userId = resolveUserId(req);
+  if (!orgId || !userId) return send403(res);
+  const programId = String(req.params.id);
+  if (!UUID_RE.test(programId)) return send404(res);
+  try {
+    const check = await pool.query(
+      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [programId, orgId],
+    );
+    if (check.rows.length === 0) return send404(res);
+    const { rows } = await pool.query(
+      `SELECT f.id, f.original_name, f.mime_type, f.file_size, f.created_at
+         FROM file_uploads f
+        WHERE f.organization_id = $1 AND f.user_id = $2 AND f.checksum_sha256 IS NOT NULL
+          AND NOT EXISTS (
+                SELECT 1 FROM cre_evidence_sources s
+                 WHERE s.organization_id = $1 AND s.checksum = f.checksum_sha256
+                   AND (s.client_program_id IS NOT NULL OR s.client_workspace_id IS NOT NULL))
+        ORDER BY f.created_at DESC
+        LIMIT $3`,
+      [orgId, userId, CONVERSATION_FILES_WINDOW + 1],
+    );
+    const truncated = rows.length > CONVERSATION_FILES_WINDOW;
+    const files = (truncated ? rows.slice(0, CONVERSATION_FILES_WINDOW) : rows).map((f) => ({
+      id: String(f.id),
+      name: f.original_name ?? null,
+      mimeType: f.mime_type ?? null,
+      fileSize: f.file_size == null ? null : Number(f.file_size),
+      uploadedAt: f.created_at ?? null,
+    }));
+    return res.json({ projectId: programId, files, window: { shown: files.length, truncated } });
+  } catch (err: unknown) {
+    return serverError(res, logger, 'listing conversation files', err, { programId });
   }
 });
 
@@ -1351,6 +1683,9 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
 // project does not own must never appear as though it does.
 // ════════════════════════════════════════════════════════════════════════════
 
+/** How many of a project's sources /:id/sources returns, newest first. */
+const SOURCES_WINDOW = 200;
+
 router.get('/:id/sources', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
@@ -1368,7 +1703,13 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     );
 
     const programId = String(req.params.id);
-    const sources = await listClientDocuments(orgId, { programId });
+    /* One past the window, so a full one can say so: the reader's default cap
+       was 200 and nothing said when it was reached. Superseded sources stay in
+       the list — the authoring canvas and sources rail read this route too —
+       and each carries isCurrent, so a reader that counts can count once. */
+    const read = await listClientDocuments(orgId, { programId, limit: SOURCES_WINDOW + 1 });
+    const truncated = read.length > SOURCES_WINDOW;
+    const sources = truncated ? read.slice(0, SOURCES_WINDOW) : read;
     const unscoped =
       req.query.includeUnscoped === 'true'
         ? await listClientDocuments(orgId, { includeUnscoped: true, limit: 50 })
@@ -1394,6 +1735,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       id: s.id,
       title: s.title,
       checksum: s.checksum,
+      isCurrent: s.isCurrent !== false,
       ingestionStatus: s.ingestionStatus,
       extractionStatus: s.extractionStatus,
       createdAt: s.createdAt,
@@ -1415,6 +1757,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       projectId: programId,
       sources: sources.map(shape),
       unscoped: unscoped.map(shape),
+      window: { shown: sources.length, truncated },
     });
   } catch (err: unknown) {
     return serverError(res, logger, 'loading the sources', err, { programId: String(req.params.id) });
@@ -1457,6 +1800,187 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
   } catch (err: unknown) {
     return serverError(res, logger, 'loading the source changes', err, { programId: String(req.params.id) });
   }
+});
+
+// ── Close-out: archive / unarchive / soft-delete ──────────────────────────────
+//
+// A program had no end state. It could be created and worked, never closed —
+// so a tenant's portfolio only ever grew, finished submissions sat beside live
+// ones, and the licensed seat a finished program held could never be released.
+// `regulatory_programs` already carried the vocabulary for this (a `status`
+// including 'archived', an indexed column, and `deleted_at`); nothing wrote it.
+//
+// That left the gap visible from the outside: checkProgramQuota already excludes
+// archived and soft-deleted programs from the licensed count, and the refusal it
+// produces tells the user to "Archive a program or raise the plan limit" — a
+// remedy no route could perform until now.
+//
+// Archive is reversible and keeps the record. Delete is a soft delete: the row
+// stays for the audit trail and for any submission that references it, and only
+// stops being listed. Neither is a hard DELETE — a regulated tenant does not get
+// to make a program disappear, and the audit rows below would dangle if it did.
+
+/** Shared close-out body: authorize, mutate, audit, in one transaction. */
+/**
+ * What a project holds that makes it a record rather than a draft (PF-13;
+ * founder decision 2026-09-26): a transmittal, a frozen or dispatched sequence,
+ * a document filed in its Vault, a sealed authoring document. Each counted by
+ * its recorded project key. Read inside the caller's transaction, one savepoint
+ * per store, so a store this database does not carry (42P01 / 42703) holds
+ * nothing and does not abort the transaction; any other failure propagates.
+ */
+const PROJECT_HOLD_READS: ReadonlyArray<readonly [string, string]> = [
+  ['transmitted', `SELECT count(*)::int AS n FROM submission_transmittals WHERE program_id = $1 AND organization_id = $2`],
+  ['frozenOrDispatched', `SELECT count(*)::int AS n FROM ectd_sequences e
+                            JOIN submissions s ON s.id = e.submission_id AND s.organization_id = e.organization_id
+                           WHERE s.program_id = $1 AND s.organization_id = $2
+                             AND e.status IN ('frozen', 'dispatched') AND e.deleted_at IS NULL`],
+  ['filed', `SELECT count(*)::int AS n FROM vault.documents d
+               JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $2
+              WHERE d.program_id = $1 AND d.deleted_at IS NULL`],
+  ['sealed', `SELECT count(*)::int AS n FROM frozen_documents f
+                JOIN authoring_documents d ON d.id = f.document_id AND d.tenant_id = f.tenant_id
+               WHERE d.client_program_id = $1 AND d.tenant_id = $2`],
+];
+
+async function projectHolds(client: PoolClient, programId: string, orgId: number): Promise<Record<string, number>> {
+  const holds: Record<string, number> = {};
+  for (const [kind, sql] of PROJECT_HOLD_READS) {
+    await client.query('SAVEPOINT project_hold');
+    try {
+      const { rows } = await client.query(sql, [programId, orgId]);
+      await client.query('RELEASE SAVEPOINT project_hold');
+      const n = Number((rows[0] as { n?: number } | undefined)?.n ?? 0);
+      if (n > 0) holds[kind] = n;
+    } catch (err: unknown) {
+      await client.query('ROLLBACK TO SAVEPOINT project_hold');
+      const code = (err as { code?: string })?.code;
+      if (code !== '42P01' && code !== '42703') throw err;
+    }
+  }
+  return holds;
+}
+
+async function transitionProgram(
+  req: Request,
+  res: Response,
+  opts: {
+    action: string;
+    /** SQL SET clause; $1 is the program id, $2 the org id. */
+    set: string;
+    /** Extra guard on the current row, e.g. only archive something not archived. */
+    precondition?: (row: { status: string; deleted_at: string | null }) => string | null;
+    /** A refusal that needs the project's records, read under the row lock. */
+    guard?: (client: PoolClient, programId: string, orgId: number) => Promise<{ status: number; body: Record<string, unknown> } | null>;
+    details: (row: { status: string }) => Record<string, unknown>;
+  },
+): Promise<void> {
+  const userId = resolveUserId(req);
+  const orgId = resolveOrgId(req);
+  if (!userId || !orgId) { send403(res); return; }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Row-level lock: two concurrent close-outs would otherwise both read the
+    // old status and both write an audit row claiming they made the change.
+    const { rows } = await client.query(
+      `SELECT lead_user_id, status, deleted_at FROM regulatory_programs
+        WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
+      [req.params.id, orgId],
+    );
+    if (rows.length === 0) { await client.query('ROLLBACK'); send404(res); return; }
+
+    const row = rows[0] as { lead_user_id: number | null; status: string; deleted_at: string | null };
+    if (!allowProgramMutation(req, res, { leadUserId: row.lead_user_id == null ? null : Number(row.lead_user_id) }, opts.action)) {
+      await client.query('ROLLBACK');
+      return;
+    }
+
+    const blocked = opts.precondition?.(row);
+    if (blocked) { await client.query('ROLLBACK'); send400(res, blocked); return; }
+    const refused = await opts.guard?.(client, String(req.params.id), orgId);
+    if (refused) { await client.query('ROLLBACK'); res.status(refused.status).json(refused.body); return; }
+
+    await client.query(
+      `UPDATE regulatory_programs SET ${opts.set}, updated_at = now()
+        WHERE id = $1 AND organization_id = $2`,
+      [req.params.id, orgId],
+    );
+    await writeProgramAudit(client, {
+      orgId, userId, programId: String(req.params.id),
+      action: opts.action,
+      details: opts.details(row),
+    });
+
+    await client.query('COMMIT');
+    res.json({ ok: true, projectId: String(req.params.id) });
+  } catch (err: unknown) {
+    await client.query('ROLLBACK').catch(() => {});
+    // 42P01 is an unprovisioned store, not a failed close-out — keep the
+    // documented PENDING_STORE contract the rest of this router uses rather
+    // than reporting a missing table as an internal error.
+    if ((err as { code?: string })?.code === '42P01') {
+      const pending = await pendingStore(err, opts.action, req);
+      if (pending) { res.status(503).json(pending); return; }
+    }
+    serverError(res, logger, opts.action, err, { programId: String(req.params.id) });
+  } finally {
+    client.release();
+  }
+}
+
+router.post('/:id/archive', async (req: Request, res: Response) => {
+  await transitionProgram(req, res, {
+    action: 'c2c.project.archive',
+    set: `status = 'archived'`,
+    precondition: (row) =>
+      row.deleted_at ? 'This program is deleted and cannot be archived.'
+      : row.status === 'archived' ? 'This program is already archived.'
+      : null,
+    details: (row) => ({ from_status: row.status, to_status: 'archived' }),
+  });
+});
+
+router.post('/:id/unarchive', async (req: Request, res: Response) => {
+  await transitionProgram(req, res, {
+    action: 'c2c.project.unarchive',
+    // Restores to 'active' rather than to whatever it was before: the prior
+    // status is not recorded on the row, and reconstructing it from the audit
+    // trail to pick a resume point would be guessing at intent.
+    set: `status = 'active'`,
+    precondition: (row) =>
+      row.deleted_at ? 'This program is deleted and cannot be unarchived.'
+      : row.status !== 'archived' ? 'This program is not archived.'
+      : null,
+    details: (row) => ({ from_status: row.status, to_status: 'active' }),
+  });
+});
+
+router.delete('/:id', async (req: Request, res: Response) => {
+  await transitionProgram(req, res, {
+    action: 'c2c.project.delete',
+    set: `deleted_at = now()`,
+    precondition: (row) => (row.deleted_at ? 'This program is already deleted.' : null),
+    // A project that holds sealed, filed or transmitted records is archived,
+    // never deleted (PF-13; founder decision 2026-09-26): deleting it made its
+    // Vault leaves stop resolving, and its chain stopped reading.
+    guard: async (client, programId, orgId) => {
+      const holds = await projectHolds(client, programId, orgId);
+      return Object.keys(holds).length === 0
+        ? null
+        : {
+            status: 409,
+            body: {
+              error: 'PROJECT_HOLDS_RECORDS',
+              message: 'This project holds sealed, filed or transmitted records. Archive it instead.',
+              holds,
+            },
+          };
+    },
+    details: (row) => ({ from_status: row.status, soft_delete: true }),
+  });
 });
 
 export default router;

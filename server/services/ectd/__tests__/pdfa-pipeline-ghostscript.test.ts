@@ -23,6 +23,13 @@
  * deployment uses — so the code path exercised is the one that runs in
  * production, and no Ghostscript install is required to run it.
  *
+ * Since 1454068f9 the conversion also needs a readable sRGB ICC profile for
+ * the OutputIntent, which it finds through PDFA_SRGB_ICC or a Ghostscript
+ * install. Without one it refuses BEFORE running Ghostscript, so on a host
+ * with no Ghostscript these tests stopped reaching the branch they exist for.
+ * The stub never reads the profile, so the suite supplies its own through the
+ * same override the deployment uses.
+ *
  * @compliance ICH eCTD; FDA Portable Document Format Specifications (PDF/A).
  */
 
@@ -49,6 +56,7 @@ describe('finalizePdfA — a successful Ghostscript exit is not a conversion', (
   let dir: string;
   const originalGs = process.env.GHOSTSCRIPT_BINARY;
   const originalVera = process.env.VERAPDF_BINARY;
+  const originalIcc = process.env.PDFA_SRGB_ICC;
 
   /**
    * Write an executable stub that answers `--version` (so the pipeline's
@@ -80,6 +88,9 @@ describe('finalizePdfA — a successful Ghostscript exit is not a conversion', (
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfa-gs-stub-'));
     // veraPDF must not be picked up: this file is about the Ghostscript branch.
     process.env.VERAPDF_BINARY = path.join(dir, 'definitely-not-verapdf');
+    const icc = path.join(dir, 'srgb.icc');
+    fs.writeFileSync(icc, Buffer.from('stub ICC profile — read by nothing but fs.access'));
+    process.env.PDFA_SRGB_ICC = icc;
   });
 
   afterAll(() => {
@@ -87,6 +98,8 @@ describe('finalizePdfA — a successful Ghostscript exit is not a conversion', (
     else process.env.GHOSTSCRIPT_BINARY = originalGs;
     if (originalVera === undefined) delete process.env.VERAPDF_BINARY;
     else process.env.VERAPDF_BINARY = originalVera;
+    if (originalIcc === undefined) delete process.env.PDFA_SRGB_ICC;
+    else process.env.PDFA_SRGB_ICC = originalIcc;
     fs.rmSync(dir, { recursive: true, force: true });
   });
 

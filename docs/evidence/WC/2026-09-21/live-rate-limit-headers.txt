@@ -1,0 +1,25 @@
+== F-5: X-RateLimit-Limit as ONE authenticated browser session sees it (was 60 on legacy-limited routers, 100 on the /api Redis limiter)
+-- GET /api/submissions (legacy per-router limiter after auth → user bucket 600; the /api Redis limiter ran first with the credential bucket 600)
+HTTP/1.1 200 OK
+Access-Control-Expose-Headers: X-Request-Id, X-RateLimit-Remaining, X-Audit-Row-Persisted, X-Audit-Row-Code
+X-RateLimit-Limit: 600
+X-RateLimit-Remaining: 594
+X-RateLimit-Reset: 1789952939
+-- GET /api/c2c/projects (Redis limiter, concept2cure category, credential bucket → 600)
+HTTP/1.1 200 OK
+Access-Control-Expose-Headers: X-Request-Id, X-RateLimit-Remaining, X-Audit-Row-Persisted, X-Audit-Row-Code
+X-RateLimit-Limit: 600
+X-RateLimit-Remaining: 590
+X-RateLimit-Reset: 1789952927
+-- GET /api/c2c/projects with NO credential (per-IP bucket unchanged → 100; then 401 from the auth boundary)
+HTTP/1.1 401 Unauthorized
+Access-Control-Expose-Headers: X-Request-Id, X-RateLimit-Remaining, X-Audit-Row-Persisted, X-Audit-Row-Code
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 98
+X-RateLimit-Reset: 1789952940
+-- GET /api/submissions with NO credential (per-IP → 100 from the /api limiter; 401 before the router's limiter)
+HTTP/1.1 401 Unauthorized
+Access-Control-Expose-Headers: X-Request-Id, X-RateLimit-Remaining, X-Audit-Row-Persisted, X-Audit-Row-Code
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 97
+X-RateLimit-Reset: 1789952940

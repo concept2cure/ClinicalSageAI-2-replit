@@ -1,0 +1,33 @@
+
+❌ A 21 CFR Part 11 audit row is written and its outcome discarded.
+
+   server/routes/taskManagement.routes.ts — 0 → 9
+       server/routes/taskManagement.routes.ts:215
+       server/routes/taskManagement.routes.ts:398
+       server/routes/taskManagement.routes.ts:509
+       server/routes/taskManagement.routes.ts:681
+       server/routes/taskManagement.routes.ts:868
+       server/routes/taskManagement.routes.ts:909
+       server/routes/taskManagement.routes.ts:1023
+       server/routes/taskManagement.routes.ts:1263
+       server/routes/taskManagement.routes.ts:1395
+
+   Both `void auditService.logAction(...)` and a statement-position
+   `await auditService.logAction(...)` discard the AuditWriteResult. logAction
+   does not reject when persistence fails — by policy — so either way the call has
+   two outcomes and one observable result: nothing downstream can tell a recorded
+   action from an unrecorded one. Awaiting and ignoring reports no more than not
+   awaiting at all.
+
+     const audit = await auditService.logAction({ ... });
+     if (!audit.persisted) {
+       log.error('audit row NOT persisted', { action, resourceId, reason: audit.error });
+     }
+
+   Where the caller answers a client, carry the outcome out to it instead of
+   logging and returning success — see recordAuditRow in
+   server/services/pdev/pdev-audit-record.ts. Where the row must EXIST for the
+   action to be valid, use writeChainedAuditRow(client, ...) on the mutation's
+   own transaction.
+
+exit=1

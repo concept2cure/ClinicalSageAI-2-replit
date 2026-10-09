@@ -1,0 +1,5 @@
+{"code" : "head", "operation" : "tracked_change_decision", "changeId" : "probe-head-1790646675:own", "sectionIdRecorded" : "38c078c3-ff98-401a-b129-c22b0bb70fd5"}
+{"code" : "head", "operation" : "tracked_change_decision", "changeId" : "probe-head-1790646675:foreign", "sectionIdRecorded" : "0049fbe9-2a0e-4c6d-9e3d-dc8667a28896"}
+{"code" : "head", "operation" : "tracked_change_decision", "changeId" : "probe-head-1790646675:malformed", "sectionIdRecorded" : "not-a-uuid"}
+{"code" : "head", "operation" : "tracked_change_bulk_decision", "changeId" : "probe-head-1790646675:bulk", "sectionIdRecorded" : "0049fbe9-2a0e-4c6d-9e3d-dc8667a28896"}
+{"code" : "fixed", "operation" : "tracked_change_decision", "changeId" : "probe-fixed-1790646695:own", "sectionIdRecorded" : "38c078c3-ff98-401a-b129-c22b0bb70fd5"}

@@ -146,6 +146,10 @@ describe('the admin console agrees with the customer rail', () => {
       subscriptionState,
       isAvailable,
       requiredTier: minTier,
+      // decideNavEntitlement never reads this field — only subscriptionState,
+      // isAvailable and requiredTier decide the verdict — so its value here
+      // is arbitrary; it is required by ModuleCatalogEntry only.
+      launchScope: 'launch',
       sortOrder: 0,
       // Perpetual: these cases are about packaging, not about time-limited
       // grants. A grant with no expiry behaves exactly as it did before the

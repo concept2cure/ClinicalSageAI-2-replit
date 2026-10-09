@@ -1,0 +1,25 @@
+### RED — bindStudyDesignTx no longer refuses a design belonging to another tenant.
+### Both the service test and the route test must fail.
+
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > binds the design and records the governed action 52ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > 404s for another organization's protocol and writes nothing 22ms
+ × server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > 404s for a design that is not this tenant's 22ms
+   → expected 201 to be 404 // Object.is equality
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > binds a design and records who linked it and when 16ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > refuses another organization's protocol document (NOT_FOUND, nothing written) 12ms
+ × server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > refuses a design that does not exist for this tenant 33ms
+   → promise resolved "{ studyDesignId: 'sd_not_mine', …(1) }" instead of rejecting
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > unbinds, and refuses to unbind another organization's protocol 24ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > refuses a reason shorter than the governed minimum 21ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > 401s without authentication context 36ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design/remove > unbinds and records the governed action 11ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design/remove > 404s for another organization's protocol 26ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > returns null for an unbound protocol — nothing is implied to have passed 61ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > returns the design identity and the DESIGN GATES' findings for a bound protocol 24ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > does not read another tenant's design through the link 23ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > 404s for a design that is not this tenant's
+AssertionError: expected 201 to be 404 // Object.is equality
+ FAIL  server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > refuses a design that does not exist for this tenant
+AssertionError: promise resolved "{ studyDesignId: 'sd_not_mine', …(1) }" instead of rejecting
+      Tests  2 failed | 12 passed (14)

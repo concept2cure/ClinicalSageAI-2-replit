@@ -1,0 +1,59 @@
+-- The governed-decision ledger, measured on the reference deployment before
+-- the fix. Three defects, stacked.
+
+-- 1. Both CHECK constraints the fabric writer violated:
+
+decision_records_domain_track_check
+  CHECK (domain_track = ANY (ARRAY['clinical','nonclinical','cmc','biostatistics',
+         'regulatory','pharmacology','safety','labeling','commercial']))
+  -- governed-decision-repository.ts wrote: 'governance'
+
+decision_records_recommendation_type_check
+  CHECK (recommendation_type = ANY (ARRAY['regulatory_strategy','study_design',
+         'endpoint_selection','dose_selection','comparator_selection',
+         'statistical_method','manufacturing_change','labeling_change',
+         'submission_timing','risk_mitigation','protocol_amendment','data_package']))
+  -- governed-decision-repository.ts wrote: 'governed_fabric_decision', with an
+  -- in-code note stating "the column is free text". It is not.
+
+-- Every governed-fabric write violated BOTH, on every deployment, since the
+-- writer was introduced. The catch logged a warning and returned a decision
+-- reference anyway, so every caller was told its decision had been recorded.
+
+SELECT count(*) FROM decision_records;    -- 0
+SELECT count(*) FROM assumption_records;  -- 0
+
+-- 2. operating-system-integration.ts declared domainTrack from the WRONG one of
+-- two same-named vocabularies -- shared/schema/operating-system.ts's
+-- domainTrackEnum holds product modalities (biotech, device, diagnostics,
+-- combination, biosimilar), a different column on a different table -- and
+-- wrote three recommendation types outside the enum as well:
+--   sap_generation, defensibility_assessment, document_generation
+
+-- 3. The detector was blind in exactly the case it exists for.
+-- GET /api/concept2cure/governance/health, live, mid-failure:
+
+status: healthy
+dbReachable: true  decisionRecordTableReachable: true
+failureRate: 0
+counters: { decisionsCreated: 0, persistenceWrites: 0, persistenceFailures: 33, ... }
+recentFailures[0]: {"type":"persistence","operation":"recordGovernedDecision",
+  "error":"new row for relation \"decision_records\" violates check constraint
+           \"decision_records_domain_track_check\""}
+
+-- 33 failures, 0 writes, and the endpoint answers healthy with a 0% failure
+-- rate. The denominator counted only the operations that SUCCEEDED:
+--     const totalOps = persistenceWrites + queryExecuted;
+--     const failureRate = totalOps > 0 ? totalFailures / totalOps : 0;
+-- With every write failing, totalOps stays 0 and the zero-guard returns 0.
+-- The worse it got, the better it read.
+
+-- 4. Two further reasons the rows could not have been found even if written:
+--    - getRecentGovernedDecisions passed organizationId undefined, and search's
+--      tenant predicate is unconditional, so it became organization_id = NULL,
+--      which matches no row. Two control-plane endpoints served that as the
+--      answer.
+--    - The decisionId handed to every caller is minted client-side, while
+--      create() lets the database mint the primary key. The id therefore lives
+--      only in decision_code, and getGovernedDecision matched WHERE id = $1 --
+--      so the single-decision and transition APIs could never resolve one.

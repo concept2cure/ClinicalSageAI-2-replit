@@ -43,6 +43,40 @@ import type {
   ResolutionConfidence,
 } from '../../../shared/types/resolution';
 import { ACTION_KIND_TO_BUNDLE_ACTION as actionMap } from '../../../shared/types/resolution';
+import { createScopedLogger } from '../../utils/logger';
+
+const log = createScopedLogger('contradiction-resolution-orchestrator');
+
+/**
+ * Set one key of a concept2cure_artifacts row's metadata. Best-effort, but a
+ * failure is logged: it was silent.
+ *
+ * 2026-09-28: `metadata` is a json column, and `COALESCE(metadata,
+ * '{}'::jsonb)` cannot convert — every one of these writes failed, and the
+ * swallowed error meant no artifact was ever flagged as needing reapproval or
+ * linked to its resolution bundle. Cast to jsonb first.
+ */
+async function stampArtifactMetadata(
+  pool: { query: (sql: string, params?: unknown[]) => Promise<unknown> },
+  organizationId: number,
+  artifactId: string,
+  key: string,
+  valueJson: string,
+): Promise<void> {
+  try {
+    await pool.query(
+      `UPDATE concept2cure_artifacts
+          SET metadata = jsonb_set(COALESCE(metadata::jsonb, '{}'::jsonb), $4::text[], $1::jsonb),
+              updated_at = NOW()
+        WHERE artifact_id::text = $2 AND organization_id = $3`,
+      [valueJson, artifactId, organizationId, [key]],
+    );
+  } catch (error) {
+    log.warn('Could not update artifact metadata after a contradiction resolution', {
+      artifactId, organizationId, key, error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ORCHESTRATOR
@@ -503,7 +537,7 @@ async function markRealReapproval(
       UPDATE ${table}
       SET metadata = jsonb_set(
         jsonb_set(
-          COALESCE(metadata, '{}'::jsonb),
+          COALESCE(metadata::jsonb, '{}'::jsonb),
           '{needsReapproval}',
           'true'::jsonb
         ),
@@ -745,23 +779,7 @@ async function refreshPreflightAfterExecution(
   for (const key of receipt.supersededObjects) {
     const [objectType, objectId] = key.split(':');
     if (objectType === 'artifact') {
-      try {
-        await pool.query(
-          `
-          UPDATE concept2cure_artifacts
-          SET metadata = jsonb_set(
-            COALESCE(metadata, '{}'::jsonb),
-            '{contradictionResolutionBundleId}',
-            $1::jsonb
-          ),
-          updated_at = NOW()
-          WHERE artifact_id::text = $2 AND organization_id = $3
-        `,
-          [JSON.stringify(receipt.bundleId), objectId, organizationId]
-        );
-      } catch {
-        // Best-effort
-      }
+      await stampArtifactMetadata(pool, organizationId, objectId, 'contradictionResolutionBundleId', JSON.stringify(receipt.bundleId));
     }
   }
 
@@ -769,23 +787,7 @@ async function refreshPreflightAfterExecution(
   for (const key of receipt.requiresReapproval) {
     const [objectType, objectId] = key.split(':');
     if (objectType === 'artifact') {
-      try {
-        await pool.query(
-          `
-          UPDATE concept2cure_artifacts
-          SET metadata = jsonb_set(
-            COALESCE(metadata, '{}'::jsonb),
-            '{needsReapproval}',
-            'true'::jsonb
-          ),
-          updated_at = NOW()
-          WHERE artifact_id::text = $1 AND organization_id = $2
-        `,
-          [objectId, organizationId]
-        );
-      } catch {
-        // Best-effort
-      }
+      await stampArtifactMetadata(pool, organizationId, objectId, 'needsReapproval', 'true');
     }
   }
 

@@ -1,0 +1,61 @@
+    192|     expect(await registerSession(42, fresh, 1, T0), 'a session 13 hour…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a superseded session stays superseded for the lifetime it could still be presented in, and is not revived by being asked
+TypeError: openSession is not a function
+ ❯ server/services/__tests__/session-inactivity.test.ts:196:21
+    194|
+    195|   it('a superseded session stays superseded for the lifetime it could …
+    196|     const a = await openSession(42, settings(1), T0);
+       |                     ^
+    197|     await openSession(42, settings(1), T0 + MINUTE);
+    198|     for (const at of [T0 + 2 * MINUTE, T0 + 6 * HOUR, T0 + 11 * HOUR])…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  client/src/utils/__tests__/sessionEnd.test.ts > sessionEndReasonOf / sessionEndReasonOfResponse > names the three codes and nothing else
+AssertionError: expected null to be 'superseded' // Object.is equality
+
+- Expected:
+"superseded"
+
++ Received:
+null
+
+ ❯ client/src/utils/__tests__/sessionEnd.test.ts:23:54
+     21|     expect(sessionEndReasonOf('SESSION_IDLE')).toBe('idle');
+     22|     expect(sessionEndReasonOf('SESSION_LIFETIME')).toBe('lifetime');
+     23|     expect(sessionEndReasonOf('SESSION_SUPERSEDED')).toBe('superseded'…
+       |                                                      ^
+     24|     expect(sessionEndReasonOf('SESSION_ENDED')).toBeNull();
+     25|     expect(sessionEndReasonOf(undefined)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  client/src/utils/__tests__/sessionEnd.test.ts > the remembered reason > is read once
+AssertionError: expected null to be 'superseded' // Object.is equality
+
+- Expected:
+"superseded"
+
++ Received:
+null
+
+ ❯ client/src/utils/__tests__/sessionEnd.test.ts:45:33
+     43|     expect(takeSignOutReason()).toBeNull();
+     44|     rememberSignOutReason('superseded');
+     45|     expect(takeSignOutReason()).toBe('superseded');
+       |                                 ^
+     46|   });
+     47|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  12 failed | 26 passed (38)
+   Start at  04:31:41
+   Duration  2.04s (transform 1.37s, setup 343ms, import 1.89s, tests 478ms, environment 482ms)
+
+exit=1

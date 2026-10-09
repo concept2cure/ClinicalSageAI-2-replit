@@ -1,0 +1,62 @@
+$ NODE_OPTIONS='--max-old-space-size=4096' npx vitest run --config vitest.config.ts client/src/services/portal/__tests__/authService-logout.test.ts --reporter=verbose
+HEAD=b33ec50d
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 201ms
+   → expected { terminateAllSessions: false } to deeply equal { terminateAllSessions: false, …(1) }
+ × client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 2ms
+   → expected { terminateAllSessions: true } to deeply equal { terminateAllSessions: true, …(1) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer
+AssertionError: expected { terminateAllSessions: false } to deeply equal { terminateAllSessions: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "refreshToken": "refresh-1",
+    "terminateAllSessions": false,
+  }
+
+ ❯ client/src/services/portal/__tests__/authService-logout.test.ts:70:26
+     68|     expect(call!.url).toBe('/api/v1/auth/logout');
+     69|     expect((call!.init.headers as Record<string, string>).Authorizatio…
+     70|     expect(bodyOf(call)).toEqual({ terminateAllSessions: false, refres…
+       |                          ^
+     71|     // The local session is gone either way.
+     72|     expect(localStorage.getItem(KEYS.refreshToken)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory
+AssertionError: expected { terminateAllSessions: true } to deeply equal { terminateAllSessions: true, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "refreshToken": "refresh-1",
+    "terminateAllSessions": true,
+  }
+
+ ❯ client/src/services/portal/__tests__/authService-logout.test.ts:87:26
+     85|     const call = logoutCall();
+     86|     expect(call, 'no logout request was sent').toBeDefined();
+     87|     expect(bodyOf(call)).toEqual({ terminateAllSessions: true, refresh…
+       |                          ^
+     88|     expect(localStorage.getItem(KEYS.refreshToken)).toBeNull();
+     89|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  01:20:49
+   Duration  2.25s (transform 402ms, setup 410ms, import 46ms, tests 216ms, environment 983ms)
+
+exit=1

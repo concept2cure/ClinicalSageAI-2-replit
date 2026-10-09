@@ -152,10 +152,15 @@ describe('controlled lifecycle against real SQL', () => {
     let row = await svc.transitionChange(ORG, created.id, 'under_assessment', { userId: 11 });
     expect(row!.status).toBe('under_assessment');
 
-    row = await svc.transitionChange(ORG, created.id, 'approved', { userId: 11 });
-    expect(row!.status).toBe('approved');
-    expect(row!.approved_by).toBe(11);
-    expect(row!.approved_at).toBeTruthy();
+    // Approval is an electronic signature (DP-31 / P1-28): transitionChange
+    // refuses it, and the signed route (change-approval-signature.ts) is the one
+    // writer. This lifecycle proof stands in for that route with the stamp it writes.
+    await expect(svc.transitionChange(ORG, created.id, 'approved', { userId: 11 }))
+      .rejects.toMatchObject({ name: 'ChangeApprovalRequiresSignatureError' });
+    await pglite.query(
+      `UPDATE qms_change_controls SET status = 'approved', approved_by = 11, approved_at = now() WHERE id = $1`,
+      [created.id],
+    );
 
     row = await svc.transitionChange(ORG, created.id, 'in_implementation', { userId: 11 });
     expect(row!.status).toBe('in_implementation');
@@ -178,11 +183,15 @@ describe('controlled lifecycle against real SQL', () => {
       .rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
   });
 
-  it('enforces segregation of duties (approver ≠ proposer)', async () => {
+  it('refuses approval without a signature, for the proposer and anyone else, and changes nothing', async () => {
     const c = await svc.createChange(ORG, { changeNumber: 'CC-TEST-102', title: 'y', proposedBy: 10 });
     await svc.transitionChange(ORG, c.id, 'under_assessment', { userId: 10 });
-    await expect(svc.transitionChange(ORG, c.id, 'approved', { userId: 10 }))
-      .rejects.toBeInstanceOf(svc.SegregationOfDutiesError);
+    for (const userId of [10, 11]) {
+      await expect(svc.transitionChange(ORG, c.id, 'approved', { userId }))
+        .rejects.toMatchObject({ name: 'ChangeApprovalRequiresSignatureError' });
+    }
+    const r = await pglite.query(`SELECT status, approved_by FROM qms_change_controls WHERE id = $1`, [c.id]);
+    expect(r.rows[0]).toMatchObject({ status: 'under_assessment', approved_by: null });
   });
 
   it('adds and removes a cross-reference link', async () => {

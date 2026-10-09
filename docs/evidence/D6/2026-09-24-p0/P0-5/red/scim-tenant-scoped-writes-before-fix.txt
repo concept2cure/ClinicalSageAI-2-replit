@@ -1,0 +1,227 @@
+# HEAD dac69d76 — server/routes/scim.ts unchanged
+# NODE_OPTIONS='--max-old-space-size=4096' npx vitest run --config vitest.config.ts server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts --reporter=verbose
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > DELETE removes the caller's membership row and never touches users.status (204) 134ms
+   → expected [] to have a length of 1 but got +0
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=false removes the caller's membership row and never touches users.status (200, active=false) 20ms
+   → expected true to be false // Object.is equality
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PUT with a new displayName is refused: 403, scimType mutability, no write 7ms
+   → expected 200 to be 403 // Object.is equality
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH replace displayName is refused: 403, scimType mutability, no write 5ms
+   → expected 200 to be 403 // Object.is equality
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PUT with the SAME name and active=false still deprovisions (membership removed, not 403) 6ms
+   → expected true to be false // Object.is equality
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=true on a platform-suspended shared account is a no-op on status; response reflects the stored status 7ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > adds the membership only, never writes users.status; 201 reflects the stored (suspended) status 5ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > active:false in the body for an existing account deactivates nobody 4ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > DELETE still issues the global UPDATE users SET status = 'inactive' (204) 5ms
+   → expected "vi.fn()" to be called with arguments: [ 100, 7 ]
+
+Number of calls: 0
+
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > PATCH active=false still deactivates globally (200, active=false) 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > PUT with a new displayName renames as before (200) 3ms
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — unknown membership count fails closed > DELETE with no count row removes only the membership and never writes users.status 3ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > DELETE removes the caller's membership row and never touches users.status (204)
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:128:17
+    126|
+    127|     const del = sqlMatching(queryMock, MEMBERSHIP_DELETE);
+    128|     expect(del).toHaveLength(1);
+       |                 ^
+    129|     expect(del[0][1]).toEqual([USER_ID, ORG]);
+    130|     expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=false removes the caller's membership row and never touches users.status (200, active=false)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:149:29
+    147|
+    148|     expect(res.status).toBe(200);
+    149|     expect(res.body.active).toBe(false);
+       |                             ^
+    150|
+    151|     const del = sqlMatching(queryMock, MEMBERSHIP_DELETE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PUT with a new displayName is refused: 403, scimType mutability, no write
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:172:24
+    170|       });
+    171|
+    172|     expect(res.status).toBe(403);
+       |                        ^
+    173|     expect(res.body.schemas).toContain('urn:ietf:params:scim:api:messa…
+    174|     expect(res.body.scimType).toBe('mutability');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH replace displayName is refused: 403, scimType mutability, no write
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:191:24
+    189|       });
+    190|
+    191|     expect(res.status).toBe(403);
+       |                        ^
+    192|     expect(res.body.scimType).toBe('mutability');
+    193|     expect(sqlMatching(queryMock, USERS_NAME_WRITE)).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PUT with the SAME name and active=false still deprovisions (membership removed, not 403)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:211:29
+    209|
+    210|     expect(res.status).toBe(200);
+    211|     expect(res.body.active).toBe(false);
+       |                             ^
+    212|     expect(sqlMatching(queryMock, MEMBERSHIP_DELETE)).toHaveLength(1);
+    213|     expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=true on a platform-suspended shared account is a no-op on status; response reflects the stored status
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:231:56
+    229|     expect(res.status).toBe(200);
+    230|     expect(res.body.active).toBe(false);
+    231|     expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+       |                                                        ^
+    232|     expect(sqlMatching(queryMock, MEMBERSHIP_DELETE)).toHaveLength(0);
+    233|     // Nothing happened, so nothing claims to have: no "activated" aud…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > adds the membership only, never writes users.status; 201 reflects the stored (suspended) status
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:274:62
+    272|     expect(member[0][1]).toEqual([ORG, USER_ID]);
+    273|     // … and the global identity row was not touched, on either handle.
+    274|     expect(sqlMatching(clientQueryMock, USERS_STATUS_WRITE)).toHaveLen…
+       |                                                              ^
+    275|     expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+    276|     expect(sqlMatching(clientQueryMock, /INSERT INTO users/i)).toHaveL…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > active:false in the body for an existing account deactivates nobody
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:296:62
+    294|     expect(res.status).toBe(201);
+    295|     expect(res.body.active).toBe(true); // stored status, not the body…
+    296|     expect(sqlMatching(clientQueryMock, USERS_STATUS_WRITE)).toHaveLen…
+       |                                                              ^
+    297|     expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+    298|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > DELETE still issues the global UPDATE users SET status = 'inactive' (204)
+AssertionError: expected "vi.fn()" to be called with arguments: [ 100, 7 ]
+
+Number of calls: 0
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:318:28
+    316|     expect(upd[0][1]).toEqual([USER_ID]);
+    317|     expect(sqlMatching(queryMock, MEMBERSHIP_DELETE)).toHaveLength(0);
+    318|     expect(invalidateMock).toHaveBeenCalledWith(USER_ID, ORG);
+       |                            ^
+    319|     const audit = sqlMatching(queryMock, AUDIT_INSERT).find(c => c[1]?…
+    320|     expect(audit).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — unknown membership count fails closed > DELETE with no count row removes only the membership and never writes users.status
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:364:56
+    362|
+    363|     expect(res.status).toBe(204);
+    364|     expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+       |                                                        ^
+    365|     expect(sqlMatching(queryMock, MEMBERSHIP_DELETE)).toHaveLength(1);
+    366|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)
+   Start at  01:13:06
+   Duration  773ms (transform 174ms, setup 90ms, import 158ms, tests 206ms, environment 0ms)
+
+exit=1

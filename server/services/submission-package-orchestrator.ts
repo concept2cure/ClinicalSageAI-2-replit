@@ -65,6 +65,10 @@ import {
   isSignSealConfigured,
   sealSignPayloadDigest,
   verifySignPayloadSeal,
+  isKmsSignerConfigured,
+  signSignPayloadDigest,
+  verifySignPayloadSignature,
+  type PayloadSignatureEnvelope,
 } from './ectd/sign-payload-seal.js';
 import { launchCSRBuildAsync } from './csr-builder.js';
 import { getCSRBuildJobStatus } from './csr/csr-job-runner.js';
@@ -839,6 +843,10 @@ interface PackageSignStepPayload {
    *  authority so a mutable-steps-column tamper cannot forge a self-consistent
    *  snapshot+digest — see sign-payload-seal.ts. Absent when unsealed (dev). */
   payloadSeal?: string;
+  /** CONCEPT2CURE_SIGNER_MODE=kms: asymmetric signature over the same digest,
+   *  stored BESIDE the seal with its algorithm and key id. Absent under the
+   *  dev/hmac postures. See server/services/signature/payload-signer.ts. */
+  payloadSignature?: PayloadSignatureEnvelope;
   /** When complete, the electronic_signatures.id that satisfied the gate. */
   signatureId?: number;
   /** ISO timestamp when the step first transitioned to awaiting-signature. */
@@ -920,13 +928,18 @@ function tryParseSignPayload(raw: string | undefined): PackageSignStepPayload | 
  *
  * OQ-7 mandate: WHERE organization_id = $1 is the tenant guard. The
  * superseded_by IS NULL clause enforces OQ-4 (§11.70 append-only) — only the
- * current, non-rolled-back signature is returned. ORDER BY created_at DESC
+ * current, non-rolled-back signature is returned. ORDER BY id DESC
  * is defense-in-depth; in practice at most one row matches because every
  * resign produces a NEW row whose digest is different (any change to inputs
  * changes the digest).
  *
- * Returns the signature id on hit, null on miss-or-cross-org (collapsed
- * semantics — caller cannot distinguish).
+ * Returns the signature on hit, null on miss-or-cross-org (collapsed
+ * semantics — caller cannot distinguish). A hit carries the §11.50
+ * manifestation — printed name, date and time, meaning — because the screens
+ * that show a release signature have no other source for it: before periodic
+ * review 2026-09-22 (Part 11 finding 4) this selected `id` alone, and the
+ * Submission Center's §11.70 panel showed a signature nobody could attribute.
+ * A field the row does not hold comes back null, never a stand-in.
  *
  * THROWS `VerificationUnavailableError` when the lookup could not run (WO-16B
  * finding 14). This used to catch every error, log it as "non-fatal" and
@@ -936,10 +949,31 @@ function tryParseSignPayload(raw: string | undefined): PackageSignStepPayload | 
  * check that never ran. A caller that needs the verdict must now decide what
  * "could not check" means; none of them may read it as "revoked".
  */
+export interface ActiveReleaseSignature {
+  id: number;
+  signerId: number | null;
+  signerName: string | null;
+  signerTitle: string | null;
+  /** `signature_meaning` as signed — 'approval' for a package release (OQ-8). */
+  meaning: string | null;
+  /** ISO-8601 instant of signing. */
+  signedAt: string | null;
+}
+
+function nullableText(v: unknown): string | null {
+  return typeof v === 'string' && v.trim() ? v : null;
+}
+
+function isoInstantOrNull(v: unknown): string | null {
+  if (v == null) return null;
+  const d = v instanceof Date ? v : new Date(String(v));
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export async function findActiveReleaseSignature(params: {
   organizationId: number;
   boundPayloadDigest: string;
-}): Promise<{ id: number } | null> {
+}): Promise<ActiveReleaseSignature | null> {
   if (!Number.isFinite(params.organizationId) || params.organizationId <= 0) {
     return null;
   }
@@ -959,7 +993,8 @@ export async function findActiveReleaseSignature(params: {
          `id` is the serial primary key, so newest-first is identical, and it
          exists on every provisioning path. This is the only consumer of that
          column anywhere in the server. */
-      `SELECT id FROM electronic_signatures
+      `SELECT id, signer_id, signer_name, signer_title, signature_meaning, signed_at
+         FROM electronic_signatures
         WHERE organization_id = $1
           AND bound_payload_digest = $2
           AND superseded_by IS NULL
@@ -971,7 +1006,15 @@ export async function findActiveReleaseSignature(params: {
     const row = result.rows[0] as Record<string, unknown>;
     const id = Number(row.id);
     if (!Number.isFinite(id) || id <= 0) return null;
-    return { id };
+    const signerId = row.signer_id == null ? null : Number(row.signer_id);
+    return {
+      id,
+      signerId: Number.isFinite(signerId) ? signerId : null,
+      signerName: nullableText(row.signer_name),
+      signerTitle: nullableText(row.signer_title),
+      meaning: nullableText(row.signature_meaning),
+      signedAt: isoInstantOrNull(row.signed_at),
+    };
   } catch (err) {
     console.error(
       '[Orchestrator] findActiveReleaseSignature could not run — not treating this as "no active signature":',
@@ -2106,6 +2149,12 @@ async function runPackageSignGate(args: {
       // unsealed — dev/staging without AUDIT_HMAC_KEY). See sign-payload-seal.
       const payloadSeal = sealSignPayloadDigest(payloadDigest, inputs.organizationId) ?? undefined;
 
+      // kms posture: sign the same digest with the KMS key and store the
+      // envelope beside the seal. Null under dev/hmac; a KMS failure throws so
+      // a release can never be sealed-but-unsigned when a signature was promised.
+      const payloadSignature =
+        (await signSignPayloadDigest(payloadDigest, inputs.organizationId)) ?? undefined;
+
       // OQ-7: tenant-scoped lookup — WHERE organization_id = $1.
       const existing = await findActiveReleaseSignature({
         organizationId: inputs.organizationId,
@@ -2119,6 +2168,7 @@ async function runPackageSignGate(args: {
         const completePayload: PackageSignStepPayload = {
           payloadDigest,
           payloadSeal,
+          payloadSignature,
           signatureId: existing.id,
           awaitingSince: new Date().toISOString(),
           signedSnapshot,
@@ -2149,6 +2199,7 @@ async function runPackageSignGate(args: {
         const awaitingPayload: PackageSignStepPayload = {
           payloadDigest,
           payloadSeal,
+          payloadSignature,
           awaitingSince: new Date().toISOString(),
           signedSnapshot,
         };
@@ -2794,6 +2845,27 @@ async function resumeAwaitingSignature(
         'signature_seal_verification_failed'
       );
     }
+
+    // KMS envelope (CONCEPT2CURE_SIGNER_MODE=kms): same rule as the seal.
+    //   - 'failed'   → stored envelope does not verify, or no kms posture to
+    //                  verify it with: fail closed.
+    //   - 'unsigned' AND kms is configured → a run signed under a kms posture
+    //     MUST carry an envelope; its absence is a strip-the-signature
+    //     downgrade attempt, so fail closed too.
+    //   - 'unsigned' under dev/hmac → nothing promised, nothing checked.
+    const kmsVerdict = await verifySignPayloadSignature(
+      recomputedDigest,
+      snap.organizationId,
+      persistedPayload.payloadSignature
+    );
+    if (kmsVerdict === 'failed' || (kmsVerdict === 'unsigned' && isKmsSignerConfigured())) {
+      return failResumeSignStep(
+        signStep,
+        previousRun,
+        outputs,
+        'signature_kms_verification_failed'
+      );
+    }
   } else {
     // ── (B) LEGACY re-derive path (runs suspended before snapshot support) ──
     // Re-derive sync outputs. This includes module3Sections (composeFullModule3)
@@ -2927,6 +2999,7 @@ async function resumeAwaitingSignature(
   const completePayload: PackageSignStepPayload = {
     payloadDigest: recomputedDigest,
     payloadSeal: persistedPayload.payloadSeal,
+    payloadSignature: persistedPayload.payloadSignature,
     signatureId: found.id,
     awaitingSince: persistedPayload.awaitingSince,
     signedSnapshot: persistedPayload.signedSnapshot,

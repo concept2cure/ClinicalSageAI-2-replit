@@ -1,0 +1,38 @@
+[DEBUG 2026-09-23T15:36:01.763Z] PATCH /api/admin/master/users/299/status {
+  headers: {
+    accept: '*/*',
+    'content-length': '74',
+    'content-type': 'application/json',
+    'user-agent': 'node'
+  },
+  query: { parameterCount: 0, keys: [] },
+  body: undefined,
+  bodyRedacted: true,
+  bodyMetadata: {
+    contentType: 'application/json',
+    contentLength: '74',
+    transferEncoding: undefined
+  },
+  concept2curePayload: false
+}
+[AUDIT] {"timestamp":"2026-09-23T15:36:01.781Z","requestId":"cd4f3854496098dd4f25061329527c55","method":"PATCH","path":"/master/users/299/status","statusCode":403,"userId":298,"ip":"127.0.0.1","userAgent":"node","duration":19,"error":"Forbidden"}
+{"level":40,"time":"2026-09-23T15:36:01.781Z","pid":9356,"hostname":"vm","context":{"requestId":"fb0730bd-1eac-453f-bf31-95b10857b489","method":"PATCH","path":"/api/admin/master/users/299/status","statusCode":403,"durationMs":19,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+[DEBUG 2026-09-23T15:36:01.783Z] PATCH /api/admin/master/users/299/status {
+  headers: {
+    accept: '*/*',
+    'content-length': '68',
+    'content-type': 'application/json',
+    'user-agent': 'node'
+  },
+  query: { parameterCount: 0, keys: [] },
+  body: undefined,
+  bodyRedacted: true,
+  bodyMetadata: {
+    contentType: 'application/json',
+    contentLength: '68',
+    transferEncoding: undefined
+  },
+  concept2curePayload: false
+}
+[AUDIT] {"timestamp":"2026-09-23T15:36:01.790Z","requestId":"6eb68558fb10624f29261a36ff044d84","method":"PATCH","path":"/master/users/299/status","statusCode":403,"userId":298,"ip":"127.0.0.1","userAgent":"node","duration":8,"error":"Forbidden"}
+{"level":40,"time":"2026-09-23T15:36:01.790Z","pid":9356,"hostname":"vm","context":{"requestId":"f13bae86-84d3-4e0c-b521-e20680bc1cc0","method":"PATCH","path":"/api/admin/master/users/299/status","statusCode":403,"durationMs":8,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}

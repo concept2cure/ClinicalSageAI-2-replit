@@ -1,0 +1,5 @@
+      1       Tests  3 failed | 7388 passed | 17 skipped (7408)
+      2  FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts
+      1  FAIL  tests/ana-tool-tenant-and-path-scope.contract.test.ts
+      1  Test Files  2 failed | 636 passed | 3 skipped (641)
+      1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

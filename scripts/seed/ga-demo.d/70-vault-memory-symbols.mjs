@@ -521,12 +521,20 @@ async function seedVaultArtifacts(client, org, admin) {
       const ins = await client.query(
         `INSERT INTO concept2cure_artifacts (
            artifact_id, project_id, organization_id, type, category, title, content,
-           content_hash, version, ctd_section, status, locked_at, created_by_id,
+           content_hash, version, ctd_section, status, locked_at,
+           approved_version_id, published_version_id, created_by_id,
            metadata, created_at, updated_at
          ) VALUES (
            $1, $2, $3, $4, $5, $6, $7,
            $8, $9, $10, $11,
            CASE WHEN $11 = 'locked' THEN NOW() - ($13::numeric * interval '1 day') ELSE NULL END,
+           -- 2026-09-23 (W5/D7): an approved or locked artifact records the
+           -- version it was approved (and locked) at, as the status route does.
+           -- The package spine files an artifact only when its current version
+           -- is that version (artifactApproval, package-content-fingerprint.ts),
+           -- so an approval with no recorded version is refused as unproven.
+           CASE WHEN $11 IN ('approved', 'locked') THEN $9::int ELSE NULL END,
+           CASE WHEN $11 = 'locked' THEN $9::int ELSE NULL END,
            $12,
            $14::json,
            NOW() - ($15::numeric * interval '1 day'),

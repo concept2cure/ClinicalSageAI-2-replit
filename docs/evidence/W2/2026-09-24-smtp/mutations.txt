@@ -1,0 +1,11 @@
+# Each stack change reverted on its own; terraform test re-run
+
+M1 SMTP left out of the task definition
+    exit=1  Failure! 18 passed, 3 failed.
+    caught by: renders_the_boot_contract, staging_carries_every_name_the_deploy_preflight_requires, every_container_can_send_login_codes
+M2 SMTP password as a plain environment value
+    exit=1  Failure! 0 passed, 1 failed, 20 skipped.
+    caught by: renders_the_boot_contract
+M3 any SMTP port accepted
+    exit=1  Failure! 20 passed, 1 failed.
+    caught by: refuses_an_smtp_port_without_required_tls

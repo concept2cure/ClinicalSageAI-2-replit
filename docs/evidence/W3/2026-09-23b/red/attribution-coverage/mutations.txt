@@ -1,0 +1,15 @@
+== mutant: authoring_sections whitelisted with organization_id as its tenant column
+ ✓ reports the partition over the length the SERVER read 22ms
+ ✓ IGNORES a caller-supplied length — the denominator is not theirs to set 4ms
+ ✓ scopes the length read to the caller's organization 4ms
+ ✓ 404s for a document that is not this organization's, rather than reporting 0% 3ms
+ ✓ reports the partition for an Authoring section, the table the editor asks about 4ms
+ × scopes an Authoring section's length read by its own tenant column 9ms
+   → expected 'SELECT COALESCE(char_length(content),…' to match /FROM authoring_sections\s+WHERE id::t…/
+ ✓ refuses a table it cannot locate text in, by name 3ms
+ ✓ requires an organization context 2ms
+ ✓ requires both identifiers 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+
+== mutant: authoring_sections not whitelisted (the defect): see unit-before-fix.txt

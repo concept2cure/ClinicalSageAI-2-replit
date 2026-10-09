@@ -401,7 +401,6 @@ export {
   listLifecycleDocumentTypesByFamily,
   resolveCtdSectionsForDocType,
   buildSectionGenerationPrompt,
-  normalizeCtdCode,
 } from './ctd/index.js';
 export type { CtdSection, LifecycleDocumentType, LifecycleComponent } from './ctd/index.js';
 

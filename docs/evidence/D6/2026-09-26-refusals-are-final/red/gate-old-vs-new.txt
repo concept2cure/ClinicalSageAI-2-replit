@@ -1,0 +1,19 @@
+rule 1  optional-chained receiver (gw?.route)            old: NOT CAUGHT   new: caught
+rule 1  non-null receiver (gw!.route)                    old: NOT CAUGHT   new: caught
+rule 1  ensureGateway()!.route                           old: NOT CAUGHT   new: caught
+rule 1  an alias of getGateway()                         old: NOT CAUGHT   new: caught
+rule 1  this.gateway receiver                            old: caught   new: caught
+rule 1  chat helper without organizationId               old: NOT CAUGHT   new: caught
+rule 1  structuredOutput helper without options          old: NOT CAUGHT   new: caught
+rule 1  complete helper without organizationId           old: NOT CAUGHT   new: caught
+rule 1  organizationId only nested under another key     old: NOT CAUGHT   new: caught
+rule 1  a bound declaration in another function          old: NOT CAUGHT   new: caught
+rule 2  an assignment                                    old: NOT CAUGHT   new: caught
+rule 2  a constant holding public                        old: NOT CAUGHT   new: caught
+rule 2  a quoted key                                     old: NOT CAUGHT   new: caught
+rule 2  an element assignment                            old: NOT CAUGHT   new: caught
+rule 2  a shorthand                                      old: NOT CAUGHT   new: caught
+rule 2  inside gateway.ts                               old: NOT CAUGHT (findViolations skipped the file)   new: caught
+
+old gate missed 15 of 16; new gate missed 0
+exit=0 (comparison script; the old gate is the HEAD version of scripts/ci/check-ai-tenant-binding.mjs)

@@ -15,8 +15,11 @@ import { recordGovernedAction } from './c2c/actions';
 import { addMilestoneTx, setMilestoneStatusTx, listMilestones, getTimeline } from '../services/protocol-milestones/protocol-milestones-service';
 import { recordProtocolMilestoneAdded, recordProtocolMilestoneStatus, recordProtocolTimelineView } from '../services/protocol-milestones-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
+// A viewer reads a protocol and changes nothing on it (11.10(d), (g)).
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;

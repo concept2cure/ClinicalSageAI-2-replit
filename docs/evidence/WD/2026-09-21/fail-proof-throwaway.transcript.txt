@@ -1,0 +1,81 @@
+# Fail-proof on throwaway database clinicalsage_wd_throwaway (CREATE DATABASE … TEMPLATE clinicalsage_fresh; owner postgres, runtime role app_service from W2) — 2026-09-21T01:01:00Z
+
+## A. revoke one grant + one schema USAGE by hand, as the owner
+REVOKE
+REVOKE
+
+## A1. the grant audit catches it (node scripts/db/audit-runtime-grants.mjs --role app_service)
+▶ grant audit on clinicalsage_wd_throwaway as postgres; auditing role app_service (from --role)
+  role app_service: superuser=false bypassrls=false login=true; 1281 application relations audited
+  denied: 15
+    - public.organizations: missing SELECT
+  schemas without USAGE: intelligence
+  excess beyond the audit ceiling (non-owned relations): 0
+
+✗ runtime role app_service does not hold the recipe posture. Re-run deploy-migrate as the owner (step 4 refreshes grants for an identified runtime role); excess privileges on the audit store must be REVOKEd by the operator — the recipe never grants them.
+exit=1
+  (intelligence.* lines elided above; full count printed in 'denied:')
+
+## A2. deploy-migrate as the owner with RUNTIME_DB_ROLE=app_service (no password) heals it
+▶ 1/5 Preflight — database already provisioned?
+▶ 2/5 Acquire migration lock
+▶ 3/5 Apply migrations
+▶ 4/5 Runtime role — required schemas + refresh non-superuser grants
+  • runtime role app_service identified from RUNTIME_DB_ROLE (owner is postgres)
+  • refreshing grants for existing runtime role app_service (not minted here; no password needed)
+  ✓ runtime role app_service refreshed (identified from RUNTIME_DB_ROLE)
+▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+  SELECT reach: 8/8 contract tables readable by app_service
+  grant audit: 1281/1281 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+✅ Schema migration complete — safe to roll services.
+exit=0
+
+## A3. audit again
+  excess beyond the audit ceiling (non-owned relations): 0
+
+✓ runtime role app_service holds the recipe posture on all 1281 relations.
+exit=0
+
+## B. widen the Part 11 store beyond append-only through PUBLIC (something the recipe never does)
+GRANT
+## B1. deploy-migrate must REFUSE (step 5 grant audit) even though step 4 refreshed grants
+▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+  grant audit: 1281/1281 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 1
+❌ Deploy migration failed: readiness contract not met — /readyz would report schema: down.
+    runtime role app_service holds privileges beyond the append-only ceiling on: audit.tamper_proof_log (UPDATE) — REVOKE them; the recipe never grants UPDATE/DELETE on audit and a widened audit store is not a deployable state
+exit=1
+## B2. operator revokes; deploy-migrate passes again
+REVOKE
+▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+  grant audit: 1281/1281 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+✅ Schema migration complete — safe to roll services.
+exit=0
+
+## C. default privileges: a table the owner creates AFTER the refresh is readable with no further grant
+CREATE TABLE
+app_service SELECT on public.wd_future_table: true INSERT: true
+CREATE TABLE
+app_service on audit.wd_future_audit: SELECT=true INSERT=true UPDATE=false DELETE=false
+DROP TABLE
+DROP TABLE
+
+## D. a runtime role that does not exist is refused, not silently skipped
+      [NOTICE] index "unique_project_schedule" does not exist, skipping
+      [NOTICE] constraint "cmc_module3_sections_project_section" of relation "cmc_module3_sections" does not exist, skipping
+      [NOTICE] policy "project_sections_org_policy" for relation "project_sections" does not exist, skipping
+      [NOTICE] policy "section_status_log_org_policy" for relation "section_status_log" does not exist, skipping
+      [NOTICE] policy "section_comments_org_policy" for relation "section_comments" does not exist, skipping
+      [NOTICE] policy "project_milestones_org_policy" for relation "project_milestones" does not exist, skipping
+      [NOTICE] policy "project_notifications_org_policy" for relation "project_notifications" does not exist, skipping
+      [NOTICE] index "idx_ai_claims_has_flags" does not exist, skipping
+      [NOTICE] constraint "c2c_ana_actions_command_check" of relation "c2c_ana_actions" does not exist, skipping
+      [NOTICE] function get_org_ai_usage(uuid,pg_catalog.timestamptz,pg_catalog.timestamptz) does not exist, skipping
+      [NOTICE] index "idx_ivdr_class_class" does not exist, skipping
+      [NOTICE] index "idx_ivdr_class_org" does not exist, skipping
+      [NOTICE] constraint "cmc_batch_records_project_id_fkey" of relation "cmc_batch_records" does not exist, skipping
+      [NOTICE] table "c2c_cmc_changes" does not exist, skipping
+      [NOTICE] column "pass_fail" of relation "cmc_dissolution_profiles" does not exist, skipping
+      [NOTICE] constraint "cmc_comparability_assessments_project_id_fkey" of relation "cmc_comparability_assessments" does not exist, skipping
+▶ 4/5 Runtime role — required schemas + refresh non-superuser grants
+❌ Deploy migration failed: runtime role ghost_role does not exist on this server — nothing to grant to, and the request-serving pool would fail to connect as it. Mint it by setting APP_SERVICE_DB_PASSWORD (scripts/db
+exit=1

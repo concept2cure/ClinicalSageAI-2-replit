@@ -1,0 +1,35 @@
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > admits an access token of a current member of an active organisation 8ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > refuses a token carried only in the query string 2ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > refuses a revoked membership 2ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > refuses when the membership cannot be determined (fail closed) 2ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > still refuses an inactive organisation 1ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > still refuses a pre-MFA token 1ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > a member removed from the organisation is told and disconnected within 60 s 5ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > a session that has ended (revoked, account out of use, password changed) is disconnected 2ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > an organisation that stops being active is disconnected 3ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > a member in good standing is left alone 2ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > the timer stops when the socket disconnects 2ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > emits thinking then done for a completed turn 3ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > barges in: a new message cancels the in-flight turn and suppresses its output 1ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > cancel interrupts the current turn and suppresses its done 1ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > emits ana:error when the runner throws 0ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > dispose aborts silently (no client to notify) 0ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > admits an access token of an active member and scopes the socket to the token tenant 6ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_challenge token (not an access token) 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_partial token (not an access token) 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a refresh token (not an access token) 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token that declares no class at all 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token offered only in the query string 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers revoked 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers indeterminate 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the tenant is not active 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a member removed from the organisation is told why and disconnected within 60 s 11ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a membership that can no longer be read (fail closed) is told why and disconnected within 60 s 4ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a session that has ended (signed out, password changed, account out of use) is told why and disconnected within 60 s 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an organisation that stops being active is told why and disconnected within 60 s 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > re-verifies the handshake token itself, without counting as activity 3ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a member in good standing is left alone 3ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > the timer stops when the socket disconnects 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an ending session also ends the AnA turn in flight 3ms
+ Test Files  4 passed (4)
+      Tests  33 passed (33)

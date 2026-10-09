@@ -59,7 +59,14 @@ export type ArtifactProjectResolution =
 export async function resolveCmcArtifactProject(
   orgId: number,
   cmcProjectId: string,
-  deps: { db?: RequestDb } = {},
+  /**
+   * `strict`: a lookup that could not complete THROWS instead of resolving to
+   * 'unaddressable' / 'unanchored'. For an authorization decision (the
+   * artifact status route, PF-17) "I could not tell" is not "not yours": the
+   * caller's catch answers 500, never a 404 that reads as a denial. Degraded
+   * readers keep the default, which reports the absence honestly instead.
+   */
+  deps: { db?: RequestDb; strict?: boolean } = {},
 ): Promise<ArtifactProjectResolution> {
   const raw = String(cmcProjectId ?? '').trim();
 
@@ -92,6 +99,7 @@ export async function resolveCmcArtifactProject(
         return { state: 'linked', artifactProjectId: n, via: 'numeric' };
       }
     } catch (err) {
+      if (deps.strict) throw err;
       logger.warn('Numeric project-id ownership check failed; treating id as unaddressable', {
         orgId,
         projectId: n,
@@ -111,6 +119,7 @@ export async function resolveCmcArtifactProject(
       programId: raw,
       orgId,
       context: 'cmc-artifact-spine',
+      strict: deps.strict,
     });
     if (anchored != null) {
       return { state: 'linked', artifactProjectId: anchored, via: 'program-anchor' };

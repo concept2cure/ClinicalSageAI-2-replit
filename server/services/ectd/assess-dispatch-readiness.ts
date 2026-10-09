@@ -16,12 +16,17 @@
  * @module server/services/ectd/assess-dispatch-readiness
  */
 
+import { ruleView, DISPATCH_GATE_RULE_IDS, type RuleView } from './validation-rule-corpus';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
 import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
-import { getSubmissionRegionProfile } from '../region-profiles/region-profile-service';
-import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
+import {
+  getSubmissionRegionProfile,
+  requiredModule1CodesForRegion,
+} from '../region-profiles/region-profile-service';
+import { computeDispatchReadiness, type DispatchReadinessReport, type ReadinessFinding } from './dispatch-readiness';
+import { resolveLeafDocuments } from './leaf-document-resolver';
 import {
   evaluateDispatchGate,
   mergeDispatchGates,
@@ -33,6 +38,8 @@ import {
 import {
   resolveReleaseSignatureStatus,
   isReleaseSignatureRequired,
+  signingNowResolvesRelease,
+  type ReleaseSignatureStatus,
 } from './release-signature-status';
 import {
   resolveExternalValidator,
@@ -51,6 +58,61 @@ export interface AssessDispatchReadinessParams {
    * fail-closed rule applies under ECTD_REQUIRE_EVALIDATOR in production.
    */
   externalValidationReport?: ExternalValidationReport | null;
+}
+
+/** A composed dispatch gate, keyed as composeDispatchGates takes it. */
+export type DispatchGateKey = keyof typeof DISPATCH_GATE_RULE_IDS;
+
+/** One part of the dispatch verdict, as the corpus rule it enforces. */
+export interface DispatchGateView {
+  key: DispatchGateKey;
+  rule: RuleView | null;
+  cleared: boolean;
+  blockers: string[];
+  /** Set when the gate adds no blocker only because its check did not run and
+   *  is not required on this installation — the external validator with
+   *  ECTD_REQUIRE_EVALIDATOR off. Cleared is still true (it does not block);
+   *  this says the check was not made, so no surface reads it as passed. */
+  notAssessed?: string;
+}
+
+/** composeDispatchGates' merge order — the gate views follow it, so the list
+ *  reads exactly as the verdict it explains. */
+const GATE_ORDER: DispatchGateKey[] = ['structural', 'external', 'shadowPresence', 'releaseSignature'];
+
+/**
+ * The dispatch verdict, gate by gate. Every gate the verdict composes appears,
+ * named by its corpus rule and carrying its OWN blockers, so a blocker is read
+ * as the rule it enforces — not as prose under a pass/fail icon — and the
+ * gates' blockers, in order, are exactly the verdict's.
+ */
+export function dispatchGateViews(
+  gates: Record<DispatchGateKey, DispatchGateResult>,
+  notAssessed: Partial<Record<DispatchGateKey, string>> = {},
+): DispatchGateView[] {
+  return GATE_ORDER.map((key) => ({
+    key,
+    rule: ruleView(DISPATCH_GATE_RULE_IDS[key]),
+    cleared: gates[key].cleared,
+    blockers: [...gates[key].blockers],
+    ...(gates[key].cleared && notAssessed[key] ? { notAssessed: notAssessed[key] } : {}),
+  }));
+}
+
+/** Why the external gate cleared without a report, when it did. The dispatch
+ *  screen printed "The agency-grade validator's report for this package
+ *  carries no errors — Satisfied." over a sequence no validator had run on
+ *  (populated-org sweep, 2026-09-28): advisory is not passed. */
+export function externalNotAssessed(ext: { ran: boolean; configured: boolean }): string | undefined {
+  if (ext.ran) return undefined;
+  return ext.configured
+    ? 'The agency-grade validator is configured but did not run for this package, so no report exists. It is not required on this installation, so it does not block dispatch — but the package has not been checked against it.'
+    : 'No agency-grade validator is configured on this installation, so no report exists for this package. It is not required here, so it does not block dispatch — but the package has not been checked against it.';
+}
+
+/** Each finding with the corpus rule it is an instance of (null when the corpus names none). */
+export function withRules<F extends ReadinessFinding>(findings: F[]): Array<F & { rule: RuleView | null }> {
+  return findings.map((f) => ({ ...f, rule: ruleView(f.code) }));
 }
 
 export interface DispatchReadinessAssessment {
@@ -99,7 +161,20 @@ export interface DispatchReadinessAssessment {
    *  is not transmit and carries its own Part 11 signature; see
    *  composeDispatchGatesForStep. */
   freezeGate: DispatchGateResult;
-  /** Full structural breakdown (errors + non-blocking warnings/infos). */
+  /** The DISPATCH verdict as it will stand once the operator's dispatch
+   *  signature is recorded — what the Dispatch button asks. It differs from
+   *  `gate` only where the sequence's own new signature would decide the
+   *  release (signingNowResolvesRelease): an `unsigned` or `revoked` sequence
+   *  spine. Every other blocker, including an `invalid` or `undetermined`
+   *  signature and an orchestrator run awaiting its signer, blocks it exactly
+   *  as it blocks `gate`. Informational for the client; the server enforces
+   *  `gate` at transition, with the new signature on record. */
+  dispatchGateOnSigning: DispatchGateResult;
+  /** The DISPATCH verdict gate by gate, each as the corpus rule it enforces;
+   *  their blockers, in order, are exactly `gate.blockers`. */
+  gates: DispatchGateView[];
+  /** Full structural breakdown (errors + non-blocking warnings/infos); every
+   *  finding carries the corpus rule it is an instance of. */
   readiness: DispatchReadinessReport;
   leafCount: number;
 }
@@ -213,6 +288,51 @@ export function composeDispatchGatesForStep(
 }
 
 /**
+ * The three verdicts an assessment reports, each for the question a control
+ * asks, from ONE set of parts:
+ *
+ *   • `gate`                  — dispatch now (and transmit): every gate.
+ *   • `freezeGate`            — freeze: every gate, the release signature not
+ *                               REQUIRED (a tampered one still blocks).
+ *   • `dispatchGateOnSigning` — dispatch once the operator's dispatch signature
+ *                               is recorded: every gate, with the release
+ *                               verdict replaced by `signed` only where
+ *                               signingNowResolvesRelease says the new sequence
+ *                               signature would decide it.
+ *
+ * Pure, and the only place the three are composed, so which gates each one
+ * carries is pinned by test. That matters because the failure here is not a
+ * wrong gate but a MISSING one: a verdict composed without a gate blocks
+ * nothing on it, and every test of the gate in isolation still passes. It is
+ * also why the client reads these rather than rebuilding any of them — the
+ * Freeze and Dispatch buttons each read the wrong one of these for as long as
+ * the client carried its own idea of which gate applied.
+ */
+export function composeStepVerdicts(
+  parts: {
+    structural: DispatchGateResult;
+    external: DispatchGateResult;
+    shadowPresence: DispatchGateResult;
+    releaseSignature: ReleaseSignatureGateInput;
+  },
+  releaseStatus: Pick<ReleaseSignatureStatus, 'verdict' | 'decidedBy'>,
+): { gate: DispatchGateResult; freezeGate: DispatchGateResult; dispatchGateOnSigning: DispatchGateResult } {
+  return {
+    gate: composeDispatchGatesForStep(parts, 'dispatch'),
+    freezeGate: composeDispatchGatesForStep(parts, 'freeze'),
+    dispatchGateOnSigning: composeDispatchGatesForStep(
+      {
+        ...parts,
+        releaseSignature: signingNowResolvesRelease(releaseStatus)
+          ? { ...parts.releaseSignature, verdict: 'signed' }
+          : parts.releaseSignature,
+      },
+      'dispatch',
+    ),
+  };
+}
+
+/**
  * Completed Shadow Review runs for a sequence.
  *
  * Zero open criticals means nothing different whether the dossier is clean OR
@@ -243,26 +363,17 @@ async function countCompletedShadowRuns(
 
 /**
  * Flatten a region profile's Module-1 tree to the section codes marked required
- * for this application type. A section that declares `requiredFor` is required
- * only for those application types (a debarment certification for a marketing
- * application, the general investigational plan for an IND); when the
- * application type is unknown every required section is kept — conservative,
- * as before.
+ * for this application type.
+ *
+ * The walk now lives beside the profile it reads
+ * (`region-profile-service.requiredModule1CodesForRegion`) because a second
+ * copy of "what Module 1 does this application need" had grown in
+ * `ectd4-validator`, as a hand-written literal set that disagreed with this one
+ * on four codes. This name is kept as the export the dispatch path already
+ * uses; it is now a thin delegation rather than a parallel implementation.
  */
 export function requiredModule1Codes(region: string, applicationType?: string | null): string[] {
-  const profile = getSubmissionRegionProfile(region);
-  if (!profile) return [];
-  const app = applicationType ? String(applicationType).toLowerCase() : null;
-  const out: string[] = [];
-  const walk = (sections: typeof profile.module1Sections): void => {
-    for (const s of sections) {
-      const applies = !s.requiredFor || !app || s.requiredFor.includes(app);
-      if (s.required && applies) out.push(s.number);
-      if (s.childSections?.length) walk(s.childSections);
-    }
-  };
-  walk(profile.module1Sections);
-  return out;
+  return requiredModule1CodesForRegion(region, applicationType);
 }
 
 /**
@@ -312,14 +423,26 @@ export async function assessSequenceDispatchReadiness(
       )
     );
 
+  // 2b. Resolve every leaf's document pointer — by whichever key its table is
+  //     addressed by (integer document_id, or document_uuid for the vault) —
+  //     in this organization, and compare the content hash pinned at filing
+  //     with what the store holds now. ONE resolver, shared with the Builder's
+  //     read model; the freeze / dispatch / transmit gates compose this
+  //     assessment, so they cannot disagree with it. Until 2026-09-21 the
+  //     validator was handed the integer column alone and every vault-backed
+  //     leaf read UNRESOLVED_DOCUMENT (MDX demo pack, finding F5).
+  const documents = await resolveLeafDocuments(leaves, organizationId);
+
   // 3. Deterministic structural validation over the canonical core.
   const readiness = computeDispatchReadiness(
-    leaves.map(l => ({
+    leaves.map((l, i) => ({
       sectionCode: l.sectionCode,
       title: l.title,
       lifecycleOp: l.lifecycleOp,
       documentTable: l.documentTable,
       documentId: l.documentId,
+      documentUuid: l.documentUuid,
+      document: documents[i],
     })),
     {
       requiredSections: requiredModule1Codes(sequence.region, submissionApplicationType),
@@ -419,6 +542,11 @@ export async function assessSequenceDispatchReadiness(
     // own governed path reads as unsigned — which made dispatch and transmit
     // unreachable for every submission type the gate applies to.
     sequenceId,
+    // And its REGION. Sequence numbers restart per region, so '0000' is the FDA
+    // original and the EU original both; without this a release over one clears
+    // the dispatch gate for the other. Resolved through the region registry on
+    // the far side, because the two spines spell one jurisdiction differently.
+    region: sequence.region,
   });
   const signatureRequired = isReleaseSignatureRequired(submissionApplicationType);
   const signatureInput = {
@@ -439,8 +567,23 @@ export async function assessSequenceDispatchReadiness(
     shadowPresence: shadowPresenceGate,
     releaseSignature: signatureInput,
   };
-  const gate = composeDispatchGatesForStep(gateParts, 'dispatch');
-  const freezeGate = composeDispatchGatesForStep(gateParts, 'freeze');
+  // `dispatchGateOnSigning` is the dispatch verdict as it will stand once the
+  // operator's dispatch signature is recorded — what the Dispatch button asks.
+  // It never relaxes what the server enforces: the transition re-evaluates
+  // `gate` with the new signature on record. See composeStepVerdicts.
+  const { gate, freezeGate, dispatchGateOnSigning } = composeStepVerdicts(gateParts, releaseSignature);
+  // The same four results `gate` merged: the dispatch-step release-signature
+  // evaluation is releaseSignatureGate (required as the type requires).
+  const gates = dispatchGateViews(
+    {
+      structural: structuralGate,
+      external: gateParts.external,
+      shadowPresence: shadowPresenceGate,
+      releaseSignature: releaseSignatureGate,
+    },
+    { external: externalNotAssessed({ ran: externalGate.ran, configured: externalConfigured }) },
+  );
+  readiness.findings = withRules(readiness.findings);
 
   return {
     sequenceId,
@@ -473,6 +616,8 @@ export async function assessSequenceDispatchReadiness(
     },
     gate,
     freezeGate,
+    dispatchGateOnSigning,
+    gates,
     readiness,
     leafCount: leaves.length,
   };

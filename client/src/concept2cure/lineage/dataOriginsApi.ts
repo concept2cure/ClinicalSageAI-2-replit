@@ -178,5 +178,10 @@ export async function fetchDocumentAttribution(q: {
     throw new Error(message);
   }
   const body = await res.json();
+  // A 200 without a summary is a failed read, not an empty one: rendered, it
+  // threw inside the attribution bar and blanked the whole editor.
+  if (!body?.summary || typeof body.summary !== 'object') {
+    throw new Error('The attribution response carried no summary.');
+  }
   return body.summary as DocumentAttributionSummary;
 }

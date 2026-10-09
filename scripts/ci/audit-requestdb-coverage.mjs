@@ -70,6 +70,12 @@ const ALLOWLIST_FILES = new Set([
   // the cross-tenant admin/billing entries in server/db/rlsAllowlist.ts; under
   // RLS enforcement it relies on the standard policy's super-admin bypass.
   'server/routes/admin/master-admin.ts',
+  // The platform owner's list of enterprise onboarding requests (4577cb40e),
+  // mounted by master-admin under the same guard. license_requests is
+  // platform-level sales intake with no tenant; its only policy
+  // (license_requests_platform_access) admits the system scope that
+  // /api/admin/master runs under. A request-scoped client would read nothing.
+  'server/routes/admin/master-enterprise-requests.ts',
   // First-run install setup: runs before any tenant/org exists, so it cannot
   // use the tenant-scoped requestDb. Self-closing once a user exists.
   'server/routes/setup.ts',
@@ -214,10 +220,19 @@ if (stdoutJson) {
 // ─── Baseline + no-regression ────────────────────────────────────────────────
 if (writeBaseline) {
   fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
+  // Keep the file's written history: its _comment records why the backlog was
+  // rebaselined and when it may shrink, and a rewrite used to delete it.
+  let previousComment;
+  try {
+    previousComment = JSON.parse(fs.readFileSync(baselinePath, 'utf8'))._comment;
+  } catch {
+    previousComment = undefined;
+  }
   const baseline = {
     generatedAt: summary.generatedAt,
     onSharedPool: onSharedPool.slice().sort(),
     classifications,
+    ...(previousComment ? { _comment: previousComment } : {}),
   };
   fs.writeFileSync(baselinePath, JSON.stringify(baseline, null, 2) + '\n');
   console.log(

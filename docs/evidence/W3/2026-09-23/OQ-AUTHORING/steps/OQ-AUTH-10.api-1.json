@@ -1,0 +1,105 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/docs/5db22e8b-c512-4256-87df-75ce11faf202/audit",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 11,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "events": [
+        {
+          "id": "f6e85e2a-d061-4097-9298-f73f3046f9a0",
+          "doc_id": "5db22e8b-c512-4256-87df-75ce11faf202",
+          "section_id": null,
+          "event_type": "comment_added",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": "Legacy audit event",
+          "content_hash_before": null,
+          "content_hash_after": null,
+          "metadata": {
+            "comment_id": "1431c0d7-bb58-4122-8db0-32a815e774ef",
+            "section_id": "a1d95ac5-0c5c-4cfd-af0c-91041da95428"
+          },
+          "created_at": "2026-09-23T02:50:28.352Z",
+          "tenant_id": 1
+        },
+        {
+          "id": "6119bcc8-b306-4a51-9914-b47553e34eec",
+          "doc_id": "5db22e8b-c512-4256-87df-75ce11faf202",
+          "section_id": "a1d95ac5-0c5c-4cfd-af0c-91041da95428",
+          "event_type": "REVERT",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": "Reverted to revision 95e49e70-004a-44df-b3c5-333b31957e2b",
+          "content_hash_before": "5f2aa1c0c7f6ce423a26acc9c5219b729b5f6601b73128f399231ff7fd36b1c4",
+          "content_hash_after": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "metadata": {
+            "revisionId": "95e49e70-004a-44df-b3c5-333b31957e2b",
+            "revisionCreatedAt": "2026-09-23T02:50:25.404Z"
+          },
+          "created_at": "2026-09-23T02:50:27.553Z",
+          "tenant_id": 1
+        },
+        {
+          "id": "d893af3d-2c46-42fd-8b5c-535b15e3c0e3",
+          "doc_id": "5db22e8b-c512-4256-87df-75ce11faf202",
+          "section_id": "a1d95ac5-0c5c-4cfd-af0c-91041da95428",
+          "event_type": "UPDATE",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": "OQ-003 step 05: controlled edit",
+          "content_hash_before": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "content_hash_after": "5f2aa1c0c7f6ce423a26acc9c5219b729b5f6601b73128f399231ff7fd36b1c4",
+          "metadata": {
+            "titleChanged": false
+          },
+          "created_at": "2026-09-23T02:50:25.944Z",
+          "tenant_id": 1
+        },
+        {
+          "id": "cf27de0f-1e75-401a-93be-123593d8dfab",
+          "doc_id": "5db22e8b-c512-4256-87df-75ce11faf202",
+          "section_id": "a1d95ac5-0c5c-4cfd-af0c-91041da95428",
+          "event_type": "CREATE",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": null,
+          "content_hash_before": null,
+          "content_hash_after": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "metadata": {
+            "code": "2.5",
+            "title": "Clinical Overview"
+          },
+          "created_at": "2026-09-23T02:50:25.405Z",
+          "tenant_id": 1
+        },
+        {
+          "id": "0abcfa86-e9fb-4f75-9c0b-5463a5af1ad1",
+          "doc_id": "5db22e8b-c512-4256-87df-75ce11faf202",
+          "section_id": "873f580d-941b-4a13-9752-a89f5a601e27",
+          "event_type": "CREATE",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": null,
+          "content_hash_before": null,
+          "content_hash_after": "795ce1726eb546f0745c8eb2e6318d0dd1f3ad5b534dcc55eadd63b518add96d",
+          "metadata": {
+            "code": "2.7",
+            "title": "Clinical Summary"
+          },
+          "created_at": "2026-09-23T02:50:25.123Z",
+          "tenant_id": 1
+        }
+      ],
+      "count": 5
+    }
+  }
+}

@@ -1,0 +1,4 @@
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > a classifier failure under enforcement fails closed (DENY_DETECTOR_FAILURE)
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > a classifier failure under enforcement fails closed (DENY_DETECTOR_FAILURE) 2ms
+ Test Files  57 passed (57)
+      Tests  678 passed | 1 skipped (679)

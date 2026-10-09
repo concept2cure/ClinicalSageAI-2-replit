@@ -34,7 +34,6 @@ import { authMiddleware } from '../../auth';
 import { requireOrganizationContext, tenantContextMiddleware } from '../../middleware/tenantContext';
 import {
   concept2cureRateLimiter,
-  getClientIp,
   getOrganizationId,
   getUserId,
   logAuditEntry,
@@ -44,6 +43,13 @@ import {
   sendSuccess,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
+import { clientIpKey } from '../../utils/client-ip';
+import { resolveDocumentPath } from '../../utils/document-file-roots';
+import {
+  isUnauditedExportRefusal,
+  sendAuditedDownload,
+  type ExportSourceType,
+} from '../../services/export/governedExportConsequence';
 
 const logger = createScopedLogger('concept2cure-exports');
 const router = Router();
@@ -79,6 +85,43 @@ function validateExportGovernance(req: Request, res: Response): ExportGovernance
 }
 
 /**
+ * Deliver a chat-artifact export, recorded (2026-09-29). Every file these
+ * routes produce gets an EXPORT_GENERATED audit row carrying the SHA-256 of the
+ * exact bytes delivered, and is not delivered when that row does not persist.
+ * Until then they returned the file and recorded nothing
+ * (docs/evidence/D5-EXPORTS-RECORDED/2026-09-29/).
+ */
+async function deliverRecordedExport(
+  req: Request,
+  res: Response,
+  file: { buffer: Buffer; mimeType: string; filename: string; sourceType: ExportSourceType; title: string },
+): Promise<void> {
+  const organizationId = getOrganizationId(req);
+  const userId = getUserId(req);
+  try {
+    await sendAuditedDownload(res, {
+      organizationId,
+      userId,
+      sourceType: file.sourceType,
+      backendRoute: req.originalUrl?.split('?')[0] ?? req.path,
+      resourceType: 'chat_artifact_export',
+      resourceId: file.filename,
+      programUuid: null,
+      filename: file.filename,
+      mimeType: file.mimeType,
+      buffer: file.buffer,
+      metadata: { title: file.title },
+    });
+  } catch (err) {
+    if (isUnauditedExportRefusal(err)) {
+      sendError(res, 503, 'The file was not delivered because its record could not be written. Try again.', undefined, 'UNAUDITED_EXPORT_REFUSED');
+      return;
+    }
+    throw err;
+  }
+}
+
+/**
  * POST /api/concept2cure/artifacts/export-docx
  * Generate a DOCX file from title + content and return as a download.
  * Used by the Copilot to export AI-generated documents.
@@ -99,13 +142,13 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
     const buffer = await generateDocxBuffer(title, exportBody);
 
     const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    );
-    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.docx"`);
-    res.setHeader('Content-Length', buffer.length);
-    return res.send(buffer);
+    return await deliverRecordedExport(req, res, {
+      buffer,
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      filename: `${safeFilename}.docx`,
+      sourceType: 'export_docx',
+      title,
+    });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -340,9 +383,13 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
     const pdfBytes = await pdfDoc.save();
     const safeTitle = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.pdf"`);
-    res.send(Buffer.from(pdfBytes));
+    await deliverRecordedExport(req, res, {
+      buffer: Buffer.from(pdfBytes),
+      mimeType: 'application/pdf',
+      filename: `${safeTitle}.pdf`,
+      sourceType: 'export_pdf',
+      title: String(title),
+    });
   } catch (error: any) {
     logger.error('Failed to export PDF', { error: error.message });
     return sendError(res, 500, 'Failed to generate PDF');
@@ -384,13 +431,13 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
             generateImages: true,
           });
           const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-          res.setHeader(
-            'Content-Type',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-          );
-          res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pptx"`);
-          res.setHeader('Content-Length', result.pptxBuffer.length);
-          return res.send(result.pptxBuffer);
+          return await deliverRecordedExport(req, res, {
+            buffer: result.pptxBuffer,
+            mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            filename: `${safeFilename}.pptx`,
+            sourceType: 'export_pptx',
+            title,
+          });
         }
       } catch (nbErr: any) {
         // Fall through to standard PPTX generation
@@ -402,13 +449,13 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     const buffer = await generatePptxBuffer(title, exportBody);
 
     const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-    );
-    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pptx"`);
-    res.setHeader('Content-Length', buffer.length);
-    return res.send(buffer);
+    return await deliverRecordedExport(req, res, {
+      buffer,
+      mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      filename: `${safeFilename}.pptx`,
+      sourceType: 'export_pptx',
+      title,
+    });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -436,16 +483,32 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
       return sendError(res, 400, 'Invalid filename');
     }
 
-    const { resolve, join } = await import('path');
+    // The tenant comes from the verified context, never from the request. The
+    // router sits behind requireOrganizationContext, so a miss here is a
+    // misconfigured chain; refuse rather than fall back to a shared directory.
+    let callerOrgId: number;
+    try {
+      callerOrgId = getOrganizationId(req);
+    } catch {
+      return sendError(res, 403, 'Tenant context required');
+    }
+
+    const { basename, join } = await import('path');
     const { access, stat } = await import('fs/promises');
     const { createReadStream } = await import('fs');
 
-    const docDir = resolve(process.cwd(), 'generated_documents');
-    const filePath = join(docDir, safe);
-
-    // Ensure the resolved path is within generated_documents (prevent traversal)
-    if (!filePath.startsWith(docDir)) {
-      return sendError(res, 400, 'Invalid path');
+    // IAM-07: a generated file lives under generated_documents/org-<id>/ (see
+    // services/tools documents.generate_docx) and the resolver, given the
+    // caller's organization, admits nothing outside that prefix. Another
+    // tenant's file — and a legacy flat file, which has no owner on disk — is
+    // therefore indistinguishable from a missing one. basename() is belt and
+    // braces: the character class above already forbids separators.
+    const filePath = resolveDocumentPath(
+      join('generated_documents', `org-${callerOrgId}`, basename(safe)),
+      { organizationId: callerOrgId }
+    );
+    if (!filePath) {
+      return sendError(res, 404, 'Document not found');
     }
 
     await access(filePath);
@@ -484,7 +547,7 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
         actorEmail,
         backendRoute: `/documents/download/${safe}`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { filename: safe, fileSize: fileStat.size, exportHash },
       } as never);
 

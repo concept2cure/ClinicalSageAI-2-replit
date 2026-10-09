@@ -1,0 +1,24 @@
+# Failing-first: EctdCompile on a follow-up whose only act is a withdrawal — 2026-09-29, W5/D7, WO-9 Click 6
+# Found in the browser on the rebuilt demo: 0001 withdrew the 0000 leaf at 3.2.S.4.2 (rehearsal).
+#  - no 'Download package (.zip)' (the gate was leafFilesRendered > 0)
+#  - the leaf hierarchy said 'This backbone is not well-formed XML' for a well-formed us-regional.xml with no Module 1 leaf
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx
+
+ × client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > can still be downloaded: it is a package, with no content file of its own 1041ms
+   → Unable to find an accessible element with the role "button" and name `/Download package \(\.zip\)/`
+ × client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > is not called a working document: its backbone is the package's own 130ms
+   → expected <div …(1)><span …(1)></span></div> to be null
+ × client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > says a well-formed backbone with no leaf carries none, rather than calling it malformed 99ms
+   → expected 'Leaf hierarchyindex.xml — ICH backbon…' not to match /not well-formed/
+ × client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > reads a withdrawal as one: the leaf it withdraws, and no file 93ms
+   → expected 'Leaf hierarchyindex.xml — ICH backbon…' to match /withdraws \.\.\/0000\/index\.xml…/0000\
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > still says so when a backbone really is not well-formed 98ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > a draft compile — no package built — keeps the working-document caveat and offers no package 95ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > can still be downloaded: it is a package, with no content file of its own
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > is not called a working document: its backbone is the package's own
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > says a well-formed backbone with no leaf carries none, rather than calling it malformed
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up whose only act is a withdrawal > reads a withdrawal as one: the leaf it withdraws, and no file
+    655|   it('reads a withdrawal as one: the leaf it withdraws, and no file', …
+ Test Files  1 failed (1)
+      Tests  4 failed | 30 passed (34)

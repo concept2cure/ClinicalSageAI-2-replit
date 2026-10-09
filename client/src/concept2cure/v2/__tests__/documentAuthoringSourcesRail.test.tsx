@@ -264,6 +264,17 @@ describe('DocumentAuthoring — recording a source', () => {
     expect(await screen.findByText(/No project sources available/)).toBeTruthy();
   });
 
+  it('says the data room could not be read, rather than that it is empty (GE-H-1, 2026-09-28)', async () => {
+    // A failed read set the same [] as an empty data room, and the picker told
+    // the author to add documents to a data room that may already hold them.
+    mockApi({ projectSources: () => fail(500, { error: 'boom' }) });
+    await openSourcesRail();
+    fireEvent.click(await screen.findByText(/Record a source/));
+    expect(await screen.findByText(/data room could not be read/)).toBeTruthy();
+    expect(screen.queryByText(/No project sources available/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
+  });
+
   it('surfaces the server’s refusal instead of reporting success', async () => {
     mockApi({
       projectSources: () => ok({ sources: [{ id: 11, title: 'good.pdf', extractionStatus: 'extracted' }] }),

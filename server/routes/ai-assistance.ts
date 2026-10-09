@@ -9,6 +9,8 @@ export function setAIService(service: AIProviderRouter) {
   openaiService = service;
 }
 import { z } from 'zod';
+import { isTerminalGatewayError } from '../services/ai-gateway/gateway-outcome';
+import { classifyGatewayError, GATEWAY_ERROR_HTTP_STATUS } from '../services/ai-gateway/gateway-error-map';
 import { getOtelDiagnostics } from '../services/telemetry/opentelemetry';
 import { opaClient } from '../services/policy/opaClient';
 
@@ -22,6 +24,22 @@ try {
 }
 
 const router = Router();
+
+/**
+ * Answer a gateway refusal as what it is. Until 2026-09-26 both handlers
+ * caught it as an outage, re-sent the refused content through the legacy
+ * router, and answered 200 with template text — so a request the tenant's
+ * placement policy excluded read as a successful review (D6).
+ */
+function sendGatewayRefusal(res: import('express').Response, error: unknown) {
+  const { code, message } = classifyGatewayError(error);
+  return res.status(GATEWAY_ERROR_HTTP_STATUS[code]).json({
+    success: false,
+    error: { code, message },
+    isRealAI: false,
+    fallback: false,
+  });
+}
 
 // Input validation schemas
 const assistRequestSchema = z.object({
@@ -172,6 +190,9 @@ Provide specific, actionable recommendations with regulatory citations where app
           isRealAI: true
         });
       } catch (gatewayError) {
+        // A refusal is the answer, not an outage: it goes to the handler's
+        // catch, which reports it. Only a provider failure reaches the legacy path.
+        if (isTerminalGatewayError(gatewayError)) throw gatewayError;
         console.warn('[AI Assistance] AI Gateway failed, trying legacy provider:', gatewayError);
         // Fall through to legacy provider
       }
@@ -201,6 +222,7 @@ Provide specific, actionable recommendations with regulatory citations where app
           isRealAI: true
         });
       } catch (aiError) {
+        if (isTerminalGatewayError(aiError)) throw aiError;
         logAIRequest('/assist', false, aiError, {
           task, documentType, fallbackUsed: true
         });
@@ -233,6 +255,7 @@ Provide specific, actionable recommendations with regulatory citations where app
       task: req.body.task,
       documentType: req.body.documentType
     });
+    if (isTerminalGatewayError(error)) return sendGatewayRefusal(res, error);
     
     // Provide user-friendly error message
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
@@ -321,6 +344,7 @@ router.post('/verify', async (req, res) => {
           isRealAI: true,
         });
       } catch (gatewayError) {
+        if (isTerminalGatewayError(gatewayError)) throw gatewayError;
         console.warn('[AI Assistance] AI Gateway verification failed:', gatewayError);
       }
     }
@@ -362,6 +386,7 @@ router.post('/verify', async (req, res) => {
           isRealAI: true,
         });
       } catch (aiError) {
+        if (isTerminalGatewayError(aiError)) throw aiError;
         logAIRequest('/verify', false, aiError, { fallbackUsed: true });
       }
     }
@@ -384,6 +409,7 @@ router.post('/verify', async (req, res) => {
     
   } catch (error) {
     logAIRequest('/verify', false, error);
+    if (isTerminalGatewayError(error)) return sendGatewayRefusal(res, error);
     
     console.error('Content verification error:', error);
     // `credibility: 0` was here. Zero is a verdict — "this content has no

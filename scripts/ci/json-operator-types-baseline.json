@@ -1,0 +1,4 @@
+{
+  "$comment": "Server statements that apply a jsonb operator (||, jsonb_set, jsonb_strip_nulls, COALESCE(col, '{}'::jsonb), ...) to a column Drizzle declares json, keyed file#table.column with a count and a written reason. Read by scripts/ci/check-json-operator-types.mjs. Every such statement fails on every execution (json has no ||; COALESCE cannot convert jsonb to json), so this file starts empty and an entry is a decision a person writes by hand, never a snapshot. Fix instead: cast the column first, COALESCE(col::jsonb, '{}'::jsonb) || $1::jsonb. An entry without a reason fails the gate.",
+  "entries": {}
+}

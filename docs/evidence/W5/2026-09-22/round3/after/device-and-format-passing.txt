@@ -1,0 +1,614 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/pathway-engines/__tests__/assemble-technical-file-multisource.test.ts > assembleTechnicalFileFromCore multi-source resolution > materializes coauthor + unified leaves and surfaces the ctd_onboarding leaf as unresolved
+{
+  "timestamp": "2026-09-23T07:13:07.718Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "ctd_onboarding_documents",
+        "documentId": 500,
+        "documentUuid": null,
+        "reason": "ctd_onboarding_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/pathway-engines/__tests__/assemble-technical-file-multisource.test.ts > assembleTechnicalFileFromCore multi-source resolution > materializes coauthor + unified leaves and surfaces the ctd_onboarding leaf as unresolved
+{
+  "timestamp": "2026-09-23T07:13:07.720Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-multisource.test.ts > assembleTechnicalFileFromCore multi-source resolution > materializes coauthor + unified leaves and surfaces the ctd_onboarding leaf as unresolved 105ms
+stdout | server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > packages the authored MDR sections into a real ZIP and returns the bytes
+{
+  "timestamp": "2026-09-23T07:13:11.615Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 4,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > packages the authored MDR sections into a real ZIP and returns the bytes 145ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > refuses honestly when the program has no authored content in the caller organization 3ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > filters by the requested regulation — an mdr-only program has no ivdr technical file 1ms
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them
+{
+  "timestamp": "2026-09-23T07:13:15.329Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 11,
+    "skipped": 3,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-09-23T07:13:15.401Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 9999,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-09-23T07:13:15.402Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them 167ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present 62ms
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+{
+  "timestamp": "2026-09-23T07:13:19.421Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 8,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-09-23T07:13:19.514Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "44444444-4444-4444-8444-444444444444",
+        "reason": "vault document not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-09-23T07:13:19.515Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it 205ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP 79ms
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-09-23T07:13:21.716Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T07:13:21.717Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-09-23T07:13:21.718Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > registers a handler for every submission-center tool 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > exposes every submission-center tool in ALL_ANA_TOOLS with a valid schema 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > diffs prior vs desired and assigns operations 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > forwards prior href + prior_sequence_prefix so a replace emits modified-file 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > refuses to auto-load a prior sequence without tenant context (org from ToolContext only) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > does NOT engage auto-load when explicit prior_leaves are supplied (org not required) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > maps v3 operations to RPS and emits one document + CoU per leaf 447ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > points relatedContextOfUse at the prior sequence for a lifecycle op 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > returns serialized RPS message XML when include_xml is set 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf.xml per study 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > check_ectd_cross_references (pure) > resolves present references and flags missing targets 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > validate_ectd_package (pure) > returns a verdict, score, and findings for a leaf set 75ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > explain_validation_findings refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > cross_region_gap_analysis validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > dispatch_qc_check refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > trace_provenance refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence validates required inputs before touching the core 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > check_consistency validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules returns the corpus without tenant context 16ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules validates the region enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec returns a single spec by id 23ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec filters by market without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec validates the family enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template returns a document spine by id 12ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template lists a family without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting enforces a spec and flags a bad name 10ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting errors on an unknown spec 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_submission_requirements returns and assesses a type 11ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility checks all-criteria-met 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility errors on an unknown designation 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change recommends a category from flags 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change lists the catalog without flags 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure gap-checks a CER 10ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device applies the MDR rules 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_reviewer_checklist returns the 510(k) reviewer questions 20ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device validates the framework 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_biocompatibility_endpoints returns endpoints for a permanent implant 10ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure now handles rmf 15ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint assembles the reverse-workflow view 38ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint validates the submission type 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer refuses without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer requires a report_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy maps device evidence across regions 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy validates the kind 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_regulatory_timeline returns the 510(k) RTA + decision goal 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint now includes a readiness scorecard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_udi computes the GS1 check digit 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_electrical_standards adds collaterals from facts 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_sterilization_requirements resolves the method standard 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_regulatory_capabilities enumerates the layer 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product maps PMOA to the lead center 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product validates components 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_qms returns the clause structure and gap-checks 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_labeling adds sterile elements for a sterile device 10ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document requires a numeric document_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document validates required inputs 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared-clean PDF is NOT assessed for security or size — the verdict says so 4ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared violation is still reported, and marked as declared 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a file with no extension or format is not judged for type — it used to pass 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > no files is not a conformant package 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > reads encryption from the bytes and calls a measured clean set conformant 316ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > does not flag an FDA form submitted as FDA issued it 100ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF attachments" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF (eSTAR form)" and never read is not_assessed, with PDF_NO_SECURITY listed 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF/A-1b" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "eSTAR" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > an unread leaf declared as a non-PDF format is still not assessed for security 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > a declared encrypted:true is still a finding, not a not-assessed entry 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "estar") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "form") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.docx" (declared "a") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "attachments") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd refuses the fragment token "x.pdf" (declared "pd") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd refuses the fragment token "x.pdf" (declared "df") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF (eSTAR form)" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF attachments" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared undefined as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd accepts "x.pdf" declared "PDF/A-1b" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd accepts "x.PDF" declared undefined as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > eu-mdr accepts "td.pdf" declared "pdf/a" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.docx is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xpt is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xml is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xlsx is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.txt is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > pdfa-detect exports the predicate 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a .pdf whose header is past 1 KB is judged for security — and refused, as the packager and transmit guard refuse it 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a .pdf whose bytes are not a PDF is reported under ACCEPTED_FILE_TYPES, not accepted by its extension 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > so does a leaf DECLARED as PDF whose bytes are not a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > secured PDF bytes under a non-.pdf name are still judged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a measured non-PDF leaf (neither name nor header) is judged, not left unassessed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > the packager and the transmit guard use the shared predicate, not an inline copy 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a .pdf whose bytes are not a PDF is an error whatever format is declared 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a file whose extension is not accepted is flagged even when declared as an accepted format 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a declared format that disagrees with an accepted extension is flagged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a declared format that agrees with the extension is not flagged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > an unread file with no extension, judged only by its declared format, is not assessed for type 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > an unread file with no extension declared as a format that is not accepted is still reported 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a read file with no extension whose bytes are a PDF is judged 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > plans, writes a real ZIP, and the ZIP round-trips with manifest + files + checksums 33ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > is content-addressed: identical input yields the same sha256 11ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > pins every entry (files AND implicit folders) to a fixed epoch — no wall-clock timestamps 11ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > reports skipped sources for leaves with no resolvable file 5ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > an entry whose every source was skipped is not present, and the plan is not ready 6ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf no slot claims is reported as unmapped and does not make a complete file not ready 17ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf whose source did not materialize makes the plan not ready, even when every slot is filled 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan > places a matched leaf at its Annex section path and reports nothing skipped for it 4ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan > reports a source as skipped when the file cannot be resolved 2ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan > de-collides duplicate file names within the package 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > materializeTechnicalFile > writes a real ZIP with the manifest, the placed file, and a checksum index 58ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — unmapped leaves are reported, never dropped > reports a resolvable leaf that no manifest entry lists as a source under sectionId "unmapped" 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — unmapped leaves are reported, never dropped > does not double-report a leaf that a section lists but whose file cannot be resolved 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (a) anchored program: hands the ZIP bytes to the governed export consequence 7ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (b) unanchored program: audited-unplaced delivery with the sha256, bytes still returned 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (c) no authored content: 422 NO_AUTHORED_CONTENT, no consequence, no export audit 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (d) program from another organization: 404 and the assembler is never invoked 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (e) size cap: the consequence refusing the bytes is an honest 413, never a 200 with empty data 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /sequences/:seqId/technical-file/assemble > (f) reads the bundle bytes before cleanup and delivers them through the export path 27ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > has unique ids scoped to their market and required fields 4ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > summary counts are internally consistent 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > covers the formats the Submission Center operates 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — eCTD invariants > every eCTD family spec has an index.xml backbone, regional XML, 4-digit sequencing, and lifecycle ops 2ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — eCTD invariants > device/portal families correctly carry no eCTD backbone 0ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > an eCTD spec ruleCorpusRegion resolves to corpus rules 0ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > region-coded specs map to the system region codes (fda|eu|jp) 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > scopes by market 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — clean input > passes well-formed FDA eCTD files with no findings 2ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > flags an uppercase / spaced file name against the naming pattern 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > flags an over-length file name 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > flags an over-length path 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > warns on a non-accepted file type 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > errors on an encrypted file (encryption not allowed) 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > errors when the total exceeds the EU 600 MB submission limit 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — spec-driven (applies to every market) > uses the EU pattern (periods allowed) where FDA would also pass 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — spec-driven (applies to every market) > does not impose a submission size limit where the spec defines none (JP per-file path ok) 1ms
+ ✓ server/services/market-specs/__tests__/estar-advisory-formatting.test.ts > eSTAR advisory formatting (E1 wiring) > resolves the us-estar market spec 2ms
+ ✓ server/services/market-specs/__tests__/estar-advisory-formatting.test.ts > eSTAR advisory formatting (E1 wiring) > validates the built eSTAR package into a well-formed report 2ms
+ ✓ server/services/market-specs/__tests__/estar-advisory-formatting.test.ts > eSTAR advisory formatting (E1 wiring) > flags an encrypted attachment (the case the advisory is meant to catch) 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > marks every required MDR Annex II/III section present for a complete file 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > reports missing GSPR and CER as gaps, never invents them 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > requires analytical + clinical performance and the PER (not a CER) 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > is ready when IVDR performance evidence is supplied 0ms
+ ✓ server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > carries the uuid half of the document reference 1ms
+ ✓ server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > carries every CoreLeaf field and nothing else from the row 1ms
+ ✓ server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > is the projection both submission_leaves packagers use — neither builds a CoreLeaf by hand 1ms
+
+ Test Files  14 passed (14)
+      Tests  164 passed (164)
+   Start at  07:13:02
+   Duration  28.19s (transform 6.42s, setup 298ms, import 12.59s, tests 12.66s, environment 1ms)
+
+=== eSTAR route neighbours ===
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/routes/estar-official-pdf.test.ts
+{
+  "timestamp": "2026-09-23T07:13:41.642Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T07:13:41.643Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts
+{
+  "timestamp": "2026-09-23T07:13:41.643Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > enumerates AcroForm fields into a skeleton map from inline template bytes 78ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > fails closed (422) when no template is available to scaffold against 35ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > honest fail-closed (no template / empty map) > returns 422 with blockers and officialEstarPdf:false; never persists 6ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > end-to-end official PDF when template + verified map present > produces a real PDF and asserts officialEstarPdf:true truthfully 13ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > not ready (no template / empty map) > reports ready:false with blockers and persists nothing 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > ready (template + verified map present) > reports ready:true with no blockers 6ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'device', descriptorId: 'pma-device' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'ivd', descriptorId: 'pma-ivd' } is accepted and fails closed 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'q_sub', variant: 'device', descriptorId: 'q_sub-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'ide', variant: 'ivd', descriptorId: 'ide-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: '513g', variant: 'device', descriptorId: '513g-prestar' } is accepted and fails closed 1ms
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-09-23T07:13:42.704Z",
+  "level": "error",
+  "message": "[510k-estar-routes] estar official-fields preview failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-09-23T07:13:42.706Z",
+  "level": "error",
+  "message": "[510k-estar-routes] estar official-fields preview failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-09-23T07:13:42.707Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-09-23T07:13:42.708Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it
+{
+  "timestamp": "2026-09-23T07:13:42.729Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "The official eSTAR could not be retained (STORAGE_WRITE_FAILED): The document could not be stored."
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > governed wins, request fills the gap, blanks + ignored keys are reported, provenance is persisted 11ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > without useProgramData the loader is never consulted and the response carries no fieldReport 6ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > with nothing governed and nothing requested no official eSTAR is produced at all 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: one row per mapped field with value + source; unsourced keys are null/null but name their declared home; no request data 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: the Phase 3 homes are sourced when the program and registration rows hold them 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 404 when the ident resolves to nothing in this organization — and reads no governed data 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 422 ESTAR_FIELD_MAP_NOT_POPULATED when the descriptor has no verified map 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 400 on a bad query (missing ident / unknown variant) 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > retains the delivered bytes and reports where they went 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it 8ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > says plainly when a legacy project has no vault, and still delivers 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > names the erased keys in the 200 body AND in the registered metadata 151ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > reports an EMPTY erased list rather than omitting it (assessed ≠ unassessed) 142ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 when every written value is one the form erases (P3) 120ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 on the reviewer's non-string declaring entity (P1, over HTTP) 34ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (governed path) > says the same thing beside the fieldReport, and in the metadata 12ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > files the document and says where it went 399ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > the governed record names what was filed, not only the form 404ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > reads the tenant and the program from the REQUEST, never from the body 414ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > hands the resolver a client it can actually query with 366ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses the export, with the reason, when a section is not fileable 262ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses a slot the template does not declare 282ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > rejects a malformed attachment request at the schema, before any work 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > does not inflate the administrative field report by one 401ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > never builds a resolver when no attachment was asked for 137ms
+stdout | tests/routes/estar-build-pma-package.test.ts
+{
+  "timestamp": "2026-09-23T07:13:47.023Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T07:13:47.024Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/estar-build-pma-package.test.ts
+{
+  "timestamp": "2026-09-23T07:13:47.025Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > renders one PDF per authored 814.20 section plus the combined PDF/DOCX, labelled as a PMA draft — never the six 510(k) slots 35ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed 510(k) program renders EVERY authored section, not six fixed slots 13ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed denovo document is cut per section and labelled as itself, never as a 510(k) 12ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed cer document is cut per section and labelled as itself, never as a 510(k) 8ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > the LEGACY store keeps the six 510(k) slots those slots were built for 10ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > does not call the official eSTAR producible on a template whose bytes are not the pinned ones 26ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > computes the PMA assembly verdict against the PMA modules 27ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > a 510(k) carries its device properties in the request; without them the conditional sections stay undetermined 92ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > accepts the PMA supplement type and scopes the required modules to it 27ms
+stdout | tests/routes/estar-export-governance.test.ts
+{
+  "timestamp": "2026-09-23T07:13:49.079Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T07:13:49.080Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/estar-export-governance.test.ts
+{
+  "timestamp": "2026-09-23T07:13:49.081Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > answers 500 PROJECT_RESOLUTION_FAILED — never 404 — when the anchor READ fails
+{
+  "timestamp": "2026-09-23T07:13:49.408Z",
+  "level": "error",
+  "message": "[510k-estar-routes] project resolution failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > fails closed when governed persistence fails
+{
+  "timestamp": "2026-09-23T07:13:49.459Z",
+  "level": "error",
+  "message": "[510k-estar-routes] governed export failure",
+  "context": {
+    "err": "persistence failed"
+  }
+}
+
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > creates governed bundle consequence with durable references 30ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > 404s when the project does not resolve in the caller org 1ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > answers 500 PROJECT_RESOLUTION_FAILED — never 404 — when the anchor READ fails 3ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > still 404s on schema absence (42P01): a database without the table has no row to find 1ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > delivers an audited (registry-unplaced) export for a program-spine UUID project 11ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > places the export in the registry when the program HAS a C1 project anchor 8ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > keeps the unplaced path when the program resolves but has NO anchor 6ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > assembles content server-side from authored sections with useProjectContent 7ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > a program anchor reads ITS governed document, not the org-wide legacy store (ESTAR-01/02) 9ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > a program anchor with nothing authored in its governed document 422s and names the store 1ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > 422s honestly when useProjectContent finds no authored sections 1ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > fails closed when governed persistence fails 6ms
+stderr | tests/routes/estar-export-governance.test.ts > an unplaced export whose audit row does not persist > is refused with a 500 and no downloadable bytes
+{
+  "timestamp": "2026-09-23T07:13:49.548Z",
+  "level": "error",
+  "message": "[510k-estar-routes] governed export failure",
+  "context": {
+    "err": "UNAUDITED_EXPORT_REFUSED: the export was not delivered because its audit row did not persist (no database pool: the chained audit_logs row was not attempted)"
+  }
+}
+
+ ✓ tests/routes/estar-export-governance.test.ts > POST /api/510k/estar/assemble — the device-assembly contract over HTTP > reports artifactKind none with blockers when nothing is authored 26ms
+ ✓ tests/routes/estar-export-governance.test.ts > POST /api/510k/estar/assemble — the device-assembly contract over HTTP > reports a draft-only artifact for authored content with no vendored template 55ms
+ ✓ tests/routes/estar-export-governance.test.ts > an unplaced export whose audit row does not persist > is refused with a 500 and no downloadable bytes 10ms
+
+ Test Files  3 passed (3)
+      Tests  66 passed (66)
+   Start at  07:13:38
+   Duration  11.16s (transform 2.32s, setup 142ms, import 6.48s, tests 3.84s, environment 0ms)
+
+=== skeptic probe rerun: formatting-verdict/verdict.probe.mts ===
+C estar {"v":"not_assessed","f":["warning:ACCEPTED_FILE_TYPES","warning:ACCEPTED_FILE_TYPES"],"na":["PDF_NO_SECURITY"]}
+F pre PDF attachments {"v":"conformant","f":[],"na":[]}
+F cur PDF attachments {"v":"not_assessed","f":[],"na":["PDF_NO_SECURITY"]}
+F pre PDF/A-1b {"v":"conformant_with_warnings","f":["warning:ACCEPTED_FILE_TYPES"],"na":[]}
+F cur PDF/A-1b {"v":"not_assessed","f":[],"na":["PDF_NO_SECURITY"]}
+F pre eSTAR {"v":"conformant","f":[],"na":[]}
+F cur eSTAR {"v":"not_assessed","f":["warning:ACCEPTED_FILE_TYPES"],"na":["PDF_NO_SECURITY"]}
+F pre XPT {"v":"conformant_with_warnings","f":["warning:ACCEPTED_FILE_TYPES"],"na":[]}
+F cur XPT {"v":"not_assessed","f":["warning:ACCEPTED_FILE_TYPES"],"na":["PDF_NO_SECURITY"]}
+E {"v":"conformant_with_warnings","f":["warning:ACCEPTED_FILE_TYPES"],"na":[]}
+A estar {"v":"nonconformant","f":["error:ACCEPTED_FILE_TYPES","warning:ACCEPTED_FILE_TYPES"],"na":[]}
+B estar {"v":"conformant_with_warnings","f":["warning:ACCEPTED_FILE_TYPES","warning:ACCEPTED_FILE_TYPES"],"na":[]}
+D cur {"v":"conformant_with_warnings","f":["warning:ACCEPTED_FILE_TYPES"],"na":[]}
+D pre {"v":"conformant_with_warnings","f":["warning:ACCEPTED_FILE_TYPES"],"na":[]}
+A-control (no declared fmt) {"v":"nonconformant","f":["error:ACCEPTED_FILE_TYPES"],"na":[]}
+B-control (no declared fmt) {"v":"conformant_with_warnings","f":["warning:ACCEPTED_FILE_TYPES"],"na":[]}
+H {"v":"conformant","f":[],"na":[]}
+=== skeptic probe rerun: uuid-projection/tf-ready.probe.test.ts ===
+[noIV] manifest.ready= true result.ready= true skipped= []
+[MDR+IV] manifest.ready(pre-commit value)= true result.ready(post-commit)= true zip manifest.json ready= true fileCount= 8 unresolved= 0 skipped= [{"sectionId":"unmapped","source":"IV.1","reason":"no technical-file section matched this leaf (IV.1: EU declaration of conformity — Annex IV)"},{"sectionId":"unmapped","source":"IV.3","reason":"no technical-file section matched this leaf (IV.3: EUDAMED registration — actor, device and UDI data)"},{"sectionId":"unmapped","source":"IV.5","reason":"no technical-file section matched this leaf (IV.5: Person responsible for regulatory compliance — Article 15)"}]
+[IVDR] manifest.ready(pre-commit value)= true result.ready(post-commit)= true skipped= [{"sectionId":"unmapped","source":"II.6.3.a","reason":"no technical-file section matched this leaf (II.6.3.a: Claimed shelf life and real-time stability)"}]
+[SEQ] result.ready= false | ZIP manifest.json ready= false | CER entry in ZIP manifest: {"status":"missing","sources":[]} | CER pdfs in ZIP= 0 | skipped= [{"sectionId":"clinical-evaluation","source":"II.6.1.g","reason":"no resolvable source file for the leaf document"}]
+[KEY] unresolved= [{"documentTable":"coauthor_documents","documentId":8888,"documentUuid":"12345678-1234-4234-8234-123456789abc","reason":"coauthor_documents row not found in this organization"}] | unresolvedKeys= [ 'coauthor_documents:12345678-1234-4234-8234-123456789abc' ] | compile lookup key= coauthor_documents:12345678-1234-4234-8234-123456789abc | compile would call it materialized: false
+      Tests  5 passed (5)

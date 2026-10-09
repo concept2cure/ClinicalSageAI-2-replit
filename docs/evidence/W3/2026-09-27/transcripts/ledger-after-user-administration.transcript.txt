@@ -1,0 +1,24 @@
+ledger 200, 24 entries
+  2026-09-27T23:38:31.360Z | JM Smith | Password verified: email code sent | user:1 | chained=true
+  2026-09-27T23:39:01.131Z | JM Smith | Password verified: email code sent | user:1 | chained=true
+  2026-09-27T23:39:01.166Z | JM Smith | Signed in: password and second factor verified | user:1 | chained=true
+  2026-09-27T23:39:01.218Z | JM Smith | Authenticator enrolment started: a new secret was issued | user:1 | chained=true
+  2026-09-27T23:39:23.030Z | JM Smith | Password verified: authenticator code requested | user:1 | chained=true
+  2026-09-27T23:39:30.079Z | JM Smith | Signed in: password and second factor verified | user:1 | chained=true
+  2026-09-27T23:39:30.175Z | JM Smith | User Invited | user:3 | chained=true
+  2026-09-27T23:39:30.604Z | JM Smith | User Invited | user:4 | chained=true
+  2026-09-27T23:39:30.963Z | JM Smith | User Invited | user:5 | chained=true
+  2026-09-27T23:40:07.029Z | OQ Second Signer | Password verified: email code sent | user:3 | chained=true
+  2026-09-27T23:40:07.069Z | OQ Second Signer | Signed in: password and second factor verified | user:3 | chained=true
+  2026-09-27T23:40:07.107Z | OQ Second Signer | Authenticator enrolment started: a new secret was issued | user:3 | chained=true
+  2026-09-27T23:40:07.137Z | OQ Second Signer | Two-step verification turned on | user:3 | chained=true
+  2026-09-27T23:40:08.601Z | OQ Platform Administrator | Password verified: email code sent | user:4 | chained=true
+  2026-09-27T23:40:08.639Z | OQ Platform Administrator | Signed in: password and second factor verified | user:4 | chained=true
+  2026-09-27T23:40:08.671Z | OQ Platform Administrator | Authenticator enrolment started: a new secret was issued | user:4 | chained=true
+  2026-09-27T23:40:08.694Z | OQ Platform Administrator | Two-step verification turned on | user:4 | chained=true
+  2026-09-27T23:40:10.205Z | OQ Standing Subject | Password verified: email code sent | user:5 | chained=true
+  2026-09-27T23:40:10.244Z | OQ Standing Subject | Signed in: password and second factor verified | user:5 | chained=true
+  2026-09-27T23:40:10.277Z | OQ Standing Subject | Authenticator enrolment started: a new secret was issued | user:5 | chained=true
+  2026-09-27T23:40:10.310Z | OQ Standing Subject | Two-step verification turned on | user:5 | chained=true
+  2026-09-27T23:40:33.893Z | JM Smith | Password verified: authenticator code requested | user:1 | chained=true
+  2026-09-27T23:40:33.931Z | JM Smith | Signed in: password and second factor verified | user:1 | chained=true

@@ -1,0 +1,228 @@
+# MDN close repair — failing-first, tests written, implementation NOT yet changed (2026-09-23T10:46:38Z)
+# git diff of implementation files is the state reviewed by the skeptic (as2-transport.ts requestWrittenBeforeAnswer rule + requestReachedServer 'finish' boundary)
+===== server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — control over a real mTLS connection > a trusted client certificate and an accepting MDN for our message is received 27ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — the agency refuses our client certificate at the TLS handshake: NOT_DELIVERED > TLSv1.3: rejected (transport), nothing reached the application, never in transit 11ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — the agency refuses our client certificate at the TLS handshake: NOT_DELIVERED > TLSv1.2: rejected (transport), nothing reached the application, never in transit 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 500: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 10ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 502: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 503: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 504: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 9ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > HTTP 503 on the request head, body never read: in transit, never "Nothing reached FDA" 219ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > HTTP 302 on the request head, body never read: in transit, never "Nothing reached FDA" 220ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > httpsPost settles once on an early answer; the request error the stop raises is neither unhandled nor a second settlement 383ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > an early 503 from a server that keeps reading: the rest of the body is not sent; the attempt is still held 160ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > a 503 status sent early, but the answer ended only after the server read the whole body — in transit 281ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > a 503 after the server read the whole 32 MiB body is in transit 193ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 400: rejected (gateway), never in transit 12ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 401: rejected (gateway), never in transit 8ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 403: rejected (gateway), never in transit 8ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 404: rejected (gateway), never in transit 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 405: rejected (gateway), never in transit 8ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 409: rejected (gateway), never in transit 8ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 411: rejected (gateway), never in transit 8ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 413: rejected (gateway), never in transit 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 415: rejected (gateway), never in transit 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 422: rejected (gateway), never in transit 8ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > TLSv1.3: the server resets after reading the whole body — in transit, never rejected 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > TLSv1.2: the server resets after reading the whole body — in transit, never rejected 7ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > 200 headers and part of the MDN, then a reset: settles promptly as in transit (no hang) 29ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 301 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 302 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 307 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 100 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 1ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 500 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 5ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 502 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 1ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 503 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 1ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 504 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 1ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 302 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 2ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 307 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > a RequestSentTransportError is DELIVERED_UNCONFIRMED; any other thrown error is NOT_DELIVERED 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_TLSV13_ALERT_CERTIFICATE_REQUIRED / x is the peer refusal alert "certificate required" 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_SSLV3_ALERT_BAD_CERTIFICATE / x is the peer refusal alert "bad certificate" 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > EPROTO / write EPROTO C0:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca:../ssl/record/rec_layer_s3.c:1605:SSL alert number 48 is the peer refusal alert "unknown ca" 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_DECRYPTION_FAILED_OR_BAD_RECORD_MAC (SSL routines:tls_get_more_records:decryption failed or bad record mac) is not a peer refusal alert 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR (tlsv1 alert internal error) is not a peer refusal alert 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ECONNRESET (socket hang up) is not a peer refusal alert 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ETIMEDOUT (read ETIMEDOUT) is not a peer refusal alert 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > CERT_HAS_EXPIRED (certificate has expired) is not a peer refusal alert 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.3: the agency read the whole bundle and answered; its answer fails decryption — in transit, never "Nothing reached FDA" 13ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.2: the agency read the whole bundle and answered; its answer fails decryption — in transit, never "Nothing reached FDA" 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.3: 200 headers arrive, then the MDN record fails decryption — in transit 162ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.2: 200 headers arrive, then the MDN record fails decryption — in transit 162ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLS 1.3: a client-certificate refusal 60 ms away (each way) — rejected, nothing written, never in transit 254ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > control: a trusted certificate 60 ms away (each way) is received — the session ticket, not the window, releases the request 376ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > the TLS 1.3 settle window is at least 1 s — longer than any realistic round trip to the agency 1ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > HTTP 502 right after the whole body: DELIVERED_UNCONFIRMED on every attempt 998ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > a reset right after the whole body: RequestSentTransportError (DELIVERED_UNCONFIRMED) on every attempt 799ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > through FdaEsgGateway: a 502 after the whole bundle is in transit, never rejected, never proof that nothing was sent 205ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > nothing before the server accepted this client (the request still corked, not a byte written) is held 1ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write, a reset, a timeout or a local decryption failure (the server sent bytes) is held — whether or not Node had fired finish 2ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "sslv3 alert bad certificate" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv13 alert certificate required" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv1 alert unknown ca" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv1 alert access denied" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "ssl/tls alert handshake failure" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "sslv3 alert bad record mac" refused us or our bytes: not held 1ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > a peer alert that refuses nothing ("internal error") after an authenticated write is held 1ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > once any response has been parsed, every failure is held — even a peer alert 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > HTTP 503 on the request head, body never read: in transit, never "Nothing reached FDA"
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > HTTP 302 on the request head, body never read: in transit, never "Nothing reached FDA"
+AssertionError: expected TransportError: The agency endpoint answe… { …(2) } to be an instance of GatewayError
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > an early 503 from a server that keeps reading: the rest of the body is not sent; the attempt is still held
+AssertionError: expected 'The agency endpoint answered HTTP 503…' to match /may hold it/
+- Expected:
++ Received:
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 500 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 502 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 503 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 504 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 302 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 307 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says
+AssertionError: expected 'NOT_DELIVERED' to be 'DELIVERED_UNCONFIRMED' // Object.is equality
+Expected: "DELIVERED_UNCONFIRMED"
+Received: "NOT_DELIVERED"
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > HTTP 502 right after the whole body: DELIVERED_UNCONFIRMED on every attempt
+AssertionError: expected [ 'NOT_DELIVERED', …(5) ] to deeply equal [ 'DELIVERED_UNCONFIRMED', …(5) ]
+- Expected
++ Received
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > a reset right after the whole body: RequestSentTransportError (DELIVERED_UNCONFIRMED) on every attempt
+AssertionError: expected [ Array(6) ] to deeply equal [ …(6) ]
+- Expected
++ Received
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > through FdaEsgGateway: a 502 after the whole bundle is in transit, never rejected, never proof that nothing was sent
+AssertionError: expected false not to be false // Object.is equality
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write, a reset, a timeout or a local decryption failure (the server sent bytes) is held — whether or not Node had fired finish
+AssertionError: expected false to be true // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > a peer alert that refuses nothing ("internal error") after an authenticated write is held
+AssertionError: expected false to be true // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > once any response has been parsed, every failure is held — even a peer alert
+AssertionError: expected false to be true // Object.is equality
+- Expected
++ Received
+ Test Files  1 failed (1)
+      Tests  15 failed | 50 passed (65)
+===== server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 1376ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError) 4ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the requiredAgencyMetadata refusal raised by the gateway 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError) 5ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when the SFTP credentials are set but the ssh2-sftp-client module is absent (MDN close) 19ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NOT_DELIVERED (FDA refuses our client certificate at the TLS handshake): row rejected, claim released 33ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — DELIVERED_UNCONFIRMED (HTTP 502 after the whole bundle): in transit, the claim stays transmitting 17ms
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — HTTP 502 from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting 2252ms
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — a reset from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting 2144ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError keeps the claim at transmitting 4ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError keeps the claim at transmitting 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — HTTP 502 from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — a reset from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting
+AssertionError: expected [ 'pending transmitted=false', …(2) ] to deeply equal [ …(3) ]
+- Expected
++ Received
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+===== server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE 358ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress 421ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id 27ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent 41ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared 27ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared 24ms
+ × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared 932ms
+ × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared 824ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing 36ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing 21ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+AssertionError: expected [ …(3) ] to deeply equal [ …(3) ]
+- Expected
++ Received
++   "GATEWAY_TRANSMIT_FAILED prepared",
++   "GATEWAY_TRANSMIT_FAILED prepared",
++   "GATEWAY_TRANSMIT_FAILED prepared",
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+
+# Detail: the separate-process cases (full assertion diffs), same untouched implementation
+===== server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts (-t separate-process)
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > HTTP 502 right after the whole body: DELIVERED_UNCONFIRMED on every attempt 1079ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > a reset right after the whole body: RequestSentTransportError (DELIVERED_UNCONFIRMED) on every attempt 830ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > through FdaEsgGateway: a 502 after the whole bundle is in transit, never rejected, never proof that nothing was sent 222ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'NOT_DELIVERED', …(5) ] to deeply equal [ 'DELIVERED_UNCONFIRMED', …(5) ]
+AssertionError: expected [ Array(6) ] to deeply equal [ …(6) ]
+AssertionError: expected false not to be false // Object.is equality
+      Tests  3 failed | 62 skipped (65)
+===== server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts (-t separate-process)
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — HTTP 502 from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting 4917ms
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — a reset from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting 2231ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'pending transmitted=false', …(2) ] to deeply equal [ …(3) ]
+      Tests  2 failed | 9 skipped (11)
+===== server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts (-t separate-process)
+  "timestamp": "2026-09-23T10:47:46.456Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "95549d17-c5a3-49aa-9d35-88ed9d5eedd3",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): The agency endpoint answered HTTP 502 before the whole message was sent, so it did not take it: bad. Nothing reached the agency: the message was never handed in full to an authenticated gateway.",
+    "status": "prepared"
+  "timestamp": "2026-09-23T10:47:46.718Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "95549d17-c5a3-49aa-9d35-88ed9d5eedd3",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): The agency endpoint answered HTTP 502 before the whole message was sent, so it did not take it: bad. Nothing reached the agency: the message was never handed in full to an authenticated gateway.",
+    "status": "prepared"
+  "timestamp": "2026-09-23T10:47:47.007Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "95549d17-c5a3-49aa-9d35-88ed9d5eedd3",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): The agency endpoint answered HTTP 502 before the whole message was sent, so it did not take it: bad. Nothing reached the agency: the message was never handed in full to an authenticated gateway.",
+    "status": "prepared"
+ × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared 969ms
+  "timestamp": "2026-09-23T10:47:47.401Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "b703d461-785e-4608-8612-6380af92b751",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: socket hang up. Nothing reached the agency: the message was never handed in full to an authenticated gateway.",
+    "status": "prepared"
+  "timestamp": "2026-09-23T10:47:47.631Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "b703d461-785e-4608-8612-6380af92b751",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: socket hang up. Nothing reached the agency: the message was never handed in full to an authenticated gateway.",
+    "status": "prepared"
+  "timestamp": "2026-09-23T10:47:47.896Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "b703d461-785e-4608-8612-6380af92b751",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: socket hang up. Nothing reached the agency: the message was never handed in full to an authenticated gateway.",
+    "status": "prepared"
+ × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared 845ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ …(3) ] to deeply equal [ …(3) ]
+      Tests  2 failed | 8 skipped (10)

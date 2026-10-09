@@ -198,7 +198,9 @@ export async function assembleOrgCroPortfolio(
     pool.query(
       `SELECT ta.client_id, u.name
          FROM cro_team_assignments ta
-         JOIN users u ON u.id = ta.user_id
+         -- actor_name, not users: a lead who has left stays the lead of record
+         -- rather than dropping out and promoting the next person (D3, 2026-09-29).
+         LEFT JOIN LATERAL public.actor_name(ta.user_id) u ON TRUE
         WHERE ta.client_id = ANY($1) AND ta.organization_id = $2 AND ta.status = 'active'
         ORDER BY (ta.study_id IS NULL AND ta.submission_id IS NULL) DESC,
                  (ta.assignment_type = 'primary') DESC,

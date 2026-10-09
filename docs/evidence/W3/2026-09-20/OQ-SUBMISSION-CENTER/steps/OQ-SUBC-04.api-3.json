@@ -1,0 +1,39 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/submissions/sequences/26/leaves",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 9,
+    "rateLimitRetries": 0,
+    "body": [
+      {
+        "id": 25,
+        "sequenceId": 26,
+        "sectionCode": "m1.2",
+        "title": "Cover letter",
+        "granularity": null,
+        "lifecycleOp": "new",
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "6ba53a46-5d64-47f8-8528-1cc87f678aa9",
+        "documentType": null,
+        "leafGuid": null,
+        "parentLeafId": null,
+        "checksum": null,
+        "documentContentSha256": "cd3fc0888570481b077177afb9f6313086d8e345ec60dbb7fb0dcca46dec5421",
+        "documentPinnedAt": "2026-09-21T16:27:22.584Z",
+        "organizationId": 2,
+        "createdBy": 1,
+        "createdAt": "2026-09-21T16:27:22.585Z",
+        "updatedAt": "2026-09-21T16:27:22.585Z",
+        "deletedAt": null
+      }
+    ]
+  }
+}

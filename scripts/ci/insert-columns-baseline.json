@@ -24,8 +24,6 @@
     "ind_applications.progress_pct",
     "ind_applications.project_id",
     "ind_applications.sponsor",
-    "knowledge_graph_edges.organization_id",
-    "knowledge_graph_nodes.organization_id",
     "lumen_atom_conflicts.atom_id_1",
     "lumen_atom_conflicts.atom_id_2",
     "lumen_atom_conflicts.description",

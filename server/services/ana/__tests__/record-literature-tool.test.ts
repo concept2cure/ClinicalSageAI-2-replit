@@ -9,7 +9,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockRecord, mockPool } = vi.hoisted(() => ({
+const { mockRecord, mockPool, resolveSignerOrgRole } = vi.hoisted(() => ({
+  // 2026-09-28: confirmed writes now need an editor role (registry wrapper,
+  // writeRoleRefusal); these calls model a confirmed person who may edit.
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
   mockRecord: vi.fn(async () => ({
     created: 2,
     updated: 1,
@@ -23,6 +26,8 @@ const { mockRecord, mockPool } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../../db', () => ({ pool: mockPool, db: {} }));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 vi.mock('../../literature-recording.service', () => ({
   recordLiteratureEntries: mockRecord,
   SCREENING_RECORDED_SEPARATELY: 'entries enter the corpus unscreened',
@@ -41,6 +46,7 @@ const ENTRIES = [
 describe('record_literature tool', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resolveSignerOrgRole.mockImplementation(async () => 'member');
     mockRecord.mockResolvedValue({
       created: 2,
       updated: 1,
@@ -63,16 +69,21 @@ describe('record_literature tool', () => {
 
   it('refuses without an organization context (org never comes from input)', async () => {
     const handler = getToolHandler('record_literature')!;
-    const out = JSON.parse(await handler({ entries: ENTRIES }, {} as any));
-    expect(out.recorded).toBe(false);
-    expect(out.error).toMatch(/organization context/i);
+    const out = JSON.parse(await handler({ entries: ENTRIES }, { humanConfirmed: true } as any));
+    // 2026-09-28: record_literature is a confirm-class write, so with no identified
+    // member the registry wrapper (writeRoleRefusal) refuses before the handler's
+    // own organization-context check. The wrapper's refusal is { error } only, with
+    // no `recorded` field — pinned exactly, so a change to that shape is seen.
+    expect(Object.keys(out)).toEqual(['error']);
+    expect(out.error).toMatch(/needs an identified member of the organization\. Nothing was changed\./);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
     expect(mockRecord).not.toHaveBeenCalled();
   });
 
   it('records through the shared service with the ToolContext org', async () => {
     const handler = getToolHandler('record_literature')!;
     const out = JSON.parse(
-      await handler({ entries: ENTRIES }, { organizationId: 42, userId: 9 } as any),
+      await handler({ entries: ENTRIES }, { organizationId: 42, userId: 9, humanConfirmed: true } as any),
     );
     expect(out.recorded).toBe(true);
     expect(out.created).toBe(2);
@@ -88,7 +99,7 @@ describe('record_literature tool', () => {
 
   it('refuses an empty entries payload with guidance instead of a no-op success', async () => {
     const handler = getToolHandler('record_literature')!;
-    const out = JSON.parse(await handler({}, { organizationId: 42 } as any));
+    const out = JSON.parse(await handler({}, { organizationId: 42, userId: 9, humanConfirmed: true } as any));
     expect(out.recorded).toBe(false);
     expect(out.error).toMatch(/no entries/i);
     expect(mockRecord).not.toHaveBeenCalled();
@@ -98,7 +109,7 @@ describe('record_literature tool', () => {
     mockRecord.mockRejectedValueOnce(new Error('relation "literature_entries" does not exist'));
     const handler = getToolHandler('record_literature')!;
     const out = JSON.parse(
-      await handler({ entries: ENTRIES }, { organizationId: 42 } as any),
+      await handler({ entries: ENTRIES }, { organizationId: 42, userId: 9, humanConfirmed: true } as any),
     );
     expect(out.recorded).toBe(false);
     expect(out.error).toMatch(/literature_entries/);

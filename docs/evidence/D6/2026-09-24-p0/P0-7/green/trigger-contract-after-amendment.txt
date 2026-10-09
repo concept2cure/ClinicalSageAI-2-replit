@@ -1,0 +1,17 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the revocation statement from signature-persistence.ts succeeds (supersession + the verification column group in one statement) 16ms
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a superseded row can never be modified again 7ms
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the verification column group cannot change outside a supersession 3ms
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a supersession cannot restore validity or give the superseded signature a status other than revoked 4ms
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the attested columns never change, even in the supersession statement 2ms
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a plain supersession (pointer only) still passes, and DELETE is refused 4ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  01:14:02
+   Duration  6.20s (transform 93ms, setup 96ms, import 39ms, tests 5.78s, environment 0ms)
+
+exit=0

@@ -1,0 +1,5 @@
+# Direct reproduction on c2c_ref_0924 (migrated to trunk 8b9d18c6d), before the fix
+INSERT (org 91860, 'correspondence', 0, source_ref 'issue-A') -> INSERT 0 1
+INSERT (org 91860, 'correspondence', 0, source_ref 'issue-B') ->
+ERROR:  duplicate key value violates unique constraint "c2c_pwi_org_source_type_source_id_unique"
+DETAIL:  Key (org_id, source_type, source_id)=(91860, correspondence, 0) already exists.

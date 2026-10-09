@@ -1,0 +1,93 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Concept2Cure.RI — sign-in second factor (TOTP and emailed codes)
+-- Compliance: 21 CFR Part 11 §11.300 (controls for identification codes and
+--             passwords), ALCOA+ (attributable: a signature is only as
+--             attributable as the sign-in behind it).
+-- Purpose: Records the TOTP step last accepted, so a code verifies once
+--          (RFC 6238 §5.2), and counts the emailed codes one challenge re-issues.
+--
+-- eCTD/CTD Context:
+--   - Module(s): none directly; identity for every governed action and signature.
+--   - Integrity Risk Addressed: a replayed second-factor code.
+--
+-- Determinism Contract:
+--   - Additive columns only, IF NOT EXISTS; replays unchanged (CLAUDE.md Rule 1).
+--
+-- Notes:
+--   - Header added 2026-09-26 (comment only, no statement changed): the
+--     migration-header gate (scripts/ci/require-migration-headers.sh) refused
+--     the push that amended this file. It registers as `drift` in
+--     c2c_migration_journal, which nothing acts on; this note is its record.
+-- =============================================================================
+-- ── Amended in place 2026-09-26 (IAM-18-8; plan P1-3's resend cap; security ─
+--    audit 2026-09-24 IAM-09; docs/evidence/D6/2026-09-25-p1/IAM-18-8/).
+-- ADDED: users.email_otp_resends INTEGER DEFAULT 0 — the number of emailed
+-- codes re-issued to the current sign-in challenge (POST /mfa/resend).
+-- emailOtpService.reissueEmailOtp adds one in a single conditional UPDATE and
+-- refuses past MAX_RESENDS (3); createEmailOtp, which follows the password,
+-- sets it back to 0. Until this column existed nothing counted the codes one
+-- challenge minted: a sixth wrong guess cleared the row and the next resend
+-- refilled the five guesses.
+-- WHY THIS FILE AND NOT A NEW ONE: every file in C2C_MIGRATION_FILES re-runs on
+-- every deploy (CLAUDE.md Rule 1), so an additive IF NOT EXISTS column may be
+-- added to an existing set file in place; a new file would need a line in
+-- scripts/db/migration-set.mjs, which another lane held when this landed. This
+-- file is the set's other users MFA column and already carries the ordering
+-- note below — a server whose shared/schema.ts declares emailOtpResends must
+-- not serve before this runs (the same C-20 mode). The amendment registers as
+-- `drift` in c2c_migration_journal, which nothing acts on; this note is its
+-- record. One creator, like its email_otp_* siblings (0009_email_otp_fields.sql),
+-- which server/db/bootstrap/auth-schema.ts does not carry either; deploy runs
+-- this set before the new image serves. Pinned by
+-- server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts
+-- ("the migration the set runs gives the row what the service writes"): the
+-- file applied to the pre-2026-09-26 shape of users, then createEmailOtp.
+--
+-- A TOTP code is accepted once (RFC 6238 §5.2). Launch row D6; VSR-001 §13.3
+-- item 1. Added 2026-09-23.
+--
+-- mfaService.verifyTOTPToken accepts any code in the ±1-step window and, until
+-- this change, nothing recorded which step had been used. A code that had
+-- verified was therefore accepted again until its window closed: one code opened
+-- two sessions for one user inside one time step
+-- (docs/evidence/W3/2026-09-23/observations/totp-replay.json). RFC 6238 §5.2:
+-- "the verifier MUST NOT accept the second attempt of the OTP after the
+-- successful validation has been issued for the first OTP".
+--
+-- mfa_totp_last_step holds the time step (floor(unix seconds / 30)) of the last
+-- code accepted for the user. A code is accepted only if its step is GREATER
+-- than this value, compared-and-set in one UPDATE ... WHERE ... RETURNING, so two
+-- concurrent verifications of one code cannot both succeed, and a captured code
+-- from an earlier step cannot be used once a later one has been.
+--
+-- NULL means no code has been accepted since this column existed. No backfill:
+-- time steps only move forward, so the first code a user presents after the
+-- deploy is accepted normally and sets the value.
+--
+-- public.users carries no RLS policy and no tenant column (it is never swept),
+-- so this needs neither an organization_id nor a policy. Additive and
+-- idempotent: it re-runs on every deploy (CLAUDE.md Rule 1) as a no-op.
+--
+-- It must be applied before a server carrying shared/schema.ts's
+-- mfaTotpLastStep serves traffic: bare `select().from(users)` expands to every
+-- declared column (the C-20 failure mode, 20260725_users_signing_lockout_columns).
+--
+-- TWO creators, deliberately, as for every other mfa_* column: this file, and
+-- server/db/bootstrap/auth-schema.ts, which re-adds the users auth columns on
+-- the owner connection at every boot (server/db/bootstrap/index.ts). The boot
+-- copy means a server whose image is ahead of its migrations still starts.
+--
+-- Rollback: not a DROP appended to the set (CLAUDE.md Rule 1), and not a DROP
+-- alone: remove the column from BOTH creators and from shared/schema.ts in one
+-- change, then drop it once. ci:migration-drop-safety reads only the migration
+-- set, so it would not see the bootstrap re-create a column dropped here.
+
+ALTER TABLE IF EXISTS users
+  ADD COLUMN IF NOT EXISTS mfa_totp_last_step BIGINT;
+
+-- Amended 2026-09-26 (header note above): codes re-issued to the current
+-- emailed-code challenge. Additive and idempotent; no backfill (0 is right for
+-- every existing row: no challenge is mid-flight across a deploy that matters).
+ALTER TABLE IF EXISTS users
+  ADD COLUMN IF NOT EXISTS email_otp_resends INTEGER DEFAULT 0;

@@ -72,8 +72,10 @@ const MATRIX = {
   modules: [
     { moduleId: 'pv-cockpit', name: 'PV cockpit', minTier: 'professional' },
     { moduleId: 'basic-module', name: 'Basic module', minTier: 'standard' },
+    // Standard tier, but offered to medtech only: Northwind is biotech.
+    { moduleId: 'device-only', name: 'Device module', minTier: 'standard', industries: ['medtech'] },
   ],
-  organizations: [{ id: 42, name: 'Northwind Bio', tier: 'standard' }],
+  organizations: [{ id: 42, name: 'Northwind Bio', tier: 'standard', industryMode: 'biotech' }],
 };
 
 function wire(trials: unknown[], over: { post?: (u: string) => Promise<Response> } = {}) {
@@ -296,6 +298,16 @@ describe('TrialsPanel — opening a grant', () => {
     expect(screen.getByTestId('ml-trial-consequence').textContent).toMatch(
       /already includes Basic module/i,
     );
+  });
+
+  it('does not claim "already included" for a module the workspace\'s industry is not offered', async () => {
+    await mount([]);
+    choose('42', 'device-only', inDays(30));
+    // Tier alone would say "included"; the server refuses it on industry, so the
+    // grant is exactly what would give them access.
+    const note = screen.getByTestId('ml-trial-consequence').textContent ?? '';
+    expect(note).not.toMatch(/already includes/i);
+    expect(note).toMatch(/does not include Device module/i);
   });
 
   it('says what access the grant actually buys when the plan does not include it', async () => {

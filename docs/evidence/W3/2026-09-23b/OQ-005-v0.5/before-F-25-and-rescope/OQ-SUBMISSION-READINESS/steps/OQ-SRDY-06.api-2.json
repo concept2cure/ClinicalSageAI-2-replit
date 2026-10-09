@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/governed-intelligence/contradictions/scan/2147480000",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 20,
+    "rateLimitRetries": 0,
+    "body": {
+      "findings": [],
+      "summary": {
+        "total": 0,
+        "bySeverity": {},
+        "byType": {}
+      }
+    }
+  }
+}

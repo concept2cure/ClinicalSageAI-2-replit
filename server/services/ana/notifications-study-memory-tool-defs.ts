@@ -12,6 +12,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { STATED_REASON_INPUT } from './stated-reason-input';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications + clinical-study + memory tools (migration 20260510).
@@ -82,7 +83,7 @@ export const CREATE_CLINICAL_INVESTIGATOR: AnaTool = {
       role: { type: 'string', enum: ['principal_investigator', 'sub_investigator', 'coordinator', 'other'] },
       institution: { type: 'string' },
       study_id: { type: 'number', description: 'Optional clinical_studies.id to link.' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['full_name', 'role'],
   },
@@ -100,7 +101,7 @@ export const CREATE_FINANCIAL_DISCLOSURE: AnaTool = {
       has_disclosable_interests: { type: 'boolean' },
       disclosure_period_start: { type: 'string', description: 'YYYY-MM-DD.' },
       disclosure_period_end: { type: 'string', description: 'YYYY-MM-DD.' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['investigator_id', 'has_disclosable_interests'],
   },
@@ -118,7 +119,7 @@ export const ADD_DISCLOSURE_INTEREST: AnaTool = {
       description: { type: 'string' },
       monetary_value: { type: 'number' },
       arrangements_to_minimize_bias: { type: 'string' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['disclosure_id', 'interest_type', 'description'],
   },
@@ -147,7 +148,7 @@ export const CREATE_HA_INTERACTION: AnaTool = {
       title: { type: 'string' },
       objective: { type: 'string' },
       submission_id: { type: 'number' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['interaction_type', 'agency', 'title'],
   },
@@ -166,7 +167,7 @@ export const CREATE_REGULATORY_COMMITMENT: AnaTool = {
       regulatory_basis: { type: 'string' },
       source_interaction_id: { type: 'number' },
       submission_id: { type: 'number' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['commitment_type', 'description'],
   },
@@ -198,7 +199,7 @@ export const CREATE_IACUC_PROTOCOL: AnaTool = {
       three_rs_reduction: { type: 'string' },
       three_rs_refinement: { type: 'string' },
       pain_justification: { type: 'string', description: 'Required for category E.' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['protocol_number', 'title', 'pain_category'],
   },
@@ -217,7 +218,7 @@ export const REGISTER_ANIMAL_COHORT: AnaTool = {
       planned_count: { type: 'number' },
       pain_category: { type: 'string', enum: ['B', 'C', 'D', 'E'] },
       housing_location: { type: 'string' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['protocol_id', 'species', 'planned_count', 'pain_category'],
   },
@@ -250,7 +251,7 @@ export const CREATE_IRB_SUBMISSION: AnaTool = {
       vulnerable_population_protections: { type: 'string' },
       is_single_irb: { type: 'boolean' },
       consent_waiver_requested: { type: 'boolean' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['protocol_number', 'title', 'risk_level'],
   },
@@ -267,7 +268,7 @@ export const ADD_IRB_SITE: AnaTool = {
       site_name: { type: 'string' },
       principal_investigator: { type: 'string' },
       local_context: { type: 'string' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['irb_submission_id', 'site_name'],
   },
@@ -298,7 +299,7 @@ export const CREATE_IBC_REGISTRATION: AnaTool = {
       submission_id: { type: 'number', description: 'Optional IND-enabling submission this clearance supports.' },
       involves_recombinant_dna: { type: 'boolean' },
       involves_human_gene_transfer: { type: 'boolean' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['registration_number', 'title', 'biosafety_level'],
   },
@@ -315,7 +316,7 @@ export const ADD_BIOLOGICAL_AGENT: AnaTool = {
       agent_name: { type: 'string' },
       agent_type: { type: 'string', enum: ['virus', 'bacterium', 'fungus', 'toxin', 'viral_vector', 'cell_line', 'recombinant_construct', 'other'] },
       risk_group: { type: 'string', enum: ['RG1', 'RG2', 'RG3', 'RG4'] },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['registration_id', 'agent_name', 'agent_type', 'risk_group'],
   },
@@ -348,7 +349,7 @@ export const CREATE_NONCLINICAL_STUDY: AnaTool = {
       noael: { type: 'string' },
       submission_id: { type: 'number' },
       iacuc_protocol_id: { type: 'number' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['study_number', 'title', 'study_type'],
   },
@@ -431,7 +432,7 @@ export const REVIEW_PROTOCOL_COMPLETENESS: AnaTool = {
 export const FINALIZE_PROTOCOL_DOCUMENT: AnaTool = {
   name: 'finalize_protocol_document',
   description:
-    "Finalize a protocol document. Gated on the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB); rejected with the gaps otherwise. On success it snapshots a major version. Governed + audited (signature).",
+    "Check whether a protocol document can be finalized, against the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB), and return the gaps. This tool does not finalize: finalizing is an electronic signature and AnA cannot sign. Tell the user to finalize from the protocol workspace, where they enter their password.",
   input_schema: { type: 'object', properties: { document_id: { type: 'number' }, reason: { type: 'string' } }, required: ['document_id'] },
 };
 
@@ -469,13 +470,15 @@ export const REVIEW_PROTOCOL_RISK_REGISTER: AnaTool = {
 export const CREATE_PROTOCOL_AMENDMENT: AnaTool = {
   name: 'create_protocol_amendment',
   description:
-    "Open a protocol amendment against a protocol document. Type (major/minor/administrative) plus the affects-consent / affects-risk flags drive the deterministic review path and reconsent trigger (45 CFR 46.109 / 21 CFR 56.110). Governed + audited.",
+    "Open a protocol amendment against a protocol document. Type (major/minor/administrative) and the affects-consent / affects-risk flags are recorded as the sponsor's declaration, and the substantiality assessment compares that declaration against what actually changed in the study design. Pass a flag only if it has been assessed: an omitted flag is stored as NOT DECLARED, never as No. Snapshots the bound study design as the 'before' side. Governed + audited.",
   input_schema: {
     type: 'object',
     properties: {
       protocol_document_id: { type: 'number' }, title: { type: 'string' }, amendment_number: { type: 'string' },
       rationale: { type: 'string' }, amendment_type: { type: 'string', enum: ['major', 'minor', 'administrative'] },
-      affects_consent: { type: 'boolean' }, affects_risk: { type: 'boolean' }, reason: { type: 'string' },
+      affects_consent: { type: 'boolean', description: 'Does the change affect the informed-consent content? Omit if not assessed.' },
+      affects_risk: { type: 'boolean', description: 'Does the change INCREASE risk to subjects or worsen the risk/benefit balance? A risk-reducing change is false. Omit if not assessed.' },
+      reason: { type: 'string' },
     },
     required: ['protocol_document_id', 'title'],
   },
@@ -493,21 +496,22 @@ export const ADD_AMENDMENT_CHANGE: AnaTool = {
 
 export const REVIEW_AMENDMENT: AnaTool = {
   name: 'review_amendment',
-  description: "Read-only amendment readiness: change count, computed review path / reconsent trigger, and any blockers before submission.",
+  description: "Read-only amendment review. Returns submission readiness (a draft with at least one change line item) and a deterministic impact classification: IRB review is ALWAYS required (45 CFR 46.108(a)(3)(iii); 21 CFR 56.108(a)(4)) and the result says whether it is expedited-eligible or convened; re-consent is always reported as the IRB's determination, never as required or not required; and FDA protocol-amendment status under 21 CFR 312.30 for IND studies. Phase and IND status come back with their recorded source; unrecorded inputs are reported as undetermined. Relay the statuses and bases as given — do not upgrade 'undetermined' or 'sponsor_determination_required' to a yes or no.",
   input_schema: { type: 'object', properties: { amendment_id: { type: 'number' } }, required: ['amendment_id'] },
 };
 
 export const REPORT_PROTOCOL_DEVIATION: AnaTool = {
   name: 'report_protocol_deviation',
   description:
-    "Report a protocol deviation. Category + severity (and whether it affects safety) drive the deterministic reportability + timeliness assessment (45 CFR 46.108 / ICH E6). Governed + audited.",
+    "Record a protocol deviation. Severity and affects_safety are a PERSON'S assessment: pass them only when the user has stated them — never propose, infer or default them yourself. Omitted, the deviation is recorded as NOT ASSESSED; it then reports 'assessment_required' and cannot be closed until a person assesses it on the deviation register. Returns what the assessment indicates (prompt IRB report indicated / not indicated / assessment required) with its basis, and the fixed regulatory clocks that apply only if their condition is separately determined (EU CTR Art. 52 serious breach, 7 days; 21 CFR 812.150(a)(4) device emergency deviation, 5 working days). There are no other fixed day counts — relay the status and basis as given. Governed + audited.",
   input_schema: {
     type: 'object',
     properties: {
       protocol_document_id: { type: 'number' }, description: { type: 'string' },
       category: { type: 'string', enum: ['enrollment', 'consent', 'procedure', 'safety', 'data', 'other'] },
-      severity: { type: 'string', enum: ['minor', 'major', 'critical'] },
-      affects_safety: { type: 'boolean' }, root_cause: { type: 'string' }, reason: { type: 'string' },
+      severity: { type: 'string', enum: ['minor', 'major', 'critical'], description: "Only the severity the user stated. Omit if they did not." },
+      affects_safety: { type: 'boolean', description: "Only if the user stated whether it affected subject safety. Omit if not." },
+      root_cause: { type: 'string' }, reason: { type: 'string' },
     },
     required: ['protocol_document_id', 'description'],
   },
@@ -611,7 +615,7 @@ export const REVIEW_DMS_PLAN_COMPLETENESS: AnaTool = {
 
 export const FINALIZE_DMS_PLAN: AnaTool = {
   name: 'finalize_dms_plan',
-  description: "Finalize an NIH DMS plan behind the deterministic completeness gate (all six required elements addressed). Records a governed signature. Governed + audited.",
+  description: "AnA cannot sign. Finalizing an NIH DMS plan is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user to finalize the plan in its workspace.",
   input_schema: { type: 'object', properties: { plan_id: { type: 'number' }, reason: { type: 'string' } }, required: ['plan_id'] },
 };
 
@@ -660,7 +664,7 @@ export const REVIEW_OTHER_SUPPORT: AnaTool = {
 
 export const CERTIFY_OTHER_SUPPORT: AnaTool = {
   name: 'certify_other_support',
-  description: "Certify an NIH Other Support document behind the deterministic readiness gate (every entry complete, foreign components disclosed, no effort overcommitment). Records a governed signature. Governed + audited.",
+  description: "AnA cannot sign. Certifying NIH Other Support is an electronic signature and needs the user's password, so this tool does not certify and writes nothing. Tell the user to certify it in its workspace.",
   input_schema: { type: 'object', properties: { document_id: { type: 'number' }, reason: { type: 'string' } }, required: ['document_id'] },
 };
 
@@ -694,7 +698,7 @@ export const REVIEW_BIOSKETCH_COMPLETENESS: AnaTool = {
 
 export const FINALIZE_BIOSKETCH: AnaTool = {
   name: 'finalize_biosketch',
-  description: "Finalize an NIH biosketch behind the deterministic completeness gate (all required sections addressed). Records a governed signature. Governed + audited.",
+  description: "AnA cannot sign. Finalizing an NIH biosketch is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user to finalize it in its workspace.",
   input_schema: { type: 'object', properties: { biosketch_id: { type: 'number' }, reason: { type: 'string' } }, required: ['biosketch_id'] },
 };
 
@@ -783,7 +787,7 @@ export const REVIEW_EXPORT_CONTROL: AnaTool = {
 
 export const FINALIZE_EXPORT_CONTROL_DETERMINATION: AnaTool = {
   name: 'finalize_export_control_determination',
-  description: "Finalize an export-control determination behind the deterministic readiness gate; persists the computed license-required outcome and FRE finding. Records a governed signature. Governed + audited.",
+  description: "AnA cannot sign. Finalizing an export-control determination is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user to finalize it in the export-control workspace.",
   input_schema: { type: 'object', properties: { review_id: { type: 'number' }, reason: { type: 'string' } }, required: ['review_id'] },
 };
 
@@ -831,7 +835,7 @@ export const REVIEW_RESEARCH_AGREEMENT: AnaTool = {
 
 export const EXECUTE_RESEARCH_AGREEMENT: AnaTool = {
   name: 'execute_research_agreement',
-  description: "Execute a research agreement behind the deterministic HIPAA readiness gate (PHI properly handled, parties + material described). Records a governed signature. Governed + audited.",
+  description: "AnA cannot sign. Executing a research agreement is an electronic signature and needs the user's password, so this tool does not execute it and writes nothing. Tell the user to execute it in its workspace.",
   input_schema: { type: 'object', properties: { agreement_id: { type: 'number' }, reason: { type: 'string' } }, required: ['agreement_id'] },
 };
 
@@ -1128,7 +1132,7 @@ export const CAST_COMMITTEE_VOTE: AnaTool = {
 export const FINALIZE_COMMITTEE_DETERMINATION: AnaTool = {
   name: 'finalize_committee_determination',
   description:
-    "Finalize an agenda item by tallying the poll into the deterministic determination (approved / approved_with_modifications / disapproved / tabled). Gated: a convened meeting WITH quorum, the 'approve' privilege, AND current CITI training for the finalizing actor (citi_human_subjects for IRB, citi_animal for IACUC). Governed + audited (signature).",
+    "AnA cannot sign. Finalizing a committee determination is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user a member holding the approve privilege finalizes it in the committee workspace.",
   input_schema: {
     type: 'object',
     properties: { agenda_item_id: { type: 'number' }, reason: { type: 'string' } },
@@ -1157,7 +1161,7 @@ export const CREATE_COVERAGE_ANALYSIS: AnaTool = {
       irb_submission_id: { type: 'number' },
       nct_id: { type: 'string', description: 'ClinicalTrials.gov identifier (e.g. NCT01234567).' },
       sponsor: { type: 'string' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['title'],
   },
@@ -1315,7 +1319,7 @@ export const CREATE_RIM_PRODUCT: AnaTool = {
       inn: { type: 'string', description: 'International Nonproprietary Name.' },
       dosage_form: { type: 'string' },
       atc_code: { type: 'string' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['product_name'],
   },
@@ -1335,7 +1339,7 @@ export const SET_REGISTRATION_STATUS: AnaTool = {
       marketing_auth_holder: { type: 'string' },
       approval_date: { type: 'string' },
       renewal_due_date: { type: 'string' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['product_id', 'country'],
   },
@@ -1363,7 +1367,7 @@ export const CREATE_INSPECTION: AnaTool = {
       agency: { type: 'string', enum: ['fda','ema','mhra','pmda','other'] },
       site_name: { type: 'string' },
       scheduled_date: { type: 'string', description: 'YYYY-MM-DD.' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['inspection_type', 'agency', 'site_name'],
   },
@@ -1380,7 +1384,7 @@ export const LOG_INSPECTION_FINDING: AnaTool = {
       observation_number: { type: 'number' },
       description: { type: 'string' },
       classification: { type: 'string', enum: ['critical','major','minor','observation'] },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['inspection_id', 'observation_number', 'description', 'classification'],
   },
@@ -1409,7 +1413,7 @@ export const REGISTER_DEA: AnaTool = {
       business_activity: { type: 'string', enum: ['researcher','analytical_lab','manufacturer','distributor','practitioner','teaching_institution','other'] },
       schedules: { type: 'array', items: { type: 'string', enum: ['I','II','III','IV','V'] } },
       expiration_date: { type: 'string', description: 'YYYY-MM-DD.' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['registrant_name', 'dea_number', 'business_activity'],
   },
@@ -1428,7 +1432,7 @@ export const LOG_CS_TRANSACTION: AnaTool = {
       transaction_date: { type: 'string' },
       witnessed_by: { type: 'string' },
       reference: { type: 'string' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['substance_id', 'transaction_type', 'quantity'],
   },
@@ -1458,7 +1462,7 @@ export const CREATE_LIFECYCLE_OBLIGATION: AnaTool = {
       recurrence_months: { type: 'number', description: 'For periodic reports, e.g. 6 or 12.' },
       anchor_date: { type: 'string', description: 'Start date to generate periodic occurrences from.' },
       occurrences_to_generate: { type: 'number' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['obligation_type', 'region', 'title'],
   },
@@ -1480,7 +1484,7 @@ export const CREATE_TMF: AnaTool = {
     properties: {
       title: { type: 'string' },
       study_id: { type: 'number', description: 'Optional clinical_studies.id.' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['title'],
   },
@@ -1498,7 +1502,7 @@ export const CLASSIFY_TMF_ARTIFACT: AnaTool = {
       zone: { type: 'number', description: 'DIA RM zone 1-11; omit to auto-classify.' },
       status: { type: 'string', enum: ['expected','received','in_review','final','missing','not_applicable'] },
       document_date: { type: 'string' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['tmf_file_id', 'artifact_name'],
   },
@@ -1563,7 +1567,7 @@ export const ADD_PERSONNEL_TRAINING: AnaTool = {
       training_type: { type: 'string', enum: ['citi_human_subjects','citi_gcp','citi_animal','citi_rcr','biosafety','bloodborne_pathogens','iata_shipping','hipaa','fcoi_disclosure','other'] },
       completed_date: { type: 'string', description: 'YYYY-MM-DD.' },
       expires_date: { type: 'string', description: 'YYYY-MM-DD.' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['personnel_id', 'training_type'],
   },

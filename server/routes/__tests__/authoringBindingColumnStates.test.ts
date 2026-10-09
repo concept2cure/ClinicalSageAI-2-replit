@@ -49,7 +49,7 @@ import router from '../authoring.router';
 
 async function bearer(): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-  return `Bearer ${await new SignJWT({ sub: 'u1', organizationId: 7, email: 'ra@test.co' })
+  return `Bearer ${await new SignJWT({ sub: 'u1', organizationId: ORG_ID, email: 'ra@test.co' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('5m')
@@ -65,10 +65,28 @@ function makeApp() {
 
 type ColState = 'present' | 'absent' | 'throws';
 
+/** The caller's organization (the JWT's organizationId). */
+const ORG_ID = 7;
+/**
+ * A live project (regulatory_programs row) owned by ORG_ID. A document belongs
+ * to a project (PF-07, founder decision 2026-09-26): createDocument refuses a
+ * create with no client_program_id 400 PROJECT_REQUIRED, and (LX-20) refuses
+ * 404 one that is not a live program of the caller's organization.
+ */
+const OWNED_PROGRAM_ID = '0b9f6c2e-4d1a-4c3b-9e7f-2a1d5c8e9f10';
+
 /** Wire the catalog probe to report one of the three states. */
 function wire(state: ColState, opts: { boundRows?: number } = {}) {
-  mockQuery.mockImplementation(async (sql: unknown) => {
+  mockQuery.mockImplementation(async (sql: unknown, params?: unknown[]) => {
     const s = String(sql);
+    // programInOrganization: a row for the owned, live program only; nothing
+    // for any other id or organization, exactly as the real SELECT answers.
+    if (s.includes('FROM regulatory_programs') && s.includes('deleted_at IS NULL')) {
+      const [programId, organizationId] = params ?? [];
+      return programId === OWNED_PROGRAM_ID && organizationId === ORG_ID
+        ? { rowCount: 1, rows: [{ id: OWNED_PROGRAM_ID }] }
+        : { rowCount: 0, rows: [] };
+    }
     if (s.includes('information_schema.columns') && s.includes('c2c_document_id')) {
       if (state === 'throws') throw new Error('catalog unavailable');
       return { rowCount: 1, rows: [{ ok: state === 'present' }] };
@@ -100,11 +118,14 @@ const renameCode = async () =>
     .set('Authorization', await bearer())
     .send({ code: '3.2.S.2' });
 
+// Created IN a project (PF-07). The binding question under test is unchanged:
+// the governed-document resolver is mocked to name a filing either way, so the
+// only thing that decides bound vs unbound is the c2c_document_id column state.
 const createDoc = async () =>
   request(makeApp())
     .post('/api/authoring/docs')
     .set('Authorization', await bearer())
-    .send({ title: 'A doc', module: 'M3' });
+    .send({ title: 'A doc', module: 'M3', client_program_id: OWNED_PROGRAM_ID });
 
 beforeEach(() => {
   mockQuery.mockReset();
@@ -175,6 +196,9 @@ describe('creating a document when the check could NOT RUN', () => {
     const res = await createDoc();
 
     expect(res.status).toBeLessThan(500);
+    // "Unbound" means not bound to a FILING (no c2c_document_id). Since PF-07
+    // the document is always created in its project, so the INSERT carries
+    // client_program_id; the filing binding is what the column state withholds.
     const insert = mockClientQuery.mock.calls
       .map(c => String(c[0]))
       .find(s => s.includes('INSERT INTO authoring_documents'));

@@ -1,0 +1,4 @@
+{
+  "_comment": "Columns the server queries whose ONLY creator is a migration on no durable apply path — they exist on no real database, so the statements naming them raise 42703. Every entry needs a written reason; an empty one fails the guard. Resolve an entry (put its migration on an applier after the file that creates the table, or delete the dead reference), then remove it here. Goal: empty.",
+  "columns": {}
+}

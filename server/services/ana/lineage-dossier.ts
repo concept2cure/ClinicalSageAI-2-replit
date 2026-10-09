@@ -30,10 +30,12 @@
  * @module server/services/ana/lineage-dossier
  */
 import { getPool } from '../../db/runtime.js';
+import { listTurnRecords } from './turn-record-verify.js';
 import {
   collectArtifactLedger,
   type ArtifactLedger,
 } from '../export/docx-ledger-collector.js';
+import { GOVERNED_FABRIC_DECISION_KIND } from '../../../shared/constants/operating-system-vocab.js';
 
 export const DOSSIER_SCHEMA_VERSION = '1.0';
 
@@ -102,6 +104,13 @@ export interface DossierDecision {
 }
 
 export interface DossierDecisionSummary {
+  /**
+   * Non-null when the decision query could NOT run. Every count below is then
+   * zero because nothing was read, not because nothing exists. Renderers MUST
+   * show this reason and MUST NOT print the counts — the contract
+   * docx-ledger-collector states as "a count is a claim".
+   */
+  unavailable: string | null;
   total: number;
   anaAuthored: number;
   humanAuthored: number;
@@ -141,6 +150,22 @@ export interface DossierHumanControl {
   at: string | null;
 }
 
+/**
+ * One retained AnA turn record for the document's conversation — the
+ * immutable, chained record of the turn (services/ana/turn-record.ts). The
+ * reasoning and controls above are read from the working transcript, which a
+ * person may delete; these are not, and each can be exported and verified by
+ * id (GET /api/ana-ri/turn-records/:id/export).
+ */
+export interface DossierRetainedTurn {
+  id: string;
+  outcome: 'answered' | 'stopped' | 'failed';
+  actorUserId: number | null;
+  startedAt: string;
+  endedAt: string;
+  recordSha256: string;
+}
+
 export interface DossierDataLineage {
   sourceObjectType: string;
   sourceObjectId: string;
@@ -170,6 +195,12 @@ export interface DocumentLineageDossier {
   /** Human control actions (pause/interject/redirect/cancel) across the turns. */
   humanControls: DossierHumanControl[];
   dataLineage: DossierDataLineage[];
+  /**
+   * The retained turn records of the document's conversation, oldest first.
+   * Null when the store could not be read — never an empty list standing in
+   * for a failed read. Absent from dossiers assembled before this field.
+   */
+  retainedTurnRecords?: DossierRetainedTurn[] | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -178,10 +209,20 @@ export interface DocumentLineageDossier {
 
 /** Raw decision_records shape needed to derive actors (subset of columns). */
 export interface RawDecisionRow {
-  created_by_id: number | null;
-  approved_by_id: number | null;
-  rejected_by_id: number | null;
+  created_by_id?: number | null;
+  approved_by_id?: number | null;
+  rejected_by_id?: number | null;
   provenance?: unknown;
+  /**
+   * The columns `public.decision_records` actually has. The three ids above
+   * belong to a drizzle shape that drizzle.config.ts never provisioned, so a
+   * query naming them raised 42703 and this dossier read nothing for as long
+   * as it has existed. Actors on the deployed table are free text, and the
+   * machine/human split is carried by decision_context->>'kind'.
+   */
+  decided_by?: string | null;
+  approved_by?: string | null;
+  context_kind?: string | null;
 }
 
 /**
@@ -208,21 +249,31 @@ export function deriveDecisionActors(row: RawDecisionRow): {
   let authoredBy: DecisionActor;
   if (declared === 'human' || declared === 'ana' || declared === 'system') {
     authoredBy = declared;
-  } else if (row.created_by_id != null) {
+  } else if (row.context_kind === GOVERNED_FABRIC_DECISION_KIND) {
+    // A governed-fabric row is one machine gate evaluation, never a human's
+    // decision — the same distinction the boundary rules draw on this key.
+    authoredBy = 'ana';
+  } else if (row.created_by_id != null || (row.decided_by && row.decided_by !== 'system')) {
     authoredBy = 'human';
   } else {
     authoredBy = 'ana';
   }
 
   const decidedBy: DecisionActor | null =
-    row.rejected_by_id != null || row.approved_by_id != null ? 'human' : null;
+    row.rejected_by_id != null || row.approved_by_id != null || row.approved_by
+      ? 'human'
+      : null;
 
   return { authoredBy, decidedBy };
 }
 
 /** Roll a set of decisions up into the dossier headline counts. */
-export function summarizeDecisions(decisions: DossierDecision[]): DossierDecisionSummary {
+export function summarizeDecisions(
+  decisions: DossierDecision[],
+  unavailable: string | null = null,
+): DossierDecisionSummary {
   const summary: DossierDecisionSummary = {
+    unavailable,
     total: decisions.length,
     anaAuthored: 0,
     humanAuthored: 0,
@@ -235,8 +286,11 @@ export function summarizeDecisions(decisions: DossierDecision[]): DossierDecisio
     if (d.authoredBy === 'ana') summary.anaAuthored += 1;
     else if (d.authoredBy === 'human') summary.humanAuthored += 1;
     if (d.decidedBy === 'human') summary.humanDecided += 1;
-    if (d.rejectedById != null) summary.rejected += 1;
-    else if (d.approvedById != null) summary.approved += 1;
+    /* Counted from the action state, which is what the deployed table records.
+       The rejectedById / approvedById columns this used to test do not exist,
+       so every row fell to `pending` — including the rejected ones. */
+    if (d.actionState === 'rejected') summary.rejected += 1;
+    else if (d.actionState === 'approved' || d.actionState === 'executed') summary.approved += 1;
     else summary.pending += 1;
   }
   return summary;
@@ -246,11 +300,6 @@ function toIso(value: unknown): string {
   if (value instanceof Date) return value.toISOString();
   if (typeof value === 'string') return value;
   return '';
-}
-
-function coerceStringArray(value: unknown): string[] {
-  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
-  return [];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -307,57 +356,81 @@ async function loadVersionHistory(
 
 async function loadDecisions(
   artifactPk: number,
+  artifactId: string,
   organizationId: number,
-): Promise<DossierDecision[]> {
+): Promise<{ decisions: DossierDecision[]; unavailable: string | null }> {
   try {
+    /* The live column list. The previous projection named fourteen columns the
+       table does not have (context_type, confidence, approval_state,
+       governance_boundary, created_by_id, approved_by_id, rejected_by_id,
+       rejected_at, related_artifact_id, related_artifact_version_id,
+       executed_artifact_version_id, evidence_sources, provenance,
+       context_description) — the retired drizzle shape, alive only in a test
+       fixture on no applier. The predicate was broken too: related_artifact_id
+       does not exist, so repairing the projection alone would still have
+       matched nothing. The artifact link is executed_artifact_id, with
+       decision_context->>'artifactId' as the fallback the governed-fabric
+       writer stamps. */
     const { rows } = await getPool().query(
-      `SELECT id, context_type, context_description, recommendation_type,
-              recommendation_summary, confidence, action_state, approval_state,
-              governance_boundary, created_by_id, approved_by_id, approved_at,
-              rejected_by_id, rejected_at, rejection_reason,
-              related_artifact_version_id, executed_artifact_version_id,
-              evidence_sources, provenance, created_at
+      `SELECT id, decision_code, title, domain_track, recommendation_type,
+              recommendation_summary, confidence_level, evidence_basis,
+              action_state, approved_by, approved_at, rejection_reason,
+              executed_artifact_version, decision_context, decided_by, created_at
        FROM decision_records
        WHERE organization_id = $2
-         AND (related_artifact_id = $1 OR executed_artifact_id = $1)
+         AND (executed_artifact_id = $1 OR decision_context->>'artifactId' = $3)
        ORDER BY created_at ASC
        LIMIT ${MAX_DECISIONS}`,
-      [artifactPk, organizationId],
+      [artifactPk, organizationId, artifactId],
     );
-    return rows.map((r: any) => {
+    const decisions = rows.map((r: any) => {
+      const ctx = r.decision_context && typeof r.decision_context === 'object'
+        ? (r.decision_context as Record<string, unknown>)
+        : {};
+      const contextKind = typeof ctx.kind === 'string' ? ctx.kind : null;
       const { authoredBy, decidedBy } = deriveDecisionActors({
-        created_by_id: r.created_by_id ?? null,
-        approved_by_id: r.approved_by_id ?? null,
-        rejected_by_id: r.rejected_by_id ?? null,
-        provenance: r.provenance,
+        provenance: ctx,
+        decided_by: r.decided_by ?? null,
+        approved_by: r.approved_by ?? null,
+        context_kind: contextKind,
       });
       return {
         id: String(r.id),
-        contextType: r.context_type ?? 'unknown',
-        contextDescription: r.context_description ?? null,
+        contextType: contextKind ?? r.domain_track ?? 'unknown',
+        contextDescription: r.title ?? null,
         recommendationType: r.recommendation_type ?? null,
         recommendationSummary: r.recommendation_summary ?? '',
-        confidence: r.confidence ?? 'provisional',
+        confidence: r.confidence_level ?? 'provisional',
         actionState: r.action_state ?? 'recommended_only',
-        approvalState: r.approval_state ?? null,
-        governanceBoundary: r.governance_boundary ?? null,
+        // The deployed table records no separate approval state; it is what the
+        // action state says, not a second field guessed alongside it.
+        approvalState: r.action_state === 'approved' || r.action_state === 'rejected'
+          ? String(r.action_state)
+          : null,
+        governanceBoundary: null,
         authoredBy,
         decidedBy,
-        createdById: r.created_by_id ?? null,
-        approvedById: r.approved_by_id ?? null,
+        createdById: null,
+        approvedById: null,
         approvedAt: r.approved_at ? toIso(r.approved_at) : null,
-        rejectedById: r.rejected_by_id ?? null,
-        rejectedAt: r.rejected_at ? toIso(r.rejected_at) : null,
+        rejectedById: null,
+        rejectedAt: null,
         rejectionReason: r.rejection_reason ?? null,
-        relatedArtifactVersionId: r.related_artifact_version_id ?? null,
-        executedArtifactVersionId: r.executed_artifact_version_id ?? null,
-        evidenceSources: coerceStringArray(r.evidence_sources),
+        relatedArtifactVersionId: null,
+        executedArtifactVersionId: r.executed_artifact_version ?? null,
+        evidenceSources: r.evidence_basis ? [String(r.evidence_basis)] : [],
         createdAt: toIso(r.created_at),
       } satisfies DossierDecision;
     });
+    return { decisions, unavailable: null };
   } catch (err) {
     warnUnless42P01('decisions', err);
-    return [];
+    /* The reason is DATA, not a swallowed zero. Returning [] alone is what let
+       an exported dossier assert Decisions count="0" over rows it never read. */
+    return {
+      decisions: [],
+      unavailable: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -510,6 +583,30 @@ async function loadDataLineage(
   }
 }
 
+/** The conversation's retained turn records, or null when they could not be read. */
+async function loadRetainedTurnRecords(
+  threadId: string | null,
+  organizationId: number,
+): Promise<DossierRetainedTurn[] | null> {
+  if (!threadId) return [];
+  try {
+    const records = await listTurnRecords(getPool(), organizationId, { threadId, limit: 500 });
+    return records
+      .map(({ id, outcome, actorUserId, startedAt, endedAt, recordSha256 }) => ({
+        id,
+        outcome,
+        actorUserId,
+        startedAt,
+        endedAt,
+        recordSha256,
+      }))
+      .reverse();
+  } catch (err) {
+    console.warn('[lineage-dossier] load failed', { source: 'retained-turn-records', error: (err as Error)?.message });
+    return null;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Assembler
 // ─────────────────────────────────────────────────────────────────────────────
@@ -531,13 +628,14 @@ export async function buildDocumentLineageDossier(
   const artifactPk = ledger.artifact.artifactPk;
   const threadId = await loadThreadId(artifactId, organizationId);
 
-  const [versionHistory, decisions, provenanceEvents, turnRecords, dataLineage] =
+  const [versionHistory, decisionResult, provenanceEvents, turnRecords, dataLineage, retainedTurnRecords] =
     await Promise.all([
       loadVersionHistory(artifactPk, organizationId, ledger.artifact.version),
-      loadDecisions(artifactPk, organizationId),
+      loadDecisions(artifactPk, artifactId, organizationId),
       loadProvenanceEvents(artifactPk, organizationId),
       loadTurnRecords(threadId),
       loadDataLineage(artifactId, threadId, organizationId),
+      loadRetainedTurnRecords(threadId, organizationId),
     ]);
 
   return {
@@ -546,11 +644,12 @@ export async function buildDocumentLineageDossier(
     ledger,
     threadId,
     versionHistory,
-    decisions,
-    decisionSummary: summarizeDecisions(decisions),
+    decisions: decisionResult.decisions,
+    decisionSummary: summarizeDecisions(decisionResult.decisions, decisionResult.unavailable),
     provenanceEvents,
     reasoning: turnRecords.reasoning,
     humanControls: turnRecords.humanControls,
     dataLineage,
+    retainedTurnRecords,
   };
 }

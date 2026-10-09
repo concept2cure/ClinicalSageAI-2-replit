@@ -95,7 +95,7 @@ export function useSopTemplates() {
 /** Periodic-review tracking — GET /api/mdx/qms/documents/review-due. */
 export function useReviewDue(within = 120) {
   const path = `/api/mdx/qms/documents/review-due?within=${within}`;
-  const { data, loading, error } = useFetchJson<unknown>(path);
+  const { data, loading, error, refresh } = useFetchJson<unknown>(path);
   const raw = useMemo(() => listOf<ServerDoc>(data), [data]);
   const rows = useMemo<ReviewDueRow[] | null>(
     () =>
@@ -109,7 +109,7 @@ export function useReviewDue(within = 120) {
       })) ?? null,
     [raw],
   );
-  return { rows, loading, error: error ?? shapeError(path, data, raw) };
+  return { rows, loading, error: error ?? shapeError(path, data, raw), refresh };
 }
 
 interface ServerTraining {
@@ -126,7 +126,7 @@ interface ServerTraining {
  *  acknowledgments; denominator is the org roster. */
 const TRAINING_PATH = '/api/mdx/qms/training/compliance';
 export function useTrainingCompliance() {
-  const { data, loading, error } = useFetchJson<unknown>(TRAINING_PATH);
+  const { data, loading, error, refresh } = useFetchJson<unknown>(TRAINING_PATH);
   const raw = useMemo(() => listOf<ServerTraining>(data), [data]);
   const rows = useMemo<TrainingRow[] | null>(
     () =>
@@ -138,5 +138,5 @@ export function useTrainingCompliance() {
       })) ?? null,
     [raw],
   );
-  return { rows, loading, error: error ?? shapeError(TRAINING_PATH, data, raw) };
+  return { rows, loading, error: error ?? shapeError(TRAINING_PATH, data, raw), refresh };
 }

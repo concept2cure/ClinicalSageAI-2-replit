@@ -1,0 +1,23 @@
+/** HEAD's seeding, verbatim from server/routes/concept2cure.ts (80cbd718a) ~1238-1263, as a function. */
+import { pool } from '../../db.js';
+export interface SeedBlueprintMilestonesInput { organizationId: number; projectId: number; userId: number | null | undefined; registryId: string; milestones: readonly { id: string; title: string; description?: string | null }[] }
+export async function seedBlueprintMilestones(input: SeedBlueprintMilestonesInput): Promise<string[]> {
+  const { organizationId, userId } = input; const newProject = { id: input.projectId }; const bootstrapResult = { entry: { id: input.registryId }, milestones: input.milestones };
+  const seeded: string[] = [];
+  for (const milestone of bootstrapResult.milestones ?? []) {
+    const r = await pool.query(
+      `INSERT INTO unified_tasks
+         (task_id, organization_id, project_id, module_type, title,
+          description, task_type, category, priority, status,
+          source_entity_type, source_entity_id, created_by_id,
+          created_at, updated_at)
+       VALUES ($1, $2, $3, 'Regulatory', $4, $5, 'milestone',
+               'regulatory', 'high', 'pending', 'registry_blueprint',
+               $6, $7, NOW(), NOW())
+       ON CONFLICT (task_id) DO NOTHING`,
+      [`TASK-BP-${newProject.id}-${milestone.id}`, organizationId, newProject.id, milestone.title, milestone.description || '', `${bootstrapResult.entry.id}:${milestone.id}`, userId ?? null],
+    );
+    if ((r.rowCount ?? 0) > 0) seeded.push(`TASK-BP-${newProject.id}-${milestone.id}`);
+  }
+  return seeded;
+}

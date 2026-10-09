@@ -25,10 +25,31 @@ spec:
         app: concept2cure-bff
     spec:
       restartPolicy: Always
+      # Hardened (TRIVY-01, 2026-09-24): no privilege escalation, no Linux
+      # capabilities, read-only root filesystem with a scratch /tmp, and the
+      # runtime's default seccomp profile.
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: shadow-tmp
+          emptyDir: {}
       containers:
         # ─── BFF (Node + Express) ─────────────────────────────────────────
         - name: bff
           image: ghcr.io/concept2cure/clinicalsageai:REPLACE_WITH_DIGEST
+          # The image runs as appuser (Dockerfile.optimized).
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           ports:
             - containerPort: 3000
               name: http
@@ -73,6 +94,15 @@ spec:
         # ─── Shadow service (Python FastAPI) ──────────────────────────────
         - name: predicate-shadow
           image: ghcr.io/concept2cure/predicate-shadow-service:REPLACE_WITH_DIGEST
+          # Built in a separate repository; its runtime user is not asserted here.
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: shadow-tmp
+              mountPath: /tmp
           ports:
             - containerPort: 8001
               name: shadow

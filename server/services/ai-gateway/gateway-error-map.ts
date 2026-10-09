@@ -11,12 +11,15 @@
 
 import {
   GatewayPolicyError,
+  ModelNotApprovedError,
   GatewayNoProviderError,
   GatewayAllProvidersFailedError,
 } from './gateway';
 import { GatewayContextWindowError } from './context-budget';
+import { isTenantPlacementRefusal } from './gateway-outcome';
 
 export type GatewayErrorCode =
+  | 'PLACEMENT_REFUSED'
   | 'RATE_LIMITED'
   | 'OVERLOADED'
   | 'TOKEN_LIMIT_EXCEEDED'
@@ -34,6 +37,9 @@ export interface ClassifiedGatewayError {
  * submissions.ts and ectd-documents.ts predate this export and agree with it.
  */
 export const GATEWAY_ERROR_HTTP_STATUS: Readonly<Record<GatewayErrorCode, number>> = {
+  // Not an outage: the organization's own policy excludes every lane that
+  // could serve the request, and retrying cannot change that.
+  PLACEMENT_REFUSED: 403,
   RATE_LIMITED: 429,
   OVERLOADED: 503,
   TOKEN_LIMIT_EXCEEDED: 413,
@@ -70,9 +76,8 @@ export function classifyGatewayError(err: unknown): ClassifiedGatewayError {
   if (err instanceof GatewayNoProviderError) {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is available to handle this request.' };
   }
-  if (err instanceof GatewayPolicyError) {
-    return { code: 'PROVIDER_UNAVAILABLE', message: 'This request was blocked by AI gateway policy.' };
-  }
+  const refusal = classifyPolicyRefusal(err);
+  if (refusal) return refusal;
   if (err instanceof GatewayAllProvidersFailedError) {
     const msg = err.message || '';
     // 529 = Anthropic "Overloaded" (and generic provider overload/503). Distinct
@@ -90,4 +95,50 @@ export function classifyGatewayError(err: unknown): ClassifiedGatewayError {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'The AI provider is temporarily unavailable.' };
   }
   return { code: 'PROVIDER_UNAVAILABLE', message: 'The AI request could not be completed.' };
+}
+
+/**
+ * A gateway policy refusal, classified by what it refused. Null for anything
+ * that is not one.
+ */
+function classifyPolicyRefusal(err: unknown): ClassifiedGatewayError | null {
+  // Before the general policy branch: it is a GatewayPolicyError subclass, and
+  // "blocked by AI gateway policy" would tell the author nothing they can act on.
+  if (err instanceof ModelNotApprovedError) {
+    return {
+      code: 'PROVIDER_UNAVAILABLE',
+      message:
+        'No model approved for regulatory drafting and review is available right now, ' +
+        'so this request was not sent to one that is not approved for it. Try again shortly.',
+    };
+  }
+  // Matched by its code, not `instanceof MediaNotCarriedError`: route tests mock
+  // the gateway module with a hand-listed set of error classes, and an
+  // `instanceof` against a class the mock omits throws — which turned every
+  // classified refusal on those routes into a 500 (authoringAiDraftNoProvider).
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'MEDIA_NOT_CARRIED') {
+    return {
+      code: 'PROVIDER_UNAVAILABLE',
+      message:
+        'No model that can read the attached file is available right now, so the request was not ' +
+        'answered without it. Try again shortly.',
+    };
+  }
+  // The organization's placement policy excludes every lane. The gateway's
+  // message names the reason and no content, so it is safe to show as written.
+  if (isTenantPlacementRefusal(err)) {
+    return { code: 'PLACEMENT_REFUSED', message: err.message };
+  }
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'FILE_REFERENCE_NOT_CARRIED') {
+    return {
+      code: 'PROVIDER_UNAVAILABLE',
+      message:
+        'The document was referenced by an Anthropic file id, which only first-party Anthropic can read, ' +
+        'so the request was not answered without it. Attach the document itself.',
+    };
+  }
+  if (err instanceof GatewayPolicyError) {
+    return { code: 'PROVIDER_UNAVAILABLE', message: 'This request was blocked by AI gateway policy.' };
+  }
+  return null;
 }

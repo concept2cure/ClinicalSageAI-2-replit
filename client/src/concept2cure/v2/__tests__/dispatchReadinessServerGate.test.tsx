@@ -59,10 +59,17 @@ const SHADOW_BLOCKED = {
   },
 };
 
+/* The surface gates the OPEN program's submission (F-8), so the shell program
+   is seeded and its record served; the one submission here is its spine. */
+const PROGRAM_UUID = '5b1c2d3e-0000-4000-8000-000000000001';
+
 function serve(assessment: unknown) {
   apiRequest.mockImplementation(async (_m: string, rawUrl: unknown) => {
     const url = String(rawUrl ?? '');
-    if (url === '/api/submissions') return ok([{ id: 3, title: 'NDA 2026' }]);
+    if (url === `/api/c2c/projects/${PROGRAM_UUID}`) {
+      return { ok: true, status: 200, json: async () => ({ id: PROGRAM_UUID, name: 'NDA 2026', code: 'NDA-26', product_name: null, program_type: 'nda' }) } as Response;
+    }
+    if (url === '/api/submissions') return ok([{ id: 3, title: 'NDA 2026', productName: 'NDA 2026', applicationType: 'NDA' }]);
     if (url === '/api/submissions/3/sequences') return ok([{ id: 7, sequenceNumber: '0001' }]);
     if (url.endsWith('/dispatch-readiness')) return ok(assessment);
     return ok([]);
@@ -73,8 +80,14 @@ const props = () =>
   ({ surface: { id: 'dispatch-readiness', label: 'Dispatch' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'regulatory' });
 const text = () => document.body.textContent ?? '';
 
-beforeEach(() => apiRequest.mockReset());
-afterEach(() => cleanup());
+beforeEach(() => {
+  apiRequest.mockReset();
+  (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM_UUID };
+});
+afterEach(() => {
+  cleanup();
+  delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+});
 
 describe('DispatchReadiness — renders the server gate, not a local recomputation', () => {
   /* The surface's own verdict strings. The page title is always
@@ -110,7 +123,7 @@ describe('DispatchReadiness — renders the server gate, not a local recomputati
     const { gate: _omitted, ...noGate } = SHADOW_BLOCKED;
     serve(noGate);
     render(<DispatchReadiness {...props()} />);
-    await waitFor(() => expect(text()).toMatch(/Sequence 7/));
+    await waitFor(() => expect(text()).toMatch(/Sequence 0001 \(id 7\)/));
     expect(text()).not.toMatch(CLEARED);
   });
 });

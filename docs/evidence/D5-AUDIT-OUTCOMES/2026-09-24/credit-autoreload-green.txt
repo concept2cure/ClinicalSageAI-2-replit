@@ -1,0 +1,6 @@
+# GREEN — credit-autoreload: same tests, fix applied
+ ✓ server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a lost row: the settings are saved and the result says the row is missing 1685ms
+ ✓ server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a writer that throws is still reported as a lost row, not as success 2ms
+ ✓ server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a written row says so, with whether it is the chained row a reader can retrieve 3ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)

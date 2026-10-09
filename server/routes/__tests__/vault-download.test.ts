@@ -32,7 +32,10 @@ import request from 'supertest';
 import { createHash } from 'node:crypto';
 
 const { query, readFile } = vi.hoisted(() => ({ query: vi.fn(), readFile: vi.fn() }));
-vi.mock('../../db.js', () => ({ pool: { query, connect: vi.fn() } }));
+/* The download's audit row is written in a transaction of its own (a chained
+   row needs one), so connect() hands back a client that shares the same
+   query mock: every assertion about the audit INSERT still sees it. */
+vi.mock('../../db.js', () => ({ pool: { query, connect: vi.fn(async () => ({ query, release: vi.fn() })) } }));
 vi.mock('node:fs', async (io) => {
   const actual = await io<typeof import('node:fs')>();
   return { ...actual, promises: { ...actual.promises, readFile } };
@@ -41,9 +44,15 @@ vi.mock('node:fs', async (io) => {
 /* The canonical storage seam. The vault writes bytes through it now, so a row
    carrying a storage_version_id must be served from HERE and never from disk. */
 const { storageGet } = vi.hoisted(() => ({ storageGet: vi.fn() }));
-vi.mock('../../services/storage/index.js', () => ({
-  getStorageProvider: () => ({ name: 'local', get: storageGet, put: vi.fn(), delete: vi.fn() }),
-}));
+vi.mock('../../services/storage/index.js', () => {
+  const provider = { name: 'local', get: storageGet, put: vi.fn(), delete: vi.fn() };
+  return {
+    getStorageProvider: () => provider,
+    // 7fd5d6af reads a row from the store recorded on it; these rows record
+    // that same store, so both lookups answer with it.
+    getStorageProviderFor: () => provider,
+  };
+});
 
 import createProjectVaultRoutes from '../c2c/project-vault';
 

@@ -1,0 +1,22 @@
+== HEAD client/src/concept2cure/v2/C2CForm.tsx
+
+./client/src/concept2cure/v2/C2CForm.tsx
+   50:8   warning  Function 'C2CForm' has too many lines (163). Maximum allowed is 100  max-lines-per-function
+  124:41  warning  Arrow function has a complexity of 21. Maximum allowed is 15         complexity
+
+✖ 2 problems (0 errors, 2 warnings)
+
+== WORKTREE client/src/concept2cure/v2/C2CForm.tsx
+
+./client/src/concept2cure/v2/C2CForm.tsx
+   75:8   warning  Function 'C2CForm' has too many lines (168). Maximum allowed is 100  max-lines-per-function
+  152:41  warning  Arrow function has a complexity of 23. Maximum allowed is 15         complexity
+
+✖ 2 problems (0 errors, 2 warnings)
+
+== HEAD client/src/concept2cure/v2/surfaces/ProtocolDevForms.tsx
+== WORKTREE client/src/concept2cure/v2/surfaces/ProtocolDevForms.tsx
+== HEAD client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx
+== WORKTREE client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx
+== NEW client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx
+exit 0

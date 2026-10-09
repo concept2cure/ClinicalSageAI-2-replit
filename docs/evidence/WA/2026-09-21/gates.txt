@@ -1,0 +1,37 @@
+# gates — WA 2026-09-21
+
+## ci:migration-set-order
+[ci:migration-set-order] OK — 292 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+
+## ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 292 migrations, 33 DROP(s), none re-created by the set, 2 reviewed exception(s); 16 dynamic DROP(s) in 16 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+
+## ci:tenant-isolation:no-regression (WA files absent from the list)
+[ci:tenant-isolation] FAIL — 2 NEW finding(s) above baseline of 9:
+  server/mcp/__tests__/mcp-connector.dbtest.ts#fd01e43209c6:users
+  server/mcp/__tests__/mcp-connector.dbtest.ts#36c096e160f7:users
+
+## ci:audit-logs-fixture
+✅ every audit_logs fixture accepts the writer's full column list.
+
+## ci:db-test-isolation
+[ci:db-test-isolation] OK — 27 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+
+## ci:migration-reachability
+[ci:migration-reachability] ✅ no new unreachable table references.
+
+## ci:check-unrun-tests
+[ci:unrun-tests] OK — every test file is reachable by a runner, or explained.
+
+## eslint (changed files) — see eslint.txt: 0 errors; 9 warnings, all on functions not changed by WA
+
+## tests
+vitest.config (baseline before WA, 20 files): 190 passed
+vitest.config rerun after WA (chain unit, ledger, governed-action pglite, rule-pack outlines, 3 golden journeys): 7 files, 86 passed — tests-rerun.log
+server/services/audit (7 files): 79 passed
+vitest.db.config chain-concurrency.dbtest.ts: 3 failed before the fix (F-1-repro-before.txt), 3 passed after (F-1-repro-after.txt)
+
+## npm run typecheck:fast (tsc --noEmit -p tsconfig.check.json, heap 10 GB)
+EXIT 0 — 0 errors (a first run alongside the test suites was OOM-killed; the rerun alone is clean)
+
+Note: ci:tenant-isolation:no-regression fails on two pre-existing findings in server/mcp/__tests__/mcp-connector.dbtest.ts (D8 workstream, not WA); WA's files are absent from the list.

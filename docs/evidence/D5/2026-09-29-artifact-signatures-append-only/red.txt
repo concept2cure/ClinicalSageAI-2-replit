@@ -1,0 +1,24 @@
+# Red — the suite with migrations/20260929_concept2cure_signatures_append_only.sql emptied: HEAD's state, where no applier file protects either table (2026-09-29)
+ ✓ concept2cure_signatures is append-only > a new signature can be recorded 4ms
+ × concept2cure_signatures is append-only > rewriting the printed name is refused, and the signature stands as signed 5ms
+   → the statement was allowed: expected 'ALLOWED' to match /IMMUTABILITY_VIOLATION/
+ × concept2cure_signatures is append-only > rewriting the meaning is refused, and the signature stands as signed 1ms
+   → the statement was allowed: expected 'ALLOWED' to match /IMMUTABILITY_VIOLATION/
+ × concept2cure_signatures is append-only > deleting the signature is refused, and the signature stands as signed 2ms
+   → the statement was allowed: expected 'ALLOWED' to match /IMMUTABILITY_VIOLATION/
+ × concept2cure_signatures is append-only > truncating the table is refused, and the signature stands as signed 4ms
+   → the statement was allowed: expected 'ALLOWED' to match /IMMUTABILITY_VIOLATION/
+ × concept2cure_signatures is append-only > deleting the signed artifact (the cascade) is refused, and the signature stands as signed 2ms
+   → the statement was allowed: expected 'ALLOWED' to match /IMMUTABILITY_VIOLATION/
+ × concept2cure_signatures is append-only > deleting the signed version (the cascade) is refused, and the signature stands as signed 1ms
+   → the statement was allowed: expected 'ALLOWED' to match /IMMUTABILITY_VIOLATION/
+ × concept2cure_submission_snapshots is append-only > rewriting the hash is refused 1ms
+   → the statement was allowed: expected 'ALLOWED' to match /IMMUTABILITY_VIOLATION/
+ × concept2cure_submission_snapshots is append-only > deleting the snapshot is refused 1ms
+   → the statement was allowed: expected 'ALLOWED' to match /IMMUTABILITY_VIOLATION/
+ × concept2cure_submission_snapshots is append-only > truncating the table is refused 3ms
+   → the statement was allowed: expected 'ALLOWED' to match /IMMUTABILITY_VIOLATION/
+ × the migration replays > a second run (every deploy runs it again) succeeds and adds no second trigger 4ms
+   → expected [] to deeply equal [ …(4) ]
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  10 failed | 1 passed (11)

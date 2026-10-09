@@ -1,0 +1,23 @@
+$ npm run ci:audit-logs-fixture        # tree at 0ed9a861a merged into 811be46c0, before 4226565db
+
+> concept2cure-riai@1.0.0 ci:audit-logs-fixture
+> node scripts/ci/check-audit-logs-fixture.mjs
+
+[ci:audit-logs-fixture] audit_logs fixtures vs writeChainedAuditRow
+  columns the writer writes : 16
+  fixtures found            : 18
+
+❌ 2 fixture(s) the audit writer cannot write into:
+
+  server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts:184
+      missing: user_id, actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal, old_values, ip_address, user_agent
+  server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts:120
+      missing: user_id, actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal, old_values, ip_address, user_agent
+
+  The chained audit write is fail-closed — the audit row and the mutation
+  commit together or neither does. A fixture missing one of these columns
+  does not merely skip the log: it ROLLS THE MUTATION BACK, so the suite can
+  only stay green by never reaching a governed write. Add the missing
+  columns, or import AUDIT_LOGS_PGLITE_DDL from server/db/pglite-harness.ts,
+  which carries the full set.
+exit 1

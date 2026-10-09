@@ -16,6 +16,15 @@ export type AuthoringPermissionAction =
   | 'comment'
   | 'review'
   | 'approve'
+  /**
+   * Produce the record from the document without changing it: export the
+   * filing artifact, file it into the project vault, hand it to the eCTD
+   * packager. Allowed at every status — a sealed document is the one these
+   * exist for. Added 2026-09-28: the three routes fell through to 'edit', and
+   * an edit of an immutable document is refused, so a FROZEN or APPROVED
+   * document could be none of exported, filed or packaged.
+   */
+  | 'export'
   | 'manage_permissions';
 
 export interface AuthoringPrincipal {
@@ -77,10 +86,10 @@ const IMMUTABLE_DOCUMENT_STATUSES = new Set([
 ]);
 
 const ROLE_ACTIONS: Record<AuthoringPermissionRole, ReadonlySet<AuthoringPermissionAction>> = {
-  OWNER: new Set(['view', 'edit', 'comment', 'review', 'approve', 'manage_permissions']),
-  AUTHOR: new Set(['view', 'edit', 'comment']),
+  OWNER: new Set(['view', 'edit', 'comment', 'review', 'approve', 'export', 'manage_permissions']),
+  AUTHOR: new Set(['view', 'edit', 'comment', 'export']),
   REVIEWER: new Set(['view', 'comment', 'review']),
-  APPROVER: new Set(['view', 'comment', 'review', 'approve']),
+  APPROVER: new Set(['view', 'comment', 'review', 'approve', 'export']),
   VIEWER: new Set(['view']),
 };
 
@@ -122,7 +131,7 @@ export function documentStatusAllowsAction(
   status: string,
   action: AuthoringPermissionAction,
 ): boolean {
-  if (action === 'view' || action === 'comment' || action === 'review' || action === 'approve') {
+  if (action === 'view' || action === 'comment' || action === 'review' || action === 'approve' || action === 'export') {
     return true;
   }
   return !IMMUTABLE_DOCUMENT_STATUSES.has(String(status ?? '').trim().toUpperCase());

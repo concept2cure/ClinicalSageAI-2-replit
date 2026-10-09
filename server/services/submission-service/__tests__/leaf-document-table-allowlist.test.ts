@@ -28,9 +28,8 @@ const insertValues = vi.fn();
 const updateSet = vi.fn();
 
 const poolQuery = vi.fn();
-vi.mock('../../../db', () => ({
-  pool: { query: (...a: unknown[]) => poolQuery(...a) },
-  db: {
+vi.mock('../../../db', () => {
+  const db: any = {
     select: () => {
       const tail = { limit: () => selectChain() };
       const afterWhere = { ...tail, orderBy: () => tail };
@@ -41,16 +40,23 @@ vi.mock('../../../db', () => ({
     update: () => ({
       set: (v: unknown) => ({ where: () => ({ returning: () => updateSet(v) }) }),
     }),
-  },
-}));
+  };
+  // 2026-09-23 (W5/D7, round-2 skeptic): the leaf write now runs inside a
+  // transaction holding the sequence row lock; the stub's lock read reports an
+  // unlocked sequence (without consuming executeChain), and the write goes
+  // through the same stubs as before.
+  db.transaction = async (fn: (tx: any) => unknown) => fn({ ...db, execute: async () => ({ rows: [{ status: 'draft' }] }) });
+  return { pool: { query: (...a: unknown[]) => poolQuery(...a) }, db };
+});
 vi.mock('../../auditService', () => ({
   default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) },
 }));
 
 import { upsertLeaf } from '../submission-service';
+import auditService from '../../auditService';
 
 const CTX = { organizationId: 7, userId: 3 };
-const SEQ = { id: 1, status: 'draft' };
+const SEQ = { id: 1, status: 'draft', submissionId: 21 };
 
 const BOGUS_TABLE = 'coauthor_doccuments';
 
@@ -64,9 +70,15 @@ beforeEach(() => {
   updateSet.mockResolvedValue([{ id: 99 }]);
 });
 
-/** getSequence always runs first. */
+/**
+ * getSequence runs first, then the submission lookup that decides which
+ * section-code vocabulary the leaf is judged against. An IND is a CTD
+ * submission, so these tests keep exercising the CTD gate they were written
+ * for.
+ */
 function seedSequence() {
   selectChain.mockResolvedValueOnce([SEQ]);
+  selectChain.mockResolvedValueOnce([{ applicationType: 'ind' }]);
 }
 
 /** Run upsertLeaf and report the OUTCOME rather than throwing, so a failure
@@ -297,5 +309,32 @@ describe('upsertLeaf — placeable document_table allowlist', () => {
     );
     expect(insertValues).toHaveBeenCalledTimes(1);
     expect((insertValues.mock.calls[0][0] as Record<string, unknown>).documentTable).toBeNull();
+  });
+});
+
+/* PX-1 (docs/evidence/reviews/2026-09-24/lenses.md): the placement's audit row
+   recorded what changed — section code, lifecycle operation — and never why. */
+describe('upsertLeaf — the reason for a placement is on its audit row', () => {
+  const logged = () =>
+    (auditService.logAction as unknown as { mock: { calls: Array<[Record<string, any>]> } }).mock.calls.map((c) => c[0]);
+
+  beforeEach(() => (auditService.logAction as unknown as { mockClear: () => void }).mockClear());
+
+  it('records the reason given on a new placement', async () => {
+    seedSequence();
+    await upsertLeaf(
+      { sequenceId: 1, sectionCode: '2.5', title: 'Clinical Overview', reason: 'Replaces the draft overview after QA review' } as any,
+      CTX,
+    );
+    const row = logged().find((e) => e.action === 'LEAF_CREATED');
+    expect(row?.details?.reason).toBe('Replaces the draft overview after QA review');
+  });
+
+  it('writes no reason key when the caller gave none, rather than inventing one', async () => {
+    seedSequence();
+    await upsertLeaf({ sequenceId: 1, sectionCode: '2.5', title: 'Clinical Overview' } as any, CTX);
+    const row = logged().find((e) => e.action === 'LEAF_CREATED');
+    expect(row).toBeTruthy();
+    expect(row?.details).not.toHaveProperty('reason');
   });
 });

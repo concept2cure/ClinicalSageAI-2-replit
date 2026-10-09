@@ -1,0 +1,161 @@
+ci:launch-scope-api: 52 API path(s) that launch or shell screens call are not attributed to the launch scope:
+"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+
+  [unmapped] /api/concept2cure/projects/:p/schedule-of-events
+    called by project-home, home
+    in client/src/concept2cure/v2/surfaces/ProjectHome.tsx
+  [unmapped] /api/concept2cure/projects/:p/schedule-of-events/generate
+    called by project-home, home
+    in client/src/concept2cure/v2/surfaces/ProjectHome.tsx
+  [unmapped] /api/program-journey
+    called by program-journey
+    in client/src/concept2cure/v2/surfaces/BiopharmaJourney.tsx
+  [unmapped] /api/organizations/:p
+    called by artifacts-center, apps, audit-trail, setup, (shell chrome)
+    in client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx, client/src/concept2cure/v2/V2App.tsx
+  [unmapped] /api/audit-trail/ledger
+    called by artifacts-center, apps, audit-trail, setup
+    in client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx
+  [unmapped] /api/artifacts-center
+    called by artifacts-center, apps, audit-trail, setup
+    in client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx
+  [unmapped] /api/artifacts-center/:p/export
+    called by artifacts-center, apps, audit-trail, setup
+    in client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx
+  [unmapped] /api/validation-kit/:p
+    called by artifacts-center, apps, audit-trail, setup
+    in client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx
+  [unmapped] /api/validation-kit
+    called by artifacts-center, apps, audit-trail, setup
+    in client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx
+  [unmapped] /api/v1/auth
+    called by document-authoring, protocol-dev, submission-center, quality, conversation-thread, (shell chrome)
+    in client/src/services/portal/authService.tsx
+  [unmapped] /api/v1/auth/session
+    called by document-authoring, protocol-dev, submission-center, quality, conversation-thread, (shell chrome)
+    in client/src/services/portal/authService.tsx
+  [unmapped] /api/data-origins/selection
+    called by document-authoring, protocol-dev, ectd-coauthor, conversation-thread
+    in client/src/concept2cure/lineage/dataOriginsApi.ts
+  [unmapped] /api/data-origins/selection.pdf
+    called by document-authoring, protocol-dev, ectd-coauthor, conversation-thread
+    in client/src/concept2cure/lineage/dataOriginsApi.ts
+  [unmapped] /api/data-origins/document
+    called by document-authoring, protocol-dev, ectd-coauthor, conversation-thread
+    in client/src/concept2cure/lineage/dataOriginsApi.ts
+  [unmapped] /api/ana-ri/governed-action
+    called by document-authoring, submission-center, ectd-coauthor, conversation-thread, ana-command, onboarding-ingest, (shell chrome)
+    in client/src/concept2cure/components/ana/useGovernedAction.ts
+  [unmapped] /api/ana-ri/stream/:p/control
+    called by document-authoring, submission-center, ectd-coauthor, conversation-thread, ana-command, onboarding-ingest, (shell chrome)
+    in client/src/concept2cure/components/ana/useAnaChat.ts
+  [unmapped] /api/ana-ri/stream
+    called by document-authoring, submission-center, ectd-coauthor, conversation-thread, ana-command, onboarding-ingest, (shell chrome)
+    in client/src/concept2cure/components/ana/useAnaChat.ts
+  [unmapped] /api/ana-ri/agent-activity
+    called by document-authoring, submission-center, ectd-coauthor, conversation-thread, ana-command, onboarding-ingest, (shell chrome)
+    in client/src/concept2cure/v2/useAgentActivity.ts
+  [unmapped] /api/tasks/tasks
+    called by document-authoring, conversation-thread, (shell chrome)
+    in client/src/concept2cure/v2/editor/AssignReviewDialog.tsx, client/src/concept2cure/v2/surfaces/CollabLauncher.tsx
+  [unmapped] /api/tasks/tasks/by-module/:p
+    called by document-authoring, conversation-thread
+    in client/src/concept2cure/v2/editor/ReviewTasksPanel.tsx
+  [unmapped] /api/tasks/tasks/:p
+    called by document-authoring, conversation-thread
+    in client/src/concept2cure/v2/editor/ReviewTasksPanel.tsx
+  [unmapped] /api/realtime-collab/locks/:p
+    called by document-authoring, conversation-thread
+    in client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx
+  [unmapped] /api/realtime-collab/rooms
+    called by document-authoring, conversation-thread
+    in client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx
+  [unmapped] /api/realtime-collab/rooms/:p/users/me:p
+    called by document-authoring, conversation-thread
+    in client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx
+  [unmapped] /api/realtime-collab/rooms/:p/awareness
+    called by document-authoring, conversation-thread
+    in client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx
+  [unmapped] /api/realtime-collab/locks
+    called by document-authoring, conversation-thread
+    in client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx
+  [unmapped] /api/review/board
+    called by review
+    in client/src/concept2cure/v2/surfaces/Review.tsx
+  [unmapped] /api/concept2cure/reviews/my-queue
+    called by review, (shell chrome)
+    in client/src/concept2cure/v2/surfaces/ReviewThreads.tsx, client/src/concept2cure/v2/TaskTray.tsx
+  [unmapped] /api/concept2cure/review-threads/:p/comments
+    called by review
+    in client/src/concept2cure/v2/surfaces/ReviewThreads.tsx
+  [unmapped] /api/concept2cure/review-threads/:p/resolve
+    called by review
+    in client/src/concept2cure/v2/surfaces/ReviewThreads.tsx
+  [unmapped] /api/concept2cure/review-tasks/:p/resolve
+    called by review
+    in client/src/concept2cure/v2/surfaces/ReviewThreads.tsx
+  [unmapped] /api/csr-workflow/board
+    called by regulatory-workspace
+    in client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx
+  [unmapped] /api/regulatory-workspace
+    called by regulatory-workspace
+    in client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx
+  [unmapped] /api/protocol-dev
+    called by protocol-dev
+    in client/src/concept2cure/v2/surfaces/ProtocolDev.tsx
+  [unmapped] /api/concept2cure/artifacts/export-:p
+    called by protocol-dev
+    in client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx
+  [unmapped] /api/irb/submissions
+    called by protocol-dev
+    in client/src/concept2cure/v2/surfaces/IrbPackage.tsx
+  [unmapped] /api/irb/submissions/:p/package-manifest
+    called by protocol-dev
+    in client/src/concept2cure/v2/surfaces/IrbPackage.tsx
+  [unmapped] /api/tenant-users/:p
+    called by protocol-dev
+    in client/src/concept2cure/v2/surfaces/ProtocolDevWrites.ts
+  [unmapped] /api/c2c/actions/sign
+    called by submission-center
+    in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx
+  [unmapped] /api/dossier-map
+    called by dossier-map
+    in client/src/concept2cure/v2/surfaces/DossierMap.tsx
+  [unmapped] /api/submission-orchestrator/runs/:p
+    called by ectd-compile
+    in client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+  [unmapped] /api/submission-orchestrator/runs/:p/audit
+    called by ectd-compile
+    in client/src/concept2cure/v2/surfaces/EctdCompile.tsx
+  [unmapped] /api/concept2cure/artifacts/export-docx
+    called by conversation-thread
+    in client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+  [unmapped] /api/concept2cure/projects/:p
+    called by conversation-thread
+    in client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+  [unmapped] /api/ai-actions/execute
+    called by ana-command
+    in client/src/concept2cure/v2/surfaces/AnaCommand.tsx
+  [unmapped] /api/tenant-users
+    called by admin-console, onboarding
+    in client/src/concept2cure/v2/surfaces/AdminAccess.tsx, client/src/concept2cure/v2/surfaces/Onboarding.tsx
+  [unmapped] /api/organizations/:p/profile
+    called by onboarding
+    in client/src/concept2cure/v2/surfaces/Onboarding.tsx
+  [unmapped] /api/organizations/:id/profile
+    called by onboarding
+    in client/src/concept2cure/v2/surfaces/Onboarding.tsx
+  [unmapped] /api/ana-ri/live-drive/state
+    called by (shell chrome)
+    in client/src/concept2cure/v2/V2App.tsx
+  [unmapped] /api/tasks/messages
+    called by (shell chrome)
+    in client/src/concept2cure/v2/surfaces/CollabLauncher.tsx
+  [unmapped] /api/tenants
+    called by (shell chrome)
+    in client/src/contexts/TenantContext.tsx
+  [unmapped] /api/clients
+    called by (shell chrome)
+    in client/src/contexts/TenantContext.tsx

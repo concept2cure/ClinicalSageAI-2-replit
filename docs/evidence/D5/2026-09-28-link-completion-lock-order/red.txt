@@ -1,0 +1,9 @@
+# tests/db/task-link-completion-lock-order.dbtest.ts on PostgreSQL 16.13 (deadlock_timeout 1s), against HEAD's unifiedTaskService.ts
+   → the link failed: expected '40P01' to be undefined
+ FAIL  tests/db/task-link-completion-lock-order.dbtest.ts > a link and a completion over the same two tasks > queue one behind the other — neither is aborted as a deadlock victim
+AssertionError: the link failed: expected '40P01' to be undefined
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+
+# the unified-tasks PGlite suite's pinned lock order, against HEAD's unifiedTaskService.ts
+   → expected [ 'BEGIN', 'lock:by-task-id', …(5) ] to deeply equal [ 'BEGIN', 'lock:TASK-X', …(6) ]

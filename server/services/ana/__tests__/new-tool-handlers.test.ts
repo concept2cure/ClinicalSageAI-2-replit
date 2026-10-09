@@ -17,7 +17,17 @@
  * a seeded fixture (TODO).
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// 2026-09-28: confirmed writes now need an editor role (registry wrapper,
+// writeRoleRefusal); the confirmed calls here model a person who may edit, so
+// the membership lookup answers 'member'. The pg stub has no organization_users row.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { getToolHandler, type ToolContext } from '../AnaToolExecutor.js';
 import FDAFormGenerator from '../../FDAFormGenerator';
 
@@ -50,32 +60,32 @@ describe('AnA new tool handlers — registration', () => {
 describe('AnA new tool handlers — input validation (no DB needed)', () => {
   it('lookup_regulatory_precedents rejects missing submission_type', async () => {
     const handler = getToolHandler('lookup_regulatory_precedents')!;
-    const result = JSON.parse(await handler({}, {}));
+    const result = JSON.parse(await handler({}, { humanConfirmed: true }));
     expect(result.error).toMatch(/submission_type/);
   });
 
   it('compare_submission_against_precedent rejects missing precedent_id', async () => {
     const handler = getToolHandler('compare_submission_against_precedent')!;
-    const result = JSON.parse(await handler({ submission_type: '510(k)' }, {}));
+    const result = JSON.parse(await handler({ submission_type: '510(k)' }, { humanConfirmed: true }));
     expect(result.error).toMatch(/precedent_id/);
   });
 
   it('compare_submission_against_precedent rejects missing submission_type', async () => {
     const handler = getToolHandler('compare_submission_against_precedent')!;
-    const result = JSON.parse(await handler({ precedent_id: 'p_123' }, {}));
+    const result = JSON.parse(await handler({ precedent_id: 'p_123' }, { humanConfirmed: true }));
     expect(result.error).toMatch(/submission_type/);
   });
 
   it('assess_claim_evidence_integrity rejects missing package_id', async () => {
     const handler = getToolHandler('assess_claim_evidence_integrity')!;
-    const result = JSON.parse(await handler({}, { organizationId: 1 }));
+    const result = JSON.parse(await handler({}, { organizationId: 1, userId: 1, humanConfirmed: true }));
     expect(result.error).toMatch(/package_id/);
   });
 
   it('simulate_reviewer_challenges rejects missing assessment_id', async () => {
     const handler = getToolHandler('simulate_reviewer_challenges')!;
     const result = JSON.parse(
-      await handler({ package_id: 42 }, { organizationId: 1 })
+      await handler({ package_id: 42 }, { organizationId: 1, userId: 1, humanConfirmed: true })
     );
     expect(result.error).toMatch(/assessment_id/);
   });
@@ -89,7 +99,7 @@ describe('AnA new tool handlers — input validation (no DB needed)', () => {
           changed_artifact_id: 7,
           change_description: 'added 12-month safety follow-up',
         },
-        { organizationId: 1 }
+        { organizationId: 1, userId: 1, humanConfirmed: true }
       )
     );
     expect(result.error).toMatch(/change_type/);
@@ -97,14 +107,14 @@ describe('AnA new tool handlers — input validation (no DB needed)', () => {
 
   it('fetch_template_and_fill rejects missing template_id', async () => {
     const handler = getToolHandler('fetch_template_and_fill')!;
-    const result = JSON.parse(await handler({}, { organizationId: 1 }));
+    const result = JSON.parse(await handler({}, { organizationId: 1, humanConfirmed: true }));
     expect(result.error).toMatch(/template_id/);
   });
 
   it('assemble_ectd_module_from_artifacts rejects missing module_number', async () => {
     const handler = getToolHandler('assemble_ectd_module_from_artifacts')!;
     const result = JSON.parse(
-      await handler({ project_id: 1 }, { organizationId: 1 })
+      await handler({ project_id: 1 }, { organizationId: 1, humanConfirmed: true })
     );
     expect(result.error).toMatch(/module_number/);
   });
@@ -122,13 +132,13 @@ describe('AnA new tool handlers — input validation (no DB needed)', () => {
 
   it('draft_clinical_overview_m2_5 rejects missing indication', async () => {
     const handler = getToolHandler('draft_clinical_overview_m2_5')!;
-    const result = JSON.parse(await handler({ product_name: 'Compound X' }, {}));
+    const result = JSON.parse(await handler({ product_name: 'Compound X' }, { humanConfirmed: true }));
     expect(result.error).toMatch(/indication/);
   });
 
   it('draft_fda_ir_response rejects empty / too-short ir_text', async () => {
     const handler = getToolHandler('draft_fda_ir_response')!;
-    const result = JSON.parse(await handler({ ir_text: 'too short' }, {}));
+    const result = JSON.parse(await handler({ ir_text: 'too short' }, { humanConfirmed: true }));
     expect(result.error).toMatch(/ir_text/);
   });
 
@@ -174,7 +184,7 @@ Information Request from FDA, dated April 2026.
 3.1. Provide the audit trail for protocol deviation #47.
 3.2. Provide the source data for primary endpoint analysis in study C-301.
 `;
-    const result = JSON.parse(await handler({ ir_text: irText }, {}));
+    const result = JSON.parse(await handler({ ir_text: irText }, { humanConfirmed: true }));
     expect(result.questions_extracted).toBeGreaterThanOrEqual(4);
     expect(result.questions[0].number).toBe('1');
     expect(result.response_scaffold?.per_question_format?.sections).toEqual(
@@ -188,21 +198,30 @@ describe('AnA new tool handlers — tenant context enforcement', () => {
   // they hit org-scoped DB queries. The LLM cannot pass tenant identifiers
   // as inputs by design — they come from request-scoped ToolContext only.
 
+  // 2026-09-28: these three are confirm-class writes, so a call with no identified
+  // member (no userId / organizationId) is refused by the registry wrapper
+  // (writeRoleRefusal) before the handler's own organizationId check, and the
+  // membership lookup is never asked.
   it('assess_claim_evidence_integrity refuses without organizationId', async () => {
+    resolveSignerOrgRole.mockClear();
     const handler = getToolHandler('assess_claim_evidence_integrity')!;
-    const result = JSON.parse(await handler({ package_id: 42 }, {} as ToolContext));
-    expect(result.error).toMatch(/organizationId/);
+    const result = JSON.parse(await handler({ package_id: 42 }, { humanConfirmed: true } as ToolContext));
+    expect(result.error).toMatch(/needs an identified member of the organization\. Nothing was changed\./);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('simulate_reviewer_challenges refuses without organizationId', async () => {
+    resolveSignerOrgRole.mockClear();
     const handler = getToolHandler('simulate_reviewer_challenges')!;
     const result = JSON.parse(
-      await handler({ package_id: 42, assessment_id: 7 }, {} as ToolContext)
+      await handler({ package_id: 42, assessment_id: 7 }, { humanConfirmed: true } as ToolContext)
     );
-    expect(result.error).toMatch(/organizationId/);
+    expect(result.error).toMatch(/needs an identified member of the organization\. Nothing was changed\./);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('predict_change_impact refuses without organizationId', async () => {
+    resolveSignerOrgRole.mockClear();
     const handler = getToolHandler('predict_change_impact')!;
     const result = JSON.parse(
       await handler(
@@ -212,22 +231,23 @@ describe('AnA new tool handlers — tenant context enforcement', () => {
           change_description: 'data update',
           change_type: 'data_source',
         },
-        {} as ToolContext
+        { humanConfirmed: true } as ToolContext
       )
     );
-    expect(result.error).toMatch(/organizationId/);
+    expect(result.error).toMatch(/needs an identified member of the organization\. Nothing was changed\./);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('fetch_template_and_fill refuses without organizationId', async () => {
     const handler = getToolHandler('fetch_template_and_fill')!;
-    const result = JSON.parse(await handler({ template_id: 1 }, {} as ToolContext));
+    const result = JSON.parse(await handler({ template_id: 1 }, { humanConfirmed: true } as ToolContext));
     expect(result.error).toMatch(/organizationId/);
   });
 
   it('assemble_ectd_module_from_artifacts refuses without organizationId', async () => {
     const handler = getToolHandler('assemble_ectd_module_from_artifacts')!;
     const result = JSON.parse(
-      await handler({ project_id: 1, module_number: '3.2.S' }, {} as ToolContext)
+      await handler({ project_id: 1, module_number: '3.2.S' }, { humanConfirmed: true } as ToolContext)
     );
     expect(result.error).toMatch(/organizationId/);
   });
@@ -240,7 +260,7 @@ describe('AnA new tool handlers — tenant context enforcement', () => {
     // confirm the validation doesn't reject the call before the DB layer.
     // If the DB is unavailable the handler will return its own error
     // string; we only care that it didn't reject on context grounds.
-    const raw = await handler({ submission_type: '510(k)' }, {});
+    const raw = await handler({ submission_type: '510(k)' }, { humanConfirmed: true });
     const result = JSON.parse(raw);
     // Either succeeds with a count, or fails with a *non-tenant-context* error.
     if (result.error) {
@@ -283,7 +303,7 @@ describe('AnA biostatistics tools — registration + deterministic compute', () 
 
   it('compute_sample_size returns an engine-computed N and power', async () => {
     const handler = getToolHandler('compute_sample_size')!;
-    const result = JSON.parse(await handler(validDesign, {} as ToolContext));
+    const result = JSON.parse(await handler(validDesign, { humanConfirmed: true } as ToolContext));
     expect(result.status).toBe('computed');
     expect(result.engine).toBe('deterministic');
     expect(result.sampleSize.total).toBeGreaterThan(0);
@@ -292,14 +312,14 @@ describe('AnA biostatistics tools — registration + deterministic compute', () 
 
   it('compute_sample_size reports needs_parameters when design is missing', async () => {
     const handler = getToolHandler('compute_sample_size')!;
-    const result = JSON.parse(await handler({ clientTrack: 'biotech_pharma' }, {} as ToolContext));
+    const result = JSON.parse(await handler({ clientTrack: 'biotech_pharma' }, { humanConfirmed: true } as ToolContext));
     expect(result.status).toBe('needs_parameters');
     expect(Array.isArray(result.errors)).toBe(true);
   });
 
   it('assess_statistical_defensibility returns a multi-dimension judgment', async () => {
     const handler = getToolHandler('assess_statistical_defensibility')!;
-    const result = JSON.parse(await handler(validDesign, {} as ToolContext));
+    const result = JSON.parse(await handler(validDesign, { humanConfirmed: true } as ToolContext));
     expect(result.status).toBe('assessed');
     expect(result.judgment).toBeDefined();
     expect(Array.isArray(result.judgment.dimensions)).toBe(true);
@@ -308,7 +328,7 @@ describe('AnA biostatistics tools — registration + deterministic compute', () 
   it('analyze_missing_data_impact returns adjusted power for a missing-data plan', async () => {
     const handler = getToolHandler('analyze_missing_data_impact')!;
     const result = JSON.parse(
-      await handler({ ...validDesign, missingDataMethod: 'MMRM', expectedMissingRate: 0.2 }, {} as ToolContext)
+      await handler({ ...validDesign, missingDataMethod: 'MMRM', expectedMissingRate: 0.2 }, { humanConfirmed: true } as ToolContext)
     );
     expect(result.status).toBe('computed');
     expect(result.missingDataImpact).toBeDefined();
@@ -318,7 +338,7 @@ describe('AnA biostatistics tools — registration + deterministic compute', () 
   it('generate_statistical_document drafts a SAP section grounded in the engine', async () => {
     const handler = getToolHandler('generate_statistical_document')!;
     const result = JSON.parse(
-      await handler({ ...validDesign, documentType: 'sap_section_draft' }, {} as ToolContext)
+      await handler({ ...validDesign, documentType: 'sap_section_draft' }, { humanConfirmed: true } as ToolContext)
     );
     expect(result.status).toBe('generated');
     expect(result.documentType).toBe('sap_section_draft');
@@ -331,7 +351,7 @@ describe('AnA biostatistics tools — registration + deterministic compute', () 
     const result = JSON.parse(
       await handler(
         { scenarioA: { ...validDesign, powerTarget: 0.8 }, scenarioB: { ...validDesign, powerTarget: 0.9 } },
-        {} as ToolContext
+        { humanConfirmed: true } as ToolContext
       )
     );
     expect(result.status).toBe('computed');
@@ -369,7 +389,7 @@ describe('generate_statistical_document — full template coverage', () => {
   for (const documentType of DOC_TYPES) {
     it(`generates ${documentType}`, async () => {
       const handler = getToolHandler('generate_statistical_document')!;
-      const result = JSON.parse(await handler({ ...design, documentType }, {} as ToolContext));
+      const result = JSON.parse(await handler({ ...design, documentType }, { humanConfirmed: true } as ToolContext));
       expect(result.status).toBe('generated');
       expect(result.documentType).toBe(documentType);
       expect(typeof result.content).toBe('string');
@@ -381,7 +401,7 @@ describe('generate_statistical_document — full template coverage', () => {
 
 describe('existing FDAFormGenerator — AnA adapter', () => {
   it('lists the canonical registry with fail-closed release readiness', async () => {
-    const result = JSON.parse(await getToolHandler('list_fda_forms')!({}, {}));
+    const result = JSON.parse(await getToolHandler('list_fda_forms')!({}, { humanConfirmed: true }));
     expect(result.canonicalRegistry).toBe(true);
     expect(result.releaseReadiness).toEqual(expect.objectContaining({ releaseReady: false, catalogComplete: false }));
   });
@@ -395,9 +415,9 @@ describe('existing FDAFormGenerator — AnA adapter', () => {
   });
 
   it('requires an amendment reason and executes conditional validation', async () => {
-    const noReason = JSON.parse(await getToolHandler('amend_fda_form')!({ formId: 'FDA_1571', currentValues: {}, changes: {} }, {}));
+    const noReason = JSON.parse(await getToolHandler('amend_fda_form')!({ formId: 'FDA_1571', currentValues: {}, changes: {} }, { humanConfirmed: true }));
     expect(noReason.error).toBe('REASON_REQUIRED');
-    const supplement = JSON.parse(await getToolHandler('prepare_fda_form')!({ formId: 'FDA_356H', values: { application_type: 'Supplement' } }, {}));
+    const supplement = JSON.parse(await getToolHandler('prepare_fda_form')!({ formId: 'FDA_356H', values: { application_type: 'Supplement' } }, { humanConfirmed: true }));
     expect(supplement.missingRequired).toContain('application_number');
   });
 

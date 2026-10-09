@@ -1,0 +1,218 @@
+{
+  "measured": "2026-09-29, scripts/ci/launch-scope-route-inventory.ts --rows, production posture, throwaway copy of c2c_testdb; before = HEAD registry, after = this change",
+  "changed": 26,
+  "writes": 12,
+  "byTransition": {
+    "launch->out-of-scope": 26
+  },
+  "routes": [
+    {
+      "path": "/api/programs/:programId/se-matrix/render",
+      "methods": [
+        "post"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/defense-packet",
+      "methods": [
+        "post"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/defense-packet/:packetId",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/defense-packets",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/defense-packet/:packetId/staleness-check",
+      "methods": [
+        "post"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/defense-packet/:packetId/status",
+      "methods": [
+        "patch"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/defense-packet/build",
+      "methods": [
+        "post"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/defense-packet/:manifestHash/export.json",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/defense-packet/:manifestHash/export.csv",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/defense-packet/:manifestHash/submission-gate",
+      "methods": [
+        "post"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/defense-packet/:packetId/waive-task",
+      "methods": [
+        "post"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/proof-pack",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/replay-determinism",
+      "methods": [
+        "post"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/proof-pack/persist",
+      "methods": [
+        "post"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/proof-pack/:proofPackId/download",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/proof-pack/:proofPackId/verify",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/safety-signals/ingest",
+      "methods": [
+        "post"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/safety-signals/:kNumber/profile",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/lineage/:kNumber/graph",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/render",
+      "methods": [
+        "post"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/render/:renderJobId/download",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/predicate-intel/render/proof-pack/:proofPackId",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/rtm",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/rtm/csv",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/rtm/snapshot",
+      "methods": [
+        "post"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    },
+    {
+      "path": "/api/programs/:programId/rtm/snapshots",
+      "methods": [
+        "get"
+      ],
+      "before": "launch",
+      "after": "out-of-scope"
+    }
+  ]
+}

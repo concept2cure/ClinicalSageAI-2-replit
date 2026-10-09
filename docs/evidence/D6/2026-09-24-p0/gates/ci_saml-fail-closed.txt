@@ -1,0 +1,1 @@
+✓ SAML SSO fail-closed invariants hold (vetted library, signed assertion required).

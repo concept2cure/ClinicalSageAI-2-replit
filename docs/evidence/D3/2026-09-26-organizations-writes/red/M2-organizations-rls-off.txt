@@ -1,0 +1,17 @@
+# M2: RLS disabled on public.organizations (middleware in place). c2c_d3b
+ × tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > a tenant scope cannot write another organization at the database 11ms
+   → tenant A's scope wrote B's organization row: expected 1 to be +0 // Object.is equality
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings 124ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still cannot touch another organization's settings 13ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's settings, and the change is really there 30ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's profile 26ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff update another tenant's configuration through tenant-config 27ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > the runtime role exists, so the privilege checks below mean something 8ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > self-test: the sweep catches a delegate-grant table with its RLS removed 172ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > self-test: the sweep catches the organizations table with its RLS removed 77ms
+ × tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > no table an RLS decision reads is writable by the runtime role without RLS 81ms
+   → each of these decides a tenant boundary and can be rewritten by any tenant: expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: tenant A's scope wrote B's organization row: expected 1 to be +0 // Object.is equality
+AssertionError: each of these decides a tenant boundary and can be rewritten by any tenant: expected [ Array(1) ] to deeply equal []
+      Tests  2 failed | 8 passed (10)

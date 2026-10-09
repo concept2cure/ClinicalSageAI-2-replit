@@ -1,0 +1,2819 @@
+{
+  "role": "c2c",
+  "attrs": {
+    "rolname": "c2c",
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "rolcanlogin": true
+  },
+  "auditedAt": "2026-09-21T00:58:22.636Z",
+  "database": "clinicalsage",
+  "connectedAs": "postgres",
+  "relations": 1267,
+  "deniedCount": 271,
+  "denied": [
+    "ai.gateway_audit_log",
+    "audit.tamper_proof_log",
+    "clinical_ops.deviations",
+    "clinical_ops.endpoint_results",
+    "clinical_ops.enrollment_records",
+    "clinical_ops.milestones",
+    "clinical_ops.monitoring_visits",
+    "clinical_ops.sites",
+    "clinical_ops.studies",
+    "evidence.claims",
+    "evidence.contradiction_scans",
+    "evidence.derivations",
+    "evidence.hash_ledger",
+    "evidence.provenance",
+    "evidence.sources",
+    "evidence.support",
+    "evidence.v_claim_support",
+    "evidence.v_derivation_chain",
+    "evidence.v_execution_provenance",
+    "intelligence.agency_requirements",
+    "intelligence.ana_interactions",
+    "intelligence.calibration_buckets",
+    "intelligence.document_templates",
+    "intelligence.failure_patterns",
+    "intelligence.network_risk_priors",
+    "intelligence.outcome_feature_vectors",
+    "intelligence.outcome_precedent_links",
+    "intelligence.pattern_contradictions",
+    "intelligence.pattern_warnings",
+    "intelligence.risk_model_versions",
+    "intelligence.risk_predictions",
+    "intelligence.template_sections",
+    "intelligence.template_validations",
+    "intelligent_docs.auto_generated_tables",
+    "intelligent_docs.change_propagation_events",
+    "intelligent_docs.compliance_rules",
+    "intelligent_docs.compliance_scores",
+    "intelligent_docs.impacted_sections",
+    "intelligent_docs.source_documents",
+    "intelligent_docs.traceability_links",
+    "manufacturing.responses",
+    "precedent.csr_precedent_links",
+    "precedent.quality_checkpoints",
+    "precedent.regulatory_precedents",
+    "predicate.candidates",
+    "predicate.defense_packets",
+    "predicate.defense_previews",
+    "predicate.fda_510k_clearances",
+    "predicate.fda_510k_embeddings",
+    "predicate.fda_enforcement",
+    "predicate.fda_ingest_runs",
+    "predicate.fda_product_codes",
+    "predicate.predicate_lineage",
+    "predicate.predicate_risk_rollups",
+    "predicate.predicate_safety_signals",
+    "predicate.proof_pack_exports",
+    "predicate.render_jobs",
+    "predicate.se_matrix_rows",
+    "predicate.toxic_predicates",
+    "public.ai_goal_plan_runs",
+    "public.ai_goal_plan_step_events",
+    "public.ai_kernel_agent_protocol_events",
+    "public.ai_kernel_decision_records",
+    "public.ai_kernel_policy_outcomes",
+    "public.ai_provider_audit_log",
+    "public.ai_provider_cost_summary",
+    "public.ana_artifact_citation_runs",
+    "public.ana_kernel_decision_log",
+    "public.ana_runs",
+    "public.ana_submission_chat_proposals",
+    "public.artifact_compute_attempts",
+    "public.artifact_compute_jobs",
+    "public.artifact_compute_outputs",
+    "public.artifact_compute_runtime_profiles",
+    "public.artifacts",
+    "public.assumption_records",
+    "public.authoring_ai_draft_candidates",
+    "public.biopharma_orphan_advocacy",
+    "public.biopharma_orphan_rpd",
+    "public.biopharma_prea_milestones",
+    "public.bundle_execution_receipts",
+    "public.c2c_agency_meetings",
+    "public.c2c_communication_timeline_events",
+    "public.c2c_correspondence",
+    "public.c2c_correspondence_issues",
+    "public.c2c_design_controls",
+    "public.c2c_evidence_asks",
+    "public.c2c_evidence_objects",
+    "public.c2c_hf_files",
+    "public.c2c_hf_scenarios",
+    "public.c2c_investigator_brochure",
+    "public.c2c_labeling_pi",
+    "public.c2c_maa_module1_components",
+    "public.c2c_mailbox_connections",
+    "public.c2c_migration_journal",
+    "public.c2c_nda_m1_docs",
+    "public.c2c_nda_rtf",
+    "public.c2c_program_journey",
+    "public.c2c_response_packages",
+    "public.c2c_secure_attachments",
+    "public.c2c_smpc_sections",
+    "public.c2c_submissions",
+    "public.capa",
+    "public.cer_jobs",
+    "public.chat_tool_runs",
+    "public.citation_chains",
+    "public.cmc_change_controls",
+    "public.cmc_interview_sessions",
+    "public.cmc_methods",
+    "public.collab_document_state",
+    "public.concept2cure_agency_communications",
+    "public.concept2cure_authority_profiles",
+    "public.concept2cure_publishops_services",
+    "public.concept2cure_submission_center_items",
+    "public.contradiction_links",
+    "public.conversation_os_accepted_artifact_versions",
+    "public.conversation_os_artifact_proposals",
+    "public.conversation_os_execution_plans",
+    "public.conversation_os_execution_steps",
+    "public.conversation_os_proposal_versions",
+    "public.conversation_os_quality_evaluations",
+    "public.conversation_os_retrieval_chunks",
+    "public.conversation_os_retrieval_sources",
+    "public.conversation_os_scout_findings",
+    "public.conversation_os_tool_events",
+    "public.conversation_os_tool_manifests",
+    "public.cre_clinical_studies",
+    "public.cre_design_lessons",
+    "public.cre_evidence_relationships",
+    "public.cre_evidence_sources",
+    "public.cre_regulatory_findings",
+    "public.cre_regulatory_outcomes",
+    "public.decision_receipts",
+    "public.decision_records",
+    "public.doc_sections",
+    "public.document_span_lineage",
+    "public.dp_specs",
+    "public.ectd_agency_configs",
+    "public.ectd_submission_documents",
+    "public.ectd_submission_status_history",
+    "public.ectd_submission_validations",
+    "public.ectd_submissions",
+    "public.embedding_audit_log",
+    "public.fda_510k_initial_data_forms",
+    "public.gdpr_consent_records",
+    "public.gdpr_data_breaches",
+    "public.gdpr_data_subject_requests",
+    "public.gdpr_dpias",
+    "public.gdpr_processing_activities",
+    "public.gdpr_transfer_assessments",
+    "public.governance_boundary_rules",
+    "public.governance_boundary_transitions",
+    "public.governed_dependencies",
+    "public.hf_engineering_files",
+    "public.impact_propagation_log",
+    "public.ind_drafts",
+    "public.ind_milestones",
+    "public.ind_pre_ind_data",
+    "public.ivdr_binder_claims",
+    "public.ivdr_binder_evidence",
+    "public.ivdr_pack_build_jobs",
+    "public.ivdr_pack_counters",
+    "public.ivdr_pack_snapshots",
+    "public.ivdr_packs",
+    "public.knowledge_documents",
+    "public.knowledge_graph_edges",
+    "public.knowledge_graph_nodes",
+    "public.labeling_pi_sections",
+    "public.licenses",
+    "public.literature_entries",
+    "public.lumen_atom_citations",
+    "public.lumen_atom_collections",
+    "public.lumen_atom_conflicts",
+    "public.lumen_atom_quality_scores",
+    "public.lumen_atom_versions",
+    "public.lumen_collection_atoms",
+    "public.lumen_domain_taxonomy",
+    "public.lumen_knowledge_graph_edges",
+    "public.lumen_query_analytics",
+    "public.lumen_regulatory_timeline",
+    "public.market_access_positions",
+    "public.maud_algorithms",
+    "public.maud_validation_requests",
+    "public.maud_validations",
+    "public.method_links",
+    "public.module_access_requests",
+    "public.patent_portfolio",
+    "public.platform_settings",
+    "public.predicate_intelligence_results",
+    "public.proc_control_strategy",
+    "public.program_journey_stages",
+    "public.program_journeys",
+    "public.programs",
+    "public.project_notifications",
+    "public.project_sections",
+    "public.project_workflows",
+    "public.pv_adverse_events",
+    "public.pv_icsr",
+    "public.pv_periodic_reports",
+    "public.pv_risk_management_plans",
+    "public.pv_safety_signals",
+    "public.qa_methods",
+    "public.qc_specs",
+    "public.qms_change_controls",
+    "public.qms_change_links",
+    "public.reg_change_items",
+    "public.reg_mail_ingest",
+    "public.reg_question_events",
+    "public.regional_compliance_config",
+    "public.resolution_bundle_items",
+    "public.resolution_bundles",
+    "public.resolution_plans",
+    "public.section_comments",
+    "public.section_dependencies",
+    "public.section_status_log",
+    "public.specification_audit_log",
+    "public.stab_assignments",
+    "public.stab_audit",
+    "public.stab_capa",
+    "public.stab_chain",
+    "public.stab_conditions",
+    "public.stab_excursions",
+    "public.stab_exports",
+    "public.stab_inuse",
+    "public.stab_lineage",
+    "public.stab_oot_rules",
+    "public.stab_protocols",
+    "public.stab_reminders",
+    "public.stab_results",
+    "public.stab_samples",
+    "public.stab_signoffs",
+    "public.stab_studies",
+    "public.stab_tests",
+    "public.stab_timepoints",
+    "public.strategy_p34_exports",
+    "public.submission_projects",
+    "public.submission_tasks",
+    "public.supersession_records",
+    "public.templates",
+    "public.user_work_queue",
+    "public.user_work_sessions",
+    "public.v_stab_due_tp",
+    "public.v_stab_upcoming_tp",
+    "public.weekly_overage_ledger",
+    "public.weekly_usage_limits",
+    "regulatory_harmonization.audit_log",
+    "regulatory_harmonization.audit_log_y2026m01",
+    "regulatory_harmonization.audit_log_y2026m02",
+    "regulatory_harmonization.audit_log_y2026m03",
+    "regulatory_harmonization.canonical_adverse_events",
+    "regulatory_harmonization.canonical_products",
+    "regulatory_harmonization.electronic_signatures",
+    "regulatory_harmonization.export_job_audit_log",
+    "regulatory_harmonization.export_jobs",
+    "regulatory_harmonization.gdpr_processing_records",
+    "regulatory_harmonization.mapping_rules",
+    "regulatory_harmonization.submission_terminology_usage",
+    "regulatory_harmonization.tenant_data_residency",
+    "regulatory_harmonization.terminology_mappings",
+    "regulatory_harmonization.terminology_versions",
+    "regulatory_intel.advisory_committee_patterns",
+    "regulatory_intel.confidence_calibration_log",
+    "regulatory_intel.crl_trajectory_records",
+    "regulatory_intel.crl_trigger_patterns",
+    "regulatory_intel.cross_jurisdictional_frameworks",
+    "regulatory_intel.ema_question_patterns",
+    "regulatory_intel.filing_sequence_strategies",
+    "regulatory_intel.jurisdictional_divergence_map",
+    "regulatory_intel.precedent_application_rules",
+    "regulatory_intel.reliance_pathways",
+    "regulatory_intel.rtf_trigger_patterns"
+  ],
+  "deniedDetail": [
+    {
+      "relation": "ai.gateway_audit_log",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "audit.tamper_proof_log",
+      "missing": [
+        "SELECT",
+        "INSERT"
+      ]
+    },
+    {
+      "relation": "clinical_ops.deviations",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "clinical_ops.endpoint_results",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "clinical_ops.enrollment_records",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "clinical_ops.milestones",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "clinical_ops.monitoring_visits",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "clinical_ops.sites",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "clinical_ops.studies",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "evidence.claims",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "evidence.contradiction_scans",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "evidence.derivations",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "evidence.hash_ledger",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "evidence.provenance",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "evidence.sources",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "evidence.support",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "evidence.v_claim_support",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "evidence.v_derivation_chain",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "evidence.v_execution_provenance",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.agency_requirements",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.ana_interactions",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.calibration_buckets",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.document_templates",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.failure_patterns",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.network_risk_priors",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.outcome_feature_vectors",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.outcome_precedent_links",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.pattern_contradictions",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.pattern_warnings",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.risk_model_versions",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.risk_predictions",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.template_sections",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligence.template_validations",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligent_docs.auto_generated_tables",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligent_docs.change_propagation_events",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligent_docs.compliance_rules",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligent_docs.compliance_scores",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligent_docs.impacted_sections",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligent_docs.source_documents",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "intelligent_docs.traceability_links",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "manufacturing.responses",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "precedent.csr_precedent_links",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "precedent.quality_checkpoints",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "precedent.regulatory_precedents",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.candidates",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.defense_packets",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.defense_previews",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.fda_510k_clearances",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.fda_510k_embeddings",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.fda_enforcement",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.fda_ingest_runs",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.fda_product_codes",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.predicate_lineage",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.predicate_risk_rollups",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.predicate_safety_signals",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.proof_pack_exports",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.render_jobs",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.se_matrix_rows",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "predicate.toxic_predicates",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ai_goal_plan_runs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ai_goal_plan_step_events",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ai_kernel_agent_protocol_events",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ai_kernel_decision_records",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ai_kernel_policy_outcomes",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ai_provider_audit_log",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ai_provider_cost_summary",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ana_artifact_citation_runs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ana_kernel_decision_log",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ana_runs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ana_submission_chat_proposals",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.artifact_compute_attempts",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.artifact_compute_jobs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.artifact_compute_outputs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.artifact_compute_runtime_profiles",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.artifacts",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.assumption_records",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.authoring_ai_draft_candidates",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.biopharma_orphan_advocacy",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.biopharma_orphan_rpd",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.biopharma_prea_milestones",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.bundle_execution_receipts",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_agency_meetings",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_communication_timeline_events",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_correspondence",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_correspondence_issues",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_design_controls",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_evidence_asks",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_evidence_objects",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_hf_files",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_hf_scenarios",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_investigator_brochure",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_labeling_pi",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_maa_module1_components",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_mailbox_connections",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_migration_journal",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_nda_m1_docs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_nda_rtf",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_program_journey",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_response_packages",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_secure_attachments",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_smpc_sections",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.c2c_submissions",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.capa",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.cer_jobs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.chat_tool_runs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.citation_chains",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.cmc_change_controls",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.cmc_interview_sessions",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.cmc_methods",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.collab_document_state",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.concept2cure_agency_communications",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.concept2cure_authority_profiles",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.concept2cure_publishops_services",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.concept2cure_submission_center_items",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.contradiction_links",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.conversation_os_accepted_artifact_versions",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.conversation_os_artifact_proposals",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.conversation_os_execution_plans",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.conversation_os_execution_steps",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.conversation_os_proposal_versions",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.conversation_os_quality_evaluations",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.conversation_os_retrieval_chunks",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.conversation_os_retrieval_sources",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.conversation_os_scout_findings",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.conversation_os_tool_events",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.conversation_os_tool_manifests",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.cre_clinical_studies",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.cre_design_lessons",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.cre_evidence_relationships",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.cre_evidence_sources",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.cre_regulatory_findings",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.cre_regulatory_outcomes",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.decision_receipts",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.decision_records",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.doc_sections",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.document_span_lineage",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.dp_specs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ectd_agency_configs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ectd_submission_documents",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ectd_submission_status_history",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ectd_submission_validations",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ectd_submissions",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.embedding_audit_log",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.fda_510k_initial_data_forms",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.gdpr_consent_records",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.gdpr_data_breaches",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.gdpr_data_subject_requests",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.gdpr_dpias",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.gdpr_processing_activities",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.gdpr_transfer_assessments",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.governance_boundary_rules",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.governance_boundary_transitions",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.governed_dependencies",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.hf_engineering_files",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.impact_propagation_log",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ind_drafts",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ind_milestones",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ind_pre_ind_data",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ivdr_binder_claims",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ivdr_binder_evidence",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ivdr_pack_build_jobs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ivdr_pack_counters",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ivdr_pack_snapshots",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.ivdr_packs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.knowledge_documents",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.knowledge_graph_edges",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.knowledge_graph_nodes",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.labeling_pi_sections",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.licenses",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.literature_entries",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.lumen_atom_citations",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.lumen_atom_collections",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.lumen_atom_conflicts",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.lumen_atom_quality_scores",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.lumen_atom_versions",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.lumen_collection_atoms",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.lumen_domain_taxonomy",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.lumen_knowledge_graph_edges",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.lumen_query_analytics",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.lumen_regulatory_timeline",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.market_access_positions",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.maud_algorithms",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.maud_validation_requests",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.maud_validations",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.method_links",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.module_access_requests",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.patent_portfolio",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.platform_settings",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.predicate_intelligence_results",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.proc_control_strategy",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.program_journey_stages",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.program_journeys",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.programs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.project_notifications",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.project_sections",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.project_workflows",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.pv_adverse_events",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.pv_icsr",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.pv_periodic_reports",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.pv_risk_management_plans",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.pv_safety_signals",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.qa_methods",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.qc_specs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.qms_change_controls",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.qms_change_links",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.reg_change_items",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.reg_mail_ingest",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.reg_question_events",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.regional_compliance_config",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.resolution_bundle_items",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.resolution_bundles",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.resolution_plans",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.section_comments",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.section_dependencies",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.section_status_log",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.specification_audit_log",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_assignments",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_audit",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_capa",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_chain",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_conditions",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_excursions",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_exports",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_inuse",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_lineage",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_oot_rules",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_protocols",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_reminders",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_results",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_samples",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_signoffs",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_studies",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_tests",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.stab_timepoints",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.strategy_p34_exports",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.submission_projects",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.submission_tasks",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.supersession_records",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.templates",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.user_work_queue",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.user_work_sessions",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.v_stab_due_tp",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.v_stab_upcoming_tp",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.weekly_overage_ledger",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "public.weekly_usage_limits",
+      "missing": [
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.audit_log",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.audit_log_y2026m01",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.audit_log_y2026m02",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.audit_log_y2026m03",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.canonical_adverse_events",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.canonical_products",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.electronic_signatures",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.export_job_audit_log",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.export_jobs",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.gdpr_processing_records",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.mapping_rules",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.submission_terminology_usage",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.tenant_data_residency",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.terminology_mappings",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_harmonization.terminology_versions",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_intel.advisory_committee_patterns",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_intel.confidence_calibration_log",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_intel.crl_trajectory_records",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_intel.crl_trigger_patterns",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_intel.cross_jurisdictional_frameworks",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_intel.ema_question_patterns",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_intel.filing_sequence_strategies",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_intel.jurisdictional_divergence_map",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_intel.precedent_application_rules",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_intel.reliance_pathways",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "relation": "regulatory_intel.rtf_trigger_patterns",
+      "missing": [
+        "USAGE",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    }
+  ],
+  "excess": [],
+  "ownedAppendOnly": [],
+  "ownedInOverrideSchemas": 17,
+  "schemasWithoutUsage": [
+    "ai",
+    "clinical_ops",
+    "evidence",
+    "intelligence",
+    "intelligent_docs",
+    "predicate",
+    "regulatory_harmonization",
+    "regulatory_intel"
+  ]
+}

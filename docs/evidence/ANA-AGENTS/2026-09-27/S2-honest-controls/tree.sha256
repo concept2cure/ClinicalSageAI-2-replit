@@ -1,0 +1,12 @@
+# sha256 of the S2 files in the tree the red, green and mutation runs were recorded against (HEAD 1a4b1893f + the S2 working tree, uncommitted when filed).
+# source
+1340c9b2c572cb5b5d3a11317395c138147e3805a4a472ad3248edd7a88eada9  server/services/ai-gateway/effort.ts
+77a784ee72a2174371a297905e7baa2e558375be3a621ba63a26338e375abc26  server/routes/ana-ri/stream.ts
+0eb844b97738d70a1ef9d2e6c184c49e265d0f4fb935d9c6ddf2956476a44fa5  client/src/concept2cure/v2/surfaces/Surfaces.tsx
+068fb8d7b87a08dbd97de9d446b7a92c0fae3b1c61c38901239b36b49f271191  client/src/concept2cure/v2/V2App.tsx
+eee536a28eeb0fca837935f4ca25198c3c553e995642c3c7bb56bea23700792b  client/src/concept2cure/components/ana/useAnaChat.types.ts
+ccb6a9129f7339ce4a278aa194c2a49b66da42deb013302341c3cc01a9740311  server/services/ai-gateway/reasoning.ts
+# tests
+e047450a57585ab59632e4038e4fff97eab00e09b01fb11667fb09b28324a754  client/src/concept2cure/v2/__tests__/homeEngine.test.tsx
+df5d6a80b971d5131beabc7e66a671af66a4c949e9d0e8318fe98d133f32d916  server/services/ai-gateway/__tests__/effort.test.ts
+1dfc532977d9f14320cb51bf63d0cdc11faac8800c7b76ee12c80ce2580a305b  server/routes/ana-ri/__tests__/stream-model-override.test.ts

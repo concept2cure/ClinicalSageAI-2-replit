@@ -1,0 +1,45 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5600/api/c2c/projects",
+    "anonymous": false,
+    "body": {
+      "name": "OQ-004 Submission program 20260921011414",
+      "programType": "ind",
+      "primaryAgency": "FDA",
+      "indication": "Validation exercise",
+      "priority": "medium"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 53,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": "4698f51b-4164-490c-a964-c2c3190bdd53",
+        "title": "OQ-004 Submission program 20260921011414",
+        "ws": "Biotech",
+        "code": "OSP2-YANT",
+        "stage": "Planning",
+        "readiness": 0,
+        "status": "active",
+        "lead": "JM Smith",
+        "blocker": null,
+        "due": "—",
+        "activity": "Updated Sep 21"
+      },
+      "meta": {
+        "created": true,
+        "documentId": "doc_b10c054d306b4686ae09acb950fb2907",
+        "scaffoldedSections": 92,
+        "submissionId": 46,
+        "submissionCreated": true,
+        "projectAnchorId": null,
+        "projectAnchorSkipped": "NO_CLIENT_WORKSPACE",
+        "projectAnchorDetail": "This organization has no client workspace, and projects.client_workspace_id is NOT NULL. The program was created; it carries no PM-spine anchor until a workspace exists."
+      }
+    }
+  }
+}

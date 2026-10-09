@@ -1,0 +1,53 @@
+# 2026-09-26T04:07:06Z — HEAD 5b55e2b5, before the fix: the callbacks hand the token over in the query string; no sign-in page reads a fragment
+$ npx vitest run server/routes/__tests__/ssoRoutes.test.ts client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts
+       |                        ^
+    218|     expect(beforeHash, 'the token travelled in the query string').not.…
+    219|     const params = new URLSearchParams(fragment);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a return path rides in the fragment with the session, never in a query string (IAM-18 item 6)
+AssertionError: expected '/concept2cure/projects?tab=1&token=ey…' to be '/concept2cure/login' // Object.is equality
+Expected: "/concept2cure/login"
+Received: "/concept2cure/projects?tab=1&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3IiwiZW1haWwiOiJhbGljZUBhY21lLnRlc3QiLCJvcmdhbml6YXRpb25JZCI6IjQyIiwicm9sZSI6Im1hbmFnZXIiLCJwcm92aWRlciI6InNhbWwiLCJzZXNzaW9uSW5kZXgiOiJfc2Vzc2lvbl8xIiwidHlwZSI6ImFjY2VzcyIsInNpZCI6IjZmYTgyMDAxLWNlNmItNDAwOC04NWJhLTYyMjk1YmQzN2MwYyIsInNzdCI6MTc5MDM5NTYyOCwiaWRsIjo5MDAsImlhdCI6MTc5MDM5NTYyOCwiZXhwIjoxNzkwNDgyMDI4fQ.qYk2mXQeFpL6iGNlvle74UiPuj4w_X97KEuIq7-X9t8"
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:404:24
+    402|     const location = String(res.headers.location);
+    403|     const [beforeHash, fragment] = location.split('#');
+    404|     expect(beforeHash).toBe('/concept2cure/login');
+       |                        ^
+    405|     expect(beforeHash, 'the token travelled in the query string').not.…
+    406|     const params = new URLSearchParams(fragment);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+ FAIL  client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > reads the token, provider and an allowed return path from the fragment
+TypeError: parseSsoHandoff is not a function
+ ❯ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts:14:12
+     12| describe('parseSsoHandoff', () => {
+     13|   it('reads the token, provider and an allowed return path from the fr…
+     14|     expect(parseSsoHandoff(`#sso=${JWT}&provider=saml&returnTo=${encod…
+       |            ^
+     15|       token: JWT,
+     16|       provider: 'saml',
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+ FAIL  client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > drops a return path that is not a same-origin path this app allows
+TypeError: parseSsoHandoff is not a function
+ ❯ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts:22:12
+     20|
+     21|   it('drops a return path that is not a same-origin path this app allo…
+     22|     expect(parseSsoHandoff(`#sso=${JWT}&returnTo=${encodeURIComponent(…
+       |            ^
+     23|     expect(parseSsoHandoff(`#sso=${JWT}&returnTo=${encodeURIComponent(…
+     24|     expect(parseSsoHandoff(`#sso=${JWT}&returnTo=${encodeURIComponent(…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+ FAIL  client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > is null without a token shaped like a JWT, and for an empty or unrelated fragment
+TypeError: parseSsoHandoff is not a function
+ ❯ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts:28:12
+     26|
+     27|   it('is null without a token shaped like a JWT, and for an empty or u…
+     28|     expect(parseSsoHandoff('')).toBeNull();
+       |            ^
+     29|     expect(parseSsoHandoff('#tab=1')).toBeNull();
+     30|     expect(parseSsoHandoff('#sso=not-a-token')).toBeNull();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+ Test Files  2 failed (2)
+      Tests  5 failed | 16 passed (21)
+   Start at  04:07:07
+   Duration  2.05s (transform 944ms, setup 169ms, import 1.62s, tests 180ms, environment 0ms)
+exit=1

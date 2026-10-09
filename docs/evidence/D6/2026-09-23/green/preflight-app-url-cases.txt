@@ -1,0 +1,7 @@
+# The deploy-aws.yml APP_URL preflight check, run on five task-definition shapes (2026-09-23T10:18:42Z)
+
+env https (expect 0) -> FAIL=0
+env padded upper-case (expect 0) -> FAIL=0
+secret (expect 0) -> FAIL=0
+env http (expect 1) -> FAIL=1
+absent (expect 1) -> FAIL=1

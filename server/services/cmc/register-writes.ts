@@ -23,6 +23,7 @@
 import { z } from 'zod';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db';
+import { withoutTenantKey, withoutOrgId } from '../../utils/authedOrgId';
 import {
   cmcCharacterizationStudies,
   cmcContainerClosures,
@@ -64,16 +65,10 @@ export const optionalDate = z.preprocess(
   z.coerce.date().optional(),
 );
 
-/** The tenant key is taken from the authenticated context, never the body. */
-export function withoutTenantKey<S extends z.AnyZodObject>(schema: S): S {
-  return schema.omit({ organizationId: true } as never) as unknown as S;
-}
-
-/** Strip the tenant key from a validated body. */
-export function withoutOrgId<T extends Record<string, unknown>>(data: T): Omit<T, 'organizationId'> {
-  const { organizationId: _discard, ...rest } = data as { organizationId?: unknown } & T;
-  return rest as Omit<T, 'organizationId'>;
-}
+/** The tenant key is taken from the authenticated context, never the body.
+ *  The canonical pair lives in server/utils/authedOrgId.ts; re-exported here
+ *  for the CMC routers that import it from this module. */
+export { withoutTenantKey, withoutOrgId };
 
 /**
  * Strip the tenant key AND the signature columns. Who qualified a record, and

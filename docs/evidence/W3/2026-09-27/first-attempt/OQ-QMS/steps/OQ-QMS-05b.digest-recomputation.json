@@ -1,0 +1,39 @@
+{
+  "method": "tests/validation/lib/qms-digest.mjs — re-implementation of server/services/qms/document-approval-signature.ts computeQmsDocumentContentDigest (canonical JSON: sorted keys, undefined→null, Date→ISO; sha256 hex)",
+  "digestInput": {
+    "kind": "qms-document-version-content",
+    "id": 1,
+    "organizationId": 1,
+    "docNumber": "SOP-OQ-20260927235436",
+    "version": "1.0",
+    "title": "OQ-006 Document control SOP 20260927235436",
+    "docType": "sop",
+    "category": "validation",
+    "artifactId": null,
+    "nextReviewDate": "2026-10-07",
+    "metadata": {}
+  },
+  "recomputed": "038321d1c2770249205244ac00c31d94c0c1f8cd2a49b29ce8bf0f81523c8b11",
+  "reportedBySignature": "038321d1c2770249205244ac00c31d94c0c1f8cd2a49b29ce8bf0f81523c8b11",
+  "storedOnDocument": "038321d1c2770249205244ac00c31d94c0c1f8cd2a49b29ce8bf0f81523c8b11",
+  "match": true,
+  "signatureRow": {
+    "id": 1,
+    "document_id": null,
+    "version_id": null,
+    "signed_target": "qms-document:1",
+    "signature_type": "qms-document-approval",
+    "signature_purpose": "OQ-006 step 05: SOP approved for validation (signed)",
+    "signer_id": 3,
+    "signer_name": "OQ Second Signer",
+    "signer_title": null,
+    "signer_email": "oq-signer@validation.local",
+    "signature_meaning": "APPROVED",
+    "signature_hash": "67c0a90f0b4a88563fffeee0cdd878d86838f0624ad8c264a9abc4075fc50b62",
+    "binding_basis": "qms-document-version-content-sha256",
+    "second_factor_verified": true,
+    "is_valid": true,
+    "signed_at": "2026-09-27T23:54:40.057Z",
+    "ip_address": "127.0.0.1"
+  }
+}

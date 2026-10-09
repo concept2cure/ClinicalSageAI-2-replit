@@ -117,3 +117,16 @@ describe('the tool variants themselves', () => {
     expect(CODE_EXECUTION_TOOL.name).toBe('code_execution');
   });
 });
+
+describe('web fetch is bounded like web search (D6, WS2)', () => {
+  // Until 2026-09-26 web_fetch had no allowed_domains and no use cap: the one
+  // egress on AnA's tool surface with no boundary.
+  it('reaches only the agency domains web search may search', () => {
+    expect(WEB_FETCH_TOOL.allowed_domains).toEqual(WEB_SEARCH_TOOL.allowed_domains);
+    expect((WEB_FETCH_TOOL.allowed_domains as string[]).length).toBeGreaterThan(0);
+  });
+
+  it('is capped per turn', () => {
+    expect(WEB_FETCH_TOOL.max_uses).toBe(5);
+  });
+});

@@ -17,12 +17,20 @@
  *   4. Re-computes the bound payload digest from the run's stored outputs
  *      (rederived deterministically). If the recomputed digest doesn't match
  *      what the orchestrator persisted, returns 409 `signature_payload_drift`.
- *   5. Verifies the password via part11ComplianceService — the §11.200
- *      two-factor (user-id + password) re-verification. 401 on mismatch.
- *   6. Calls part11ComplianceService.createElectronicSignature to insert the
- *      §11.50 / §11.70-compliant electronic_signatures row, then updates the
- *      row with the orchestrator's payload-binding digest + tenant scope so
- *      the orchestrator's resume-path lookup can find it.
+ *   5. Re-verifies the signer with the platform's one signing ceremony
+ *      (services/part11/reverify-signer.ts, §11.200): the account is in use
+ *      and not locked, the password, and the authenticator code when one is
+ *      enrolled; a wrong factor counts against the account. 401 on a wrong
+ *      password, 400 when an enrolled code is missing, 423 when locked. Until
+ *      2026-09-23 this route had its own password-only check
+ *      (part11ComplianceService.verifyUserCredentials, deleted), so a signer
+ *      with an authenticator enrolled released a submission on the password
+ *      alone and the row said nothing of a second factor.
+ *   6. Calls part11ComplianceService.createElectronicSignature with what the
+ *      ceremony verified, to insert the §11.50 / §11.70-compliant
+ *      electronic_signatures row carrying the orchestrator's payload-binding
+ *      digest + tenant scope, so the orchestrator's resume-path lookup can
+ *      find it.
  *   7. Logs the action via auditService.
  *   8. Returns 200 with { signatureId, signedAt }.
  *
@@ -56,6 +64,8 @@ import {
   loadSubmissionFkBySubmissionIdText,
 } from '../services/submission-package-orchestrator.js';
 import part11ComplianceService from '../services/part11ComplianceService.js';
+import { reverifySigner } from '../services/part11/reverify-signer.js';
+import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
 import { isSigningAuthorized } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import auditService from '../services/auditService.js';
@@ -100,6 +110,9 @@ function requireTenant(req: Request, res: Response): number | null {
 const SignReleaseBodySchema = z.object({
   runId: z.string().min(1),
   password: z.string().min(1),
+  // The enrolled authenticator's current code; the ceremony requires it when
+  // one is enrolled and refuses a malformed one without spending a check.
+  mfaToken: z.string().max(12).optional(),
   // OQ-8 decision: closed enum, only 'approval' accepted for the release gate.
   signatureMeaning: z.literal(PACKAGE_SIGN_SIGNATURE_MEANING),
   // §11.50 manifestation requires a non-empty reason string.
@@ -144,7 +157,7 @@ async function recomputeBoundDigestFromRun(
  * SECURITY:
  *   - JWT-bound signerId (req.user.id). Body cannot override.
  *   - Tenant-scoped run lookup (orgId from JWT, never body).
- *   - Password re-verified via bcrypt in part11ComplianceService.
+ *   - Signer re-verified by the platform's one ceremony (reverifySigner).
  *   - 4xx responses NEVER echo the password or the bound digest payload
  *     (only the signatureId or an opaque error code).
  */
@@ -186,7 +199,7 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
     });
     return res.status(400).json({ error: 'invalid_request' });
   }
-  const { runId, password, signatureMeaning, reason } = parsed.data;
+  const { runId, password, mfaToken, signatureMeaning, reason } = parsed.data;
 
   // ── Load + verify the run ───────────────────────────────────────────────
   let run;
@@ -242,12 +255,16 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
     });
   }
 
-  // ── Verify password (21 CFR Part 11 §11.200 — two-factor for e-sig) ─────
-  const credentialsOk = await part11ComplianceService.verifyUserCredentials(signerId, password);
-  if (!credentialsOk) {
-    // 401 — never reveal whether the user exists, whether the password was
-    // close, or anything about the bound digest. Just the credentials.
-    return res.status(401).json({ error: 'invalid_credentials' });
+  // ── Re-verify the signer (21 CFR Part 11 §11.200) ───────────────────────
+  // The platform's one ceremony: account in use and not locked, password, and
+  // the authenticator code when one is enrolled. The refusal names only the
+  // factor; it never reveals anything about the bound digest.
+  const reverified = await reverifySigner(signerId, { password, mfaToken }, signerReverificationDeps());
+  if (!reverified.ok) {
+    // 401 keeps the error this route has always answered for bad credentials;
+    // the code says which factor, as every other signing surface does.
+    const error = reverified.status === 401 ? 'invalid_credentials' : reverified.code.toLowerCase();
+    return res.status(reverified.status).json({ error, code: reverified.code });
   }
 
   // ── Resolve a documentId for the signature row ──────────────────────────
@@ -286,7 +303,9 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
       documentType: 'submission-release',
       signatureReason: reason,
       signatureMeaning, // 'approval' — OQ-8
-      password,
+      // What the ceremony verified, recorded on the row; never a password for
+      // the service to check a second time.
+      reverified,
       boundPayloadDigest,
       signerRole: signerRole ?? undefined,
       // Committed WITH the signature, not after it (ledger L138). This used to

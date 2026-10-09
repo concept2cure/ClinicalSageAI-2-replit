@@ -30,9 +30,21 @@ export const SIGNATURE_MEANINGS = ['approval', 'review', 'responsibility', 'auth
  * records a meaning; `reauth` is optional here because the verification (and
  * its refusal) is the re-auth service's decision, not this schema's.
  */
+/**
+ * The `meaning` field alone, for a governed route that parses the rest of its
+ * body itself. Defined once here and reused by `governedSignatureSchema`
+ * below, so the two cannot drift into different answers about what a valid
+ * §11.50(a)(3) meaning is.
+ *
+ * An OMITTED meaning still defaults to 'approval' — that caller declared
+ * nothing to contradict. An unrecognised one does not: substituting a meaning
+ * for a value the signer did declare would record something they did not sign.
+ */
+export const signatureMeaningSchema = z.enum(SIGNATURE_MEANINGS).optional().default('approval');
+
 export const governedSignatureSchema = z.object({
   reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
-  meaning: z.enum(SIGNATURE_MEANINGS).optional().default('approval'),
+  meaning: signatureMeaningSchema,
   reauth: z
     .object({
       password: z.string().optional(),

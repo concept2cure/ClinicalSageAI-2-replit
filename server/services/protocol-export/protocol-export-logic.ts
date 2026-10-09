@@ -10,6 +10,8 @@
  * @module server/services/protocol-export/protocol-export-logic
  */
 
+import type { PdevSignatureFacet } from '../protocol-development/protocol-signature-manifestation';
+
 export const FDAAA_801 = 'FDAAA 801 / 42 CFR Part 11 — ClinicalTrials.gov registration data elements';
 
 export interface ExportDoc {
@@ -20,6 +22,10 @@ export interface ExportDoc {
   phase?: string | null;
   version?: string | null;
   synopsis?: string | null;
+  /** protocol_documents.status. */
+  status?: string | null;
+  /** The finalization signature as the signature row records it. Absent means not read. */
+  finalization?: PdevSignatureFacet;
 }
 export interface ExportSection { sectionKey: string; title: string; content?: string | null; orderIndex?: number }
 export interface ExportObjective { objectiveType: string; objective: string; endpoint?: string | null; timepoint?: string | null }
@@ -29,6 +35,8 @@ export interface ExportVisit { visitName: string; timepoint?: string | null; pro
 export interface AssembledProtocol {
   title: string;
   header: { protocolNumber: string | null; kind: string | null; designType: string | null; phase: string | null; version: string | null };
+  status: string | null;
+  finalization: PdevSignatureFacet;
   synopsis: string | null;
   objectives: ExportObjective[];
   eligibility: { inclusion: string[]; exclusion: string[] };
@@ -47,6 +55,8 @@ export function assembleProtocolExport(
   return {
     title: doc.title,
     header: { protocolNumber: doc.protocolNumber ?? null, kind: doc.protocolKind ?? null, designType: doc.designType ?? null, phase: doc.phase ?? null, version: doc.version ?? null },
+    status: doc.status ?? null,
+    finalization: doc.finalization ?? { state: 'unavailable' },
     synopsis: doc.synopsis ?? null,
     objectives,
     eligibility: {
@@ -60,6 +70,44 @@ export function assembleProtocolExport(
   };
 }
 
+/** §11.50(a)(3) in words, as the workspace prints it (client _shared/signatureMeaning.ts).
+ *  Anything else is printed as stored rather than mapped to a guess. */
+const MEANING_LABEL: Record<string, string> = {
+  authorship: 'Authorship', review: 'Review', approval: 'Approval', responsibility: 'Responsibility',
+};
+
+/** A protocol that has been finalized, and so carries a finalization signature
+ *  (the two statuses finalizeProtocolTx refuses to finalize again). */
+export const isFinalizedStatus = (status: string | null): boolean => status === 'finalized' || status === 'superseded';
+
+/**
+ * The status line and the finalization signature block (periodic review
+ * 2026-09-28, editor family, P11-C-2): the export printed a finalized protocol
+ * exactly like a draft, and MD, DOCX and PDF are all rendered from this
+ * Markdown. §11.50(b): printed name, date and time, meaning, on every
+ * human-readable form. Modelled on authoring-export's signatureManifestLines.
+ */
+function signatureBlockLines(status: string | null, f: PdevSignatureFacet): string[] {
+  const statusWords = status ? status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ') : 'Not recorded';
+  const lines = ['', `**Status:** ${statusWords}`, '', '## Electronic signature'];
+  if (!isFinalizedStatus(status)) {
+    return [...lines, '- Not finalized: no electronic signature has been applied to this version.'];
+  }
+  if (f.state === 'unavailable') return [...lines, '- The signature record could not be read, so this copy does not carry the signature.'];
+  if (f.state === 'none') return [...lines, '- No electronic signature is on record for this finalization.'];
+  const s = f.signature;
+  const at = new Date(s.signedAt);
+  if (f.state === 'revoked') lines.push('- REVOKED: this signature has been withdrawn and no longer attests to this protocol.');
+  lines.push(
+    `- Signed by: ${s.signerName}`,
+    `- Meaning: ${s.meaning ? (MEANING_LABEL[s.meaning] ?? s.meaning) : 'Not recorded'}`,
+    `- Executed: ${Number.isNaN(at.getTime()) ? 'Not recorded' : at.toISOString().replace('T', ' ').slice(0, 19) + ' UTC'}`,
+  );
+  if (s.reason) lines.push(`- Reason: ${s.reason}`);
+  if (s.recordedOnBehalfOf) lines.push(`- Recorded on behalf of: ${s.recordedOnBehalfOf}`);
+  return lines;
+}
+
 /** Render an assembled protocol to Markdown. Pure, deterministic. */
 export function renderProtocolMarkdown(p: AssembledProtocol): string {
   const lines: string[] = [];
@@ -67,6 +115,7 @@ export function renderProtocolMarkdown(p: AssembledProtocol): string {
   const h = p.header;
   const meta = [h.protocolNumber && `Protocol ${h.protocolNumber}`, h.version && `v${h.version}`, h.phase, h.designType].filter(Boolean).join(' · ');
   if (meta) lines.push(`_${meta}_`);
+  lines.push(...signatureBlockLines(p.status, p.finalization));
   if (p.synopsis) { lines.push('', '## Synopsis', p.synopsis); }
   if (p.objectives.length) {
     lines.push('', '## Objectives & Endpoints');

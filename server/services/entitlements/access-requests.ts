@@ -196,6 +196,18 @@ export function denyCreate(actor: RequestActor): Denial | null {
 }
 
 /**
+ * Which queue a read is for. `organization` is the caller's own workspace;
+ * `all` is the platform owner's cross-organization view.
+ *
+ * The scope is a property of the MOUNT, not of the request (2026-09-22). `all`
+ * is served only by routes/admin/master-access-requests under the system
+ * scope: on a per-user mount, RLS on module_access_requests confines every read
+ * to the caller's own workspace, so an `all` read there answers for one
+ * workspace while claiming to answer for every one.
+ */
+export type AccessRequestQueueScope = 'organization' | 'all';
+
+/**
  * PURE: may this actor READ the queue at the given scope?
  *
  * `all` is the platform owner's cross-organization view. An org admin asking
@@ -203,7 +215,7 @@ export function denyCreate(actor: RequestActor): Denial | null {
  * a console that shows one workspace while its heading says every workspace is
  * a console that lies about its own scope.
  */
-export function denyQueueRead(actor: RequestActor, scope: 'organization' | 'all'): Denial | null {
+export function denyQueueRead(actor: RequestActor, scope: AccessRequestQueueScope): Denial | null {
   if (actor.userId == null) return { status: 401, error: 'Sign in to view access requests.' };
   if (scope === 'all') {
     if (!actor.isMasterAdmin) {

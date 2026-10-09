@@ -21,7 +21,13 @@
  * Centralized so chat/upload, document ingestion, and any future
  * upload path share one source of truth — adding a new allowed MIME
  * type only needs an edit here.
+ *
+ * The declared type is itself bound to the file's name by
+ * {@link verifyDeclaredTypeForName}: checking bytes against a type the
+ * uploader chose is not enough when the uploader also chose the name.
  */
+
+import path from 'node:path';
 
 export interface SignatureCheck {
   ok: boolean;
@@ -160,4 +166,72 @@ export function verifyFileSignature(buffer: Buffer, mimeType: string): Signature
   // either the allowlist is wider than this utility supports OR the
   // caller skipped the allowlist check. Either way, refuse.
   return { ok: false, reason: `no signature check defined for ${mimeType}` };
+}
+
+/**
+ * What a file's name binds: the types it may be declared as, and the one
+ * whose signature its bytes must carry.
+ *
+ * verifyFileSignature checks the bytes against the DECLARED type, and the
+ * uploader writes the declared type as well as the name. So `report.pdf`
+ * declared `text/html` with HTML bytes passed — text-shaped bytes for a text
+ * type — the vault stored text/html, served it back under a .pdf name, and the
+ * editor's viewer framed it in the app's origin (periodic review 2026-09-28,
+ * editor family, SEC-A-3).
+ *
+ * This binds, it does not blacklist: text/html stays a valid type for a name
+ * that says HTML and is refused for one that says PDF. An extension not listed
+ * here is not bound; the caller's own allowlist decides whether it is accepted.
+ * Every declared type listed is one verifyFileSignature can verify.
+ */
+interface NameBinding {
+  canonical: string;
+  declared: readonly string[];
+}
+
+const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+const JPEG_NAME: NameBinding = { canonical: 'image/jpeg', declared: ['image/jpeg', 'image/jpg'] };
+
+const NAME_BINDINGS: ReadonlyMap<string, NameBinding> = new Map<string, NameBinding>([
+  ['.pdf', { canonical: 'application/pdf', declared: ['application/pdf'] }],
+  ['.png', { canonical: 'image/png', declared: ['image/png'] }],
+  ['.jpg', JPEG_NAME],
+  ['.jpeg', JPEG_NAME],
+  ['.gif', { canonical: 'image/gif', declared: ['image/gif'] }],
+  ['.docx', { canonical: DOCX, declared: [DOCX] }],
+  ['.xlsx', { canonical: XLSX, declared: [XLSX] }],
+  ['.pptx', { canonical: PPTX, declared: [PPTX] }],
+  ['.doc', { canonical: 'application/msword', declared: ['application/msword'] }],
+  ['.xls', { canonical: 'application/vnd.ms-excel', declared: ['application/vnd.ms-excel'] }],
+  // Text formats are sent under more than one name, and a multipart part with
+  // no Content-Type at all reaches multer as text/plain (busboy's default).
+  ['.txt', { canonical: 'text/plain', declared: ['text/plain'] }],
+  ['.csv', { canonical: 'text/csv', declared: ['text/csv', 'application/csv', 'text/plain'] }],
+  ['.md', { canonical: 'text/markdown', declared: ['text/markdown', 'text/x-markdown', 'text/plain'] }],
+  ['.rtf', { canonical: 'text/rtf', declared: ['text/rtf', 'text/plain'] }],
+]);
+
+/**
+ * Verify that `declaredMime` is a type `fileName`'s extension may be declared
+ * as, and that `buffer` carries the signature that extension promises, whatever
+ * was declared: a `.pdf` must be declared application/pdf AND begin `%PDF`.
+ * The comparison ignores case and parameters (`text/plain; charset=utf-8`).
+ * Returns { ok: true } for an extension this module does not bind.
+ */
+export function verifyDeclaredTypeForName(
+  buffer: Buffer,
+  fileName: string,
+  declaredMime: string,
+): SignatureCheck {
+  const ext = path.extname(String(fileName ?? '')).toLowerCase();
+  const binding = NAME_BINDINGS.get(ext);
+  if (!binding) return { ok: true };
+  const declared = String(declaredMime ?? '').split(';')[0].trim().toLowerCase();
+  if (!binding.declared.includes(declared)) {
+    return { ok: false, reason: `a ${ext} file must be declared as ${binding.declared.join(' or ')}` };
+  }
+  const bytes = verifyFileSignature(buffer, binding.canonical);
+  return bytes.ok ? bytes : { ok: false, reason: `the bytes are not a ${ext} file — ${bytes.reason}` };
 }

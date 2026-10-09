@@ -102,6 +102,46 @@ export function getSubmissionRegionProfile(region: string): SubmissionRegionProf
   };
 }
 
+/**
+ * The Module 1 section codes a submission of this application type must carry,
+ * flattened from a region profile.
+ *
+ * ONE implementation, because there were two and they disagreed. A section that
+ * declares `requiredFor` is required only for those application types — a
+ * debarment certification for a marketing application, the general
+ * investigational plan for an IND — and when the application type is unknown
+ * every required section is kept, which is the conservative direction.
+ *
+ * `assess-dispatch-readiness.requiredModule1Codes` (the gate that blocks freeze
+ * and transmit) had this walk; `ectd4-validator` had a hand-written literal set
+ * instead, whose comments described the EU/legacy CTD layout while its codes
+ * were read as FDA ones. That set demanded 1.5 of an IND as a "Table of
+ * Contents" when FDA 1.5 is Application Status, 1.6 as the general
+ * investigational plan when 1.6 is Meetings and the plan lives at 1.20, 1.9 as
+ * an environmental assessment when 1.9 is Pediatric Administrative Information
+ * and the analysis lives at 1.12.14, and 1.7 as the Investigator's Brochure
+ * when the FDA profile has no 1.7 at all and the brochure lives at 1.14.4.1.
+ * Both callers now read the profile, so neither can drift from it alone.
+ */
+export function requiredModule1CodesForRegion(
+  region: string,
+  applicationType?: string | null,
+): string[] {
+  const profile = getSubmissionRegionProfile(region);
+  if (!profile) return [];
+  const app = applicationType ? String(applicationType).toLowerCase() : null;
+  const out: string[] = [];
+  const walk = (sections: typeof profile.module1Sections): void => {
+    for (const s of sections) {
+      const applies = !s.requiredFor || !app || s.requiredFor.includes(app);
+      if (s.required && applies) out.push(s.number);
+      if (s.childSections?.length) walk(s.childSections);
+    }
+  };
+  walk(profile.module1Sections);
+  return out;
+}
+
 /** All submission region profiles (fda, eu, jp, cn, kr), in canonical order. */
 export function getAllSubmissionRegionProfiles(): SubmissionRegionProfile[] {
   return (['fda', 'eu', 'jp', 'cn', 'kr'] as ProfiledRegion[])

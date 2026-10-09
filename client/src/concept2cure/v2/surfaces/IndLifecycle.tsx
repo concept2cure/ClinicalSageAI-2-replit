@@ -40,6 +40,9 @@ interface IndlChecklist {
       lifecycle /file routes need to create an ectd_sequences row. Optional so an
       older server shape degrades to "cannot file" honestly, never to a guess. */
   submissionId?: number | null;
+  /** The project the submission belongs to (submissions.program_id), when the
+      server returns it; null or absent for a submission with none recorded. */
+  programId?: string | null;
   code: string;
   drugName: string | null;
   productName: string | null;
@@ -171,11 +174,12 @@ const EMPTY_SECTIONS: IndlSection[] = [];
 /* ── The open program, and which checklist row is really its IND ──
    The checklist endpoint is org-scoped and this surface used to render rows[0]
    unconditionally — so with two INDs in the org, the CMC build tab could be on
-   one program while this screen silently showed the other's readiness. The
-   program ↔ submission linkage is identity matching (product/title, the same
-   convention ensureSubmissionSpine and the checklist assembler use), applied
-   here so the screens agree. rows[0] remains the fallback when no program is
-   open or no row matches — WITH the mismatch said out loud, never silently. */
+   one program while this screen silently showed the other's readiness. A row
+   whose submission is anchored to the open program (`programId`, LX-22) is its
+   IND; one anchored to ANOTHER program never is, whatever its name. Only a row
+   with no recorded project is matched by name (product/title), and the note
+   says so. rows[0] remains the fallback when no program is open or no row
+   matches — WITH the mismatch said out loud, never silently. */
 interface ShellProjectRead {
   id?: unknown;
   title?: string;
@@ -186,11 +190,22 @@ interface ShellProjectRead {
 /* The local copy of this reader is gone — `../shellProject` owns both ends of
    the window channel, and a second reader is how the two drift. */
 
-function rowMatchesProgram(row: IndlChecklist, p: ShellProjectRead): boolean {
+/** Whether `row` is the open program's IND, and how that is known. */
+function rowMatchesProgram(row: IndlChecklist, p: ShellProjectRead): 'program' | 'legacy-name' | null {
+  if (row.programId != null) return p.id != null && row.programId === String(p.id) ? 'program' : null;
   const norm = (v: unknown): string => String(v ?? '').trim().toLowerCase();
   const programKeys = [p.title, p.product, p.code].map(norm).filter(Boolean);
   const rowKeys = [row.productName, row.drugName, row.code].map(norm).filter(Boolean);
-  return programKeys.some((k) => rowKeys.includes(k));
+  return programKeys.some((k) => rowKeys.includes(k)) ? 'legacy-name' : null;
+}
+
+/** The open program's row: anchored first, a name match only when none is. */
+function programRow(rows: IndlChecklist[], p: ShellProjectRead | null): { row: IndlChecklist; byName: boolean } | null {
+  if (!p) return null;
+  const anchored = rows.find((r) => rowMatchesProgram(r, p) === 'program');
+  if (anchored) return { row: anchored, byName: false };
+  const named = rows.find((r) => rowMatchesProgram(r, p) === 'legacy-name');
+  return named ? { row: named, byName: true } : null;
 }
 
 /* ════ IND Lifecycle -- the deliverable-first IND workspace (21 CFR 312) ════ */
@@ -207,15 +222,19 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   /* Prefer the row that IS the open program's IND; fall back to the first row
      with the mismatch stated (scopeNote), never silently. */
   const shellProject = readShellProject();
-  const matched = shellProject ? rows.find((r) => rowMatchesProgram(r, shellProject)) ?? null : null;
+  const found = programRow(rows, shellProject);
+  const matched = found?.row ?? null;
   const checklist = matched ?? rows[0] ?? null;
+  const byNameNote = found?.byName ? ' Matched by name: this IND has no project recorded.' : '';
   const scopeNote =
     checklist == null
       ? null
       : matched
         ? rows.length > 1
-          ? `Showing the open program's IND (${checklist.productName ?? checklist.code}) — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization.`
-          : null
+          ? `Showing the open program's IND (${checklist.productName ?? checklist.code}) — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization.${byNameNote}`
+          : byNameNote
+            ? byNameNote.trim()
+            : null
         : shellProject
           ? `The open program (${shellProject.title ?? shellProject.id}) has no IND checklist yet — showing ${checklist.productName ?? checklist.code}, the organization's first.`
           : rows.length > 1

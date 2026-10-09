@@ -1,0 +1,191 @@
+# RED re-record, 2026-09-28T04:28:01Z: every S1 test file as it is in the tree, against HEAD cd08aec79 source.
+# Trimmed to the per-test lines, each failure's reason and the summary. vitest's per-failure
+# detail (stack traces; the carriage checks print the whole of stream.ts) is omitted. Re-run the
+# command against the source described above to see it.
+# Test-file sha256 (the tree's):
+#   d83922f34083964ba8c854ab9a7ba5a4da753188867361f0dd335a661df2ada3  client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts
+#   cd122d670b3df686c775cbbcaf0bd1c377730a4b7ef589c10dcf73712cad069c  client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx
+#   ec8b95d54e4978f486b14051f1b14b921125ec8955d61f4b022095087065c798  client/src/concept2cure/v2/__tests__/anaActivity.test.tsx
+#   590daf1748fff418aafd6c3c8118649a73b375ef8a7d23630350e2922c08e0dd  client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx
+#   01bc2a9f0fdd1ea9246131e4d3609df7892f063e2807b5cd6d55811c08677dee  client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts
+#   59189bed9b04ec51ca0d3c11d88c16c50134c5b011394d4fac809cfa4fe0209c  client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx
+#   992de61812b13bdae335513e5b8c12f3960845441321ea8e7cc18b178bb55467  server/services/ana/__tests__/tool-trace-stopped-turn.test.ts
+#   088d8a309b7bd107b2f4fcf2b96a27fbede80cbe449093f966305e498e187934  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts
+# Source: HEAD for all 12 S1 source files, plus these do-nothing stubs (HEAD has none of the names):
+#   anaWorkModel.ts: isContinuable() → false; CONTINUE_PROMPT = ''; continueTurnIndex() → -1
+#   tool-trace.ts:   withTurnEnding(meta) → meta; turnStopWarning() → ''; formatStoppedTurnNote() → ''
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx client/src/concept2cure/v2/__tests__/anaActivity.test.tsx client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx server/services/ana/__tests__/tool-trace-stopped-turn.test.ts server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names each tool AnA actually ran, under its real label
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > announces status through exactly one polite region
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > keeps the live region mounted when there is nothing to say
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > speaks the outcomes, not just the phase
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > points the disclosure at the region it controls
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > separates the rounds so going back for more reads as exactly that
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names no rounds when she declared a plan — the plan is the structure
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > says a draft once when the step that wrote it already names it
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > states how the question was read
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > numbers the phases the turn actually reported and marks the one in flight
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > runs a clock while the turn is live and stops it when the turn ends
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > says a turn that timed out or lost its connection did not finish — never "Finished"
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > says a turn that failed before its first phase did not finish
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > reports the deliverable it produced, without needing to be expanded
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names the deliverable as a step too once the record is open
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > shows the newest stretch of her reasoning while she is still thinking
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > shows her reasoning verbatim, never a summary of it
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > lets a keyboard reach the reasoning it has to scroll to read
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > does not add an empty tab stop for the live thought, which does not scroll
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > cuts a long live thought at a word boundary and marks the cut
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > is open while streaming and collapsed once the answer has landed
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > renders nothing at all for a settled turn that did no reportable work
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > renders nothing while streaming when there is no phase and nothing to report
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > lists no outputs — the conversation shows each one where it happened
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > says a stopped turn was stopped, never finished
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > shows the paused state with its clock
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > leaves tool durations and inputs to the transcript, never repeats them here
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > shows steers waiting for the next round
+ × client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says a turn stopped at the round limit stopped there — never "Finished"
+   → Unable to find an element with the text: Stopped at the round limit · 1m 12s. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says a turn stopped for repeating a step stopped there
+   → Unable to find an element with the text: Stopped: repeating a step · 1m 12s. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > a server-side stop whose stream then dropped did not finish — the stop does not outrank the lost connection
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > the person's own Stop still reads as a stop, even when the stream then dropped
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > shows a failed step as failed instead of dropping it
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > reports a failed step in the words the server wrote, not the raw payload
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > counts only settled steps as run, never the one still in flight
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the clock > runs a clock beside the live phase and freezes the recorded duration once settled
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the clock > claims no duration for a settled turn with no recorded end
+ × client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says a run that was stopped at a round boundary was stopped, even when the stream closed cleanly
+   → Unable to find an element with the text: Stopped after 30s. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says it for a reopened turn too, which has no clock to show
+   → Unable to find an element with the text: Stopped at the round limit. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > still says "Finished" for a turn she ended herself
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — her plan > shows her declared plan on the rail, the current step marked, and counts nothing she did not declare
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — each row opens in place, like the work it records > puts a step's duration and the inputs she passed behind that step's own chevron
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — each row opens in place, like the work it records > records her plan once as "Planned N steps", with the steps behind the chevron
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > does not say the plan twice: the folded line counts the work, the first row is the plan
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > says "Plan", not "Planned", for a reopened thread that kept only the final list
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > keeps a FAILED plan call as a failed row — a failure is never folded away
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — her plan > never shows an unfinished step as done once the turn has ended
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — nothing is shown that did not happen > renders no phases for a turn that reported none, and no fabricated steps
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — nothing is shown that did not happen > is honest before the first turn
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — nothing is shown that did not happen > reports a failed queue read as a failure, not an empty queue
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > claims no duration for a settled step whose end was never recorded
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > says on the folded line when a fallback provider answered
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > is fed by one mapping from the turn, which carries the plan and the fallback
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > splits a label at the argument the server quoted, and leaves the rest whole
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — nothing is shown that did not happen > renders the background queue the server reported, stalled runs included
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — nothing is shown that did not happen > adds no Background section when no read was wired, or the queue is empty
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — used in this session > says what the session used — only what reached the model, and a failed read as failed
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — used in this session > names the effort only when it differs from the engine she was given
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > a recorded turn carries one quiet row with the start of its hash, and the whole of it behind the row
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > a turn that was not recorded says so under the turn, unfolded, with the reason
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > says it even for a turn with nothing else to report
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > claims nothing while the turn is in flight, or when the server said nothing
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > activityPropsFor carries the status from the turn
+ × client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a round-limit stop is a note outside the folded body, with Continue, and Continue sends once
+   → expected null to be truthy
+ × client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says the limit without a number when the round count is unknown
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a repeated-step stop says so, and offers no Continue — continuing would repeat it
+   → expected null to be truthy
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a stop the person made carries no note — they pressed Stop, they know
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a turn she ended herself carries no note
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — used in this session > says memory could not be read rather than that nothing matched
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — used in this session > counts a file once however many turns it rode, at the best read it got
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — used in this session > says nothing about memory when no turn reported what it read
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — structure and announcements > is one h2 over h3 sections, each present only when it has something to say
+ × client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > offers Continue only where the host offers it — the latest settled turn
+   → expected null to be truthy
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says nothing about a stop while the turn is still in flight
+ × client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says it even for a turn with nothing else to report
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > keeps the open-while-streaming, folded-after pin
+   → expected null to be truthy
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — structure and announcements > offers a close only when the host asks for one
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — structure and announcements > speaks the same placeholder the list shows before the first phase arrives
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — structure and announcements > owns a single polite live region only when asked to announce
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > keeps a round-limit stop and the round count on the turn, through post_done
+   → expected undefined to be 'max_rounds' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > keeps a repeated-step stop
+   → expected undefined to be 'duplicate_thrash' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > ignores a reason it does not know, and a round count that is not a count
+   → expected undefined to be 'max_rounds' // Object.is equality
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > does not accept the reasons later slices reserve before anything produces them
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > a turn with no stop reason on done is left without one
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > a reopened thread > restores why each turn stopped, and its rounds, from the persisted metadata
+   → expected undefined to be 'max_rounds' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > speaks the stop in the one polite region
+   → expected '' to contain 'AnA reached this turn\'s round limit …'
+ × client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > speaks the stop when a turn with nothing to report settles — the polite region stays mounted
+   → expected  to have a length of 1 but got +0
+ × client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > names what Continue answers: the button is described by the stop sentence
+   → Expected container to be an Element, a Document or a DocumentFragment but got null.
+ × client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > keeps keyboard focus in place when Continue unmounts itself
+   → Expected container to be an Element, a Document or a DocumentFragment but got null.
+ × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores a round-limit stop and the rounds it ran
+   → expected undefined to be 'max_rounds' // Object.is equality
+ × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores a repeated-step stop, and a stop the person made
+   → expected undefined to be 'duplicate_thrash' // Object.is equality
+ × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > omits the reason when she finished herself, and keeps the rounds
+   → expected undefined to be 2 // Object.is equality
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores nothing new for a turn that ran no tools and ended normally
+ × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > keeps a stop even when nothing else about the turn was worth storing
+   → expected undefined to deeply equal { stoppedReason: 'max_rounds', …(1) }
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > keeps no round count that is not a positive whole number
+ × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names a round-limit stop, with its rounds, and says not to reuse the work as complete
+   → expected '' to contain 'Your previous turn stopped at the rou…'
+ × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names the limit without a number when the rounds were not kept
+   → expected '' to contain 'Your previous turn stopped at the rou…'
+ × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names a repeated-step stop
+   → expected '' to contain 'repeating the same step'
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a turn she finished, or one the person stopped
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a stored reason that names an Object.prototype member
+ × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > reads only the LAST assistant turn — an earlier stop was already followed by a later answer
+   → expected '' to contain 'round limit (4 rounds)'
+ × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says the answer was written from the work so far, for the round limit and the repeat guard
+   → expected '' to be 'The turn stopped at the round limit a…' // Object.is equality
+ × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says a stop between rounds as one, and a stop before the first round without claiming a round
+   → expected '' to be 'The run was stopped between rounds af…' // Object.is equality
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says nothing for a turn she finished
+ × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > which turn, and which stops > the hosts pick the latest settled assistant turn, and none while a turn is in flight
+   → expected -1 to be 3 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > which turn, and which stops > isContinuable follows the table, and Continue sends one fixed sentence
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the rail > offers Continue on the latest settled turn only, and sends the fixed sentence
+   → expected [] to have a length of 2 but got +0
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the rail > offers nothing while a turn is in flight
+ × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the rail > keeps keyboard focus in the transcript when the send withdraws Continue
+   → Cannot read properties of undefined (reading 'focus')
+ × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > offers Continue on the latest settled turn only, and sends it on the same conversation
+   → expected [] to have a length of 2 but got +0
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > offers nothing while a turn is in flight
+ × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > keeps keyboard focus in the transcript when the send withdraws Continue
+   → Cannot read properties of undefined (reading 'focus')
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+   → expected { toolTrace: [ { …(4) } ] } to match object { stoppedReason: 'max_rounds', …(1) }
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason
+   → expected undefined to be 2 // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason
+   → expected '/**\n * POST /api/ana-ri/stream — SSE…' to match /let loopRounds = 0;/
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and a null runPolicy
+   → expected 'type: \'done\',\n          model: gwR…' to match /stoppedReason: loopStoppedReason,/
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing
+   → expected 'void runStreamPostProcessing({\n     …' to match /stoppedReason: loopStoppedReason,/
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice
+   → expected '/**\n * POST /api/ana-ri/stream — SSE…' to match /if \(loopStoppedReason !== 'no_more_t…/
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history
+   → expected 'const traceNote = formatTraceForConte…' to match /const stoppedNote = formatStoppedTurn…/
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts > adaptChatMessage — the turn reaches the rail intact > carries the caveats that qualify the answer
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts > adaptChatMessage — the turn reaches the rail intact > carries every part of the work record
+ × client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts > adaptChatMessage — the turn reaches the rail intact > carries why the turn stopped, and how many rounds it ran
+   → expected undefined to be 'max_rounds' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts > adaptChatMessage — the turn reaches the rail intact > carries the steers AnA accepted
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts > adaptChatMessage — the turn reaches the rail intact > carries the evidence verdict
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts > adaptChatMessage — the turn reaches the rail intact > carries the pre-mortem artifact
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts > adaptChatMessage — the turn reaches the rail intact > carries the governed action state
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts > adaptChatMessage — the turn reaches the rail intact > a user turn stays a user turn and grows no work record
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts > adaptChatMessage — the turn reaches the rail intact > the body falls back to the phase only while nothing else can speak
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts > adaptChatMessage — the turn reaches the rail intact > never invents a caveat for a clean turn
+ Test Files  8 failed (8)
+      Tests  42 failed | 87 passed (129)
+# vitest exit: 1

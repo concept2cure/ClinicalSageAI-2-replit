@@ -1,0 +1,19 @@
+$ NODE_OPTIONS='--max-old-space-size=4096' npx tsc -p <scratchpad>/tsconfig.followup.json   # extends ./tsconfig.json; include: []; files: the three changed sources, the three tests, shared/types/third-party.d.ts, server/types/*.d.ts, server/middleware/tenantContext.ts, server/db/requestDb.ts
+HEAD=5c978992 (working tree: fix applied, uncommitted). The full-tree typecheck was not run on this host (OOM under concurrent runs); the control tower runs it at push.
+files:
+  server/auth.ts
+  server/middleware/auth.ts
+  server/services/audit/auth-event-audit.ts
+  server/__tests__/security/auth-middleware-session-currency.test.ts
+  server/middleware/__tests__/auth-carries-provider.test.ts
+  server/services/audit/__tests__/auth-event-audit.test.ts
+  shared/types/third-party.d.ts
+  server/types/global.d.ts
+  server/types/index.d.ts
+  server/types/ml-stat.d.ts
+  server/types/pdfkit.d.ts
+  server/types/xml2js.d.ts
+  server/middleware/tenantContext.ts
+  server/db/requestDb.ts
+
+exit=0

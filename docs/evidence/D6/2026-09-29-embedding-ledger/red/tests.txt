@@ -1,0 +1,9 @@
+# embedding-provider.test.ts: the new and changed cases against the provider and gateway before this change
+ × server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant
+   → expected [] to have a length of 1 but got +0
+ × server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > one content-free served row, with the placement decision, the model and the tokens
+   → expected [] to have a length of 1 but got +0
+ × server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > an embedding the provider failed leaves a failure row, and the error still reaches the caller
+   → expected [] to have a length of 1 but got +0
+      Tests  3 failed | 8 passed (11)
+exit=1

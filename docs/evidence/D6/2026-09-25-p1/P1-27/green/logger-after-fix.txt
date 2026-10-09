@@ -1,0 +1,218 @@
+ ✓ server/utils/__tests__/logger.test.ts > logger SENSITIVE_KEYS coverage > includes every credential category 3ms
+ ✓ server/utils/__tests__/logger.test.ts > logger SENSITIVE_KEYS coverage > includes API key variants 0ms
+ ✓ server/utils/__tests__/logger.test.ts > logger SENSITIVE_KEYS coverage > includes the HIPAA PHI identifiers 0ms
+ ✓ server/utils/__tests__/logger.test.ts > logger SENSITIVE_KEYS coverage > includes PII (ssn, dob) 0ms
+ ✓ server/utils/__tests__/logger.test.ts > logger SENSITIVE_KEYS coverage > includes payment fields 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — exact key matches > redacts a top-level password field 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — exact key matches > redacts a top-level mrn (HIPAA PHI) 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — exact key matches > redacts every variant credential field 1ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — substring matches (case-insensitive) > catches variant casings and camelCase 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — substring matches (case-insensitive) > catches mrn, MRN, medical_record_number 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — substring matches (case-insensitive) > catches bearerToken, accessToken, refreshToken 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — nested objects > redacts secrets inside nested user objects 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — nested objects > redacts deeply nested PHI 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — nested objects > stops recursing past depth 6 (DoS guard) 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — value handling > leaves null and undefined alone 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — value handling > replaces non-string sensitive values too (object credentials) 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — value handling > passes arrays through unchanged (out of scope for the walker) 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — Authorization-header common shapes > redacts req.headers.authorization 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — Authorization-header common shapes > redacts Set-Cookie header 0ms
+ ✓ server/utils/__tests__/logger.test.ts > maskPersonalData — e-mail and IP addresses in log values (DP-26) > keeps the first character and the domain of an address 0ms
+ ✓ server/utils/__tests__/logger.test.ts > maskPersonalData — e-mail and IP addresses in log values (DP-26) > keeps the network part of an IP address 0ms
+ ✓ server/utils/__tests__/logger.test.ts > maskPersonalData — e-mail and IP addresses in log values (DP-26) > leaves other strings alone, including long ones 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — masks personal data under ordinary keys, redacts sensitive keys entirely > masks an address or an IP wherever it is a string value, at any depth 1ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — masks personal data under ordinary keys, redacts sensitive keys entirely > a sensitive key is still redacted whole, never merely masked 0ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — environment gating > does not patch in development 2ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — environment gating > does not patch in test 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — environment gating > patches in production 0ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — environment gating > is idempotent — calling install twice does not double-wrap 0ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — redaction (production) > redacts password fields in an object argument 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — redaction (production) > redacts HIPAA PHI (mrn) nested in objects 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — redaction (production) > passes string + number + boolean arguments through unchanged 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — redaction (production) > passes Error instances through unchanged (preserves stack) 3ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — redaction (production) > does not mutate the original argument object 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge.redactArgs unit > null / undefined pass through 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge.redactArgs unit > arrays of objects are walked element-wise via redactContext 0ms
+ ✓ server/utils/__tests__/sendInternalError.test.ts > sendInternalError — production > responds with only the curated userMessage (no raw detail) 19ms
+ ✓ server/utils/__tests__/sendInternalError.test.ts > sendInternalError — production > logs the raw exception server-side 6ms
+ ✓ server/utils/__tests__/sendInternalError.test.ts > sendInternalError — production > allows overriding the status code (e.g. 503) 3ms
+ ✓ server/utils/__tests__/sendInternalError.test.ts > sendInternalError — production > handles non-Error throwables (strings, objects) 3ms
+ ✓ server/utils/__tests__/sendInternalError.test.ts > sendInternalError — non-production > includes detail in dev for the feedback loop 4ms
+ ✓ server/utils/__tests__/database-no-import-ddl.test.ts > server/utils/database.js — importing must not issue DDL > contains no DDL 2ms
+ ✓ server/utils/__tests__/database-no-import-ddl.test.ts > server/utils/database.js — importing must not issue DDL > has no module-scope statement that runs a query on import 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — scheme / literal guard (before DNS) > rejects non-https URLs without resolving DNS or fetching 3ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — scheme / literal guard (before DNS) > rejects a literal private/loopback host up front 2ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — scheme / literal guard (before DNS) > rejects the IPv4-mapped IPv6 literal bypass up front 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — IP literals skip DNS and pinning > fetches a public IPv4 literal directly (no DNS lookup, no dispatcher) 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — IP literals skip DNS and pinning > fetches a public IPv6 literal directly 5ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — DNS rebinding defense (resolve + assert every IP is public) > allows a hostname that resolves to a public IPv4 and pins the dispatcher 3ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — DNS rebinding defense (resolve + assert every IP is public) > allows a hostname that resolves to a public IPv6 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — DNS rebinding defense (resolve + assert every IP is public) > rejects when the hostname resolves to a private IPv4 (10/8) 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — DNS rebinding defense (resolve + assert every IP is public) > rejects when the hostname resolves to the cloud metadata IP 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — DNS rebinding defense (resolve + assert every IP is public) > rejects when the hostname resolves to loopback IPv6 (::1) 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — DNS rebinding defense (resolve + assert every IP is public) > rejects when the hostname resolves to a unique-local IPv6 (fd00::/8) 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — DNS rebinding defense (resolve + assert every IP is public) > rejects when ANY resolved address is private (mixed public + private) 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — DNS rebinding defense (resolve + assert every IP is public) > rejects when resolution yields no addresses (fail closed) 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — DNS rebinding defense (resolve + assert every IP is public) > rejects when DNS resolution fails (fail closed) 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — DNS rebinding defense (resolve + assert every IP is public) > fails closed when DNS resolution exceeds the timeout budget 21ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — DNS rebinding defense (resolve + assert every IP is public) > uses the provided context string in rebinding rejection messages 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — redirects are re-validated on every hop > REGRESSION: rejects a 302 to an IP-literal metadata host (SSRF via redirect) 2ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — redirects are re-validated on every hop > REGRESSION: rejects a 302 to the IPv4-mapped IPv6 metadata literal 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — redirects are re-validated on every hop > rejects a redirect to a host that DNS-resolves to a private IP 2ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — redirects are re-validated on every hop > follows a redirect to another public host, re-pins, and strips Authorization cross-origin 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — redirects are re-validated on every hop > keeps Authorization on a same-origin redirect 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — redirects are re-validated on every hop > downgrades POST to GET and drops the body on a 303 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — redirects are re-validated on every hop > preserves method and body on a 307 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — redirects are re-validated on every hop > fails closed after too many redirects 1ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — redirects are re-validated on every hop > returns the 3xx untouched when the caller sets redirect:manual 0ms
+ ✓ server/utils/__tests__/safeFetch.test.ts > safeFetch — redirects are re-validated on every hop > throws on a redirect when the caller sets redirect:error 0ms
+ ✓ server/utils/__tests__/jwtVerify.test.ts > verifyJwtWithRotation — no rotation in progress > verifies a token signed with the current secret 24ms
+ ✓ server/utils/__tests__/jwtVerify.test.ts > verifyJwtWithRotation — no rotation in progress > rejects a token signed with an unrelated secret 3ms
+ ✓ server/utils/__tests__/jwtVerify.test.ts > verifyJwtWithRotation — no rotation in progress > rejects an expired token even when previous is set 2ms
+ ✓ server/utils/__tests__/jwtVerify.test.ts > verifyJwtWithRotation — rotation in progress > verifies tokens signed with the CURRENT secret 2ms
+ ✓ server/utils/__tests__/jwtVerify.test.ts > verifyJwtWithRotation — rotation in progress > verifies tokens signed with the PREVIOUS secret (zero-downtime rotation) 2ms
+ ✓ server/utils/__tests__/jwtVerify.test.ts > verifyJwtWithRotation — rotation in progress > rejects tokens signed with neither secret 1ms
+ ✓ server/utils/__tests__/jwtVerify.test.ts > verifyJwtWithRotation — rotation in progress > rejects tokens signed with a different algorithm (HS512) 1ms
+ ✓ server/utils/__tests__/jwtVerify.test.ts > verifyJwtWithRotation — rotation in progress > throws the PRIMARY error (not the previous-secret one) when both fail 1ms
+ ✓ server/utils/__tests__/jwtVerify.test.ts > isJwtRotationInProgress > false when previous secret is unset 2ms
+ ✓ server/utils/__tests__/jwtVerify.test.ts > isJwtRotationInProgress > true when previous secret is set 1ms
+ ✓ server/utils/__tests__/client-ip.test.ts > clientIpOf > in production, the address the load balancer appended, never the one the client wrote 18ms
+ ✓ server/utils/__tests__/client-ip.test.ts > clientIpOf > with no proxy trusted, the socket peer: a forwarding header changes nothing 5ms
+ ✓ server/utils/__tests__/client-ip.test.ts > clientIpOf > no request 0ms
+ ✓ server/utils/__tests__/client-ip.test.ts > clientIpOf > no address 0ms
+ ✓ server/utils/__tests__/client-ip.test.ts > clientIpOf > not an address 4ms
+ ✓ server/utils/__tests__/client-ip.test.ts > clientIpOf > blank 1ms
+ ✓ server/utils/__tests__/client-ip.test.ts > clientIpOf > IPv4 0ms
+ ✓ server/utils/__tests__/client-ip.test.ts > clientIpOf > IPv6 0ms
+ ✓ server/utils/__tests__/client-ip.test.ts > clientIpOf > IPv4-mapped IPv6 0ms
+ ✓ server/utils/__tests__/client-ip.test.ts > clientIpOf > clientIpKey gives a key a limiter can use, and says unknown rather than inventing an address 0ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — bypass when not configured > returns scanned=false, clean=true when CLAMAV_HOST is unset 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — clean response > parses "stream: OK" as scanned + clean 11ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — FOUND response > parses signature name out of "stream: X FOUND" 3ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — FOUND response > parses multi-word signatures correctly 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — fail-open posture > returns clean=true with reason on unparseable response 1ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — fail-open posture > returns clean=true with reason when host is unreachable 2ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > accepts the root itself and real descendants 1ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > REJECTS a sibling that merely shares the prefix 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > normalises traversal before comparing 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses a path inside another organization’s vault 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses the vault root and the caller’s OWN vault path too 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses a vault path reached by traversal from an allowed root 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > keeps the vault out of the allowlist itself 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under csrs 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under ectd 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > accepts a relative path and returns it resolved 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects absolute system path 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects traversal out of a root 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects empty 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects whitespace only 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a NUL byte, which truncates the path in some syscalls 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: null 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: undefined 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: a number 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: an object 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: an array 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > is containment, not a string prefix: org-77 is not inside org-7 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a traversal out of the caller’s prefix into another tenant’s 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: zero 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: negative 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: NaN 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: empty string 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: non-numeric string 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > leaves the reference corpus csrs readable with an organization given 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > leaves the reference corpus ectd readable with an organization given 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > keeps the no-organization form for internal callers 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > accepts a buffer starting with %PDF 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects a buffer that declares pdf but starts with PNG bytes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects an executable masquerading as pdf 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts a real PNG 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > rejects a JPEG-marked buffer that is actually PDF bytes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts real JPEG (ff d8 ff) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts both GIF87a and GIF89a 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts a docx-declared buffer that starts with PK 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > rejects a docx-declared buffer that does not start with PK 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts .xlsx and .pptx (same container) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts plain application/zip 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts plain ASCII text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts CSV 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts JSON 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects binary content declared as text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects a buffer with embedded null bytes (classic binary tell) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > accepts OLE compound for application/msword 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > rejects a .doc-declared buffer that is actually a ZIP (real-world bug case) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects an empty buffer 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects unknown / unhandled MIME types 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects a buffer too short to contain the magic 0ms
+ ✓ server/utils/__tests__/database-no-import-ddl.test.ts > server/utils/database.js — importing must not issue DDL > no longer exports a table-creating initializer 1570ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicUrl > allows public https endpoints 2ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicUrl > rejects non-https schemes 1ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicUrl > rejects malformed URLs 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicUrl > rejects private / loopback / metadata destinations 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicUrl > rejects the IPv4-mapped IPv6 bypass (regression) 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks localhost 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks app.localhost 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks db.local 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks svc.internal 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks ::1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks fc00::1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks fd12:3456::1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks fe80::1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks 0.0.0.0 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks 10.1.2.3 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks 127.0.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks 169.254.169.254 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks 172.16.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks 172.31.255.255 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks 192.168.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks 100.64.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks 100.127.255.255 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks 224.0.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks 240.0.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks ::ffff:127.0.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks ::ffff:169.254.169.254 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks ::ffff:10.0.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks ::ffff:7f00:1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — blocked > blocks ::ffff:a9fe:a9fe 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows example.com 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows api.fda.gov 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows 8.8.8.8 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows 1.1.1.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows 172.15.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows 172.32.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows 192.169.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows 100.63.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows 100.128.0.1 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows 223.255.255.255 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows 2606:4700:4700::1111 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows 2001:4860:4860::8888 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows ::ffff:8.8.8.8 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > isSafePublicHost — allowed > allows ::ffff:0808:0808 0ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > assertSafePublicUrl > throws for an unsafe URL with the context in the message 1ms
+ ✓ server/utils/__tests__/ssrfGuard.test.ts > assertSafePublicUrl > does not throw for a safe URL 0ms
+ ✓ server/utils/__tests__/binary-body.test.ts > toBinaryBody > preserves the exact bytes of a plain Buffer 2ms
+ ✓ server/utils/__tests__/binary-body.test.ts > toBinaryBody > returns a zero-copy view — not a copy — for the normal case 0ms
+ ✓ server/utils/__tests__/binary-body.test.ts > toBinaryBody > honours byteOffset on a pooled buffer rather than sending the whole pool 1ms
+ ✓ server/utils/__tests__/binary-body.test.ts > toBinaryBody > accepts a Uint8Array as well as a Buffer 0ms
+ ✓ server/utils/__tests__/binary-body.test.ts > toBinaryBody > handles an empty buffer without throwing 0ms
+ ✓ server/utils/__tests__/binary-body.test.ts > toBinaryBody > produces something the web APIs actually accept 0ms
+ ✓ server/utils/__tests__/binary-body.test.ts > toBinaryBody > copies out of a SharedArrayBuffer rather than returning an unusable view 0ms
+ ✓ server/utils/__tests__/expressQuery.test.ts > setRequestQuery > reproduces the failure it exists to fix 2ms
+ ✓ server/utils/__tests__/expressQuery.test.ts > setRequestQuery > replaces the query object despite the prototype getter 1ms
+ ✓ server/utils/__tests__/expressQuery.test.ts > setRequestQuery > preserves Zod coercion — handlers must read parsed types, not raw strings 0ms
+ ✓ server/utils/__tests__/expressQuery.test.ts > setRequestQuery > can be applied twice, so validation layers may run in sequence 0ms
+ ✓ server/utils/__tests__/expressQuery.test.ts > setRequestQuery > leaves the property enumerable, as request logging and spreads expect 1ms
+ Test Files  13 passed (13)
+      Tests  215 passed (215)
+exit=0

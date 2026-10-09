@@ -214,21 +214,21 @@ describe('dossierStore round-trip', () => {
     DossierStore.enableSampleFixtures();
   });
 
-  it('seeds section bodies and pushes an edit onto the section activity trail', () => {
+  it('seeds section bodies and persists an edit — without authoring an audit event', () => {
     const label = 'Substantial Equivalence Discussion'; // K510_ESTAR id 11
     const seeded = DossierStore.readSectionBody('k510', 11, label);
     expect(seeded.length).toBeGreaterThan(0);
 
-    const before = DossierStore.activityForSection('k510', 11).length;
     const marker = `EDIT-${Date.now()}`;
     DossierStore.writeSectionBody('k510', 11, label, `${seeded}\n\n${marker}`, { who: 'Tester', role: 'Reg Lead' });
 
     // The edit persists…
     expect(DossierStore.readSectionBody('k510', 11, label)).toContain(marker);
-    // …and a live section.edit event is appended (Activity tab reads this).
-    const after = DossierStore.activityForSection('k510', 11);
-    expect(after.length).toBeGreaterThanOrEqual(before + 1);
-    expect(after.some((e) => e.kind === 'section.edit' && e.live === true)).toBe(true);
+    // …and no event is appended. This used to assert a live section.edit was
+    // pushed onto the Activity trail: a browser-authored Part 11 event, written
+    // before and regardless of the governed save. The trail is now the
+    // server's section version rows (useSectionVersions).
+    expect((DossierStore as unknown as Record<string, unknown>).activityForSection).toBeUndefined();
   });
 
   it('lists the dossier tree under the program root', () => {

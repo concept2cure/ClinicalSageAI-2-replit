@@ -1,0 +1,5 @@
+# Mutation E: the orchestrator_runs entry deleted from forgeFor: Record<Domain, Forge>.
+# Targeted tsc on the module (a missing record key is a within-file error, so a
+# single-file check is sound for this); the full gate runs on push and in CI.
+
+tests/db/tenant-proof-routes.ts(152,7): error TS2741: Property 'orchestrator_runs' is missing in type '{ projects: (c: RequestSqlClient, org: number, f: ProofFixture) => Promise<{ rows: Record<string, unknown>[]; }>; documents: (c: RequestSqlClient, org: number, f: ProofFixture) => Promise<...>; audit_logs: (c: RequestSqlClient, org: number, f: ProofFixture) => Promise<...>; design_controls: (c: R

@@ -1,13 +1,5 @@
 /**
- * AnA scripting + targeted-insertion compute workers.
- *
- * Two isolated Python runtimes that give AnA real, governed code execution
- * without opening up arbitrary filesystem/shell access:
- *
- *   runPythonScriptIsolated  → workers/artifact-compute/python-script-runtime.py
- *     Runs AnA-authored Python in an ephemeral tempdir with NO network egress,
- *     bounded CPU time, a bounded address space, and a wall-clock SIGKILL.
- *     Returns stdout/stderr plus any files the script produced.
+ * AnA's targeted-insertion compute worker.
  *
  *   runDocxInsertIsolated    → workers/artifact-compute/docx-insert-runtime.py
  *     Surgically inserts content into an existing .docx at exact anchors
@@ -15,8 +7,12 @@
  *     python-docx. This is the governed equivalent of "write a Python script
  *     to make the targeted insertions precisely".
  *
- * Both enforce the same no-network policy as runDocxPythonIsolated and run
- * under the locked-down artifact-compute profile (see runner.ts).
+ * It runs a FIXED runtime on data (a document and its insertions), on the
+ * host, with no network and a scrubbed environment. Model-written code never
+ * runs here: `runPythonScriptIsolated`, which exec()'d AnA's Python on the
+ * application host with the whole filesystem in reach, was removed
+ * (INJ-PATH-002); run_python_script now runs in the hardened container
+ * (services/compute/containerExec.ts).
  */
 
 import { Buffer } from 'node:buffer';
@@ -100,60 +96,6 @@ async function runPythonRuntime(
 
   const outputRaw = await fs.readFile(outputPath, 'utf8');
   return { payload: JSON.parse(outputRaw), workdir };
-}
-
-export interface PythonScriptInput {
-  /** Python source AnA authored. */
-  code: string;
-  /** Optional map of filename → base64 bytes, written into the script's cwd. */
-  inputFiles?: Record<string, string>;
-  /** Bounded CPU seconds (best-effort, POSIX). Default 20. */
-  cpuSeconds?: number;
-  /** Per-output-file byte cap before the file is reported as too-large. Default 5MB. */
-  maxOutputBytes?: number;
-  /** Wall-clock timeout in ms (Node-enforced SIGKILL). Default 30s, max 120s. */
-  timeoutMs?: number;
-}
-
-export interface PythonScriptResult {
-  ok: boolean;
-  stdout: string;
-  stderr: string;
-  error: string | null;
-  /** filename → base64 bytes; value is null when the file exceeded the size cap. */
-  outputFiles: Record<string, string | null>;
-  network: string;
-}
-
-/**
- * Run AnA-authored Python in the isolated sandbox. No network, bounded CPU,
- * bounded memory, wall-clock SIGKILL. Returns structured stdout/stderr and any
- * files the script created or modified.
- */
-export async function runPythonScriptIsolated(
-  input: PythonScriptInput
-): Promise<PythonScriptResult> {
-  const timeoutMs = Math.min(input.timeoutMs ?? DEFAULT_TIMEOUT_MS, MAX_TIMEOUT_MS);
-  const { payload } = await runPythonRuntime(
-    'python-script',
-    'workers/artifact-compute/python-script-runtime.py',
-    {
-      code: input.code,
-      input_files: input.inputFiles ?? {},
-      cpu_seconds: input.cpuSeconds ?? 20,
-      max_output_bytes: input.maxOutputBytes ?? 5_000_000,
-    },
-    timeoutMs
-  );
-
-  return {
-    ok: payload.ok === true,
-    stdout: typeof payload.stdout === 'string' ? payload.stdout : '',
-    stderr: typeof payload.stderr === 'string' ? payload.stderr : '',
-    error: payload.error ?? null,
-    outputFiles: payload.output_files ?? {},
-    network: payload.network ?? 'unknown',
-  };
 }
 
 export interface DocxInsertion {

@@ -27,6 +27,14 @@
  *   4. a caller that sends no token keeps the old behaviour (deliberate: the
  *      MDX dossier drawer PATCHes without having read one, and failing those
  *      closed would break saving to fix a race they cannot hit)
+ *
+ * ── Every save carries a reason for change ───────────────────────────────────
+ * Since fde9d704e the SERVER refuses a content save without a reason of at
+ * least 8 characters (400, `field: 'changeReason'`) — 21 CFR 11.10(e), see
+ * server/routes/governed-reason.ts. That rule is orthogonal to the token: it
+ * applies whether or not `expectedUpdatedAt` is sent. So every PATCH here sends
+ * a valid `changeReason`, exactly as the editor does, and the stale save in
+ * particular is refused for its token and nothing else.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -36,6 +44,8 @@ import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 
 const PROBE = 'dbtest-concurrency';
+/** A reason that clears the server's 8-character floor (governed-reason.ts). */
+const REASON = 'Updated the filter validation statement.';
 
 let owner: Pool;
 let orgId: number;
@@ -48,6 +58,8 @@ let app: express.Express;
  *  with the same rotation-aware secret the server uses, which is the point:
  *  the suite exercises the real auth boundary rather than bypassing it. */
 let bearer: string;
+/** The project the document is created in: a document belongs to a project (PF-07). */
+let programId: string;
 
 async function buildApp(): Promise<express.Express> {
   const router = (await import('../../server/routes/authoring.router')).default;
@@ -98,6 +110,18 @@ beforeAll(async () => {
     [orgId, userId],
   );
 
+  /* A document is created in a project of its organization (PF-07): POST
+     /api/authoring/docs refuses one that names none, 400 PROJECT_REQUIRED.
+     Upserted on (organization_id, code), so a re-run reuses it. */
+  const program = await owner.query(
+    `INSERT INTO regulatory_programs (organization_id, name, code, program_type, product_type, primary_agency, product_name)
+       VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', $4)
+     ON CONFLICT (organization_id, code) DO UPDATE SET name = EXCLUDED.name, deleted_at = NULL
+     RETURNING id`,
+    [orgId, `${PROBE} program`, 'DBTEST-CONCURRENCY', `${PROBE} product`],
+  );
+  programId = String(program.rows[0].id);
+
   /* Signed with the SAME secret the router verifies against.
      `server/utils/jwtVerify.ts` resolves `JWT_SECRET_<suffix> ?? JWT_SECRET`
      at CALL time, and maps NODE_ENV through ENV_SUFFIX_MAP where 'test' →
@@ -144,6 +168,7 @@ afterAll(async () => {
     .query('DELETE FROM authoring_sections WHERE code LIKE $1', [`${PROBE}%`])
     .catch(() => {});
   await owner.query('DELETE FROM authoring_documents WHERE title LIKE $1', [`${PROBE}%`]).catch(() => {});
+  await owner.query('DELETE FROM regulatory_programs WHERE organization_id = $1 AND code = $2', [orgId, 'DBTEST-CONCURRENCY']).catch(() => {});
   await owner.end().catch(() => {});
 });
 
@@ -151,7 +176,7 @@ describe('a second author cannot silently overwrite the first', () => {
   it('creates a document and a section to contend over', async () => {
     const doc = await request(app)
       .post('/api/authoring/docs').set('Authorization', `Bearer ${bearer}`)
-      .send({ title: `${PROBE} Module 3`, module: 'M3' });
+      .send({ title: `${PROBE} Module 3`, module: 'M3', client_program_id: programId });
     expect([200, 201]).toContain(doc.status);
     docId = String(doc.body?.doc?.id ?? doc.body?.document?.id ?? doc.body?.id);
     expect(docId, 'no document id returned').toBeTruthy();
@@ -178,13 +203,22 @@ describe('a second author cannot silently overwrite the first', () => {
     /* Author A saves first and moves the row. */
     const first = await request(app)
       .patch(`/api/authoring/sections/${sectionId}`).set('Authorization', `Bearer ${bearer}`)
-      .send({ content: '<p>Author A: the filter is validated to 0.22 µm.</p>', expectedUpdatedAt: sharedToken });
+      .send({
+        content: '<p>Author A: the filter is validated to 0.22 µm.</p>',
+        expectedUpdatedAt: sharedToken,
+        changeReason: REASON,
+      });
     expect(first.status, 'the first save should succeed').toBe(200);
 
-    /* Author B saves against the timestamp they loaded — now stale. */
+    /* Author B saves against the timestamp they loaded — now stale. A valid
+       reason, so the token is the only thing wrong with this request. */
     const second = await request(app)
       .patch(`/api/authoring/sections/${sectionId}`).set('Authorization', `Bearer ${bearer}`)
-      .send({ content: '<p>Author B: REPLACED EVERYTHING.</p>', expectedUpdatedAt: sharedToken });
+      .send({
+        content: '<p>Author B: REPLACED EVERYTHING.</p>',
+        expectedUpdatedAt: sharedToken,
+        changeReason: REASON,
+      });
 
     expect(second.status, 'a stale save was accepted — the first author was overwritten').toBe(409);
     expect(String(second.body?.error?.code)).toBe('SECTION_CHANGED');
@@ -209,6 +243,7 @@ describe('a second author cannot silently overwrite the first', () => {
       .send({
         content: '<p>Author B: reapplied after reloading.</p>',
         expectedUpdatedAt: new Date(fresh.rows[0].updated_at).toISOString(),
+        changeReason: REASON,
       });
     expect(res.status).toBe(200);
 
@@ -223,7 +258,10 @@ describe('a second author cannot silently overwrite the first', () => {
        less safe than yesterday; they are simply not yet opted in. */
     const res = await request(app)
       .patch(`/api/authoring/sections/${sectionId}`).set('Authorization', `Bearer ${bearer}`)
-      .send({ content: '<p>Legacy caller with no token.</p>' });
+      .send({ content: '<p>Legacy caller with no token.</p>', changeReason: REASON });
     expect(res.status).toBe(200);
+
+    const after = await owner.query('SELECT content FROM authoring_sections WHERE id = $1', [sectionId]);
+    expect(after.rows[0].content).toContain('Legacy caller with no token');
   });
 });

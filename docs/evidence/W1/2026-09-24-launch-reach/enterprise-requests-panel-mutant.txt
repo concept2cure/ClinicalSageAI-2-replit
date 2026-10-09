@@ -1,0 +1,8 @@
+# Mutant: EnterpriseRequestsPanel.tsx error branch disabled ('false && state.error'), then restored
+ × client/src/concept2cure/v2/__tests__/enterpriseRequests.test.tsx > honest empty and failed states > a failed read is an error with a retry — never "No pending requests" 5010ms
+ × client/src/concept2cure/v2/__tests__/enterpriseRequests.test.tsx > honest empty and failed states > a body without a requests list is treated as a failure, not as empty 5009ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 4 passed (6)
+
+# Restored:
+      Tests  6 passed (6)

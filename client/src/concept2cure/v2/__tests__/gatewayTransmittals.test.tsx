@@ -23,6 +23,13 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+// 2026-09-28 (Q-0928-3): the signer named in the transmit confirmation is the
+// authenticated user, read the way SubmissionCenter reads it.
+const authUser = vi.hoisted(() => ({ current: null as null | Record<string, unknown> }));
+vi.mock('@/services/portal/authService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/portal/authService')>()),
+  useAuthUser: () => authUser.current,
+}));
 vi.mock('../C2CForm', () => ({
   // One submit button per dialog; the values it submits depend on which form
   // was mounted, so the record-identifiers / assemble / transmit wiring can each
@@ -33,13 +40,17 @@ vi.mock('../C2CForm', () => ({
       config.title === 'Record regulatory identifiers'
         ? { packageId: '77', applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' }
         : config.title === 'Assemble bundle'
-          ? { packageId: '77', region: 'FDA', sequence: '0001', reason: 'Assemble sequence 0001 for FDA' }
+          // A case that needs particular field values sets __c2cFormValues; the
+          // default stands in for "the operator filled the form in".
+          ? ((globalThis as any).__c2cFormValues
+              ?? { packageId: '77', region: 'FDA', sequence: '0001', reason: 'Assemble sequence 0001 for FDA' })
           : { region: 'fda', gateway: 'esg', packageId: '77', submissionType: 'original', reason: 'Dispatch sequence 0003 to FDA', meaning: 'approval', password: 'pw', totp: '123456' };
     return <button data-testid="form-submit" onClick={() => onSubmit(values)}>{config.submitLabel}</button>;
   },
 }));
 
 import { GatewayTransmittals } from '../surfaces/GatewayTransmittals';
+import { ApiRequestError } from '@/lib/queryClient';
 
 function env(data: unknown, status = 200) {
   return { ok: status < 400, status, json: async () => ({ data }) } as Response;
@@ -65,6 +76,8 @@ beforeEach(() => {
   // catch reports a failure, so the toast under test never renders.
   (URL as unknown as { createObjectURL: unknown }).createObjectURL = vi.fn(() => 'blob:stub');
   (URL as unknown as { revokeObjectURL: unknown }).revokeObjectURL = vi.fn();
+  (globalThis as any).__c2cFormValues = undefined;
+  authUser.current = null;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
@@ -514,6 +527,44 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     await screen.findByText(/must declare what is being filed/);
   });
 
+  it('SENDS what the form collected: the submission type and the withdrawals reach the server', async () => {
+    // The form asked for a submission type and the handler did not forward it,
+    // so a follow-up sequence was refused for want of a value the operator had
+    // supplied. A field the request drops is a field that does not exist.
+    let sent: any = null;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/assemble')) {
+        sent = body;
+        return env({ packageId: 'pkg_77', bundle: {
+          sha256: 'f'.repeat(64), leafCount: 1, sequence: '0001',
+          validation: { errorCount: 0, warningCount: 0, infoCount: 0 },
+          lifecycle: { summary: { new: 0, replace: 1, append: 0, delete: 1, unchanged: 2 }, omittedCount: 2 },
+        } });
+      }
+      return env(null);
+    });
+    // Set before the dialog mounts: the stub captures its values at render.
+    (globalThis as any).__c2cFormValues = {
+      packageId: 'pkg_77', sequence: '0001', submissionType: 'Efficacy Supplement',
+      withdraw: '2.5/clinical-overview.pdf\n\n  3.2.P.1/description.pdf  \n',
+      reason: 'Withdraw the superseded overview and file the revision',
+    };
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    await screen.findByText(/Sequence 0001/);
+    expect(sent.submissionType).toBe('Efficacy Supplement');
+    expect(sent.withdraw).toEqual([
+      { ctdSection: '2.5', fileName: 'clinical-overview.pdf' },
+      { ctdSection: '3.2.P.1', fileName: 'description.pdf' },
+    ]);
+    // A withdrawal is irreversible at the agency, so it is counted out loud.
+    await screen.findByText(/1 withdrawn from the application/);
+  });
+
   it('a submission type the region cannot file shows the terms that would work', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
@@ -691,5 +742,119 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     const toast = await screen.findByText(/agency still holds the transmitted bytes/i);
     expect(toast).toBeTruthy();
     expect(screen.queryByText(/rolled back at the gateway/i)).toBeNull();
+  });
+});
+
+/* 2026-09-28 (M-0928-1): the real apiRequest THROWS ApiRequestError on every
+   non-2xx except 401 (client/src/lib/queryClient.ts). The cases above mock it
+   resolving a non-ok Response, which it never does, so they could not see that
+   readData's bare catch turned every refusal into status 0 / raw null — the
+   409/412/422, identifier 400/404 and assemble 404/409/400 branches were dead
+   and every refusal read "HTTP 0". These throw the way the real client does. */
+describe('GatewayTransmittals — refusals as the real apiRequest delivers them (thrown ApiRequestError)', () => {
+  function throwing(status: number, payload: unknown) {
+    return new ApiRequestError(String((payload as any)?.error ?? 'refused'), status, payload);
+  }
+
+  it('a thrown 409 reaches the active-transmittal branch with the holder id', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/transmit')) {
+        throw throwing(409, { error: 'An active transmittal holds the lock', details: { transmittalId: 3, status: 'transmitting' } });
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(/transmittal #3 is already active \(transmitting\)\. Roll it back first\./)).toBeTruthy();
+    expect(screen.queryByText(/HTTP 0/)).toBeNull();
+  });
+
+  it('a thrown 412 says the gateway credentials are not configured', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/transmit')) throw throwing(412, { error: 'FDA ESG credentials missing' });
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(/gateway credentials are not configured/)).toBeTruthy();
+  });
+
+  it('a thrown identifiers 404 reaches its own branch', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'PUT' && url.includes('/regulatory-identifiers')) throw throwing(404, { error: 'Package not found' });
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Record identifiers/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(/no package with that id in this tenant/)).toBeTruthy();
+  });
+
+  it('a network failure (not an ApiRequestError) still reads as a failure, never a success', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/transmit')) throw new TypeError('Failed to fetch');
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(/Transmit failed/)).toBeTruthy();
+  });
+});
+
+/* 2026-09-28 (Q-0928-3): the §11.50 meaning declared at transmit was persisted
+   on the electronic signature and never shown back — not in the confirmation,
+   not in the log. */
+describe('GatewayTransmittals — the declared signature meaning is shown back', () => {
+  it('the success confirmation names the signer and the declared meaning', async () => {
+    authUser.current = { id: '11', email: 'ada@sponsor.example', firstName: 'Ada', lastName: 'Lovelace', displayName: 'Dr Ada Lovelace' };
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(/gateway ref ESG-NEW-1.*Signed by Dr Ada Lovelace — meaning: approval/)).toBeTruthy();
+  });
+
+  it('does not claim a signature when the ledger transaction that carries it was lost', async () => {
+    authUser.current = { id: '11', email: 'ada@sponsor.example', firstName: 'Ada', lastName: 'Lovelace', displayName: 'Dr Ada Lovelace' };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/transmit')) return env({ transmittalId: 4242, transmissionId: 'ESG-NEW-9', status: 'received', ledgerWriteFailed: true }, 201);
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const toast = await screen.findByText(/gateway ref ESG-NEW-9/);
+    expect(toast.textContent).not.toMatch(/Signed by/);
+  });
+
+  it('the transmittal log shows the meaning recorded on the transmittal with its signature', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') {
+        return env([{ ...LOG[0], metadata: { environment: 'production', signature: { meaning: 'release', signatureId: 501 } } }]);
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('Dr Ada Lovelace');
+    expect(screen.getByText(/meaning: release/)).toBeTruthy();
   });
 });

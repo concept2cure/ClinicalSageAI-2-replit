@@ -19,6 +19,18 @@
  * to vault.documents — documents could not enter the RAG corpus.
  * See DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md §3 (GAP 1).
  *
+ * REFUSALS ARE 4xx (VSR-001 F-4, 2026-09-21). The multer `fileFilter` refused
+ * a disallowed extension with a bare Error, multer passed it to `next(err)`,
+ * and nothing between here and the platform's generic handler knew what it
+ * meant — so a `.exe` was answered 500 SERVER_ERROR "File type .exe is not
+ * allowed". Nothing was stored, but a 500 says the server broke, clients retry
+ * it, and URS-VAULT-003 ("refused with a 4xx") failed. `receiveUpload` below
+ * owns every multer outcome: the allowlist refusal is 400
+ * FILE_TYPE_NOT_ALLOWED with the accepted set named, an over-size file is 413
+ * FILE_TOO_LARGE, any other multer complaint (wrong field name, too many
+ * files) is 400 UPLOAD_INVALID, and only a genuinely unknown error still
+ * reaches the generic handler.
+ *
  * NOTE FOR ANY ROUTE THAT PUTS MULTER IN FRONT OF TENANT-SCOPED WORK. Multer
  * parses off the request stream, and an EventEmitter listener runs in the
  * emitting context rather than the registering one, so the AsyncLocalStorage
@@ -29,12 +41,12 @@
  * multipart routes in this codebase have the same exposure.
  */
 
-import { Router, type Request, type Response } from 'express';
+import { Router, type NextFunction, type Request, type RequestHandler, type Response } from 'express';
 import { requireEditorAccess } from '../middleware/orgMembership.js';
 import multer from 'multer';
 import path from 'node:path';
 import { z } from 'zod';
-import { VAULT_INGEST_DOCUMENT_TYPES } from '../../shared/constants/domain/vault-taxonomy';
+import { VAULT_CLASSIFICATIONS, VAULT_INGEST_DOCUMENT_TYPES } from '../../shared/constants/domain/vault-taxonomy';
 import { runWithTenantScope } from '../db/tenantStore';
 import { ingestVaultDocument } from '../services/vault/vault-ingest.service';
 
@@ -43,6 +55,18 @@ const ALLOWED_EXTENSIONS = new Set([
 ]);
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 
+/** The allowlist refusal, typed so `receiveUpload` can recognise it. */
+class FileTypeNotAllowedError extends Error {
+  readonly code = 'FILE_TYPE_NOT_ALLOWED' as const;
+  constructor(readonly extension: string) {
+    super(
+      `File type ${extension || '(none)'} is not allowed. Accepted: ` +
+        `${[...ALLOWED_EXTENSIONS].join(', ')}.`,
+    );
+    this.name = 'FileTypeNotAllowedError';
+  }
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   fileFilter: (_req, file, cb) => {
@@ -50,11 +74,42 @@ const upload = multer({
     if (ALLOWED_EXTENSIONS.has(ext)) {
       cb(null, true);
     } else {
-      cb(new Error(`File type ${ext} is not allowed`));
+      cb(new FileTypeNotAllowedError(ext));
     }
   },
   limits: { fileSize: MAX_FILE_SIZE },
 });
+
+/**
+ * Multer, with its outcomes answered HERE as the 4xx they are (see the module
+ * header). Multer calls back with the fileFilter's error or a `MulterError`;
+ * left to `next(err)` both became a 500 at the generic handler.
+ */
+const receiveUpload: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+  upload.single('file')(req, res, (err: unknown) => {
+    if (!err) return next();
+    if (err instanceof FileTypeNotAllowedError) {
+      return res.status(400).json({ error: { code: err.code, message: err.message } });
+    }
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+          error: {
+            code: 'FILE_TOO_LARGE',
+            message: `The file exceeds the ${MAX_FILE_SIZE / (1024 * 1024)} MB ingest limit.`,
+          },
+        });
+      }
+      return res.status(400).json({
+        error: {
+          code: 'UPLOAD_INVALID',
+          message: `${err.message}. Send one file as multipart/form-data under the field name "file".`,
+        },
+      });
+    }
+    return next(err);
+  });
+};
 
 const IngestBodySchema = z.object({
   programId: z.string().uuid('programId must be a UUID'),
@@ -62,10 +117,8 @@ const IngestBodySchema = z.object({
   documentTitle: z.string().min(1, 'documentTitle is required'),
   documentType: z.enum(VAULT_INGEST_DOCUMENT_TYPES),
   version: z.string().optional(),
-  classification: z.enum(['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC']).optional(),
+  classification: z.enum(VAULT_CLASSIFICATIONS).optional(),
   retentionPolicy: z.string().optional(),
-  parentDocumentId: z.string().uuid().optional(),
-  supersedesId: z.string().uuid().optional(),
   /* Explicit dossier target, when the uploader already knows where the file
      goes. Validated against the program's vault-view taxonomy — an invalid
      folder is a 400, never a silent unfile. Omitted → the filing classifier
@@ -92,13 +145,27 @@ export default function createVaultIngestRoutes(): Router {
      Gate BEFORE multer: refusing after the upload has been parsed into memory
      means a caller who may not write can still make the server buffer a file
      for them. `requireEditorAccess` is the repo's one governed-write gate. */
-  router.post('/', requireEditorAccess, upload.single('file'), async (req: Request, res: Response) => {
+  router.post('/', requireEditorAccess, receiveUpload, async (req: Request, res: Response) => {
     const fileBuffer: Buffer | undefined = (req as any).file?.buffer;
     if (!fileBuffer || fileBuffer.length === 0) {
       return res.status(400).json({
         error: {
           code: 'NO_FILE_RECEIVED',
           message: 'Send the file as multipart/form-data under the field name "file".',
+        },
+      });
+    }
+
+    /* Lineage is not set by an upload (VR-05). The body took any UUID here and
+       wrote it as the new version's parent or predecessor, unchecked against
+       program or organization; no client sends either. Refused, not dropped:
+       a caller that sent lineage is told it was not recorded. */
+    const lineage = ['parentDocumentId', 'supersedesId'].filter((k) => req.body?.[k] !== undefined);
+    if (lineage.length > 0) {
+      return res.status(400).json({
+        error: {
+          code: 'LINEAGE_NOT_ACCEPTED',
+          message: `${lineage.join(' and ')} cannot be set by an upload. Nothing was saved.`,
         },
       });
     }
@@ -173,8 +240,6 @@ export default function createVaultIngestRoutes(): Router {
         version: data.version,
         classification: data.classification,
         retentionPolicy: data.retentionPolicy,
-        parentDocumentId: data.parentDocumentId,
-        supersedesId: data.supersedesId,
         folderId: data.folderId,
         evidenceKind: data.evidenceKind,
         ctdSection: data.ctdSection,
@@ -191,10 +256,12 @@ export default function createVaultIngestRoutes(): Router {
         .status(outcome.status)
         .json({ error: { code: outcome.code, message: outcome.message } });
     }
-    return res.status(201).json({
+    // 200, not 201, when the bytes were already recorded: nothing was created.
+    return res.status(outcome.reupload ? 200 : 201).json({
       success: true,
       document: outcome.document,
       filing: outcome.filing,
+      ...(outcome.reupload ? { reupload: outcome.reupload } : {}),
     });
   });
 

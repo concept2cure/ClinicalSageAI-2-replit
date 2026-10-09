@@ -1,0 +1,31 @@
+{
+  "verifiedAt": "2026-09-21T01:25:25.522Z",
+  "verdict": "ok",
+  "exitCode": 0,
+  "tables": [
+    {
+      "table": "audit.tamper_proof_log",
+      "status": "ok",
+      "rows": 65,
+      "chainedRows": 65,
+      "signedRows": 65,
+      "secretSource": "development-fallback (same value the writer used)",
+      "lastChainHash": "b588ecdf3714b655b7407c363860741ae1b244d1c54387e933ea787597f40a8b"
+    },
+    {
+      "table": "public.audit_logs",
+      "status": "ok",
+      "rows": 262,
+      "chainedRows": 262,
+      "sealedRows": 0
+    },
+    {
+      "table": "public.audit_events",
+      "status": "ok",
+      "rows": 0,
+      "chainedRows": 0,
+      "unchainedRows": 0,
+      "sealedRows": 0
+    }
+  ]
+}

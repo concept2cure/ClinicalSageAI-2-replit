@@ -1,0 +1,100 @@
+$ npx vitest run server/middleware/__tests__/auth-carries-provider.test.ts   # HEAD=5c978992, sources unchanged
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a token with provider 'saml' yields req.user.provider === 'saml' 314ms
+   → expected undefined to be 'saml' // Object.is equality
+ × server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a token with no provider claim yields req.user.provider === 'local-jwt' (a password session) 3ms
+   → expected undefined to be 'local-jwt' // Object.is equality
+ × server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a provider claim that is not a string is read as 'local-jwt', never as a value the guard could mistake 2ms
+   → expected undefined to be 'local-jwt' // Object.is equality
+ × server/middleware/__tests__/auth-carries-provider.test.ts > PLATFORM_ADMIN_EMAILS behind authenticateToken > does not admit an allow-listed e-mail asserted by an IdP (provider saml): isPlatformAdmin false, requirePlatformAdmin 403 3ms
+   → expected true to be false // Object.is equality
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > PLATFORM_ADMIN_EMAILS behind authenticateToken > still admits the same e-mail on a password session (no provider claim) 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a token with provider 'saml' yields req.user.provider === 'saml'
+AssertionError: expected undefined to be 'saml' // Object.is equality
+
+- Expected:
+"saml"
+
++ Received:
+undefined
+
+ ❯ server/middleware/__tests__/auth-carries-provider.test.ts:130:61
+    128|     const r = await admit(accessToken({ provider: 'saml' }));
+    129|     expect(r.reachedHandler).toBe(true);
+    130|     expect((r.req.user as { provider?: unknown }).provider).toBe('saml…
+       |                                                             ^
+    131|   });
+    132|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a token with no provider claim yields req.user.provider === 'local-jwt' (a password session)
+AssertionError: expected undefined to be 'local-jwt' // Object.is equality
+
+- Expected:
+"local-jwt"
+
++ Received:
+undefined
+
+ ❯ server/middleware/__tests__/auth-carries-provider.test.ts:136:61
+    134|     const r = await admit(accessToken());
+    135|     expect(r.reachedHandler).toBe(true);
+    136|     expect((r.req.user as { provider?: unknown }).provider).toBe('loca…
+       |                                                             ^
+    137|   });
+    138|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a provider claim that is not a string is read as 'local-jwt', never as a value the guard could mistake
+AssertionError: expected undefined to be 'local-jwt' // Object.is equality
+
+- Expected:
+"local-jwt"
+
++ Received:
+undefined
+
+ ❯ server/middleware/__tests__/auth-carries-provider.test.ts:142:61
+    140|     const r = await admit(accessToken({ provider: 7 }));
+    141|     expect(r.reachedHandler).toBe(true);
+    142|     expect((r.req.user as { provider?: unknown }).provider).toBe('loca…
+       |                                                             ^
+    143|   });
+    144| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/middleware/__tests__/auth-carries-provider.test.ts > PLATFORM_ADMIN_EMAILS behind authenticateToken > does not admit an allow-listed e-mail asserted by an IdP (provider saml): isPlatformAdmin false, requirePlatformAdmin 403
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/middleware/__tests__/auth-carries-provider.test.ts:151:36
+    149|     expect(r.reachedHandler).toBe(true);
+    150|
+    151|     expect(isPlatformAdmin(r.req)).toBe(false);
+       |                                    ^
+    152|
+    153|     const res = mkRes();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  01:46:16
+   Duration  819ms (transform 314ms, setup 99ms, import 89ms, tests 329ms, environment 0ms)
+
+exit=1

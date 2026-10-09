@@ -1,0 +1,45 @@
+CI run 35885373726, job "Test" (107269816313), concept2cure-v2 at 3d58f9e1
+The failure summary, verbatim with the terminal colour codes removed.
+
+ Failed Tests 2
+
+ FAIL  tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > its governed acts reach the server — the no-op dialog and its disclosure are gone together
+AssertionError: expected '' to contain 'onDone='
+
+- Expected
++ Received
+
+- onDone=
+
+ ❯ tests/ui/surface-honesty.contract.test.ts:175:19
+    173|     expect(src).toMatch(/<ProtocolRegisterForm/);
+    174|     const mount = src.slice(src.indexOf('<ProtocolRegisterForm'), src.…
+    175|     expect(mount).toContain('onDone=');
+       |                   ^
+    176|     expect(mount).toContain('registerDoneMessage(');
+    177|     expect(mount).toContain('onChanged?.()');
+
+ FAIL  server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > diagnoses the pre-fix fork: a legacy row committing to genesis instead of its predecessor
+AssertionError: expected { ok: false, rowsChecked: 2, …(4) } to match object { ok: false, brokenAt: { …(3) } }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "brokenAt": {
+      "commitsTo": "genesis",
+-     "id": "777c8232-cff1-48fa-8d29-296132e4de8d",
++     "id": "921adef8-6c26-4f28-bd7e-c225e7552abb",
+      "segment": "legacy",
+    },
+    "ok": false,
+  }
+
+ ❯ server/services/audit/__tests__/chain-order.pglite.test.ts:180:21
+    178|     const forked = await writeLegacy(7, 'forked', '0'.repeat(64));
+    179|     const verdict = await verifyAuditChain(pglite as unknown as PoolCl…
+    180|     expect(verdict).toMatchObject({ ok: false, brokenAt: { id: forked,…
+
+ Test Files  2 failed | 2626 passed | 3 skipped (2631)
+      Tests  2 failed | 30416 passed | 53 skipped (30523)

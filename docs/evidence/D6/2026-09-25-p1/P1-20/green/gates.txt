@@ -1,0 +1,6 @@
+$ npm run check:security-patterns
+check-security-patterns: 0 violations across 2845 file(s).
+exit=0
+$ npm run ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 125 baselined across 56 file(s).
+exit=0

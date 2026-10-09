@@ -1,0 +1,10 @@
+ × server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a member removed from the organisation is told why and disconnected within 60 s 14ms
+ × server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a membership that can no longer be read (fail closed) is told why and disconnected within 60 s 3ms
+ × server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a session that has ended (signed out, password changed, account out of use) is told why and disconnected within 60 s 2ms
+ × server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an organisation that stops being active is told why and disconnected within 60 s 2ms
+ × server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > re-verifies the handshake token itself, without counting as activity 2ms
+ × server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > a member in good standing is left alone 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > the timer stops when the socket disconnects 1ms
+ × server/services/ana/__tests__/ana-realtime-session-recheck.test.ts > /ana: after connect, the session is re-checked on a timer > an ending session also ends the AnA turn in flight 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 1 passed (8)

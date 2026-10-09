@@ -1,0 +1,94 @@
+-- The same ledger after the fix. Measured live, same database, same server.
+
+-- The CMC staff simulation now writes real governance history:
+decision_records before run : 248
+decision_records after  run : 280
+domain_track distribution   : cmc | 312     (derived from the CTD section)
+
+-- Newest rows -- a Module 3 export and approval history, attributed:
+cmc | data_package | proj=0 | ref=a8571a89-... | Governed export: block
+cmc | data_package | proj=0 | ref=a8571a89-... | Governed export: review
+cmc | data_package | proj=0 | ref=a8571a89-... | Governed approve: block
+
+-- proj=0 is a placeholder, not project zero: decision_records.project_id is
+-- INTEGER NOT NULL and this platform's projects are uuid-keyed programs, so
+-- the addressable reference travels in decision_context.projectRef and the
+-- per-project reads filter on that.
+
+-- The read path, exercised against the real database:
+per-project entries: 5
+   export  | block  | readiness export_ready  | 745c5b1d
+   export  | review | readiness publish_ready | 3871e32d
+   export  | review | readiness publish_ready | 7ac22c39
+   approve | block  | readiness review_ready  | 11d89576
+summary total: 32  byOutcome: {"allow":0,"block":30,"review":2,"degraded":0}  blocked: 30
+lookup by the id the caller holds: RESOLVED export/block
+another tenant sees: 0
+
+-- Before, that same summary read total 0, blocked 0, averageReadinessScore 0 --
+-- zeros that say "nothing was blocked", not "nothing was recorded".
+
+-- Red-to-green proof for the gate that would have caught this: restoring the
+-- two original literals fails exactly the two tests that exist to catch them,
+-- and nothing else.
+--   FAIL  no production source assigns a domainTrack literal the column would reject
+--   FAIL  no production source assigns a recommendationType literal the column would reject
+--   Tests  2 failed | 13 passed (15)
+-- Restored: 15 passed (15).
+--
+-- That gate also found three literals I had not: sap_generation,
+-- defensibility_assessment and document_generation in
+-- operating-system-integration.ts, none of them in the enum either.
+
+-- The health endpoint now counts attempts, not successes:
+--   33 failures / 0 writes  -> failureRate 1,    status unhealthy   (was 0, healthy)
+--   1 failure  / 3 writes   -> failureRate 0.25, status degraded    (was 0.333)
+--   0 failures / 5 writes   -> failureRate 0,    not unhealthy
+
+-- ── The regression this fix caused, and the defect underneath it ──
+--
+-- Making the writes succeed turned them into real work, and real work exposed a
+-- latent hazard in the Module 3 compile route. Measured, CMC staff simulation:
+--
+--   baseline (no fix)                     : 118 passed, 0 failed
+--   fix, ledger write suppressed          : 118 passed, 0 failed
+--   fix, ledger write active, pool max 20 : 114 passed, 4 failed
+--   fix, ledger write active, pool max 60 : 118 passed, 0 failed
+--
+-- All four failures cascaded from one compile. Captured from pg_stat_activity:
+--
+--   pid=1787 st=idle in transaction x_age=29.9 wait=Client/ClientRead
+--     :: SELECT count(*)::int AS n FROM submission_leaves WHERE sequence_id = $1 ...
+--   pid=1755 st=active            x_age=29.8 wait=Lock/transactionid
+--     :: INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, ...
+--
+-- POST /api/cmc/module3-os/compile/:projectId opens a transaction on a dedicated
+-- client, then calls composeProjectModule3 -> resolveProjectRegionCode ->
+-- resolveSubmissionSpine, which reached for the SHARED pool. That second
+-- connection is the hazard: with the pool saturated the read waits, the
+-- transaction sits idle holding its locks, a concurrent compile's INSERT blocks
+-- on its uncommitted rows, and the 30s statement_timeout cancels it.
+--
+-- Raising the pool ceiling hid it. The fix removes the second connection:
+-- resolveSubmissionSpine now takes the caller's Queryable, so the reads run on
+-- the transaction's own connection and see its own snapshot.
+--
+--   fix, ledger write active, pool max 20, spine on the caller's client
+--     : 118 passed, 0 failed   (decision_records 248 -> 280)
+
+-- Re-verified after merging origin/concept2cure-v2 (1719 commits), which had
+-- independently fixed the same two CHECK violations. Converged on their
+-- discriminator -- decision_context->>'kind', a shared constant in
+-- shared/constants/operating-system-vocab.ts that three places must agree on --
+-- and on their recommendation_type. Kept what they do not have: the CTD-derived
+-- discipline (a Module 3 decision records as cmc, not a flat regulatory), the
+-- projectRef filter (their per-project read passes Number(uuid) = NaN, which
+-- search() reads as "no project filter" and answers with every project's
+-- decisions), the id-to-primary-key resolution, and the health denominator.
+-- DOMAIN_TRACKS and the recommendation types moved into their shared vocabulary
+-- file, which the schema-contract tier asserts against the real DDL.
+--
+-- Post-merge, same database, after node scripts/db/deploy-migrate.mjs:
+--   server/services/cmc + server/api/cmc + the gate : 44 files, 445 tests green
+--   CMC staff simulation                            : 118 passed, 0 failed
+--   decision_records                                : 312 -> 344

@@ -48,7 +48,7 @@ describe('verify_docx_against_source — input guards', () => {
   it('errors when neither expected_text nor required_strings is supplied', async () => {
     const handler = getToolHandler(TOOL)!;
     const out = JSON.parse(
-      await handler({ input_docx_path: '/tmp/x.docx' }, { organizationId: 1 } as any),
+      await handler({ input_docx_path: 'tmp/docbuilder/org-1/x/x.docx' }, { organizationId: 1 } as any),
     );
     expect(out.error).toMatch(/expected_text|required_strings/);
   });

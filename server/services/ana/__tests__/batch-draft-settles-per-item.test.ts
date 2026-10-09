@@ -28,6 +28,8 @@ const drafted = (sectionType: string): DocumentDraftResponse => ({
   model: 'claude-opus-4-7',
   usage: { inputTokens: 10, outputTokens: 20, estimatedCostUsd: 0.001 },
   latencyMs: 5,
+  finishReason: 'end_turn',
+  truncated: false,
 });
 
 /** The refusal the gateway raises for a request no model can hold. */

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { useSurfaceActionHandlers } from '../surfaceActions';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
@@ -867,6 +867,13 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       return { ok: true, detail: `Switched the document to ${doc.label} — filing it stays a human act` };
     },
   });
+  /* The ready signal for the hold above. A design named while the list is
+     loading gets its answer once the list has settled, loaded or not: the
+     handler refuses a failed read itself, and without this the held
+     directive waited out the bus's 20 s and was never answered. */
+  useEffect(() => {
+    if (!designs.loading) notifySurfaceActionReady('biostatistics');
+  }, [designs.loading]);
 
   usePublishSurfaceContext('biostatistics', anaContext);
 

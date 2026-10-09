@@ -23,6 +23,7 @@
  */
 
 import { pool } from '../../db.js';
+import { getTenantScope, runWithTenantScope, type TenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { FeatureToggleService } from '../featureToggleService.js';
 import { pageForOffset, type PageSpan } from '../ocr/page-offsets.js';
@@ -126,6 +127,26 @@ async function documentIsInOrganization(
 }
 
 /**
+ * The tenant scope the embedding calls run under: the document's organisation,
+ * verified by `documentIsInOrganization` immediately before. The embedder's
+ * placement gate (`AIGateway.authorizeEmbedding`, via embedding-provider.ts)
+ * reads the organisation from this scope, because the corpus runtime's
+ * `embedBatch(texts, model)` has no argument to carry it. Binding it here means
+ * the policy applied is the owning organisation's whatever the caller's
+ * ambient scope was (a request, or the backfill's per-org job scope).
+ */
+function embeddingScope(organizationId: number): TenantScope {
+  const outer = getTenantScope();
+  return {
+    tenantId: String(organizationId),
+    orgUuid: outer?.orgUuid ?? null,
+    role: outer?.role ?? null,
+    source: outer?.source ?? 'job',
+    caller: 'document-chunking:embed',
+  };
+}
+
+/**
  * Chunk the document's extracted text, embed every chunk through the governed
  * provider seam, and replace the document's chunk set in one transaction.
  * Returns a failure (with reason) instead of throwing; the caller records it
@@ -161,20 +182,35 @@ export async function chunkAndEmbedDocument(args: {
     };
   }
 
+  // Ownership BEFORE egress (P0-11 / DP-07). The write below refused a foreign
+  // document, but only after its text had already been embedded — sent to the
+  // configured provider under THIS caller's placement policy. A document id
+  // from another organization must be refused before anything leaves.
+  if (!(await documentIsInOrganization(pool, args.documentId, args.organizationId))) {
+    return {
+      ok: false,
+      chunkCount: 0,
+      error: 'Document is not in the caller\'s organization; refusing to index it.',
+    };
+  }
+
   let vectors: string[];
   try {
     const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
     const svc = getEmbeddingService(pool as any);
-    vectors = [];
-    for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
-      const batch = chunks.slice(i, i + EMBED_BATCH);
-      const results = await svc.embedBatch(batch.map(c => c.text), CHUNK_EMBEDDING_MODEL);
-      for (let j = 0; j < batch.length; j++) {
-        const e = results[j]?.embedding;
-        if (!e) throw new Error(`embedding missing for chunk ${i + j}`);
-        vectors.push(`[${e.join(',')}]`);
+    vectors = await runWithTenantScope(embeddingScope(args.organizationId), async () => {
+      const out: string[] = [];
+      for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
+        const batch = chunks.slice(i, i + EMBED_BATCH);
+        const results = await svc.embedBatch(batch.map(c => c.text), CHUNK_EMBEDDING_MODEL);
+        for (let j = 0; j < batch.length; j++) {
+          const e = results[j]?.embedding;
+          if (!e) throw new Error(`embedding missing for chunk ${i + j}`);
+          out.push(`[${e.join(',')}]`);
+        }
       }
-    }
+      return out;
+    });
   } catch (err) {
     return {
       ok: false,
@@ -187,8 +223,9 @@ export async function chunkAndEmbedDocument(args: {
   // through its program (regulatory_programs.organization_id), which is also
   // what the table's RLS policies resolve. Every statement below reaches the
   // chunk table only through that join, so a document id from another
-  // organization matches nothing — and is refused up front rather than
-  // silently indexed to zero rows.
+  // organization matches nothing. The ownership check is repeated inside the
+  // transaction so the write is refused on its own evidence, not on the
+  // pre-embedding check's.
   const client = await pool.connect();
   try {
     await client.query('BEGIN');

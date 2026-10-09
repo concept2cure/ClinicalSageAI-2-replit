@@ -10,10 +10,8 @@
 import * as React from 'react';
 import { I } from '../icons';
 import {
-  PRESUB_KPIS,
   PRESUB_TYPES,
   PRESUB_STAGES,
-  PRESUB_LIST,
   type PresubTypeId,
   type PresubStageId,
   type PresubListRow,
@@ -22,7 +20,6 @@ import {
 } from '../data/presub';
 import { usePresubList, usePresubDetail } from '../hooks/usePresub';
 import { EmptyState, ErrorState } from '../../v2/dataConnect';
-import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 import { downloadCsv } from '../../v2/download';
 
 interface PreSubTypeChipProps {
@@ -352,6 +349,11 @@ export interface PreSubManagerProps {
   onJumpToDossier?: (link: DossierLink) => void;
 }
 
+/* Shared empty reads, so a panel awaiting its first response renders the same
+   nothing each time rather than allocating a fresh array per render. */
+const NO_PRESUBS: PresubListRow[] = [];
+const NO_PRESUB_KPIS: { label: string; metric: string; unit?: string; meta: string; tone?: string }[] = [];
+
 type ListFilter = 'all' | 'mine' | PresubTypeId;
 type StageFilter = 'all' | PresubStageId;
 
@@ -360,12 +362,21 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
   const [stageFilter, setStageFilter] = React.useState<StageFilter>('all');
   const [selected, setSelected] = React.useState<string | null>(null);
 
-  /* Live list + derived KPIs from /api/q-sub. Falls back to fixtures only
-     during the initial fetch so the surface doesn't flash empty. When the
-     live list returns zero rows, the empty state below renders accurately. */
+  /* Live or nothing, from /api/q-sub.
+
+     PRESUB_LIST invented an interaction with FDA. Its rows carried Q-numbers
+     in the agency's own format (Q251142, Q250987), a named reviewer — "Dr. K.
+     Patel (DDH/OHT2)" — a confirmed teleconference date, and counts of
+     questions FDA had answered and commitments the agency had made. Nothing on
+     screen said any of it was an example: this surface has no sample banner.
+     A fabricated agency communication is the same class of claim as a
+     fabricated signature, and it is the one a sponsor would most reasonably
+     act on.
+
+     PRESUB_KPIS was derived from those rows and inherited the problem. */
   const live = usePresubList();
-  const sourceList: PresubListRow[] = useSampleRows(live.list, PRESUB_LIST);
-  const sourceKpis = useSampleRows(live.kpis, PRESUB_KPIS);
+  const sourceList: PresubListRow[] = live.list ?? NO_PRESUBS;
+  const sourceKpis = live.kpis ?? NO_PRESUB_KPIS;
 
   const filtered = sourceList
     .filter(r => {
@@ -496,10 +507,33 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
                 onPick={() => setSelected(r.id)}
               />
             ))}
-            {filtered.length === 0 && (
+            {/* Three different facts, and "clear filters" is the right advice
+                for exactly one of them. While a fixture guaranteed rows the
+                other two were unreachable; without one, a failed read and an
+                empty portfolio both landed on advice that cannot help. */}
+            {filtered.length === 0 && live.error !== null && (
+              <ErrorState
+                title="Could not load your Q-Submissions"
+                message={live.error}
+                retry={live.refresh}
+                testId="presub-list-error"
+              />
+            )}
+            {filtered.length === 0 && live.error === null && live.list === null && (
+              <EmptyState busy title="Loading Q-Submissions" testId="presub-list-loading" />
+            )}
+            {filtered.length === 0 && live.error === null && live.list !== null && (
               <div className="ps-empty">
-                <div className="ps-empty-t">No Q-Subs match these filters</div>
-                <div className="ps-empty-s">Clear filters to see the full portfolio.</div>
+                <div className="ps-empty-t">
+                  {sourceList.length === 0
+                    ? 'No Q-Subs yet'
+                    : 'No Q-Subs match these filters'}
+                </div>
+                <div className="ps-empty-s">
+                  {sourceList.length === 0
+                    ? 'Pre-submissions, SIRs and informational meetings appear here once filed.'
+                    : 'Clear filters to see the full portfolio.'}
+                </div>
               </div>
             )}
           </div>

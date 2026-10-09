@@ -18,6 +18,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { tenantContextMiddleware, requireOrganizationContext } from '../middleware/tenantContext';
 import { createScopedLogger } from '../utils/logger';
+import { withoutOrgId } from '../utils/authedOrgId';
 
 // Use declaration merging to specify the tenant context and db types
 // The requireOrganizationContext guarantees these will be available
@@ -278,7 +279,12 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    const updateData = validationResult.data as Partial<typeof qmpTraceabilityMatrix.$inferInsert>;
+    // Without the tenant key: the partial insert schema accepts
+    // `organizationId`, and spreading it into .set() below would move the
+    // caller's own item into whichever organization the body named.
+    const updateData = withoutOrgId(
+      validationResult.data as Partial<typeof qmpTraceabilityMatrix.$inferInsert>
+    );
 
     // Check if item exists and belongs to tenant
     const existingItemResults = await getDb(req)
@@ -297,6 +303,25 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Traceability item not found or access denied' });
     }
 
+    // Re-pointing the item at another QMP must name one of this tenant's, as
+    // creating it must (POST above).
+    const qmpId = updateData.qmpId ?? existingItem.qmpId;
+    if (qmpId !== existingItem.qmpId) {
+      const qmpResults = await getDb(req)
+        .select({ id: qualityManagementPlans.id })
+        .from(qualityManagementPlans)
+        .where(
+          and(
+            eq(qualityManagementPlans.organizationId, organizationId),
+            eq(qualityManagementPlans.id, qmpId)
+          )
+        )
+        .limit(1);
+      if (!qmpResults[0]) {
+        return res.status(404).json({ error: 'QMP not found or access denied' });
+      }
+    }
+
     // If CTQ factor ID is being updated, verify it belongs to the tenant and QMP
     if (updateData.ctqFactorId) {
       const ctqFactorResults = await getDb(req)
@@ -306,7 +331,7 @@ router.put('/:id', async (req, res) => {
           and(
             eq(ctqFactors.organizationId, organizationId),
             eq(ctqFactors.id, updateData.ctqFactorId),
-            eq(ctqFactors.qmpId, existingItem.qmpId)
+            eq(ctqFactors.qmpId, qmpId)
           )
         )
         .limit(1);

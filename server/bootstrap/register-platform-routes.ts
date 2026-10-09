@@ -1,3 +1,4 @@
+import { requestFullPath } from '../middleware/request-path';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import type { PlatformBootstrapContext } from './types';
 import { runWithPreAuthScope } from '../db/tenantStore';
@@ -16,13 +17,16 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     runWithPreAuthScope(`auth:${req.method} ${req.path}`, next);
   // CSP violation reporting — must match the report-uri set on the policy.
   // Mounted on the platform router so it's available before any auth-gated
-  // routes need it, and so it survives the validateTenantContext skip list.
+  // routes need it. It is reachable without a session because CSP_REPORT_URI is
+  // on the boundary's PUBLIC_API_ALLOWLIST (middleware/public-api-allowlist.ts);
+  // the impersonation detector behind the boundary keeps no skip list of its own.
   app.use(CSP_REPORT_URI, cspReportRouter);
 
   // Admin security-health endpoint. Lives under /api/admin so the
   // global /api auth gate runs first (auth + admin role enforced
-  // by the router itself). Returns the security self-test report
-  // on demand for ops dashboards and SOC tooling.
+  // on its one route, never router-wide: every /api/admin/* request
+  // enters this router first, VSR-001 F-31). Returns the security
+  // self-test report on demand for ops dashboards and SOC tooling.
   app.use('/api/admin', adminSecurityRouter);
 
   // /healthz and /readyz are NOT registered here.
@@ -99,7 +103,8 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     if (usersRouter && (typeof usersRouter === 'function' || (usersRouter as any).handle)) {
       // These mounts sit BEFORE the global /api gate, so the gate's
       // authMiddleware (and the scope lever) never runs for them. The router is
-      // MIXED: pre-auth routes (/login, /register, /logout) alongside
+      // MIXED: /login, /register and /logout (307s to the canonical /api/auth
+      // routes since they were found issuing sessions without MFA) alongside
       // authenticated ones (/, /me, /:id, /me/preferences, …), and it verifies
       // JWTs inline rather than via a mount middleware — so it opens no tenant
       // scope of its own. Under RLS_ENFORCE=on the authenticated routes then
@@ -266,7 +271,7 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
       // the in-editor Simple Browser can probe connectivity.
       '/api/time', '/api/diag',
     ];
-    const fullPath = req.baseUrl + req.path;
+    const fullPath = requestFullPath(req);
     const isOpen = openPrefixes.some(p => fullPath === p || fullPath.startsWith(p + '/'));
     if (isOpen) return next();
     return authMiddleware(req, res, next);

@@ -1,0 +1,152 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > resolves the drop-point dir from env or the default 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > maps every pathway+variant in the manifest to a descriptor 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > covers the whole eSTAR program: 510(k)/De Novo/PMA and the PreSTAR requests 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > assigns every descriptor to a template family 11ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > lists descriptors by family 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > reports available when the required template is present (case-insensitive) 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > fails closed in production when the required template is missing and required 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > never blocks in staging or when not required (report-only) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > reads the opt-in enforcement flag from the environment 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry — De Novo and PMA on the vendored files > files De Novo and PMA on the same vendored v7.0 PDFs as 510(k) — FDA ships one file per family 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry — De Novo and PMA on the vendored files > reports De Novo and PMA available in production once the two vendored files are present 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the script facts the field map depends on > blanks every script/exData body before scanning, and that changes the parse 9ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the script facts the field map depends on > declares exactly one initialize event, and it reveals nothing 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the script facts the field map depends on > reveals every mapped container only from a user-interaction activity 166ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the script facts the field map depends on > guards the 510(k) reveal on an unconditional xfa.host.getFocus() dereference 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the script facts the field map depends on > lets one jurisdiction click null the pathway radio members 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the fields the form recomputes for itself > matches ESTAR_TEMPLATE_RECOMPUTED_FIELDS to the scripts that assign each field 66ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the script facts the field map depends on > blanks every script/exData body before scanning, and that changes the parse 8ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the script facts the field map depends on > declares exactly one initialize event, and it reveals nothing 3ms
+stdout | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts
+{
+  "timestamp": "2026-09-20T19:20:03.295Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-20T19:20:03.296Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts
+{
+  "timestamp": "2026-09-20T19:20:03.297Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts
+[database] Database connection successful
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the script facts the field map depends on > reveals every mapped container only from a user-interaction activity 131ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the script facts the field map depends on > guards the 510(k) reveal on an unconditional xfa.host.getFocus() dereference 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the script facts the field map depends on > lets one jurisdiction click null the pathway radio members 2ms
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts
+{
+  "timestamp": "2026-09-20T19:20:03.618Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the fields the form recomputes for itself > matches ESTAR_TEMPLATE_RECOMPUTED_FIELDS to the scripts that assign each field 68ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the recompute declaration, independent of any template > names the four the pathway click clears and the six nothing ever touches 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > fills the official eSTAR AcroForm when template + verified field map are present 66ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > REFUSES when a key of the registered map has no measured rebuild outcome 9ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > a CALLER-SUPPLIED map is the caller's vocabulary and is not measured against the table 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > fails closed (no fabricated PDF) when the official template is not vendored 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > fails closed when the field map is not populated/verified 13ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the pathway click runs the clearers > proves the pathway click runs the two scripts that clear those four fields 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the pathway click runs the clearers > proves the pathway click runs the two scripts that clear those four fields 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > maps no key onto the ApplicationType selectors 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > declares a recomputation record for every 510(k) device key 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > leaves NO key of ANY populated map unmeasured 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > covers every 510(k) IVD key too, lacking only the citation the IVD form does not ask 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > a field claiming the rebuild REPRODUCES its value has that source written 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > a field claiming the rebuild BLANKS it has that source written by nobody 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > names the one cell the form fills from a DIFFERENT governed fact 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > writes the two sources that turn the reveal click from destructive into constructive 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > skips+warns for canonical keys with no data, still producing the PDF 14ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > produces a filled official eSTAR with no blockers, via the XFA layer 257ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > writes each value at the SOM path it was mapped to 243ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > still fails closed when the template is missing 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > fails closed for a descriptor with no verified field map 38ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > De Novo and PMA are ready on this template: vendored AND mapped (the readiness route's gate) 353ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > a fill that writes nothing is not a filled form: no blank official eSTAR 172ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > one real value is enough to be a filled form 192ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'de_novo-device' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'pma-device' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'de_novo-ivd' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 4ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'pma-ivd' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > de_novo-device never addresses the 510(k) Summary page, the predicate fields or the known-classification block 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > pma-device never addresses the 510(k) Summary page, the predicate fields or the known-classification block 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > de_novo-ivd never addresses the 510(k) Summary page, the predicate fields or the known-classification block 8ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > pma-ivd never addresses the 510(k) Summary page, the predicate fields or the known-classification block 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > the IVD maps omit indicationsForUseCitation (the IVD template does not declare LBTextField130) 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > each descriptor owns its map object (mutating one cannot change another) 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official nIVD eSTAR v7.0 (same vendored file as 510(k)) > de_novo-device fills the shared administrative fields and reads them back at their SOM paths 316ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official nIVD eSTAR v7.0 (same vendored file as 510(k)) > pma-device fills the shared administrative fields and reads them back at their SOM paths 223ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official IVD eSTAR v7.0 (same vendored file as 510(k)) > de_novo-ivd is ready and fills the shared fields (minus the IFU citation the IVD template lacks) 231ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official IVD eSTAR v7.0 (same vendored file as 510(k)) > pma-ivd is ready and fills the shared fields (minus the IFU citation the IVD template lacks) 252ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > refuses a file with the right NAME whose bytes do not match its pin 50ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > isUsableEstarTemplate refuses a mismatch and allows verified or unpinned 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > a swapped template is excluded from the list a caller judges availability from 5ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > the committed templates match the checksums pinned for them 33ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > writes the manifest token into the form the applicant opens 682ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > reports what was filed, where, and under what hash 396ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > embeds the bytes, under a name-tree key the eSTAR will not delete 569ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > the file the manifest routes is the file that is in the document 623ms
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":3,"column":16,"offset":16})
+Invalid object ref: 272 0 R
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":11,"column":16,"offset":576})
+Invalid object ref: 273 0 R
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":19,"column":16,"offset":831})
+Invalid object ref: 274 0 R
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":27,"column":16,"offset":1342})
+Invalid object ref: 275 0 R
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":61,"column":16,"offset":4641})
+Invalid object ref: 276 0 R
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":77,"column":16,"offset":7125})
+Invalid object ref: 277 0 R
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > is byte-identical across two runs with the same inputs 1234ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > still parses as a PDF to a reader that has never seen this code 623ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > refuses the WHOLE export when one requested document cannot be filed 471ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > refuses a blank official form with files stapled to it 329ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > changes nothing when no attachment is requested 351ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > refuses an oversized submission as a sentence, not an exception 392ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > delivers when the output fits, and the ceiling is opt-in 709ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > still says how many were requested when the template itself refuses 640ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > is a caller bug, not a regulatory refusal, to ask for attachments with no resolver 39ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > files into several slots at once, each under its own chapter 402ms
+
+ Test Files  3 passed (3)
+      Tests  79 passed (79)
+   Start at  19:20:00
+   Duration  13.51s (transform 2.12s, setup 208ms, import 3.75s, tests 13.05s, environment 0ms)
+
+exit=0

@@ -1,0 +1,4 @@
+❌ ci:canvas-path — the AnA-draft → canvas → editor → vault path is cut:
+   [founder-walk] tests/lineage/founder-path-lineage.pglite.test.ts skips, narrows or defers its tests (.skip / .only / .todo / .skipIf / .runIf)
+   docs/design/ANA_DOCUMENT_CANVAS.md is the binding design; CLAUDE.md "Deleting a user-facing capability" applies.
+exit 1

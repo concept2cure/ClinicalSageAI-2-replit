@@ -9,8 +9,10 @@
  * as it does for the shared frontier providers.
  *
  * Model identifiers here are the substrate-specific IDs:
- *   - Bedrock: 'anthropic.<model>' (a regional inference-profile prefix such as
- *     'us.' / 'eu.' is added at call time from AI_BEDROCK_RESIDENCY when set).
+ *   - Bedrock: 'anthropic.<model>', sent as-is. No cross-region inference-profile
+ *     prefix ('us.' / 'eu.') is added; an earlier version of this comment said
+ *     one was, and no code ever did. Residency follows the region the client
+ *     calls (providers/placement.ts bedrockClientRegion).
  *   - Vertex: the bare Claude model id (the SDK targets it by project+region).
  *   - Azure: the deployment name (defaults to the OpenAI model id).
  *   - Local: a logical name resolved by the self-hosted server / LiteLLM map.
@@ -47,6 +49,7 @@ export const CLOUD_MODELS: ModelConfig[] = [
     id: 'claude-opus-4-bedrock',
     provider: 'bedrock',
     model: 'anthropic.claude-opus-4-7',
+    maxApiEffort: 'max',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
     contextWindow: 200000,
@@ -60,6 +63,7 @@ export const CLOUD_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4-bedrock',
     provider: 'bedrock',
     model: 'anthropic.claude-sonnet-4-6',
+    maxApiEffort: 'max',
     thinkingMode: 'budget',
     supportsSamplingParams: true,
     contextWindow: 200000,
@@ -74,6 +78,7 @@ export const CLOUD_MODELS: ModelConfig[] = [
     id: 'claude-opus-4-vertex',
     provider: 'vertex',
     model: 'claude-opus-4-7',
+    maxApiEffort: 'max',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
     contextWindow: 200000,

@@ -28,13 +28,24 @@ import {
   runGovernedIssueParser,
 } from '../services/regulatory-correspondence/issue-parser';
 import {
+  devicePathwayFor,
+  isDeviceSubmissionType,
+} from '../services/regulatory-correspondence/device-issue-taxonomy';
+import {
   computeCorrespondenceIssueImpact,
   createCanonicalTasksForIssue,
 } from '../services/regulatory-correspondence/operating-layer';
 import { compileGovernedResponseAssembly } from '../services/regulatory-correspondence/response-package-compiler';
+import {
+  issueRowsToCorrespondenceIssues,
+  type CorrespondenceIssueRow,
+} from '../services/regulatory-correspondence/issue-row-mapper';
 import { recordGovernedAction } from './c2c/actions';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const intakeLog = createScopedLogger('regulatory-correspondence');
 router.use(authMiddleware);
 
 const REG_CORRESPONDENCE_ENABLED = process.env.ENABLE_REG_CORRESPONDENCE_OS !== 'false';
@@ -392,6 +403,7 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
   });
 
   // Check for unresolved governed decisions
+  let governedDecisionCheckFailed = false;
   let governedDecisionWarning: {
     hasUnresolved: boolean;
     unresolvedCount: number;
@@ -401,7 +413,7 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
   try {
     const { hasUnresolvedGovernedDecisions } = await import('../services/governed-decision-repository.js');
     const unresolvedCheck = await hasUnresolvedGovernedDecisions(
-      Number(upd.rows[0].project_id),
+      String(upd.rows[0].project_id ?? ''),
       orgId
     );
     if (unresolvedCheck.hasUnresolved) {
@@ -420,7 +432,7 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
         await recordTransitionEvent({
           decisionId: 'correspondence-lifecycle-gate',
           organizationId: orgId,
-          projectId: Number(upd.rows[0].project_id),
+          projectRef: String(upd.rows[0].project_id ?? ''),
           fromState: 'unknown',
           toState: lifecycleState,
           action: 'correspondence_lifecycle_gate',
@@ -440,10 +452,17 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
       }
     }
   } catch {
-    // Non-blocking — governed decision check is advisory only
+    // Advisory, so the transition above stands. But a check that could not run
+    // must not read as one that found nothing, which is what an absent warning
+    // says (ledger L186).
+    governedDecisionCheckFailed = true;
   }
 
-  return res.json({ data: upd.rows[0], ...(governedDecisionWarning ? { governedDecisionWarning } : {}) });
+  return res.json({
+    data: upd.rows[0],
+    ...(governedDecisionWarning ? { governedDecisionWarning } : {}),
+    ...(governedDecisionCheckFailed ? { governedDecisionCheck: 'unavailable' } : {}),
+  });
 });
 
 router.post('/correspondence/intake', async (req, res) => {
@@ -516,23 +535,7 @@ router.post('/correspondence/intake', async (req, res) => {
     });
   }
 
-  const extraction = runGovernedIssueParser(normalizedParsedText, id);
-  const extracted = extraction.issues;
-  record.parserMetadata = {
-    ...(record.parserMetadata || {}),
-    parserMode: extraction.metadata.parserMode,
-    responseContract: extraction.metadata.responseContract,
-    extractionMethod: extraction.metadata.extractionMethod,
-    confidenceMethod: extraction.metadata.confidenceMethod,
-    humanReviewRequired: extraction.metadata.humanReviewRequired,
-    extractionVersion: extraction.metadata.extractionVersion,
-    sourceTextDigest: extraction.metadata.sourceTextDigest,
-    matchedRuleCount: extraction.metadata.matchedRuleCount,
-    parserGovernanceMode: parserGovernance.mode,
-    parserGovernanceHeuristicEnabled: parserGovernance.heuristicEnabled,
-    deterministicSignals: extraction.metadata.deterministicSignals,
-    modelAssistedReasoningUsed: extraction.metadata.modelAssistedReasoningUsed,
-  };
+  let extraction: ReturnType<typeof runGovernedIssueParser>;
 
   const pool = getDbClientOrNull();
   const isReady = await tableReady(pool);
@@ -541,7 +544,11 @@ router.post('/correspondence/intake', async (req, res) => {
   }
   try {
   const submissionCheck = await pool!.query(
-      `SELECT id, project_id
+      /* `submission_type` decides WHICH taxonomy reads this letter, so it comes
+         from the submission row — never from the request body, which is the
+         caller's claim — and from THIS query rather than a second one: the row
+         is already being fetched here, tenant-scoped, to validate the anchor. */
+      `SELECT id, project_id, submission_type
        FROM c2c_submissions
        WHERE id = $1 AND organization_id = $2
        LIMIT 1`,
@@ -553,6 +560,36 @@ router.post('/correspondence/intake', async (req, res) => {
     if (submissionCheck.rows[0].project_id !== record.projectId) {
       return res.status(400).json({ error: 'Submission does not belong to the specified project' });
     }
+
+    /* PARSED HERE, after the submission is known — not before it. The letter
+       cannot be classified until we know what it is a letter ABOUT: a 510(k)
+       deficiency filed under CTD 2.5 is a section that pathway does not have.
+       It also means a 404 no longer burns a parse. */
+    const submissionType: string | null = submissionCheck.rows[0].submission_type ?? null;
+    extraction = runGovernedIssueParser(normalizedParsedText, id, { submissionType });
+    const extracted = extraction.issues;
+    record.parserMetadata = {
+      ...(record.parserMetadata || {}),
+      /* Which vocabulary the issues below are in. Without it an `E1` on an
+         issue is unreadable: Biocompatibility on a 510(k), Proposed labeling
+         on a De Novo. */
+      submissionType,
+      issueTaxonomy: isDeviceSubmissionType(submissionType)
+        ? `device:${devicePathwayFor(submissionType) ?? 'unmapped'}`
+        : 'ctd',
+      parserMode: extraction.metadata.parserMode,
+      responseContract: extraction.metadata.responseContract,
+      extractionMethod: extraction.metadata.extractionMethod,
+      confidenceMethod: extraction.metadata.confidenceMethod,
+      humanReviewRequired: extraction.metadata.humanReviewRequired,
+      extractionVersion: extraction.metadata.extractionVersion,
+      sourceTextDigest: extraction.metadata.sourceTextDigest,
+      matchedRuleCount: extraction.metadata.matchedRuleCount,
+      parserGovernanceMode: parserGovernance.mode,
+      parserGovernanceHeuristicEnabled: parserGovernance.heuristicEnabled,
+      deterministicSignals: extraction.metadata.deterministicSignals,
+      modelAssistedReasoningUsed: extraction.metadata.modelAssistedReasoningUsed,
+    };
 
     await pool!.query(
       `INSERT INTO c2c_correspondence
@@ -587,13 +624,20 @@ router.post('/correspondence/intake', async (req, res) => {
     const downstreamActions: Array<Record<string, unknown>> = [];
     for (const issue of extracted) {
       await pool!.query(
+        /* `subcategory` and `structured_extraction` are written because the
+           response-package compiler reads them and nothing persisted either:
+           the parser's section candidates, evidence needs, owner function and
+           confidence trace lived in the intake response and were gone by the
+           time a package was compiled, which is why every package fell back to
+           the generic 'Issue evidence attachment'. */
         `INSERT INTO c2c_correspondence_issues
-          (id, correspondence_id, category, severity, blocker, response_required, source_excerpt, confidence, human_review_status, mapped_ctd_sections, mapped_artifact_ids, resolution_status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb,$12)`,
+          (id, correspondence_id, category, subcategory, severity, blocker, response_required, source_excerpt, confidence, human_review_status, mapped_ctd_sections, mapped_artifact_ids, resolution_status, structured_extraction)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14::jsonb)`,
         [
           issue.id,
           issue.correspondenceId,
           issue.category,
+          issue.subcategory || null,
           issue.severity,
           issue.blocker,
           issue.responseRequired,
@@ -603,6 +647,7 @@ router.post('/correspondence/intake', async (req, res) => {
           JSON.stringify(issue.mappedCtdSections || []),
           JSON.stringify(issue.mappedArtifactIds || []),
           issue.resolutionStatus,
+          JSON.stringify(issue.structuredExtraction || {}),
         ]
       );
 
@@ -672,9 +717,15 @@ router.post('/correspondence/intake', async (req, res) => {
 
   return res.status(201).json({ data: record, issues: extracted, downstreamActions, auditTrail });
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Unknown error';
-    console.error('[Correspondence Intake] DB operation failed:', message);
-    return res.status(500).json({ error: 'Failed to ingest correspondence', detail: message });
+    /* Through the canonical helper: the detail — Drizzle's "Failed query: …
+       params: …", the requester's e-mail among the params — goes to the log
+       against the request id, never to the client (2026-09-29, row D2). The
+       PostgreSQL error rides on `.cause`. */
+    return serverError(res, intakeLog, 'ingesting agency correspondence', (e as { cause?: unknown })?.cause ?? e, {
+      correspondenceId: id,
+      projectId: record.projectId,
+      submissionId: record.submissionId,
+    });
   }
 });
 
@@ -918,7 +969,7 @@ router.post('/response-packages', async (req, res) => {
   });
   const compiledAssembly = compileGovernedResponseAssembly({
     correspondenceId: pack.sourceCorrespondenceId,
-    issues: issueRows.rows as any,
+    issues: issueRowsToCorrespondenceIssues(issueRows.rows as CorrespondenceIssueRow[]),
     revisedArtifactIds: pack.revisedArtifactIds,
   });
 

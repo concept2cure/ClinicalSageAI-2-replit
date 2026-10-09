@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fda-regional:fda-regional SYSTEM "../../util/dtd/us-regional-v3-3.dtd">
+<?xml-stylesheet type="text/xsl" href="../../util/style/us-regional.xsl"?>
+<fda-regional:fda-regional dtd-version="3.3" xml:lang="en"
+    xmlns:fda-regional="http://www.ich.org/fda"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+  <admin>
+      <applicant-info/>
+    <application-set>
+      <application>
+        <application-information>
+          <application-number application-type="fdaat4">000512</application-number>
+        </application-information>
+        <submission-information>
+          <submission-id submission-type="fdast1">0000</submission-id>
+          <sequence-number submission-sub-type="fdasst1">0000</sequence-number>
+        </submission-information>
+      </application>
+    </application-set>
+  </admin>
+  <m1-regional>
+    <m1-1-forms>
+      <leaf operation="new" checksum="751823946a0105abcb17415634e23723" checksum-type="md5" xlink:href="1-1/form-fda-1571-pdf-rendered-leaf-files-1.pdf" xlink:type="simple" ID="leaf-m1-1-form-fda-1571-pdf-rendered-leaf-files-1">
+        <title>Form FDA 1571 (sponsor-completed)</title>
+      </leaf>
+    </m1-1-forms>
+  </m1-regional>
+</fda-regional:fda-regional>

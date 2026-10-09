@@ -212,11 +212,14 @@ export function computeGovernedEvaluation(
       aiGenerated: input.exportState.aiGenerated,
       provenanceComplete: input.exportState.provenanceComplete,
       unresolvedContradictionCount: input.documentState.unresolvedContradictionCount,
-      isStale: input.documentState.isStale ?? false,
+      isStale: input.documentState.isStale ?? null,
     };
     exportGate = evaluateExportGate(exportInput);
   } else {
-    // Default: evaluate with what we have
+    // No export state supplied: evaluate with what we have, and say what we do
+    // not have. `aiGenerated: null` is NOT RECORDED — it used to be `false`,
+    // which asserted "no model wrote this" and removed the human-review check
+    // from the decision instead of failing it.
     exportGate = evaluateExportGate({
       context,
       readiness,
@@ -224,10 +227,10 @@ export function computeGovernedEvaluation(
       hasContent: input.documentState.hasContent,
       hasApproval: input.documentState.hasApproval,
       humanReviewApproved: false,
-      aiGenerated: false,
+      aiGenerated: null,
       provenanceComplete: input.documentState.hasProvenance,
       unresolvedContradictionCount: input.documentState.unresolvedContradictionCount,
-      isStale: input.documentState.isStale ?? false,
+      isStale: input.documentState.isStale ?? null,
     });
   }
 
@@ -243,10 +246,10 @@ export function computeGovernedEvaluation(
       hasApproval: input.documentState.hasApproval,
       approvalDate: input.documentState.approvalDate,
       humanReviewApproved: input.exportState?.humanReviewApproved ?? false,
-      aiGenerated: input.exportState?.aiGenerated ?? false,
+      aiGenerated: input.exportState?.aiGenerated ?? null,
       provenanceComplete: input.exportState?.provenanceComplete ?? input.documentState.hasProvenance,
       unresolvedContradictionCount: input.documentState.unresolvedContradictionCount,
-      isStale: input.documentState.isStale ?? false,
+      isStale: input.documentState.isStale ?? null,
       ...input.publishState,
     };
     publishGate = evaluatePublishGate(publishInput);

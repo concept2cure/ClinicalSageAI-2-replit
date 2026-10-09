@@ -20,8 +20,12 @@
  * governed action, not on a list of the ones this file knows, so an action
  * added after it was written still appears.
  *
- * DB and the audit-integrity service are mocked so these exercise the real
- * router. The platform-admin gate is inherited from the mount in
+ * DB, the audit-integrity service and the per-tenant chain walker are mocked
+ * so these exercise the real router. The chain is ONE CHAIN PER TENANT
+ * (services/audit/chain.ts): when the store-wide walk finds a break, each
+ * tenant on the page is walked on its own and its rows are placed against
+ * ITS break, by chain_seq. The same properties are proven against a real
+ * database, as the runtime role, in tests/db/licensing-history.dbtest.ts. The platform-admin gate is inherited from the mount in
  * ./master-admin and is deliberately not re-implemented here.
  */
 import express from 'express';
@@ -30,12 +34,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const queryMock = vi.fn();
 const verifyMock = vi.fn();
+const tenantChainMock = vi.fn();
 
 vi.mock('../../../db', () => ({
   query: (...args: unknown[]) => queryMock(...args),
 }));
 vi.mock('../../../services/audit/audit-integrity-service', () => ({
   verifyAuditIntegrity: (...args: unknown[]) => verifyMock(...args),
+}));
+vi.mock('../../../services/audit/chain', () => ({
+  verifyAuditChain: (...args: unknown[]) => tenantChainMock(...args),
 }));
 
 // Imported after the mocks (vi.mock is hoisted).
@@ -91,18 +99,20 @@ const CHAIN_OK = {
 
 /**
  * Route every statement the router issues. `history` returns the page; the
- * oversize probe answers "small enough to walk"; the break lookup answers with
- * whatever the test supplies.
+ * bounded size probe answers `storeSize` (default: small enough to walk); the
+ * break lookup answers with the row of that id from `breakRows`.
  */
 function wireQuery(opts: {
   history?: () => Promise<{ rows: unknown[] }>;
-  oversize?: unknown[];
-  breakRow?: unknown[];
+  storeSize?: number;
+  breakRows?: Array<Record<string, unknown>>;
 }) {
-  queryMock.mockImplementation(async (sql: string) => {
-    if (/SELECT 1 FROM audit_logs OFFSET/.test(sql)) return { rows: opts.oversize ?? [] };
-    if (/SELECT id, occurred_at FROM audit_logs WHERE id/.test(sql)) {
-      return { rows: opts.breakRow ?? [] };
+  queryMock.mockImplementation(async (sql: string, params: unknown[] = []) => {
+    if (/SELECT count\(\*\)::int AS n FROM \(SELECT 1 FROM audit_logs LIMIT/.test(sql)) {
+      return { rows: [{ n: opts.storeSize ?? 12 }] };
+    }
+    if (/SELECT id, occurred_at, chain_seq FROM audit_logs WHERE id/.test(sql)) {
+      return { rows: (opts.breakRows ?? []).filter((r) => r.id === params[0]) };
     }
     if (/FROM audit_logs a/.test(sql)) {
       return opts.history ? opts.history() : { rows: [auditRow()] };
@@ -115,6 +125,9 @@ beforeEach(() => {
   queryMock.mockReset();
   verifyMock.mockReset();
   verifyMock.mockResolvedValue(CHAIN_OK);
+  tenantChainMock.mockReset();
+  // A tenant walk that nobody set up is a test defect, not an intact chain.
+  tenantChainMock.mockRejectedValue(new Error('tenant walk not wired'));
   clearIntegrityCache();
 });
 
@@ -339,7 +352,8 @@ describe('honest about integrity — per row', () => {
   });
 
   it('does not walk a store larger than it verifies in one pass, and says so', async () => {
-    wireQuery({ oversize: [{ '?column?': 1 }] });
+    // The probe counts at most VERIFY_MAX_ROWS + 1 rows; one past the cap is "too large".
+    wireQuery({ storeSize: 50_001 });
     const res = await request(makeApp()).get('/api/admin/master/licensing/history');
     expect(res.body.integrity.status).toBe('unavailable');
     expect(res.body.integrity.reason).toBe('store-too-large');
@@ -354,13 +368,18 @@ describe('honest about integrity — per row', () => {
       ok: false,
       unverifiable: false,
     });
+    tenantChainMock.mockImplementation(async (_client: unknown, o: { tenantId: number }) =>
+      o.tenantId === 7
+        ? { ok: false, rowsChecked: 2, brokenAt: { id: 'mid' } }
+        : { ok: true, rowsChecked: 3 },
+    );
     wireQuery({
-      breakRow: [{ id: 'mid', occurred_at: '2026-08-20T10:00:00.000Z' }],
+      breakRows: [{ id: 'mid', occurred_at: '2026-08-20T10:00:00.000Z', chain_seq: 2 }],
       history: async () => ({
         rows: [
-          auditRow({ id: 'late', occurred_at: '2026-08-21T10:00:00.000Z', total_matching: '3' }),
-          auditRow({ id: 'mid', total_matching: '3' }),
-          auditRow({ id: 'early', occurred_at: '2026-08-19T10:00:00.000Z', total_matching: '3' }),
+          auditRow({ id: 'late', occurred_at: '2026-08-21T10:00:00.000Z', chain_seq: 3, total_matching: '3' }),
+          auditRow({ id: 'mid', chain_seq: 2, total_matching: '3' }),
+          auditRow({ id: 'early', occurred_at: '2026-08-19T10:00:00.000Z', chain_seq: 1, total_matching: '3' }),
         ],
       }),
     });
@@ -371,6 +390,86 @@ describe('honest about integrity — per row', () => {
     );
     expect(byId).toEqual({ late: 'after-break', mid: 'broken', early: 'verified' });
     expect(res.body.integrity.status).toBe('broken');
+    // Placed against the row's OWN tenant's walk.
+    expect(tenantChainMock).toHaveBeenCalledWith(expect.anything(), { tenantId: 7 });
+  });
+
+  /* The chain position is chain_seq, not the timestamp: the writer stamps
+     occurred_at before it takes the tenant's chain lock, so a row can sort
+     EARLIER by time while sitting AFTER the break in its chain. */
+  it('places a row by its chain position, not its timestamp', async () => {
+    verifyMock.mockResolvedValue({
+      chain: { ok: false, rowsChecked: 3, brokenAt: { id: 'mid' } },
+      seals: { checked: true, valid: true, brokenAt: null },
+      ok: false,
+      unverifiable: false,
+    });
+    tenantChainMock.mockResolvedValue({ ok: false, rowsChecked: 1, brokenAt: { id: 'mid' } });
+    wireQuery({
+      breakRows: [{ id: 'mid', occurred_at: '2026-08-20T10:00:00.000Z', chain_seq: 2 }],
+      history: async () => ({
+        rows: [
+          auditRow({ id: 'mid', chain_seq: 2, total_matching: '2' }),
+          // Earlier by a second, later in the chain.
+          auditRow({ id: 'raced', occurred_at: '2026-08-20T09:59:59.000Z', chain_seq: 3, total_matching: '2' }),
+        ],
+      }),
+    });
+    const res = await request(makeApp()).get('/api/admin/master/licensing/history');
+    const byId = Object.fromEntries(res.body.entries.map((e: any) => [e.id, e.integrity.chain]));
+    expect(byId).toEqual({ mid: 'broken', raced: 'after-break' });
+  });
+
+  /* A break in one tenant's chain says nothing about another's. */
+  it('does not mark another workspace after-break for a break outside its chain', async () => {
+    verifyMock.mockResolvedValue({
+      chain: { ok: false, rowsChecked: 3, brokenAt: { id: 'mid' } },
+      seals: { checked: true, valid: true, brokenAt: null },
+      ok: false,
+      unverifiable: false,
+    });
+    tenantChainMock.mockImplementation(async (_client: unknown, o: { tenantId: number }) =>
+      o.tenantId === 7
+        ? { ok: false, rowsChecked: 1, brokenAt: { id: 'mid' } }
+        : { ok: true, rowsChecked: 1 },
+    );
+    wireQuery({
+      breakRows: [{ id: 'mid', occurred_at: '2026-08-20T10:00:00.000Z', chain_seq: 2 }],
+      history: async () => ({
+        rows: [
+          auditRow({ id: 'other', tenant_id: 8, occurred_at: '2026-08-22T10:00:00.000Z', chain_seq: 9, total_matching: '2' }),
+          auditRow({ id: 'mid', chain_seq: 2, total_matching: '2' }),
+        ],
+      }),
+    });
+    const res = await request(makeApp()).get('/api/admin/master/licensing/history');
+    const byId = Object.fromEntries(res.body.entries.map((e: any) => [e.id, e.integrity.chain]));
+    expect(byId).toEqual({ other: 'verified', mid: 'broken' });
+  });
+
+  /* A walk whose tenant could not be checked claims nothing for that tenant. */
+  it('claims nothing for a workspace whose own walk failed', async () => {
+    verifyMock.mockResolvedValue({
+      chain: { ok: false, rowsChecked: 3, brokenAt: { id: 'x' } },
+      seals: { checked: true, valid: true, brokenAt: null },
+      ok: false,
+      unverifiable: false,
+    });
+    wireQuery({}); // the tenant walk stays rejected (beforeEach)
+    const res = await request(makeApp()).get('/api/admin/master/licensing/history');
+    expect(res.body.entries[0].integrity.chain).toBe('not-checked');
+  });
+
+  /* The memoised walk is only reused while the store has not grown: a row
+     appended inside the memo window was never seen by that walk. */
+  it('walks again when a row has been appended since the memoised walk', async () => {
+    wireQuery({ storeSize: 12 });
+    await request(makeApp()).get('/api/admin/master/licensing/history');
+    await request(makeApp()).get('/api/admin/master/licensing/history');
+    expect(verifyMock).toHaveBeenCalledTimes(1);
+    wireQuery({ storeSize: 13 });
+    await request(makeApp()).get('/api/admin/master/licensing/history');
+    expect(verifyMock).toHaveBeenCalledTimes(2);
   });
 });
 

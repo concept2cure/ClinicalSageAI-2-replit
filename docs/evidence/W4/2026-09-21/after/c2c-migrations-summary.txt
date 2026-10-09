@@ -1,0 +1,6 @@
+# apply-c2c-migrations against the freshly provisioned database
+
+applied: 290
+failed:  0
+
+All c2c migrations applied.

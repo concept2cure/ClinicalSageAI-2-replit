@@ -1,0 +1,16 @@
+[ci:sign-ceremony:selftest]
+  ✓ the pre-fix protocol finalize route fails the gate
+  ✓ an AnA tool that signs from a chat turn fails the gate
+  ✓ re-authentication without a signature row still fails
+  ✓ the full ceremony passes
+  ✓ a ceremony in another handler does not count for this one
+  ✓ writeMutation("sign") needs the caller to re-authenticate
+  ✓ comments, type annotations and other commands are not sites
+  ✓ a command chosen by a ternary is still a sign write (IRB approval, as it stood on 2026-09-23)
+  ✓ a ternary or template-literal command inside recordGovernedAction is a site
+  ✓ "sign" in a reason, a target or a callback is not a command
+  ✓ the baseline is a ceiling per file, not a pass
+  ✓ a baseline that allows more than exists is reported, so a fixed site cannot be refilled
+  ✓ a baseline entry without a written reason fails
+[ci:sign-ceremony:selftest] 13 passed — the gate fails on what it exists to catch.
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 23 baselined site(s) remain, exactly as baselined.

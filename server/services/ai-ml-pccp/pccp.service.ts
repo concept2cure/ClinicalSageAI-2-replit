@@ -5,6 +5,7 @@
  * deterministic validator lives in pccp-validator.service.ts.
  */
 
+import auditService from '../auditService';
 import { and, asc, desc, eq } from 'drizzle-orm';
 
 import { db } from '../../db';
@@ -18,6 +19,7 @@ import {
 } from '../../../shared/schema/ai-ml-pccp';
 import { validatePccp, type PccpValidationResult } from './pccp-validator.service';
 import { publishRegulatoryChange, type PublishOutcome } from '../living-file/publish';
+import { pickWritable } from '../../utils/authedOrgId';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Read
@@ -68,10 +70,69 @@ export async function createPlan(values: InsertAiMlPccpPlan): Promise<AiMlPccpPl
   return row;
 }
 
+/**
+ * The plan columns an edit may write. Everything else is identity, lineage or
+ * governance: the tenant key and the program the plan belongs to, its version
+ * lineage, and status / locked / approvedBy / approvedAt / signatureId, which
+ * only approvePlan writes, behind validatePccp's gate. The route spread the
+ * request body into .set(), so any member could file a plan into another org,
+ * re-parent it onto another org's program, or mark it approved and locked
+ * without passing the gate (ledger L192).
+ */
+const PLAN_EDITABLE = [
+  'code',
+  'title',
+  'deviceSubjectName',
+  'intendedUse',
+  'descriptionSummary',
+  'dataManagementPractices',
+  'retrainingPractices',
+  'performanceEvaluationProtocol',
+  'updateProcedures',
+  'transparencyCommitments',
+  'benefitsNarrative',
+  'risksNarrative',
+  'mitigationsNarrative',
+  'comparisonToCurrentDevice',
+  'monitoringPlan',
+  'driftDetectionPlan',
+  'biasSubgroupAnalysisPlan',
+  'cybersecurityImpactNarrative',
+  'labelingImpactNarrative',
+  'rollbackStrategyNarrative',
+  'guidanceVersion',
+  'metadata',
+] as const satisfies readonly (keyof InsertAiMlPccpPlan & string)[];
+
+/** The modification columns an edit may write: not its id, and not `planId`,
+ *  which is its tenancy — ai_ml_modifications has no organization column and
+ *  no RLS policy, so a planId from the body moved it into another org's plan. */
+const MODIFICATION_EDITABLE = [
+  'code',
+  'ordering',
+  'title',
+  'modificationType',
+  'boundary',
+  'boundaryDeltaLimit',
+  'rationale',
+  'retrainingDataCriteria',
+  'performanceMetric',
+  'performanceComparator',
+  'performanceThresholdValue',
+  'performanceTestSet',
+  'rollbackStrategy',
+  'cybersecurityImpact',
+  'labelingImpact',
+  'biasSubgroupAnalysis',
+  'status',
+  'metadata',
+] as const satisfies readonly (keyof InsertAiMlModification & string)[];
+
 export async function updatePlan(
   organizationId: number,
   planId: string,
-  patch: Partial<InsertAiMlPccpPlan>
+  patch: unknown,
+  updatedBy: string
 ): Promise<AiMlPccpPlan | null> {
   const existing = await getPlan(organizationId, planId);
   if (!existing) return null;
@@ -80,8 +141,12 @@ export async function updatePlan(
   }
   const [row] = await db
     .update(aiMlPccpPlans)
-    .set({ ...patch, updatedAt: new Date() })
-    .where(eq(aiMlPccpPlans.id, planId))
+    .set({
+      ...pickWritable<InsertAiMlPccpPlan>(patch, PLAN_EDITABLE),
+      updatedBy,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(aiMlPccpPlans.id, planId), eq(aiMlPccpPlans.organizationId, organizationId)))
     .returning();
   return row ?? null;
 }
@@ -105,11 +170,11 @@ export async function addModification(
 
 export async function updateModification(
   modificationId: string,
-  patch: Partial<InsertAiMlModification>
+  patch: unknown
 ): Promise<AiMlModification | null> {
   const [row] = await db
     .update(aiMlModifications)
-    .set({ ...patch, updatedAt: new Date() })
+    .set({ ...pickWritable<InsertAiMlModification>(patch, MODIFICATION_EDITABLE), updatedAt: new Date() })
     .where(eq(aiMlModifications.id, modificationId))
     .returning();
   return row ?? null;
@@ -122,15 +187,17 @@ export async function updateModification(
 export interface ApprovePlanArgs {
   organizationId: number;
   planId: string;
+  /** The re-authenticated signer's user id (the route verified it). */
   approvedBy: string;
-  signatureId?: string;
+  /** Reason for approval, recorded on the audit trail. */
+  reason: string;
 }
 
 export async function approvePlan(args: ApprovePlanArgs): Promise<{
   plan: AiMlPccpPlan;
   validation: PccpValidationResult;
   publish: PublishOutcome;
-} | { error: 'NOT_FOUND' } | { error: 'GATE_BLOCKED'; validation: PccpValidationResult } | { error: 'ALREADY_LOCKED' }> {
+} | { error: 'NOT_FOUND' } | { error: 'GATE_BLOCKED'; validation: PccpValidationResult } | { error: 'ALREADY_LOCKED' } | { error: 'AUDIT_WRITE_FAILED' }> {
   const plan = await getPlan(args.organizationId, args.planId);
   if (!plan) return { error: 'NOT_FOUND' };
   if (plan.locked) return { error: 'ALREADY_LOCKED' };
@@ -149,11 +216,33 @@ export async function approvePlan(args: ApprovePlanArgs): Promise<{
       locked: true,
       approvedBy: args.approvedBy,
       approvedAt: new Date(),
-      signatureId: args.signatureId ?? null,
+      /* Was `args.signatureId ?? null` — a client string, never checked,
+         stored on the locked plan as its signature reference. */
+      signatureId: null,
       updatedAt: new Date(),
     })
     .where(eq(aiMlPccpPlans.id, plan.id))
     .returning();
+
+  /* The approval's reason and verified approver go on the chained audit trail.
+     logAction does not throw on a failed write — it reports it — and a locked
+     PCCP with no record of who approved it or why is the one outcome this
+     cannot leave behind, so a failed write reverses the approval. */
+  const audit = await auditService.logAction({
+    tenantId: args.organizationId,
+    userId: args.approvedBy,
+    action: 'pccp_plan_approved',
+    resourceType: 'ai_ml_pccp_plan',
+    resourceId: plan.id,
+    details: { reason: args.reason, code: updated.code, version: updated.version },
+  });
+  if (!audit.persisted) {
+    await db
+      .update(aiMlPccpPlans)
+      .set({ status: plan.status, locked: false, approvedBy: null, approvedAt: null, updatedAt: new Date() })
+      .where(eq(aiMlPccpPlans.id, plan.id));
+    return { error: 'AUDIT_WRITE_FAILED' };
+  }
 
   // Living-file: PCCP approval changes the AI/ML governance posture, which
   // downstream registrants (defense packets, sufficiency assessments,

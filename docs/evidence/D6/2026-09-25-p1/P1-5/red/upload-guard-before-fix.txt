@@ -1,0 +1,14 @@
+$ # router as committed at 73512fda; test added
+ × server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses a body over the size limit with 413 instead of buffering it 186ms
+ × server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses an executable named file whatever type it declares (415) 8ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses a declared type this router does not read (415) 7ms
+ × server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses bytes that are not what the declared type says (the shared byte check) 5ms
+ × server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > control: a real CSV passes the guard and reaches the handler 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: an unbounded upload was buffered into the heap: expected 500 to be 413 // Object.is equality
+AssertionError: a .exe declared as text/csv was admitted: expected 500 to be 415 // Object.is equality
+AssertionError: expected 415 to be 400 // Object.is equality
+AssertionError: the handler was never reached: expected "vi.fn()" to be called at least once
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+exit=1

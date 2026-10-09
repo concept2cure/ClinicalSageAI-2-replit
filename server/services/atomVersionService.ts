@@ -197,7 +197,11 @@ export class AtomVersionService {
       title: atom.title,
       content: atom.content,
       atomType: atom.atom_type,
-      metadata: atom.metadata,
+      // lumen_data_atoms stores this as `structured_data`; `atom.metadata` was
+      // always undefined, so the content hash this builds ignored the atom's
+      // structured payload entirely — two atoms differing only there hashed
+      // identically and no version was cut.
+      metadata: atom.structured_data,
       tags: atom.tags,
     });
 

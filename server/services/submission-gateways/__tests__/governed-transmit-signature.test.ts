@@ -153,4 +153,39 @@ describe('executeGovernedTransmit — the sign is an electronic signature', () =
     expect(order).not.toContain('COMMIT');
     expect(log.error).toHaveBeenCalledWith('transmit-ledger-write-failed-after-successful-transmit', expect.objectContaining({ message: expect.stringMatching(/electronic_signatures/) }));
   });
+
+  /* 2026-09-28 (Q-0928-3): the declared meaning was persisted on the signature
+     and nowhere the transmittal log reads, so the log could not show it back. It
+     is recorded on the transmittal row, in the SAME transaction as the
+     signature, merged into metadata (the gateways read metadata.environment). */
+  it('records the declared meaning and the signature id on the transmittal row, inside the signature transaction', async () => {
+    const client = fakeClient();
+    connectMock.mockResolvedValue(client);
+    const out = await executeGovernedTransmit(input({ meaning: 'approval' }));
+    expect(out.ledgerWriteFailed).toBe(false);
+
+    const order = queries.map((q) => q.sql);
+    const insert = order.findIndex((s) => SIG_INSERT.test(s));
+    const stamp = order.findIndex((s) => /UPDATE submission_transmittals[\s\S]*SET metadata/.test(s));
+    const commit = order.findIndex((s) => s === 'COMMIT');
+    expect(stamp).toBeGreaterThan(insert);
+    expect(commit).toBeGreaterThan(stamp);
+
+    const { sql, args } = queries[stamp];
+    // Merged, never replacing the metadata the gateway wrote.
+    expect(sql).toMatch(/COALESCE\(metadata, '\{\}'::jsonb\) \|\|/);
+    // Tenant-scoped.
+    expect(sql).toMatch(/organization_id = \$\d/);
+    expect(args).toContain(900);
+    expect(args).toContain(7);
+    const stamped = JSON.parse(args.find((a) => typeof a === 'string' && a.includes('meaning')) as string);
+    expect(stamped).toEqual({ signature: { meaning: 'approval', signatureId: 501 } });
+  });
+
+  it('a failed signature write stamps nothing (the stamp rolls back with it)', async () => {
+    const client = fakeClient({ failSignature: true });
+    connectMock.mockResolvedValue(client);
+    await executeGovernedTransmit(input({ log: { error: vi.fn() } }));
+    expect(queries.some((q) => /UPDATE submission_transmittals[\s\S]*SET metadata/.test(q.sql))).toBe(false);
+  });
 });

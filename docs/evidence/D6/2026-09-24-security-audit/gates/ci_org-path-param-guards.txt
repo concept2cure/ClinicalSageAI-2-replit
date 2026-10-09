@@ -1,0 +1,2 @@
+[ci:org-path-param-guards] 43 route(s) take an org/tenant id from the path; 43 guarded, 0 not (baseline 0).
+[ci:org-path-param-guards] OK — every org path param is checked against the caller.

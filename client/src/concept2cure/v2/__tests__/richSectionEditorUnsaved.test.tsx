@@ -2,7 +2,7 @@
 /**
  * RichSectionEditor — the two ways in-progress work used to disappear.
  *
- * The editor already caches every keystroke to `dc::<storageKey>` and offers it
+ * The editor already caches every keystroke to `dc::<account>::<storageKey>` and offers it
  * back on return, which covers a crash and a reload. Two exits it did NOT
  * cover, both silent:
  *

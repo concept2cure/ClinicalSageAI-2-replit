@@ -1,0 +1,34 @@
+# ratchet: tables-live-schema-baseline.json 42 -> 41 (document_approvals)
+# reference DB c2c_ref_0924: provisioned from empty by scripts/db/provision.mjs at 872c47182,
+# re-migrated by scripts/db/deploy-migrate.mjs at 1cc3ef606 (307 migrations). Run as app_service.
+
+## after removing document_approvals
+[ci:tables-live-schema] 1281 relations on the live database; 745 referenced by server SQL; 9 resolved as functions; 41 absent
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (41 baselined)
+exit=0
+
+## red: with a GENUINELY absent entry (site_intel.site_scorecard) also removed
+[ci:tables-live-schema] 1281 relations on the live database; 745 referenced by server SQL; 9 resolved as functions; 41 absent
+
+[ci:tables-live-schema] ❌ 1 table(s) referenced by server SQL do not exist on the provisioned database:
+
+  server/api/site-intel/routes.ts
+      site_intel.site_scorecard
+
+  These were checked against a REAL database built by install-fresh +
+  deploy-migrate, not against the repo. A CREATE TABLE existing somewhere
+  in the tree is not the question and does not resolve this: the applier
+  may never reach it, a guard clause may skip it, a later migration may
+  drop it, or it may land in a schema the query does not resolve.
+
+  Fix: put the creating migration on a durable apply path (usually
+  C2C_MIGRATION_FILES in scripts/db/migration-set.mjs), then re-run the
+  provisioning locally and confirm the table is there. Or delete the
+  query, if the feature it belongs to is dead.
+
+exit=1
+
+## restored
+[ci:tables-live-schema] 1281 relations on the live database; 745 referenced by server SQL; 9 resolved as functions; 41 absent
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (41 baselined)
+exit=0

@@ -7,6 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+const ownership = vi.hoisted(() => ({ check: vi.fn(async () => true) }));
 const { svc, audit } = vi.hoisted(() => ({
   svc: {
     upsertMapping: vi.fn(),
@@ -40,6 +41,11 @@ vi.mock('../../intelligence-engine/reviewer-simulator.service', () => ({
 }));
 
 vi.mock('../../auditService', () => ({ default: audit }));
+// The tool proves program ownership through the canonical guard (ledger L195);
+// these tests exercise what happens after it answers, so it answers yes unless a
+// case says otherwise.
+vi.mock('../../../routes/innovation-routes', () => ({ programBelongsToOrg: ownership.check }));
+
 
 import {
   gsprMappingUpsert,
@@ -63,6 +69,33 @@ describe('gspr.mapping.upsert', () => {
       applicability: 'applicable',
     });
     expect(r.action).toBe('confirmation_required');
+    expect(svc.upsertMapping).not.toHaveBeenCalled();
+  });
+
+  it("refuses a program that is not the caller's, and writes nothing", async () => {
+    ownership.check.mockResolvedValueOnce(false);
+    const r = await gsprMappingUpsert(CTX, {
+      ...goodGate,
+      programId: PROGRAM_UUID,
+      requirementId: 'r-1',
+      applicability: 'applicable',
+    });
+    expect(r.error).toBe('NOT_FOUND');
+    expect(svc.upsertMapping).not.toHaveBeenCalled();
+  });
+
+  it('says so when ownership could not be checked, and writes nothing', async () => {
+    ownership.check.mockRejectedValueOnce(
+      Object.assign(new Error('ownership check could not be completed'), { name: 'GuardUnavailableError' })
+    );
+    const r = await gsprMappingUpsert(CTX, {
+      ...goodGate,
+      programId: PROGRAM_UUID,
+      requirementId: 'r-1',
+      applicability: 'applicable',
+    });
+    expect(r.error).toBe('OWNERSHIP_UNVERIFIABLE');
+    expect(r.message).toMatch(/Do not tell the user the program does not exist/);
     expect(svc.upsertMapping).not.toHaveBeenCalled();
   });
 

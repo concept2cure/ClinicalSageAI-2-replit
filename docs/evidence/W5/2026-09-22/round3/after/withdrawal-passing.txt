@@ -1,0 +1,1249 @@
+===== server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > does not count a document referenced only by a delete toward unfinalized 92ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > keys every unresolved entry exactly as the ref it came from 3ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-09-23T09:37:46.664Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-09-23T09:37:46.758Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it 96ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-09-23T09:37:46.826Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing 98ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly 59ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-09-23T09:37:46.882Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 8,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-09-23T09:37:46.935Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-09-23T09:37:46.974Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section 55ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal 51ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-09-23T09:37:47.017Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 13,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-09-23T09:37:47.065Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 17,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf 40ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section 46ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section 49ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:37:47.137Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 41,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > neither stages nor reports as unresolved a document referenced only by a delete 5ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees 66ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:37:47.206Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 43,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:37:47.272Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 45,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees 63ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees 64ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:37:47.345Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 47,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-09-23T09:37:47.407Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 49,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees 81ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped 49ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  09:37:39
+   Duration  7.65s (transform 1.85s, setup 112ms, import 2.93s, tests 4.30s, environment 0ms)
+
+===== server/services/ectd/__tests__/dispatch-readiness.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports zero errors for a clean, resolvable sequence 4ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an empty sequence as an error 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > treats a sequence of only deletes as empty (error) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a non-delete leaf with no document as UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT flag a delete leaf with no document 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an invalid lifecycle operation 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports missing required sections as non-blocking warnings (not errors) 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > matches required sections across module-prefix/format differences 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a true sub-section satisfies a required parent section 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a numerically-adjacent section does NOT satisfy a required section 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > emits an info for duplicate "new" leaves in one section without erroring 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > warnings and infos never inflate the authoritative error count 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags replace/append/delete in an ORIGINAL sequence as errors 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > allows new leaves in an original sequence (no lifecycle error) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT apply the original-sequence rule to amendments 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > says a follow-up's declared acts were not bound here, rather than reading clean (2026-09-22 W5/D7) 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > accepts a valid 4-digit sequence number 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a malformed sequence number as an error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags a leaf whose document_table no resolver can materialize 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does NOT flag the tables the assembler can resolve 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > has no external table today, and the vault leaf it used to flag now reads clear 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags an invented document_table on a DELETE leaf — the completeness exemption is not a pointer exemption 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > still exempts a delete leaf that carries NO pointer — that is the legitimate shape 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does not double-report a delete leaf that points at a table the assembler CAN resolve 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a uuid-keyed vault leaf (documentId null) is a complete pointer — no UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed leaf still resolves 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a vault leaf carrying only an integer names nothing — UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed table carrying only a uuid names nothing — UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > hasCompleteDocumentPointer: uuid for the vault, integer elsewhere, either for an unknown table 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a resolved leaf whose pin matches carries no error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > an unpinned leaf says its content was not verified, rather than reading like a match (2026-09-22 W5/D7) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a pinned hash that differs from the stored document is DOCUMENT_CONTENT_MISMATCH — its own code, never silently passed 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a delete whose source changed since it was pinned is not DOCUMENT_CONTENT_MISMATCH; the leaf that ships it still is 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a document the resolver could not find stays UNRESOLVED_DOCUMENT, naming the pointer 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a missing document on a DELETE leaf is not a completeness error (a delete ships no file) 0ms
+
+ Test Files  1 passed (1)
+      Tests  35 passed (35)
+   Start at  09:37:48
+   Duration  610ms (transform 170ms, setup 112ms, import 88ms, tests 19ms, environment 0ms)
+
+===== server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new
+{
+  "timestamp": "2026-09-23T09:37:56.900Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf
+{
+  "timestamp": "2026-09-23T09:37:56.990Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new 137ms
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing
+{
+  "timestamp": "2026-09-23T09:37:57.050Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence
+{
+  "timestamp": "2026-09-23T09:37:57.087Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 7,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf 88ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing 53ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence 43ms
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document
+{
+  "timestamp": "2026-09-23T09:37:57.120Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9,
+    "organizationId": 7,
+    "materialized": 0,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file
+{
+  "timestamp": "2026-09-23T09:37:57.137Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9,
+    "organizationId": 7,
+    "materialized": 0,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document 25ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file 19ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  09:37:50
+   Duration  7.06s (transform 1.68s, setup 83ms, import 2.81s, tests 3.81s, environment 0ms)
+
+===== server/services/ectd/__tests__/lifecycle-operator.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > marks a leaf absent from prior as new 3ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > marks a changed leaf (different checksum) as replace by default 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > honors appendOnChange to emit append instead of replace 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > omits an unchanged leaf (same checksum) by default 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > surfaces unchanged as a no-op append when includeUnchanged is set 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a prior leaf the new sequence does not mention is unchanged, NOT withdrawn 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a DECLARED withdrawal is a delete carrying the prior leaf's identity and checksum 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > refuses to withdraw a leaf that was never filed 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > uses an explicit leafKey identity over ctdSection/fileName (rename within same leaf) 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > handles a mixed sequence: new + replace + delete + unchanged together 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > throws on ambiguous duplicate identity in the desired set 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a new leaf carries NO modified-file 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a replace points modified-file at the prior published href, prefixed to the prior sequence 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > an append also carries modified-file at the leaf it extends 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a delete points modified-file at the withdrawn prior leaf 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > preserves a #leafId fragment and normalizes a leading slash on the prior href 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > with no prefix, emits the bare prior href (ungrouped / same-root lifecycle) 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > omits modified-file (rather than guessing) when the prior href is unknown 0ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  09:37:58
+   Duration  630ms (transform 179ms, setup 144ms, import 62ms, tests 16ms, environment 0ms)
+
+===== server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it
+{
+  "timestamp": "2026-09-23T09:38:06.918Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it 185ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  09:38:00
+   Duration  6.91s (transform 1.78s, setup 137ms, import 2.77s, tests 3.62s, environment 0ms)
+
+===== server/services/ectd/__tests__/assemble-from-core.multisource.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-09-23T09:38:16.546Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": 900,
+        "documentUuid": null,
+        "reason": "vault leaf carries no document_uuid — a vault document is uuid-keyed and cannot be addressed by an integer document_id"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-09-23T09:38:16.549Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved 237ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  09:38:07
+   Duration  8.57s (transform 1.86s, setup 119ms, import 3.00s, tests 5.00s, environment 0ms)
+
+===== server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+{
+  "timestamp": "2026-09-23T09:38:25.812Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+{
+  "timestamp": "2026-09-23T09:38:25.914Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it 175ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker 97ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > is empty only when nothing was left out and nothing is unapproved 0ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > names every leaf left out of the package 0ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > never reads an un-itemised unapproved count as nothing 0ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  09:38:17
+   Duration  8.21s (transform 1.64s, setup 117ms, import 2.66s, tests 5.03s, environment 0ms)
+
+===== server/services/ectd/__tests__/leaf-source-resolver.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a coauthor_documents leaf to a real PDF (unchanged path) 78ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > counts a materialized-but-draft source as unfinalized (approved is not counted) 33ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a unified_documents leaf (latest version content) to a real PDF 9ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a coauthor_documents leaf with no content as UNRESOLVED, not a title-only leaf 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a unified_documents leaf with no version rows as UNRESOLVED, not a title-only leaf 13ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports an external vault_documents leaf as UNRESOLVED, never silently dropped 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > treats a prototype-key document_table as unknown, not as an external store 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > materializes a PDF ctd_onboarding_documents upload AS the leaf (real bytes, real md5) 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a NON-PDF upload unresolved (no binary→PDF conversion) 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF-mime-but-not-PDF-bytes upload unresolved (magic-byte guard) 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF upload whose file is missing unresolved (fail closed) 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a cross-tenant ctd_onboarding upload unresolved (org-scoped lookup) 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a cross-tenant unified_documents leaf as UNRESOLVED (not dropped) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > resolves a MIXED set: coauthor + unified rendered, vault unresolved 33ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > deduplicates repeated table:id references (renders once) 12ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  09:38:27
+   Duration  10.52s (transform 1.77s, setup 333ms, import 3.06s, tests 6.45s, environment 0ms)
+
+===== server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports the alias table as absent, not the leaf as sourceless 104ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports a row that was never aliased as canonicalId null 32ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > names the authoring document a snapshot represents 12ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > never crosses the tenant: another organization sees no alias for the same row 9ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  09:38:39
+   Duration  9.78s (transform 1.66s, setup 160ms, import 2.65s, tests 6.35s, environment 0ms)
+
+===== server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > renders approved, locked and drafted sections to real PDFs; flags the draft as unfinalized 118ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never materializes an empty section — it is unresolved with an honest reason 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never renders a section whose parent document belongs to another organization 4ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  09:38:50
+   Duration  11.84s (transform 1.75s, setup 227ms, import 2.98s, tests 7.88s, environment 0ms)
+
+===== server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > materializes the vault copy, staging the RAW bytes 17ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > fetches the bytes with the CALLER organization 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > gives two vault leaves DISTINCT keys 6ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a LEGACY vault leaf addressed by an integer says an integer cannot name one 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a leaf with NEITHER pointer is skipped here and reported by the dispatch gate 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a malformed uuid is refused rather than raising 22P02 across the whole assembly 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > another organization vault document is not found 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a row that predates the storage provider names the backfill that fixes it 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes the provider will not return for this org are refused 6ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes that do not match the recorded hash are REFUSED, not staged 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a vault document that is not a PDF is refused on its BYTES, not its mime 7ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  09:39:04
+   Duration  11.79s (transform 2.61s, setup 212ms, import 4.04s, tests 6.76s, environment 0ms)
+
+===== server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > materializes the filed bytes and carries the md5 recorded at render time 39ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses another organization's rendered file — it reads as absent, not as content 6ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes that no longer match the digest recorded at render time 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses a non-PDF render — the ICSR XML is transmitted, never shipped as a leaf 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses when the object is gone — an unretrievable file is a gap, never an empty leaf 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes whose digest matches but which are not a PDF 2ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  09:39:17
+   Duration  11.51s (transform 2.27s, setup 218ms, import 3.69s, tests 7.03s, environment 0ms)
+
+===== server/services/ectd/__tests__/lifecycle-from-core.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/lifecycle-from-core.test.ts > lifecycle from the canonical spine (submission-id keyed) > sequence 0001 ships a delete (for the dropped 0000 leaf) + a new leaf
+{
+  "timestamp": "2026-09-23T09:39:43.092Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-from-core.test.ts > lifecycle from the canonical spine (submission-id keyed) > sequence 0001 ships a delete (for the dropped 0000 leaf) + a new leaf 264ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  09:39:30
+   Duration  12.45s (transform 2.77s, setup 192ms, import 4.41s, tests 7.13s, environment 0ms)
+
+===== server/services/ectd/__tests__/package-sequence-lifecycle.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > reads a well-formed history oldest-first 13ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > DROPS an entry it cannot fully read, rather than reconstructing a partial prior state 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > is empty for a package that has filed nothing, or whose metadata is unreadable 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > is the fold of every sequence, not the last one: a later filing supersedes, an untouched leaf survives, and each carries the sequence that HOLDS it 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > a withdrawn leaf drops out — it is no longer on file 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > folds in sequence order however the history is ordered 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > 0000 is an original: every leaf is new, and no prior state is consulted 8ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a follow-up REPLACES what changed, keeps what is new as new, and OMITS what is byte-identical 8ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a leaf on file but absent from this assembly stays on file — absence is not withdrawal 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a follow-up when nothing has been transmitted: an assembled-but-unsent 0000 is not on file 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a sequence number already transmitted, for 0000 and for a follow-up alike 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a follow-up that does not say what it is filing — only 0000 is an original by definition 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a term the region has no code for, and says which terms it does — an unfilable type is not a 500 out of the packager 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > checks the vocabulary on 0000 too — a term the backbone cannot carry is unfilable whatever it diffs to 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > accepts what the region accepts, and names its terms when it asks for one 6ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a region with no vocabulary takes the operator at their word — the list is not invented 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a gap and a backfill alike — the only ordering this knows is the sequence number 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a sequence in which nothing changed — a filing that files nothing consumes a sequence number to say nothing 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > diffs against the FOLD, not the last sequence: a leaf untouched since 0000 is still compared to 0000 0ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  09:39:45
+   Duration  1.44s (transform 397ms, setup 170ms, import 298ms, tests 57ms, environment 0ms)
+
+===== server/services/ectd/__tests__/core-to-packager.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > toPackagerRegion > maps core regions to publisher regions 3ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > toPackagerRegion > throws on an unsupported region 2ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > maps fields and prefers the resolved md5 over the leaf checksum 6ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > never adopts the DB leaf.checksum as the manifest md5 — leaves it undefined for byte-hashing downstream 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > refuses an unrecognised lifecycle op instead of filing it as new 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > reads a differently-cased operation as itself 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > builds a PackagerInput from core rows, mapping region and metadata 11ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > skips leaves whose document does not resolve to a file, and reports them 2ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > handles an empty product name 5ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  09:39:47
+   Duration  1.27s (transform 154ms, setup 157ms, import 46ms, tests 38ms, environment 0ms)
+
+===== server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an original IND sequence is an Original Application, sub-type original 5ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a sequence with no type recorded is treated as an original 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an amendment / response sequence is an Original Application, sub-type amendment 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a withdrawal sequence is refused, never coded as an Original Application 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an annual sequence is an Annual Report 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a sequence carrying a safety-report leaf is an IND Safety Report, whatever its type says 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > every derived value resolves to the us-regional code the FDA vocabulary defines 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > carries the application type and the sequence-derived submission type for an FDA sequence 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > codes an annual sequence as an annual report 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > adds no fda block for a non-FDA sequence 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > without the fda block an original IND is no longer coded as an IND safety report 56ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > an original IND sequence is emitted as fdaat4 / fdast1 / fdasst1 46ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > an amendment is emitted as fdast1 with sub-type fdasst4; an annual report as fdast5 75ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  09:39:50
+   Duration  1.98s (transform 820ms, setup 270ms, import 762ms, tests 197ms, environment 0ms)
+
+===== server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+{
+  "timestamp": "2026-09-23T09:39:59.157Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T09:39:59.159Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+{
+  "timestamp": "2026-09-23T09:39:59.159Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > treats unset / misspelled NODE_ENV as production (strict) 4ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > only relaxes for a recognized non-production value 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > blocks when zero Shadow Review runs have completed 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > clears once at least one completed run exists 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > names every composed gate by its corpus rule and carries its own blockers 9ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > the gates, taken together, are exactly the composed verdict — nothing shown that does not block, nothing blocking unshown 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > attaches each finding's rule, and says so when a code has none 0ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  09:39:54
+   Duration  8.55s (transform 4.93s, setup 218ms, import 7.57s, tests 26ms, environment 0ms)
+
+===== server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > resolves a uuid-keyed vault leaf and an integer-keyed leaf; reports a changed pin and a missing document under their own codes 47ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > once every leaf resolves, the structural blocker leaves BOTH composed gates and what remains is real 51ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  09:40:04
+   Duration  11.18s (transform 1.94s, setup 244ms, import 3.04s, tests 7.09s, environment 0ms)
+
+===== server/services/ectd/__tests__/validation-rule-corpus.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > has unique ids and required fields on every rule 11ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > gives every dispatch-readiness rule a findingCode equal to its id 2ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > summary counts are internally consistent 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > scopes rules to a region (shared ich rules + region-specific) 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > looks rules up by id 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > covers the global eCTD-adopting regions (US, EU, JP, CA, AU, CH) 2ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > corpus ↔ gate cross-reference invariant > catalogs EVERY finding code the dispatch gate can emit 3ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > corpus ↔ source invariant — every finding code written in the assessment > catalogs every code the dispatch-readiness sources can emit 2ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > maps every enforcement to its statement 2ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > a rule view carries its title, regions, severity and statement; an unknown code has none 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > names every composed dispatch gate as a corpus rule 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > cites FDA's criteria for the required-Module-1 rule an FDA IND trips most 0ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  09:40:17
+   Duration  1.21s (transform 403ms, setup 208ms, import 254ms, tests 34ms, environment 0ms)
+
+===== server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > resolves a vault leaf by its uuid and verifies the pin against content_hash 13ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > reports a pin that no longer matches the stored content as content_changed — never silently passed 3ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > is missing when the document belongs to another organization’s programme 8ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > is missing when no such document exists 2ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > a vault leaf carrying only an integer names nothing (no_pointer) 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > still resolves an integer-keyed leaf, pin verified against sha256(content) 9ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > resolves an unpinned leaf and says the pin was never taken 2ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > is missing for another organization’s document 2ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > a pinned leaf whose document content was emptied after filing is content_changed (unverifiable) 3ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > names an unplaceable table rather than looking it up 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > a leaf with no table is no_pointer 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > resolves a batch in input order, reading each distinct pointer once 3ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > compareDocumentPin (pure) > unpinned / unverifiable / match / mismatch 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > drift guard — one vocabulary across write, read and assembly > looks up exactly the tables the write side verifies and the assembler materializes 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > drift guard — one vocabulary across write, read and assembly > the pure uuid-keyed set is the write side’s 0ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  09:40:20
+   Duration  12.90s (transform 2.11s, setup 207ms, import 3.06s, tests 8.80s, environment 0ms)
+
+===== server/services/ectd/__tests__/prior-sequence-fold.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > folds EVERY preceding sequence, not just the most recent 12ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a later filing of the same leaf supersedes the earlier one 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a withdrawn leaf drops out of the effective state 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > each surviving leaf remembers the sequence that actually holds it 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > reports the most recent prior sequence number 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > does NOT read only a single prior compilation 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > supersedes a leaf last filed two sequences back as REPLACE pointing at that sequence 4ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > still emits new for a genuinely first-time leaf 1ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  09:40:34
+   Duration  1.10s (transform 206ms, setup 175ms, import 80ms, tests 25ms, environment 0ms)
+
+===== server/services/ectd/__tests__/prior-sequence-loader.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > returns the prior sequence leaves as PriorLeaf[] 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > ALWAYS scopes the query by organization_id (never cross-tenant) 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > returns [] when no matching compilation exists (a first sequence has no prior) 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > returns [] without touching the DB when an identifier is missing 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > tolerates a NULL/garbage stored manifest without throwing 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > a sequence's own withdrawals > loadPriorSequenceManifest leaves a withdrawn leaf out 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > a sequence's own withdrawals > loadLatestPriorManifest leaves a withdrawn leaf out 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadLatestPriorManifest > finds the most recent sequence BEFORE the current one, org-scoped 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadLatestPriorManifest > returns an empty prior for a first sequence (no earlier compilation) 1ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  09:40:37
+   Duration  1.04s (transform 221ms, setup 191ms, import 79ms, tests 14ms, environment 0ms)
+
+===== server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > a compiled-but-never-transmitted sequence is not on file 3ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > and sequence 0002 therefore SHIPS the documents rather than calling them unchanged 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > an acknowledged sequence is on file just as a sent one is 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > a QUEUED sequence is not on file — pending is not sent 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > nothing transmitted yet means an empty prior state, not a fabricated one 1ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  09:40:40
+   Duration  1.27s (transform 495ms, setup 303ms, import 255ms, tests 15ms, environment 0ms)
+
+===== server/services/ectd/__tests__/sequence-manifest.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > buildLeafManifest > snapshots section, filename (from href), href, md5, operation 5ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > buildLeafManifest > preserves an explicit filename and keeps precise sub-sections verbatim 1ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > buildLeafManifest > skips leaves with no href or no checksum (nothing to diff against) 1ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifestToPriorLeaves > round-trips a manifest into PriorLeaf identity + href 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifestToPriorLeaves > is defensive: a non-array or malformed entries yield a filtered list, never a throw 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifestToPriorLeaves > derives fileName from href when the stored entry omits it 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > computeSequencePrefix > builds the grouped sibling traversal from the new backbone to the prior sequence 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > computeSequencePrefix > rejects an empty/invalid sequence rather than emitting a same-sequence pointer 1ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifest → lifecycle → modified-file (the full purpose) > a prior manifest drives a correct replace pointer on the next sequence 1ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifest → lifecycle → modified-file (the full purpose) > precise sub-sections keep distinct identity (no false replace across 3.2.S.1 vs 3.2.S.4.2) 0ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  09:40:43
+   Duration  941ms (transform 234ms, setup 204ms, import 68ms, tests 16ms, environment 0ms)
+
+===== server/services/ectd/qualification/__tests__/qualification.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > generates a well-formed, checksum-verified FDA package with a working lifecycle 410ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region ema (well-formed + checksums) 181ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region pmda (well-formed + checksums) 251ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region ca (well-formed + checksums) 196ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v4.0 qualification > generates a well-formed RPS package, verifies checksums + in-message integrity, and a lifecycle revise 149ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > runQualification (full suite, preserved reports) > runs FDA v3 + v4 and writes reports with exact spec versions 314ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a vendored stylesheet that checksums.txt does not record 185ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a manifest entry whose agency artifact is GONE from the drop point 192ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > the v4.0 schema drop point has the same three fault classes 75ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > POSITIVE CONTROL: a recorded stylesheet verifies clean 363ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > skips (does not fail) a region whose regional DTD is absent from a partial drop 225ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > states the AMENDMENT package's skip too, not only the original sequence's 236ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > POSITIVE CONTROL: with no drop-point at all, every backbone is skipped and none fails 220ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone with no DOCTYPE at all (it must not vanish from the report) 21ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE carries no parseable SYSTEM identifier 17ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE points OUTSIDE the package (not self-contained) 13ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS an unreadable backbone rather than reporting nothing about its DTD 23ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > STILL skips (does not fail) when the DOCTYPE is right but the DTD is unvendored 14ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > POSITIVE CONTROL: a real generated package declares and validates its DTDs > emits an xmllint DTD row for every backbone when the drop-point is complete 257ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  09:40:45
+   Duration  5.70s (transform 1.10s, setup 186ms, import 1.21s, tests 3.36s, environment 0ms)
+
+===== server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > resolves a valid reference and reports it on the bundle 69ms
+ ✓ server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > flags a dangling reference (TARGET_NOT_FOUND) but does not block by default 37ms
+ ✓ server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > flags a reference to a withdrawn (delete) target as TARGET_DELETED 24ms
+ ✓ server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > blocks a production build with a broken reference when ECTD_REQUIRE_XREF=true 34ms
+ ✓ server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > is a no-op when no cross-references are declared 40ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  09:40:53
+   Duration  1.78s (transform 762ms, setup 176ms, import 749ms, tests 209ms, environment 0ms)
+
+===== server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete that carries a sourcePath, naming the leaf (the AnA tool mapping) 18ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete in a follow-up sequence that names no modified-file 28ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > packages a backbone-only delete with a modified-file: no file, no checksum line, href at the filed copy 96ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses any delete in sequence 0000, where nothing is on file to withdraw 4ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  09:40:56
+   Duration  1.42s (transform 649ms, setup 113ms, import 691ms, tests 152ms, environment 0ms)
+
+===== server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > emits new/replace/delete with modified-file, and omits the deleted leaf from the ZIP 96ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > every modified-file RESOLVES to a file the prior sequence actually shipped — Module 1 included 93ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > exposes a per-sequence leafManifest that round-trips into prior leaves for lifecycle diffing 20ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > hashes the shipped bytes for the manifest, ignoring a wrong caller-supplied leaf.md5 18ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > writes the ICH-required root index-md5.txt = MD5(index.xml) on the canonical packager 18ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > packages a bytes-less delete (empty sourcePath) without crashing and ships no file for it 10ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > package layout — Module 1 leaves reach the regional backbone > ships an m1.1 leaf under m1/us and a precise 3.2.S.4.2 leaf at full depth 18ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  09:40:59
+   Duration  2.37s (transform 1.18s, setup 239ms, import 1.13s, tests 277ms, environment 0ms)
+
+===== server/services/submission-gateways/__tests__/regional-packager.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafIdSlug > drops the extension, lowercases, and dashes non-alphanumerics 5ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafIdSlug > falls back to "file" for an empty slug 2ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > gives leaves in the SAME section distinct IDs (the duplicate-ID bug) 5ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > dedupes a true collision with a deterministic numeric suffix 13ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > always produces a valid XML ID token 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > buildMd5Index > sorts by codepoint, not locale (stable across environments) 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > buildMd5Index > emits "md5  relPath" lines 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > files an m-prefixed Module 1 leaf under the regional folder, not "mm/" 9ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > spells a Module 1 leaf the same way whichever form the caller stored 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > keeps a precise Module 3 section precise — 3.2.S.4.2 is not 3.2.S 2ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > gives one CTD section one folder, whatever case it was typed in 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > a Module 2-5 leaf resolves against the root backbone, not a regional one 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > keeps the per-study subfolder for a study report 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > follows the region for Module 1 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > recognises the m-prefixed form every Module 1 filing path writes 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > recognises the bare form too 3ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > is false for Modules 2-5, so they are not swept into the regional backbone 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > an unparseable section belongs to no module — leafPackagePath refuses it by name 3ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  09:41:03
+   Duration  2.09s (transform 890ms, setup 330ms, import 796ms, tests 57ms, environment 0ms)
+
+===== server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+{
+  "timestamp": "2026-09-23T09:41:16.935Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T09:41:16.936Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+{
+  "timestamp": "2026-09-23T09:41:16.936Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > does not require source_path, and offers modified_file 3ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > packages a delete declared by modified_file, shipping no bytes for it 1912ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete that still carries a source_path, naming the leaf 3ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a non-delete leaf with no source_path instead of reading an empty path 0ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete in sequence 0000, naming the leaf 2ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  09:41:07
+   Duration  13.13s (transform 9.36s, setup 181ms, import 10.33s, tests 1.92s, environment 0ms)
+
+===== server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+{
+  "timestamp": "2026-09-23T09:41:47.900Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 8,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it 290ms
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-09-23T09:41:48.083Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "44444444-4444-4444-8444-444444444444",
+        "reason": "vault document not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-09-23T09:41:48.084Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP 143ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  09:41:33
+   Duration  14.45s (transform 2.69s, setup 255ms, import 4.03s, tests 9.00s, environment 0ms)
+
+===== server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them
+{
+  "timestamp": "2026-09-23T09:42:04.091Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 11,
+    "skipped": 3,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-09-23T09:42:04.280Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 9999,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-09-23T09:42:04.286Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them 346ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present 200ms
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > a slot holding two documents with one section code places both, once each, and names neither unmapped
+{
+  "timestamp": "2026-09-23T09:42:04.427Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 9,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > a slot holding two documents with one section code places both, once each, and names neither unmapped 136ms
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program whose mandatory II.6.3.a has no slot is not ready, in the result, the ZIP and the audit row
+{
+  "timestamp": "2026-09-23T09:42:04.608Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "6b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "ivdr",
+    "materialized": 10,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program whose mandatory II.6.3.a has no slot is not ready, in the result, the ZIP and the audit row 165ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  09:41:50
+   Duration  14.68s (transform 2.75s, setup 375ms, import 4.24s, tests 9.25s, environment 0ms)
+
+===== skeptic probe rerun: /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/r4/unreadable-target.probe.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/r4/unreadable-target.probe.test.ts > withdrawal of a filed document whose source is unreadable > row deleted: delete binds, but is transmit blocked?
+{
+  "timestamp": "2026-09-23T09:42:21.878Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/r4/unreadable-target.probe.test.ts > withdrawal of a filed document whose source is unreadable > row deleted: delete binds, but is transmit blocked?
+[deleted-row] delete leaf: <leaf operation="delete" modified-file="../0000/m3/3-2-s-2/3-2-coauthor-documents-600.pdf" checksum="cccccccccccccccccccccccccccccccc" checksum-type="md5" xlink:href="../0000/m3/3-2-s-2/3-2-coauthor-documents-600.pdf" xlink:type="simple" ID="leaf-m3-2-s-2-3-2-coauthor-documents-600">
+[deleted-row] skipped: [] | unresolved: []
+[deleted-row] transmit blockers: []
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/r4/unreadable-target.probe.test.ts > withdrawal of a filed document whose source is unreadable > content emptied: delete binds, but is transmit blocked?
+{
+  "timestamp": "2026-09-23T09:42:21.983Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 21,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/r4/unreadable-target.probe.test.ts > withdrawal of a filed document whose source is unreadable > content emptied: delete binds, but is transmit blocked?
+[emptied] delete leaf: <leaf operation="delete" modified-file="../0000/m3/3-2-s-2/3-2-coauthor-documents-601.pdf" checksum="dddddddddddddddddddddddddddddddd" checksum-type="md5" xlink:href="../0000/m3/3-2-s-2/3-2-coauthor-documents-601.pdf" xlink:type="simple" ID="leaf-m3-2-s-2-3-2-coauthor-documents-601">
+[emptied] skipped: [] | unresolved: []
+[emptied] transmit blockers: []
+
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/r4/unreadable-target.probe.test.ts > withdrawal of a filed document whose source is unreadable > row deleted: delete binds, but is transmit blocked? 227ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/r4/unreadable-target.probe.test.ts > withdrawal of a filed document whose source is unreadable > content emptied: delete binds, but is transmit blocked? 101ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  09:42:06
+   Duration  15.13s (transform 3.71s, setup 336ms, import 5.57s, tests 8.82s, environment 0ms)
+
+===== eslint (changed files)
+✖ 14 problems (0 errors, 14 warnings)
+
+===== tsc (grep of changed basenames): no diagnostics

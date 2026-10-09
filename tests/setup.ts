@@ -7,6 +7,11 @@
  * @module tests/setup
  */
 
+// Node built-ins only (no env dependency), for the temp bundle root below.
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 // Set env vars before any imports so server/db/runtime.ts initializes a pool
 // (mocked via pg below). Without DATABASE_URL set at module-load time, db.js
 // throws "Database connection not available" cascading into every transitive
@@ -20,6 +25,19 @@ process.env.JWT_SECRET =
 process.env.JWT_SECRET_DEV =
   process.env.JWT_SECRET_DEV || 'test-jwt-secret-for-unit-tests-min-32-chars-long';
 process.env.DATABASE_URL_DEV = process.env.DATABASE_URL_DEV || process.env.DATABASE_URL;
+// 2026-09-23 (W5/D7, round-2 skeptic): assembleSequence stages packages under
+// <bundle root>/staging, and the default root is <cwd>/uploads/submission-bundles
+// — so a test that never reached cleanup() left packages in the repository's own
+// uploads/. Tests get a temp root unless they (or the caller) name one; a test
+// that pins the default deletes the variable itself.
+// 2026-09-23 (W5/D7, round-3 skeptic): the root this file creates is removed
+// in afterAll below (setupFiles run once per test file, and every run used to
+// leave one empty c2c-test-bundles-* directory per file in the temp dir). A
+// root named by the caller is never created or removed here.
+const createdBundleRoot = process.env.SUBMISSION_BUNDLE_DIR
+  ? null
+  : mkdtempSync(join(tmpdir(), 'c2c-test-bundles-'));
+if (createdBundleRoot) process.env.SUBMISSION_BUNDLE_DIR = createdBundleRoot;
 
 import { vi, beforeAll, afterAll, afterEach } from 'vitest';
 
@@ -409,6 +427,13 @@ afterEach(() => {
 afterAll(() => {
   // Clean up
   vi.restoreAllMocks();
+  // The temp bundle root created above (2026-09-23, W5/D7, round-3 skeptic).
+  // Unset too, so a later file in the same process creates its own rather than
+  // inheriting a removed one it would not clean up.
+  if (createdBundleRoot) {
+    rmSync(createdBundleRoot, { recursive: true, force: true });
+    if (process.env.SUBMISSION_BUNDLE_DIR === createdBundleRoot) delete process.env.SUBMISSION_BUNDLE_DIR;
+  }
 });
 
 export { vi };

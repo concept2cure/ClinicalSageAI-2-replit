@@ -6,9 +6,24 @@
  * phase, design, arms, interventions, conditions, outcome measures, eligibility, enrollment —
  * is the same object the protocol and SAP render from, so the registration cannot disagree
  * with the protocol. Honest by construction: a field the design object does not carry
- * (sponsor, sex/age eligibility, recruitment status, dates, EU member states) is reported as a
- * gap, never invented. The mappings (phase, masking, allocation, intervention model, arm type)
- * are deterministic.
+ * (sponsor, recruitment status, dates, EU member states) is reported as a gap, never invented.
+ * The mappings (phase, masking, allocation, intervention model, arm type) are deterministic.
+ *
+ * ELIGIBILITY comes from `eligibility-model.ts`. `projectRegistryEligibility` reads the
+ * criteria as data, and this projection renders exactly what it returns:
+ *
+ *   - Age limits are rendered ONLY from inclusion `age` criteria, carrying the criterion's own
+ *     unit and its inclusive/exclusive sense. Criteria written in mixed time units yield NO age
+ *     limit — nothing is converted, rounded, or picked — and the field says so.
+ *   - `Sex / gender` and `Accepts healthy volunteers` are facts a caller records; no criterion
+ *     text carries either, and `StudyDesign.population` has no field for them, so both remain
+ *     gaps that now NAME the field which would close them.
+ *   - Every criterion appears in the record. The ones the grammar can read carry their
+ *     structure on `RegistrationField.eligibility`; the ones it refuses carry their verbatim
+ *     text and a machine-readable reason. A registry record that quietly dropped the criteria
+ *     the parser cannot read would be worse than the joined string it replaces.
+ *
+ * Nothing is defaulted: this projection never emits "18 Years" because most trials use it.
  *
  * Pure: no DB, RNG, clock or LLM.
  *
@@ -24,9 +39,33 @@ import type {
   StudyPhase,
 } from './study-design-types';
 import { endpointTimeFrameFromSoa } from './schedule-of-activities';
+import {
+  projectRegistryEligibility,
+  type RegistryAgeLimit,
+  type RegistryEligibilityBlock,
+  type RegistryEligibilityRow,
+} from './eligibility-model';
 
 export type RegistrationRegistry = 'ClinicalTrials.gov' | 'EU CTIS';
 export type RegistrationFieldStatus = 'rendered' | 'partial' | 'missing';
+
+/**
+ * The structured reading behind a criteria field, from `eligibility-model.ts`.
+ *
+ * `criteria` carries EVERY criterion the field renders, in the design's own order: a
+ * criterion the grammar could read carries its structure, one it refused carries its verbatim
+ * `text` and a `free_text` structure naming the reason. `value` and `criteria` therefore
+ * describe the same set — a consumer can use whichever it can, and neither loses a criterion.
+ */
+export interface RegistrationEligibilityStructure {
+  criteria: RegistryEligibilityRow[];
+  /** How many of `criteria` the grammar read as a constraint. */
+  structured: number;
+  /** How many it refused. These are present in `criteria` and in `value`, never dropped. */
+  unstructured: number;
+  /** The registry basis the eligibility engine projects against. */
+  basis: string;
+}
 
 export interface RegistrationField {
   /** Registry field name, e.g. "Primary Outcome Measure". */
@@ -38,6 +77,8 @@ export interface RegistrationField {
   required: boolean;
   /** What is missing, when status is not 'rendered'. */
   gap?: string;
+  /** Present on criteria fields only: the same criteria as data. Never a different set. */
+  eligibility?: RegistrationEligibilityStructure;
 }
 
 export interface RegistrationModule {
@@ -180,9 +221,156 @@ function outcomeMeasures(design: StudyDesign, roles: Endpoint['role'][]): {
   return { value: parts.join('; '), missingTimeFrame };
 }
 
-function eligibilityText(design: StudyDesign, type: 'inclusion' | 'exclusion'): string | null {
-  const items = (design.population?.eligibility ?? []).filter(e => e.type === type).map(e => e.text);
-  return items.length ? items.join('; ') : null;
+// ─── Eligibility, read as data by eligibility-model.ts ──────────────────────────
+
+/**
+ * Why `Sex / gender` and `Accepts healthy volunteers` are STILL gaps, and what would close
+ * them. `projectRegistryEligibility` returns both null unless a CALLER records them: no
+ * criterion text carries either fact, and reading one out of wording ("female subjects") is
+ * exactly the guess `eligibility-model.ts` refuses. `StudyDesign.population`
+ * (study-design-types.ts) declares no field for either, so there is nothing to record and
+ * nothing to pass — and a `recorded` argument threaded through here that no caller could ever
+ * fill would be the unreachable path this wiring exists to remove. The gap now names the
+ * field that would settle it instead.
+ */
+const SEX_SETTLED_BY =
+  'A `sex` recorded on StudyDesign.population, passed to projectRegistryEligibility as EligibilityRecordedFacts.sex, would settle it; Population declares no such field today.';
+const HEALTHY_VOLUNTEERS_SETTLED_BY =
+  'A `healthyVolunteers` recorded on StudyDesign.population, passed to projectRegistryEligibility as EligibilityRecordedFacts.healthyVolunteers, would settle it; Population declares no such field today.';
+
+/** The engine's own reason for a field it did not emit, or `fallback` if it named none. */
+function absentReason(block: RegistryEligibilityBlock, fieldName: string, fallback: string): string {
+  return block.absent.find(a => a.field === fieldName)?.reason ?? fallback;
+}
+
+function criteriaRows(block: RegistryEligibilityBlock, type: 'inclusion' | 'exclusion'): RegistryEligibilityRow[] {
+  return block.criteria.filter(r => r.type === type);
+}
+
+/** Every criterion's verbatim text, parsed or not. A criterion is never dropped for being unreadable. */
+function criteriaText(rows: RegistryEligibilityRow[]): string | null {
+  const texts = rows.map(r => r.text).filter(present);
+  return texts.length ? texts.join('; ') : null;
+}
+
+function structureOf(rows: RegistryEligibilityRow[], basis: string): RegistrationEligibilityStructure {
+  const structured = rows.filter(r => r.structure.kind !== 'free_text').length;
+  return { criteria: rows, structured, unstructured: rows.length - structured, basis };
+}
+
+/** Attach the same criteria as data. The rendered value and the structure are one set. */
+function withCriteria(f: RegistrationField, rows: RegistryEligibilityRow[], basis: string): RegistrationField {
+  return { ...f, eligibility: structureOf(rows, basis) };
+}
+
+const AGE_BOUND_WORD: Record<'minimum' | 'maximum', string> = { minimum: 'above', maximum: 'below' };
+
+/** The bound in the criterion's OWN unit, keeping its inclusive/exclusive sense. Nothing is converted. */
+function ageBoundText(limit: RegistryAgeLimit, bound: 'minimum' | 'maximum'): string {
+  return limit.inclusive ? `${limit.value} ${limit.unit}` : `${AGE_BOUND_WORD[bound]} ${limit.value} ${limit.unit}`;
+}
+
+/**
+ * Age limits, rendered only from what the engine actually derived. A bound it did not derive
+ * — because no inclusion criterion states one, or because the age criteria mix time units —
+ * stays missing and carries the engine's own reason. Half the field is `partial`, not a
+ * rendered field with a guessed other half.
+ */
+function ageLimitsField(block: RegistryEligibilityBlock): RegistrationField {
+  const rendered: string[] = [];
+  const missing: string[] = [];
+  if (block.minimumAge) rendered.push(`Minimum age: ${ageBoundText(block.minimumAge, 'minimum')}`);
+  else missing.push(absentReason(block, 'Minimum age', 'No inclusion criterion states a lower age bound.'));
+  if (block.maximumAge) rendered.push(`Maximum age: ${ageBoundText(block.maximumAge, 'maximum')}`);
+  else missing.push(absentReason(block, 'Maximum age', 'No inclusion criterion states an upper age bound.'));
+
+  // Both bounds can be absent for ONE reason (mixed time units); say it once.
+  const why = [...new Set(missing)].join(' ');
+  if (rendered.length === 0) return gap('Age limits', true, why);
+  if (missing.length > 0) return partial('Age limits', rendered.join('; '), true, why);
+  return field('Age limits', rendered.join('; '), true);
+}
+
+/**
+ * ClinicalTrials.gov titles, per the PRS protocol data element definitions: the
+ * Brief Title is a short title "written in language intended for the lay
+ * public" (at most 300 characters); the Official Title corresponds to the title
+ * of the protocol (at most 600); the Acronym is optional (at most 14). The
+ * official title is never shown as the brief one — it used to be, which filled a
+ * required lay-language field with the scientific title and called it rendered.
+ */
+export const CTGOV_TITLE_LIMITS = { brief: 300, official: 600, acronym: 14 } as const;
+
+const NO_PUBLIC_TITLE =
+  'The design records no public (lay-language) title. The registry asks for a title written for the lay public; the official title is not reused as one.';
+
+/** A rendered value longer than the registry accepts is partial, never truncated. */
+function withinLimit(f: RegistrationField, limit: number): RegistrationField {
+  if (f.status !== 'rendered' || f.value === null || f.value.length <= limit) return f;
+  return partial(f.name, f.value, f.required, `${f.name} is ${f.value.length} characters; ClinicalTrials.gov accepts at most ${limit}.`);
+}
+
+function ctgovTitleFields(design: StudyDesign): RegistrationField[] {
+  return [
+    withinLimit(field('Brief title', design.publicTitle ?? null, true, NO_PUBLIC_TITLE), CTGOV_TITLE_LIMITS.brief),
+    withinLimit(field('Official title', design.title ?? null, true), CTGOV_TITLE_LIMITS.official),
+    withinLimit(field('Acronym', design.acronym ?? null, false, 'The design records no acronym; the study may have none.'), CTGOV_TITLE_LIMITS.acronym),
+  ];
+}
+
+/**
+ * The EU CTIS population module. CTIS renders inclusion and exclusion as two fields, so each
+ * carries its own half of the same block — and, like the ClinicalTrials.gov module, every
+ * criterion appears whether or not the grammar could read it.
+ *
+ * CTIS gets no age / sex / healthy-volunteer field here: Regulation (EU) 536/2014 Annex I asks
+ * for them, but adding them is a new required field on a registry record, which changes what
+ * `registrable` means for CTIS. That is a product decision, not this wiring's to make.
+ */
+function ctisPopulationFields(design: StudyDesign, block: RegistryEligibilityBlock): RegistrationField[] {
+  const inclusionRows = criteriaRows(block, 'inclusion');
+  const exclusionRows = criteriaRows(block, 'exclusion');
+  const planned = design.statisticalPlan?.plannedSampleSize;
+  return [
+    withCriteria(
+      field('Inclusion criteria', criteriaText(inclusionRows), true, 'No inclusion criteria are defined.'),
+      inclusionRows,
+      block.basis,
+    ),
+    withCriteria(
+      field('Exclusion criteria', criteriaText(exclusionRows), true, 'No exclusion criteria are defined.'),
+      exclusionRows,
+      block.basis,
+    ),
+    field('Planned subjects (overall)', planned ? String(planned) : null, true, 'No planned sample size is defined.'),
+    gap('Planned subjects (in the EU)', true, 'EU-specific enrollment is not part of the design object.'),
+  ];
+}
+
+/** The ClinicalTrials.gov eligibility module, straight off the engine's block. */
+function ctgovEligibilityFields(design: StudyDesign, block: RegistryEligibilityBlock): RegistrationField[] {
+  const inclusion = criteriaText(criteriaRows(block, 'inclusion'));
+  const exclusion = criteriaText(criteriaRows(block, 'exclusion'));
+  const joined = [inclusion ? `Inclusion: ${inclusion}` : '', exclusion ? `Exclusion: ${exclusion}` : '']
+    .filter(Boolean)
+    .join(' | ');
+  const noCriteria = absentReason(block, 'Eligibility criteria', 'No eligibility criteria are defined.');
+  return [
+    withCriteria(field('Eligibility criteria', joined || null, true, noCriteria), block.criteria, block.basis),
+    ageLimitsField(block),
+    gap('Sex / gender', true, `${absentReason(block, 'Sex', 'Eligibility sex is not recorded.')} ${SEX_SETTLED_BY}`),
+    gap(
+      'Accepts healthy volunteers',
+      true,
+      `${absentReason(block, 'Accepts healthy volunteers', 'Healthy-volunteer eligibility is not recorded.')} ${HEALTHY_VOLUNTEERS_SETTLED_BY}`,
+    ),
+    field(
+      'Enrollment (anticipated)',
+      design.statisticalPlan?.plannedSampleSize ? String(design.statisticalPlan.plannedSampleSize) : null,
+      true,
+      'No planned sample size is defined.',
+    ),
+  ];
 }
 
 function euMemberStates(design: StudyDesign): string[] {
@@ -263,12 +451,7 @@ function projectCtGov(design: StudyDesign): RegistrationRecord {
           : 'Randomized'
         : null;
 
-  const inclusion = eligibilityText(design, 'inclusion');
-  const exclusion = eligibilityText(design, 'exclusion');
-  const eligibility =
-    inclusion || exclusion
-      ? [inclusion ? `Inclusion: ${inclusion}` : '', exclusion ? `Exclusion: ${exclusion}` : ''].filter(Boolean).join(' | ')
-      : null;
+  const eligibility = projectRegistryEligibility(design.population?.eligibility ?? []);
 
   const primaryField =
     primary.value === null
@@ -278,13 +461,7 @@ function projectCtGov(design: StudyDesign): RegistrationRecord {
         : field('Primary outcome measure', primary.value, true);
 
   const modules: RegistrationModule[] = [
-    {
-      name: 'Study identification',
-      fields: [
-        field('Brief title', design.title ?? null, true),
-        field('Official title', design.title ?? null, true),
-      ],
-    },
+    { name: 'Study identification', fields: ctgovTitleFields(design) },
     {
       name: 'Study status',
       fields: [
@@ -336,13 +513,7 @@ function projectCtGov(design: StudyDesign): RegistrationRecord {
     },
     {
       name: 'Eligibility',
-      fields: [
-        field('Eligibility criteria', eligibility, true, 'No eligibility criteria are defined.'),
-        gap('Sex / gender', true, 'Eligibility sex is not part of the design object.'),
-        gap('Age limits', true, 'Minimum/maximum age is not part of the design object.'),
-        gap('Accepts healthy volunteers', true, 'Healthy-volunteers eligibility is not part of the design object.'),
-        field('Enrollment (anticipated)', design.statisticalPlan?.plannedSampleSize ? String(design.statisticalPlan.plannedSampleSize) : null, true, 'No planned sample size is defined.'),
-      ],
+      fields: ctgovEligibilityFields(design, eligibility),
     },
   ];
 
@@ -358,8 +529,7 @@ function projectCtis(design: StudyDesign): RegistrationRecord {
   const secondary = outcomeMeasures(design, ['key_secondary', 'secondary']);
   const interventions = interventionLines(design);
   const r = design.randomization;
-  const inclusion = eligibilityText(design, 'inclusion');
-  const exclusion = eligibilityText(design, 'exclusion');
+  const eligibility = projectRegistryEligibility(design.population?.eligibility ?? []);
 
   const randomised =
     r?.allocationMethod ? (r.allocationMethod === 'none' ? 'No' : 'Yes') : null;
@@ -370,6 +540,9 @@ function projectCtis(design: StudyDesign): RegistrationRecord {
       name: 'Trial identification',
       fields: [
         field('Full title', design.title ?? null, true),
+        // Not required here: a new required field changes what `registrable` means for CTIS
+        // (see ctisPopulationFields). Shown so the absence of a lay title is visible.
+        field('Public title', design.publicTitle ?? null, false, NO_PUBLIC_TITLE),
         field('Trial phase', design.phase ? CTIS_PHASE[design.phase] : null, true),
       ],
     },
@@ -412,12 +585,7 @@ function projectCtis(design: StudyDesign): RegistrationRecord {
     },
     {
       name: 'Population',
-      fields: [
-        field('Inclusion criteria', inclusion, true, 'No inclusion criteria are defined.'),
-        field('Exclusion criteria', exclusion, true, 'No exclusion criteria are defined.'),
-        field('Planned subjects (overall)', design.statisticalPlan?.plannedSampleSize ? String(design.statisticalPlan.plannedSampleSize) : null, true, 'No planned sample size is defined.'),
-        gap('Planned subjects (in the EU)', true, 'EU-specific enrollment is not part of the design object.'),
-      ],
+      fields: ctisPopulationFields(design, eligibility),
     },
     {
       name: 'Products',

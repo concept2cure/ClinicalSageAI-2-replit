@@ -1,0 +1,266 @@
+$ NODE_OPTIONS='--max-old-space-size=4096' npx vitest run --config vitest.config.ts server/services/__tests__/token-revocation-expiry.test.ts server/services/__tests__/account-standing-session-currency.test.ts server/middleware/__tests__/auth-session-currency.test.ts server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts server/routes/__tests__/auth-refresh-session-currency.test.ts --reporter=verbose
+HEAD=b33ec50d
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > a session issued before the change predates it; at or after does not 28ms
+   → sessionPredatesPasswordChange is not a function
+ × server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > an account that never changed its password ends no session 11ms
+   → sessionPredatesPasswordChange is not a function
+ × server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > a token with no iat is refused in production only (no first-party issuer omits it; test fixtures do) 1ms
+   → sessionPredatesPasswordChange is not a function
+ × server/services/__tests__/account-standing-session-currency.test.ts > issuedAtOfClaims > reads a numeric iat as whole seconds and nothing else 3ms
+   → issuedAtOfClaims is not a function
+ × server/services/__tests__/account-standing-session-currency.test.ts > readAccountStanding — one statement, both answers > returns the status and the password-change second, parsing the bigint pg hands back as text 1ms
+   → readAccountStanding is not a function
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > readAccountStanding — one statement, both answers > keeps the statement the request-path doubles recognise, and isAccountActive stays a boolean 19ms
+ × server/services/__tests__/account-standing-session-currency.test.ts > isSessionCurrent > is false for a session issued before the password change and true after 1ms
+   → isSessionCurrent is not a function
+ × server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > throws SessionEndedError for an access token whose iat precedes password_changed_at 253ms
+   → expected 'admitted' to be 'refused:password-changed' // Object.is equality
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > admits an access token issued after the change, and one for an account that never changed its password 13ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > still refuses an account out of use, whichever way its session was issued (F-29 unchanged) 10ms
+ × server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > answers 401 SESSION_ENDED for a bearer issued before password_changed_at, and the handler never runs 1051ms
+   → expected true to be false // Object.is equality
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > admits a bearer issued after the change 2ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > admits a bearer for an account that never changed its password 1ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > outside production, admits a bearer that carries no iat (fixtures build claims by hand); production refuses it — pinned on the rule in account-standing 6ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > still answers 401 ACCOUNT_INACTIVE for an account out of use (F-29 unchanged) 2ms
+ × server/services/__tests__/token-revocation-expiry.test.ts > revokeToken keeps a revocation for the life of the token (IAM-04) > keeps a 7-day refresh token on the DB list until its own exp, not for 24 hours 13ms
+   → expected 1790385689457 to be greater than or equal to 1790904089000
+ × server/services/__tests__/token-revocation-expiry.test.ts > revokeToken keeps a revocation for the life of the token (IAM-04) > asks Redis to keep the same refresh token for its remaining life, not for 24 hours 4ms
+   → expected 86400 to be greater than or equal to 604795
+ ✓ server/services/__tests__/token-revocation-expiry.test.ts > revokeToken keeps a revocation for the life of the token (IAM-04) > still keeps a short-lived token for the 24-hour floor (an exp sooner than that does not shorten the entry) 2ms
+ ✓ server/services/__tests__/token-revocation-expiry.test.ts > revokeToken keeps a revocation for the life of the token (IAM-04) > keeps an opaque (non-JWT) string for the 24-hour floor 8ms
+ × server/services/__tests__/token-revocation-expiry.test.ts > revocationExpiryFor (the rule, in one place) > is the later of 24 hours and the token exp 2ms
+   → revocationExpiryFor is not a function
+ × server/services/__tests__/token-revocation-expiry.test.ts > revocationExpiryFor (the rule, in one place) > is 24 hours for a token with no readable exp 1ms
+   → revocationExpiryFor is not a function
+ × server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > refuses a refresh token issued before password_changed_at: no new session, nothing rotated 182ms
+   → expected 200 to be 401 // Object.is equality
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints from a refresh token issued after the change, and rotates it (existing behaviour) 19ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints for an account that never changed its password 16ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/logout > revokes the refresh token the client sends in the body, as well as the bearer 27ms
+ × server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > mints a successor and revokes the presented access token 148ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a refresh token: nothing minted, nothing revoked 6ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa_challenge token: nothing minted, nothing revoked 4ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa-partial token: nothing minted, nothing revoked 6ms
+ × server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > cannot renew a session the password change ended (iat before password_changed_at) 7ms
+   → expected 200 to be 401 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > answers 401 SESSION_ENDED for a bearer issued before password_changed_at, and the handler never runs
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/middleware/__tests__/auth-session-currency.test.ts:118:30
+    116|     const r = await drive(accessTokenIssuedAt(changed - 3600));
+    117|
+    118|     expect(r.reachedHandler).toBe(false);
+       |                              ^
+    119|     expect(r.status).toBe(401);
+    120|     expect(r.body?.error?.code).toBe('SESSION_ENDED');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > refuses a refresh token issued before password_changed_at: no new session, nothing rotated
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/routes/__tests__/auth-refresh-session-currency.test.ts:149:24
+    147|     const res = await request(app()).post('/api/auth/refresh').send({ …
+    148|
+    149|     expect(res.status).toBe(401);
+       |                        ^
+    150|     expect(res.body.accessToken).toBeUndefined();
+    151|     expect(res.body.refreshToken).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > mints a successor and revokes the presented access token
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts:112:25
+    110|     expect(typeof res.body.token).toBe('string');
+    111|     expect(res.body.token).not.toBe(presented);
+    112|     expect(revokeToken).toHaveBeenCalledTimes(1);
+       |                         ^
+    113|     expect(revokeToken).toHaveBeenCalledWith(presented, 'rotated');
+    114|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > cannot renew a session the password change ended (iat before password_changed_at)
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts:134:24
+    132|     const res = await refresh(accessToken(changed - 3600));
+    133|
+    134|     expect(res.status).toBe(401);
+       |                        ^
+    135|     expect(res.body.token).toBeUndefined();
+    136|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > a session issued before the change predates it; at or after does not
+TypeError: sessionPredatesPasswordChange is not a function
+ ❯ server/services/__tests__/account-standing-session-currency.test.ts:72:12
+     70| describe('sessionPredatesPasswordChange — the rule', () => {
+     71|   it('a session issued before the change predates it; at or after does…
+     72|     expect(sessionPredatesPasswordChange(1_000, 2_000)).toBe(true);
+       |            ^
+     73|     expect(sessionPredatesPasswordChange(2_000, 2_000)).toBe(false); /…
+     74|     expect(sessionPredatesPasswordChange(3_000, 2_000)).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > an account that never changed its password ends no session
+TypeError: sessionPredatesPasswordChange is not a function
+ ❯ server/services/__tests__/account-standing-session-currency.test.ts:78:12
+     76|
+     77|   it('an account that never changed its password ends no session', () …
+     78|     expect(sessionPredatesPasswordChange(1_000, null)).toBe(false);
+       |            ^
+     79|     expect(sessionPredatesPasswordChange(null, null, 'development')).t…
+     80|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > a token with no iat is refused in production only (no first-party issuer omits it; test fixtures do)
+TypeError: sessionPredatesPasswordChange is not a function
+ ❯ server/services/__tests__/account-standing-session-currency.test.ts:83:12
+     81|
+     82|   it('a token with no iat is refused in production only (no first-part…
+     83|     expect(sessionPredatesPasswordChange(null, 2_000, 'production')).t…
+       |            ^
+     84|     expect(sessionPredatesPasswordChange(null, null, 'production')).to…
+     85|     expect(sessionPredatesPasswordChange(null, 2_000, 'development')).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/services/__tests__/account-standing-session-currency.test.ts > issuedAtOfClaims > reads a numeric iat as whole seconds and nothing else
+TypeError: issuedAtOfClaims is not a function
+ ❯ server/services/__tests__/account-standing-session-currency.test.ts:92:12
+     90| describe('issuedAtOfClaims', () => {
+     91|   it('reads a numeric iat as whole seconds and nothing else', () => {
+     92|     expect(issuedAtOfClaims({ iat: 1_700_000_000 })).toBe(1_700_000_00…
+       |            ^
+     93|     expect(issuedAtOfClaims({ iat: 1_700_000_000.9 })).toBe(1_700_000_…
+     94|     expect(issuedAtOfClaims({ iat: '1700000000' })).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/services/__tests__/account-standing-session-currency.test.ts > readAccountStanding — one statement, both answers > returns the status and the password-change second, parsing the bigint pg hands back as text
+TypeError: readAccountStanding is not a function
+ ❯ server/services/__tests__/account-standing-session-currency.test.ts:103:18
+    101|   it('returns the status and the password-change second, parsing the b…
+    102|     state.passwordChangedAtSeconds = '1700000000';
+    103|     expect(await readAccountStanding(42)).toEqual({ active: true, pass…
+       |                  ^
+    104|     state.passwordChangedAtSeconds = 1_700_000_001;
+    105|     expect(await readAccountStanding(42)).toEqual({ active: true, pass…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/services/__tests__/account-standing-session-currency.test.ts > isSessionCurrent > is false for a session issued before the password change and true after
+TypeError: isSessionCurrent is not a function
+ ❯ server/services/__tests__/account-standing-session-currency.test.ts:121:18
+    119|     const changed = nowSeconds() - 60;
+    120|     state.passwordChangedAtSeconds = String(changed);
+    121|     expect(await isSessionCurrent(42, changed - 3600)).toBe(false);
+       |                  ^
+    122|     expect(await isSessionCurrent(42, changed + 1)).toBe(true);
+    123|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > throws SessionEndedError for an access token whose iat precedes password_changed_at
+AssertionError: expected 'admitted' to be 'refused:password-changed' // Object.is equality
+
+Expected: "refused:password-changed"
+Received: "admitted"
+
+ ❯ server/services/__tests__/account-standing-session-currency.test.ts:137:21
+    135|     );
+    136|
+    137|     expect(outcome).toBe('refused:password-changed');
+       |                     ^
+    138|   });
+    139|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  server/services/__tests__/token-revocation-expiry.test.ts > revokeToken keeps a revocation for the life of the token (IAM-04) > keeps a 7-day refresh token on the DB list until its own exp, not for 24 hours
+AssertionError: expected 1790385689457 to be greater than or equal to 1790904089000
+ ❯ server/services/__tests__/token-revocation-expiry.test.ts:75:30
+     73|     await revokeToken(tokenExpiringAt(exp), 'logout');
+     74|
+     75|     expect(insertedExpiry()).toBeGreaterThanOrEqual(exp * 1000);
+       |                              ^
+     76|   });
+     77|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  server/services/__tests__/token-revocation-expiry.test.ts > revokeToken keeps a revocation for the life of the token (IAM-04) > asks Redis to keep the same refresh token for its remaining life, not for 24 hours
+AssertionError: expected 86400 to be greater than or equal to 604795
+ ❯ server/services/__tests__/token-revocation-expiry.test.ts:85:35
+     83|     expect(recorded.setex).toHaveLength(1);
+     84|     // Allow the seconds the test itself takes.
+     85|     expect(recorded.setex[0].ttl).toBeGreaterThanOrEqual(7 * DAY_SECON…
+       |                                   ^
+     86|   });
+     87|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  server/services/__tests__/token-revocation-expiry.test.ts > revocationExpiryFor (the rule, in one place) > is the later of 24 hours and the token exp
+TypeError: revocationExpiryFor is not a function
+ ❯ server/services/__tests__/token-revocation-expiry.test.ts:108:12
+    106|     const now = Date.UTC(2026, 8, 25, 12, 0, 0);
+    107|     const sevenDays = Math.floor(now / 1000) + 7 * DAY_SECONDS;
+    108|     expect(revocationExpiryFor(tokenExpiringAt(sevenDays), now).getTim…
+       |            ^
+    109|
+    110|     const fiveMinutes = Math.floor(now / 1000) + 300;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  server/services/__tests__/token-revocation-expiry.test.ts > revocationExpiryFor (the rule, in one place) > is 24 hours for a token with no readable exp
+TypeError: revocationExpiryFor is not a function
+ ❯ server/services/__tests__/token-revocation-expiry.test.ts:116:12
+    114|   it('is 24 hours for a token with no readable exp', () => {
+    115|     const now = Date.UTC(2026, 8, 25, 12, 0, 0);
+    116|     expect(revocationExpiryFor('opaque', now).getTime()).toBe(now + DA…
+       |            ^
+    117|     const noExp = jwt.sign({ userId: '1', type: 'access' }, 'x', { noT…
+    118|     expect(revocationExpiryFor(noExp, now).getTime()).toBe(now + DAY_S…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  15 failed | 15 passed (30)
+   Start at  01:21:25
+   Duration  8.06s (transform 4.36s, setup 871ms, import 11.73s, tests 1.88s, environment 1ms)
+
+exit=1

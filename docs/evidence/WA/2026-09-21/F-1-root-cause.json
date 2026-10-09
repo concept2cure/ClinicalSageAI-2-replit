@@ -1,0 +1,104 @@
+{
+  "database": "local clinicalsage (unsealed, AUDIT_HMAC_KEY unset)",
+  "diagnosedAt": "2026-09-21T01:25:57.413Z",
+  "chainedRows": 262,
+  "sequencedRows": 35,
+  "preFixVerifierWalk": {
+    "order": "occurred_at ASC, id ASC across all tenants",
+    "breaks": 19,
+    "firstBreak": {
+      "id": "a9989a0f-d67a-41ad-afae-db7f867f6d47",
+      "tenant": 26,
+      "action": "LEAF_CREATED",
+      "occurred_at": "2026-09-21T00:17:35.732Z",
+      "commitsTo": "genesis"
+    }
+  },
+  "evidenceRow_a9989a0f": {
+    "tenant": 26,
+    "action": "LEAF_CREATED",
+    "occurred_at": "2026-09-21T00:17:35.732Z",
+    "commitsTo": "genesis",
+    "earlierChainedRowsOfSameTenant": 0,
+    "reading": "its writer saw NO prior row: the predecessor SELECT ran under the tenant-scoped RLS view and this was the tenant's first chained row"
+  },
+  "rowsCommittingToGenesis": [
+    {
+      "id": "86ce4119-1172-49b5-adac-e6c504593253",
+      "tenant": 2,
+      "action": "c2c.work.transition",
+      "occurred_at": "2026-09-20T23:59:02.776Z",
+      "earlierChainedRowsOfSameTenant": 0
+    },
+    {
+      "id": "a9989a0f-d67a-41ad-afae-db7f867f6d47",
+      "tenant": 26,
+      "action": "LEAF_CREATED",
+      "occurred_at": "2026-09-21T00:17:35.732Z",
+      "earlierChainedRowsOfSameTenant": 0
+    },
+    {
+      "id": "22f1b610-6145-4d0c-abbb-4a8ffcee5299",
+      "tenant": 30,
+      "action": "LEAF_CREATED",
+      "occurred_at": "2026-09-21T00:17:58.832Z",
+      "earlierChainedRowsOfSameTenant": 0
+    },
+    {
+      "id": "8d4d4930-0e1f-4f35-9b85-241ae03f7abd",
+      "tenant": 34,
+      "action": "LEAF_CREATED",
+      "occurred_at": "2026-09-21T00:19:23.365Z",
+      "earlierChainedRowsOfSameTenant": 0
+    },
+    {
+      "id": "56fb64f7-a8a9-44ce-be32-10c3f1478f26",
+      "tenant": 36,
+      "action": "LEAF_CREATED",
+      "occurred_at": "2026-09-21T00:19:36.689Z",
+      "earlierChainedRowsOfSameTenant": 0
+    },
+    {
+      "id": "c8cec1dc-406d-48da-a5bd-0554e556a8f3",
+      "tenant": 38,
+      "action": "LEAF_CREATED",
+      "occurred_at": "2026-09-21T00:20:07.379Z",
+      "earlierChainedRowsOfSameTenant": 0
+    },
+    {
+      "id": "0ed775f4-2833-4fda-ae79-f83d3afc3ab8",
+      "tenant": 40,
+      "action": "mcp_tool_call",
+      "occurred_at": "2026-09-21T00:21:54.719Z",
+      "earlierChainedRowsOfSameTenant": 0
+    },
+    {
+      "id": "c8062267-5295-4eb2-89ea-157618b76e9b",
+      "tenant": 41,
+      "action": "mcp_tool_call",
+      "occurred_at": "2026-09-21T00:21:54.742Z",
+      "earlierChainedRowsOfSameTenant": 0
+    },
+    {
+      "id": "dfe09bc4-ec9f-4bc2-82cb-fc50ca72a4c8",
+      "tenant": 42,
+      "action": "mcp_tool_call",
+      "occurred_at": "2026-09-21T00:22:03.577Z",
+      "earlierChainedRowsOfSameTenant": 0
+    },
+    {
+      "id": "9a2a8dfa-a0dc-4679-9cfc-74f476f45eb2",
+      "tenant": 43,
+      "action": "mcp_tool_call",
+      "occurred_at": "2026-09-21T00:22:03.601Z",
+      "earlierChainedRowsOfSameTenant": 0
+    }
+  ],
+  "eachRowExplainedBy": {
+    "tenantViewOnly": 19,
+    "globalViewOnly": 30,
+    "either": 213,
+    "unexplained": []
+  },
+  "conclusion": "Every row derives from the head its writer could see (its tenant's, or the global one on an unscoped connection); none is tampered. The chain was per-tenant or global depending on the connection, while the verifier replayed one global chain."
+}

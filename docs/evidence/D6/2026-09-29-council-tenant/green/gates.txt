@@ -1,0 +1,13 @@
+ci:migration-set-order rc=0 :: [ci:migration-set-order] OK — 325 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+ci:migration-drop-safety rc=0 :: [ci:migration-drop-safety] OK — 325 migrations, 34 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(
+ci:rls-allowlist-sync rc=0 :: [ci:rls-allowlist-sync] OK — 6 entries match across RLS_ALLOWLIST and 4 consumers
+ci:tenant-column-types rc=0 :: [ci:tenant-column-types] OK — all tenant columns are integer-typed
+ci:tenant-isolation:no-regression rc=0 :: [ci:tenant-isolation] OK — no new findings above baseline (8 current, 8 baseline)
+ci:column-reachability rc=0 :: [ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+ci:runtime-ddl rc=0 :: [ci:runtime-ddl] ✅ no new runtime DDL.
+db:sync-manifest:check rc=0 :: Manifest is in sync.
+ci:insert-columns-declared rc=0 :: ✅ no new violations. 47 baselined and awaiting burn-down.
+ci:ai-tenant-binding rc=0 :: ✓ ai-tenant-binding: every AnA gateway call binds its tenant; payloadProvenance 'public' only in allowlisted modules
+ci:gateway-bypass rc=0 :: [check-gateway-bypass] OK — no new bypasses (8 baselined site(s) tolerated).
+ci:discarded-audit-write rc=0 :: check-discarded-audit-write: no new occurrences. 122 baselined across 54 file(s).
+ci:migration-reachability rc=0 :: [ci:migration-reachability] ✅ no new unreachable table references.

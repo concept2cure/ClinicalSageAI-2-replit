@@ -1,0 +1,60 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/sections/2ec3e8e3-775c-4ef5-85a1-86104026b67d/history",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 17,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "revisions": [
+        {
+          "id": "61e7c82f-b750-499f-9e30-a3b7f512d0b5",
+          "section_id": "2ec3e8e3-775c-4ef5-85a1-86104026b67d",
+          "content": "<p>Initial 2.5 text.</p>",
+          "created_by": "17",
+          "created_at": "2026-09-23T05:19:48.956Z",
+          "tenant_id": 1,
+          "content_sha256": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "chain_sha256": "f6735a70e197db6839de88891e9a74382eae244b06e3cd9dc567023c2a3482cb",
+          "origin": "revert",
+          "created_by_name": "OQ Runner",
+          "created_by_email": "oq-runner@validation.local"
+        },
+        {
+          "id": "adfe4629-90c6-4059-85d8-07857f21fac3",
+          "section_id": "2ec3e8e3-775c-4ef5-85a1-86104026b67d",
+          "content": "<p>Revised 2.5 text — OQ-003 step 05.</p>",
+          "created_by": "17",
+          "created_at": "2026-09-23T05:19:47.326Z",
+          "tenant_id": 1,
+          "content_sha256": "5f2aa1c0c7f6ce423a26acc9c5219b729b5f6601b73128f399231ff7fd36b1c4",
+          "chain_sha256": "8aec9868e408d385729074d369974f1d4b14121ae4b442d81e96fc28ccc9c8a6",
+          "origin": "human-edit",
+          "created_by_name": "OQ Runner",
+          "created_by_email": "oq-runner@validation.local"
+        },
+        {
+          "id": "60a6abfb-91ee-41f5-a4e9-b58c99a0114d",
+          "section_id": "2ec3e8e3-775c-4ef5-85a1-86104026b67d",
+          "content": "<p>Initial 2.5 text.</p>",
+          "created_by": "17",
+          "created_at": "2026-09-23T05:19:46.774Z",
+          "tenant_id": 1,
+          "content_sha256": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "chain_sha256": "73caaccaf6672d386bf2ce36d0fa3960f53f061f5c3c0aa20205de08ed7962d9",
+          "origin": "genesis",
+          "created_by_name": "OQ Runner",
+          "created_by_email": "oq-runner@validation.local"
+        }
+      ],
+      "count": 3
+    }
+  }
+}

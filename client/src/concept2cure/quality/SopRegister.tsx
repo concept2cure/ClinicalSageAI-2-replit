@@ -7,17 +7,26 @@
  * read-and-understood training, change control (revise / retire), and the
  * Quality system template gallery.
  *
- * AnA-first: every action is a conversational prompt handed to the host's AnA
+ * AnA-first: actions are conversational prompts handed to the host's AnA
  * surface via `onAsk` — the same pattern as the MDX Quality kit and the
- * Intelligence cluster. No mutation is performed directly here; AnA runs the
- * governed action (and captures the reason-for-change / e-signature) so the
- * 21 CFR Part 11 audit trail stays the single path.
+ * Intelligence cluster.
+ *
+ * Approval and retirement are the exceptions, because each is an electronic
+ * signature and AnA cannot sign: a chat turn cannot collect a password. The
+ * row's Approve button opens the shared EsignModal, which posts to the signed
+ * route (POST /api/mdx/qms/documents/:id/approve, VSR-001 F-3). Until 2026-09-24
+ * this button was "Ask AnA to approve", its tooltip said "you still capture the
+ * e-signature", and the tool it reached made the SOP effective with no
+ * signature at all (new-code audit 2026-09-24, finding 1). The Retire button
+ * opens the same dialog against POST /api/mdx/qms/documents/:id/retire
+ * (P1-29 / DP-32, security review 2026-09-24): until 2026-09-26 it was a
+ * reason-only confirm, and the route retired the document on the reason alone.
  *
  * @module client/src/concept2cure/quality/SopRegister
  */
 
 import * as React from 'react';
-import { I } from './icons';
+import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import {
   SOP_TEMPLATES,
@@ -31,11 +40,16 @@ import {
   isReviewOverdue,
 } from './data';
 import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } from './hooks';
+import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
+import { postQmsApproval } from './qmsApproval';
+import { useAuthUser } from '@/services/portal/authService';
+import type { QmsDoc } from './data';
 /* The canonical sample-mode guard and its marker, shared with the MDX lane —
    one definition of "may a fixture reach the screen", so two lanes cannot
    answer it differently. */
 import { useSampleRows, useShowingSample } from '../mdx/lib/useSampleRows';
 import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
+import { ErrorState } from '../v2/dataConnect';
 
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
@@ -113,6 +127,14 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
   /* One predicate for the whole surface: the document register is what the
      rest is derived from, so if that is sample then so is the view. */
   const showingSample = useShowingSample(reg.docs);
+  const user = useAuthUser(); // display only; the server resolves the signer
+  /** The document being approved, while the signature dialog is open. */
+  const [approving, setApproving] = React.useState<QmsDoc | null>(null);
+  /** The document being retired, while its signature dialog is open. Retirement
+      is the terminal transition of a controlled document and is signed like the
+      approval: password, second factor, meaning and reason, re-verified by the
+      server in the transaction that writes the signature. */
+  const [retiring, setRetiring] = React.useState<QmsDoc | null>(null);
 
   const effectiveCount = docs.filter((d) => d.status === 'effective').length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
@@ -122,6 +144,30 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
   const trainingPct = trainedRows.length
     ? Math.round((trainedRows.reduce((s, t) => s + t.current / t.of, 0) / trainedRows.length) * 100)
     : 0;
+
+  /* A read that has not answered is not an empty register. Outside sample mode
+     `useSampleRows(null, …)` is `[]`, so until 2026-09-25 a 401, a 500 or a
+     dropped connection rendered "Effective documents 0" and "Review overdue 0 —
+     All current" in the ok tone, over "No documents due for review." The hooks
+     computed the error; nothing here read it (HS-1,
+     docs/evidence/reviews/2026-09-24/lenses.md). "Unread" is in flight or failed;
+     neither may render a count. A resolved list that is non-empty came from
+     live rows or from explicit sample mode, which the banner above marks. */
+  const regUnread = reg.docs == null && docs.length === 0;
+  const regFailed = regUnread && reg.error != null;
+  /* Review dates come from their own read, or are derived from the register;
+     they are unknown only when both are. */
+  const reviewUnread = rev.rows == null && regUnread;
+  const reviewFailed = reviewUnread && regFailed;
+  const trainUnread = trainComp.rows == null && training.length === 0;
+  const trainFailed = trainUnread && trainComp.error != null;
+  const unreadSub = (failed: boolean) => (failed ? 'Could not be read' : 'Loading…');
+  /* A register that was read and holds nothing. "None in review" and "Review
+     overdue 0 — All current" were true of the empty set only vacuously, and
+     read as a compliant register to a QA lead on a new tenant (launch sweep
+     finding 112, the clause the HS-1 fix above left standing). */
+  const registerEmpty = !regUnread && docs.length === 0;
+  const nothingToReview = registerEmpty && reviewDue.length === 0;
 
   const visible = docs.filter((d) => filter === 'all' || d.status === filter);
 
@@ -168,26 +214,50 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
       </div>
 
       <div className="qms-kpis">
-        <Kpi label="Effective documents" val={String(effectiveCount)} sub={`${docs.length} in register`} />
-        <Kpi
-          label="Under review"
-          val={String(underReviewCount)}
-          sub={underReviewCount ? 'Awaiting approval' : 'None in review'}
-          tone={underReviewCount ? 'warn' : 'ok'}
-        />
-        <Kpi
-          label="Review overdue"
-          val={String(overdueCount)}
-          sub={overdueCount ? 'Past next-review date' : 'All current'}
-          tone={overdueCount ? 'err' : 'ok'}
-        />
-        <Kpi
-          label="Training compliance"
-          val={String(trainingPct)}
-          unit="%"
-          sub="Read-and-understood, current cycle"
-          tone={trainingPct >= 95 ? 'ok' : trainingPct >= 80 ? 'warn' : 'err'}
-        />
+        {regUnread ? (
+          <>
+            <Kpi label="Effective documents" val="—" sub={unreadSub(regFailed)} />
+            <Kpi label="Under review" val="—" sub={unreadSub(regFailed)} />
+          </>
+        ) : (
+          <>
+            <Kpi label="Effective documents" val={String(effectiveCount)} sub={`${docs.length} in register`} />
+            <Kpi
+              label="Under review"
+              val={String(underReviewCount)}
+              sub={underReviewCount ? 'Awaiting approval' : registerEmpty ? 'Nothing in the register yet' : 'None in review'}
+              tone={underReviewCount ? 'warn' : 'ok'}
+            />
+          </>
+        )}
+        {reviewUnread ? (
+          <Kpi label="Review overdue" val="—" sub={unreadSub(reviewFailed)} />
+        ) : nothingToReview ? (
+          <Kpi label="Review overdue" val="—" sub="Nothing in the register to review" />
+        ) : (
+          <Kpi
+            label="Review overdue"
+            val={String(overdueCount)}
+            sub={overdueCount ? 'Past next-review date' : 'All current'}
+            tone={overdueCount ? 'err' : 'ok'}
+          />
+        )}
+        {/* No trained rows is nothing assessed, not 0% compliance. */}
+        {trainUnread || trainedRows.length === 0 ? (
+          <Kpi
+            label="Training compliance"
+            val="—"
+            sub={trainUnread ? unreadSub(trainFailed) : 'No training-controlled documents yet'}
+          />
+        ) : (
+          <Kpi
+            label="Training compliance"
+            val={String(trainingPct)}
+            unit="%"
+            sub="Read-and-understood, current cycle"
+            tone={trainingPct >= 95 ? 'ok' : trainingPct >= 80 ? 'warn' : 'err'}
+          />
+        )}
       </div>
 
       {/* ── Template gallery ── */}
@@ -223,9 +293,11 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
       <section className="qms-sec">
         <div className="qms-sec-head">
           <h2>Controlled-document register</h2>
-          <span className="meta">
-            {effectiveCount} effective · {underReviewCount} under review · {draftCount} draft
-          </span>
+          {!regUnread && (
+            <span className="meta">
+              {effectiveCount} effective · {underReviewCount} under review · {draftCount} draft
+            </span>
+          )}
           <span className="spacer" />
           <div className="qms-seg" role="tablist">
             {STATUS_FILTERS.map((f) => (
@@ -254,6 +326,22 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
             <div>Next review</div>
             <div />
           </div>
+          {regFailed && (
+            <ErrorState
+              title="The controlled-document register could not be read"
+              message={reg.error}
+              retry={reg.refresh}
+              testId="sop-register-failed"
+            />
+          )}
+          {regUnread && !regFailed && (
+            <div className="qms-empty" role="status">Loading the register…</div>
+          )}
+          {!regUnread && visible.length === 0 && (
+            <div className="qms-empty">
+              {filter === 'all' ? 'No controlled documents in the register yet.' : 'No documents with this status.'}
+            </div>
+          )}
           {visible.map((d) => {
             const overdue = isReviewOverdue(d.nextReviewDate);
             return (
@@ -296,16 +384,15 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                   {(d.status === 'draft' || d.status === 'in_review') && (
                     <button
                       className="qms-chip"
-                      title="Opens the approval in AnA — you still capture the e-signature; it is not approved by clicking here"
-                      onClick={() =>
-                        onAsk(
-                          `Approve ${d.docNumber} ${d.title} (v${d.version}) and make it effective — confirm the reviewer ` +
-                            '(must differ from the author), capture the e-signature, set the effective date and the next ' +
-                            'periodic-review date, then write the Part 11 audit entry.',
-                        )
+                      disabled={showingSample}
+                      title={
+                        showingSample
+                          ? 'Sample rows cannot be approved'
+                          : 'Approve with your electronic signature (password and second factor). The author cannot approve their own document.'
                       }
+                      onClick={() => setApproving(d)}
                     >
-                      {I.sparkle} Ask AnA to approve
+                      {I.check} Approve
                     </button>
                   )}
                   {d.status === 'effective' && (
@@ -324,13 +411,8 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                       </button>
                       <button
                         className="qms-chip"
-                        title="Retire"
-                        onClick={() =>
-                          onAsk(
-                            `Retire ${d.docNumber} ${d.title}. Ask me for the reason, confirm there is no active dependency, ` +
-                              'then move it to retired and write the audit entry.',
-                          )
-                        }
+                        title="Retire with your electronic signature (password and second factor). Retirement is the terminal state; the document leaves use for everyone trained on it."
+                        onClick={() => setRetiring(d)}
                       >
                         {I.archive} Retire
                       </button>
@@ -341,7 +423,7 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                     title="Ask AnA about this document" aria-label="Ask AnA about this document"
                     onClick={() => onAsk(`Summarize ${d.docNumber} ${d.title} and tell me what it needs next.`)}
                   >
-                    {I.sparkle}
+                    {I.sparkles}
                   </button>
                 </div>
               </div>
@@ -355,12 +437,30 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
         <section className="qms-sec">
           <div className="qms-sec-head">
             <h2>Periodic review</h2>
-            <span className="meta">
-              {overdueCount} overdue · {reviewDue.length} within 120 days
-            </span>
+            {!reviewUnread && (
+              <span className="meta">
+                {overdueCount} overdue · {reviewDue.length} within 120 days
+              </span>
+            )}
           </div>
           <div className="qms-review">
-            {reviewDue.length === 0 && <div className="qms-empty">No documents due for review.</div>}
+            {reviewFailed && (
+              <ErrorState
+                title="Periodic review dates could not be read"
+                message={rev.error ?? reg.error}
+                retry={() => {
+                  reg.refresh?.();
+                  rev.refresh?.();
+                }}
+                testId="sop-review-failed"
+              />
+            )}
+            {reviewUnread && !reviewFailed && (
+              <div className="qms-empty" role="status">Loading review dates…</div>
+            )}
+            {!reviewUnread && reviewDue.length === 0 && (
+              <div className="qms-empty">No documents due for review.</div>
+            )}
             {reviewDue.map((r) => (
               <button
                 key={r.id}
@@ -409,7 +509,18 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
             </button>
           </div>
           <div className="qms-train">
-            {training.length === 0 && (
+            {trainFailed && (
+              <ErrorState
+                title="Training records could not be read"
+                message={trainComp.error}
+                retry={trainComp.refresh}
+                testId="sop-training-failed"
+              />
+            )}
+            {trainUnread && !trainFailed && (
+              <div className="qms-empty" role="status">Loading training records…</div>
+            )}
+            {!trainUnread && training.length === 0 && (
               <div className="qms-empty">No training-controlled documents yet.</div>
             )}
             {training.map((t) => {
@@ -433,6 +544,40 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
           </div>
         </section>
       </div>
+      {approving && (
+        <EsignModal
+          open
+          action="Approve controlled document"
+          target={`${approving.docNumber} ${approving.title}`}
+          targetMeta={`v${approving.version} becomes effective when you sign. The author cannot approve their own document.`}
+          defaultMeaning="approval"
+          meanings={['approval']}
+          signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+          onClose={() => setApproving(null)}
+          onSign={async (input) => {
+            const manifest = await postQmsApproval({ kind: 'document', id: approving.id }, input);
+            reg.refresh?.();
+            return manifest;
+          }}
+        />
+      )}
+      {retiring && (
+        <EsignModal
+          open
+          action="Retire controlled document"
+          target={`${retiring.docNumber} ${retiring.title} (v${retiring.version})`}
+          targetMeta="Retirement is the terminal state: the document leaves use for everyone trained on it when you sign. It is an electronic signature."
+          defaultMeaning="approval"
+          meanings={['approval']}
+          signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+          onClose={() => setRetiring(null)}
+          onSign={async (input) => {
+            const manifest = await postQmsApproval({ kind: 'document-retire', id: retiring.id }, input);
+            reg.refresh?.();
+            return manifest;
+          }}
+        />
+      )}
     </>
   );
 }

@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5800/api/c2c/projects",
+    "body": {
+      "name": "WE F-11 Vault program 20260921015253",
+      "programType": "ind",
+      "primaryAgency": "FDA",
+      "indication": "Validation exercise",
+      "priority": "medium"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "body": {
+      "data": {
+        "id": "02ed9f66-2ef6-4a21-a164-eab03a2dcdf6",
+        "title": "WE F-11 Vault program 20260921015253",
+        "ws": "Biotech",
+        "code": "WFVP-BZL3",
+        "stage": "Planning",
+        "readiness": 0,
+        "status": "active",
+        "lead": "JM Smith",
+        "blocker": null,
+        "due": "—",
+        "activity": "Updated Sep 21"
+      },
+      "meta": {
+        "created": true,
+        "documentId": "doc_0747ee0b1c4a4be0a6e1df6cd18d1fc7",
+        "scaffoldedSections": 92,
+        "submissionId": 59,
+        "submissionCreated": true,
+        "projectAnchorId": null,
+        "projectAnchorSkipped": "NO_CLIENT_WORKSPACE",
+        "projectAnchorDetail": "This organization has no client workspace, and projects.client_workspace_id is NOT NULL. The program was created; it carries no PM-spine anchor until a workspace exists."
+      }
+    }
+  }
+}

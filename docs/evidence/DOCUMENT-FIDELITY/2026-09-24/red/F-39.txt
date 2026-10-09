@@ -1,0 +1,29 @@
+F-39 — RED: the test run against the code with this fix reverted
+A draft cut off at the model token limit was accepted into coauthor_documents as finished
+
+Fix commit: e854953f8. Tree: 893a4750f with ONLY the lines below reverted to the pre-fix logic,
+then restored byte-for-byte after the run:
+  - server/routes/batch-draft-routes.ts: remove/replace block from '    const finishReason =' to '    const model = typeof body.model'
+
+vitest exit code: 1 (non-zero = the test caught the defect)
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > records every clause of the accepted text as the acceptor's assertion, in the same transaction as the content and its audit row 51ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > refuses an accept with no identified user, and writes nothing 7ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 10ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 9ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > a working row is still accepted (the refusal is the verdict, not the route) 13ms
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses a draft the model cut off at its output limit, and writes nothing 19ms
+   → {"success":true,"data":{"documentId":9,"supersededVersion":1,"framework":null}}: expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses on the explicit truncated flag as well as the raw reason 14ms
+   → expected 200 to be 422 // Object.is equality
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > accepts a completed draft that reports its finish reason 13ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses a draft the model cut off at its output limit, and writes nothing
+AssertionError: {"success":true,"data":{"documentId":9,"supersededVersion":1,"framework":null}}: expected 200 to be 422 // Object.is equality
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses on the explicit truncated flag as well as the raw reason
+AssertionError: expected 200 to be 422 // Object.is equality

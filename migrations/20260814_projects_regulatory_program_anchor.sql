@@ -1,3 +1,22 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: projects.regulatory_program_id — the bridge from the legacy integer
+--          project to its regulatory program (uuid).
+--
+-- AMENDED IN PLACE 2026-09-26 (project-first plan PF-04; CLAUDE.md Rule 1).
+--   What changed: the "Why NO FOREIGN KEY" section below and the column
+--   COMMENT this file replays. Both said regulatory_programs "is created by no
+--   durable applier". That was false: its creator,
+--   migrations/20260524_program_workbench_schema.sql, is entry 1 of
+--   C2C_MIGRATION_FILES. The anchor is now held to the project's own
+--   organization by projects_regulatory_program_same_org_fk, added by
+--   migrations/20260926b_program_same_org_keys.sql (NOT VALID, ON DELETE SET
+--   NULL (regulatory_program_id)). No schema object here changed; this file
+--   still creates the column and index only. The replayed comment text differs,
+--   so the journal records drift for this file; that is this amendment.
+-- =============================================================================
 -- ============================================================================
 -- Program anchor — projects.regulatory_program_id
 -- (Document Identity Contract 2026-08, slice C1; approved 2026-08-13)
@@ -26,30 +45,28 @@
 -- index. NULL means "this project is not anchored to a regulatory program",
 -- which is the correct and common state; nothing is required to be anchored.
 --
--- ── Why NO FOREIGN KEY (the repo's FK-free linkage convention) ───────────────
--- Two independent reasons, either sufficient:
+-- ── The key (amended 2026-09-26) ───────────────────────────────────────────
+-- This file adds no foreign key; migrations/20260926b_program_same_org_keys.sql
+-- does. As first written, this section gave two reasons for having none:
 --
---   1. `regulatory_programs` reaches no already-provisioned database. Its ONLY
---      creator is migrations/20260524_program_workbench_schema.sql, which is on
---      NO durable applier: it is not in scripts/db/migration-set.mjs, carries no
---      `_gcc_` infix, and is not in the drizzle journal (shared/schema.ts does
---      not re-export ./schema/programs, so drizzle-kit push does not create it
---      either — only install-fresh's root-tree overlay does, i.e. fresh
---      databases only). deploy-migrate runs with stopOnFirstFailure, so an
---      unguarded REFERENCES here would abort the entire migration set on any
---      database that lacks the table.
+--   1. "regulatory_programs reaches no already-provisioned database; its only
+--      creator is on no durable applier." False when written and false now: that
+--      creator is migrations/20260524_program_workbench_schema.sql, entry 1 of
+--      C2C_MIGRATION_FILES, so every database deploy-migrate has touched has it.
+--   2. "A guarded key would exist on some databases and not others." The
+--      20260926b key is guarded on its target, and every applier that runs this
+--      file runs the target's creator first, so it exists wherever this column
+--      does.
 --
---   2. A guarded FK would be worse than none. It would exist on some databases
---      and not others depending on deploy history, so no code could rely on the
---      referential guarantee — a constraint that is only sometimes there is a
---      constraint nobody can reason about. Same call, and the same reasoning, as
---      db/migrations/20260725_bundle_execution_receipts.sql (ADR-0009), which
---      carries `bundle_id` as a plain UUID with no FK.
---
--- The linkage is therefore *conventional*, enforced by the writers (intake sets
--- it inside the program-creation transaction) and by this file's backfill, not
--- by the database. Reads must tolerate a dangling anchor exactly as they
--- tolerate a NULL one.
+-- Meanwhile the column was written unchecked from 2026-08-14 to 2026-09-24
+-- (ana-platform-controller), so an anchor could name another organization's
+-- program. 20260926b holds (regulatory_program_id, organization_id) to
+-- regulatory_programs (id, organization_id) — NOT VALID, so rows written before
+-- it are not scanned (scripts/db/program-same-org-preflight.mjs lists them), and
+-- ON DELETE SET NULL (regulatory_program_id), so a tenant purge that deletes the
+-- program un-anchors the project instead of failing. Reads must still tolerate a
+-- NULL anchor; a same-organization anchor to a soft-deleted program is still
+-- possible, and readers still check deleted_at.
 --
 -- ── Backfill semantics: unambiguous 1:1 only, never a guess ─────────────────
 -- A pair (project P, program G) is a CANDIDATE when all of:
@@ -104,7 +121,7 @@ BEGIN
              ON projects (regulatory_program_id)';
 
   EXECUTE $q$COMMENT ON COLUMN projects.regulatory_program_id IS
-    'Anchor to regulatory_programs.id (uuid). NULL = not anchored, which is a valid and common state. Deliberately FK-free: regulatory_programs is created by no durable applier, so a REFERENCES here would abort deploy-migrate on databases that lack it (Document Identity Contract 2026-08, slice C1).'$q$;
+    'Anchor to regulatory_programs.id (uuid). NULL = not anchored, which is a valid and common state. Held to this project''s own organization by projects_regulatory_program_same_org_fk (migrations/20260926b_program_same_org_keys.sql, PF-04): NOT VALID, ON DELETE SET NULL (regulatory_program_id).'$q$;
 END
 $do$;
 

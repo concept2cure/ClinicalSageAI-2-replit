@@ -33,7 +33,7 @@ function program(over: Record<string, unknown> = {}) {
     id: PID, code: 'BX-512', name: 'BX-512 · Vorelinib (IND)', program_type: 'IND',
     status: 'active', phase: 'clinical', priority: 'high', description: null,
     product_name: 'Vorelinib', indication: 'KIT-mutant gastrointestinal stromal tumor',
-    intended_use: null, primary_agency: 'FDA', target_submission_date: null, progress_percent: 0,
+    intended_use: null, primary_agency: 'FDA', target_submission_date: null, readiness: 0,
     sponsor_name: 'Concept2Cure Therapeutics', application_number: '000512',
     ...over,
   };

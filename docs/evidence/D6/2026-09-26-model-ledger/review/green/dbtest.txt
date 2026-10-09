@@ -1,0 +1,13 @@
+# tests/db/ai-gateway-audit-log.dbtest.ts on real PostgreSQL 16, this change's migration
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > the migration creates the table the writer INSERTs into
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > carries every column the writer binds, including resolved_model
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > persists a row through the real writer
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > round-trips every provenance column, at the longest values the gateway writes (D6)
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > upgrades a table in the pre-2026-09-26 shape: columns added, region widened, rows kept (Rule 1)
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > stores NULL rather than inventing a resolution the provider never gave
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > records the EFFECTIVE temperature: NULL means no sampling parameter was sent
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() throws — naming the role — when the store is not writable
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() throws when the table is absent, and says which migration creates it
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() passes against the provisioned table
+      Tests  10 passed (10)
+exit=0

@@ -1,0 +1,36 @@
+# GA demo seed on a fresh database — string order vs numeric part order (2026-09-28, W5/D7, WO-9)
+#
+# Both databases: empty Postgres 16 + pgvector 0.6.0 (Ubuntu archive package),
+#   node scripts/db/install-fresh.mjs  -> exit 0
+#   node scripts/db/deploy-migrate.mjs -> exit 0 (321/321 migration files applied)
+#   npm run db:seed                    -> exit 0, ONE run
+# Left: orchestrator's previous string sort. Right: scripts/seed/ga-demo-order.mjs (numeric).
+# Lines are the seed's own ✓/⚠ report, sorted; row ids normalised away.
+#
+# string order : ✓=94  ⚠=7
+# numeric order: ✓=99  ⚠=4
+#
+# diff (string → numeric):
+5,7d4
+<    ⚠ ind authoring doc: program BX-512 not seeded — skipping
+<    ⚠ ind program BX-256: not seeded by the GA demo — skipping
+<    ⚠ ind program BX-512: not seeded by the GA demo — skipping
+67c64,69
+<    ✓ ind checklist: 1 real IND seeded (submission 3: 20 coauthor sections + leaves)
+---
+>    ✓ ind authoring doc: "Control of Drug Substance (CTD 3.2.S.4)" seeded for BX-512 (3 sections, incl. 3.2.S.4.2; approval sealed)
+>    ✓ ind checklist: 1 real IND seeded (submission 4: 20 coauthor sections + leaves)
+>    ✓ ind program BX-256: given IND 000256
+>    ✓ ind program BX-256: submission 5 (created), sequence 0000 created (5)
+>    ✓ ind program BX-512: given IND 000512
+>    ✓ ind program BX-512: submission 6 (created), sequence 0000 created (6)
+80c82
+<    ✓ nda cockpit: 1 real NDA seeded (submission 4: 28 coauthor sections + leaves)
+---
+>    ✓ nda cockpit: 1 real NDA seeded (submission 3: 28 coauthor sections + leaves)
+
+# ⚠ lines present under BOTH orders (not ordering defects; unchanged by this fix):
+   ⚠ 124-investigator-brochure.mjs skipped — there is no unique or exclusion constraint matching the ON CONFLICT specification (backing table/columns not provisioned for this surface)
+   ⚠ 50-postmarket.mjs skipped — admin is not defined (backing table/columns not provisioned for this surface)
+   ⚠ auth_audit_log table not found — skipping
+   ⚠ reg_submissions not found — skipping CMC submission

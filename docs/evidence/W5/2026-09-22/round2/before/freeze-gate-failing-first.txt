@@ -1,0 +1,5 @@
+ × server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > refuses to freeze a sequence carrying an unapproved document, and changes nothing 12ms
+ × server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > reaches the state change when the package is transmittable 3ms
+ × server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > applies to dispatch as well 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed (3)

@@ -1,0 +1,26 @@
+# Post-correction observation, 2026-09-21T01:03:01Z — IQ-DEV-001 corrective action applied by the product's own provisioning (worker WD)
+# correction: DATABASE_OWNER_URL=postgresql://postgres:***@127.0.0.1:5432/clinicalsage DATABASE_URL=postgresql://c2c:***@127.0.0.1:5432/clinicalsage node scripts/db/deploy-migrate.mjs
+#   step 4/5 identified runtime role c2c from DATABASE_URL and refreshed its grants; step 5/5 grant audit 1263/1263 (docs/evidence/WD/2026-09-21/deploy-migrate-clinicalsage.transcript.txt)
+# no GRANT was issued by hand.
+runtime role from .env DATABASE_URL: c2c
+postgres|true|true
+c2c|false|false
+-- tables in public by owner
+c2c|789
+postgres|183
+-- IQ-07 inventory (same query as run-iq.mjs): denied = 0
+-- has_table_privilege(c2c) on launch-relevant tables
+platform_settings: true
+qms_change_controls: true
+program_journeys: true
+artifacts: true
+assumption_records: true
+contradiction_links: true
+decision_records: true
+ectd_submissions: true
+qms_documents: true
+regulatory_programs: true
+submissions: true
+authoring_documents: true
+unified_tasks: true
+-- audit.tamper_proof_log (owner postgres) for c2c: SELECT=true INSERT=true UPDATE=false DELETE=false

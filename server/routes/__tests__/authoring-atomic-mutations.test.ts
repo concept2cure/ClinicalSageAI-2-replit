@@ -22,7 +22,6 @@
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
-import bcrypt from 'bcryptjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => {
@@ -70,18 +69,39 @@ vi.mock('../../services/c2c/commit-section-to-filing.js', () => ({
   commitSectionToFiling: vi.fn(async () => ({ committed: false, reason: 'unbound' })),
 }));
 
+// The signing routes re-verify the signer with the platform ceremony
+// (services/part11/reverify-signer.ts); its production wiring is stubbed to an
+// account whose password is PASSWORD, with no second factor enrolled. The
+// ceremony itself has its own suites (authoring-sign-ceremony.test.ts).
+vi.mock('../../services/part11/reverify-signer-deps', () => ({
+  signerReverificationDeps: () => ({
+    loadPasswordHash: async () => 'stored-hash',
+    comparePassword: async (plain: string) => plain === 'signer-password',
+    isMfaEnabled: async () => false,
+    verifyMfaToken: async () => false,
+    isAccountActive: async () => true,
+    isAccountLocked: async () => false,
+    recordFailedAttempt: async () => {},
+    warn: () => {},
+  }),
+}));
+// A signer is a numeric account; its membership re-check has its own suite.
+vi.mock('../../middleware/orgMembership', () => ({
+  enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  invalidateOrgMembershipCache: () => undefined,
+}));
+
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-atomic';
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
 
-const PIN = '246810';
-let PIN_HASH = '';
+const PASSWORD = 'signer-password';
 
 async function bearer(roles?: string[]): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
   const token = await new SignJWT({
-    sub: 'u1', // non-numeric subject → membership re-check is skipped
+    sub: '41', // a signer is a numeric account (membership re-check stubbed above)
     organizationId: 7,
     email: 'author@test.co',
     ...(roles ? { roles } : {}),
@@ -114,7 +134,6 @@ const writeIndex = (re: RegExp) => clientSql().findIndex((s) => re.test(s));
 let failOn: RegExp | null = null;
 
 beforeEach(async () => {
-  if (!PIN_HASH) PIN_HASH = await bcrypt.hash(PIN, 4);
   vi.clearAllMocks();
   failOn = null;
   h.auditLogAction.mockResolvedValue(undefined);
@@ -160,7 +179,8 @@ describe('PATCH /sections/:id — revision + update + audit are atomic', () => {
     const res = await request(makeApp())
       .patch('/api/authoring/sections/S1')
       .set('Authorization', await bearer())
-      .send({ content: 'new text' });
+      // fde9d704: a content change carries its reason, or it is refused (400) before the transaction under test.
+      .send({ content: 'new text', changeReason: 'Corrected the section text after review.' });
 
     expect(res.status).toBe(200);
 
@@ -187,7 +207,8 @@ describe('PATCH /sections/:id — revision + update + audit are atomic', () => {
     const res = await request(makeApp())
       .patch('/api/authoring/sections/S1')
       .set('Authorization', await bearer())
-      .send({ content: 'new text' });
+      // fde9d704: a content change carries its reason, or it is refused (400) before the transaction under test.
+      .send({ content: 'new text', changeReason: 'Corrected the section text after review.' });
 
     expect(res.status).toBe(500);
     expect(sawBegin()).toBe(0);
@@ -260,9 +281,6 @@ describe('POST /docs/:id/freeze — snapshot + status flip + audit are atomic', 
 describe('POST /docs/:id/sign — signature + workflow approval + audit are atomic', () => {
   beforeEach(() => {
     h.poolQuery.mockImplementation(async (sql: string) => {
-      if (/FROM user_pins/i.test(sql)) {
-        return { rowCount: 1, rows: [{ pin_hash: PIN_HASH, failed_attempts: 0, locked_until: null }] };
-      }
       if (/SELECT code, content FROM authoring_sections/i.test(sql)) {
         return { rowCount: 1, rows: [{ code: '2.5', content: 'body' }] };
       }
@@ -284,7 +302,7 @@ describe('POST /docs/:id/sign — signature + workflow approval + audit are atom
     const res = await request(makeApp())
       .post('/api/authoring/docs/D1/sign')
       .set('Authorization', await bearer(['REVIEWER']))
-      .send({ pin: PIN, meaning: 'REVIEWER', reason: 'reviewed and approved' });
+      .send({ password: PASSWORD, meaning: 'REVIEWER', reason: 'reviewed and approved' });
 
     expect(res.status).toBe(200);
     const begin = sawBegin();
@@ -323,7 +341,58 @@ describe('POST /docs/:id/sign — signature + workflow approval + audit are atom
     const res = await request(makeApp())
       .post('/api/authoring/docs/D1/sign')
       .set('Authorization', await bearer(['REVIEWER']))
-      .send({ pin: PIN, meaning: 'REVIEWER', reason: 'reviewed and approved' });
+      .send({ password: PASSWORD, meaning: 'REVIEWER', reason: 'reviewed and approved' });
+
+    expect(res.status).toBe(500);
+    expect(sawRollback()).toBe(true);
+    expect(sawCommit()).toBe(-1);
+    expect(h.clientRelease).toHaveBeenCalledTimes(1);
+  });
+});
+
+/* GE-P-1 (coverage-gap sweep, 2026-09-28). Revert ran the section update, its
+   revision and the filing commit in one transaction, then wrote its Part 11
+   audit record AFTER COMMIT on the pool. A failed audit write left a committed,
+   unaudited revert: in production the author was told it failed although it had
+   happened; elsewhere it reported success with no audit row at all. */
+describe('POST /sections/:id/revert — update + revision + filing + audit are atomic', () => {
+  beforeEach(() => {
+    h.poolQuery.mockImplementation(async (sql: string) => {
+      if (/FROM doc_revisions WHERE id = \$1/i.test(sql)) {
+        return { rowCount: 1, rows: [{ id: 'R1', section_id: 'S1', content: 'earlier text', created_by: 41, created_at: '2026-09-01T00:00:00Z', tenant_id: 7 }] };
+      }
+      if (/FROM authoring_sections WHERE id = \$1/i.test(sql)) {
+        return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'current text' }] };
+      }
+      if (/JOIN authoring_documents/i.test(sql)) {
+        return { rowCount: 1, rows: [{ status: 'draft' }] };
+      }
+      return { rowCount: 0, rows: [] };
+    });
+  });
+
+  it('writes its audit record inside the same BEGIN…COMMIT, not on the pool after it', async () => {
+    const res = await request(makeApp())
+      .post('/api/authoring/sections/S1/revert')
+      .set('Authorization', await bearer())
+      .send({ rev_id: 'R1' });
+
+    expect(res.status).toBe(200);
+    const begin = sawBegin();
+    const commit = sawCommit();
+    expect(begin).toBe(0);
+    const audit = writeIndex(/INSERT INTO authoring_audit_trail/i);
+    expect(audit).toBeGreaterThan(begin);
+    expect(audit).toBeLessThan(commit);
+    expect(h.poolQuery.mock.calls.some((c) => /INSERT INTO authoring_audit_trail/i.test(String(c[0])))).toBe(false);
+  });
+
+  it('a failed audit write rolls the revert back and reports 500', async () => {
+    failOn = /INSERT INTO authoring_audit_trail/i;
+    const res = await request(makeApp())
+      .post('/api/authoring/sections/S1/revert')
+      .set('Authorization', await bearer())
+      .send({ rev_id: 'R1' });
 
     expect(res.status).toBe(500);
     expect(sawRollback()).toBe(true);

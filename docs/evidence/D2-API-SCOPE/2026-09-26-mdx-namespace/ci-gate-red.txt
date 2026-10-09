@@ -1,0 +1,27 @@
+# RED — ci:launch-scope-api with /api/mdx narrowed to /api/mdx/gateways and NO other attribution (HEAD 6b7335bb3): the launch calls that depended on the broad claim
+ci:launch-scope-api: 7 API path(s) that launch or shell screens call are not attributed to the launch scope:
+"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+
+  [out-of-scope] /api/mdx/vault
+    called by vault
+    in client/src/concept2cure/mdx/hooks/useVault.ts
+  [out-of-scope] /api/mdx/vault/:p/versions
+    called by vault
+    in client/src/concept2cure/mdx/hooks/useVault.ts
+  [out-of-scope] /api/mdx/industry-profile
+    called by artifacts-center, apps, audit-trail, setup, onboarding
+    in client/src/concept2cure/mdx/hooks/useIndustryProfile.ts, client/src/concept2cure/v2/surfaces/Onboarding.tsx
+  [out-of-scope] /api/mdx/admin
+    called by admin-console
+    in client/src/concept2cure/v2/surfaces/AdminAccess.tsx
+  [out-of-scope] /api/mdx/notifications
+    called by (shell chrome)
+    in client/src/concept2cure/v2/TaskTray.tsx
+  [out-of-scope] /api/mdx/notifications/unread-count
+    called by (shell chrome)
+    in client/src/concept2cure/v2/TaskTray.tsx
+  [out-of-scope] /api/mdx/notifications/:p/read
+    called by (shell chrome)
+    in client/src/concept2cure/v2/TaskTray.tsx

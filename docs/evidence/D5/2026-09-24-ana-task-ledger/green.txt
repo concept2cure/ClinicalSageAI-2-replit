@@ -1,0 +1,19 @@
+== with the fix
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > AnA update_task and the §11.50 approval gate > REFUSES to complete an approval-gated task 18ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > AnA update_task and the §11.50 approval gate > leaves BOTH tables untouched when it refuses 7ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts the task on the board with its task.create ledger row 262ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts nothing on the board when its ledger row cannot be written, and says so 15ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > moves the board row with its task.transition ledger row 19ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > leaves the board row where it was when its ledger row cannot be written, and says so 13ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > AnA update_task and the §11.50 approval gate > allows completion once the signature has already been recorded 268ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > AnA update_task and the §11.50 approval gate > does not gate a task that was never approval-gated 18ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > AnA update_task and the §11.50 approval gate > does not gate a non-completing transition on a gated task 14ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > refuses section.approve from the agent path 4ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > refuses post_market.document.approve from the agent path 3ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > refuses post_market.document.supersede from the agent path 3ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > is not satisfied by the model asserting confirmation in params 9ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > hands back the retry envelope the existing sign-off flow already consumes 4ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > refuses the e-sign tier too, before any tenant flag is consulted 3ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > lets a human-confirmed dispatch through the partition 4ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > leaves ordinary agent work alone 15ms
+      Tests  17 passed (17)

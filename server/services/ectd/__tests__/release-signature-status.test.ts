@@ -68,7 +68,7 @@ vi.mock('../../../lib/unified-ai-client.js', () => ({
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { resolveReleaseSignatureStatus } from '../release-signature-status';
+import { resolveReleaseSignatureStatus, signingNowResolvesRelease } from '../release-signature-status';
 
 const ORG = 42;
 const SUBMISSION = 7;
@@ -275,6 +275,117 @@ describe('resolveReleaseSignatureStatus — the verdict is about THIS sequence',
    answers still win, an integrity failure on either spine still blocks, and an
    undetermined orchestrator lookup is never rescued by the other spine — an
    outage there is an 'invalid' we cannot see. */
+/* ── Region ───────────────────────────────────────────────────────────────────
+   A submission holds sequences in several REGIONS, and sequence numbers restart
+   per region: '0000' exists as the FDA original and again as the EU original.
+   The resolver narrowed candidate runs by submission and then matched only
+   descriptor.sequenceNumber, so a release signed over the EU 0000 package
+   cleared the FDA 0000 dispatch gate — the same defect as the submission-vs-
+   sequence grain, one dimension over, and with the same consequence: a gate
+   cleared by a signature that does not cover the package being shipped.
+
+   Comparing regions is not a string compare. The platform names one
+   jurisdiction four ways (shared/regulatory/region-identity.ts reconciles them):
+   'EU' as a taxonomy Region, 'ema' as a gateway slug, 'eu' as a rule region,
+   'EMA' as a market. ectd_sequences.region holds a slug-ish value while the
+   signed descriptor carries a canonical code, so a naive !== would have
+   REFUSED EVERY DISPATCH. Both sides are resolved through the registry first.
+
+   And an unresolvable region must never exclude: "I do not recognise this
+   region" is not evidence that it differs, and treating it as a mismatch would
+   block a submission for an unrecognised string. */
+describe('the verdict is about THIS region', () => {
+  function signedForRegion(sequenceNumber: string, region: string, runId: string) {
+    const d = signedFor(sequenceNumber, runId);
+    return { ...d, descriptor: { ...d.descriptor, region } };
+  }
+
+  it('does NOT clear on a signature over the same sequence number in another region', async () => {
+    runsAre('run-eu');
+    mockResolveSignedPackageForExport.mockResolvedValue(
+      signedForRegion(THIS_SEQUENCE, 'EU', 'run-eu'),
+    );
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      region: 'fda',
+    });
+
+    expect(status.verdict, "another region's signature cleared this sequence").toBe('unsigned');
+    expect(String(status.detail)).toMatch(/region/i);
+  });
+
+  it('DOES clear when the two spines spell the same region differently', async () => {
+    // The sequence row says 'fda'; the signed descriptor says 'US'. Same
+    // jurisdiction. A string compare would refuse this — and refuse every real
+    // dispatch with it.
+    runsAre('run-us');
+    mockResolveSignedPackageForExport.mockResolvedValue(
+      signedForRegion(THIS_SEQUENCE, 'US', 'run-us'),
+    );
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      region: 'fda',
+    });
+
+    expect(status.verdict, 'the same region spelled two ways was read as two regions').toBe('signed');
+  });
+
+  it('picks the run for THIS region out of several', async () => {
+    runsAre('run-eu', 'run-us', 'run-jp');
+    mockResolveSignedPackageForExport.mockImplementation(async ({ runId }: { runId: string }) =>
+      signedForRegion(THIS_SEQUENCE, runId === 'run-us' ? 'US' : runId === 'run-eu' ? 'EU' : 'JP', runId),
+    );
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      region: 'fda',
+    });
+
+    expect(status.verdict).toBe('signed');
+    expect(status.runId).toBe('run-us');
+  });
+
+  it('does NOT exclude when the region cannot be resolved — unknown is not different', async () => {
+    // A region string the registry does not know must not block a dispatch.
+    runsAre('run-a');
+    mockResolveSignedPackageForExport.mockResolvedValue(
+      signedForRegion(THIS_SEQUENCE, 'not-a-region', 'run-a'),
+    );
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      region: 'fda',
+    });
+
+    expect(status.verdict, 'an unrecognised region blocked a dispatch').toBe('signed');
+  });
+
+  it('is unchanged when the caller names no region at all', async () => {
+    runsAre('run-eu');
+    mockResolveSignedPackageForExport.mockResolvedValue(
+      signedForRegion(THIS_SEQUENCE, 'EU', 'run-eu'),
+    );
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+    });
+
+    expect(status.verdict).toBe('signed');
+  });
+});
+
 describe('a release signed on the submissions spine', () => {
   /** The orchestrator spine holds nothing for this submission. */
   function noOrchestratorRuns() {
@@ -421,6 +532,143 @@ describe('a release signed on the submissions spine', () => {
   });
 });
 
+/**
+ * P11-28b. The Dispatch button records the sequence's dispatch signature and
+ * then dispatches, and on the submissions spine that signature IS the release
+ * signature. Whether signing now can satisfy the requirement depends on which
+ * spine decided — the orchestrator's verdict stands unless it is `unsigned` —
+ * so the resolver reports it, and signingNowResolvesRelease reads it. These run
+ * through the real resolver, so `decidedBy` is what the precedence produced,
+ * not what a fixture asserted.
+ */
+describe('which spine decided — and so whether the dispatch signature can supply the release', () => {
+  function noOrchestratorRuns() {
+    runsAre();
+    unlinkedRunsAre(0);
+  }
+  const resolveThis = () =>
+    resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      sequenceId: SEQUENCE_ID,
+    });
+
+  it('neither spine holds one: the sequence decides, and signing now supplies it', async () => {
+    // The state every IND/NDA/BLA/MAA sequence is in before its first dispatch.
+    noOrchestratorRuns();
+    const status = await resolveThis();
+    expect(status.verdict).toBe('unsigned');
+    expect(status.decidedBy).toBe('sequence');
+    expect(signingNowResolvesRelease(status), 'the Dispatch button is gated on a signature its own click creates').toBe(true);
+  });
+
+  it('a revoked sequence signature: the new one is newest, so signing now supplies it', async () => {
+    noOrchestratorRuns();
+    mockSequenceSpine.mockResolvedValue({ verdict: 'revoked', detail: 'superseded' });
+    const status = await resolveThis();
+    expect(status.decidedBy).toBe('sequence');
+    expect(signingNowResolvesRelease(status)).toBe(true);
+  });
+
+  it('a sequence signature that no longer binds its content is NOT resolved by signing again', async () => {
+    // On a frozen sequence this is evidence the leaves changed after a dispatch
+    // signature. A fresh signature would bind the changed content and read
+    // `signed` — which is exactly why it must not be offered: it would paper
+    // over the tamper evidence the gate exists to surface.
+    noOrchestratorRuns();
+    mockSequenceSpine.mockResolvedValue({ verdict: 'invalid', detail: 'changed after signing' });
+    const status = await resolveThis();
+    expect(status.decidedBy).toBe('sequence');
+    expect(signingNowResolvesRelease(status)).toBe(false);
+  });
+
+  it('an orchestrator run awaiting its signer: the sequence spine is never consulted, so signing it cannot help', async () => {
+    runsAre('run-a');
+    mockResolveSignedPackageForExport.mockResolvedValue({
+      ok: false,
+      refusal: 'awaiting-signature',
+      detail: 'the package.sign step has not been signed',
+    });
+    const status = await resolveThis();
+    expect(status.verdict).toBe('awaiting');
+    expect(status.decidedBy).toBe('orchestrator');
+    expect(
+      signingNowResolvesRelease(status),
+      'offering the button here records a signature the resolver will never read, then refuses',
+    ).toBe(false);
+  });
+
+  it('a REVOKED orchestrator signature: revoked is resolvable on the sequence spine, and precedence is what says no here', async () => {
+    // The case that tests the precedence rule itself. `revoked` IS in the set
+    // signing resolves — on the sequence spine, where the new signature becomes
+    // the newest. Here the orchestrator decided, the sequence spine is never
+    // consulted, and a signature recorded on it would never be read: the click
+    // would sign, then be refused. Only `decidedBy` tells the two apart.
+    runsAre('run-a');
+    mockResolveSignedPackageForExport.mockResolvedValue({
+      ok: false,
+      refusal: 'signature-revoked',
+      detail: 'the package.sign signature was revoked',
+    });
+    const status = await resolveThis();
+    expect(status.verdict).toBe('revoked');
+    expect(status.decidedBy).toBe('orchestrator');
+    expect(signingNowResolvesRelease(status)).toBe(false);
+    expect(mockSequenceSpine, 'the sequence spine was consulted over a definite orchestrator verdict').not.toHaveBeenCalled();
+  });
+
+  it('a tampered orchestrator signature: the orchestrator decides, and nothing is offered over it', async () => {
+    runsAre('run-a');
+    mockResolveSignedPackageForExport.mockResolvedValue({
+      ok: false,
+      refusal: 'digest-drift',
+      detail: 'the package content changed after signing',
+    });
+    const status = await resolveThis();
+    expect(status.decidedBy).toBe('orchestrator');
+    expect(signingNowResolvesRelease(status)).toBe(false);
+  });
+
+  it('a failed lookup: undetermined is not absent, and nothing is offered on it', async () => {
+    mockDbExecute.mockRejectedValue(new Error('connection reset'));
+    const status = await resolveThis();
+    expect(status.verdict).toBe('undetermined');
+    expect(status.decidedBy).toBe('orchestrator');
+    expect(signingNowResolvesRelease(status)).toBe(false);
+  });
+
+  it('no sequence id: the resolver cannot see a sequence signature, so it is the orchestrator that decided', async () => {
+    noOrchestratorRuns();
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+    });
+    expect(status.verdict).toBe('unsigned');
+    expect(status.decidedBy).toBe('orchestrator');
+    expect(signingNowResolvesRelease(status)).toBe(false);
+  });
+});
+
+describe('signingNowResolvesRelease — the whole table', () => {
+  const verdicts = ['signed', 'unsigned', 'awaiting', 'invalid', 'revoked', 'undetermined'] as const;
+  const RESOLVED_BY_SIGNING = new Set(['sequence:unsigned', 'sequence:revoked']);
+
+  for (const decidedBy of ['sequence', 'orchestrator', undefined] as const) {
+    for (const verdict of verdicts) {
+      const key = `${decidedBy}:${verdict}`;
+      const expected = RESOLVED_BY_SIGNING.has(key);
+      it(`${decidedBy ?? '(unreported)'} / ${verdict} → ${expected}`, () => {
+        // An unreported spine is never assumed to be the sequence: absent
+        // evidence of which spine decided is not permission to offer a
+        // signature the resolver may never read.
+        expect(signingNowResolvesRelease({ verdict, decidedBy })).toBe(expected);
+      });
+    }
+  }
+});
+
 describe('the assessor actually passes the sequence', () => {
   /* Everything above tests the resolver in isolation, and the resolver falls
      back to submission-wide behaviour when no sequenceNumber is supplied. So a
@@ -442,6 +690,18 @@ describe('the assessor actually passes the sequence', () => {
       /sequenceNumber:\s*sequence\.sequenceNumber/.test(calls[0] ?? ''),
       'the assessor resolves a release signature WITHOUT naming its sequence, so a ' +
         'signature over any other sequence of the same submission clears this one',
+    ).toBe(true);
+  });
+
+  it('hands the resolver this sequence\'s REGION', () => {
+    // Typed optional so a region-less caller keeps compiling, which leaves the
+    // region filter one deleted argument away from being dead code — and its
+    // absence reads as "signed", the false clear this pair of changes removes.
+    const calls = src.match(/resolveReleaseSignatureStatus\(\{[\s\S]*?\}\)/g) ?? [];
+    expect(
+      /region:\s*sequence\.region/.test(calls[0] ?? ''),
+      'the assessor no longer names the sequence region, so a release signed over ' +
+        'another region of the same submission clears this one',
     ).toBe(true);
   });
 

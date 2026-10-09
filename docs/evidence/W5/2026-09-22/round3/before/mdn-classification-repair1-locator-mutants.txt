@@ -1,0 +1,34 @@
+=== MUTANT m5: declared-boundary search disabled (fallback only)
+1
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with a multipart/alternative human part (P4), accepting our message, is the receipt — with and without the HTTP Content-Type 11ms
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with a text/rfc822-headers third part echoing our multipart/signed headers (P5), accepting our message, is the receipt — with and without the HTTP Content-Type 1ms
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with a text/plain part quoting a boundary-bearing Content-Type (P13), accepting our message, is the receipt — with and without the HTTP Content-Type 1ms
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with the boundary known from the HTTP Content-Type, a delimiter-like line inside a text part cannot name a second notification 4ms
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > the part locator — a boundary declared in the body, and the end of the notification part > with a boundary declared in the body, a delimiter-like line inside a text part does not open a second part 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 57 passed (62)
+=== MUTANT m5b: declared-boundary search replaced by anywhere search
+1
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with the boundary known from the HTTP Content-Type, a delimiter-like line inside a text part cannot name a second notification 15ms
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > the part locator — a boundary declared in the body, and the end of the notification part > a notification Content-Type line inside a text/plain part BODY does not name a part 1ms
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > the part locator — a boundary declared in the body, and the end of the notification part > with a boundary declared in the body, a delimiter-like line inside a text part does not open a second part 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 59 passed (62)
+=== MUTANT m6: DN part not ended at next delimiter
+1
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > the part locator — a boundary declared in the body, and the end of the notification part > the notification part ends at the next delimiter: a later part naming another message does not make it ambiguous 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 61 passed (62)
+=== MUTANT m7: HTTP Content-Type boundary ignored
+1
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with the boundary known from the HTTP Content-Type, a delimiter-like line inside a text part cannot name a second notification 17ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 61 passed (62)
+=== MUTANT m8: no any-delimiter fallback when outer boundary unknown
+1
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with a multipart/alternative human part (P4), accepting our message, is the receipt — with and without the HTTP Content-Type 8ms
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with a text/rfc822-headers third part echoing our multipart/signed headers (P5), accepting our message, is the receipt — with and without the HTTP Content-Type 1ms
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with a text/plain part quoting a boundary-bearing Content-Type (P13), accepting our message, is the receipt — with and without the HTTP Content-Type 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 59 passed (62)
+RESTORED

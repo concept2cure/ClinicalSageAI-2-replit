@@ -1,0 +1,10 @@
+$ # mounts unchanged at 2ec744b7
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it 6ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > passes a header naming the session's own organisation 1ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > passes a request with no header 0ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > with no session it neither refuses nor adopts the header (the boundary already answered) 0ms
+ × server/startup/__tests__/tenant-impersonation-detector.test.ts > where it is mounted > applyAuthBoundary mounts the boundary and then the detector on /api 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the detector is not mounted behind the boundary: expected [ 'authBoundary' ] to have a length of 2 but got 1
+      Tests  1 failed | 4 passed (5)
+exit=1

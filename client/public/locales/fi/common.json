@@ -33,5 +33,11 @@
   "language": {
     "label": "Kieli",
     "select": "Valitse kieli"
+  },
+  "session": {
+    "stillThere": "Oletko vielä paikalla?",
+    "signOutIn": "Sinut kirjataan ulos {{seconds}} sekunnin kuluttua käyttämättömyyden vuoksi.",
+    "staySignedIn": "Pysy kirjautuneena",
+    "signOutNow": "Kirjaudu ulos nyt"
   }
 }

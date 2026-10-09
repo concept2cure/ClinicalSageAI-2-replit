@@ -29,6 +29,7 @@ import {
 } from '../lib/tamper-proof-audit';
 import { assertAuditTrailForProduction } from './audit-enforcement';
 import type { DebugLogger } from './types';
+import { clientIpOf } from '../utils/client-ip';
 
 const SKIP_PATH_PATTERNS: RegExp[] = [
   /^\/api\/health/,
@@ -67,13 +68,6 @@ function correlationIdFor(req: Request): string | undefined {
   return undefined;
 }
 
-function clientIpFor(req: Request): string | undefined {
-  const xff = req.headers['x-forwarded-for'];
-  if (typeof xff === 'string' && xff.length > 0) {
-    return xff.split(',')[0].trim();
-  }
-  return req.ip ?? req.socket?.remoteAddress ?? undefined;
-}
 
 function shouldSkip(path: string): boolean {
   return SKIP_PATH_PATTERNS.some(pattern => pattern.test(path));
@@ -133,7 +127,7 @@ export function applyAuditTrailMiddleware(
             userId: userIdStr,
             correlationId: correlationIdFor(req),
             resourceType: req.path.split('/').filter(Boolean)[1], // e.g. /api/projects/... → "projects"
-            ipAddress: clientIpFor(req),
+            ipAddress: clientIpOf(req) ?? undefined,
             userAgent:
               typeof req.headers['user-agent'] === 'string'
                 ? req.headers['user-agent']

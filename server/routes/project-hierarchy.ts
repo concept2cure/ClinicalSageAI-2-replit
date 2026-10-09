@@ -20,6 +20,10 @@ import { and, eq, isNull, asc } from 'drizzle-orm';
 import { getTenantContext, getRequestActor } from '../utils/tenantContext';
 import { ProjectRollupService } from '../services/project-rollup-service';
 
+// People are named through public.actor_name, not a join on users: since users
+// took row-level security (D3, 2026-09-28) a tenant scope reads only current
+// members, so the join dropped the name of anyone who had left
+// (docs/evidence/D3/2026-09-29-actor-names/).
 const router = Router();
 const pool = getPool();
 const rollupService = new ProjectRollupService(pool);
@@ -167,7 +171,7 @@ router.get('/:projectId/children', async (req: Request, res: Response) => {
       `SELECT p.*, u.name as owner_name,
               (SELECT COUNT(*)::int FROM projects c WHERE c.parent_project_id = p.id) as child_count
        FROM projects p
-       LEFT JOIN users u ON p.owner_id = u.id
+       LEFT JOIN LATERAL public.actor_name(p.owner_id) u ON TRUE
        WHERE p.parent_project_id = $1 AND p.organization_id = $2
        ORDER BY p.priority DESC, p.name ASC`,
       [projectId, organizationId]
@@ -518,7 +522,7 @@ router.get('/flat', async (req: Request, res: Response) => {
              parent.name as parent_name,
              (SELECT COUNT(*)::int FROM projects c WHERE c.parent_project_id = p.id) as child_count
       FROM projects p
-      LEFT JOIN users u ON p.owner_id = u.id
+      LEFT JOIN LATERAL public.actor_name(p.owner_id) u ON TRUE
       LEFT JOIN projects parent ON p.parent_project_id = parent.id
       WHERE p.organization_id = $1
     `;

@@ -9,6 +9,7 @@ import { documents, documentVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { db } from '../db';
 import { requestDb, requestPgClient } from '../db/requestDb';
+import { FeatureToggleService } from '../services/featureToggleService';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
@@ -22,21 +23,46 @@ const resolveOrganizationId = (req: any) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const resolveClientWorkspaceId = (req: any) => {
-  const headerClient =
-    req.header('x-client-id') ||
-    req.header('x-client-workspace-id') ||
-    req.header('x-client-workspace');
+type ClientWorkspaceClaim =
+  | { ok: true; id: number }
+  | { ok: false; status: 400 | 403; error: string };
+
+/**
+ * The client workspace the request names — X-Client-ID, either alias, or a
+ * query parameter — once it is shown to be one of the organisation's own.
+ *
+ * The header is a claim, not context (security audit 2026-09-24, IAM-15 / plan
+ * P1-7b): before this check the id went straight into
+ * documents.client_workspace_id, so another organisation's workspace key could
+ * sit on this tenant's document row. A claim outside the organisation is
+ * refused without saying whether the id exists anywhere. The ownership read is
+ * the one FeatureToggleService.workspaceInOrganization makes for the feature
+ * gate, so the two consumers cannot drift.
+ */
+const resolveClientWorkspaceId = async (
+  req: any,
+  organizationId: number
+): Promise<ClientWorkspaceClaim> => {
   const queryClient = req.query?.client_workspace_id || req.query?.clientWorkspaceId;
-  const raw = headerClient || queryClient;
+  // security-allow: workspace-claim — verified against the session's organisation below (P1-7b)
+  const headerClient = req.header('x-client-id') || req.header('x-client-workspace-id');
+  // security-allow: workspace-claim — the third spelling of the same header, same verification
+  const raw = headerClient || req.header('x-client-workspace') || queryClient;
   if (!raw) {
-    throw new Error('Client workspace context required');
+    return { ok: false, status: 400, error: 'Client workspace context required' };
   }
   const parsed = Number(raw);
   if (!Number.isFinite(parsed) || parsed <= 0) {
-    throw new Error('Invalid client workspace ID');
+    return { ok: false, status: 400, error: 'Invalid client workspace ID' };
   }
-  return parsed;
+  if (!(await FeatureToggleService.workspaceInOrganization(parsed, organizationId))) {
+    return {
+      ok: false,
+      status: 403,
+      error: 'Client workspace does not belong to the caller organization',
+    };
+  }
+  return { ok: true, id: parsed };
 };
 
 const resolveUserId = (req: any) => {
@@ -546,7 +572,11 @@ router.post('/documents/:documentId/save', authMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'Organization context required' });
   }
 
-  const clientWorkspaceId = resolveClientWorkspaceId(req);
+  const workspace = await resolveClientWorkspaceId(req, organizationId);
+  if (!workspace.ok) {
+    return res.status(workspace.status).json({ error: workspace.error });
+  }
+  const clientWorkspaceId = workspace.id;
   const userId = resolveUserId(req);
   const parsed = saveSchema.safeParse(req.body);
   if (!parsed.success) {

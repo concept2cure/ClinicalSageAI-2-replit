@@ -4,8 +4,8 @@
  * to set the RLS session vars `app.current_tenant_id` / `app.current_user_role`
  * / `app.current_org_id` on that connection), then runs the query. Subsequent
  * `.query()` calls reuse the cached client. `release()` clears the session
- * vars and returns the client to the pool; it is a no-op if no connection
- * was ever acquired.
+ * vars and returns the client to the pool, or discards it when a transaction
+ * is still open on it; it is a no-op if no connection was ever acquired.
  *
  * The point is to stop spending a pool slot on every authenticated request
  * regardless of whether the handler actually touches the database — before
@@ -107,9 +107,35 @@ export class LazyRequestDbClient implements RequestDbClient {
         error: cleanupError.message,
       });
     } finally {
+      // The resets queue behind any statement still in flight, so by now the
+      // status is current. A request that closed between BEGIN and COMMIT (a
+      // client abort fires res 'close') leaves the connection inside its
+      // transaction. Pooled, the next request would run inside it: its COMMIT
+      // could commit this request's half-written, unaudited change, and a
+      // rollback would revert the session variables (set with is_local=false,
+      // so transactional) to THIS tenant's. Discarding the connection makes
+      // Postgres roll the transaction back on disconnect.
+      const status = transactionStatus(client);
+      if (!cleanupError && status !== null && status !== 'I') {
+        cleanupError = new Error(
+          `Request DB client released inside an open transaction (status ${status}); connection discarded so the transaction rolls back`,
+        );
+        logger.warn('Discarded a request DB client released mid-transaction', { status });
+      }
       // node-postgres destroys a pooled client when release receives an
-      // error. A clean release is only safe after every reset succeeds.
+      // error. A clean release is only safe after every reset succeeds and
+      // no transaction is open.
       client.release(cleanupError ?? undefined);
     }
   }
+}
+
+/**
+ * The connection's transaction status as node-postgres last read it from
+ * ReadyForQuery: 'I' idle, 'T' in a transaction, 'E' in a failed one. Null when
+ * the client does not report it (pg before 8.x's getTransactionStatus).
+ */
+function transactionStatus(client: PoolClient): string | null {
+  const read = (client as PoolClient & { getTransactionStatus?: () => string | null }).getTransactionStatus;
+  return typeof read === 'function' ? read.call(client) ?? null : null;
 }

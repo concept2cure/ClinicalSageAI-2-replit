@@ -1,0 +1,34 @@
+# Posture of the database these runs used — read from the catalog, 2026-09-24
+# PostgreSQL 16, provisioned from an empty database by install-fresh + deploy-migrate at e0e42ec4
+# (the same database as docs/evidence/D3/2026-09-24-governed-decisions/)
+
+server_version                     16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+public base tables                 973
+app_service                        superuser=false bypassrls=false
+
+# The tables the Report OS handlers read and write:
+c2c_correspondence                 rls=true force=true owner=postgres policies=1 org_column=organization_id
+c2c_correspondence_issues          rls=true force=true owner=postgres policies=1 org_column=none
+c2c_submissions                    rls=true force=true owner=postgres policies=1 org_column=organization_id
+project_intelligence_profiles      rls=true force=true owner=postgres policies=1 org_column=organization_id
+project_memory_entries             rls=true force=true owner=postgres policies=1 org_column=organization_id
+projects                           rls=true force=true owner=postgres policies=1 org_column=organization_id
+report_program_group_projects      rls=false force=false owner=postgres policies=0 org_column=none
+report_program_group_snapshots     rls=true force=true owner=postgres policies=1 org_column=organization_id
+report_program_groups              rls=true force=true owner=postgres policies=1 org_column=organization_id
+report_run_dependencies            rls=true force=true owner=postgres policies=1 org_column=organization_id
+report_runs                        rls=true force=true owner=postgres policies=1 org_column=organization_id
+report_snapshots                   rls=true force=true owner=postgres policies=1 org_column=organization_id
+report_type_registry               rls=false force=false owner=postgres policies=0 org_column=none
+
+report_type_registry rows          0
+# (0 on a deployed database: no file in the migration set seeds it — ledger L188.)
+
+# report_program_group_projects has no organization column and no policy. Its FK to
+# projects is checked without RLS, so the database cannot refuse a membership naming
+# another tenant's project; mutation E shows it does not.
+
+# The contract's first case asserts the RUNTIME side through the server pool:
+#   current_user = app_service, is_superuser = false, rolbypassrls = false, app.rls_enforce = 'on'
+# It passes in every run filed here, mutations included (A, B and D disable RLS on
+# nine named tables only; enforcement stays on for the session).

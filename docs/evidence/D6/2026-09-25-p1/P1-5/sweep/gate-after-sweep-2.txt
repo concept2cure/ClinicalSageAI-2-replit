@@ -1,0 +1,3 @@
+$ node scripts/ci/check-upload-guards.mjs  # after sweep 2
+[ci:upload-guards] OK — 4 unguarded multer site(s) across 3 file(s), none new; 19 file(s) build uploads.
+exit=0

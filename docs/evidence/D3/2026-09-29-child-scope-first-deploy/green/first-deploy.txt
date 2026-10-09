@@ -1,0 +1,19 @@
+# c2c_cs_green: provisioned from blank with the child scope in the isolation tail (uuid step -> child scope -> sweep), by scripts/db/provision-test-db.sh (install-fresh, then ONE deploy-migrate)
+## child-rls lines from the first deploy:
+296:      [NOTICE] trigger "trg_export_job_audit_hash" for relation "regulatory_harmonization.export_job_audit_log" does not exist, skipping
+309:      [NOTICE] - export_job_audit_log (detailed job audit)
+734:      [NOTICE] [child-rls] 9 policied, 97 skipped
+755:      [NOTICE] [child-rls] regulatory_harmonization.export_job_audit_log scoped through regulatory_harmonization.export_jobs (chained)
+756:      [NOTICE] [child-rls] chained: 2 policied, 19 skipped
+811:✅ c2c_cs_green provisioned — 1238 base tables
+
+## rls-coverage-check after the first deploy: 0 row(s)
+
+## a second deploy-migrate:
+      [NOTICE] [child-rls] 0 policied, 106 skipped
+      [NOTICE] [child-rls] chained: 0 policied, 21 skipped
+✅ Schema migration complete — safe to roll services.
+## rls-coverage-check after the second deploy: 0 row(s)
+
+ Test Files  5 passed (5)
+      Tests  72 passed (72)

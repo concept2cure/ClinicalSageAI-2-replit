@@ -14,6 +14,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
+import { serverError } from '../../lib/api-response.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('cmc-change-impact-simulator');
 
 // Rate limiter for impact simulation (more permissive)
 const impactSimulationLimiter = rateLimit({
@@ -24,6 +28,14 @@ const impactSimulationLimiter = rateLimit({
   message: 'Too many impact simulation requests, please try again after a minute',
 });
 import { ai } from '../../lib/unified-ai-client';
+
+// Model governance (2026-09-23): both calls pinned `model: 'gpt-4o'` as a
+// 'general' request, which the gateway's high-risk approval check never sees —
+// so gpt-4o decided the filing category (CBE-30, Type II variation) and the
+// bridging studies for a manufacturing change. They are now regulatory_review:
+// only a model approved for high-risk regulatory work serves them. The filing
+// category is still a model's verdict (CLAUDE.md Rule 2); the deterministic
+// classifier is POST /api/cmc/variations/classify (supac-classifier.ts).
 
 // Create router
 const router = express.Router();
@@ -105,7 +117,8 @@ router.post('/simulate', checkForOpenAIKey, impactSimulationLimiter, async (req,
     ];
 
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'regulatory_review',
+      callerModule: 'cmc/change-impact-simulator.simulate',
       messages: messages,
       temperature: 0.3,
       max_tokens: 2500,
@@ -137,11 +150,7 @@ router.post('/simulate', checkForOpenAIKey, impactSimulationLimiter, async (req,
       downloadUrl: `/api/cmc/change-impact-simulator/download/${simulationId}`,
     });
   } catch (error) {
-    console.error('Error in impact simulation:', error);
-    return res.status(500).json({
-      error: 'An error occurred while simulating change impact',
-      details: error.message,
-    });
+    return serverError(res, logger, 'simulating change impact', error);
   }
 });
 
@@ -197,7 +206,8 @@ router.post('/market-report', checkForOpenAIKey, impactSimulationLimiter, async 
     ];
 
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'regulatory_review',
+      callerModule: 'cmc/change-impact-simulator.market-report',
       messages: messages,
       temperature: 0.3,
       max_tokens: 2500,
@@ -224,11 +234,7 @@ router.post('/market-report', checkForOpenAIKey, impactSimulationLimiter, async 
       downloadUrl: `/api/cmc/change-impact-simulator/download/${simulationId}`,
     });
   } catch (error) {
-    console.error('Error in market report generation:', error);
-    return res.status(500).json({
-      error: 'An error occurred while generating the market report',
-      details: error.message,
-    });
+    return serverError(res, logger, 'generating the market report', error);
   }
 });
 
@@ -269,11 +275,7 @@ router.get('/download/:simulationId', (req, res) => {
       return res.json(simulationData);
     }
   } catch (error) {
-    console.error('Error in simulation download:', error);
-    return res.status(500).json({
-      error: 'An error occurred while downloading the simulation',
-      details: error.message,
-    });
+    return serverError(res, logger, 'downloading the simulation', error);
   }
 });
 

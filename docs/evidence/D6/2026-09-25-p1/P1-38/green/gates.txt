@@ -1,0 +1,3 @@
+check-security-patterns: 0 violations across 2856 file(s).
+=== server-error-leaks ===
+[ci:server-error-leaks] OK — 120 baselined site(s) across 77 file(s); no file gained one.

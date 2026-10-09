@@ -1,0 +1,4 @@
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > superiority sized for 80% reports a computed power at or just above 80%, not the target echoed 3ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > non-inferiority sized for 90% reports ~90% 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > each scenario reports the power computed for its own N, not one echoed target 1ms
+      Tests  3 passed | 118 skipped (121)

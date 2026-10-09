@@ -1,0 +1,44 @@
+# vitest, HEAD af833c44 working tree, 2026-09-25T02:19:28Z — server/services/audit/__tests__/audit-archive.test.ts (service unit tests with the existing test doubles) and the P0-9a trigger self-check suites that also apply the amended migration
+# command: npx vitest run --config vitest.config.ts server/services/audit/__tests__/audit-archive.test.ts server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts server/services/audit/__tests__/audit-immutability-triggers.test.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > names the immutability triggers of every audit store the sweep verifies
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > is created by a migration on the deploy applier, under exactly that name (drift guard)
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports ok when every expected trigger is present and enabled
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > issues one read-only catalog probe over pg_trigger, pg_class and pg_namespace, parameterised
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > names a trigger the catalog does not have (trg_audit_logs_no_delete dropped)
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > treats a disabled trigger (ALTER TABLE … DISABLE TRIGGER) as not protecting the table
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports a table that does not exist yet as missing every trigger on it
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > fails closed when the probe returns no row for an expected trigger
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > propagates a probe failure rather than reporting ok (caller decides the posture)
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > describeAuditImmutabilityGap > names every missing and disabled trigger, the absent tables and the migration to run
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > security-health panel exposure > runs as a critical check that fails when a trigger is missing
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > archives rows past cutoff and removes them from hot through the door
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > calls the door once per batch with the ids, the sink locator, the stored checksum and the cutoff, after the sink confirmed
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > never opens the trigger with a session setting and never issues a raw DELETE
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > a refusal by the door aborts the batch, is counted and reported, and leaves the rows in hot
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > a door that reports a count other than the batch size is treated as a refusal
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > works on a Pool-shaped client without checking out a dedicated connection
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > does NOT call the door when the sink reports a checksum mismatch
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > aborts on sink throw and leaves rows in hot
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > chunks large datasets into multiple batches, one door call each
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > respects maxBatches as a time-box
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > returns zero work when nothing past cutoff
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > the default cutoff is never inside the 24-month floor the door enforces
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > computeBatchHash > produces the same hash for the same rows regardless of key order
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > computeBatchHash > produces different hashes for different content
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports ok after the real trigger migrations have been applied
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > stays ok when the migrations replay (they re-run on every deploy, CLAUDE.md Rule 1)
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a dropped trigger
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled trigger — the catalog row exists, the protection does not
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports an absent store (fresh install before deploy-migrate) as missing its triggers
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > does not count a same-named trigger on another table
+
+ Test Files  3 passed (3)
+      Tests  31 passed (31)
+   Start at  02:19:29
+   Duration  3.40s (transform 496ms, setup 256ms, import 819ms, tests 2.69s, environment 0ms)
+
+exit=0

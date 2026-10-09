@@ -1,0 +1,41 @@
+# Green — 2026-09-28, working tree on 80cbd718a
+
+## The three suites
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should create a project with valid payload 613ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > seeds the blueprint’s milestones through the ledgered seeder, as the project’s creator 7ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should create a conversation for a project 7ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should create an artifact for a project 39ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should persist template lineage when creating artifact from template 5ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should reject AI template generation without projectId unless adhoc context is explicit 2ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should return IND package templates when filtered by package 2ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should allow AI template generation when adhoc context is explicit 3ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should create a signature for an artifact version — through the one signing substrate 8ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > refuses a signature whose password does not verify — identity is checked at the moment of signing 1ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > each reach the board with a task.create row naming its creator, in the order they were seeded 71ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > seeded twice, the second run adds no task and no row 40ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > with no creator to name, nothing is seeded — no board task without its record 12ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > when the ledger cannot be written, no milestone stays on the board 20ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > a milestone that cannot be written takes the ones before it back: all or none 19ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > the design proposes at least two tasks (the cases below need a selection of more than one) 6ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > each reach the board naming its creator, with a task.create row, in the order raised 113ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > when the ledger cannot be written, nothing is raised and nothing is answered "created" 24ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > with no creator to name, nothing is raised 14ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > a task that cannot be written takes the ones before it back: all or none 42ms
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+
+## Neighbouring suites: server/services/tasking, server/services/biostatistics-bridge, tests/routes/concept2cure*, governed-command-vocabulary contract
+ Test Files  21 passed (21)
+      Tests  222 passed (222)
+
+## Gates
+ci:discarded-audit-write exit=0 :: check-discarded-audit-write: no new occurrences. 124 baselined across 55 file(s).
+ci:server-error-leaks exit=0 :: [ci:server-error-leaks] OK — 119 baselined site(s) across 76 file(s); no file gained one.
+ci:tenant-isolation:no-regression exit=0 :: [ci:tenant-isolation] OK — no new findings above baseline (8 current, 8 baseline)
+ci:drizzle-tenant-scope exit=0 :: [ci:drizzle-tenant-scope] OK — 125 site(s), all baselined; 26 fixed since the baseline was written.
+check:security-patterns exit=0 :: check-security-patterns: 0 violations across 2907 file(s).
+ci:db-test-isolation exit=0 :: [ci:db-test-isolation] OK — 73 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+ci:check-unrun-tests exit=0 :: [ci:unrun-tests] OK — every test file is reachable by a runner, or explained.
+ci:unreferenced-modules exit=0 :: Unreferenced modules: 86 (baseline 86)
+ci:fabricated-identity exit=0 :: [ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+audit-requestdb-coverage --strict-no-regression: fails on server/routes/study-design-planning.ts only (dd52716ed, another lane; handed on in docs/work-orders/README.md). None of this change's files is listed.

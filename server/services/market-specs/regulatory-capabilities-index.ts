@@ -65,7 +65,7 @@ export const REGULATORY_CAPABILITIES: RegulatoryCapability[] = [
   { id: 'stored_cer', label: 'Stored-CER assessment', category: 'oversight', description: 'Gap-check a persisted cer_reports/cer_sections record against the canonical CER structure.', route: 'GET /device/cer/:reportId/assess-stored', anaTool: 'assess_stored_cer', deterministic: true },
 
   // Enforcement.
-  { id: 'market_formatting', label: 'Market formatting validation', category: 'enforcement', description: 'Enforce a market spec’s formatting rules against file descriptors.', route: 'POST /market-specs/:specId/validate', anaTool: 'validate_market_formatting', deterministic: true },
+  { id: 'market_formatting', label: 'Market formatting validation', category: 'enforcement', description: 'Check a market spec’s formatting rules against file descriptors; declared sizes and encryption are claims, so byte-level rules report not assessed unless the bytes were measured.', route: 'POST /market-specs/:specId/validate', anaTool: 'validate_market_formatting', deterministic: true },
   { id: 'udi', label: 'UDI validation', category: 'enforcement', description: 'GS1 check digit + GTIN-14 + AI parsing → GUDID/EUDAMED components.', route: 'POST /device/udi/validate', anaTool: 'validate_udi', deterministic: true },
   { id: 'dispatch_readiness', label: 'Dispatch readiness gate', category: 'enforcement', description: 'Server-computed, tamper-proof eCTD dispatch gate.', route: 'GET /sequences/:seqId/dispatch-readiness', anaTool: 'assess_dispatch_readiness', deterministic: true },
 ];

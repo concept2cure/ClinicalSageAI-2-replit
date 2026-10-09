@@ -38,7 +38,7 @@ vi.mock('@/hooks/useGlobalRiCatalog', () => ({
 
 import { Review } from '../surfaces/Review';
 import { TaskBoard } from '../surfaces/TaskBoard';
-import { GlobalRiBrowser } from '../surfaces/Surfaces';
+import { GlobalRiBrowser } from '../surfaces/GlobalRiBrowser';
 import {
   __resetSurfaceActionBus,
   applySurfaceAction,
@@ -85,7 +85,10 @@ describe('Review — AnA operates the real board', () => {
   beforeEach(() => {
     apiRequest.mockReset();
     apiRequest.mockImplementation(async (_m: string, path: string) => {
-      if (path === '/api/review/board') return ok({ success: true, data: REVIEW_BOARD });
+      // The board read takes a scope (and the reviewer's identity) on the query
+      // string since it moved onto the authoring review store — match the
+      // route, not one spelling of its parameters.
+      if (path.startsWith('/api/review/board')) return ok({ success: true, data: REVIEW_BOARD });
       return ok({ success: true, data: { threads: [], tasks: [], permissions: {} } });
     });
   });
@@ -212,7 +215,7 @@ describe('TaskBoard — the aliased surface obeys nav-target-addressed directive
       ) as typeof outcome;
     });
     expect(outcome.status).toBe('failed');
-    expect(outcome.reason).toContain('No programme named');
+    expect(outcome.reason).toContain('No project named');
   });
 
   it('tasking.open-task opens the detail, and a second open is refused while it holds the canvas', async () => {

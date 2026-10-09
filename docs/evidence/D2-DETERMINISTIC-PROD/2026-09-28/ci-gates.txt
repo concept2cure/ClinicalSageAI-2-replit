@@ -1,0 +1,3 @@
+ci:gateway-bypass          exit=0 | [check-gateway-bypass] OK — no new bypasses (8 baselined site(s) tolerated).
+check:microcopy            exit=0 | [ci:microcopy] OK — scanned 391 customer-facing files, no exclamations or pictographs.
+check:compliance-claims    exit=0 | [ci:compliance-claims] OK — scanned 922 customer-facing files, no unsupported claims.

@@ -564,14 +564,22 @@ have failed to recognise it. Nothing had ever executed the failure path.
 Fixed by removing the redundant `MESSAGE =` option, keeping the RAISE literal as
 the message — the form the repo's other immutability triggers already use.
 Verified by running the path: UPDATE → `P0A01`, DELETE → `P0A02`, both carrying
-the full DETAIL and HINT, and `SET LOCAL app.audit_archive_bypass = 'on'` still
-lets the retention service delete.
+the full DETAIL and HINT, and (at that time) `SET LOCAL app.audit_archive_bypass = 'on'`
+still let the retention service delete. **Since 2026-09-25 that setting is not
+read at all** (security audit 2026-09-24 DP-04, plan P0-8a): the DELETE trigger
+admits only `public.audit_logs_archive_delete()`, a SECURITY DEFINER function
+owned by the NOLOGIN role `audit_archiver`, which records the batch in
+`public.audit_log_archives` and refuses any row inside the 24-month hot window.
+A test tearing down its own rows does so as the table owner with the trigger
+disabled for that transaction only.
 
 One consequence worth naming: `tests/db/c2c-project-persistence.dbtest.ts` tore
 down its probe rows with a bare `DELETE FROM audit_logs`, which only ever
 succeeded because the first run had nothing to delete and later runs died on the
-malformed RAISE rather than on the guard. It now opts into the same authorized
-archival path, so `npm run test:db` is re-runnable against one database.
+malformed RAISE rather than on the guard. It then opted into the archival
+setting; since 2026-09-25 every dbtest teardown disables the DELETE trigger as
+the owner inside its own transaction instead, so `npm run test:db` stays
+re-runnable against one database.
 
 ---
 

@@ -17,8 +17,11 @@ import express from 'express';
 import { CMC_SOURCE_TYPES } from '../../services/module3Composer';
 import { z } from 'zod';
 import { autoDraftModule3 } from '../../services/cmc/auto-draft-composer';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 const router = express.Router();
+const log = createScopedLogger('module3-auto-draft');
 
 /* The composer's own list — a hand copy here lacked qc_result and drifted. */
 
@@ -121,10 +124,7 @@ router.post('/auto-draft/:projectId', async (req, res) => {
     if (String((error as Error)?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({
-      success: false,
-      error: (error instanceof Error ? error.message : String(error)) || 'Auto-draft failed',
-    });
+    return serverError(res, log, 'auto-drafting Module 3', error);
   }
 });
 

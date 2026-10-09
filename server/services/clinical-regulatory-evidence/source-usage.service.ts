@@ -52,12 +52,56 @@ import { randomUUID } from 'node:crypto';
 
 import { pool } from '../../db';
 import { visibleOrgClause } from './evidence-spine.service';
+import type { Queryable } from './span-lineage.service';
 import type { CitationSource } from '@shared/authoring/citations';
 
 /** The `authoring_citations.source` discriminator for a canonical-source citation. */
 export const CRE_SOURCE_CITATION = 'cre_evidence_source';
 
 export class SourceUsageError extends Error {}
+
+/**
+ * The writers below take the caller's transaction client, so a citation write
+ * and the audit row recording it commit together or not at all. Without one
+ * they run on the pool. Resolved at call time, not at import.
+ */
+const onPool = (): Queryable => pool as unknown as Queryable;
+
+/**
+ * A citation row as an audit entry records it: the before or after image of a
+ * write, under the table's own column names so it reads directly against
+ * `authoring_citations`.
+ */
+export interface CitationImage {
+  id: string;
+  section_id: string;
+  source: string | null;
+  reference_id: string | null;
+  citation_text: string | null;
+  payload_sha256: string | null;
+  anchor?: unknown;
+  created_by?: string | null;
+  created_at?: string | Date | null;
+}
+
+/** What a citation write changed. A write that changed nothing returns null instead. */
+export interface CitationChange {
+  before: CitationImage | null;
+  after: CitationImage | null;
+}
+
+const CITATION_IMAGE_COLUMNS = 'id, section_id, source, reference_id, citation_text, payload_sha256';
+
+function citationImage(row: CitationImage): CitationImage {
+  return {
+    id: row.id,
+    section_id: row.section_id,
+    source: row.source,
+    reference_id: row.reference_id,
+    citation_text: row.citation_text,
+    payload_sha256: row.payload_sha256,
+  };
+}
 
 /**
  * Whether a citation still stands against its source's current content.
@@ -165,9 +209,12 @@ function usageState(
  * the citation asserts "drafted from this content", and the assertion stays
  * checkable after the source moves.
  *
- * Idempotent per (section, source): citing the same source twice re-resolves the
- * existing row to the current checksum instead of accumulating duplicates, so a
- * section's source list is a set of sources, not a log of clicks.
+ * Idempotent per (section, source): citing a source the section already cites
+ * returns that citation instead of accumulating duplicates, so a section's
+ * source list is a set of sources, not a log of clicks. See {@link recite} for
+ * what a second cite does and does not change.
+ *
+ * `change` is what was written, for the caller's audit row; null when nothing was.
  */
 export async function citeSource(
   orgId: number,
@@ -178,12 +225,13 @@ export async function citeSource(
     anchor?: unknown;
     createdBy: string;
   },
-): Promise<{ citationId: string; citedChecksum: string | null; created: boolean }> {
+  executor: Queryable = onPool(),
+): Promise<{ citationId: string; citedChecksum: string | null; created: boolean; change: CitationChange | null }> {
   const [sourceId] = numericIds([p.sourceId]);
   if (!sourceId) throw new SourceUsageError('sourceId must be a positive integer');
   if (!p.sectionId) throw new SourceUsageError('sectionId is required');
 
-  const section = await pool.query(
+  const section = await executor.query(
     `SELECT id FROM authoring_sections WHERE id = $1 AND tenant_id = $2 LIMIT 1`,
     [p.sectionId, orgId],
   );
@@ -192,7 +240,7 @@ export async function citeSource(
   }
 
   const c = visibleOrgClause(orgId, 2);
-  const source = await pool.query<{ id: number; checksum: string | null }>(
+  const source = await executor.query<{ id: number; checksum: string | null }>(
     `SELECT id, checksum FROM cre_evidence_sources
       WHERE id = $1 AND ${c.sql} AND deleted_at IS NULL LIMIT 1`,
     [sourceId, c.param],
@@ -202,28 +250,21 @@ export async function citeSource(
   }
   const checksum = source.rows[0].checksum ?? null;
 
-  // Re-resolve an existing citation of the same source rather than duplicating.
-  const existing = await pool.query<{ id: string }>(
-    `SELECT id FROM authoring_citations
+  // Locked for the same reason as the re-read below: it is the before-image.
+  const existing = await executor.query<CitationImage & { frozen_at: string | null }>(
+    `SELECT ${CITATION_IMAGE_COLUMNS}, frozen_at FROM authoring_citations
       WHERE section_id = $1 AND tenant_id = $2 AND source = $3 AND reference_id = $4
-      ORDER BY created_at ASC LIMIT 1`,
+      ORDER BY created_at ASC LIMIT 1
+      FOR UPDATE`,
     [p.sectionId, orgId, CRE_SOURCE_CITATION, String(sourceId)],
   );
-
   if (existing.rows.length > 0) {
-    await pool.query(
-      `UPDATE authoring_citations
-          SET payload_sha256 = $1,
-              citation_text = COALESCE($2, citation_text)
-        WHERE id = $3 AND tenant_id = $4 AND frozen_at IS NULL`,
-      [checksum, p.citationText ?? null, existing.rows[0].id, orgId],
-    );
-    return { citationId: existing.rows[0].id, citedChecksum: checksum, created: false };
+    return recite(orgId, existing.rows[0], p.citationText ?? null, executor);
   }
 
   // The column is UUID, like every other id the authoring router mints.
   const citationId = randomUUID();
-  await pool.query(
+  await executor.query(
     `INSERT INTO authoring_citations
        (id, section_id, source, anchor, citation_text, reference_id, created_by, created_at, tenant_id, payload_sha256)
      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8, $9)`,
@@ -239,24 +280,71 @@ export async function citeSource(
       checksum,
     ],
   );
-  return { citationId, citedChecksum: checksum, created: true };
+  const after: CitationImage = {
+    id: citationId,
+    section_id: p.sectionId,
+    source: CRE_SOURCE_CITATION,
+    reference_id: String(sourceId),
+    citation_text: p.citationText ?? null,
+    payload_sha256: checksum,
+  };
+  return { citationId, citedChecksum: checksum, created: true, change: { before: null, after } };
 }
 
-/** Stop citing a source from a section. Frozen citations are immutable. */
+/**
+ * Citing a source the section already cites.
+ *
+ * The recorded checksum is NOT re-read. This used to set payload_sha256 to the
+ * source's checksum today, re-baselining the one value that says what the
+ * section was drafted against, with no record of the value it replaced; and the
+ * workbench cites every citation the editor inserts, so it happened without
+ * anyone asking to re-read anything (periodic review 2026-09-28, editor family,
+ * SEC-A-8). Re-reading is the explicit, audited refresh below. A second cite
+ * changes only the citation text, and only when new text is supplied.
+ */
+async function recite(
+  orgId: number,
+  prior: CitationImage & { frozen_at: string | null },
+  citationText: string | null,
+  executor: Queryable,
+): Promise<{ citationId: string; citedChecksum: string | null; created: false; change: CitationChange | null }> {
+  const unchanged = { citationId: prior.id, citedChecksum: prior.payload_sha256 ?? null, created: false as const };
+  if (citationText == null || citationText === prior.citation_text || prior.frozen_at) {
+    return { ...unchanged, change: null };
+  }
+  await executor.query(
+    `UPDATE authoring_citations SET citation_text = $1
+      WHERE id = $2 AND tenant_id = $3 AND frozen_at IS NULL`,
+    [citationText, prior.id, orgId],
+  );
+  const before = citationImage(prior);
+  return { ...unchanged, change: { before, after: { ...before, citation_text: citationText } } };
+}
+
+/**
+ * Stop citing a source from a section. Frozen citations are immutable.
+ *
+ * Returns the rows it deleted, whole, so the caller's audit row can keep them
+ * as its before-image: a hard delete leaves no other record of the cite-time
+ * checksum or text (periodic review 2026-09-28, editor family, P11-A-1). Empty
+ * when nothing was removed.
+ */
 export async function removeSourceCitation(
   orgId: number,
   sectionId: string,
   sourceId: number | string,
-): Promise<boolean> {
+  executor: Queryable = onPool(),
+): Promise<CitationImage[]> {
   const [id] = numericIds([sourceId]);
-  if (!id || !sectionId) return false;
-  const { rowCount } = await pool.query(
+  if (!id || !sectionId) return [];
+  const { rows } = await executor.query<CitationImage>(
     `DELETE FROM authoring_citations
       WHERE section_id = $1 AND tenant_id = $2 AND source = $3 AND reference_id = $4
-        AND frozen_at IS NULL`,
+        AND frozen_at IS NULL
+      RETURNING ${CITATION_IMAGE_COLUMNS}, anchor, created_by, created_at`,
     [sectionId, orgId, CRE_SOURCE_CITATION, String(id)],
   );
-  return (rowCount ?? 0) > 0;
+  return rows;
 }
 
 /**
@@ -484,24 +572,43 @@ export async function listChangedSourceUsages(
  * citation was made when it was made), and the result reports plainly whether the
  * content moved. A frozen citation is immutable and is reported as such rather than
  * quietly skipped.
+ *
+ * BOUND TO ITS SECTION. The citation is looked up by id AND section, and the
+ * section is the one the caller was authorised on. It was looked up by tenant
+ * alone, while both authorization layers checked the section in the request
+ * path, so an editor of one section could re-baseline a citation on any
+ * document in the tenant, frozen or signed ones included (periodic review
+ * 2026-09-28, editor family, SEC-A-1). A citation of another section is
+ * `not_found`, and nothing is written.
+ *
+ * `change` carries the prior checksum for the caller's audit row; null when the
+ * content had not moved and nothing was written.
  */
 export async function refreshSourceCitation(
   orgId: number,
-  citationId: string,
+  target: { sectionId: string; citationId: string },
+  executor: Queryable = onPool(),
 ): Promise<
-  | { ok: true; changed: boolean; previousChecksum: string | null; currentChecksum: string | null; sourceId: number }
+  | {
+      ok: true;
+      changed: boolean;
+      previousChecksum: string | null;
+      currentChecksum: string | null;
+      sourceId: number;
+      change: CitationChange | null;
+    }
   | { ok: false; reason: 'not_found' | 'not_a_source_citation' | 'unresolved_source' | 'frozen' }
 > {
-  const cite = await pool.query<{
-    id: string;
-    source: string | null;
-    reference_id: string | null;
-    payload_sha256: string | null;
-    frozen_at: string | null;
-  }>(
-    `SELECT id, source, reference_id, payload_sha256, frozen_at
-       FROM authoring_citations WHERE id = $1 AND tenant_id = $2 LIMIT 1`,
-    [citationId, orgId],
+  if (!target.sectionId || !target.citationId) return { ok: false, reason: 'not_found' };
+  // FOR UPDATE: the checksum read here is the before-image the caller records;
+  // the row lock stops a concurrent re-read replacing it between read and write.
+  const cite = await executor.query<CitationImage & { frozen_at: string | null }>(
+    `SELECT ${CITATION_IMAGE_COLUMNS}, frozen_at
+       FROM authoring_citations
+      WHERE id = $1 AND section_id = $2 AND tenant_id = $3
+      LIMIT 1
+      FOR UPDATE`,
+    [target.citationId, target.sectionId, orgId],
   );
   if (cite.rows.length === 0) return { ok: false, reason: 'not_found' };
   const row = cite.rows[0];
@@ -512,7 +619,7 @@ export async function refreshSourceCitation(
   if (!sourceId) return { ok: false, reason: 'unresolved_source' };
 
   const c = visibleOrgClause(orgId, 2);
-  const src = await pool.query<{ checksum: string | null }>(
+  const src = await executor.query<{ checksum: string | null }>(
     `SELECT checksum FROM cre_evidence_sources
       WHERE id = $1 AND ${c.sql} AND deleted_at IS NULL LIMIT 1`,
     [sourceId, c.param],
@@ -521,14 +628,16 @@ export async function refreshSourceCitation(
 
   const currentChecksum = src.rows[0].checksum ?? null;
   const previousChecksum = row.payload_sha256 ?? null;
-  if (currentChecksum !== previousChecksum) {
-    await pool.query(`UPDATE authoring_citations SET payload_sha256 = $1 WHERE id = $2 AND tenant_id = $3`, [
-      currentChecksum,
-      citationId,
-      orgId,
-    ]);
-  }
-  return { ok: true, changed: currentChecksum !== previousChecksum, previousChecksum, currentChecksum, sourceId };
+  const outcome = { ok: true as const, previousChecksum, currentChecksum, sourceId };
+  if (currentChecksum === previousChecksum) return { ...outcome, changed: false, change: null };
+
+  await executor.query(`UPDATE authoring_citations SET payload_sha256 = $1 WHERE id = $2 AND tenant_id = $3`, [
+    currentChecksum,
+    row.id,
+    orgId,
+  ]);
+  const before = citationImage(row);
+  return { ...outcome, changed: true, change: { before, after: { ...before, payload_sha256: currentChecksum } } };
 }
 
 /** A section with recorded source citations, grouped for the Source Tracer. */

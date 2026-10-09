@@ -19,6 +19,7 @@
  */
 
 import { createScopedLogger } from '../utils/logger';
+import type { ActionState } from './decision-record-service.js';
 import type {
   FormalDecisionRecord,
   DecisionReceipt,
@@ -62,6 +63,83 @@ function indexReceipt(receipt: DecisionReceipt): void {
 }
 
 // ─── Persistence Bridge ──────────────────────────────────────────────────────
+
+/**
+ * The lifecycle status this service works in, mapped onto the ledger's
+ * `action_state` CHECK vocabulary.
+ *
+ * Two vocabularies for one idea, and they are not the same set. Every value
+ * here is a member of the deployed CHECK
+ * (db/migrations/20260323_assumption_decision_contradiction.sql); the ones with
+ * no ledger equivalent map to undefined and the transition stays in-memory
+ * rather than being written as something it is not.
+ *
+ *   recommended  -> proposed       the ledger's own DEFAULT
+ *   confirmed    -> under_review   a human confirmed; execution has not happened
+ *   executed     -> executed
+ *   approved     -> approved
+ *   rejected     -> rejected
+ *   escalated    -> escalated
+ *   superseded   -> superseded
+ *   provisional  -> (none)         executed but pending approval; the ledger
+ *                                  has no such state and inventing one would
+ *                                  be worse than recording nothing
+ */
+const DECISION_STATUS_TO_ACTION_STATE: Partial<Record<DecisionStatus, ActionState>> = {
+  recommended: 'proposed',
+  confirmed: 'under_review',
+  executed: 'executed',
+  approved: 'approved',
+  rejected: 'rejected',
+  escalated: 'escalated',
+  superseded: 'superseded',
+};
+
+/**
+ * Advance the decision's durable row to match the in-memory transition.
+ *
+ * `decisionRecordService.create` lets the database mint the primary key, so the
+ * id this service holds lives only in `decision_code` — `getByDecisionCode` is
+ * the lookup that can find it. Returns false rather than throwing so the caller
+ * reports a failed transition instead of a thrown route.
+ */
+async function persistTransition(
+  decision: FormalDecisionRecord,
+  newStatus: DecisionStatus,
+  actorId: string | undefined,
+): Promise<boolean> {
+  if (decision.organizationId == null) return false;
+  const actionState = DECISION_STATUS_TO_ACTION_STATE[newStatus];
+  if (!actionState) return true; // a lifecycle-only state the ledger does not model
+
+  try {
+    const { decisionRecordService } = await import('./decision-record-service.js');
+    const row = await decisionRecordService.getByDecisionCode(
+      `${decision.kind}:${decision.id}`,
+      decision.organizationId,
+    );
+    if (!row) {
+      log.warn('Decision transition has no durable row to advance', {
+        id: decision.id,
+        code: `${decision.kind}:${decision.id}`,
+      });
+      return false;
+    }
+    await decisionRecordService.transition(row.id, {
+      organizationId: decision.organizationId,
+      actionState,
+      performedBy: actorId || 'system',
+    });
+    return true;
+  } catch (err) {
+    log.warn('Decision transition could not be persisted', {
+      id: decision.id,
+      newStatus,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return false;
+  }
+}
 
 async function persistDecision(decision: FormalDecisionRecord): Promise<boolean> {
   // Never fabricate tenant attribution. The in-memory store remains the source
@@ -171,7 +249,7 @@ export class DecisionLifecycleService {
   /**
    * Record a governed action (promotion, correction, harmonization) as a formal decision.
    */
-  recordGovernedActionDecision(opts: {
+  async recordGovernedActionDecision(opts: {
     projectId: string;
     organizationId?: number;
     kind: DecisionKind;
@@ -191,15 +269,22 @@ export class DecisionLifecycleService {
     createdById?: string;
     linkedContradictionIds?: string[];
     linkedAssumptionIds?: string[];
-  }): FormalDecisionRecord {
+  }): Promise<FormalDecisionRecord> {
     const decision = buildGovernedActionDecision(opts);
 
     indexDecision(decision);
-    persistDecision(decision).then(ok => {
-      if (!ok) {
-        log.warn('Governed action decision persisted to memory only', { id: decision.id });
-      }
-    });
+    /* AWAITED, and a failure is a failure. This fired unawaited and returned the
+       id regardless, so eight routes answered 200 with the id of a formal
+       decision that existed only in this process's heap — gone at the next
+       restart, invisible to every other worker, and unrecoverable for an audit.
+       A governed decision that was not recorded did not happen. */
+    const persisted = await persistDecision(decision);
+    if (!persisted) {
+      throw new Error(
+        `Governed action decision ${decision.id} could not be recorded durably; ` +
+          'refusing to report it as taken. See the [decision-lifecycle] log line above for the cause.',
+      );
+    }
 
     log.info('Governed action decision recorded', {
       id: decision.id,
@@ -216,7 +301,7 @@ export class DecisionLifecycleService {
   /**
    * Transition a decision to a new status with authority checking.
    */
-  transitionDecision(
+  async transitionDecision(
     decisionId: string,
     newStatus: DecisionStatus,
     opts: {
@@ -225,7 +310,7 @@ export class DecisionLifecycleService {
       reason?: string;
       escalatedToRole?: string;
     } = {}
-  ): { success: boolean; decision?: FormalDecisionRecord; error?: string } {
+  ): Promise<{ success: boolean; decision?: FormalDecisionRecord; error?: string }> {
     const decision = decisionStore.get(decisionId);
     if (!decision) {
       return { success: false, error: `Decision ${decisionId} not found` };
@@ -272,6 +357,24 @@ export class DecisionLifecycleService {
         break;
     }
 
+    /* The confirmed / executed / approved / rejected stamps touched NO database:
+       they mutated `decisionStore`, a module-level Map, and every route reported
+       success. So the moment an action was confirmed — the fact a Part 11
+       reviewer would ask about — was lost at the next restart and invisible to
+       every other worker. The durable row is addressed by decision_code, not by
+       this id: `create` lets the database mint the primary key, the same
+       mismatch the governed-fabric writer had. */
+    const durable = await persistTransition(decision, newStatus, opts.actorId);
+    if (!durable) {
+      return {
+        success: false,
+        error:
+          `Decision ${decisionId} could not be transitioned to ${newStatus} durably. ` +
+          'The in-memory record was not advanced; retry once the store is reachable.',
+        decision,
+      };
+    }
+
     log.info('Decision transitioned', {
       id: decisionId,
       from: decision.status,
@@ -287,7 +390,7 @@ export class DecisionLifecycleService {
   /**
    * Create a receipt after a decision is confirmed and/or executed.
    */
-  createReceipt(opts: {
+  async createReceipt(opts: {
     decisionId: string;
     projectId: string;
     recommendation: { summary: string; actionIds: string[]; rationale: string };
@@ -301,7 +404,17 @@ export class DecisionLifecycleService {
     affectedObjects?: DecisionReceiptAffectedObject[];
     pendingApprovals?: Array<{ requiredRole: string; reason: string; status: 'pending' | 'approved' | 'rejected' }>;
     provisionalItems?: Array<{ objectType: string; objectId: string; reason: string }>;
-  }): DecisionReceipt {
+    /**
+     * The tenant this receipt belongs to. REQUIRED.
+     *
+     * `decision_receipts.organization_id` is `INTEGER NOT NULL DEFAULT 1` and
+     * this writer never passed it, so every receipt was filed against
+     * organisation 1 whoever acted — and under RLS the tenant policy then
+     * refused the row for every other tenant, a refusal swallowed at log.debug
+     * claiming the table might not exist. The table exists; it held 0 rows.
+     */
+    organizationId: number;
+  }): Promise<DecisionReceipt> {
     const receipt = buildDecisionReceipt(opts);
     indexReceipt(receipt);
 
@@ -320,36 +433,39 @@ export class DecisionLifecycleService {
       pendingApprovals: opts.pendingApprovals?.length ?? 0,
     });
 
-    // Persist receipt to DB (non-blocking)
-    this.persistReceipt(receipt).catch((err: unknown) => {
-      log.warn('Receipt persistence failed (in-memory retained)', {
-        receiptId: receipt.id,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    });
+    /* A 21 CFR Part 11 receipt is the record that the act happened. Awaited,
+       and a failure refuses rather than handing back an id for nothing. */
+    const persisted = await this.persistReceipt(receipt, opts.organizationId);
+    if (!persisted) {
+      throw new Error(
+        `Decision receipt ${receipt.id} could not be recorded durably; refusing to ` +
+          'report the decision as confirmed. See the [decision-lifecycle] log line above.',
+      );
+    }
 
     return receipt;
   }
 
   /** Persist receipt to decision_receipts table (non-blocking bridge) */
-  private async persistReceipt(receipt: DecisionReceipt): Promise<boolean> {
+  private async persistReceipt(receipt: DecisionReceipt, organizationId: number): Promise<boolean> {
     try {
       const { pool } = await import('../db.js');
       if (!pool) return false;
 
       await pool.query(`
         INSERT INTO decision_receipts (
-          id, decision_id, project_id,
+          id, decision_id, project_id, organization_id,
           recommendation_summary, recommendation_action_ids, recommendation_rationale,
           confirmation_accepted, confirmed_by_id, confirmed_at, rejection_reason,
           execution_executed, executed_at, executed_by_id, execution_method, execution_error,
           affected_objects, pending_approvals, provisional_items
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
         ON CONFLICT (id) DO NOTHING
       `, [
         receipt.id,
         receipt.decisionId,
         receipt.projectId,
+        organizationId,
         receipt.recommendation?.summary,
         JSON.stringify(receipt.recommendation?.actionIds ?? []),
         receipt.recommendation?.rationale,
@@ -370,9 +486,13 @@ export class DecisionLifecycleService {
       log.info('Receipt persisted to DB', { receiptId: receipt.id });
       return true;
     } catch (err: unknown) {
-      // Table may not exist yet — degrade gracefully
-      log.debug('Receipt persistence skipped (table may not exist)', {
+      /* This said "table may not exist" at log.debug. The table exists, and the
+         real causes are a tenant the policy refuses or a scope the pool cannot
+         find — neither of which anyone would look for behind that message.
+         Warn, name the tenant, and let the caller refuse. */
+      log.warn('Receipt persistence FAILED — the decision must not be reported as recorded', {
         receiptId: receipt.id,
+        organizationId,
         error: err instanceof Error ? err.message : String(err),
       });
       return false;
@@ -511,7 +631,7 @@ export class DecisionLifecycleService {
    * Create a decision from a contradiction finding that feeds the core workflow.
    * Returns the decision and the recommended consequence paths.
    */
-  recordContradictionConsequence(opts: {
+  async recordContradictionConsequence(opts: {
     projectId: string;
     organizationId?: number;
     contradictionId: string;
@@ -521,14 +641,14 @@ export class DecisionLifecycleService {
     moduleCode?: string;
     affectedSections?: string[];
     createdById?: string;
-  }): {
+  }): Promise<{
     decision: FormalDecisionRecord;
     consequencePaths: Array<{
       action: GovernedActionType;
       label: string;
       authority: ReturnType<typeof getAuthorityForAction>;
     }>;
-  } {
+  }> {
     // Determine consequence paths based on severity
     const consequencePaths: Array<{
       action: GovernedActionType;
@@ -558,7 +678,7 @@ export class DecisionLifecycleService {
       });
     }
 
-    const decision = this.recordGovernedActionDecision({
+    const decision = await this.recordGovernedActionDecision({
       projectId: opts.projectId,
       organizationId: opts.organizationId,
       kind: 'contradiction-resolution-decision',

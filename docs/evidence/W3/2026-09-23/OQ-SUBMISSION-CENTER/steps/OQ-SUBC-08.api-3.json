@@ -1,0 +1,31 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/actions/sign",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "target": "ectd-sequence:9",
+      "reason": "OQ-004 step 08: e-signature to freeze sequence 0000 for validation",
+      "payload": {
+        "intent": "freeze"
+      },
+      "reauth": {
+        "password": "[REDACTED]",
+        "totp": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 366,
+    "rateLimitRetries": 0,
+    "body": {
+      "actionId": "act_48315253a481409eb08a74e033ed7beb",
+      "auditId": "10355bc1-ccfa-4998-900b-9a27c03f38a2",
+      "sha256Chain": "edf7db8adcee7cfe246380a24900cad5924ec7038f0570daf12dc0b7d33579fe",
+      "state": "executed"
+    }
+  }
+}

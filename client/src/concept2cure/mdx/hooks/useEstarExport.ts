@@ -44,9 +44,19 @@ export interface EstarExportOutcome {
   /** Registered in the artifact registry (governed consequence) vs audited-only delivery. */
   governed: boolean;
   filename: string | null;
-  /** Advisory us-estar formatting counts from the build (draft path only). */
-  formattingErrors: number;
-  formattingWarnings: number;
+  /**
+   * Advisory us-estar formatting counts from the build. null = no report (the
+   * check did not run, or this path runs none) — never read as 0 errors.
+   */
+  formattingErrors: number | null;
+  formattingWarnings: number | null;
+  /**
+   * What the formatting check established (2026-09-22, W5/D7). 'not_assessed'
+   * = it ran but some applicable rules could not be judged; 'not_run' = the
+   * server sent no report; null = no export produced. Same fail-closed
+   * contract as erasedFields.
+   */
+  formattingVerdict?: 'conformant' | 'conformant_with_warnings' | 'nonconformant' | 'not_assessed' | 'not_run' | null;
   /** Honest blockers when the official eSTAR is not producible (422). */
   blockers: string[];
   /**
@@ -221,10 +231,18 @@ export function exportStatusLine(busy: boolean, outcome: EstarExportOutcome | nu
   if (busy) return 'Exporting…';
   if (!outcome) return null;
   if (outcome.ok) {
-    const formatting =
-      outcome.formattingErrors + outcome.formattingWarnings > 0
-        ? ` · ${outcome.formattingErrors} formatting errors, ${outcome.formattingWarnings} warnings to fix before submitting`
-        : '';
+    const fErrors = outcome.formattingErrors ?? 0;
+    const fWarnings = outcome.formattingWarnings ?? 0;
+    const counts =
+      fErrors + fWarnings > 0 ? ` · ${fErrors} formatting errors, ${fWarnings} warnings to fix before submitting` : '';
+    // A clean count is only a clean result when the check ran on every rule.
+    const coverage =
+      outcome.formattingVerdict === 'not_assessed'
+        ? ' · some formatting rules could not be checked'
+        : outcome.formattingVerdict === 'not_run'
+          ? ' · formatting was not checked'
+          : '';
+    const formatting = counts + coverage;
     const registry = outcome.governed ? '' : ' · audit-logged; artifact registry placement pending';
     // The server produced it either way; whether the file reached the user is a
     // separate fact, and saying "Downloaded" when it did not is the difference
@@ -375,8 +393,9 @@ async function postExport(url: string, body: unknown, official: boolean): Promis
         delivered: false,
         governed: false,
         filename: null,
-        formattingErrors: 0,
-        formattingWarnings: 0,
+        formattingErrors: null,
+        formattingWarnings: null,
+        formattingVerdict: null,
         blockers,
         blockedByEntitlement,
         requiredTier:
@@ -392,15 +411,24 @@ async function postExport(url: string, body: unknown, official: boolean): Promis
     const delivered = ref?.data ? triggerDownload(ref) : false;
 
     const formatting = (json?.formattingReport ?? null) as
-      | { errors?: number; warnings?: number }
+      | { errors?: unknown; warnings?: unknown; verdict?: unknown }
       | null;
+    const count = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+    const VERDICTS = ['conformant', 'conformant_with_warnings', 'nonconformant', 'not_assessed'] as const;
+    type KnownVerdict = (typeof VERDICTS)[number];
     return {
       ok: true,
       delivered,
       governed: json?.governed === true,
       filename: ref?.filename ?? null,
-      formattingErrors: formatting?.errors ?? 0,
-      formattingWarnings: formatting?.warnings ?? 0,
+      formattingErrors: formatting ? count(formatting.errors) : null,
+      formattingWarnings: formatting ? count(formatting.warnings) : null,
+      // A report without a known verdict (an older server) cannot claim it assessed everything.
+      formattingVerdict: formatting
+        ? VERDICTS.includes(formatting.verdict as KnownVerdict)
+          ? (formatting.verdict as KnownVerdict)
+          : 'not_assessed'
+        : 'not_run',
       blockers: [],
       blockedByEntitlement: false,
       requiredTier: null,
@@ -418,8 +446,9 @@ async function postExport(url: string, body: unknown, official: boolean): Promis
       delivered: false,
       governed: false,
       filename: null,
-      formattingErrors: 0,
-      formattingWarnings: 0,
+      formattingErrors: null,
+      formattingWarnings: null,
+      formattingVerdict: null,
       blockers: [],
       blockedByEntitlement: false,
       requiredTier: null,

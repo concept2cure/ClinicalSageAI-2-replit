@@ -702,7 +702,7 @@ class ClinicalIntelligenceService {
           // cer_reports has no content_vector column; persist the embedding in
           // metadata (merge, preserving existing keys).
           .set({
-            metadata: sql`COALESCE(${clinicalEvaluationReports.metadata}, '{}'::jsonb) || jsonb_build_object('content_vector', ${JSON.stringify(embeddings)}::jsonb)`,
+            metadata: sql`COALESCE(${clinicalEvaluationReports.metadata}::jsonb, '{}'::jsonb) || jsonb_build_object('content_vector', ${JSON.stringify(embeddings)}::jsonb)`,
           })
           .where(eq(clinicalEvaluationReports.reportId, documentId));
       } else {
@@ -986,7 +986,7 @@ class ClinicalIntelligenceService {
           .update(clinicalEvaluationReports)
           // processing-state flags have no cer_reports columns; record them in metadata.
           .set({
-            metadata: sql`COALESCE(${clinicalEvaluationReports.metadata}, '{}'::jsonb) || jsonb_build_object('processed', true, 'processed_at', now(), 'semantic_processing_complete', true)`,
+            metadata: sql`COALESCE(${clinicalEvaluationReports.metadata}::jsonb, '{}'::jsonb) || jsonb_build_object('processed', true, 'processed_at', now(), 'semantic_processing_complete', true)`,
           })
           .where(eq(clinicalEvaluationReports.reportId, documentId));
       } else {

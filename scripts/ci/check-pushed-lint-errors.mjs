@@ -39,6 +39,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import { changedSince, resolvePushBase } from './lib/push-range.mjs';
 
 const TAG = '[ci:pushed-lint-errors]';
 /** Extensions ESLint is configured for here. */
@@ -50,41 +51,20 @@ function fail(lines) {
   process.exit(1);
 }
 
-function git(args) {
-  const p = spawnSync('git', args, { encoding: 'utf8' });
-  return p.status === 0 ? p.stdout.trim() : null;
-}
 
-/**
- * The ref the push is measured against.
- *
- * The configured upstream when there is one; otherwise the remote's copy of
- * this branch, which is what a first push to an existing branch compares to.
- * Null means there is nothing upstream to diff against — a brand-new branch —
- * and the caller treats that as "nothing to check" rather than inventing a base
- * and linting the entire history.
- */
-function resolveBase(argv) {
-  const flag = argv.indexOf('--base');
-  if (flag !== -1 && argv[flag + 1]) return argv[flag + 1];
-  const upstream = git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
-  if (upstream && git(['rev-parse', '--verify', '--quiet', upstream])) return upstream;
-  const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']);
-  const remote = branch ? `origin/${branch}` : null;
-  if (remote && git(['rev-parse', '--verify', '--quiet', remote])) return remote;
-  return null;
-}
-
-const base = resolveBase(process.argv.slice(2));
+const base = resolvePushBase(process.argv.slice(2));
 if (!base) {
   console.log(`${TAG} no upstream ref to compare against — nothing to check.`);
   process.exit(0);
 }
 
-const changed = (git(['diff', '--name-only', '--diff-filter=ACMR', `${base}...HEAD`]) ?? '')
-  .split('\n')
-  .map(s => s.trim())
-  .filter(f => f && LINTABLE.test(f));
+const all = changedSince(base);
+if (all === null) {
+  // Used to be `?? ''`: a failed git diff read as "nothing changed" and the gate
+  // passed over files it never looked at.
+  fail([`git diff against ${base} failed, so the pushed files are unknown.`]);
+}
+const changed = all.filter(f => LINTABLE.test(f));
 
 if (changed.length === 0) {
   console.log(`${TAG} no lintable files changed against ${base}.`);

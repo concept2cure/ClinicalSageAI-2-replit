@@ -38,6 +38,7 @@ import { LangfuseService } from './observability/langfuseService';
 // audit trail and selects a *current* model for the chosen provider (the
 // router's logical MODEL_CONFIGS otherwise pin retired snapshots).
 import { getGateway } from './ai-gateway/gateway.js';
+import { isTerminalGatewayError } from './ai-gateway/gateway-outcome.js';
 import type {
   TaskType as GatewayTaskType,
   ProviderName as GatewayProviderName,
@@ -84,6 +85,26 @@ export interface ModelConfig {
 export interface AIRequest {
   taskType: TaskType;
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+  /**
+   * Pin the model that must serve this request, by gateway model id.
+   *
+   * WHY IT EXISTS. Without it a caller cannot say WHICH model answered, only
+   * which task type was asked — and a run that cannot be attributed to a model
+   * cannot be a performance qualification of that model. That is the blocker
+   * `ga-readiness-report` records against the PQ row for the RAG component:
+   * "ragQuery takes no model parameter — the answer is generated inside the RAG
+   * pipeline by whatever it selects".
+   *
+   * IT IS NOT AN APPROVAL BYPASS, and must never become one. The gateway's
+   * selectModel treats an explicitly named model as a REQUEST, not an
+   * instruction: for a high-risk task it filters the matches through
+   * `approvedForTask` and throws ModelNotApprovedError when none qualify,
+   * rather than silently substituting an approved one or honouring an
+   * unapproved one. Naming an unapproved model here therefore produces a
+   * refusal, which is the point — a PQ must fail loudly against a model nobody
+   * approved.
+   */
+  model?: string;
   maxTokens?: number;
   temperature?: number;
   jsonMode?: boolean;
@@ -96,7 +117,8 @@ export interface AIRequest {
 
 export interface AIResponse {
   content: string;
-  provider: AIProvider;
+  /** The provider and model that actually served the request (from the gateway). */
+  provider: AIProvider | GatewayProviderName;
   model: string;
   usage: {
     inputTokens: number;
@@ -107,6 +129,13 @@ export interface AIResponse {
   latencyMs: number;
   requestId: string;
   cached: boolean;
+}
+
+/** One execution's output, and the provider and model that produced it. */
+interface ExecutionResult {
+  content: string;
+  usage: { inputTokens: number; outputTokens: number };
+  served: { provider: AIResponse['provider']; model: string };
 }
 
 export interface ProviderHealth {
@@ -121,7 +150,7 @@ export interface ProviderHealth {
 export interface AuditLogEntry {
   id: string;
   timestamp: Date;
-  provider: AIProvider;
+  provider: AIProvider | GatewayProviderName;
   model: string;
   taskType: TaskType;
   inputTokens: number;
@@ -464,15 +493,25 @@ export class AIProviderRouter {
   private async executeViaGateway(
     request: AIRequest,
     modelConfig: ModelConfig
-  ): Promise<{ content: string; usage: { inputTokens: number; outputTokens: number } }> {
+  ): Promise<ExecutionResult> {
     const response = await this.gateway.route({
       taskType: mapToGatewayTaskType(request.taskType),
       messages: request.messages.map(m => ({ role: m.role, content: m.content })),
       maxTokens: request.maxTokens ?? 4096,
       temperature: request.temperature,
       jsonMode: request.jsonMode,
-      // Honor the router's provider choice; the gateway picks a live model for it.
-      provider: modelConfig.provider as GatewayProviderName,
+      /* An explicitly pinned model OUTRANKS the router's provider guess, and the
+         provider is then dropped rather than sent alongside it. The gateway
+         filters on BOTH when both are present
+         (`(!request.provider || m.provider === …) && (!request.model || …)`), so
+         sending this router's independently-chosen provider next to a caller's
+         model yields an empty match set whenever the two disagree — and an
+         empty match set on a high-risk task is indistinguishable from "no such
+         model". The model determines its own provider; that is what naming one
+         means. */
+      ...(request.model
+        ? { model: request.model }
+        : { provider: modelConfig.provider as GatewayProviderName }),
       organizationId: request.organizationId,
       userId: request.userId,
       projectId: request.projectId,
@@ -485,6 +524,8 @@ export class AIProviderRouter {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
       },
+      // The gateway chooses the model for the provider; this is what served.
+      served: { provider: response.provider, model: response.model },
     };
   }
 
@@ -576,7 +617,7 @@ export class AIProviderRouter {
       .digest('hex')
       .slice(0, 16);
 
-    let result: { content: string; usage: { inputTokens: number; outputTokens: number } };
+    let result: ExecutionResult;
     let liteLLMResult: AIResponse | null = null;
     let success = true;
     let errorMessage: string | undefined;
@@ -607,11 +648,18 @@ export class AIProviderRouter {
             inputTokens: liteLLMResult.usage.inputTokens,
             outputTokens: liteLLMResult.usage.outputTokens,
           },
+          served: { provider: liteLLMResult.provider, model: liteLLMResult.model },
         };
       } else {
         result = await this.executeViaGateway(request, modelConfig);
       }
     } catch (error) {
+      // A gateway refusal, cancel or decline is final (gateway-outcome.ts): no
+      // provider failed. Counting it against health marked the refused provider
+      // unhealthy for every tenant, and the fallback below re-sent the refused
+      // payload to another vendor.
+      if (isTerminalGatewayError(error)) throw error;
+
       success = false;
       errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
@@ -647,6 +695,7 @@ export class AIProviderRouter {
                 inputTokens: liteLLMResult.usage.inputTokens,
                 outputTokens: liteLLMResult.usage.outputTokens,
               },
+              served: { provider: liteLLMResult.provider, model: liteLLMResult.model },
             };
           } else {
             result = await this.executeViaGateway(request, fallbackConfig);
@@ -673,12 +722,19 @@ export class AIProviderRouter {
       (result.usage.inputTokens / 1000) * executedModelConfig.costPer1kInput +
         (result.usage.outputTokens / 1000) * executedModelConfig.costPer1kOutput;
 
+    // Record what served, not the router's logical config: the gateway picks
+    // the live model for the chosen provider (and may fall back within it), so
+    // MODEL_CONFIGS names like claude-3-5-sonnet-20241022 were never the model
+    // that answered. Until 2026-09-23 those names went into
+    // ai_provider_audit_log, Langfuse and the response.
+    const served = result.served;
+
     // Log audit entry
     await this.logAudit({
       id: requestId,
       timestamp: new Date(),
-      provider: executedModelConfig.provider,
-      model: executedModelConfig.model,
+      provider: served.provider,
+      model: served.model,
       taskType: request.taskType,
       inputTokens: result.usage.inputTokens,
       outputTokens: result.usage.outputTokens,
@@ -696,8 +752,8 @@ export class AIProviderRouter {
       name: success ? 'ai_request_success' : 'ai_request_failure',
       traceId: requestId,
       metadata: {
-        provider: executedModelConfig.provider,
-        model: executedModelConfig.model,
+        provider: served.provider,
+        model: served.model,
         taskType: request.taskType,
         organizationId: request.organizationId,
         userId: request.userId,
@@ -715,8 +771,8 @@ export class AIProviderRouter {
 
     return {
       content: result.content,
-      provider: executedModelConfig.provider,
-      model: executedModelConfig.model,
+      provider: served.provider,
+      model: served.model,
       usage: {
         inputTokens: result.usage.inputTokens,
         outputTokens: result.usage.outputTokens,

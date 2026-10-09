@@ -1,0 +1,10 @@
+ × server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > fails a reply with no findings array instead of completing a run with 0 criticals 29ms
+ × server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > counts a "Critical" finding as critical 15ms
+   → expected { completedRuns: 1, openCriticals: +0 } to deeply equal { completedRuns: 1, openCriticals: 1 }
+ × server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > fails a reply whose severity is not one the gate knows 8ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > completes a run whose model returned an explicit, empty findings list 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: promise resolved "{ runId: 1, rtfRiskScore: 0.9, …(3) }" instead of rejecting
+AssertionError: expected { completedRuns: 1, openCriticals: +0 } to deeply equal { completedRuns: 1, openCriticals: 1 }
+AssertionError: promise resolved "{ runId: 3, rtfRiskScore: NaN, …(3) }" instead of rejecting
+      Tests  3 failed | 1 passed (4)

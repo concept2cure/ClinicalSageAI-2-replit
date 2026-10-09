@@ -1,0 +1,5 @@
+# scripts/db/rls-coverage-check.sql on c2c_d3u, users RLS applied (expect no rows)
+(0 rows)
+
+# the same check with public.users row security disabled inside a rolled-back transaction (expect the users edge)
+public.users (child of public.organizations, row security off)

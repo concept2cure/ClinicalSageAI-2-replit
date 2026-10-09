@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/projects",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "name": "OQ bad type 20260923024901",
+      "programType": "not-a-type"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 410,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "programType must be one of: 510k, de_novo, pma, ivd, device, cer, ide, ind, cta, bla, biologic, nda, maa, jnda, anda, mdr, ivdr, dmf"
+    }
+  }
+}

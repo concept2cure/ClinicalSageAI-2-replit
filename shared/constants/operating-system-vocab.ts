@@ -52,6 +52,54 @@ export const ASSUMPTION_SETTLED_SQL_PREDICATE =
 
 // ── Decisions (decision_records) ─────────────────────────────────────────────
 
+/**
+ * domain_track CHECK constraint, db/migrations/20260323:58-61 and :121-124 —
+ * the same nine values on BOTH assumption_records and decision_records.
+ *
+ * These are DISCIPLINES. A second, unrelated vocabulary in this repository is
+ * also called domain_track: `domainTrackEnum` in shared/schema/operating-system.ts
+ * holds product modalities (biotech, device, diagnostics, combination,
+ * biosimilar) for a column of the same name on the governance boundary-rule
+ * table. Crossing them is not hypothetical — operating-system-integration.ts
+ * declared the modality set inline and handed it to the assumption registry, so
+ * every write it made was rejected by this constraint and swallowed.
+ */
+export const DEPLOYED_DOMAIN_TRACKS = [
+  'clinical',
+  'nonclinical',
+  'cmc',
+  'biostatistics',
+  'regulatory',
+  'pharmacology',
+  'safety',
+  'labeling',
+  'commercial',
+] as const;
+export type DeployedDomainTrack = (typeof DEPLOYED_DOMAIN_TRACKS)[number];
+
+/**
+ * recommendation_type CHECK constraint, db/migrations/20260323:127-131.
+ *
+ * The other column the governed-fabric writer violated: it wrote a thirteenth
+ * value, 'governed_fabric_decision', cast into the enum under an in-code note
+ * claiming the column was free text. It is not.
+ */
+export const DEPLOYED_RECOMMENDATION_TYPES = [
+  'regulatory_strategy',
+  'study_design',
+  'endpoint_selection',
+  'dose_selection',
+  'comparator_selection',
+  'statistical_method',
+  'manufacturing_change',
+  'labeling_change',
+  'submission_timing',
+  'risk_mitigation',
+  'protocol_amendment',
+  'data_package',
+] as const;
+export type DeployedRecommendationType = (typeof DEPLOYED_RECOMMENDATION_TYPES)[number];
+
 /** action_state CHECK constraint, db/migrations/20260323:107-110. DEFAULT 'proposed'. */
 export const DEPLOYED_DECISION_ACTION_STATES = [
   'proposed',
@@ -82,6 +130,28 @@ export const UNRESOLVED_DECISION_ACTION_STATES = [
   'deferred',
   'escalated',
 ] as const;
+
+/**
+ * `decision_context->>'kind'` marking a decision_records row as a MACHINE
+ * record — one governed-fabric gate evaluation, written by
+ * server/services/governed-decision-repository.ts.
+ *
+ * It shares a table with human domain decisions but is not one, and the
+ * distinction is load-bearing: `requiresAllDecisionsResolved` asks "has a human
+ * finished deciding the things this project is waiting on", and a machine's log
+ * of its own gate evaluation is not something a human owes an answer on. The
+ * fabric records one row per evaluation, so counting them there would let a
+ * single `review` verdict on one document action block a whole project from
+ * ever reaching `locked`, with no human able to clear it.
+ *
+ * The distinction could not surface until 2026-09: both discriminator columns
+ * the writer used (`domain_track='governance'`, `recommendation_type=
+ * 'governed_fabric_decision'`) are CHECK-constrained and rejected every insert,
+ * so `decision_records` had never held a machine row and the rule had only ever
+ * counted human ones. Persisting them is the fix; keeping the rule's meaning
+ * unchanged is the other half of it.
+ */
+export const GOVERNED_FABRIC_DECISION_KIND = 'governed-fabric-decision';
 
 // ── Confidence ────────────────────────────────────────────────────────────────
 

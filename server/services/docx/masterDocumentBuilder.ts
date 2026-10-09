@@ -23,11 +23,20 @@ import JSZip from 'jszip';
 import { runDocxPdfPipeline } from '../docx-pdf-pipeline';
 import { inlineMarksToText } from '../../export/inline-marks-to-text.js';
 import { decodeHtmlEntities } from '../../export/decode-html-entities.js';
+import { workspaceFileName } from '../ana/document-workspace.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface BuildFromTemplateOptions {
+  /**
+   * The template to read. The builder opens whatever it is given, so a caller
+   * handling a model- or request-supplied path must first resolve it through
+   * assertWithinDocumentWorkspace (services/ana/document-workspace.ts) and pass
+   * the resolved path (INJ-PATH-002).
+   */
   templatePath: string;
+  /** Where the output lands: a fresh tenant scratch directory (anaScratchDir). */
+  outputDir: string;
   replacements?: Record<string, string>;
   xmlInjections?: XmlInjection[];
   outputFormat?: 'docx' | 'pdf';
@@ -155,13 +164,14 @@ export function htmlToOoxml(html: string): string {
 
 // ─── Master Builder ───────────────────────────────────────────────────────────
 
+
+/**
+ * The builder writes only into the directory its caller names. It used to pick
+ * one itself, `tmp/docbuilder/<buildId>` — shared by every tenant — so any
+ * tenant could be handed another's output path. The caller now supplies a
+ * tenant scratch directory (anaScratchDir in services/ana/document-workspace).
+ */
 export class MasterDocumentBuilder {
-  private tempDir: string;
-
-  constructor(tempDir?: string) {
-    this.tempDir = tempDir || join(process.cwd(), 'tmp', 'docbuilder');
-  }
-
   /**
    * Build from uploaded DOCX template using proper ZIP extraction.
    *
@@ -170,7 +180,7 @@ export class MasterDocumentBuilder {
   async buildFromTemplate(options: BuildFromTemplateOptions): Promise<BuildResult> {
     const startTime = Date.now();
     const buildId = randomUUID().slice(0, 8);
-    const outputDir = join(this.tempDir, buildId);
+    const outputDir = options.outputDir;
     await fs.mkdir(outputDir, { recursive: true });
 
     // Read and parse the DOCX as a ZIP
@@ -257,8 +267,7 @@ export class MasterDocumentBuilder {
       compressionOptions: { level: 6 },
     });
 
-    const safeName = (options.documentTitle || 'document').replace(/[^a-zA-Z0-9._-]/g, '_');
-    const docxPath = join(outputDir, `${safeName}_${buildId}.docx`);
+    const docxPath = join(outputDir, `${workspaceFileName(options.documentTitle, 'document')}_${buildId}.docx`);
     await fs.writeFile(docxPath, outputBuffer);
 
     /* When the caller asked for PDF, convert the .docx through headless
@@ -299,10 +308,12 @@ export class MasterDocumentBuilder {
     agencies?: string[];
     outputFormat?: 'docx' | 'pdf' | 'xml';
     documentTitle?: string;
+    /** Where the output lands: a fresh tenant scratch directory (anaScratchDir). */
+    outputDir: string;
   }): Promise<BuildResult> {
     const startTime = Date.now();
     const buildId = randomUUID().slice(0, 8);
-    const outputDir = join(this.tempDir, buildId);
+    const outputDir = options.outputDir;
     await fs.mkdir(outputDir, { recursive: true });
 
     // Build body XML from sections
@@ -331,7 +342,10 @@ export class MasterDocumentBuilder {
 
     // XML-only output
     if (options.outputFormat === 'xml') {
-      const outputPath = join(outputDir, `${options.documentTitle || 'document'}_${buildId}.xml`);
+      // The title is the model's; it was joined onto the path raw here while
+      // the .docx branch below sanitised it, so `../../x` wrote outside the
+      // build directory (INJ-PATH-002). One sanitiser for both.
+      const outputPath = join(outputDir, `${workspaceFileName(options.documentTitle, 'document')}_${buildId}.xml`);
       await fs.writeFile(outputPath, documentXml, 'utf-8');
       const stats = await fs.stat(outputPath);
       return { outputPath, format: 'xml', sizeBytes: stats.size, replacementsApplied: 0, xmlInjectionsApplied: options.sections.length, buildDurationMs: Date.now() - startTime };
@@ -368,8 +382,7 @@ export class MasterDocumentBuilder {
       compressionOptions: { level: 6 },
     });
 
-    const safeName = (options.documentTitle || 'document').replace(/[^a-zA-Z0-9._-]/g, '_');
-    const docxPath = join(outputDir, `${safeName}_${buildId}.docx`);
+    const docxPath = join(outputDir, `${workspaceFileName(options.documentTitle, 'document')}_${buildId}.docx`);
     await fs.writeFile(docxPath, outputBuffer);
 
     /* PDF requested → convert via headless LibreOffice (canonical Word→PDF

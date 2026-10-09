@@ -1,0 +1,6 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx   (after, at the merged head with 780a0639's tablist)
+ ✓ the section outline exposes the open section (A-C-2) > marks the open section as current, and moves the mark with the selection 523ms
+ ✓ the section outline exposes the open section (A-C-2) > never has more than one current section, across a tab change 266ms
+      Tests  2 passed (2)
+
+# The lane's full neighbouring run (the ten ProtocolDev suites and others) is in the lane record; it predates dropping the tab-strip half.

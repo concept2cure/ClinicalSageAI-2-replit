@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/governed-intelligence/contradictions/scan/27771a4d-45bc-4b35-b053-d8eb0f15aa25",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 17,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "LAUNCH_SCOPE",
+        "message": "This part of the product is not in this release."
+      }
+    }
+  }
+}

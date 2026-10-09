@@ -1,0 +1,15 @@
+# mutant: .gitleaksignore without the ep-wild-forest (INF-22) block
+$ gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts="--full-history --diff-filter=tuxdb HEAD" .   # exit 1
+findings: 9
+by rule: c2c-neon-password 5, c2c-connection-uri-password 4
+findings on the neondb_owner credential (INF-22): 4
+(secrets not reproduced; fingerprints only)
+  8d5bce39c57b10546710539c7715dc9c204e5989:AUTH_CREDENTIALS_LOCKED.md:c2c-connection-uri-password:25
+  8d5bce39c57b10546710539c7715dc9c204e5989:AUTH_CREDENTIALS_LOCKED.md:c2c-neon-password:25
+  8d5bce39c57b10546710539c7715dc9c204e5989:AUTH_CREDENTIALS_LOCKED.md:c2c-neon-password:31
+  9d1d8d21c54e744114950d146485f78fa72b860b:tests/e2e/seed-governed-workflow.cjs:c2c-connection-uri-password:15
+  9d1d8d21c54e744114950d146485f78fa72b860b:tests/e2e/seed-governed-workflow.cjs:c2c-neon-password:15
+  e11adb0c94b9c64bb6c654b01dc03e1b8021cd14:tests/e2e/seed-governed-workflow.cjs:c2c-connection-uri-password:15
+  e11adb0c94b9c64bb6c654b01dc03e1b8021cd14:tests/e2e/seed-governed-workflow.cjs:c2c-neon-password:15
+  eec00130798d55853fd69e6f70ce14e7c0b48dbc:scripts/cortex-enhance.cjs:c2c-connection-uri-password:8
+  eec00130798d55853fd69e6f70ce14e7c0b48dbc:scripts/cortex-enhance.cjs:c2c-neon-password:8

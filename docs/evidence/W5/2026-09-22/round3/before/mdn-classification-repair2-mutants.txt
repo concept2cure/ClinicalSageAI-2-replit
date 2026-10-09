@@ -1,0 +1,18 @@
+## mutant A: httpsPost treats every failure as after-send (let sent = true)
+ × server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts > ICSR — a socket failure after the whole message was written > AS2: a connection refused before the message was written is still transport, "NOT transmitted" 19ms
+ × server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts > ICSR — a socket failure after the whole message was written > HTTPS: a connection refused before the message was written is still transport, "NOT transmitted" 31ms
+ × server/services/submission-gateways/__tests__/fda-esg-ambiguous-delivery.test.ts > FDA ESG AS2 — a failure after the whole request was written keeps the send inside the lock > a connection refused before the request was written is still a rejection (nothing reached FDA) 9ms
+ × server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > surfaces a socket failure as a transport-stage refusal, audited 15ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 55 passed (59)
+RESTORED as2-transport.ts
+## mutant B: fda-esg keeps 'sent' for an explicit refusal of our message
+ × server/services/submission-gateways/__tests__/fda-esg-ambiguous-delivery.test.ts > FDA ESG AS2 — a database failure after FDA answered never records a rejection > an explicit refusal naming our message whose write fails is still a rejection 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+RESTORED fda-esg.ts
+## mutant C: isFailureModifier ignores negations
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/x-not-failed is not an explicit refusal: delivered-unconfirmed, never rejected or accepted 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 85 passed (86)
+RESTORED as2-transport.ts

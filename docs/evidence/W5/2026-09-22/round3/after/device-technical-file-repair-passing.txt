@@ -1,0 +1,84 @@
+=== server/routes/__tests__/ivd-completeness-denominator.test.ts
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/routes/__tests__/ivdr-program-scoping.test.ts
+ Test Files  1 passed (1)
+      Tests  24 passed (24)
+=== server/services/__tests__/ivdr-pack-read-failures.test.ts
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+=== server/services/ana-advisory/__tests__/device-market-advisor.test.ts
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+=== server/services/ana-advisory/__tests__/eu-techdoc-advisor.test.ts
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+=== server/services/ana/__tests__/submission-center-tools.test.ts
+ Test Files  1 passed (1)
+      Tests  66 passed (66)
+=== server/services/device-ivd-cockpit/__tests__/cockpit.test.ts
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+=== server/services/ectd/__tests__/core-leaf-projection.test.ts
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/services/global-markets/__tests__/market-readiness.test.ts
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+=== server/services/mdx-submission-planner/__tests__/planner.test.ts
+ Test Files  1 passed (1)
+      Tests  27 passed (27)
+=== server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/services/pathway-engines/__tests__/assemble-technical-file-multisource.test.ts
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+=== server/services/pathway-engines/__tests__/dispatcher.test.ts
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+=== server/services/pathway-engines/__tests__/pathway-manifest.test.ts
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+=== server/services/pathway-engines/__tests__/tech-doc-assembler-pack-keys.test.ts
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/services/pathway-engines/__tests__/technical-file-manifest.test.ts
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+=== server/services/pathway-engines/__tests__/technical-file-packager.test.ts
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+=== server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+=== server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+=== server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts
+ Test Files  1 passed (1)
+      Tests  32 passed (32)
+=== server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+=== server/services/regulatory/__tests__/batch-portfolio.test.ts
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/services/regulatory/__tests__/global-pathways.test.ts
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/services/regulatory/__tests__/submission-readiness.test.ts
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+=== tests/routes/ivdr-submission-package-scope.test.ts
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+=== tests/routes/technical-file-export-governance.test.ts
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+=== tests/golden-journeys/cer-eu-mdr.journey.test.ts
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+=== tests/golden-journeys/drug-nda-ectd.journey.test.ts
+ Test Files  1 passed (1)
+      Tests  1 passed (1)

@@ -1,0 +1,9 @@
+$ # router with the fix
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses a body over the size limit with 413 instead of buffering it 165ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses an executable named file whatever type it declares (415) 12ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses a declared type this router does not read (415) 5ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses bytes that are not what the declared type says (the shared byte check) 8ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > control: a real CSV passes the guard and reaches the handler 8ms
+ Test Files  3 passed (3)
+      Tests  17 passed (17)
+exit=0

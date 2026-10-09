@@ -1,0 +1,13 @@
+# scripts/db/rls-coverage-check.sql after the amendment: no rows.
+# Then, as a mutation, row security DISABLED on workflow_approvals; the child rule names it,
+# once per parent edge. Restored with ENABLE + FORCE; the gate is empty again.
+
+## after the amendment
+(0 rows)
+
+## workflow_approvals row security disabled
+public.workflow_approvals (child of document_workflows, row security off)
+public.workflow_approvals (child of workflow_steps, row security off)
+
+## restored
+(0 rows)

@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/dc107197-6d9e-4192-ba98-98236bdf1dfc/file",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "documentId": "775838d2-01f0-4821-a9f5-749fcadbad0f",
+      "folderId": "k510"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 32,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "INVALID_FOLDER",
+      "message": "Folder 'k510' does not exist in this program's biotech vault taxonomy."
+    }
+  }
+}

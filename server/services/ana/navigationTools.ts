@@ -9,11 +9,9 @@
  *       in the exact shape the chat client applies. Refuses unknown targets /
  *       invalid params rather than emitting a broken jump.
  *
- * The directive is surfaced to the client through the streamed action channel
- * (the chat client already turns an action `path` into a real navigation). The
- * live stream hookup is the one remaining wiring step (see
- * shared/navigation/README.md); these tools + the contract are UI-agnostic and
- * complete today.
+ * The directive reaches the client two ways (services/ana-ri/navigation-actions
+ * and live-drive): applied on the person's screen as it streams under Live
+ * Drive (the default), or offered as a chip they press when it is off.
  *
  * Definitions only — handlers live in AnaToolExecutor.ts (registerToolHandler).
  *
@@ -39,7 +37,7 @@ export const LIST_APP_SCREENS: AnaTool = {
 export const NAVIGATE_TO: AnaTool = {
   name: 'navigate_to',
   description:
-    "Navigate the app to a screen/surface by its target id (from list_app_screens). Validates the target and any params against the governed navigation registry and returns a navigation directive the UI applies; refuses unknown targets or invalid/missing params rather than guessing. Use when the user asks to go somewhere, or to take them to the right surface to complete a task (e.g. open CMC, the dossier map, or the intelligence 'clinical' group). Project-scoped targets require an active project in context. Tell the user where you're taking them.",
+    "Take the person to a screen of the app — go to, open, show, switch to, bring up — by its target id (from list_app_screens). Validates the target and any params against the governed navigation registry and returns a navigation directive the UI applies; refuses unknown targets, invalid params and screens closed to this workspace rather than guessing. Use whenever the person asks to go somewhere or see something, and to take them to the right screen to complete a task (e.g. open CMC, the Vault, the dossier map, the intelligence 'clinical' group, settings, billing). Project-scope screens show one program: pass `program` to open a specific one. Say where you are taking them.",
   input_schema: {
     type: 'object',
     properties: {
@@ -48,6 +46,11 @@ export const NAVIGATE_TO: AnaTool = {
         type: 'object',
         description: 'Optional params for the target (e.g. { "intelligenceTab": "clinical" }, { "sectionCode": "3.2.P.8" }).',
         additionalProperties: { type: 'string' },
+      },
+      program: {
+        type: 'string',
+        description:
+          'For a project-scope screen: the program to open there — its id, code (e.g. "BX-301") or name. Omit to use the program already open. When none is open and none is named, the tool answers with the workspace\'s programs to choose from.',
       },
     },
     required: ['target'],

@@ -8,6 +8,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { authedOrgId } from '../../utils/authedOrgId.js';
 import { serverError } from '../../lib/api-response.js';
 import { createScopedLogger } from '../../utils/logger.js';
+import { clientIpOf } from '../../utils/client-ip.js';
 
 const logger = createScopedLogger('ai-phase3-routes');
 
@@ -124,7 +125,7 @@ const extractOrgContext = (req, res, next) => {
   }
 
   req.sessionId = req.headers['x-session-id'] || null;
-  req.ipAddress = req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
+  req.ipAddress = clientIpOf(req);
   next();
 };
 

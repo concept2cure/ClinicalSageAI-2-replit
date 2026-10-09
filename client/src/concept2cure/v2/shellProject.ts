@@ -26,6 +26,8 @@
  * as it would have mid-session).
  */
 
+import { useSyncExternalStore } from 'react';
+
 export interface ShellProject {
   id: string | number;
   title?: string;
@@ -33,9 +35,24 @@ export interface ShellProject {
   code?: string;
   ws?: string;
   status?: string;
+  /** regulatory_programs.product_type (drug / biologic / device / ivd / cdx /
+   *  samd / combination), published by Project home once the program's read
+   *  model has loaded. The shell's segment label follows it — see
+   *  segmentForShellProject. */
+  productType?: string;
 }
 
 const KEY = 'c2c.shell-project';
+
+/* Subscribers to the channel, so a React reader (the shell's top bar) can
+   re-render when a surface publishes — the window global itself is not
+   reactive. Listeners are module-level and never persisted. */
+const listeners = new Set<() => void>();
+const notify = (): void => {
+  for (const l of listeners) {
+    try { l(); } catch { /* one listener's failure must not silence the rest */ }
+  }
+};
 
 /* The global is already declared app-wide as `Record<string, string>`
    (ProjectHome.tsx's declare-global block, which every existing reader types
@@ -63,6 +80,21 @@ export function publishShellProject(project: ShellProject): void {
     /* storage unavailable (private mode quota, disabled) — the live global
        still works for this page's lifetime; only reload-survival is lost */
   }
+  notify();
+}
+
+/**
+ * Publish a partial update onto the open program (e.g. its product type once
+ * the read model answers) without disturbing the identifiers a surface set
+ * when it opened it. A no-op when no program is open, or when nothing changes —
+ * so a surface may call it on every render of its data without a publish loop.
+ */
+export function updateShellProject(patch: Partial<Omit<ShellProject, 'id'>>): void {
+  const live = readShellProject();
+  if (!live) return;
+  const changed = (Object.keys(patch) as Array<keyof typeof patch>).some((k) => patch[k] !== live[k]);
+  if (!changed) return;
+  publishShellProject({ ...live, ...patch });
 }
 
 /**
@@ -96,6 +128,50 @@ export function restoreShellProject(): ShellProject | null {
 }
 
 /**
+ * The UI segment a program belongs to, from what the channel knows about it:
+ * its product type first (the regulatory fact), the portfolio workstream it was
+ * opened from second (MDX / Biotech / Pharma / CRO — coarser, but available the
+ * moment a card is clicked), nothing otherwise. Pure. An unknown product type
+ * is not guessed. Segment ids are the SEGMENTS of registryModel.ts.
+ */
+const PRODUCT_TYPE_SEGMENT: Record<string, string> = {
+  drug: 'biopharma',
+  biologic: 'biopharma',
+  device: 'medtech',
+  samd: 'medtech',
+  combination: 'medtech',
+  ivd: 'diagnostics',
+  cdx: 'diagnostics',
+};
+const WORKSTREAM_SEGMENT: Record<string, string> = {
+  mdx: 'medtech',
+  biotech: 'biopharma',
+  pharma: 'biopharma',
+  cro: 'cro',
+};
+export function segmentForShellProject(project: ShellProject | null | undefined): string | null {
+  if (!project) return null;
+  const byProduct = PRODUCT_TYPE_SEGMENT[String(project.productType ?? '').trim().toLowerCase()];
+  if (byProduct) return byProduct;
+  const byWorkstream = WORKSTREAM_SEGMENT[String(project.ws ?? '').trim().toLowerCase()];
+  return byWorkstream ?? null;
+}
+
+const subscribe = (listener: () => void): (() => void) => {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+};
+/* Snapshot identity: publishShellProject writes a new object each time, so the
+   global's reference is the version stamp useSyncExternalStore needs. */
+const getSnapshot = (): ShellProject | null => readShellProject();
+const getServerSnapshot = (): ShellProject | null => null;
+
+/** The open program, re-rendering the caller when a surface publishes. */
+export function useShellProject(): ShellProject | null {
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+/**
  * The open program, or null. The READ half of this channel.
  *
  * `restoreShellProject` rehydrates at boot; this is what a surface calls on
@@ -111,6 +187,21 @@ export function readShellProject(): ShellProject | null {
   } catch {
     return null;
   }
+}
+
+const PROGRAM_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The open project's `regulatory_programs` id, or null when no project is open
+ * or the open one is not a project (a legacy numeric workspace id).
+ *
+ * A governed record is created in this project and nowhere else (PF-07,
+ * founder decision 2026-09-26: every governed record belongs to a project), so
+ * every create path asks here — and with null, does not create.
+ */
+export function shellProgramId(project: ShellProject | null = readShellProject()): string | null {
+  const id = project?.id;
+  return typeof id === 'string' && PROGRAM_UUID.test(id) ? id : null;
 }
 
 /**

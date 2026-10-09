@@ -20,6 +20,14 @@ import {
   type CreateAssumptionInput,
 } from './assumption-registry-service';
 import { DecisionRecordService } from './decision-record-service';
+/* domain_track on the governance ledger is a DISCIPLINE. These three contexts
+   used to declare it as the product-modality vocabulary (biotech, device,
+   diagnostics, combination, biosimilar) -- a different column of the same name
+   on shared/schema/operating-system.ts. Every write here was therefore
+   rejected by the CHECK constraint and swallowed, and both registries stayed
+   empty. SAP generation and statistical defensibility are biostatistics; see
+   server/services/domain-track.ts. */
+import { DEFAULT_DOMAIN_TRACK, type DomainTrack } from './domain-track';
 import { GovernanceBoundaryService } from './governance-boundary-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -37,7 +45,7 @@ export interface SapAssumptionContext {
   effectSize?: number;
   alpha?: number;
   power?: number;
-  domainTrack?: 'biotech' | 'device' | 'diagnostics' | 'combination' | 'biosimilar';
+  domainTrack?: DomainTrack;
   regulatorBody?: string;
   jurisdiction?: string;
   sourceArtifactId?: number;
@@ -54,7 +62,7 @@ export interface DefensibilityDecisionContext {
   reviewerRiskLevel: string;
   recommendations: string[];
   relatedArtifactId?: number;
-  domainTrack?: 'biotech' | 'device' | 'diagnostics' | 'combination' | 'biosimilar';
+  domainTrack?: DomainTrack;
   regulatorBody?: string;
   jurisdiction?: string;
   createdById?: number;
@@ -69,7 +77,7 @@ export interface DocumentGenerationDecisionContext {
   generatedArtifactVersionId?: number;
   usedAssumptionIds: string[];
   confidence: 'strong' | 'moderate' | 'provisional' | 'uncertain';
-  domainTrack?: 'biotech' | 'device' | 'diagnostics' | 'combination' | 'biosimilar';
+  domainTrack?: DomainTrack;
   regulatorBody?: string;
   jurisdiction?: string;
   createdById?: number;
@@ -125,7 +133,7 @@ export class OperatingSystemIntegration {
         sourceType: 'ana_generated',
         sourceArtifactId: ctx.sourceArtifactId,
         sourceDescription: 'SAP generation flow',
-        domainTrack: ctx.domainTrack ?? 'biotech',
+        domainTrack: ctx.domainTrack ?? 'biostatistics',
         regulatorBody: ctx.regulatorBody,
         jurisdiction: ctx.jurisdiction,
         confidence: 'provisional',
@@ -151,7 +159,7 @@ export class OperatingSystemIntegration {
         sourceType: ctx.dropoutRate === 0.15 ? 'ana_generated' : 'manual',
         sourceArtifactId: ctx.sourceArtifactId,
         sourceDescription: 'SAP generation flow',
-        domainTrack: ctx.domainTrack ?? 'biotech',
+        domainTrack: ctx.domainTrack ?? 'biostatistics',
         regulatorBody: ctx.regulatorBody,
         jurisdiction: ctx.jurisdiction,
         confidence: ctx.dropoutRate === 0.15 ? 'uncertain' : 'provisional',
@@ -174,7 +182,7 @@ export class OperatingSystemIntegration {
           sourceType: 'ana_generated',
           sourceArtifactId: ctx.sourceArtifactId,
           sourceDescription: 'SAP generation flow',
-          domainTrack: ctx.domainTrack ?? 'biotech',
+          domainTrack: ctx.domainTrack ?? 'biostatistics',
           regulatorBody: ctx.regulatorBody,
           jurisdiction: ctx.jurisdiction,
           confidence: 'provisional',
@@ -197,7 +205,7 @@ export class OperatingSystemIntegration {
         sourceType: 'manual',
         sourceArtifactId: ctx.sourceArtifactId,
         sourceDescription: 'SAP generation flow',
-        domainTrack: ctx.domainTrack ?? 'biotech',
+        domainTrack: ctx.domainTrack ?? 'biostatistics',
         regulatorBody: ctx.regulatorBody,
         jurisdiction: ctx.jurisdiction,
         confidence: 'provisional',
@@ -212,7 +220,14 @@ export class OperatingSystemIntegration {
       projectId: ctx.projectId,
       contextType: 'biostatistics_analysis',
       contextDescription: `SAP generation for ${ctx.indication} Phase ${ctx.phase}`,
-      recommendationType: 'sap_generation',
+      /* recommendation_type carries a CHECK naming twelve types; the three
+          descriptive labels this file used ('sap_generation',
+          'defensibility_assessment', 'document_generation') are not among
+          them, so every decision write here was rejected alongside the
+          domainTrack above. The label is kept below, where it reaches
+          decision_context and stays queryable. */
+      recommendationType: 'statistical_method',
+      analysisKind: 'sap_generation',
       recommendationSummary: `Generate SAP with N=${ctx.sampleSize}, dropout=${(
         ctx.dropoutRate * 100
       ).toFixed(0)}%, endpoint=${ctx.primaryEndpoint}`,
@@ -225,7 +240,7 @@ export class OperatingSystemIntegration {
       approvalState: 'pending_review',
       relatedAssumptionIds: assumptionIds,
       relatedArtifactId: ctx.sourceArtifactId,
-      domainTrack: ctx.domainTrack ?? 'biotech',
+      domainTrack: ctx.domainTrack ?? 'biostatistics',
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       governanceBoundary: 'advisory',
@@ -277,7 +292,10 @@ export class OperatingSystemIntegration {
       projectId: ctx.projectId,
       contextType: 'regulatory_analysis',
       contextDescription: `Statistical defensibility assessment — score ${ctx.overallScore}/100 (${ctx.overallRating})`,
-      recommendationType: 'defensibility_assessment',
+      // See the note in captureFromSapGeneration: a defensibility assessment
+      // rates the study design, which is the type the column accepts.
+      recommendationType: 'study_design',
+      analysisKind: 'defensibility_assessment',
       recommendationSummary:
         `Study design rated as "${ctx.overallRating}" (${ctx.overallScore}/100). ` +
         `${ctx.criticalIssueCount} critical, ${ctx.majorIssueCount} major issues. ` +
@@ -293,7 +311,7 @@ export class OperatingSystemIntegration {
       actionState,
       approvalState,
       relatedArtifactId: ctx.relatedArtifactId,
-      domainTrack: ctx.domainTrack ?? 'biotech',
+      domainTrack: ctx.domainTrack ?? 'biostatistics',
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       governanceBoundary: 'advisory',
@@ -319,7 +337,10 @@ export class OperatingSystemIntegration {
       projectId: ctx.projectId,
       contextType: 'document_generation',
       contextDescription: `Generated ${ctx.documentType}: "${ctx.documentTitle}"`,
-      recommendationType: 'document_generation',
+      // See the note in captureFromSapGeneration: a generated document is a
+      // decision about what enters the submission data package.
+      recommendationType: 'data_package',
+      analysisKind: 'document_generation',
       recommendationSummary: `Generated ${ctx.documentType} "${ctx.documentTitle}" using ${ctx.usedAssumptionIds.length} linked assumptions.`,
       recommendationDetail:
         `Document generated as advisory output. ` +
@@ -334,7 +355,10 @@ export class OperatingSystemIntegration {
       executedArtifactVersionId: ctx.generatedArtifactVersionId,
       relatedAssumptionIds: ctx.usedAssumptionIds,
       linkedAssumptionIds: ctx.usedAssumptionIds,
-      domainTrack: ctx.domainTrack ?? 'biotech',
+      // Document generation spans every discipline, so there is nothing to
+      // derive from here; the ledger's own default stands until the caller
+      // supplies the track.
+      domainTrack: ctx.domainTrack ?? DEFAULT_DOMAIN_TRACK,
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       governanceBoundary: 'advisory',

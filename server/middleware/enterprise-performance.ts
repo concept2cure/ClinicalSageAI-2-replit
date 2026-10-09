@@ -174,6 +174,18 @@ export const compressionMiddleware = compressionLib({
     if (req.headers['x-no-compression']) {
       return false;
     }
+    // Never compress a server-sent event stream. `text/event-stream` is
+    // "compressible" to the default filter, and a compressed stream is held in
+    // the encoder until it fills or the response ends — nothing here calls
+    // res.flush() per event. Every browser negotiates brotli/gzip, so AnA's
+    // answer did not stream at all: the whole turn (tokens, tool progress, and
+    // every Live Drive move) arrived in one burst when she finished, and a
+    // screen she was driving jumped through all its stops at once. curl, which
+    // negotiates nothing, streamed fine — which is how it went unnoticed.
+    const contentType = String(res.getHeader('Content-Type') ?? '');
+    if (contentType.startsWith('text/event-stream')) {
+      return false;
+    }
     // Use compression default filter
     return compressionLib.filter(req, res);
   },

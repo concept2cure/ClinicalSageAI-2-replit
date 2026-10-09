@@ -1,0 +1,8 @@
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > sizes d = 0.5 at 63 per group (80% power, two-sided 0.05), not 16 4ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > N depends on the effect size: d = 0.3 needs more subjects than d = 0.5 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > discloses the standardisation as a default assumption 1ms
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > refuses when no effect size is given, instead of sizing on an invented 0.5 7ms
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > reads the dropoutRate its catalog entry advertises 2ms
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > passes the variance through, so the effect size is not silently divided by itself 1ms
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > refuses when no effect size is given, instead of reporting "SAP generated" 23ms
+      Tests  7 passed | 109 skipped (116)

@@ -14,6 +14,8 @@
  * agentic loop speaks TOOL CALLS. `execute_platform_command` carries the
  * command in `input.command`, so somebody has to unwrap it, and doing that
  * inline at the call site is how the unwrapping comes to disagree with itself.
+ * Every other tool is judged by the tool register in `tool-authorization.ts`,
+ * which the registry wrapper in AnaToolExecutor reads too (P1-34).
  *
  * ── Why a missing command is its own answer ──────────────────────────────────
  * `UNDECIDABLE` is not a tidier spelling of "not governed", and collapsing the
@@ -38,7 +40,8 @@
  */
 
 import { isProposeOnlyCommand } from '../ana-ri/command-rbac.js';
-import { requiresEsignature } from '../ana-ri/part11-governance.js';
+import { governedTierOf } from '../ana-ri/part11-governance.js';
+import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
 
 /** The tool that carries a platform command in its input. */
 export const PLATFORM_COMMAND_TOOL = 'execute_platform_command';
@@ -49,7 +52,7 @@ export const PLATFORM_COMMAND_TOOL = 'execute_platform_command';
  *   reason       a reason-for-change, recorded verbatim
  *   esignature   re-authentication as well (§11.200), for the high-impact tier
  */
-export type ApprovalTier = 'reason' | 'esignature';
+export type ApprovalTier = 'confirm' | 'reason' | 'esignature';
 
 export type ToolGateVerdict =
   /** Runs as usual. Nothing to ask. */
@@ -60,7 +63,12 @@ export type ToolGateVerdict =
    * The call could not be read, so it cannot be cleared. Distinct from
    * UNGOVERNED on purpose — see the module docstring.
    */
-  | { kind: 'UNDECIDABLE'; why: string };
+  | { kind: 'UNDECIDABLE'; why: string }
+  /**
+   * A person's own act (tool-authorization.ts `refuse`). Not put to anyone:
+   * a confirmation would not make it AnA's to take. Carries what she is told.
+   */
+  | { kind: 'REFUSED'; why: string; result: ReturnType<typeof buildToolRefusal> };
 
 /** A tool call as the agentic loop holds one. */
 export interface ClassifiableToolCall {
@@ -77,22 +85,17 @@ function asRecord(v: unknown): Record<string, unknown> | null {
 /**
  * Classify one tool call.
  *
- * Only `execute_platform_command` can be governed today, because the propose-
- * only partition is defined over the command surface. Tools with their own
- * handlers — saving a document to the vault, seeding a TMF — are NOT treated as
- * governed here, and that is the existing judgment rather than an omission:
- * `PROPOSE_ONLY_COMMANDS` deliberately excludes ordinary authoring mutations
- * ("work, not attestation"), on the reasoning that making AnA unable to do them
- * trades a real capability for no control. Escalating any of them is a product
- * decision about what AnA may do unaided, to be taken with the tier changed in
- * the same commit — not something this translation layer should decide on its
- * own.
+ * `execute_platform_command` carries a command, judged by the propose-only
+ * partition and its tier. Every other tool is judged by the tool register
+ * (tool-authorization.ts): a read or AnA's own state runs; a write is put to a
+ * person at the confirm tier; a person's own act is refused outright; a tool
+ * the register does not know is proposed.
  */
 export function classifyToolCall(call: ClassifiableToolCall): ToolGateVerdict {
   if (call.inputParseError) {
     return { kind: 'UNDECIDABLE', why: `arguments did not parse: ${call.inputParseError}` };
   }
-  if (call.name !== PLATFORM_COMMAND_TOOL) return { kind: 'UNGOVERNED' };
+  if (call.name !== PLATFORM_COMMAND_TOOL) return classifyRegisteredTool(call);
 
   const input = asRecord(call.input);
   if (!input) {
@@ -112,6 +115,21 @@ export function classifyToolCall(call: ClassifiableToolCall): ToolGateVerdict {
     kind: 'NEEDS_APPROVAL',
     command,
     params: asRecord(input.params) ?? {},
-    tier: requiresEsignature(command) ? 'esignature' : 'reason',
+    tier: governedTierOf(command),
   };
+}
+
+/** A tool other than the command carrier, judged by the register. */
+function classifyRegisteredTool(call: ClassifiableToolCall): ToolGateVerdict {
+  const auth = toolAuthorizationOf(call.name, call.input);
+  if (auth.class === 'read' || auth.class === 'self' || auth.class === 'command') return { kind: 'UNGOVERNED' };
+  // Its handler is the refusal, and the more useful one (see refusedBy).
+  if (auth.refusedBy === 'handler') return { kind: 'UNGOVERNED' };
+  if (auth.class === 'refuse') {
+    return { kind: 'REFUSED', why: auth.why ?? 'a person’s own act', result: buildToolRefusal(call.name, auth.why) };
+  }
+  // What a person is asked to confirm is the call itself, so it must be readable.
+  const toolInput = asRecord(call.input);
+  if (!toolInput) return { kind: 'UNDECIDABLE', why: 'the call carried no arguments object' };
+  return { kind: 'NEEDS_APPROVAL', command: call.name, params: toolInput, tier: 'confirm' };
 }

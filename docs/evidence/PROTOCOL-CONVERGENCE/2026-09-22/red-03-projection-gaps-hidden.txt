@@ -1,0 +1,17 @@
+### RED — the projection panel stops rendering the engine's own gaps.
+### The 'honest gap, not an empty success' test must fail: a Schedule of Activities
+### the design cannot fill would render as a clean, empty panel.
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, unbound > says no design is bound and offers the bind action, claiming nothing 700ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, unbound > lists this tenant's persisted designs in the bind drawer 323ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, bound > shows the design identity and the design gates' findings 356ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, bound > reports an unresolved link as unresolved, not as a clean design 189ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > offers all five, each labelled with what it is a projection OF 383ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > views the ICH M11 protocol projection with each section's status 285ms
+ × client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > renders a projection the design cannot fill as its gap, not as an empty success 260ms
+   → Unable to find an element with the text: /The design object carries no Schedule of Activities/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > renders a failed projection read as a failure, not as an empty projection 257ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > renders a projection the design cannot fill as its gap, not as an empty success
+TestingLibraryElementError: Unable to find an element with the text: /The design object carries no Schedule of Activities/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+      Tests  1 failed | 7 passed (8)

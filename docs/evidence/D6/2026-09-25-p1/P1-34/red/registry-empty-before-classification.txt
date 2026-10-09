@@ -1,0 +1,413 @@
+# red: propose-only-tools.test.ts against propose-only-tools.ts with EMPTY registry maps (HEAD 7fbe51c5, 2026-09-26)
+# command: NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/services/ana/__tests__/propose-only-tools.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the scan still sees the surface > finds the whole registered surface across the executor and every RegisterFn module 5ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the scan still sees the surface > flags the tools the finding was found through 2ms
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every handler with a write marker is classified — a new writer cannot ship unclassified 10ms
+   → expected [ 'run_rbm_assessment', …(134) ] to deeply equal []
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > no name is in two maps 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every classified name is a registered tool — no stale entries 0ms
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every entry says why, in a sentence 2ms
+   → expected 0 to be greater than 0
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > the two gates compose: every governed content write is a proposal or a refusal 1ms
+   → expected [ 'author_docx_native', …(13) ] to deeply equal []
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every handler that already refuses inline is registered as a refusal — the registry is the single source 9ms
+   → expected [ 'finalize_dms_plan', …(13) ] to deeply equal []
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > the command bridge is in no map — the command partition governs it 2ms
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > save_document_to_vault is a proposal 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > update_vault_document is a proposal 4ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > draft_authoring_document is a proposal 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > create_qms_document is a proposal 3ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > retire_qms_document is refused in chat 1ms
+   → expected null not to be null
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > approve_import is refused in chat 1ms
+   → expected null not to be null
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > ack_training is refused in chat 1ms
+   → expected null not to be null
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > approve_qms_document is refused in chat 1ms
+   → expected null not to be null
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > qms_change_transition is refused for the approve, reject and close targets and proposed for the rest 4ms
+   → approved: expected null not to be null
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > an unreadable transition target is refused, not proposed 1ms
+   → {}: expected null not to be null
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > the tools that already demand a reason-for-change of their own are at the reason tier, so the reason is the person’s 1ms
+   → save_document_to_vault: expected null to be 'reason' // Object.is equality
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > a read is neither 0ms
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a proposal mirrors buildHumanConfirmationRequiredResult with a {tool, input} retry 1ms
+   → save_document_to_vault is not a propose-only tool
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a confirm-tier proposal asks for no reason and carries an object input even when the call had none 1ms
+   → create_qms_document is not a propose-only tool
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > refuses to build a proposal for a tool that is not one — no silent confirm tier for an unknown name 1ms
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a refusal keeps refuseSignatureInChat’s keys and adds an error code every door reads as a refusal 0ms
+   → Cannot read properties of null (reading 'target')
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every handler with a write marker is classified — a new writer cannot ship unclassified
+AssertionError: expected [ 'run_rbm_assessment', …(134) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "run_rbm_assessment",
++   "ind_generate_section",
++   "author_docx_native",
++   "run_python_script",
++   "insert_document_content",
++   "surgical_docx_xml_edit",
++   "insert_clause_template",
++   "run_in_container",
++   "create_udi_record",
++   "create_risk_item",
++   "add_risk_control",
++   "create_software_lifecycle_item",
++   "write_q_sub_section",
++   "record_analytical_performance_study",
++   "record_clinical_performance_study",
++   "classify_ivd_device",
++   "create_per_document",
++   "categorize_clia_complexity",
++   "pair_companion_diagnostic",
++   "register_ldt",
++   "record_validation_finding",
++   "resolve_validation_finding",
++   "fire_notification",
++   "create_clinical_study",
++   "create_clinical_investigator",
++   "create_financial_disclosure",
++   "add_disclosure_interest",
++   "create_ha_interaction",
++   "create_regulatory_commitment",
++   "create_iacuc_protocol",
++   "register_animal_cohort",
++   "create_irb_submission",
++   "add_irb_site",
++   "create_ibc_registration",
++   "add_biological_agent",
++   "create_nonclinical_study",
++   "add_protocol_budget_item",
++   "set_protocol_budget_params",
++   "add_soa_assessment",
++   "set_soa_cell",
++   "create_protocol_template",
++   "clone_protocol_template",
++   "save_document_as_template",
++   "add_protocol_milestone",
++   "set_protocol_milestone_status",
++   "create_protocol_amendment",
++   "add_amendment_change",
++   "report_protocol_deviation",
++   "add_capa_action",
++   "assign_protocol_reviewer",
++   "add_protocol_review_comment",
++   "create_consent_form",
++   "update_consent_element",
++   "create_dms_plan",
++   "update_dms_plan_element",
++   "create_other_support",
++   "add_other_support_entry",
++   "create_biosketch",
++   "update_biosketch_section",
++   "create_invention_disclosure",
++   "update_invention_disclosure",
++   "submit_invention_disclosure",
++   "create_export_control_review",
++   "update_export_control_review",
++   "create_research_agreement",
++   "update_research_agreement",
++   "add_protocol_risk",
++   "create_protocol_document",
++   "update_protocol_section",
++   "add_protocol_objective",
++   "add_eligibility_criterion",
++   "import_citi_records",
++   "set_funding_profile",
++   "assign_committee_member",
++   "convene_committee_meeting",
++   "add_committee_agenda_item",
++   "cast_committee_vote",
++   "create_coverage_analysis",
++   "set_coverage_qualifying_determination",
++   "add_coverage_item",
++   "classify_coverage_item",
++   "create_grant_proposal",
++   "record_grant_award",
++   "set_grant_milestone_status",
++   "open_grant_closeout",
++   "update_grant_closeout",
++   "record_subaward",
++   "screen_subaward",
++   "add_grant_budget_line",
++   "record_grant_expenditure",
++   "record_cost_share_contribution",
++   "request_no_cost_extension",
++   "record_grant_opportunity",
++   "triage_compliance_attention",
++   "fulfill_regulatory_commitment",
++   "register_controlled_substance",
++   "create_rim_product",
++   "set_registration_status",
++   "create_inspection",
++   "log_inspection_finding",
++   "register_dea",
++   "log_cs_transaction",
++   "create_lifecycle_obligation",
++   "create_tmf",
++   "classify_tmf_artifact",
++   "add_personnel_training",
++   "create_effort_certification",
++   "add_effort_line",
++   "create_coi_disclosure",
++   "log_study_deviation",
++   "log_study_ae",
++   "record_endpoint_result",
++   "verify_memory_atom",
++   "create_qms_document",
++   "revise_qms_document",
++   "retire_qms_document",
++   "ack_training",
++   "qms_change_create",
++   "qms_change_transition",
++   "qms_change_link",
++   "register_supplier",
++   "log_nonconforming_product",
++   "create_labeling_document",
++   "add_labeling_translation",
++   "add_labeling_symbol",
++   "start_legacy_import",
++   "override_import_mapping",
++   "approve_import",
++   "write_kit_section",
++   "save_document_to_vault",
++   "update_vault_document",
++   "seed_tmf",
++   "update_tmf_artifact_status",
++   "bind_protocol_to_study_design",
++   "apply_protocol_design_derivation",
++ ]
+
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:127:26
+    125|   it('every handler with a write marker is classified — a new writer c…
+    126|     const unclassified = flagged.filter((n) => !classified.has(n));
+    127|     expect(unclassified).toEqual([]);
+       |                          ^
+    128|   });
+    129|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every entry says why, in a sentence
+AssertionError: expected 0 to be greater than 0
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:148:25
+    146|       ...Object.entries(READ_ONLY_TOOL_EXCLUSIONS),
+    147|     ];
+    148|     expect(whys.length).toBeGreaterThan(0);
+       |                         ^
+    149|     for (const [n, why] of whys) {
+    150|       expect(why.length, n).toBeGreaterThan(30);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > the two gates compose: every governed content write is a proposal or a refusal
+AssertionError: expected [ 'author_docx_native', …(13) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "author_docx_native",
++   "commit_document_revision",
++   "draft_authoring_document",
++   "generate_document",
++   "insert_document_content",
++   "pdf_overlay",
++   "save_document_to_vault",
++   "update_biosketch_section",
++   "update_consent_element",
++   "update_dms_plan_element",
++   "update_protocol_section",
++   "update_vault_document",
++   "write_kit_section",
++   "write_q_sub_section",
++ ]
+
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:161:21
+    159|   it('the two gates compose: every governed content write is a proposa…
+    160|     const unaided = Object.keys(GOVERNED_CONTENT_WRITE_TOOLS).filter((…
+    161|     expect(unaided).toEqual([]);
+       |                     ^
+    162|   });
+    163|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every handler that already refuses inline is registered as a refusal — the registry is the single source
+AssertionError: expected [ 'finalize_dms_plan', …(13) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "finalize_dms_plan",
++   "certify_other_support",
++   "finalize_biosketch",
++   "finalize_export_control_determination",
++   "execute_research_agreement",
++   "finalize_committee_determination",
++   "finalize_grant_closeout",
++   "execute_subaward",
++   "approve_no_cost_extension",
++   "approve_qms_document",
++   "finalize_protocol_document",
++   "approve_rbm_assessment",
++   "approve_rbm_plan",
++   "transmit_submission",
++ ]
+
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:167:64
+    165|     const inline = inlineRefusers();
+    166|     expect(inline.length).toBeGreaterThanOrEqual(14);
+    167|     expect(inline.filter((n) => !(n in REFUSE_IN_CHAT_TOOLS))).toEqual…
+       |                                                                ^
+    168|   });
+    169|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > save_document_to_vault is a proposal
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > update_vault_document is a proposal
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > draft_authoring_document is a proposal
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > create_qms_document is a proposal
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:181:36
+    179|     '%s is a proposal',
+    180|     (n) => {
+    181|       expect(isProposeOnlyTool(n)).toBe(true);
+       |                                    ^
+    182|       expect(refusedInChatTool(n, { title: 'x' })).toBeNull();
+    183|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > retire_qms_document is refused in chat
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > approve_import is refused in chat
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > ack_training is refused in chat
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > approve_qms_document is refused in chat
+AssertionError: expected null not to be null
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:187:58
+    185|
+    186|   it.each(['retire_qms_document', 'approve_import', 'ack_training', 'a…
+    187|     expect(refusedInChatTool(n, { document_id: 1 })).not.toBeNull();
+       |                                                          ^
+    188|     expect(isProposeOnlyTool(n)).toBe(false);
+    189|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > qms_change_transition is refused for the approve, reject and close targets and proposed for the rest
+AssertionError: approved: expected null not to be null
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:194:25
+    192|     for (const to of ['approved', 'rejected', 'closed']) {
+    193|       const r = refusedInChatTool('qms_change_transition', { change_id…
+    194|       expect(r, to).not.toBeNull();
+       |                         ^
+    195|       expect(r?.target).toBe(to);
+    196|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > an unreadable transition target is refused, not proposed
+AssertionError: {}: expected null not to be null
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:207:44
+    205|     for (const input of [{}, { to: '' }, { to: 42 }, null, 'approved']…
+    206|       const r = refusedInChatTool('qms_change_transition', input);
+    207|       expect(r, JSON.stringify(input)).not.toBeNull();
+       |                                            ^
+    208|       expect(r?.target).toBeNull();
+    209|       expect(buildToolRefusalResult(r!).message).toMatch(/could not be…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > the tools that already demand a reason-for-change of their own are at the reason tier, so the reason is the person’s
+AssertionError: save_document_to_vault: expected null to be 'reason' // Object.is equality
+
+- Expected:
+"reason"
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:215:32
+    213|   it('the tools that already demand a reason-for-change of their own a…
+    214|     for (const n of ['save_document_to_vault', 'update_vault_document'…
+    215|       expect(toolTierOf(n), n).toBe('reason');
+       |                                ^
+    216|     }
+    217|     for (const n of ['create_qms_document', 'draft_authoring_document'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a proposal mirrors buildHumanConfirmationRequiredResult with a {tool, input} retry
+TypeError: save_document_to_vault is not a propose-only tool
+ ❯ buildToolProposalResult server/services/ana/propose-only-tools.ts:199:28
+    197| } {
+    198|   const tier = toolTierOf(tool);
+    199|   if (tier === null) throw new TypeError(`${tool} is not a propose-onl…
+       |                            ^
+    200|   const message =
+    201|     tier === 'confirm'
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:233:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a confirm-tier proposal asks for no reason and carries an object input even when the call had none
+TypeError: create_qms_document is not a propose-only tool
+ ❯ buildToolProposalResult server/services/ana/propose-only-tools.ts:199:28
+    197| } {
+    198|   const tier = toolTierOf(tool);
+    199|   if (tier === null) throw new TypeError(`${tool} is not a propose-onl…
+       |                            ^
+    200|   const message =
+    201|     tier === 'confirm'
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:251:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a refusal keeps refuseSignatureInChat’s keys and adds an error code every door reads as a refusal
+TypeError: Cannot read properties of null (reading 'target')
+ ❯ buildToolRefusalResult server/services/ana/propose-only-tools.ts:239:30
+    237|   message: string;
+    238| } {
+    239|   const unreadable = refusal.target === null ? ' The target of the cha…
+       |                              ^
+    240|   return {
+    241|     ok: false,
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:263:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed | 7 passed (25)
+   Start at  13:14:47
+   Duration  616ms (transform 107ms, setup 86ms, import 83ms, tests 59ms, environment 0ms)
+
+exit=1

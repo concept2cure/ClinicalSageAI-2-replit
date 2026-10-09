@@ -25,7 +25,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Pool } from 'pg';
 
-const databaseUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL ?? '';
+// `||`, not `??` — the same reading tests/setup.db.ts uses. Under this runner
+// TEST_DATABASE_URL can arrive as the EMPTY STRING rather than unset, and `??`
+// keeps an empty string, so this suite alone never reached DATABASE_URL and
+// failed in beforeAll with every test skipped (seen 2026-09-22).
+const databaseUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL || '';
 const TAG = `capacode_${process.pid}_${Date.now().toString(36)}`;
 const ORG = 90401;
 const YEAR = new Date().getUTCFullYear().toString();

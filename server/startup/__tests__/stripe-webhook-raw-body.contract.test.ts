@@ -138,7 +138,11 @@ describe('the real middleware keeps the mount', () => {
       'utf8',
     );
     const rawAt = src.indexOf("app.use('/api/billing/webhooks'");
-    const jsonAt = src.indexOf("app.use('/api', express.json(");
+    // Since 2026-09-26 the pre-boundary parsers are mounted by
+    // mountPreAuthBodyParsers (security audit IAM-18 item 7: the Concept2Cure
+    // parser moved behind the auth boundary); the call marks where /api JSON
+    // parsing begins.
+    const jsonAt = src.indexOf('mountPreAuthBodyParsers(app)');
 
     expect(rawAt, 'the raw mount for /api/billing/webhooks is gone').toBeGreaterThan(-1);
     expect(jsonAt, 'the /api JSON parser mount could not be found').toBeGreaterThan(-1);

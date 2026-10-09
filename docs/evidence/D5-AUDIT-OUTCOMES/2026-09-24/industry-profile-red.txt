@@ -1,0 +1,6 @@
+# RED — industry-profile: tests run against the unfixed implementation (server/routes/mdx-industry-context.ts stashed at 872c47182)
+ × server/routes/__tests__/mdx-industry-profile-audit-outcome.test.ts > PATCH /api/mdx/industry-profile carries its audit-row outcome > a lost row: 200 with the saved profile, and meta.auditTrail says the row is missing 39ms
+ × server/routes/__tests__/mdx-industry-profile-audit-outcome.test.ts > PATCH /api/mdx/industry-profile carries its audit-row outcome > a written row says so 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed (2)

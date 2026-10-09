@@ -33,5 +33,11 @@
   "language": {
     "label": "言語",
     "select": "言語を選択"
+  },
+  "session": {
+    "stillThere": "まだご利用中ですか？",
+    "signOutIn": "操作がないため、{{seconds}} 秒後にサインアウトします。",
+    "staySignedIn": "サインインしたままにする",
+    "signOutNow": "今すぐサインアウト"
   }
 }

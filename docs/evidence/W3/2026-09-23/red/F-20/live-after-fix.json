@@ -1,0 +1,19 @@
+{
+ "identity": "oq-runner@validation.local (TOTP factor enrolled)",
+ "/api/users/login": {
+  "status": 200,
+  "tokenIssued": false,
+  "mfaAsked": true,
+  "projectsWithThatToken": null,
+  "sessionAuthenticated": null,
+  "sessionUser": null
+ },
+ "/api/user/login": {
+  "status": 200,
+  "tokenIssued": false,
+  "mfaAsked": true,
+  "projectsWithThatToken": null,
+  "sessionAuthenticated": null,
+  "sessionUser": null
+ }
+}

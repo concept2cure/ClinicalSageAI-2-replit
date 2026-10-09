@@ -1,0 +1,248 @@
+{
+ "commit": "be2c04350 (seed and full capture); 48337a429 (the ten screenshots, after the two fixes)",
+ "posture": {
+  "LAUNCH_SCOPE_ENFORCE": "on",
+  "RLS_ENFORCE": "on",
+  "runtimeRole": "app_service (non-superuser)",
+  "database": "fresh, provisioned from empty by npm run up",
+  "program": "C2C-101 open in the shell"
+ },
+ "surfaces": [
+  {
+   "id": "admin-console",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "master-licensing",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "403 GET /api/admin/master/licensing",
+    "403 GET /api/admin/master/licensing"
+   ]
+  },
+  {
+   "id": "access-requests",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ana-command",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ana-memory",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "apps",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "artifacts-center",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "audit-trail",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "conversation-thread",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "dispatch-readiness",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "document-authoring",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "dossier-map",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ectd-coauthor",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ectd-compile",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ectd-publishing",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "filings-catalog",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "licensing",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "onboarding",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "onboarding-ingest",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "program-journey",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "project-home",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "projects",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "protocol-dev",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "regulatory-workspace",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "review",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "setup",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "qmp",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "quality",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "part11-console",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "identity-console",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "403 GET /api/admin/scim-tenants",
+    "403 GET /api/admin/scim-ip-allowlist",
+    "403 GET /api/admin/scim-tenants",
+    "403 GET /api/admin/scim-ip-allowlist"
+   ]
+  },
+  {
+   "id": "submission-center",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "gateway-transmittals",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "tasks",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "template-library",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "training",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "billing",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "usage",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "vault",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  }
+ ]
+}

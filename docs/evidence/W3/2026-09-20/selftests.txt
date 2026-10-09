@@ -1,0 +1,16 @@
+# Gate self-tests, 2026-09-21T00:41:50Z
+## npm run validation:oq:selftest
+  ST-01  pass
+  ST-02  FAIL  (healthz returned 200, not 418 (this failure is the point))
+  ST-03  deviation  (selftest: deliberately not executable)
+  ST-04  not-executed  (prerequisite step ST-02 did not pass)
+  ST-05  FAIL  (runner error: Error: selftest: runner error |     at file:///home/user/ClinicalSageAI-2-replit/tests/validation/lib/harness.selftest.mjs:37:9 |     at Object.step (file:///home/user/ClinicalSageAI-2-replit/tests/validation/lib/harness.mjs:463:30))
+
+OQ-000 Harness self-test: 1 pass, 2 fail, 1 deviation, 1 not-executed → ../../../tmp/oq-harness-selftest-ZmOknw/OQ-SELFTEST
+harness selftest: OK — false expectation → fail, deviation → deviation, dependent → not-executed, thrown → fail; bundle written
+exit 0
+## npm run validation:traceability:selftest
+negative case: builder exited 1 and named URS-FAKE-999 — the gate fails when it should
+positive case: builder exited 0 on the real tree (TM-001: 67 requirements — pass 43, partial 2, fail 7, open 15, uncovered 0; 90 OQ steps → ../../../tmp/tm-selftest-flNmCm/out-pos/TM-001-TRACEABILITY-MATRIX.md)
+build-traceability selftest: OK
+exit 0

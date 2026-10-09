@@ -1,0 +1,80 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/projects",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "name": "OQ-005 Readiness program 20260927235411",
+      "programType": "ind",
+      "primaryAgency": "FDA",
+      "indication": "Validation exercise",
+      "priority": "medium"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 81,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": "1afec5c1-212c-4aed-b72d-fafbaea6ceca",
+        "title": "OQ-005 Readiness program 20260927235411",
+        "ws": "Biotech",
+        "code": "ORP2",
+        "stage": "Planning",
+        "readiness": 0,
+        "status": "active",
+        "lead": "JM Smith",
+        "blocker": null,
+        "due": "—",
+        "activity": "Updated Sep 27"
+      },
+      "program": {
+        "id": "1afec5c1-212c-4aed-b72d-fafbaea6ceca",
+        "code": "ORP2",
+        "name": "OQ-005 Readiness program 20260927235411",
+        "program_type": "ind",
+        "status": "active",
+        "phase": "planning",
+        "priority": "medium",
+        "description": null,
+        "product_name": "OQ-005 Readiness program 20260927235411",
+        "indication": "Validation exercise",
+        "intended_use": null,
+        "primary_agency": "FDA",
+        "target_agencies": [
+          "FDA"
+        ],
+        "target_submission_date": null,
+        "actual_submission_date": null,
+        "approval_date": null,
+        "lead_user_id": 1,
+        "team_members": [],
+        "created_at": "2026-09-27T23:54:12.259Z",
+        "updated_at": "2026-09-27T23:54:12.259Z",
+        "application_number": null,
+        "product_type": "biologic",
+        "device_class": null,
+        "regulatory_path": null,
+        "product_code": null,
+        "sponsor_name": "Concept2Cure Therapeutics",
+        "predicate_devices": [],
+        "review_panel": null,
+        "regulation_number": null,
+        "device_flags": null,
+        "readiness": 0
+      },
+      "meta": {
+        "created": true,
+        "documentId": "doc_38bfd669ebf84bf1a1a1d5391359f84d",
+        "scaffoldedSections": 92,
+        "submissionId": 7,
+        "submissionCreated": true,
+        "projectAnchorId": 6,
+        "projectAnchorCreated": true
+      }
+    }
+  }
+}

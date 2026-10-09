@@ -12,16 +12,21 @@
  *   4. Link every change to deviations, CAPAs and validation documents (the
  *      per-change cross-reference panel).
  *
- * AnA-first: every governed action is a conversational prompt handed to the
- * host's AnA surface via `onAsk` — AnA runs the governed transition and captures
- * the reason-for-change / e-signature, so the 21 CFR Part 11 audit trail stays
- * the single path. No mutation is performed directly here.
+ * AnA-first: governed actions are conversational prompts handed to the host's
+ * AnA surface via `onAsk`, and AnA runs the governed transition with its reason.
+ *
+ * Approval is the exception, because it is an electronic signature and AnA
+ * cannot sign: a chat turn cannot collect a password. A change under assessment
+ * carries an Approve button that opens the shared EsignModal and posts to
+ * POST /api/mdx/qms/changes/:id/approve. Until 2026-09-25 "Advance" asked AnA to
+ * "capture the reason and e-signature", and the tool approved with segregation
+ * of duties as its only check (security review 2026-09-24, DP-31; plan P1-28).
  *
  * @module client/src/concept2cure/quality/ChangeControl
  */
 
 import * as React from 'react';
-import { I } from './icons';
+import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import { ChangeFlow } from './ChangeFlow';
 import {
@@ -48,7 +53,10 @@ import { useChangeSummary } from './changeHooks';
    screen", so the two lanes cannot answer it differently. */
 import { useSampleValue } from '../mdx/lib/useSampleRows';
 import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
-import { EmptyState } from '../v2/dataConnect';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
+import { useAuthUser } from '@/services/portal/authService';
+import { postQmsApproval } from './qmsApproval';
 
 export interface ChangeControlProps {
   /** Forward a prompt to the host's AnA conversation surface. */
@@ -67,6 +75,10 @@ export interface ChangeControlProps {
   loading: boolean;
   /** True when `changes` is the fixture — renders the standing sample marker. */
   showingSample: boolean;
+  /** The register read's error, when it failed. A failed read is not an empty log. */
+  error?: string | null;
+  /** Re-run the register read. */
+  onRetry?: () => void;
 }
 
 const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
@@ -100,8 +112,13 @@ export function ChangeControl({
   changes,
   loading,
   showingSample,
+  error,
+  onRetry,
 }: ChangeControlProps) {
   const sum = useChangeSummary();
+  const user = useAuthUser(); // display only; the server resolves the signer
+  /** The change being approved, while the signature dialog is open. */
+  const [approving, setApproving] = React.useState<ChangeControlRow | null>(null);
 
   /* The register read — and its sample-mode boundary — lives in QualityApp
      now, lifted because AnA's open-change action resolves free-text names
@@ -113,6 +130,13 @@ export function ChangeControl({
   const counts = React.useMemo(() => deriveStageCounts(changes), [changes]);
 
   const visible = changes.filter((c) => stage === 'all' || c.status === stage);
+  /* Until 2026-09-25 a failed read rendered "No changes at this stage." under
+     a flowchart of zeroes, while the KPI strip above said the totals were
+     unavailable (HS-1, docs/evidence/reviews/2026-09-24/lenses.md). A resolved
+     list that is non-empty is live or explicit sample mode; an empty one with
+     an error, or still loading, is unread and may not render a count. */
+  const failed = changes.length === 0 && error != null;
+  const unread = failed || (changes.length === 0 && loading);
 
   return (
     <>
@@ -205,22 +229,30 @@ export function ChangeControl({
             <>
               <span className="spacer" />
               <button className="qms-link" onClick={() => onStageChange('all')}>
-                {I.x} Clear filter · {STATE_LABEL[stage as ChangeState] ?? stage}
+                {I.close} Clear filter · {STATE_LABEL[stage as ChangeState] ?? stage}
               </button>
             </>
           )}
         </div>
-        <ChangeFlow counts={counts} activeStage={stage} onSelectStage={onStageChange} onAsk={onAsk} />
+        {unread ? (
+          <div className="qms-empty" role="status">
+            {failed ? 'Stage counts appear once the change log can be read.' : 'Loading the change log…'}
+          </div>
+        ) : (
+          <ChangeFlow counts={counts} activeStage={stage} onSelectStage={onStageChange} onAsk={onAsk} />
+        )}
       </section>
 
       {/* ── Register / log ── */}
       <section className="qms-sec">
         <div className="qms-sec-head">
           <h2>Change control log</h2>
-          <span className="meta">
-            {visible.length} {visible.length === 1 ? 'change' : 'changes'}
-            {stage !== 'all' ? ` · ${STATE_LABEL[stage as ChangeState] ?? stage}` : ''}
-          </span>
+          {!unread && (
+            <span className="meta">
+              {visible.length} {visible.length === 1 ? 'change' : 'changes'}
+              {stage !== 'all' ? ` · ${STATE_LABEL[stage as ChangeState] ?? stage}` : ''}
+            </span>
+          )}
         </div>
 
         <div className="qms-table">
@@ -234,7 +266,18 @@ export function ChangeControl({
             <div>Links</div>
             <div />
           </div>
-          {visible.length === 0 && <div className="qms-empty">No changes at this stage.</div>}
+          {failed && (
+            <ErrorState
+              title="The change log could not be read"
+              message={error}
+              retry={onRetry}
+              testId="change-log-failed"
+            />
+          )}
+          {unread && !failed && (
+            <div className="qms-empty" role="status">Loading the change log…</div>
+          )}
+          {!unread && visible.length === 0 && <div className="qms-empty">No changes at this stage.</div>}
           {visible.map((c) => {
             const overdue = isImplementationOverdue(c);
             const open = openId === c.id;
@@ -284,13 +327,27 @@ export function ChangeControl({
                       onClick={() =>
                         onAsk(
                           `Advance ${c.changeNumber} ${c.title} (currently ${STATE_LABEL[c.status]}). Tell me the next ` +
-                            'controlled step, confirm the reviewer or approver (the approver must differ from the initiator), ' +
-                            'capture the reason and e-signature, then write the Part 11 audit entry.',
+                            'controlled step and ask me for the reason for the change. If the next step is approval, ' +
+                            'tell me to approve it here with the Approve button, which takes my signature.',
                         )
                       }
                     >
                       {I.arrowRight} Advance
                     </button>
+                    {c.status === 'under_assessment' && (
+                      <button
+                        className="qms-chip"
+                        disabled={showingSample}
+                        title={
+                          showingSample
+                            ? 'Sample changes cannot be approved'
+                            : 'Approve with your electronic signature (password and second factor). The person who proposed the change cannot approve it.'
+                        }
+                        onClick={() => setApproving(c)}
+                      >
+                        {I.check} Approve
+                      </button>
+                    )}
                     <button
                       className="qms-chip ghost"
                       title="Ask AnA about this change" aria-label="Ask AnA about this change"
@@ -298,7 +355,7 @@ export function ChangeControl({
                         onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)
                       }
                     >
-                      {I.sparkle}
+                      {I.sparkles}
                     </button>
                   </div>
                 </div>
@@ -425,6 +482,23 @@ export function ChangeControl({
           </div>
         </section>
       </div>
+      {approving && (
+        <EsignModal
+          open
+          action="Approve change"
+          target={`${approving.changeNumber} ${approving.title}`}
+          targetMeta="Approves the change for implementation. The person who proposed it cannot approve it."
+          defaultMeaning="approval"
+          meanings={['approval']}
+          signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+          onClose={() => setApproving(null)}
+          onSign={async (input) => {
+            const manifest = await postQmsApproval({ kind: 'change', id: approving.id }, input);
+            onRetry?.();
+            return manifest;
+          }}
+        />
+      )}
     </>
   );
 }

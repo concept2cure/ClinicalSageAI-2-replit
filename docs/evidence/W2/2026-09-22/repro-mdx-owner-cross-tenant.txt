@@ -1,0 +1,8 @@
+# Two organizations; a risk in A assigned first to a member of A, then to a user of B only.
+# Statement as pushed in 264c6972b (42703 fixed, no membership condition):
+member assignee        -> owner = "Insider A"
+OTHER-TENANT assignee  -> owner = "Outsider B"
+
+# Statement with the membership condition on the users join:
+member assignee        -> owner = "Insider A"
+OTHER-TENANT assignee  -> owner = null

@@ -3,23 +3,25 @@
  * (POST /docs/:docId/e-sign and POST /docs/:docId/sign).
  *
  * ── What was open ────────────────────────────────────────────────────────────
- * Both handlers verified identity (a JWT) and a credential (the §11.200 PIN)
+ * Both handlers verified identity (a JWT) and a credential (§11.200; a PIN
+ * then, the account password and enrolled second factor since 2026-09-23)
  * and then let ANY authenticated member sign. Neither consulted the caller's
  * role, so `meaning: 'APPROVER'` — which flips the document to APPROVED and
- * inserts a frozen_documents row — was available to a viewer who knew a PIN.
+ * inserts a frozen_documents row — was available to a viewer who knew the
+ * credential.
  *
  * §11.10(g) requires "controls to ensure that persons who ... electronically
  * sign records ... have the authority to do so". Identity is not authority.
  * The policy already existed in signing-authority.ts, whose own header lists
  * the surfaces that consult it; this router was not among them.
  *
- * ── Why the gate sits before the PIN check ───────────────────────────────────
- * An unauthorized caller must not learn whether a PIN is correct. If authority
+ * ── Why the gate sits before the credential check ────────────────────────────
+ * An unauthorized caller must not learn whether a password is correct. If authority
  * were checked after the credential, this endpoint would answer 401 for a wrong
- * PIN and 403 for a right one — a PIN oracle for the signing credential of any
+ * password and 403 for a right one — an oracle for the signing credential of any
  * account whose email the caller can guess. The ordering is asserted below, not
- * merely arranged: `rejects an unauthorized role BEFORE verifying the PIN`
- * sends a deliberately wrong PIN and requires 403, not 401.
+ * merely arranged: `rejects an unauthorized role BEFORE verifying the password`
+ * sends a deliberately wrong password and requires 403, not 401.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type NextFunction } from 'express';
@@ -113,7 +115,7 @@ describe('§11.10(g) — authoring e-signature requires signing authority', () =
       const res = await request(makeApp())
         .post(`/api/authoring/docs/D1/${path}`)
         .set('Authorization', await bearer())
-        .send({ pin: '1234', meaning: 'APPROVER', intent: 'Approve', reason: 'approving now' });
+        .send({ password: 'not-the-password', meaning: 'APPROVER', intent: 'Approve', reason: 'approving now' });
 
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('ESIGNATURE_NO_AUTHORITY');
@@ -125,21 +127,21 @@ describe('§11.10(g) — authoring e-signature requires signing authority', () =
       const res = await request(makeApp())
         .post(`/api/authoring/docs/D1/${path}`)
         .set('Authorization', await bearer())
-        .send({ pin: '1234', meaning: 'REVIEWER', intent: 'Review', reason: 'reviewing now' });
+        .send({ password: 'not-the-password', meaning: 'REVIEWER', intent: 'Review', reason: 'reviewing now' });
 
       expect(res.status).toBe(403);
     });
 
-    it(`/${path}: rejects an unauthorized role BEFORE verifying the PIN`, async () => {
+    it(`/${path}: rejects an unauthorized role BEFORE verifying the password`, async () => {
       resolveSignerOrgRole.mockResolvedValue('viewer');
 
-      // A PIN that could not possibly verify. If authority were checked after
-      // the credential this would be 401; 403 proves the ordering, and proves
-      // the endpoint cannot be used to probe PINs.
+      // A password that could not possibly verify. If authority were checked
+      // after the credential this would be 401; 403 proves the ordering, and
+      // proves the endpoint cannot be used to probe passwords.
       const res = await request(makeApp())
         .post(`/api/authoring/docs/D1/${path}`)
         .set('Authorization', await bearer())
-        .send({ pin: 'definitely-wrong', meaning: 'APPROVER', intent: 'Approve', reason: 'approving' });
+        .send({ password: 'definitely-wrong', meaning: 'APPROVER', intent: 'Approve', reason: 'approving' });
 
       expect(res.status).toBe(403);
       expect(res.status).not.toBe(401);
@@ -151,10 +153,10 @@ describe('§11.10(g) — authoring e-signature requires signing authority', () =
       const res = await request(makeApp())
         .post(`/api/authoring/docs/D1/${path}`)
         .set('Authorization', await bearer())
-        .send({ pin: '1234', meaning: 'APPROVER', intent: 'Approve', reason: 'approving now' });
+        .send({ password: 'not-the-password', meaning: 'APPROVER', intent: 'Approve', reason: 'approving now' });
 
       // Past the authority gate. What it becomes next (404 for the unknown
-      // document, 401 for the unverifiable PIN) is another control's business —
+      // document, 401 for the unverifiable password) is another control's business —
       // the one thing it must NOT be is a §11.10(g) refusal.
       expect(res.status).not.toBe(403);
     });
@@ -170,7 +172,7 @@ describe('§11.70 — a signature must be linked to a real record', () => {
     const res = await request(makeApp())
       .post('/api/authoring/docs/does-not-exist/e-sign')
       .set('Authorization', await bearer())
-      .send({ pin: '1234', meaning: 'APPROVER', intent: 'Approve' });
+      .send({ password: 'not-the-password', meaning: 'APPROVER', intent: 'Approve' });
 
     // computeDocHash hashes zero section rows to sha256(""), which is
     // indistinguishable from an unknown or cross-tenant id — so without this

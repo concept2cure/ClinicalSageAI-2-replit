@@ -135,7 +135,6 @@
   --pdev-ana-seam: 32px;
   --pdev-dur: var(--dur-normal, 200ms);
   --pdev-ease: var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
-  --error-text: #8a2929;
 
   /* Element-scoped dynamic vars: [data-tone] rules set --t/--tm per tone and
      gauges set --pct inline; these :root defaults only give var() a resolvable
@@ -925,7 +924,7 @@ button:focus-visible {
   padding: 0.15em 0.35em;
   font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
   font-size: 0.875em;
-  color: #c2410c;
+  color: var(--accent-main-200);
 }
 .ProseMirror pre {
   background-color: #1c1917;

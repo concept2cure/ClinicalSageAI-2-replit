@@ -48,6 +48,7 @@ import fs from 'fs';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { resolveDocumentPath } from '../utils/document-file-roots.js';
+import { requireAuthedOrgId } from '../utils/authedOrgId.js';
 
 const logger = createScopedLogger('document-understanding');
 
@@ -511,7 +512,14 @@ router.post('/analyze', async (req: Request, res: Response) => {
       // this replaces matched roots by string prefix (so `/app/storage-evil`
       // passed for `/app/storage`) and included `storage`, which contains the
       // per-tenant vault: one customer could name another customer's file here.
-      const fullPath = resolveDocumentPath(body.filePath);
+      //
+      // IAM-07: the caller's organization goes with the path, so a file under
+      // `uploads/`, `exports/` or `generated_documents/` resolves only inside
+      // `<root>/org-<id>/`. No tenant on the request refuses outright, and no
+      // refusal or miss echoes the path.
+      const guard = requireAuthedOrgId(req, res);
+      if (!guard.ok) return;
+      const fullPath = resolveDocumentPath(body.filePath, { organizationId: guard.orgId });
       if (!fullPath) {
         return res
           .status(403)
@@ -520,7 +528,7 @@ router.post('/analyze', async (req: Request, res: Response) => {
       if (fs.existsSync(fullPath)) {
         textContent = fs.readFileSync(fullPath, 'utf-8');
       } else {
-        return res.status(404).json({ error: `File not found: ${body.filePath}` });
+        return res.status(404).json({ error: 'File not found' });
       }
     }
 
@@ -623,15 +631,17 @@ router.post('/extract-tables', async (req: Request, res: Response) => {
   let text = content || '';
   if (!content && filePath) {
     // See utils/document-file-roots — the tenant vault is deliberately not
-    // reachable by arbitrary path, and containment is separator-aware.
-    const fullPath = resolveDocumentPath(filePath);
+    // reachable by arbitrary path, containment is separator-aware, and (IAM-07)
+    // a tenant-owned root resolves only inside the caller's own org prefix.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const fullPath = resolveDocumentPath(filePath, { organizationId: guard.orgId });
     if (!fullPath) {
       return res
         .status(403)
         .json({ error: 'Access denied: file path outside allowed directories' });
     }
-    if (!fs.existsSync(fullPath))
-      return res.status(404).json({ error: `File not found: ${filePath}` });
+    if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'File not found' });
     text = fs.readFileSync(fullPath, 'utf-8');
   }
 
@@ -659,15 +669,17 @@ router.post('/extract-form-fields', async (req: Request, res: Response) => {
   let text = content || '';
   if (!content && filePath) {
     // See utils/document-file-roots — the tenant vault is deliberately not
-    // reachable by arbitrary path, and containment is separator-aware.
-    const fullPath = resolveDocumentPath(filePath);
+    // reachable by arbitrary path, containment is separator-aware, and (IAM-07)
+    // a tenant-owned root resolves only inside the caller's own org prefix.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const fullPath = resolveDocumentPath(filePath, { organizationId: guard.orgId });
     if (!fullPath) {
       return res
         .status(403)
         .json({ error: 'Access denied: file path outside allowed directories' });
     }
-    if (!fs.existsSync(fullPath))
-      return res.status(404).json({ error: `File not found: ${filePath}` });
+    if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'File not found' });
     text = fs.readFileSync(fullPath, 'utf-8');
   }
 

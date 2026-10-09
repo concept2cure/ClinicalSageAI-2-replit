@@ -184,10 +184,3 @@ declare module '*/cmcBlueprintService.js' {
   const cmcBlueprintService: Record<string, (...args: any[]) => any>;
   export default cmcBlueprintService;
 }
-
-declare module '*/enhancedFaersService.js' {
-  export class EnhancedFAERSClient {
-    constructor();
-  }
-  export function fetchFaersAnalysis(...args: any[]): Promise<any>;
-}

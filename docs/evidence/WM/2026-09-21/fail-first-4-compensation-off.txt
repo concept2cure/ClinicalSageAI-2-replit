@@ -1,0 +1,4 @@
+### MUTATION 4: compensating soft-delete removed after a failed record transaction
+ × server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500 631ms
+   → expected null not to be null
+      Tests  1 failed | 5 skipped (6)

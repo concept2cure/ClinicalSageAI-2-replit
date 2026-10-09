@@ -1,0 +1,10 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx   (before the fix)
+ ✓ deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > the same person is offered it back 398ms
+ × deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > another person on the same browser is not 157ms
+   → expected <div class="rse-gate" …(1)>…(2)</div> to be null
+ × deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > a read-only section offers no draft, even its author’s 174ms
+   → expected <div class="rse-gate" …(1)>…(2)</div> to be null
+ × deviceDraftCacheOwner.test.tsx > signing out removes every device draft (SEC-A-5) > drafts under any key shape are purged; other storage is kept 89ms
+   → expected [ 'dc::sec-1', 'dc::sec-9' ] to deeply equal []
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)

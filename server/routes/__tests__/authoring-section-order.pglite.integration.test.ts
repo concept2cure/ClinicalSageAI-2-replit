@@ -104,9 +104,13 @@ describe('this file exercises the router\u2019s own statements', () => {
   /* The router cannot be imported here — it pulls the whole app graph — so its
      two statements are reproduced above. A reproduction that drifts from the
      original proves nothing about the original, so it is checked against the
-     source rather than trusted. */
+     source rather than trusted.
+
+     The statements live in services/authoring/authoring-documents.ts
+     createSection since POST /sections moved there (WM, 2026-09-21); the router
+     calls it. Same statements, same file check, new home. */
   const ROUTER = readFileSync(
-    path.resolve(__dirname, '../authoring.router.ts'),
+    path.resolve(__dirname, '../../services/authoring/authoring-documents.ts'),
     'utf8',
   );
   const normalise = (sql: string) => sql.replace(/\s+/g, ' ').trim();

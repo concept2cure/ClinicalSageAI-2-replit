@@ -1,0 +1,16 @@
+# gates on the WS3 tree (base 1500beca + WS3 working changes)
+ci:migration-set-order rc=0 :: [ci:migration-set-order] OK — 316 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+ci:migration-drop-safety rc=0 :: [ci:migration-drop-safety] OK — 316 migrations, 33 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(
+ci:column-reachability rc=0 :: [ci:column-reachability] OK — 2134 column add(s) on no applier, 0 queried by the server.
+ci:runtime-ddl rc=0 :: [ci:runtime-ddl] ✅ no new runtime DDL.
+db:sync-manifest:check rc=0 :: Manifest is in sync.
+ci:insert-columns-declared rc=0 :: ✅ no new violations. 47 baselined and awaiting burn-down.
+ci:ai-tenant-binding rc=0 :: ✓ ai-tenant-binding: every AnA gateway call binds its tenant; payloadProvenance 'public' only in allowlisted modules
+ci:gateway-bypass rc=0 :: [check-gateway-bypass] OK — no new bypasses (8 baselined site(s) tolerated).
+ci:discarded-audit-write rc=0 :: check-discarded-audit-write: no new occurrences. 125 baselined across 56 file(s).
+ci:fabricated-identity rc=0 :: [ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+ci:no-mock-in-prod-routes rc=0 :: ✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+ci:tenant-resolvers rc=0 :: OK: no new local tenant resolvers.
+ci:session-scoped-rls-bypass rc=0 :: [ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass
+ci:error-envelope rc=0 :: [ci:error-envelope] OK — 0 hand-rolled read(s) (baseline 0), none new.
+exit=0

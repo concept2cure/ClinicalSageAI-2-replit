@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/orchestration/executions/oq-srdy-08",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 12,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "LAUNCH_SCOPE",
+        "message": "This part of the product is not in this release."
+      }
+    }
+  }
+}

@@ -118,3 +118,33 @@ export function resolveProgramAuthzMode(
   if (explicit === 'enforce' || explicit === 'warn') return explicit;
   return 'enforce';
 }
+
+const PROGRAM_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * TENANCY, the half canMutateProgram leaves to its caller: is `programId` a live
+ * project (regulatory_programs, the one project identity the Projects surface
+ * creates) of `organizationId`? False for a malformed id, another
+ * organization's project, one that does not exist, and one that was deleted.
+ *
+ * Every chain of governed records starts at a project, so every writer that
+ * anchors a record to one asks this, before it writes. Until 2026-09-25 (LX-20)
+ * the question was asked in a dozen hand-written copies, most of which ignored
+ * deleted_at, and several writers checked only that the id looked like a UUID —
+ * so a record of one organization could be anchored to another's project, or to
+ * none. `db` is anything with the pg `query` shape (a Pool, a PoolClient inside
+ * the caller's transaction, a test double).
+ */
+export async function programInOrganization(
+  db: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> },
+  programId: unknown,
+  organizationId: number,
+): Promise<boolean> {
+  if (typeof programId !== 'string' || !PROGRAM_UUID_RE.test(programId)) return false;
+  if (!Number.isSafeInteger(organizationId) || organizationId <= 0) return false;
+  const { rows } = await db.query(
+    `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    [programId, organizationId],
+  );
+  return rows.length > 0;
+}

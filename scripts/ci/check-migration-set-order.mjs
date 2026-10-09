@@ -35,6 +35,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   C2C_MIGRATION_FILES,
+  CHILD_TABLE_PARENT_SCOPE,
   TENANT_ISOLATION_SWEEP,
   UUID_TENANT_ISOLATION_NONPUBLIC,
 } from '../db/migration-set.mjs';
@@ -60,14 +61,23 @@ if (last !== TENANT_ISOLATION_SWEEP) {
   );
 }
 
-// ── 2. The uuid non-public step is in the final pair (ledger C-46) ───────────
-const finalPair = C2C_MIGRATION_FILES.slice(-2);
-if (!finalPair.includes(UUID_TENANT_ISOLATION_NONPUBLIC)) {
+// ── 2. The isolation tail: uuid step, child scope, sweep (C-46; D3 2026-09-29)
+// The uuid non-public step policies the uuid-keyed tables, so nothing that
+// creates one may follow it. The parent-scoped child RLS follows IT: its chained
+// list delegates to parent policies the uuid step creates, and it must see every
+// table the set creates. Mid-set, a blank database's first deploy left
+// regulatory_harmonization.export_job_audit_log unscoped until the second
+// (docs/evidence/D3/2026-09-29-child-scope-first-deploy/). It creates no table,
+// so the integer sweep stays last (invariant 1).
+const tail = C2C_MIGRATION_FILES.slice(-3);
+const expectedTail = [UUID_TENANT_ISOLATION_NONPUBLIC, CHILD_TABLE_PARENT_SCOPE, TENANT_ISOLATION_SWEEP];
+if (tail.join('\n') !== expectedTail.join('\n')) {
   fail(
-    'the uuid non-public isolation step is not in the final pair',
-    `Expected the last two entries to be ${UUID_TENANT_ISOLATION_NONPUBLIC} and ` +
-      `${TENANT_ISOLATION_SWEEP}; found:\n` +
-      finalPair.map((f) => `        ${f}`).join('\n'),
+    'the isolation tail is not uuid step, child scope, sweep',
+    `Expected the last three entries to be, in order:\n` +
+      expectedTail.map((f) => `        ${f}`).join('\n') +
+      `\n      found:\n` +
+      tail.map((f) => `        ${f}`).join('\n'),
   );
 }
 
@@ -115,6 +125,6 @@ if (failures.length) {
 }
 
 console.log(
-  `${TAG} OK — ${C2C_MIGRATION_FILES.length} migrations, sweep last, uuid step in the final pair, ` +
+  `${TAG} OK — ${C2C_MIGRATION_FILES.length} migrations, sweep last, tail uuid step → child scope → sweep, ` +
     'all present, no duplicates.',
 );

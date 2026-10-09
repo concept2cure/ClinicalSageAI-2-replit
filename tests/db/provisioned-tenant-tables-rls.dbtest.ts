@@ -501,8 +501,9 @@ describe('governed mutation paths stay auditable under the runtime role', () => 
     const client = await owner.connect();
     try {
       await client.query('BEGIN');
-      await client.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
+      await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
       const removed = await client.query('DELETE FROM public.audit_logs WHERE action = $1', [probe]);
+      await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
       await client.query('COMMIT');
       expect(removed.rowCount).toBe(1);
     } catch (err) {

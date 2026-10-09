@@ -1,0 +1,8 @@
+# org-placement-migration.test.ts — first with the C2C_MIGRATION_FILES entry removed, then with the ADD COLUMN lines removed
+ × server/services/ai-gateway/providers/__tests__/org-placement-migration.test.ts > ai_placement_policies migration > is applied on every deploy, before the final tenant-isolation pair 6ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-migration.test.ts > ai_placement_policies migration > adds, on an existing table, every column the resolver reads 2ms
+      Tests  1 failed | 1 passed (2)
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-migration.test.ts > ai_placement_policies migration > is applied on every deploy, before the final tenant-isolation pair 2ms
+ × server/services/ai-gateway/providers/__tests__/org-placement-migration.test.ts > ai_placement_policies migration > adds, on an existing table, every column the resolver reads 7ms
+      Tests  1 failed | 1 passed (2)
+exit=1

@@ -1,0 +1,123 @@
+$ # server/services/DocumentDataCenterService.ts as committed at 50b04d99 (git show HEAD:server/services/DocumentDataCenterService.ts > server/services/DocumentDataCenterService.ts); test server/services/__tests__/document-data-center-upload-guards.test.ts
+$ NODE_OPTIONS='--max-old-space-size=2048' npx vitest run --config vitest.config.ts server/services/__tests__/document-data-center-upload-guards.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+✅ DocumentDataCenterService initialized with AI-powered tagging
+
+ × server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses a body over the size limit with 413 and leaves nothing on disk 575ms
+   → an oversize upload was accepted: expected 500 to be 413 // Object.is equality
+ × server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses an executable named file whatever type it declares (415) 10ms
+   → a .exe declared as application/pdf was admitted: expected 200 to be 415 // Object.is equality
+ × server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses a declared type the service does not accept (415) 6ms
+   → expected 200 to be 415 // Object.is equality
+ × server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses bytes that are not what the declared type says and removes the stored file 5ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > leaves a request with no file to the route 5ms
+ × server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > control: a real PNG passes the guard, is stored, and reaches the route 7ms
+   → expected [ …(4) ] to have a length of 1 but got 4
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses a body over the size limit with 413 and leaves nothing on disk
+AssertionError: an oversize upload was accepted: expected 500 to be 413 // Object.is equality
+
+- Expected
++ Received
+
+- 413
++ 500
+
+ ❯ server/services/__tests__/document-data-center-upload-guards.test.ts:64:57
+     62|     const oversize = Buffer.alloc(100 * 1024 * 1024 + 1, 0x41); // 100…
+     63|     const r = await request(app()).post('/upload').attach('file', over…
+     64|     expect(r.status, 'an oversize upload was accepted').toBe(413);
+       |                                                         ^
+     65|     expect(stored()).toEqual([]);
+     66|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses an executable named file whatever type it declares (415)
+AssertionError: a .exe declared as application/pdf was admitted: expected 200 to be 415 // Object.is equality
+
+- Expected
++ Received
+
+- 415
++ 200
+
+ ❯ server/services/__tests__/document-data-center-upload-guards.test.ts:72:73
+     70|       .post('/upload')
+     71|       .attach('file', Buffer.from('%PDF-1.4 fake'), { filename: 'paylo…
+     72|     expect(r.status, 'a .exe declared as application/pdf was admitted'…
+       |                                                                         ^
+     73|     expect(stored()).toEqual([]);
+     74|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses a declared type the service does not accept (415)
+AssertionError: expected 200 to be 415 // Object.is equality
+
+- Expected
++ Received
+
+- 415
++ 200
+
+ ❯ server/services/__tests__/document-data-center-upload-guards.test.ts:80:22
+     78|       .post('/upload')
+     79|       .attach('file', Buffer.from('GIF89a'), { filename: 'x.gif', cont…
+     80|     expect(r.status).toBe(415);
+       |                      ^
+     81|   });
+     82|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses bytes that are not what the declared type says and removes the stored file
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/services/__tests__/document-data-center-upload-guards.test.ts:87:22
+     85|       .post('/upload')
+     86|       .attach('file', Buffer.from('this is not a pdf'), { filename: 'r…
+     87|     expect(r.status).toBe(400);
+       |                      ^
+     88|     expect(r.body).toMatchObject({ code: 'FILE_SIGNATURE_MISMATCH' });
+     89|     expect(stored(), 'the refused file was left on disk').toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > control: a real PNG passes the guard, is stored, and reaches the route
+AssertionError: expected [ …(4) ] to have a length of 1 but got 4
+
+- Expected
++ Received
+
+- 1
++ 4
+
+ ❯ server/services/__tests__/document-data-center-upload-guards.test.ts:103:22
+    101|     expect(r.body.path).toBeTruthy();
+    102|     expect(fs.existsSync(r.body.path)).toBe(true);
+    103|     expect(stored()).toHaveLength(1);
+       |                      ^
+    104|   });
+    105| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  23:48:07
+   Duration  3.02s (transform 895ms, setup 93ms, import 191ms, tests 2.39s, environment 0ms)
+
+exit=1

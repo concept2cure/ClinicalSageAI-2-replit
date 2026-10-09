@@ -10,7 +10,9 @@ export type ExportSourceType =
   // The official FDA eSTAR interactive PDF (the artifact CDRH ingests), as
   // opposed to `export_estar_zip` which is a draft ZIP of section PDFs. Only
   // ever emitted when a real filled official eSTAR PDF was produced.
-  | 'export_estar_pdf';
+  | 'export_estar_pdf'
+  // A PowerPoint rendered from chat-artifact content (routes/c2c/exports.ts).
+  | 'export_pptx';
 
 export interface GovernedExportInput {
   organizationId: number;
@@ -304,4 +306,38 @@ export async function createAuditedUnplacedExport(
       data: input.buffer.toString('base64'),
     },
   };
+}
+
+/**
+ * Deliver a generated file as a plain binary download, recorded.
+ *
+ * `createAuditedUnplacedExport` returns its file inside a JSON body (base64),
+ * which is the contract the governed-export callers read. Some callers are
+ * binary downloads a browser saves directly: the chat-artifact DOCX/PDF/PPTX
+ * exports and template renders. They used to hand the file back and record
+ * nothing: no audit row, no hash, no trace of who produced which document
+ * (2026-09-29, docs/evidence/D5-EXPORTS-RECORDED/2026-09-29/). This records
+ * through the same one implementation, so the refusal rule is the same: no
+ * persisted EXPORT_GENERATED row, no delivery. It then sends the bytes, with
+ * their SHA-256 in `X-Export-Sha256`.
+ *
+ * Throws what createAuditedUnplacedExport throws. `isUnauditedExportRefusal`
+ * tells a caller which of those is the record failing.
+ */
+export async function sendAuditedDownload(
+  res: { setHeader(name: string, value: string | number): unknown; send(body: Buffer): unknown },
+  input: AuditedUnplacedExportInput,
+): Promise<{ sha256: string }> {
+  const recorded = await createAuditedUnplacedExport(input);
+  res.setHeader('Content-Type', input.mimeType);
+  res.setHeader('Content-Disposition', `attachment; filename="${input.filename}"`);
+  res.setHeader('Content-Length', input.buffer.length);
+  res.setHeader('X-Export-Sha256', recorded.sha256);
+  res.send(input.buffer);
+  return { sha256: recorded.sha256 };
+}
+
+/** True when a delivery was refused because its audit row did not persist. */
+export function isUnauditedExportRefusal(err: unknown): boolean {
+  return err instanceof Error && err.message.startsWith('UNAUDITED_EXPORT_REFUSED');
 }

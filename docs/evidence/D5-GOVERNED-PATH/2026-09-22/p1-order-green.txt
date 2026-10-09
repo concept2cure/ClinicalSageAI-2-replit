@@ -1,0 +1,33 @@
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > the creator and everyone who edited it through the ledger, and no one else 40ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > whoever built the schedule of assessments or the objectives is an author; a commenting reviewer is not 13ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > reads on the client it is given 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > comments, budget, version snapshots and other modules' records are not authorship of the protocol 12ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a synopsis edit, which records no payload, counts 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a document-level edit counts 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a disposition is independent of the reviewed protocol's authors 20ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > another tenant's protocol has no authors here, so it cannot be shown independent 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization and a disposition bind the same content, re-derivably 29ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization does not move it: version and workflow status are not content 23ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an objective moves it 18ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an eligibility criterion moves it 16ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing a visit moves it 21ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the synopsis moves it 29ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the sponsor moves it 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > changing the content moves the digest 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > another tenant's protocol binds nothing of its content 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > the assigned reviewer, as review 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > not someone else, and nothing is recorded 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a reviewer with no account can only have their decision recorded under responsibility 10ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a signed disposition is final: a second signing is refused and the decision stands 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > another tenant's assignment is not found 5ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone independent of the authors finalizes it as approval: the version row finalize writes does not make them an author 27ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a non-author cannot finalize as its author, and nothing is written 21ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author finalizes it as its author 30ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > whatever the act itself writes is not read as authorship of what is being signed 17ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author cannot approve their own protocol 15ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a member who can sign 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a named reviewer with no account 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a user of another organization: the review could never be signed 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a viewer, who cannot sign 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > the disposition reports the protocol version that was reviewed 6ms
+      Tests  32 passed (32)

@@ -1,0 +1,77 @@
+# neighbouring pins after the change (2026-09-26): the single-writer grep and the MCP connector contract
+# command: NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/services/ana-ri/__tests__/propose-only-partition.test.ts server/mcp/__tests__/mcp-auth-contract.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > covers the three approve-class commands that sit in NEITHER Part 11 set 1ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > covers the GDPR erasure — model output never runs it (audit 2026-09-24 DP-08/DP-09, P0-12) 0ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > covers every command in both Part 11 tiers 1ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > covers the ordinary authoring mutations, at the confirm tier (audit 2026-09-24 DP-08, P0-12) 1ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > contains only writes 0ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > is derived, so a new governed command cannot ship outside it 1ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > single writer > assigns humanConfirmed in exactly one source file 215ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > single writer > never reads the confirmation out of command params 2ms
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+{
+  "timestamp": "2026-09-26T13:22:33.107Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T13:22:33.108Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+{
+  "timestamp": "2026-09-26T13:22:33.109Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+{
+  "timestamp": "2026-09-26T13:22:33.374Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 9728 protected-resource metadata for /mcp 27ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 8414 authorization-server metadata with PKCE S256 and dynamic registration 4ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp without a token with 401 and a resource_metadata challenge 16ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp with a forged token with 401 (same verifier as the API: HS256 + rotation) 4ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > rejects a refresh-class token on the MCP path (token-class allow-list) 7ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > curated tool catalog > has 19 uniquely named tools, each with all four annotation hints, a scope and exactly one governed write 5ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > returns the gateway’s own refusal verbatim when no provider key is configured 327ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > maps an AnA handler error to a verbatim refusal, never an empty success 1ms
+
+ Test Files  2 passed (2)
+      Tests  16 passed (16)
+   Start at  13:22:31
+   Duration  2.74s (transform 1.30s, setup 158ms, import 543ms, tests 2.37s, environment 0ms)
+
+exit=0

@@ -578,8 +578,8 @@ export function PyramidShell(_props: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!typesState.loading && !typesState.error && !pyrState.loading) notifySurfaceActionReady('pyramid');
-  }, [typesState.loading, typesState.error, pyrState.loading]);
+    if (!typesState.loading && !pyrState.loading) notifySurfaceActionReady('pyramid');
+  }, [typesState.loading, pyrState.loading]);
 
   usePublishSurfaceContext('pyramid', anaContext);
 

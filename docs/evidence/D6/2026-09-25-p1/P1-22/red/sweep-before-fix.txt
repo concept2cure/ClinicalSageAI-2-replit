@@ -1,0 +1,63 @@
+# 2026-09-26T03:47:43Z — HEAD ebf9266a, before the fix: the sweep as committed (a copy of HEAD's retentionCron.ts) run against the rewritten test — no transaction, no chained audit row, drizzle deletes
+$ npx vitest run server/jobs/__tests__/retentionCron.legal-hold.test.ts   # against HEAD's module
+- Expected
++ Received
+  {
+-   "archived": 1,
+-   "errors": 0,
++   "archived": 0,
++   "errors": 1,
+    "hardDeleted": 0,
+-   "softDeleted": 1,
++   "softDeleted": 0,
+  }
+ ❯ server/jobs/__tests__/retentionCron.legal-hold.test.ts:260:21
+    258|     const summary = await runRetentionSweep();
+    259|
+    260|     expect(summary).toMatchObject({ archived: 1, softDeleted: 1, hardD…
+       |                     ^
+    261|     expect(tx.statements).toEqual(['BEGIN', 'INSERT INTO vault.documen…
+    262|     expect(tx.audit.mock.calls[0][1]).toMatchObject({ action: 'vault.d…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+ FAIL  server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a deletion whose audit row cannot be written is rolled back and counted as an error
+AssertionError: expected [] to deeply equal [ 'BEGIN', …(3) ]
+- Expected
++ Received
+- [
+-   "BEGIN",
+-   "SELECT organization_id FROM",
+-   "DELETE FROM vault.documents",
+-   "ROLLBACK",
+- ]
++ []
+ ❯ server/jobs/__tests__/retentionCron.legal-hold.test.ts:274:27
+    272|     expect(summary.hardDeleted).toBe(0);
+    273|     expect(summary.errors).toBe(1);
+    274|     expect(tx.statements).toEqual(['BEGIN', 'SELECT organization_id FR…
+       |                           ^
+    275|   });
+    276|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+ FAIL  server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a document with no organisation to chain the row under is left in place (nothing is committed unaudited)
+AssertionError: expected [] to deeply equal [ 'BEGIN', …(2) ]
+- Expected
++ Received
+- [
+-   "BEGIN",
+-   "SELECT organization_id FROM",
+-   "ROLLBACK",
+- ]
++ []
+ ❯ server/jobs/__tests__/retentionCron.legal-hold.test.ts:285:27
+    283|     expect(summary.hardDeleted).toBe(0);
+    284|     expect(summary.errors).toBe(1);
+    285|     expect(tx.statements).toEqual(['BEGIN', 'SELECT organization_id FR…
+       |                           ^
+    286|     expect(tx.audit).not.toHaveBeenCalled();
+    287|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+ Test Files  1 failed (1)
+      Tests  7 failed | 4 passed (11)
+   Start at  03:47:44
+   Duration  835ms (transform 150ms, setup 81ms, import 444ms, tests 32ms, environment 0ms)
+exit=1

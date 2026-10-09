@@ -1,0 +1,31 @@
+# source at 25ee228e PF-02 (D2): the Data Room capture route anchors a file only to a project its organization owns
+# the PF-14 tests, against the source before the change
+ × server/routes/__tests__/study-design-persist.route.test.ts > POST /api/study-design/persist > refuses a design that names no project, before a connection is taken
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/study-design-persist.route.test.ts > POST /api/study-design/persist > answers the writer’s PROJECT_NOT_FOUND refusal with 404, and rolls back
+   → [vitest] No "StudyDesignPersistRefusal" export is defined on the "../../services/study-design" mock. Did you forget to return it from "vi.mock"?
+ × server/routes/__tests__/study-design-persist.route.test.ts > POST /api/study-design/persist > answers the writer’s PROGRAM_MISMATCH refusal with 409, and rolls back
+   → [vitest] No "StudyDesignPersistRefusal" export is defined on the "../../services/study-design" mock. Did you forget to return it from "vi.mock"?
+ × server/routes/__tests__/study-design-persist.route.test.ts > POST /api/study-design/persist > answers the writer’s STUDY_ID_TAKEN refusal with 409, and rolls back
+   → [vitest] No "StudyDesignPersistRefusal" export is defined on the "../../services/study-design" mock. Did you forget to return it from "vi.mock"?
+ × server/routes/__tests__/study-design-persist.route.test.ts > POST /api/study-design/persist > persists a design that names its project, and the governed record names it too
+   → expected "vi.fn()" to be called with arguments: [ Anything, ObjectContaining{…} ]
+ × server/services/study-design/__tests__/persist-program-anchor.pglite.test.ts > persistStudyDesignTx — a design belongs to one project of its organization > refuses another organization’s project, and writes nothing
+   → The instanceof assertion needs a constructor but undefined was given.
+ ✓ server/services/study-design/__tests__/persist-program-anchor.pglite.test.ts > persistStudyDesignTx — a design belongs to one project of its organization > anchors a design to its own project
+ × server/services/study-design/__tests__/persist-program-anchor.pglite.test.ts > persistStudyDesignTx — a design belongs to one project of its organization > keeps the project when a later save carries none
+   → expected { Object (tenant_id, program_id, ...) } to match object { …(2) }
+ × server/services/study-design/__tests__/persist-program-anchor.pglite.test.ts > persistStudyDesignTx — a design belongs to one project of its organization > refuses to move a design to another project
+   → The instanceof assertion needs a constructor but undefined was given.
+ × server/services/study-design/__tests__/persist-program-anchor.pglite.test.ts > persistStudyDesignTx — a design belongs to one project of its organization > never overwrites another organization’s design that has the same study id
+   → The instanceof assertion needs a constructor but undefined was given.
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > refuses when no effect size is given, instead of sizing on an invented 0.5
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > reads the dropoutRate its catalog entry advertises
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > passes the variance through, so the effect size is not silently divided by itself
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > refuses when no effect size is given, instead of reporting "SAP generated"
+ × server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > reports that the SAP was not stored when the artifact write fails
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > names the stored artifact when the write succeeds
+   → expected null to be 4242 // Object.is equality
+ Test Files  3 failed (3)
+      Tests  11 failed | 5 passed (16)

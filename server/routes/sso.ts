@@ -4,13 +4,21 @@ import * as crypto from 'crypto';
 
 import { config } from '../config/environment';
 import { db } from '../db';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { users, organizationUsers, organizations } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
-import { getSamlProvider, SAMLValidationError, type SAMLConfig } from '../services/saml-provider';
+import {
+  getSamlProvider,
+  SAMLValidationError,
+  type SAMLConfig,
+  type SAMLUser,
+} from '../services/saml-provider';
 import { runWithTenantScope } from '../db/tenantStore';
 import { isDevAuthAllowed } from '../auth/dev-auth-policy';
+import { recordAuthEvent } from '../services/audit/auth-event-audit';
+import { openSession } from '../services/session-inactivity';
+import { ACCOUNT_INACTIVE_MESSAGE, isActiveAccountStatus } from '../services/account-standing';
 
 const logger = createScopedLogger('sso');
 const router = Router();
@@ -70,6 +78,16 @@ router.use((req, _res, next) =>
 const samlConfigs: Map<string, SAMLConfig> = new Map();
 
 /**
+ * The org slug the single-org env configuration (SAML_IDP_*) is registered
+ * under. That configuration belongs to ONE organisation, `organizations.slug =
+ * 'default'`, and serves no other slug. Until 2026-09-25 it was the fallback
+ * for every slug absent from SAML_TENANTS, so a user of the default IdP could
+ * name any organisation in `?org=` / RelayState and be provisioned into it
+ * (audit IAM-03).
+ */
+const DEFAULT_SAML_ORG_SLUG = 'default';
+
+/**
  * RelayState carries the org slug (and optional same-origin return path) through
  * the IdP round-trip. It is UNTRUSTED on return — it only selects which org's IdP
  * certificate validates the response. A forged response cannot validate against
@@ -80,16 +98,31 @@ function encodeRelayState(state: { org: string; returnTo?: string }): string {
   return Buffer.from(JSON.stringify(state), 'utf-8').toString('base64url');
 }
 
+/**
+ * The sign-in page's SSO hand-off. The session travels in the URL fragment,
+ * which the browser never sends to a server and no access log, proxy or
+ * referrer records; the page reads it once and drops it from the address bar
+ * (security audit 2026-09-24, IAM-18 item 6). A query string was the carrier
+ * before, and no page read it.
+ */
+function loginHandoffUrl(token: string, extra: { provider: string; returnTo?: string }): string {
+  const params = new URLSearchParams({ sso: token, provider: extra.provider });
+  if (extra.returnTo) params.set('returnTo', extra.returnTo);
+  return `/concept2cure/login#${params.toString()}`;
+}
+
 function decodeRelayState(relayState: unknown): { org: string; returnTo?: string } {
-  if (typeof relayState !== 'string' || relayState.length === 0) return { org: 'default' };
+  if (typeof relayState !== 'string' || relayState.length === 0) {
+    return { org: DEFAULT_SAML_ORG_SLUG };
+  }
   try {
     const parsed = JSON.parse(Buffer.from(relayState, 'base64url').toString('utf-8'));
     return {
-      org: typeof parsed?.org === 'string' ? parsed.org : 'default',
+      org: typeof parsed?.org === 'string' ? parsed.org : DEFAULT_SAML_ORG_SLUG,
       returnTo: typeof parsed?.returnTo === 'string' ? parsed.returnTo : undefined,
     };
   } catch {
-    return { org: 'default' };
+    return { org: DEFAULT_SAML_ORG_SLUG };
   }
 }
 
@@ -103,6 +136,36 @@ class SamlOrgResolutionError extends Error {
   constructor(orgSlug: string) {
     super(`No organization found for SAML org slug "${orgSlug}"`);
     this.name = 'SamlOrgResolutionError';
+  }
+}
+
+/**
+ * Raised when the account the assertion names exists but holds no membership
+ * in the organisation that owns the matched IdP configuration. A signed
+ * assertion from org A's IdP is proof of identity in org A only: it does not
+ * attach the account to A, and it never signs the account in to some other
+ * organisation it happens to belong to. The ids ride on the error for the audit
+ * row, never in the message.
+ */
+class SamlUserNotInOrganisationError extends Error {
+  constructor(
+    readonly userId: number,
+    readonly email: string,
+    readonly organizationId: number
+  ) {
+    super('The account is not a member of the organisation that owns this SSO configuration');
+    this.name = 'SamlUserNotInOrganisationError';
+  }
+}
+
+/** Raised when the account the assertion names is not active (VSR-001 F-29). */
+class SamlAccountInactiveError extends Error {
+  constructor(
+    readonly userId: number,
+    readonly email: string
+  ) {
+    super(ACCOUNT_INACTIVE_MESSAGE);
+    this.name = 'SamlAccountInactiveError';
   }
 }
 
@@ -125,14 +188,20 @@ async function resolveOrgIdForSlug(orgSlug: string): Promise<number> {
 }
 
 /**
- * Retrieve SAML config for an organization. Falls back to environment variable config.
+ * Retrieve the SAML config for an organization slug: its SAML_TENANTS entry, or,
+ * for the slug `default` ONLY, the single-org env configuration (SAML_IDP_*).
+ * Any other slug without an entry is not configured for SSO and gets null,
+ * which the routes answer with 404. The env configuration is never used as a
+ * stand-in for another organisation's IdP.
  */
 function getSamlConfig(orgSlug: string): SAMLConfig | null {
   // Check in-memory store first
   const stored = samlConfigs.get(orgSlug);
   if (stored) return stored;
 
-  // Fall back to environment variables for default config
+  // The env configuration belongs to the default org and to no other slug.
+  if (orgSlug !== DEFAULT_SAML_ORG_SLUG) return null;
+
   const idpSsoUrl = process.env.SAML_IDP_SSO_URL;
   const idpEntityId = process.env.SAML_IDP_ENTITY_ID;
   const idpCertificate = process.env.SAML_IDP_CERTIFICATE;
@@ -162,7 +231,8 @@ function getSamlConfig(orgSlug: string): SAMLConfig | null {
  * deployment can serve several client orgs' IdPs. SAML_TENANTS is a JSON object
  * keyed by org slug: `{ "<slug>": { "idpSsoUrl", "idpEntityId", "idpCertificate",
  * ...optional entityId/assertionConsumerServiceUrl/signRequests/sp keys } }`.
- * The single-org env vars (SAML_IDP_*) remain the fallback for the default org.
+ * The single-org env vars (SAML_IDP_*) serve the slug `default` only (see
+ * getSamlConfig); they are not a fallback for slugs missing from this map.
  */
 function loadSamlTenants(): void {
   const raw = process.env.SAML_TENANTS;
@@ -179,36 +249,31 @@ function loadSamlTenants(): void {
 
   const baseUrl = process.env.APP_BASE_URL || 'https://app.concept2cure.ai';
   for (const [slug, value] of Object.entries(parsed as Record<string, unknown>)) {
-    if (!value || typeof value !== 'object') continue;
-    const cfg = value as Record<string, unknown>;
-    const idpSsoUrl = cfg.idpSsoUrl;
-    const idpEntityId = cfg.idpEntityId;
-    const idpCertificate = cfg.idpCertificate;
-    if (
-      typeof idpSsoUrl !== 'string' ||
-      typeof idpEntityId !== 'string' ||
-      typeof idpCertificate !== 'string'
-    ) {
-      continue;
-    }
-    samlConfigs.set(slug, {
-      entityId:
-        typeof cfg.entityId === 'string' ? cfg.entityId : `${baseUrl}/saml/${slug}/metadata`,
-      assertionConsumerServiceUrl:
-        typeof cfg.assertionConsumerServiceUrl === 'string'
-          ? cfg.assertionConsumerServiceUrl
-          : `${baseUrl}/api/auth/sso/saml/callback`,
-      idpSsoUrl,
-      idpEntityId,
-      idpCertificate,
-      signRequests: cfg.signRequests === true,
-      spPrivateKey: typeof cfg.spPrivateKey === 'string' ? cfg.spPrivateKey : undefined,
-      spCertificate: typeof cfg.spCertificate === 'string' ? cfg.spCertificate : undefined,
-      nameIdFormat: typeof cfg.nameIdFormat === 'string' ? cfg.nameIdFormat : undefined,
-      idpSloUrl: typeof cfg.idpSloUrl === 'string' ? cfg.idpSloUrl : undefined,
-    });
+    const config = samlTenantConfigOf(slug, value, baseUrl);
+    if (config) samlConfigs.set(slug, config);
   }
   logger.info(`Loaded ${samlConfigs.size} SAML tenant config(s) from SAML_TENANTS`);
+}
+
+/** One SAML_TENANTS entry as a config, or null when it lacks the IdP's URL, entity id or certificate. */
+function samlTenantConfigOf(slug: string, value: unknown, baseUrl: string): SAMLConfig | null {
+  if (!value || typeof value !== 'object') return null;
+  const cfg = value as Record<string, unknown>;
+  const { idpSsoUrl, idpEntityId, idpCertificate } = cfg;
+  if (typeof idpSsoUrl !== 'string' || typeof idpEntityId !== 'string' || typeof idpCertificate !== 'string') return null;
+  const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+  return {
+    entityId: str(cfg.entityId) ?? `${baseUrl}/saml/${slug}/metadata`,
+    assertionConsumerServiceUrl: str(cfg.assertionConsumerServiceUrl) ?? `${baseUrl}/api/auth/sso/saml/callback`,
+    idpSsoUrl,
+    idpEntityId,
+    idpCertificate,
+    signRequests: cfg.signRequests === true,
+    spPrivateKey: str(cfg.spPrivateKey),
+    spCertificate: str(cfg.spCertificate),
+    nameIdFormat: str(cfg.nameIdFormat),
+    idpSloUrl: str(cfg.idpSloUrl),
+  };
 }
 
 loadSamlTenants();
@@ -228,7 +293,7 @@ loadSamlTenants();
  */
 router.get('/saml/initiate', async (req: Request, res: Response) => {
   try {
-    const orgSlug = (req.query.org as string) || 'default';
+    const orgSlug = (req.query.org as string) || DEFAULT_SAML_ORG_SLUG;
     const samlConfig = getSamlConfig(orgSlug);
 
     if (!samlConfig) {
@@ -313,7 +378,102 @@ export function sanitizeReturnTo(value: unknown): string | undefined {
  *   - SAMLResponse: base64-encoded SAML Response XML
  *   - RelayState: (optional) original URL to redirect back to
  */
+/**
+ * The SAML callback's refusals, each recorded as a failure event in the tenant
+ * it concerns (21 CFR Part 11 §11.10(e)): a response that does not validate, a
+ * slug that names no organisation, a user outside the config organisation, an
+ * account that is not active, and anything else.
+ */
+async function refuseSamlCallback(
+  err: unknown,
+  res: Response,
+  configOrgId: number | undefined,
+  requestContext: { ipAddress: string | undefined; userAgent: string | undefined },
+): Promise<Response> {
+  if (err instanceof SAMLValidationError) {
+    logger.warn(`SAML validation failed: ${err.message}`);
+    await recordAuthEvent({
+      action: 'user_login',
+      tenantId: configOrgId,
+      outcome: 'failure',
+      reason: 'saml_validation_failed',
+      ...requestContext,
+    });
+    return res.status(401).json({
+      success: false,
+      error: 'SAML_VALIDATION_FAILED',
+      message: err.message,
+    });
+  }
+
+  if (err instanceof SamlOrgResolutionError) {
+    // Fail closed: do not provision into a default org we can't verify.
+    logger.error(`SAML org resolution failed: ${err.message}`);
+    await recordAuthEvent({
+      action: 'user_login',
+      outcome: 'failure',
+      reason: 'saml_org_not_resolved',
+      ...requestContext,
+    });
+    return res.status(403).json({
+      success: false,
+      error: 'SAML_ORG_NOT_RESOLVED',
+      message:
+        'Could not resolve the organization for this SAML login. Please contact your administrator.',
+    });
+  }
+
+  if (err instanceof SamlUserNotInOrganisationError) {
+    logger.warn(`SAML sign-in refused: user ${err.userId} is not a member of org ${err.organizationId}`);
+    await recordAuthEvent({
+      action: 'user_login',
+      userId: err.userId,
+      tenantId: err.organizationId,
+      email: err.email,
+      outcome: 'failure',
+      reason: 'saml_user_not_in_organisation',
+      ...requestContext,
+    });
+    return res.status(403).json({
+      success: false,
+      error: 'SSO_USER_NOT_IN_ORGANISATION',
+      message:
+        'This account is not a member of the organization that owns this SSO configuration. Please contact your administrator.',
+    });
+  }
+
+  if (err instanceof SamlAccountInactiveError) {
+    logger.warn(`SAML sign-in refused: account ${err.userId} is not active`);
+    await recordAuthEvent({
+      action: 'user_login',
+      userId: err.userId,
+      tenantId: configOrgId,
+      email: err.email,
+      outcome: 'failure',
+      reason: 'account_inactive',
+      ...requestContext,
+    });
+    return res.status(403).json({
+      success: false,
+      error: 'SSO_ACCOUNT_INACTIVE',
+      message: ACCOUNT_INACTIVE_MESSAGE,
+    });
+  }
+
+  logger.error('SAML callback error', err as Record<string, unknown>);
+  return res.status(500).json({
+    success: false,
+    error: 'SAML_CALLBACK_FAILED',
+    message: 'Failed to process SAML response. Please contact your administrator.',
+  });
+}
+
 router.post('/saml/callback', async (req: Request, res: Response) => {
+  // Every sign-in attempt, admitted or refused, is an auth event in the
+  // tenant it concerns (21 CFR Part 11 §11.10(e)), as the password path's are.
+  // What is known when a refusal is raised is kept here for the catch below.
+  const requestContext = { ipAddress: req.ip, userAgent: req.headers['user-agent'] };
+  let configOrgId: number | undefined;
   try {
     const samlResponseB64 = req.body?.SAMLResponse;
     const relayState = req.body?.RelayState;
@@ -342,6 +502,13 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
       });
     }
 
+    // Resolve the organisation that owns this configuration BEFORE the response
+    // is validated, so a refused response is recorded in that tenant's audit
+    // trail too. The user signs in to THIS organisation and no other (see
+    // findOrCreateSamlUser). Fails closed when the slug names no organisation
+    // (SamlOrgResolutionError → 403 below).
+    configOrgId = await resolveOrgIdForSlug(orgSlug);
+
     // FAIL CLOSED: real XML-DSig verification (signed assertion required),
     // audience + InResponseTo enforced. Throws SAMLValidationError on any
     // missing/invalid signature or forged/expired assertion — there is no
@@ -354,6 +521,13 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
 
     if (!samlUser.email) {
       logger.error('SAML assertion did not contain an email address');
+      await recordAuthEvent({
+        action: 'user_login',
+        tenantId: configOrgId,
+        outcome: 'failure',
+        reason: 'saml_no_email',
+        ...requestContext,
+      });
       return res.status(400).json({
         success: false,
         error: 'SAML_NO_EMAIL',
@@ -361,17 +535,17 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
       });
     }
 
-    // Resolve the org that owns this SAML config. JIT/unassociated users are
-    // placed in THIS org, not a hardcoded default. Fail closed if it can't be
-    // resolved (see SamlOrgResolutionError handling below).
-    const configOrgId = await resolveOrgIdForSlug(orgSlug);
-
-    // Find or create user in the database
+    // Find the account, or provision one, in the config's organisation. Throws
+    // SamlUserNotInOrganisationError / SamlAccountInactiveError (handled below).
     const { user: dbUser, organizationId } = await findOrCreateSamlUser(samlUser, configOrgId);
 
     // Issue JWT
     // SECURITY: JWT must include organizationId so downstream tenant middleware
     // derives the org context from the token, not from user-supplied headers.
+    // The session's id, start and idle window, registered against the account's
+    // concurrent-session limit, both from the config organisation's settings
+    // as at every other sign-in door (P1-1).
+    const session = await openSession(dbUser.id, await organizationSettingsOf(Number(organizationId)));
     const token = jwt.sign(
       {
         userId: String(dbUser.id),
@@ -381,22 +555,32 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
         provider: 'saml',
         sessionIndex: samlUser.sessionIndex,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
 
+    await recordAuthEvent({
+      action: 'user_login',
+      userId: dbUser.id,
+      tenantId: organizationId,
+      email: dbUser.email,
+      outcome: 'success',
+      reason: 'saml_sso',
+      ...requestContext,
+    });
+
     logger.info(`SAML SSO login successful for user=${dbUser.email}, org=${organizationId}`);
 
-    // Redirect to a SAME-ORIGIN return path with the token, when one was
-    // requested. RelayState round-trips through the IdP unauthenticated, so the
-    // return path is re-validated here as same-origin; an attacker-supplied
-    // absolute URL is rejected (would otherwise leak the token cross-origin).
+    // Hand the session to the sign-in page in the URL fragment, with the
+    // SAME-ORIGIN return path when one was requested. RelayState round-trips
+    // through the IdP unauthenticated, so the return path is re-validated here
+    // as same-origin; an attacker-supplied absolute URL is rejected (would
+    // otherwise send the person, and the token, cross-origin).
     const safeReturnTo = sanitizeReturnTo(returnTo);
     if (safeReturnTo) {
-      const params = new URLSearchParams({ token });
-      const sep = safeReturnTo.includes('?') ? '&' : '?';
-      return res.redirect(302, `${safeReturnTo}${sep}${params.toString()}`);
+      return res.redirect(302, loginHandoffUrl(token, { provider: 'saml', returnTo: safeReturnTo }));
     }
 
     // Otherwise return JSON response
@@ -415,32 +599,7 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    if (err instanceof SAMLValidationError) {
-      logger.warn(`SAML validation failed: ${err.message}`);
-      return res.status(401).json({
-        success: false,
-        error: 'SAML_VALIDATION_FAILED',
-        message: err.message,
-      });
-    }
-
-    if (err instanceof SamlOrgResolutionError) {
-      // Fail closed: do not provision into a default org we can't verify.
-      logger.error(`SAML org resolution failed: ${err.message}`);
-      return res.status(403).json({
-        success: false,
-        error: 'SAML_ORG_NOT_RESOLVED',
-        message:
-          'Could not resolve the organization for this SAML login. Please contact your administrator.',
-      });
-    }
-
-    logger.error('SAML callback error', err as Record<string, unknown>);
-    return res.status(500).json({
-      success: false,
-      error: 'SAML_CALLBACK_FAILED',
-      message: 'Failed to process SAML response. Please contact your administrator.',
-    });
+    return refuseSamlCallback(err, res, configOrgId, requestContext);
   }
 });
 
@@ -451,7 +610,7 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
  */
 router.get('/saml/metadata', (req: Request, res: Response) => {
   try {
-    const orgSlug = (req.query.org as string) || 'default';
+    const orgSlug = (req.query.org as string) || DEFAULT_SAML_ORG_SLUG;
     const samlConfig = getSamlConfig(orgSlug);
 
     if (!samlConfig) {
@@ -472,7 +631,7 @@ router.get('/saml/metadata', (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/auth/sso/saml/logout
+ * GET|POST /api/auth/sso/saml/logout
  *
  * SP-initiated Single Logout (SLO). Verifies the caller's session JWT, builds a
  * SAML LogoutRequest for the user's IdP session (nameID + sessionIndex taken
@@ -480,14 +639,32 @@ router.get('/saml/metadata', (req: Request, res: Response) => {
  * SLO endpoint so the federated session is terminated. Falls back to the local
  * login page when SLO is not configured or the session is not federated.
  *
+ * The session token is a bearer credential: it is read from the Authorization
+ * header or, on a POST, the `token` form/body field. It is NOT read from the
+ * query string, where it lands in access logs, proxies and the Referer sent to
+ * the IdP page this route redirects to (audit IAM-03).
+ *
  * Query: ?org=<slug> selects the IdP (default 'default'). The IdP validates the
  * LogoutRequest, so org selection cannot be abused to forge a logout elsewhere.
  */
-router.get('/saml/logout', async (req: Request, res: Response) => {
+/** The session token a logout presents: the Authorization header or, on a POST, the `token` body field; never the query string. */
+function logoutTokenOf(req: Request): string {
+  const bearer = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? '');
+  const bodyToken = req.method === 'POST' && typeof req.body?.token === 'string' ? req.body.token : '';
+  return bearer?.[1] || bodyToken;
+}
+
+/** The IdP session a federated token names, else null: only a SAML session has an IdP session to terminate. */
+function federatedSessionOf(claims: Record<string, unknown>): { sessionIndex: string; email: string } | null {
+  const { sessionIndex, email } = claims;
+  if (claims.provider !== 'saml' || typeof sessionIndex !== 'string' || typeof email !== 'string') return null;
+  return { sessionIndex, email };
+}
+
+async function handleSpInitiatedLogout(req: Request, res: Response): Promise<void | Response> {
   const loginUrl = '/concept2cure/login';
   try {
-    const bearer = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? '');
-    const token = bearer?.[1] || (typeof req.query.token === 'string' ? req.query.token : '');
+    const token = logoutTokenOf(req);
     if (!token) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
 
     let claims: Record<string, unknown>;
@@ -498,18 +675,11 @@ router.get('/saml/logout', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'INVALID_TOKEN' });
     }
 
-    const sessionIndex = claims.sessionIndex;
-    const email = claims.email;
-    // Only federated (SAML) sessions have an IdP session to terminate.
-    if (
-      claims.provider !== 'saml' ||
-      typeof sessionIndex !== 'string' ||
-      typeof email !== 'string'
-    ) {
-      return res.redirect(302, loginUrl);
-    }
+    const federated = federatedSessionOf(claims);
+    if (!federated) return res.redirect(302, loginUrl);
+    const { sessionIndex, email } = federated;
 
-    const orgSlug = (req.query.org as string) || 'default';
+    const orgSlug = (req.query.org as string) || DEFAULT_SAML_ORG_SLUG;
     const samlConfig = getSamlConfig(orgSlug);
     if (!samlConfig) return res.redirect(302, loginUrl);
 
@@ -525,7 +695,10 @@ router.get('/saml/logout', async (req: Request, res: Response) => {
     logger.error('SAML logout error', err as Record<string, unknown>);
     return res.redirect(302, loginUrl);
   }
-});
+}
+
+router.get('/saml/logout', handleSpInitiatedLogout);
+router.post('/saml/logout', handleSpInitiatedLogout);
 
 /**
  * GET/POST /api/auth/sso/saml/logout/callback
@@ -617,14 +790,14 @@ router.get('/:provider/initiate', (req: Request, res: Response) => {
 });
 
 // GET /api/auth/sso/:provider/callback
-router.get('/:provider/callback', (req: Request, res: Response) => {
+router.get('/:provider/callback', async (req: Request, res: Response) => {
   const { provider } = req.params;
-  const { code } = req.query;
 
   // For dev mode, accept the mock code and return a token + user info
   if (isDevAuthAllowed()) {
     // SECURITY: JWT must include organizationId so downstream tenant middleware
     // derives the org context from the token, not from user-supplied headers.
+    const devSession = await openSession('1');
     const token = jwt.sign(
       {
         userId: '1',
@@ -633,20 +806,15 @@ router.get('/:provider/callback', (req: Request, res: Response) => {
         role: 'client_user',
         provider,
         type: 'access',
+        ...devSession,
       },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
 
-    // Redirect to frontend SSO handler page with token in URL fragment (not query string for security)
-    const redirectUrl = `/concept2cure/login?sso_provider=${encodeURIComponent(
-      provider as string
-    )}&sso_token=${encodeURIComponent(token)}&sso_email=${encodeURIComponent(
-      'sso-user@example.com'
-    )}&sso_name=${encodeURIComponent('SSO User')}&sso_org_id=2&sso_org_name=${encodeURIComponent(
-      'Concept2Cure'
-    )}`;
-    return res.redirect(302, redirectUrl);
+    // The sign-in page adopts the session from the fragment and reads the
+    // account from GET /session; nothing about the person travels in the URL.
+    return res.redirect(302, loginHandoffUrl(token, { provider: String(provider) }));
   }
 
   res.status(501).json({ success: false, error: 'SSO_NOT_IMPLEMENTED' });
@@ -667,58 +835,74 @@ interface DbUserResult {
 }
 
 /**
- * Finds an existing user by email or creates a new one via Just-In-Time (JIT) provisioning.
+ * Finds the account an assertion names, or creates one (Just-In-Time
+ * provisioning), IN the organisation that owns the SAML config used for this
+ * callback (`configOrgId`, resolved from the orgSlug; the caller fails closed
+ * when it cannot be).
  *
- * New/unassociated users are placed in `configOrgId` — the organization that owns
- * the SAML config used for this callback (resolved from the orgSlug) — NOT a
- * hardcoded default. The caller resolves and fails closed if the org is unknown,
- * so this function is only ever handed a verified org id.
+ * The organisation is always `configOrgId`. A signed assertion from org A's IdP
+ * is proof of identity in org A and nothing else, so:
+ *   - an existing account must ALREADY hold a membership in `configOrgId`, or
+ *     the sign-in is refused (SamlUserNotInOrganisationError → 403). It is not
+ *     attached to A, and it is never signed in to another organisation it
+ *     belongs to. Until 2026-09-25 the lookup was `WHERE user_id = ?` and the
+ *     first row found decided the tenant (audit IAM-03);
+ *   - a new account is created with a membership in `configOrgId` only;
+ *   - an account that is not active is refused (SamlAccountInactiveError);
+ *   - nothing on an existing account is rewritten from the assertion.
  */
-async function findOrCreateSamlUser(
-  samlUser: import('../services/saml-provider').SAMLUser,
-  configOrgId: number
-): Promise<DbUserResult> {
+/** The organisation's settings object (session window and limit), or undefined when the row is not there. */
+async function organizationSettingsOf(organizationId: number): Promise<unknown> {
+  const [row] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, organizationId))
+    .limit(1);
+  return row?.settings;
+}
+
+async function findOrCreateSamlUser(samlUser: SAMLUser, configOrgId: number): Promise<DbUserResult> {
   const email = samlUser.email.toLowerCase().trim();
 
-  // Look up existing user by email
+  // `users` is the global identity table: the e-mail match only finds the
+  // account. Which organisation it signs in to is decided below.
   const existingUsers = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
   if (existingUsers.length > 0) {
     const user = existingUsers[0];
 
-    // Find organization association
-    const orgAssoc = await db
-      .select()
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, user.id))
-      .limit(1);
-
-    // Existing user keeps their current org association; an unassociated user is
-    // bound to the SAML config's org (configOrgId), not a hardcoded default.
-    const organizationId = orgAssoc.length > 0 ? orgAssoc[0].organizationId : configOrgId;
-    const orgRole = orgAssoc.length > 0 ? orgAssoc[0].role : 'member';
-
-    // Update name if it was empty and SAML provides first/last name
-    const samlFullName = [samlUser.firstName, samlUser.lastName].filter(Boolean).join(' ');
-    if ((!user.name || user.name === email.split('@')[0]) && samlFullName) {
-      try {
-        await db.update(users).set({ name: samlFullName }).where(eq(users.id, user.id));
-      } catch (updateErr) {
-        logger.warn(
-          `Failed to update user name for ${email}`,
-          updateErr as Record<string, unknown>
-        );
-      }
+    // An account taken out of use signs in to nothing, whatever the IdP says
+    // (VSR-001 F-29; the same reading as the password path, routes/auth.ts).
+    if (!isActiveAccountStatus(user.status)) {
+      throw new SamlAccountInactiveError(user.id, user.email);
     }
 
+    // The membership lookup is scoped to the config's organisation, so a
+    // membership elsewhere is neither found nor adopted.
+    const membership = await db
+      .select({ role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(
+        and(
+          eq(organizationUsers.userId, user.id),
+          eq(organizationUsers.organizationId, configOrgId)
+        )
+      )
+      .limit(1);
+    if (membership.length === 0) {
+      throw new SamlUserNotInOrganisationError(user.id, user.email, configOrgId);
+    }
+
+    // `users.name` is what signature manifests print; an IdP attribute is not
+    // where it changes from. The previous version overwrote it here.
     return {
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        orgRole,
+        orgRole: membership[0].role,
       },
-      organizationId,
+      organizationId: configOrgId,
     };
   }
 
@@ -739,21 +923,16 @@ async function findOrCreateSamlUser(
     })
     .returning();
 
-  // Associate with the organization that owns the SAML config used for this
-  // login (configOrgId), resolved from the callback's orgSlug — never a
-  // hardcoded org 1.
-  try {
-    await (db.insert(organizationUsers) as any).values({
-      userId: newUser.id,
-      organizationId: configOrgId,
-      role: 'member',
-    });
-  } catch (orgErr) {
-    logger.warn(
-      `Failed to associate SAML user ${email} with org ${configOrgId}`,
-      orgErr as Record<string, unknown>
-    );
-  }
+  // The membership in the config's organisation is part of the sign-in. If it
+  // cannot be written the sign-in fails (500) rather than minting a token for
+  // an organisation the account is not a member of; the next attempt finds an
+  // account with no membership there and refuses it as above. The previous
+  // version swallowed this failure and issued the token anyway.
+  await db.insert(organizationUsers).values({
+    userId: newUser.id,
+    organizationId: configOrgId,
+    role: 'member',
+  });
 
   return {
     user: {

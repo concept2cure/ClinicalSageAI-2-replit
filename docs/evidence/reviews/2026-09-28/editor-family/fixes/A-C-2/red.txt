@@ -1,0 +1,6 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx   (ProtocolDevPanes.tsx as it was before 88ef5f87; the test as committed)
+ × the section outline exposes the open section (A-C-2) > marks the open section as current, and moves the mark with the selection 433ms
+   → expected null to be 'true' // Object.is equality
+ × the section outline exposes the open section (A-C-2) > never has more than one current section, across a tab change 164ms
+   → expected [] to have a length of 1 but got +0
+      Tests  2 failed (2)

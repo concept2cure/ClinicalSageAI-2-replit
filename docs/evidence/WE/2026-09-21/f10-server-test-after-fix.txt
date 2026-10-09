@@ -1,0 +1,24 @@
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 400 when draftId is missing 89ms
+ ✓ server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > parks the model’s SRC-mapped paraphrase assertions from a JSON envelope 175ms
+ ✓ server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > degrades to plain prose with no assertions when the model does not return JSON 7ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 404 when the section is not found for this tenant (past the edit guard) 50ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 410 when the draft candidate is missing/expired/already accepted 35ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > accepts a draft: consumes it, records lineage, returns the attribution summary 30ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > no enabled provider → 503 GATEWAY_UNAVAILABLE and no draft body at all 187ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider failure refuses with its classified code — never a template 8ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > attributes the EDITED text when the client sends its own content 30ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > commits the accepted draft to the filing, and reports whether it landed 6ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > never records "Accepted AI draft" as the reason for change 7ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > records the author's stated reason when they give one 8ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 500 (fails closed) when lineage cannot be recorded — rolls content back 9ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that answers with no content is INVALID_AI_RESPONSE, not a template 19ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a fault of ours (not the gateway) is a 500, still with no draft body 20ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that drafts → 200 with the model draft, source "model" 29ms
+ ✓ server/routes/__tests__/ai-draft-retrieval-honesty.test.ts > AI draft — retrieval outcome is reported, not swallowed > server/routes/authoring.router.ts distinguishes failed retrieval from an empty corpus 4ms
+ ✓ server/routes/__tests__/ai-draft-retrieval-honesty.test.ts > AI draft — retrieval outcome is reported, not swallowed > server/routes/authoring.router.ts records the failure reason rather than only logging it 3ms
+ ✓ server/routes/__tests__/ai-draft-retrieval-honesty.test.ts > AI draft — retrieval outcome is reported, not swallowed > server/routes/authoring.router.ts reports the status to the caller 2ms
+ ✓ server/routes/__tests__/ai-draft-retrieval-honesty.test.ts > AI draft — retrieval outcome is reported, not swallowed > the authoring response no longer says "successfully" for an ungrounded draft 2ms
+ ✓ server/routes/__tests__/ai-draft-retrieval-honesty.test.ts > AI draft — retrieval outcome is reported, not swallowed > the failure reason is bounded, so a driver error cannot flood the response 2ms
+ ✓ server/routes/__tests__/ai-draft-retrieval-honesty.test.ts > AI draft — retrieval outcome is reported, not swallowed > a retrieval failure still yields a draft — it is labelled, not blocked 2ms
+ Test Files  4 passed (4)
+      Tests  22 passed (22)

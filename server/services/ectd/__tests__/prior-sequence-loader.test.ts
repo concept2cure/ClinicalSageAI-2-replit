@@ -76,6 +76,33 @@ describe('loadPriorSequenceManifest', () => {
   });
 });
 
+describe('a sequence\'s own withdrawals', () => {
+  // A stored manifest records the sequence's deletes (2026-09-23): the leaf a
+  // delete names is off file after that sequence, so a single-sequence read must
+  // not hand it to the lifecycle diff as a leaf on file.
+  const withWithdrawal = [
+    ...manifestRow,
+    { ctdSection: '3.2.S.9', fileName: 'obsolete.pdf', href: '../0000/m3/32/obsolete.pdf', md5: 'c', operation: 'delete' },
+  ];
+
+  it('loadPriorSequenceManifest leaves a withdrawn leaf out', async () => {
+    const prior = await loadPriorSequenceManifest(stubPool([{ leaf_manifest: withWithdrawal }]), {
+      organizationId: 7,
+      applicationNumber: 'IND-123',
+      priorSequenceNumber: '0001',
+    });
+    expect(prior.map((l) => l.fileName)).toEqual(['general.pdf', 'csr.pdf']);
+  });
+
+  it('loadLatestPriorManifest leaves a withdrawn leaf out', async () => {
+    const { leaves } = await loadLatestPriorManifest(
+      stubPool([{ sequence_number: '0001', leaf_manifest: withWithdrawal }]),
+      { organizationId: 7, applicationNumber: 'IND-123', currentSequence: '0002' },
+    );
+    expect(leaves.map((l) => l.fileName)).toEqual(['general.pdf', 'csr.pdf']);
+  });
+});
+
 describe('loadLatestPriorManifest', () => {
   it('finds the most recent sequence BEFORE the current one, org-scoped', async () => {
     const pool = stubPool([{ sequence_number: '0002', leaf_manifest: manifestRow }]);

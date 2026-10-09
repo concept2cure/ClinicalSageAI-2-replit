@@ -68,7 +68,7 @@ function assessment(over: Record<string, unknown> = {}) {
     validation: { riskLevel: 'high', summary: '1 major finding', counts: { critical: 0, major: 1, minor: 0, info: 0 } },
     review: {
       overallRisk: 'high',
-      standardsChecked: ['ICH E9(R1) §A.6'],
+      standardsChecked: ['ICH E9(R1) §A.5'],
       verdict: { challengeLikelihood: 'moderate', mostVulnerable: 'Missing data', recommendedActions: ['Missing data: Make MMRM or multiple imputation the primary approach.'] },
       rows: [
         { element: 'Primary endpoint', risk: 'low', finding: 'Single primary endpoint with a complete ICH E9(R1) estimand.', action: 'No action required.', codes: [] },

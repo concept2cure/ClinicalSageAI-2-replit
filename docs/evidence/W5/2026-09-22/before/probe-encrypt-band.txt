@@ -1,0 +1,11 @@
+  400 KB  encrypted=true   acceptableForEctd=false
+  500 KB  encrypted=true   acceptableForEctd=false
+  511 KB  encrypted=true   acceptableForEctd=false
+  513 KB  encrypted=false  acceptableForEctd=true
+  520 KB  encrypted=false  acceptableForEctd=true
+  540 KB  encrypted=false  acceptableForEctd=true
+  560 KB  encrypted=false  acceptableForEctd=true
+  575 KB  encrypted=false  acceptableForEctd=true
+  577 KB  encrypted=true   acceptableForEctd=false
+  600 KB  encrypted=true   acceptableForEctd=false
+ 2000 KB  encrypted=true   acceptableForEctd=false

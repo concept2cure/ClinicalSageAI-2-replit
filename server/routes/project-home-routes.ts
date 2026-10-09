@@ -113,6 +113,10 @@ async function safeRows(
 
 // ── Router Factory ────────────────────────────────────────────────────────────
 
+// Names come from public.actor_name, not a join on users: since users took
+// row-level security (D3, 2026-09-28) a tenant scope reads only current members,
+// so a join dropped anyone who had left — and an INNER join dropped their rows
+// too (docs/evidence/D3/2026-09-29-actor-names/).
 export default function createProjectHomeRoutes(): Router {
   const router = Router();
 
@@ -141,7 +145,7 @@ export default function createProjectHomeRoutes(): Router {
                 p.knowledge_token_estimate, p.target_end_date, p.depth, p.path,
                 COALESCE(u.name, u.email) AS lead_name
            FROM projects p
-           LEFT JOIN users u ON u.id = p.owner_id
+           LEFT JOIN LATERAL public.actor_name(p.owner_id) u ON TRUE
           WHERE p.id = $1 AND p.organization_id = $2
           LIMIT 1`,
         [projectId, organizationId],
@@ -183,7 +187,7 @@ export default function createProjectHomeRoutes(): Router {
                     t.critical_to_quality, t.depends_on, t.blocked_reason, t.updated_at,
                     COALESCE(a.name, a.email) AS assignee_name
                FROM project_tasks t
-               LEFT JOIN users a ON a.id = t.assignee_id
+               LEFT JOIN LATERAL public.actor_name(t.assignee_id) a ON TRUE
               WHERE t.project_id = $1 AND t.organization_id = $2
               ORDER BY t.updated_at DESC
               LIMIT 200`,
@@ -201,7 +205,7 @@ export default function createProjectHomeRoutes(): Router {
             `SELECT d.id, d.title, d.document_type, d.category, d.module, d.status,
                     d.version, d.updated_at, COALESCE(o.name, o.email) AS owner_name
                FROM documents d
-               LEFT JOIN users o ON o.id = d.owner_id
+               LEFT JOIN LATERAL public.actor_name(d.owner_id) o ON TRUE
               WHERE d.project_id = $1 AND d.organization_id = $2
               ORDER BY d.updated_at DESC
               LIMIT 50`,
@@ -222,7 +226,7 @@ export default function createProjectHomeRoutes(): Router {
             'project_members',
             `SELECT pm.role, COALESCE(u.name, u.email) AS name
                FROM project_members pm
-               JOIN users u ON u.id = pm.user_id
+               LEFT JOIN LATERAL public.actor_name(pm.user_id) u ON TRUE
               WHERE pm.project_id = $1 AND pm.organization_id = $2 AND pm.status = 'active'
               ORDER BY pm.created_at ASC`,
             [projectId, organizationId],

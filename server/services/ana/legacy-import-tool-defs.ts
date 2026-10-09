@@ -24,7 +24,7 @@ export const START_LEGACY_IMPORT: AnaTool = {
   input_schema: {
     type: 'object',
     properties: {
-      source_path:    { type: 'string', description: 'Absolute path to the uploaded zip / folder.' },
+      source_path:    { type: 'string', description: 'The uploaded zip or folder, in your organization\'s AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization\'s uploads; other paths are refused.' },
       source_kind:    { type: 'string', enum: ['zip', 'folder', 'tar', 'rar'] },
       source_filename:{ type: 'string', description: 'Original filename for display.' },
       program_id:     { type: 'string', description: 'Optional program (UUID) the archive belongs to.' },
@@ -151,7 +151,7 @@ export const CONVERT_DOCX_TO_PDF: AnaTool = {
       input_docx_path: {
         type: 'string',
         description:
-          'Absolute path to the source .docx file. Typically the outputPath returned by a prior generate_document / fetch_template_and_fill / assemble_ectd_module_from_artifacts call.',
+          'The source .docx, in your organization\'s AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization\'s uploads; other paths are refused. Typically the outputPath returned by a prior generate_document / fetch_template_and_fill / assemble_ectd_module_from_artifacts call.',
       },
       output_pdf_path: {
         type: 'string',
@@ -244,7 +244,7 @@ export const INSERT_DOCUMENT_CONTENT: AnaTool = {
       input_docx_path: {
         type: 'string',
         description:
-          'Absolute path to the source .docx to edit (typically the docxPath returned by author_docx_native, generate_document, or fetch_template_and_fill).',
+          'The source .docx to edit, in your organization\'s AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization\'s uploads; other paths are refused (typically the docxPath returned by author_docx_native, generate_document, or fetch_template_and_fill).',
       },
       insertions: {
         type: 'array',
@@ -315,7 +315,7 @@ export const SURGICAL_DOCX_XML_EDIT: AnaTool = {
     properties: {
       input_docx_path: {
         type: 'string',
-        description: 'Absolute path to the source .docx to edit (e.g. a docxPath from author_docx_native or an uploaded document).',
+        description: 'The source .docx to edit, in your organization\'s AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization\'s uploads; other paths are refused (e.g. a docxPath from author_docx_native or an uploaded document).',
       },
       operations: {
         type: 'array',
@@ -374,7 +374,7 @@ export const INSERT_CLAUSE_TEMPLATE: AnaTool = {
       input_docx_path: {
         type: 'string',
         description:
-          'Absolute path to the source .docx to edit (e.g. a docxPath from author_docx_native, generate_document, fetch_template_and_fill, or an uploaded template).',
+          'The source .docx to edit, in your organization\'s AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization\'s uploads; other paths are refused (e.g. a docxPath from author_docx_native, generate_document, fetch_template_and_fill, or an uploaded template).',
       },
       clause: {
         type: 'string',
@@ -464,7 +464,7 @@ export const VALIDATE_DOCX: AnaTool = {
     properties: {
       input_docx_path: {
         type: 'string',
-        description: 'Absolute path to the .docx to validate.',
+        description: 'The .docx to validate, in your organization\'s AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization\'s uploads; other paths are refused.',
       },
     },
     required: ['input_docx_path'],
@@ -489,7 +489,7 @@ export const VERIFY_DOCX_AGAINST_SOURCE: AnaTool = {
     properties: {
       input_docx_path: {
         type: 'string',
-        description: 'Absolute path to the built/edited .docx to verify (e.g. a docxPath returned by author_docx_native, build_from_template, or surgical_docx_xml_edit).',
+        description: 'The built/edited .docx to verify, in your organization\'s AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization\'s uploads; other paths are refused (e.g. a docxPath returned by author_docx_native, build_from_template, or surgical_docx_xml_edit).',
       },
       expected_text: {
         type: 'string',

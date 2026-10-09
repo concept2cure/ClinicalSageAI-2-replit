@@ -447,8 +447,13 @@ function fakePool(row: Record<string, unknown> | null, opts: { projectInTenant?:
   const q: Queryable = {
     async query(text: string, params: unknown[] = []) {
       statements.push({ text, params });
-      // The tenant check on a project bound at commit time.
-      if (/SELECT 1 AS present/.test(text)) return { rows: opts.projectInTenant ? [{ present: 1 }] : [], rowCount: opts.projectInTenant ? 1 : 0 };
+      /* The tenant check on the project the records file under, run on every
+         commit (PF-15). The fixture's project is the tenant's unless a case
+         says otherwise. */
+      if (/SELECT 1 AS present/.test(text)) {
+        const inTenant = opts.projectInTenant !== false;
+        return { rows: inTenant ? [{ present: 1 }] : [], rowCount: inTenant ? 1 : 0 };
+      }
       // `staleSelect`: another commit already moved the row on; this caller still reads the old snapshot.
       if (/^\s*SELECT/.test(text)) {
         const seen = opts.staleSelect ? snapshot : row;
@@ -733,6 +738,21 @@ describe('commitInterviewSession — holds the session, checks the project, chec
     const hold = own.statements.find(s => /SET status = 'committing'/.test(s.text))!;
     expect(hold.params[2]).toBe('prog-9');
     for (const call of writer.mock.calls) expect(call[1].projectId).toBe('prog-9');
+  });
+
+  it('a session bound at start to a project the tenant does not hold is refused at commit — nothing is held or written', async () => {
+    /* A session created before the start-time check (PF-15), or bound to a
+       project deleted since: its own binding is not trusted. */
+    const writer = vi.fn<RegisterWriter>(async (entry) => ({ id: `${entry.register}-id`, module3Linked: true }));
+    const { q, statements } = fakePool(sessionRow({ project_id: 'someone-elses' }), { projectInTenant: false });
+    const outcome = await commitInterviewSession({ organizationId: ORG, sessionId: SESSION_ID, userId: 7 }, { writer, q });
+    expect(outcome.ok).toBe(false);
+    if (outcome.ok) return;
+    expect(outcome.code).toBe('PROJECT_NOT_IN_TENANT');
+    const check = statements.find(s => /SELECT 1 AS present/.test(s.text))!;
+    expect(check.params).toEqual(['someone-elses', ORG]);
+    expect(writer).not.toHaveBeenCalled();
+    expect(statements.some(s => /SET status = 'committing'/.test(s.text))).toBe(false);
   });
 
   it('a failed write releases the hold: the session is complete again with what landed recorded', async () => {

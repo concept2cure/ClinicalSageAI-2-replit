@@ -1,0 +1,34 @@
+ × server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses a secured 540 KB leaf (trailer past the head window, before the tail window) 136ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > refuses to package a leaf that carries an /Encrypt dictionary, naming the leaf 17ms
+ × server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses secured PDF bytes shipped under a non-.pdf name 12ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > packages the same set without the secured leaf 21ms
+ × server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > packages a filled official Form FDA 1571 at m1.1 byte-for-byte, as FDA issued it 163ms
+ × server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses a secured leaf transmitted to FDA's test environment (staging) 37ms
+ × server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses in production too 4ms
+ × server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses secured PDF bytes under a non-.pdf name 3ms
+ × server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > covers the PMDA eCTD format 3ms
+ × server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses a bundle that cannot be opened, rather than reading it as clear 3ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > lets a bundle carrying the official Form FDA 1571 as FDA issued it past the security check 94ms
+ FAIL  server/services/ectd/__tests__/leaf-pdf-security.test.ts [ server/services/ectd/__tests__/leaf-pdf-security.test.ts ]
+Error: Cannot find module '../leaf-pdf-security' imported from /home/user/ClinicalSageAI-2-replit/server/services/ectd/__tests__/leaf-pdf-security.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses a secured 540 KB leaf (trailer past the head window, before the tail window)
+AssertionError: promise resolved "{ …(9) }" instead of rejecting
+ FAIL  server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses secured PDF bytes shipped under a non-.pdf name
+AssertionError: promise resolved "{ …(9) }" instead of rejecting
+ FAIL  server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > packages a filled official Form FDA 1571 at m1.1 byte-for-byte, as FDA issued it
+ValidationError: Leaf 'form-fda-1571.pdf' is an encrypted/secured PDF; the eCTD PDF specification prohibits security settings and the package cannot ship it.
+Serialized Error: { findings: [ { ruleId: 'LEAF-ENCRYPTED', severity: 'error', filePath: 'form-fda-1571.pdf' } ], errorClass: 'validation' }
+ FAIL  server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses a secured leaf transmitted to FDA's test environment (staging)
+AssertionError: expected [Function] to throw error matching /…/leaves in the signed package are encrypted\ but got 'Cannot read properties of undefined (…'
+ FAIL  server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses in production too
+AssertionError: expected [Function] to throw error matching /encrypted\/secured/secured but got 'Cannot read properties of undefined (…'
+ FAIL  server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses secured PDF bytes under a non-.pdf name
+AssertionError: expected [Function] to throw error matching /listing\.xpt/ but got 'Cannot read properties of undefined (…'
+ FAIL  server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > covers the PMDA eCTD format
+AssertionError: expected [Function] to throw error matching /encrypted\/secured/secured but got 'Transmit requires the four-digit eCTD…'
+ FAIL  server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses a bundle that cannot be opened, rather than reading it as clear
+AssertionError: expected [Function] to throw error matching /could not be opened as a ZIP/ but got 'Cannot read properties of undefined (…'
+ Test Files  3 failed (3)
+      Tests  8 failed | 3 passed (11)

@@ -228,3 +228,116 @@ describe('gateway abort — the cancel is nobody\'s fault', () => {
     expect(calls, 'the cancelled call was retried').toBe(1);
   });
 });
+
+/*
+ * ── The abort that actually happens ─────────────────────────────────────────
+ * The two tests above mock the provider to throw GatewayAbortedError — the one
+ * type the guard catches. But GatewayAbortedError is only ever CREATED before a
+ * call starts (route()'s pre-call check). When the user stops while a
+ * non-streaming call is IN FLIGHT — AnA's round-2+ calls are `gw.route` with
+ * the run's signal — the Anthropic SDK throws its own APIUserAbortError, which
+ * is not a GatewayAbortedError. It fell through the guard to noteRungFailure →
+ * recordFailure, and the loop walked on to the next rung, where the already-
+ * aborted signal threw again: one press counted once per rung. With three
+ * Anthropic rungs a single Stop reached the three-failure threshold and marked
+ * Anthropic unhealthy for every tenant.
+ *
+ * These throw what the SDK really throws. Note its `name` is 'Error', not
+ * 'APIUserAbortError' — a fix keyed on the name would never fire, which is
+ * why the gateway keys on the caller's signal instead.
+ */
+const realSdkAbort = async (): Promise<Error> => {
+  const sdk = (await import('@anthropic-ai/sdk')) as unknown as {
+    APIUserAbortError: new () => Error;
+  };
+  return new sdk.APIUserAbortError();
+};
+
+describe('gateway abort — a cancel that lands mid-call', () => {
+  it('an abort that lands mid-call (the SDK error) never counts against the circuit breaker', async () => {
+    const gw = liveGateway();
+    const ctl = new AbortController();
+    const err = await realSdkAbort();
+    vi.spyOn(gw as unknown as { dispatchProvider: (m: ModelConfig) => Promise<unknown> }, 'dispatchProvider')
+      .mockImplementation(async () => {
+        ctl.abort(); // the user pressed Stop while the call was running
+        throw err;
+      });
+    const recordFailure = vi.spyOn(
+      gw as unknown as { recordFailure: (p: string, e: unknown) => void },
+      'recordFailure',
+    );
+
+    const outcome = await gw
+      .route({ taskType: 'chat', messages: [{ role: 'user', content: 'hi' }], signal: ctl.signal })
+      .then(() => null, (e: unknown) => e);
+
+    expect(outcome, 'a mid-call cancel was not reported as a cancel').toBeInstanceOf(GatewayAbortedError);
+    expect(recordFailure, 'a mid-call cancel was recorded as a provider failure').not.toHaveBeenCalled();
+  });
+
+  it('an abort that lands mid-call is not re-run on the next model', async () => {
+    const gw = liveGateway();
+    const ctl = new AbortController();
+    const err = await realSdkAbort();
+    const dispatch = vi
+      .spyOn(gw as unknown as { dispatchProvider: (m: ModelConfig) => Promise<unknown> }, 'dispatchProvider')
+      .mockImplementation(async () => {
+        ctl.abort();
+        throw err;
+      });
+
+    await gw
+      .route({ taskType: 'chat', messages: [{ role: 'user', content: 'hi' }], signal: ctl.signal })
+      .catch(() => {});
+
+    expect(dispatch, 'the stopped request was re-run on another model').toHaveBeenCalledTimes(1);
+  });
+
+  it('one Stop leaves Anthropic healthy for everyone — it used to count once per fallback rung', async () => {
+    const gw = liveGateway();
+    const ctl = new AbortController();
+    const err = await realSdkAbort();
+    vi.spyOn(gw as unknown as { dispatchProvider: (m: ModelConfig) => Promise<unknown> }, 'dispatchProvider')
+      .mockImplementation(async () => {
+        ctl.abort();
+        throw err;
+      });
+
+    await gw
+      .route({ taskType: 'chat', messages: [{ role: 'user', content: 'hi' }], signal: ctl.signal })
+      .catch(() => {});
+
+    const health = (gw as unknown as {
+      providerHealth: Map<string, { consecutiveFailures: number; healthy: boolean }>;
+    }).providerHealth.get('anthropic');
+    expect(health?.consecutiveFailures ?? 0, 'one Stop counted as provider failures').toBe(0);
+    expect(health?.healthy ?? true, 'one Stop marked Anthropic unhealthy for every tenant').toBe(true);
+  });
+
+  it('a genuine provider failure is still counted — the guard is about cancels, not errors', async () => {
+    // Guards the fix against overcorrecting: without an aborted signal, a real
+    // failure must still reach the circuit breaker.
+    const gw = liveGateway();
+    // Run each attempt once, without the backoff SLEEPS: a real 503 otherwise
+    // walks every retry and rung on genuine 1s delays and outlives any sane
+    // timeout. The assertion is untouched — the failure still flows through
+    // route()'s catch and noteRungFailure to the breaker, exactly as in use.
+    vi.spyOn(gw as unknown as { retryWithBackoff: (fn: () => Promise<unknown>) => Promise<unknown> }, 'retryWithBackoff')
+      .mockImplementation(async (fn: () => Promise<unknown>) => fn());
+    vi.spyOn(gw as unknown as { dispatchProvider: (m: ModelConfig) => Promise<unknown> }, 'dispatchProvider')
+      .mockImplementation(async () => {
+        throw Object.assign(new Error('upstream 503'), { status: 503 });
+      });
+    const recordFailure = vi.spyOn(
+      gw as unknown as { recordFailure: (p: string, e: unknown) => void },
+      'recordFailure',
+    );
+
+    await gw
+      .route({ taskType: 'chat', messages: [{ role: 'user', content: 'hi' }] })
+      .catch(() => {});
+
+    expect(recordFailure, 'a real outage was hidden').toHaveBeenCalled();
+  });
+});

@@ -21,6 +21,7 @@ import {
   RbmPlan,
 } from './RbmSurfaces';
 import { useAnaChat } from '../../components/ana/useAnaChat';
+import { activityPropsFor, hasReportableWork } from '../AnaActivity';
 import '../styles/project-home-v2.css';
 import '../styles/rbm-v2.css';
 
@@ -203,12 +204,19 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
-  const anaMsgs: RbmAnaMessage[] = anaChat.messages.map(m => ({
-    role: m.role,
-    text: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),
-    executedActions: m.executedActions,
-    pendingSignoffs: m.pendingSignoffs,
-  }));
+  /* Each turn with the shared record of her work and its output card. The
+     waiting state is the record's live phase — never "Thinking…". */
+  const anaMsgs: RbmAnaMessage[] = anaChat.messages.map(m => {
+    const activity = activityPropsFor(m);
+    return {
+      role: m.role,
+      text: m.text,
+      executedActions: m.executedActions,
+      pendingSignoffs: m.pendingSignoffs,
+      activity: m.role === 'assistant' && (m.streaming || hasReportableWork(activity)) ? activity : undefined,
+      output: m.generatedDraft?.title ? { generatedDraft: m.generatedDraft, streaming: m.streaming } : undefined,
+    };
+  });
   const askAna = (text: string) => {
     if (!text) return;
     if (!anaOpen) setAnaOpen(true);
@@ -355,6 +363,8 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             msgs={anaMsgs}
             onAsk={askAna}
             onClose={() => setAnaOpen(false)}
+            onNav={onNav}
+            onStartDemo={liveDrive?.onStartDemo}
             /* The live work dock reads the raw turns: phases, tool timings,
                pending steers and outputs the pane's message shape does not carry. */
             work={{

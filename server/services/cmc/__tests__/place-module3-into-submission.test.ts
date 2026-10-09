@@ -20,11 +20,16 @@ vi.mock('../final-export-gate', () => ({
 }));
 
 const getSequence = vi.fn();
+const getSubmission = vi.fn<(...args: any[]) => Promise<any>>(async () => ({
+  id: 10,
+  applicationType: 'ind',
+}));
 const upsertLeaf = vi.fn();
 const listSequences = vi.fn<(...args: any[]) => Promise<any[]>>(async () => []);
 const listLeaves = vi.fn<(...args: any[]) => Promise<any[]>>(async () => []);
 vi.mock('../../submission-service/submission-service', () => ({
   getSequence: (...args: unknown[]) => getSequence(...args),
+  getSubmission: (...args: unknown[]) => getSubmission(...args),
   upsertLeaf: (...args: unknown[]) => upsertLeaf(...args),
   listSequences: (...args: unknown[]) => listSequences(...args),
   listLeaves: (...args: unknown[]) => listLeaves(...args),
@@ -89,6 +94,8 @@ describe('placeModule3IntoSubmission', () => {
     inserted.length = 0;
     sectionRows = [];
     nextSnapshotId = 500;
+    getSubmission.mockReset();
+    getSubmission.mockResolvedValue({ id: 10, applicationType: 'ind' });
   });
 
   it('refuses with the gate verdict and performs no write when the gate refuses', async () => {
@@ -117,6 +124,98 @@ describe('placeModule3IntoSubmission', () => {
     expect(getSequence).not.toHaveBeenCalled();
     expect(upsertLeaf).not.toHaveBeenCalled();
     expect(inserted).toHaveLength(0);
+  });
+
+  it('refuses a submission that does not file on CTD headings, before any read or write', async () => {
+    // upsertLeaf judges every section code against its submission's own
+    // vocabulary. A Module 3 code is a CTD code, so against an IRB package it
+    // is refused -- but that used to surface from INSIDE the per-section loop,
+    // after the first coauthor_documents snapshot was already written, as a
+    // VALIDATION error the route answered 500 with a body telling a CMC lead
+    // to file their drug substance at 'irb.consent'.
+    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+    getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
+    getSubmission.mockResolvedValue({ id: 10, applicationType: 'irb' });
+    sectionRows = [
+      { sectionKey: '3.2.S.1', narrativeText: 'General information.', deterministicJson: { tables: [] } },
+    ];
+
+    const result = await placeModule3IntoSubmission({
+      orgId: 7,
+      userId: 42,
+      cmcProjectId: 'proj-1',
+      submissionId: 10,
+      sequenceId: 20,
+    });
+
+    expect(result.placed).toBe(false);
+    if (!result.placed && result.refusedBy === 'wrong-submission-type') {
+      expect(result.vocabulary).toBe('irb');
+      // The refusal names the TARGET, not the codes it rejected.
+      expect(result.error).toMatch(/CTD headings/);
+      expect(result.error).toMatch(/irb/);
+    } else {
+      throw new Error(`expected a wrong-submission-type refusal, got ${JSON.stringify(result)}`);
+    }
+    // The orphan snapshot is the point: nothing may be written before this.
+    expect(inserted).toHaveLength(0);
+    expect(upsertLeaf).not.toHaveBeenCalled();
+  });
+
+  it('refuses an eSTAR device submission for the same reason', async () => {
+    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+    getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
+    getSubmission.mockResolvedValue({ id: 10, applicationType: '510k' });
+    sectionRows = [
+      { sectionKey: '3.2.S.1', narrativeText: 'General information.', deterministicJson: { tables: [] } },
+    ];
+
+    const result = await placeModule3IntoSubmission({
+      orgId: 7, userId: 42, cmcProjectId: 'proj-1', submissionId: 10, sequenceId: 20,
+    });
+
+    expect(result.placed).toBe(false);
+    expect(!result.placed && result.refusedBy).toBe('wrong-submission-type');
+    expect(inserted).toHaveLength(0);
+  });
+
+  it('places normally when the submission files on CTD headings', async () => {
+    // The guard must not refuse the case it exists to protect: an eCTD target
+    // still places, and an unreadable application type narrows to ctd upstream.
+    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+    getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
+    getSubmission.mockResolvedValue({ id: 10, applicationType: 'nda' });
+    upsertLeaf.mockImplementation(async (input: { sectionCode: string }) => ({ id: 900, sectionCode: input.sectionCode }));
+    sectionRows = [
+      { sectionKey: '3.2.S.1', narrativeText: 'General information.', deterministicJson: { tables: [] } },
+    ];
+
+    const result = await placeModule3IntoSubmission({
+      orgId: 7, userId: 42, cmcProjectId: 'proj-1', submissionId: 10, sequenceId: 20,
+    });
+
+    expect(result.placed).toBe(true);
+    expect(upsertLeaf).toHaveBeenCalledTimes(1);
+  });
+
+  it('carries the section label into coauthor_documents.module_name', async () => {
+    // The IND checklist reads module_name, not title, and falls back to the raw
+    // code. m3.2.A.2 is absent from the IND blueprint, so with this NULL the
+    // checklist listed a section titled literally "m3.2.A.2".
+    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+    getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
+    upsertLeaf.mockImplementation(async (input: { sectionCode: string }) => ({ id: 900, sectionCode: input.sectionCode }));
+    sectionRows = [
+      { sectionKey: '3.2.A.2', narrativeText: 'Adventitious agents narrative.', deterministicJson: { tables: [] } },
+    ];
+
+    await placeModule3IntoSubmission({
+      orgId: 7, userId: 42, cmcProjectId: 'proj-1', submissionId: 10, sequenceId: 20,
+    });
+
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0].moduleName).toBeTruthy();
+    expect(String(inserted[0].moduleName)).not.toMatch(/^m?3\.2\.A\.2$/);
   });
 
   it('files a section already placed in an earlier sequence as replace of that leaf, not as new', async () => {

@@ -1,0 +1,7 @@
+# server-tool-placement.test.ts against the gateway and registry before this change
+ × server/services/ai-gateway/__tests__/server-tool-placement.test.ts > web tools reach each model in the version it accepts > Haiku 4.5 is sent the basic variants, with the same domains and cap
+   → expected [ { …(3) }, { …(4) }, { …(4) } ] to deeply equal [ { …(3) }, { …(4) }, { …(4) } ]
+ × server/services/ai-gateway/__tests__/server-tool-placement.test.ts > web tools reach each model in the version it accepts > every Anthropic model in the registry says which version it accepts, and only 4.6+ claim dynamic filtering
+   → .toMatch() expects to receive a string, but got undefined
+      Tests  2 failed | 11 passed (13)
+exit=1

@@ -36,12 +36,13 @@ import {
   addToWorkQueue,
 } from '../services/user-intelligence.js';
 import { resolveNavEntitlements } from '../services/entitlements/navigation-entitlements.js';
-import { resolveMasterAdmin } from '../services/entitlements/master-admin.js';
+import { resolveAdminStanding } from '../services/entitlements/master-admin.js';
 import { writeModuleGrant } from '../services/entitlements/module-grants.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { pool } from '../db.js';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { launchScopeEnforced } from '../services/entitlements/launch-scope.js';
 
 const logger = createScopedLogger('module-subscriptions');
 
@@ -59,7 +60,10 @@ router.get('/catalog', async (req: Request, res: Response) => {
     }
 
     const catalog = await getModuleCatalog(Number(orgId));
-    return res.json({ modules: catalog });
+    // `launchScope.enforced` is the deployment's answer, sent with the rows it
+    // applies to, so the catalog can label a 'later' module "in a later
+    // release" only when that is actually what locks it.
+    return res.json({ modules: catalog, launchScope: { enforced: launchScopeEnforced() } });
   } catch (error) {
     logger.error('catalog error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load module catalog' });
@@ -102,6 +106,14 @@ router.get('/enabled', async (req: Request, res: Response) => {
 // here — unlike /catalog and /license, this handler reads the identity (email
 // and roles) to decide the platform-owner grant, so the request must have been
 // through real authentication rather than merely carrying a tenant context.
+//
+// `platformAdmin` rides along because the account menu needs it and has no
+// other honest source: it is `resolvePlatformAdmin`, the exact function the
+// Master Administration guard admits with, applied to this request. It is NOT
+// `masterAdmin` — that is the commercial-unlock grant, a different set (a
+// `support` designation opens the console without unlocking modules). Before
+// it existed the menu offered the console to every customer org admin, and the
+// console refused all of them. Wayfinding only; the guard stays authoritative.
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/navigation', authenticateToken, async (req: Request, res: Response) => {
   try {
@@ -109,14 +121,13 @@ router.get('/navigation', authenticateToken, async (req: Request, res: Response)
     if (!orgId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    return res.json(
-      await resolveNavEntitlements(Number(orgId), {
-        // resolveMasterAdmin, not isMasterAdmin: the sync check cannot see a
-        // designation made in the Access Management console, and answering "no"
-        // here would grey the rail for somebody the owner has designated.
-        masterAdmin: await resolveMasterAdmin(req),
-      }),
-    );
+    // One pass for both: the owner grant is decided inside platform
+    // administration (finding 43), so the two can no longer disagree.
+    const { masterAdmin, platformAdmin } = await resolveAdminStanding(req);
+    return res.json({
+      ...(await resolveNavEntitlements(Number(orgId), { masterAdmin })),
+      platformAdmin,
+    });
   } catch (error) {
     logger.error('navigation error', {
       err: error instanceof Error ? error.message : String(error),
@@ -209,7 +220,11 @@ router.put('/:moduleId/toggle', async (req: Request, res: Response) => {
     }
 
     // Check if module is available for this org's tier
-    const access = await canAccessModule(Number(orgId), moduleId);
+    // The plan question, not the use question: an administrator must be able to
+    // turn back on a module they turned off, so an existing revocation is not a
+    // reason to refuse the toggle. canAccessModule's default (revocation denies)
+    // is what the gate and /check want.
+    const access = await canAccessModule(Number(orgId), moduleId, { ignoreRevocation: true });
     if (!access.allowed) {
       return res.status(403).json({
         error: access.reason,

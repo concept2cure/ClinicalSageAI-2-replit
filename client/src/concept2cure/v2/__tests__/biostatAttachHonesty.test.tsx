@@ -75,8 +75,21 @@ function mount(onAsk = vi.fn()) {
   return onAsk;
 }
 
-afterEach(() => cleanup());
-beforeEach(() => apiRequest.mockClear());
+/* A document is filed in the open project and nowhere else (PF-07), so every
+   case but the last opens one: without it the filing write is never attempted,
+   and the refusal and transport cases below would pass for that reason alone. */
+const PROGRAM = '0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a';
+const setProject = (p: unknown) => {
+  (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = p;
+};
+afterEach(() => {
+  cleanup();
+  setProject(undefined);
+});
+beforeEach(() => {
+  apiRequest.mockClear();
+  setProject({ id: PROGRAM });
+});
 
 /** Resolve after the click's awaits settle, so the toast has been written. */
 const settle = () => act(async () => { await Promise.resolve(); await Promise.resolve(); });
@@ -87,9 +100,23 @@ describe('Biostatistics — the attach control reports only what the server conf
     fireEvent.click(screen.getByRole('button', { name: ATTACH }));
     await settle();
 
-    // The binding write, not a sentence into the conversation.
+    // The binding write, not a sentence into the conversation — in the project.
+    const create = apiRequest.mock.calls.find((c: unknown[]) => String(c[1]).includes('/api/authoring/docs'));
+    expect(create).toBeDefined();
+    expect(create?.[2]).toMatchObject({ client_program_id: PROGRAM });
+  });
+
+  it('with no project open, files nothing, reports no filing, and says why (PF-07)', async () => {
+    setProject(undefined);
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: ATTACH }));
+    await settle();
+
     const urls = apiRequest.mock.calls.map((c: unknown[]) => String(c[1]));
-    expect(urls.some((u) => u.includes('/api/authoring/docs'))).toBe(true);
+    expect(urls.some((u) => u.includes('/api/authoring/docs'))).toBe(false);
+    const body = document.body.textContent ?? '';
+    expect(/filed to the dossier/i.test(body)).toBe(false);
+    expect(body).toMatch(/open a project first/i);
   });
 
   it('does not report a filing when the server refuses it', async () => {

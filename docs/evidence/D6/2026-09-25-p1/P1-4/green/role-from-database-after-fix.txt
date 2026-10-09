@@ -1,0 +1,10 @@
+$ git rev-parse --short HEAD  # plus the orgMembership.ts / middleware/auth.ts change
+901f9c9e
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a token still claiming admin for a user the row now says is member: requireRole(admin) refuses 1821ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a token minted as member for a user the row now says is admin: requireRole(admin) admits without a new sign-in 4ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > req.user.roles is expanded from the database role, so a functional grant of that role is honoured 3ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a revoked membership is still refused before any role is read 3ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a platform administrator granted through platform_role_grants still passes requirePlatformAdmin with an org role of member 2ms
+ Test Files  6 passed (6)
+      Tests  45 passed (45)
+exit=0

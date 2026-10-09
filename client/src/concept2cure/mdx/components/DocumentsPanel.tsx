@@ -21,7 +21,7 @@ import { I } from '../icons';
 // other *-docs.js files). Optional fields are surface-specific and most
 // surfaces omit them entirely — DocumentsPanel renders only when present.
 
-export type DocStatus = 'draft' | 'review' | 'ready' | 'locked';
+export type DocStatus = 'draft' | 'review' | 'ready' | 'locked' | 'uploaded';
 export type DocEsigState = 'na' | 'pending' | 'signed';
 
 export interface KitDocument {
@@ -33,7 +33,10 @@ export interface KitDocument {
   title: string;
   ver: string;
   status: DocStatus;
-  completion: number;
+  /** NULL when nothing assessed this document's completion — an ingested file
+   *  has no sections to be part-way through. Rendered as an em dash, never as
+   *  a number: a percentage is a claim, and 0% and 64% are both false here. */
+  completion: number | null;
   blocker?: boolean;
   blockerNote?: string;
   owner: string;
@@ -50,6 +53,30 @@ export interface KitDocument {
   deviations?: number;
   openRisks?: number;
   anomalies?: number;
+}
+
+/**
+ * Mean completion over the documents whose completion was ASSESSED, or null
+ * when none was.
+ *
+ * One definition for every surface that shows an average — Engineering and UDI
+ * each carried their own copy of `documents.reduce((s, d) => s + d.completion,
+ * 0) / documents.length`. Two properties that copy did not have:
+ *
+ *  - An unassessed document (completion null — an uploaded file has no
+ *    sections to be part-way through) is left OUT of both the sum and the
+ *    count. Counting it as 0 would drag the mean down for a file that is
+ *    finished; counting it as 100 would lift it for one nobody reviewed.
+ *  - Nothing assessed yields null, not 0. The copy returned 0 for an empty
+ *    list, which renders "avg 0%" — a claim that documents exist and are
+ *    unstarted, made about documents that do not exist.
+ */
+export function averageAssessedCompletion(docs: readonly KitDocument[]): number | null {
+  const assessed = docs
+    .map((d) => d.completion)
+    .filter((c): c is number => typeof c === 'number' && Number.isFinite(c));
+  if (assessed.length === 0) return null;
+  return Math.round(assessed.reduce((s, c) => s + c, 0) / assessed.length);
 }
 
 export interface KitDocFramework {
@@ -182,16 +209,26 @@ export function DocumentsPanel({
                 <div className="docs-meta">
                   <span className="mono small docs-ver">{d.ver}</span>
                   <span className="dot-sep" aria-hidden="true">·</span>
-                  <span>
-                    {d.sectionsComplete}/{d.sections} sections
-                  </span>
-                  <span className="docs-progress">
-                    <span
-                      className="docs-progress-fill"
-                      style={{ width: `${d.completion}%` }}
-                    />
-                  </span>
-                  <span className="mono small docs-pct">{d.completion}%</span>
+                  {d.completion !== null && (
+                    <span>
+                      {d.sectionsComplete}/{d.sections} sections
+                    </span>
+                  )}
+                  {d.completion !== null ? (
+                    <>
+                      <span className="docs-progress">
+                        <span
+                          className="docs-progress-fill"
+                          style={{ width: `${d.completion}%` }}
+                        />
+                      </span>
+                      <span className="mono small docs-pct">{d.completion}%</span>
+                    </>
+                  ) : (
+                    <span className="mono small docs-pct" title="No authoring completion is assessed for an uploaded file.">
+                      —
+                    </span>
+                  )}
                   <span className="dot-sep" aria-hidden="true">·</span>
                   <span className="docs-owner">{d.owner}</span>
                   {d.reviewers && d.reviewers.length > 0 && (

@@ -1,7 +1,8 @@
 /**
  * Pins the /api/admin/security-health endpoint contract.
  *
- *   - Requires auth + admin role (router-level middleware).
+ *   - Requires auth + admin role, on the route: never router-level, which
+ *     would gate every /api/admin/* router (admin-prefix-gate.test.ts, F-31).
  *   - Returns 200 when overall is healthy or degraded.
  *   - Returns 503 when overall is failing (page-able signal).
  *   - Response shape matches SecurityHealthReport.

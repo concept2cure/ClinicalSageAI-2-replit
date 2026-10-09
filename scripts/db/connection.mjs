@@ -16,8 +16,23 @@ export const INSTALL_URL_VARS = [
   'NEON_DATABASE_URL_ADMIN',
 ];
 
-/** Env var names checked, in order, by the incremental appliers. */
-export const APPLY_URL_VARS = ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET', 'NEON_DATABASE_URL'];
+/**
+ * Env var names checked, in order, by the incremental appliers.
+ *
+ * DATABASE_OWNER_URL leads (2026-09-21): it is the owner/admin connection
+ * scripts/db/provision.mjs documents for provisioning and for the deploy-time
+ * migrate job. When it is set, DATABASE_URL is the RUNTIME's connection, and
+ * deploy-migrate identifies the runtime role from it to refresh grants
+ * (provision-app-role.mjs → resolveRuntimeRole). Migrating as the runtime role
+ * while DATABASE_OWNER_URL names the owner would make the runtime the owner of
+ * every new table — the single-role posture the split exists to end.
+ */
+export const APPLY_URL_VARS = [
+  'DATABASE_OWNER_URL',
+  'DATABASE_URL',
+  'DATABASE_NEON_NEW_SECRET',
+  'NEON_DATABASE_URL',
+];
 
 /**
  * First non-empty URL among `names`, with a leading `psql '…'` wrapper stripped

@@ -1,0 +1,65 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/orchestration/templates",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 11,
+    "rateLimitRetries": 0,
+    "body": {
+      "templates": [
+        {
+          "templateId": "submission_readiness_review",
+          "name": "Submission Readiness Review",
+          "description": "Comprehensive review of project/submission readiness. Inspects all documents, artifacts, validations, and module placements to produce a readiness assessment with blockers and next actions.",
+          "stepCount": 5,
+          "estimatedDurationMinutes": 5,
+          "applicableModules": [
+            "cmc",
+            "cer",
+            "ectd",
+            "510k",
+            "ind",
+            "nda"
+          ]
+        },
+        {
+          "templateId": "draft_validate_route",
+          "name": "Draft, Validate & Route",
+          "description": "End-to-end content pipeline: identify what needs drafting, validate content, surface findings, run AI-assisted refinement, and route to the correct CTD module.",
+          "stepCount": 5,
+          "estimatedDurationMinutes": 10,
+          "applicableModules": [
+            "cmc",
+            "cer",
+            "ectd",
+            "510k",
+            "ind",
+            "nda"
+          ]
+        },
+        {
+          "templateId": "project_blocker_scan",
+          "name": "Project Blocker Scan",
+          "description": "Scans across all project objects — tasks, documents, validations, module placements — to identify and prioritize blockers, then recommends next actions.",
+          "stepCount": 4,
+          "estimatedDurationMinutes": 3,
+          "applicableModules": [
+            "cmc",
+            "cer",
+            "ectd",
+            "510k",
+            "ind",
+            "nda",
+            "vault"
+          ]
+        }
+      ]
+    }
+  }
+}

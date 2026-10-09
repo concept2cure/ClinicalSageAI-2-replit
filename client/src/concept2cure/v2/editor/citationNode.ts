@@ -242,7 +242,7 @@ export const Citation = Node.create<CitationOptions>({
       const dom = document.createElement('a');
       dom.className = 'rse-cite';
       // Not a navigation: clicking a citation in the canvas places the caret.
-      dom.setAttribute('role', 'link');
+      // So no link role (A-B-3; see crossReferenceNode.ts).
       dom.setAttribute(CITATION_SOURCE_ATTR, String(node.attrs.source ?? ''));
 
       const paint = () => {

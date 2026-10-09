@@ -1,0 +1,44 @@
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the propose-only partition > is every state-changing command (no write runs from model output unaided) 3ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the propose-only partition > holds only writes 1ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the three tiers > an ordinary write is the confirm tier 1ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the three tiers > the Part 11 sets keep their tiers 1ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the three tiers > every write has a tier and a confirm-tier command is in neither Part 11 set 7ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the approve class keeps a reason > section and post-market approvals are the reason tier, not a click 1ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > what the agent is told > a confirm-tier proposal asks for a confirmation, not a reason or a signature 2ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > what the agent is told > a reason-tier proposal still asks for the reason, an e-sign one for the signature too 1ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the tool gate > asks for approval on an ordinary write, at the confirm tier 1ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the tool gate > still leaves reads alone 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > pulls only well-formed PART11 blocks and reads the tier flag 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > returns [] for missing / non-array input 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > surfaces an agent's proposal (HUMAN_CONFIRMATION_REQUIRED) with its tier — the confirm tier asks for no reason 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > asks for neither a reason nor credentials, and says what AnA proposed 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > confirming posts { confirm: true } with the command and params, and no reason or password 181ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > the reason tier still needs its reason before the button enables 46ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > reason-only tier shows no password field 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier requires a password field 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier presents the §11.50 meaning enum (AUTHOR/REVIEWER/APPROVER) 37ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier states the 11.100(b) attestation and re-auth-at-signing 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > renders as a modal dialog naming the action and consequence 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > Escape cancels the dialog 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > associates the reason error via aria-invalid + aria-describedby when too short 13ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > submits the reason + command to the governed-action route and reports outcome 15ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact submit requires reason + re-auth + meaning and forwards them 42ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > keeps Confirm disabled until the reason is long enough 11ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > Escape on a live prompt declines too 62ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > on a finished turn there is nothing waiting, and nothing is sent 11ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > on a live prompt, Cancel tells the waiting run 64ms
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > writes the decision against the SAME org the lookup used 26ms
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > ignores an organization named in the body, for the lookup and the write 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > follows the caller — a caller of another org binds to that org 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > refuses a run the caller org does not hold, and writes nothing 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > an ordinary write runs with no reason and no password, confirmed by a person 20ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run without an explicit yes 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run when the confirmation could not be recorded 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > the Part 11 tiers still demand what they demanded 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > a read is still not something this route runs 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held run runs the command from the ROW and releases the run 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline records the decision, runs nothing, and releases the run at once 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline needs a run to apply to 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > an approval proposed by AnA asks for a reason, not a click 6ms
+ Test Files  4 passed (4)
+      Tests  42 passed (42)

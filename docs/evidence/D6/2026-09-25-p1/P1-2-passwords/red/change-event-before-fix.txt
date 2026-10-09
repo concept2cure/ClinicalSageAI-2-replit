@@ -1,0 +1,7 @@
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password while signed in is audited too (IAM-17) > records user_password_changed for the account holder, in the account tenant, without the password 341ms
+   → the change was a log line, not an audit event: expected undefined to be truthy
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password while signed in is audited too (IAM-17) > records user_password_changed for the account holder, in the account tenant, without the password
+AssertionError: the change was a log line, not an audit event: expected undefined to be truthy
+    338|     expect(row, 'the change was a log line, not an audit event').toBeT…
+exit=1

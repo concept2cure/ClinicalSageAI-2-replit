@@ -1,0 +1,221 @@
+/**
+ * Protocol development — review assignments and informed consent.
+ *
+ * REVIEWS: `/api/protocol-reviews` has carried reviewers, comments,
+ * resolutions and dispositions since C2C-17, and this pane read them and wrote
+ * none of them — WI's audit put it plainly: "reviewers/comments are API-only".
+ * A review that can only be requested through an API is not a review anyone on
+ * the study can ask for. The pane now requests a review (reviewer, role, due
+ * date) and records a reviewer's disposition. The disposition is an electronic
+ * signature (ProtocolDevSigning.tsx): only the assigned user can sign it, so the
+ * button is disabled, with the reason, for anyone else.
+ *
+ * CONSENT: the tab used to read `consent: []` — hard-coded in the assembler —
+ * and print "0 of 0 required elements present, 0% complete" over whatever had
+ * been authored. That is a number invented by the screen. The assembler now
+ * returns the latest linked consent form and its elements, so the tab is wired
+ * to them. It stays READ-ONLY here on purpose: consent elements are authored
+ * against a consent form (`/api/protocol-consent`), which is a different
+ * record with its own version and approval, and giving this tab a tick box
+ * would be a second writer for it. With no linked form the tab says so and
+ * prints no percentage — a completeness figure over zero elements is not 0 %,
+ * it is nothing.
+ */
+import React from 'react';
+import { useAuthUser } from '@/services/portal/authService';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
+import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
+import type { PdevSignatureFacet } from '../fixtures/protocol-data';
+import * as PG from './ProtocolGov';
+import { PaneHead, type PaneAction } from './ProtocolDevShared';
+import type { PdevFormKind, PdevFormTarget } from './ProtocolDevForms';
+
+type Row = Record<string, unknown>;
+const asRows = (v: unknown): Row[] => (Array.isArray(v) ? (v as Row[]) : []);
+const str = (v: unknown): string => (v == null ? '' : String(v));
+
+export interface ReviewPaneProps {
+  doc: Record<string, unknown>;
+  onEdit?: (kind: PdevFormKind, target?: PdevFormTarget) => void;
+}
+
+/** The read model's facet, or null when it is missing or not one: a facet this
+ *  client cannot read is reported as unreadable, never as unsigned. */
+function facetOf(v: unknown): PdevSignatureFacet | null {
+  const f = v as { state?: unknown; signature?: unknown } | null | undefined;
+  if (f?.state === 'none' || f?.state === 'unavailable') return f as PdevSignatureFacet;
+  if ((f?.state === 'signed' || f?.state === 'revoked') && f.signature && typeof f.signature === 'object') return f as PdevSignatureFacet;
+  return null;
+}
+
+/**
+ * The §11.50 manifestation of one signed act, as its signature row records it:
+ * the printed name at signing, the meaning, the UTC time (periodic review
+ * 2026-09-28, editor family, P11-C-2). It was shown once, in the signing
+ * dialog, and then nowhere. `expected` is true when the record says the act
+ * happened (a recorded disposition, a finalized protocol), so a missing or
+ * unreadable signature is said rather than left silent. The protocol header
+ * uses the same line for the finalization.
+ */
+export function SignatureLine({ facet, expected, style }: { facet: unknown; expected: boolean; style?: React.CSSProperties }) {
+  const f = facetOf(facet);
+  if (!f || f.state === 'unavailable') {
+    return expected ? <span className="pde-review-meta" style={style}>The signature record could not be read.</span> : null;
+  }
+  if (f.state === 'none') {
+    return expected ? <span className="pde-review-meta" style={style}>No electronic signature is on record.</span> : null;
+  }
+  const s = f.signature;
+  return (
+    <span className="pde-review-meta" style={style}>
+      {f.state === 'revoked' ? 'Signature revoked · signed by ' : 'Signed by '}
+      <strong>{s.signerName || 'a signer with no printed name on record'}</strong>
+      {' as ' + signatureMeaningLabel(s.meaning) + ' · '}
+      <GovernedTimestamp value={s.signedAt} layout="inline" />
+      {s.recordedOnBehalfOf ? ' · recorded on behalf of ' + s.recordedOnBehalfOf : ''}
+    </span>
+  );
+}
+
+/** The disposition control: the signature on offer, or the signed state. */
+function DispositionAction({ name, signed, someoneElses, whyId, onSign }: {
+  name: string; signed: boolean; someoneElses: boolean; whyId: string; onSign: () => void;
+}) {
+  const who = name || 'this reviewer';
+  return (
+    <span className="pde-review-act">
+      {/* The visible label is short so the row stays one line; the
+          accessible name carries the reviewer, and contains the visible
+          text, so WCAG 2.5.3 (Label in Name) holds. */}
+      {signed ? (
+        <button type="button" className="pg-btn outline" aria-label={'Disposition signed for ' + who} disabled
+          title="A disposition is already signed for this review.">
+          <PG.Ic n="checkCircle" s={14} />Disposition signed
+        </button>
+      ) : (
+        <button type="button" className="pg-btn outline" aria-label={'Record disposition for ' + who} disabled={someoneElses}
+          aria-describedby={someoneElses ? whyId : undefined} onClick={onSign}>
+          <PG.Ic n="penLine" s={14} />Record disposition
+        </button>
+      )}
+    </span>
+  );
+}
+
+function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit'] }) {
+  const name = str(r.reviewer);
+  const disposition = str(r.disposition);
+  const due = str(r.dueDate);
+  const assignedTo = typeof r.reviewerUserId === 'number' ? r.reviewerUserId : null;
+  const me = Number(useAuthUser()?.id);
+  // The server refuses anyone but the assigned user; say so before the click.
+  const someoneElses = assignedTo !== null && Number.isFinite(me) && assignedTo !== me;
+  // The server's own test for a signed disposition (setDispositionTx), which
+  // refuses a second one. Offering it again spent the signer's password and
+  // code on a certain refusal (periodic review 2026-09-28, editor family, P11-C-4).
+  const signed = disposition !== '' || str(r.status) === 'completed';
+  /* 2026-09-28 · GA-7 (coverage-gap sweep): the reason lived only in the
+     disabled button's `title`, which a keyboard user cannot reach (a disabled
+     button takes no focus) and most screen readers do not announce. It is now
+     visible text on the row, and the button is described by it. */
+  const whyId = React.useId();
+  return (
+    <div className="pde-review-row">
+      <span className="pde-review-name">{name || 'Unnamed reviewer'}</span>
+      <PG.StatusBadge status={str(r.status)} />
+      <span className="pde-review-meta">
+        {str(r.role) ? PG.labelize(str(r.role)) : 'No review role recorded'}
+        {due ? ' · due ' + due : ' · no due date'}
+        {disposition ? ' · ' + PG.labelize(disposition) : ' · no disposition recorded'}
+        {someoneElses && !signed && <>{' · '}<span id={whyId}>Assigned to another user. Only they can sign this disposition.</span></>}
+      </span>
+      {onEdit && (
+        <DispositionAction
+          name={name} signed={signed} someoneElses={someoneElses} whyId={whyId}
+          onSign={() => onEdit('review-disposition', { id: Number(r.id), label: name, reviewerUserId: assignedTo })}
+        />
+      )}
+      {/* Its own line under the row: who signed, not who was assigned. */}
+      <SignatureLine facet={r.signature} expected={signed} style={{ flexBasis: '100%' }} />
+    </div>
+  );
+}
+
+export function ReviewsTab({ doc, onEdit }: ReviewPaneProps) {
+  const reviews = asRows(doc.reviews);
+  const allComments = reviews.flatMap((r) => asRows(r.comments));
+  const blocking = allComments.filter((c) => c.sev === 'blocking' && !c.resolved).length;
+  const actions: PaneAction[] | undefined = onEdit
+    ? [{ label: 'Request a review', icon: 'plus', onAct: () => onEdit('review-request'), variant: 'outline' }]
+    : undefined;
+
+  return (
+    <div className="pd-pane">
+      <PaneHead
+        title="Review & comments"
+        sub={reviews.length + ' reviewers · ' + blocking + ' blocking open'}
+        actions={actions}
+      />
+      {reviews.length === 0
+        ? <div className="pde-note">No review has been requested for this protocol.</div>
+        : <div className="pd-review-sum">{reviews.map((r) => <ReviewerRow key={str(r.id)} r={r} onEdit={onEdit} />)}</div>}
+      {allComments.length ? (
+        <div className="pd-comments">{allComments.map((c) => (
+          <div key={str(c.id)} className="pd-comment" data-sev={str(c.sev)}>
+            <div className="pd-comment-h">
+              <span className="pg-badge" data-tone={PG.SEV_TONE[str(c.sev)]}>{PG.labelize(str(c.sev))}</span>
+              <span className="pd-comment-sec">{str(c.sec)}</span>
+              <span className="pd-comment-st">{c.resolved ? 'Resolved' : 'Open'}</span>
+            </div>
+            <div className="pd-comment-t">{str(c.text)}</div>
+          </div>))}</div>
+      ) : <div className="pg-empty">No review comments have been left on this protocol.</div>}
+    </div>
+  );
+}
+
+export function ConsentTab({ doc }: { doc: Record<string, unknown> }) {
+  const consent = asRows(doc.consent);
+  const form = (doc.consentForm ?? null) as Row | null;
+  const required = consent.filter((c) => c.required !== false);
+  const present = required.filter((c) => c.present).length;
+
+  if (!form || consent.length === 0) {
+    return (
+      <div className="pd-pane">
+        <PaneHead title="Informed consent" sub="Read from the linked consent form" />
+        <div className="pde-note">
+          {form
+            ? <>The linked consent form <strong>{str(form.title)}</strong> has no elements recorded, so there is no checklist to report against.</>
+            : <><strong>No consent form is linked to this protocol.</strong> Consent elements are authored on a consent form, which carries its own version and approval; until one is linked there is no completeness to report.</>}
+        </div>
+        <PG.Citation basis="45 CFR 46.116 — General requirements for informed consent" />
+      </div>
+    );
+  }
+
+  const pct = Math.round((present / required.length) * 100);
+  return (
+    <div className="pd-pane">
+      <PaneHead
+        title="Informed consent"
+        sub={present + ' of ' + required.length + ' required elements present'}
+      />
+      <div className="pde-note">
+        {str(form.title)} · version {str(form.version) || '—'} · {PG.labelize(str(form.status)) || 'no status'}
+        {Number(form.formsLinked) > 1 ? ` · ${Number(form.formsLinked)} forms linked, the most recently updated is shown` : ''}
+      </div>
+      <div className="pd-consent-meter">
+        <div className="pd-consent-bar"><div className="pd-consent-fill" style={{ width: pct + '%' }} /></div>
+        <span className="pd-consent-pct">{pct + '% complete'}</span>
+        <PG.Citation basis="45 CFR 46.116 — General requirements for informed consent" />
+      </div>
+      <ul className="pd-consent-list">{consent.map((c) => (
+        <li key={str(c.id)} className={'pd-consent-row' + (c.present ? '' : ' missing')}>
+          <span className="pd-consent-ck" data-on={Boolean(c.present)} aria-hidden="true">{c.present ? '✓' : ''}</span>
+          <span>{str(c.el)}</span>
+          <span className="sr-only">{c.present ? 'present' : 'not present'}</span>
+        </li>))}</ul>
+    </div>
+  );
+}

@@ -448,6 +448,9 @@ export interface FormattingFinding {
   leaf?: string;
   message: string;
 }
+/* Mirrors server/services/market-specs/market-formatting-validator.ts; keep in step.
+   2026-09-22 (W5/D7): declared facts are claims, and every applicable rule that
+   could not be judged is listed — `errors: 0` alone is not a clean result. */
 export interface FormattingReport {
   specId: string;
   market: string;
@@ -455,6 +458,8 @@ export interface FormattingReport {
   errors: number;
   warnings: number;
   findings: FormattingFinding[];
+  notAssessed: Array<{ rule: FormattingFinding['rule']; leaves: string[]; reason: string }>;
+  verdict: 'conformant' | 'conformant_with_warnings' | 'nonconformant' | 'not_assessed';
 }
 
 // ── Document template structures (GET /api/submissions/document-templates[/:id]) ─

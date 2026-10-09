@@ -30,41 +30,44 @@
  * flight, and a failure keeps the reference and says it could not be shown —
  * it never renders a broken glyph or silently drops the node.
  *
- * External http(s) images pasted from elsewhere are displayed directly by the
- * browser (no auth to attach); data: URIs pass through untouched.
+ * A figure is a governed reference or an inline PNG, JPEG or GIF, and nothing
+ * else (@shared/authoring/figure-refs). Any other src, such as an external
+ * address or a data: URI of another type, is not fetched and not displayed:
+ * the node view says the figure must be uploaded, and the schema does not
+ * parse one in.
  */
 
 import { Node, mergeAttributes } from '@tiptap/core';
 import { apiRequest } from '@/lib/queryClient';
 import { CAPTION_ID_ATTR } from '@shared/authoring/captions';
-import { AUTHORING_IMAGE_URL_PREFIX } from '../../components/ana/renderSafeMarkdown';
+import {
+  isFigureSrc,
+  isGovernedImageRef,
+  isInlineFigureImage,
+} from '@shared/authoring/figure-refs';
 
 /* ── Authenticated display cache ──────────────────────────────── */
 
 /** One fetch per image per page lifetime; object URLs are tiny handles. */
 const objectUrlCache = new Map<string, Promise<string>>();
 
-/** Is this src the governed figure reference — the ONLY same-app path the
- *  resolver will fetch with the viewer's credentials? This was a bare
- *  '/api/' test, which let any API path one author stored in section HTML
- *  be fetched with the NEXT VIEWER's auth when the document rendered. */
-export function isApiImageSrc(src: string): boolean {
-  return src.startsWith(AUTHORING_IMAGE_URL_PREFIX);
-}
-
-/** Thrown for a same-app API path outside the governed images route. */
+/** Thrown for a src that is not a figure. */
 export const NOT_A_FIGURE_REF = 'NOT_A_FIGURE_REF';
 
-/** Resolve a src to something an <img> element can display. */
+/** What the canvas and the read view show in place of a src that is not a
+ *  figure. Nothing was fetched, and the export would not file it. */
+export const FIGURE_NOT_UPLOADED_NOTE =
+  'This figure is not shown: only an image uploaded to the document can be displayed or filed. Upload the image to include it.';
+
+/** Resolve a src to something an <img> element can display: a governed
+ *  reference is fetched with the viewer's credentials, an inline PNG, JPEG or
+ *  GIF is handed back as it is, and anything else is refused before any
+ *  request. Periodic review 2026-09-28, editor family, SEC-B-1 and SEC-B-2:
+ *  the governed check was a prefix test that dot segments walked out of to any
+ *  API route, and every other src was handed to the browser to fetch. */
 export function resolveImageSrc(src: string): Promise<string> {
-  if (!isApiImageSrc(src)) {
-    if (src.startsWith('/api/')) {
-      // Refuse outright rather than hand the path back for the <img> to fire
-      // as a native (cookie-carrying) request.
-      return Promise.reject(new Error(NOT_A_FIGURE_REF));
-    }
-    return Promise.resolve(src);
-  }
+  if (isInlineFigureImage(src)) return Promise.resolve(src);
+  if (!isGovernedImageRef(src)) return Promise.reject(new Error(NOT_A_FIGURE_REF));
   let hit = objectUrlCache.get(src);
   if (!hit) {
     hit = (async () => {
@@ -134,7 +137,17 @@ export const AuthoringImage = Node.create({
   },
 
   parseHTML() {
-    return [{ tag: 'img[src]' }];
+    // Only a figure parses in, so a paste, a load or an inserted draft cannot
+    // bring in an image the canvas would fetch from elsewhere (periodic review
+    // 2026-09-28, editor family, SEC-B-1, SEC-B-2). Stored content that holds
+    // one fails the fidelity gate on its image count and opens in source mode,
+    // where nothing is fetched.
+    return [
+      {
+        tag: 'img[src]',
+        getAttrs: (el: HTMLElement) => (isFigureSrc(el.getAttribute('src')) ? null : false),
+      },
+    ];
   },
 
   renderHTML({ HTMLAttributes }) {
@@ -181,10 +194,14 @@ export const AuthoringImage = Node.create({
               dom.dataset.error = '1';
             };
           })
-          .catch(() => {
+          .catch((e: unknown) => {
             if (!alive) return;
+            // A node can still arrive without a parse (JSON, live sync). One
+            // that is not a figure was never requested; say what to do.
             status.textContent =
-              'The image could not be loaded — you may not have access, or the store is unreachable. Its reference is kept in the section.';
+              e instanceof Error && e.message === NOT_A_FIGURE_REF
+                ? FIGURE_NOT_UPLOADED_NOTE
+                : 'The image could not be loaded — you may not have access, or the store is unreachable. Its reference is kept in the section.';
             dom.dataset.error = '1';
           });
       }

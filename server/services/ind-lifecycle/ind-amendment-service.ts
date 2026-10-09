@@ -60,9 +60,9 @@ export type DocumentChangeKind = 'added' | 'revised' | 'appended' | 'withdrawn';
  * amendment class it triggers.
  */
 export type ContentCategory =
-  | 'protocol' // 312.30 — new/changed protocol
+  | 'protocol' // 312.30(a) new protocol (changeKind 'added') / 312.30(b) change in protocol
   | 'protocol_amendment_summary'
-  | 'new_investigator' // 312.30(a) — added investigator (Form 1572)
+  | 'new_investigator' // 312.30(c) — added investigator (Form 1572); FDA notified within 30 days
   | 'cmc' // 312.31 — chemistry/manufacturing/controls
   | 'pharmacology_toxicology' // 312.31 — nonclinical
   | 'clinical_summary' // 312.31 — Module 2 summaries
@@ -118,6 +118,35 @@ export interface IndAmendmentPlan {
   leaves: PlannedLeaf[];
   /** Non-fatal advisories (e.g. unmapped category, missing replace GUID). */
   warnings: string[];
+  /**
+   * The 21 CFR 312.30(d) titles this sequence must be "prominently identified"
+   * with: "Protocol Amendment: New Protocol" (312.30(a)), "…: Change in
+   * Protocol" (312.30(b)), "…: New Investigator" (312.30(c)). Empty when the
+   * sequence carries no protocol amendment.
+   */
+  protocolAmendmentTitles: ProtocolAmendmentTitle[];
+}
+
+export type ProtocolAmendmentTitle =
+  | 'Protocol Amendment: New Protocol'
+  | 'Protocol Amendment: Change in Protocol'
+  | 'Protocol Amendment: New Investigator';
+
+const TITLE_FOR_CFR: Record<string, ProtocolAmendmentTitle> = {
+  '312.30(a)': 'Protocol Amendment: New Protocol',
+  '312.30(b)': 'Protocol Amendment: Change in Protocol',
+  '312.30(c)': 'Protocol Amendment: New Investigator',
+};
+
+/**
+ * A protocol document's provision depends on what happened to it: a protocol
+ * the IND did not already contain is a NEW PROTOCOL under 312.30(a); a revised
+ * or appended one is a change under 312.30(b). The category mapping carried
+ * (b) for both, so every new study was filed as a change to an existing one.
+ */
+function cfrRefFor(category: ContentCategory, changeKind: DocumentChangeKind, mapped: string): string {
+  if (category === 'protocol' && changeKind === 'added') return '312.30(a)';
+  return mapped;
 }
 
 // ---------------------------------------------------------------------------
@@ -153,7 +182,9 @@ const SECTION_FOR_CATEGORY: Record<ContentCategory, CategoryMapping> = {
     sectionCode: 'm1.1',
     amendmentClass: 'protocol',
     documentType: 'form_1572',
-    cfrRef: '312.30(a)',
+    // 312.30(c) "New investigator". Was cited 312.30(a), which is "New protocol"
+    // (corrected 2026-09-22; docs/evidence/REGULATORY-SME/2026-09-22/).
+    cfrRef: '312.30(c)',
   },
   cmc: {
     sectionCode: 'm3.2',
@@ -254,7 +285,7 @@ export function planIndAmendment(input: IndAmendmentInput): IndAmendmentPlan {
       documentType: mapping.documentType,
       parentLeafGuid: doc.replacesLeafGuid ?? null,
       amendmentClass: mapping.amendmentClass,
-      cfrRef: mapping.cfrRef,
+      cfrRef: cfrRefFor(doc.category, doc.changeKind, mapping.cfrRef),
     };
   });
 
@@ -289,6 +320,9 @@ export function planIndAmendment(input: IndAmendmentInput): IndAmendmentPlan {
     amendmentClasses: Array.from(classesPresent).sort(),
     leaves,
     warnings,
+    protocolAmendmentTitles: [...new Set(
+      leaves.map((l) => TITLE_FOR_CFR[l.cfrRef]).filter((t): t is ProtocolAmendmentTitle => Boolean(t)),
+    )].sort(),
   };
 }
 

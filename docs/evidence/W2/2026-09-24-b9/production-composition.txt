@@ -1,0 +1,48 @@
+# environments/production under a mocked AWS provider (terraform test, Terraform 1.9.8, hashicorp/aws 5.70.0).
+# The test files and two outputs below live in a scratch copy only: environments/production/* and
+# modules/ecs-fargate/* belong to the B1-B5 lane. Their source is in production-composition-scratch-tests.txt.
+
+######## composition — must pass
+tests/composition.tftest.hcl... in progress
+  run "production_plans_with_a_domain_and_a_secret"... pass
+  run "the_api_task_trusts_two_hops"... pass
+tests/composition.tftest.hcl... tearing down
+tests/composition.tftest.hcl... pass
+
+Success! 2 passed, 0 failed.
+exit=0
+
+######## refusals — each must fail, on the named check
+refusal/no-domain.tftest.hcl... in progress
+  run "production_without_a_custom_domain"... fail
+
+Error: Invalid value for variable
+
+  on refusal/no-domain.tftest.hcl line 48, in run "production_without_a_custom_domain":
+  48:     domain_aliases = []
+    ├────────────────
+    │ var.domain_aliases is empty list of string
+
+Production routes the API through CloudFront, which needs a custom domain
+that the ALB's certificate (acm_certificate_arn) also covers.
+
+This was checked by the validation rule at variables.tf:89,3-13.
+refusal/no-domain.tftest.hcl... tearing down
+refusal/no-domain.tftest.hcl... fail
+refusal/weak-secret.tftest.hcl... in progress
+  run "production_with_a_weak_origin_secret"... fail
+
+Error: Invalid value for variable
+
+  on main.tf line 99, in module "alb":
+  99:   origin_secret      = var.cloudfront_origin_secret
+
+origin_secret must be 32 to 128 characters of letters, digits, '-' or '_'.
+
+This was checked by the validation rule at
+../../modules/alb/variables.tf:62,3-13.
+refusal/weak-secret.tftest.hcl... tearing down
+refusal/weak-secret.tftest.hcl... fail
+
+Failure! 0 passed, 2 failed.
+exit=1

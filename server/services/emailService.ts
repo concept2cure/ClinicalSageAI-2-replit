@@ -320,6 +320,72 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
 }
 
 // ---------------------------------------------------------------------------
+// Sign-up verification link
+// ---------------------------------------------------------------------------
+
+function buildVerificationEmailHtml(name: string, verifyUrl: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;padding:40px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background-color:#292524;padding:32px 40px;text-align:center;">
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:600;">Concept2Cure</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:40px;">
+            <h2 style="margin:0 0 16px;color:#292524;font-size:20px;font-weight:600;">Confirm your e-mail address</h2>
+            <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
+              Hi ${name}, an account was created with this address. Open the link below within 24 hours to confirm it and finish creating your account. Until then the account cannot be used.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding:8px 0 32px;">
+                <a href="${verifyUrl}" style="display:inline-block;background-color:#1c1917;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:6px;">
+                  Confirm e-mail address
+                </a>
+              </td></tr>
+            </table>
+            <p style="margin:0 0 12px;color:#6b6963;font-size:13px;line-height:1.5;">
+              If you did not create this account, ignore this message; nothing happens without the link.
+            </p>
+            <p style="margin:0;color:#75736d;font-size:12px;line-height:1.5;word-break:break-all;">
+              If the button does not work, copy this address into your browser:<br />${verifyUrl}
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+/**
+ * Send the sign-up verification link (security audit 2026-09-24, IAM-17). The
+ * account cannot act until the link is opened, so this mail is the sign-up.
+ */
+export async function sendVerificationEmail(email: string, firstName: string, verifyUrl: string): Promise<void> {
+  const transporter = getTransporter();
+  const name = firstName || email.split('@')[0];
+  if (!transporter) {
+    log.warn('SMTP not configured — the sign-up verification link was NOT delivered; this account cannot be activated', { to: email });
+    return;
+  }
+  await transporter.sendMail({
+    from: `"Concept2Cure" <${FROM_ADDRESS}>`,
+    to: email,
+    subject: 'Confirm your e-mail address — Concept2Cure',
+    text: `Hi ${name},\n\nAn account was created with this address. Open the link below within 24 hours to confirm it and finish creating your account:\n${verifyUrl}\n\nIf you did not create this account, ignore this message.`,
+    html: buildVerificationEmailHtml(name, verifyUrl),
+  });
+  log.info('Sign-up verification email sent', { to: email });
+}
+
+// ---------------------------------------------------------------------------
 // Team Invitation Email
 // ---------------------------------------------------------------------------
 

@@ -1,0 +1,30 @@
+== check-canvas-path
+✅ ci:canvas-path — thread → canvas → workbench, surface → workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project → agency within its baseline
+exit=0
+== check-discarded-audit-write
+check-discarded-audit-write: no new occurrences. 125 baselined across 56 file(s).
+exit=0
+== check-lineage-save-gate
+[ci:lineage-save-gate] ok  server/services/ana/verifiedSealService.ts
+[ci:lineage-save-gate] ok  server/services/resolution/bundle-executor.ts
+[ci:lineage-save-gate] ok  server/services/protocol-templates/protocol-templates-service.ts
+[ci:lineage-save-gate] OK — 21 guarded path(s) enforce lineage on save.
+exit=0
+== check-no-mock-in-prod-routes
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+exit=0
+== check-docx-runtime-canonicality
+                  server/services/docxGenerator.ts
+  2. python-docx → workers/artifact-compute/docx-python-runtime.py
+                  (+ the docx-insert / docx-xml / docx-validate
+                   surgical-edit runtimes in the same directory)
+exit=0
+== check-pdf-runtime-canonicality
+[ci:pdf-runtime-canonicality] OK — no new PDF entry points outside the approved list
+exit=0
+check-canvas-path exit=0
+check-discarded-audit-write exit=0
+check-lineage-save-gate exit=0
+check-no-mock-in-prod-routes exit=0
+check-docx-runtime-canonicality exit=0
+check-pdf-runtime-canonicality exit=0

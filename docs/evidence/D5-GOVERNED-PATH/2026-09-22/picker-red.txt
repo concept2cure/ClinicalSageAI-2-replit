@@ -1,0 +1,22 @@
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds a visit through the governed visit route and re-reads the protocol 1406ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renames a visit through the visit PATCH, carrying the visit id 881ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes a visit through the governed remove route 615ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds an assessment through the SoA router 621ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes an assessment through the governed remove route 757ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renders the assembler’s findings rather than an empty list 364ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > risk register — residual rating, owner and mitigation > writes the residual rating through the risk PATCH 871ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > says plainly that no budget has been entered instead of printing a verdict 315ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > adds a line item through the budget router 483ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > sets the feasibility parameters through the params PUT 437ms
+× client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > requests a review through the reviewers route 503ms
+× client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > assigns the review to a member's account, so the reviewer signs their own review 476ms
+× client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > when the member list cannot be read it says so, and a reviewer can still be named without an account 5435ms
+× client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > neither an account nor a name: nothing is sent 5575ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > a disposition is signed, not submitted: nothing is sent until the signer re-authenticates 771ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > finalize — the replacement for the deleted reason-only drawer is reachable > Finalize protocol opens the e-signature and posts the signed finalization 828ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > cover page — sponsor and principal investigator > writes both through the cover-page PATCH and re-reads 499ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > consent — the tab shows what the read model returns > reports the element the assembled consent form holds 320ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a governed write does not take the protocol off screen > stays on the register being edited while the record is re-read 642ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > empty state > names the open project and offers both a start and an AnA draft 51ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+Tests  4 failed | 16 passed (20)

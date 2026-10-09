@@ -1,0 +1,21 @@
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that cannot answer is an error, never an empty result (L186) > getRecentGovernedDecisions rejects rather than answering "no decisions" 14ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that cannot answer is an error, never an empty result (L186) > getGovernedDecisionSummary rejects rather than answering a zeroed summary 1ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that cannot answer is an error, never an empty result (L186) > getArtifactDecisionTrace rejects rather than answering an empty trace 5ms
+ × tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that cannot answer is an error, never an empty result (L186) > getGovernedDecision rejects rather than answering "not found" 9ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that cannot answer is an error, never an empty result (L186) > getDecisionTimeline rejects rather than answering an empty history 1ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that cannot answer is an error, never an empty result (L186) > getProjectReviewQueue rejects rather than answering empty queues 1ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that cannot answer is an error, never an empty result (L186) > hasUnresolvedGovernedDecisions rejects rather than answering "nothing unresolved" — the gate case 1ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that answers is reported as it is > no decisions is an empty list and a zeroed summary 2ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that answers is reported as it is > a decision that does not exist is null 1ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that answers is reported as it is > a decision is found by the code its caller holds, before the primary key is tried 1ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that answers is reported as it is > decisions under review or escalated are unresolved, and counted 1ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that answers is reported as it is > a review queue the database reports empty is nothing unresolved 0ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that answers is reported as it is > repository version is 2.0.0 0ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that answers is reported as it is > isValidTransition is pure logic — no DB dependency 0ms
+ ✓ tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that answers is reported as it is > recordTransitionEvent returns a complete event structure 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that cannot answer is an error, never an empty result (L186) > getGovernedDecision rejects rather than answering "not found"
+AssertionError: promise resolved "null" instead of rejecting
+ ❯ tests/governed-decision-db-integration.test.ts:104:47
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)

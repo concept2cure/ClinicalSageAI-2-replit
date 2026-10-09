@@ -1,0 +1,6 @@
+$ # ledger route as committed at 0bc045c7; member case added
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses a member (403) before reading anything: the ledger names every user in the org
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 200 to be 403 // Object.is equality
+      Tests  1 failed | 7 passed (8)
+exit=1

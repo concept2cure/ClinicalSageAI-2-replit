@@ -1,0 +1,19 @@
+# Failing-first: the application number an exported package carries — 2026-09-29, W5/D7, WO-9 Click 6
+# Found by exporting BX-512 (recorded IND 000512) from the compile surface: the ZIP's us-regional.xml read
+#   <application-number application-type="fdaat4">UNASSIGNED-SEQ-6</application-number>
+# while the compiled package (and its recorded manifest) carried 000512.
+# Command: npx vitest run server/services/ectd/__tests__/export-application-identity.pglite.test.ts
+
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none 168ms
+   → expected 'UNASSIGNED-SEQ-11' to be '000512' // Object.is equality
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > with no agency number recorded, is the program's own code — never invented 77ms
+   → expected 'UNASSIGNED-SEQ-12' to be 'BX-900' // Object.is equality
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > for a submission with no program, says plainly that it is unassigned 69ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used 68ms
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that contradicts the recorded one is refused 100ms
+   → promise resolved "{ …(15) }" instead of rejecting
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied value that is not a usable identifier is refused, never written into a filename 85ms
+   → promise resolved "{ …(15) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)

@@ -23,6 +23,31 @@
 
 import { betaRegularized } from './special';
 
+/** The elimination rule's prior on the dose's toxicity: Beta(α, β). Fixed; no caller sets it. */
+const ELIMINATION_PRIOR = { alpha: 1, beta: 1 } as const;
+
+/**
+ * Every default this engine applies, as one constant (Liu & Yuan 2015; Yuan et
+ * al. 2016). Exported so a consumer that prints a default prints the engine's
+ * own value instead of a copy of it.
+ *  - `phi1Ratio` / `phi2Ratio`: the neighbourhood φ1 = 0.6φ and φ2 = 1.4φ,
+ *    applied by `boinBoundaries` (and everything built on it) when φ1/φ2 are absent;
+ *  - `eliminationThreshold`: `boinDecision` eliminates a dose when the posterior
+ *    P(p > φ | data) exceeds it;
+ *  - `minEliminationN`: `boinDecision` eliminates no dose with fewer patients;
+ *  - `priorAlpha` / `priorBeta` / `prior`: the Beta(1,1) prior of that
+ *    posterior. It is fixed: `boinDecision` takes no prior argument.
+ */
+export const BOIN_DEFAULTS = Object.freeze({
+  phi1Ratio: 0.6,
+  phi2Ratio: 1.4,
+  eliminationThreshold: 0.95,
+  minEliminationN: 3,
+  priorAlpha: ELIMINATION_PRIOR.alpha,
+  priorBeta: ELIMINATION_PRIOR.beta,
+  prior: `Beta(${ELIMINATION_PRIOR.alpha},${ELIMINATION_PRIOR.beta})`,
+} as const);
+
 export interface BoinBoundaries {
   lambdaE: number;
   lambdaD: number;
@@ -34,8 +59,8 @@ export interface BoinBoundaries {
 /** BOIN escalation/de-escalation boundaries for target toxicity `target`. */
 export function boinBoundaries(target: number, phi1?: number, phi2?: number): BoinBoundaries {
   if (!(target > 0 && target < 1)) throw new Error('target must be in (0, 1)');
-  const p1 = phi1 ?? 0.6 * target;
-  const p2 = phi2 ?? 1.4 * target;
+  const p1 = phi1 ?? BOIN_DEFAULTS.phi1Ratio * target;
+  const p2 = phi2 ?? BOIN_DEFAULTS.phi2Ratio * target;
   if (!(p1 < target && target < p2 && p2 < 1)) {
     throw new Error('require phi1 < target < phi2 < 1');
   }
@@ -58,13 +83,23 @@ export interface BoinDecisionResult {
   /** Posterior P(toxicity > target | data) used for the elimination rule. */
   posteriorExceedance: number;
   eliminated: boolean;
+  /** φ1 / φ2 the boundaries were computed from: the caller's, or the engine default ({@link BOIN_DEFAULTS}). */
+  phi1: number;
+  phi2: number;
+  /** The elimination threshold applied: the caller's, or {@link BOIN_DEFAULTS}.eliminationThreshold. */
+  eliminationThreshold: number;
+  /** The minimum n for elimination applied: the caller's, or {@link BOIN_DEFAULTS}.minEliminationN. */
+  minEliminationN: number;
+  /** The fixed prior of the elimination posterior ({@link BOIN_DEFAULTS}.prior). */
+  prior: string;
 }
 
 /**
  * BOIN decision at the current dose given `nDlt` DLTs in `nPatients`. Safety
  * elimination (de-escalate + remove this dose and higher) triggers when the
  * posterior P(p > target) exceeds `eliminationThreshold` with at least
- * `minEliminationN` patients (Beta(1,1) prior).
+ * `minEliminationN` patients (Beta(1,1) prior). Every value applied — the
+ * caller's or {@link BOIN_DEFAULTS} — is returned with the decision.
  */
 export function boinDecision(args: {
   nPatients: number;
@@ -78,12 +113,13 @@ export function boinDecision(args: {
   const { nPatients, nDlt, target } = args;
   if (!Number.isInteger(nPatients) || nPatients <= 0) throw new Error('nPatients must be a positive integer');
   if (!Number.isInteger(nDlt) || nDlt < 0 || nDlt > nPatients) throw new Error('nDlt must be in [0, nPatients]');
-  const { lambdaE, lambdaD } = boinBoundaries(target, args.phi1, args.phi2);
-  const elimThreshold = args.eliminationThreshold ?? 0.95;
-  const minElimN = args.minEliminationN ?? 3;
+  const { lambdaE, lambdaD, phi1, phi2 } = boinBoundaries(target, args.phi1, args.phi2);
+  const elimThreshold = args.eliminationThreshold ?? BOIN_DEFAULTS.eliminationThreshold;
+  const minElimN = args.minEliminationN ?? BOIN_DEFAULTS.minEliminationN;
 
-  // Posterior P(p > target | data) under Beta(1,1): Beta(1+x, 1+n-x).
-  const posteriorExceedance = 1 - betaRegularized(target, 1 + nDlt, 1 + nPatients - nDlt);
+  // Posterior P(p > target | data) under Beta(α,β) = Beta(1,1): Beta(α+x, β+n-x).
+  const posteriorExceedance =
+    1 - betaRegularized(target, BOIN_DEFAULTS.priorAlpha + nDlt, BOIN_DEFAULTS.priorBeta + nPatients - nDlt);
   const eliminated = nPatients >= minElimN && posteriorExceedance > elimThreshold;
 
   const observedRate = nDlt / nPatients;
@@ -93,7 +129,10 @@ export function boinDecision(args: {
   else if (observedRate >= lambdaD) decision = 'deescalate';
   else decision = 'stay';
 
-  return { decision, observedRate, lambdaE, lambdaD, posteriorExceedance, eliminated };
+  return {
+    decision, observedRate, lambdaE, lambdaD, posteriorExceedance, eliminated,
+    phi1, phi2, eliminationThreshold: elimThreshold, minEliminationN: minElimN, prior: BOIN_DEFAULTS.prior,
+  };
 }
 
 /**
@@ -164,15 +203,28 @@ export interface MtdSelection {
   mtdIndex: number | null;
   isotonicRates: number[];
   target: number;
+  /**
+   * The lowest dose flagged `eliminated`, or null when none is. BOIN
+   * elimination removes that dose and every higher one, so no dose at or above
+   * this index is eligible; when it is 0 the trial stopped for safety and
+   * `mtdIndex` is null.
+   */
+  lowestEliminatedIndex: number | null;
 }
 
 /**
  * Select the MTD as the dose whose isotonic-regression-smoothed toxicity is
- * closest to the target, among non-eliminated, tried doses. Ties above target
- * resolve to the lower dose, ties below to the higher dose (BOIN convention).
+ * closest to the target, among tried doses below the lowest eliminated dose
+ * (Liu & Yuan 2015: eliminating a dose eliminates every higher dose too, so a
+ * higher dose without its own flag is still out). Ties above target resolve to
+ * the lower dose, ties below to the higher dose (BOIN convention). The
+ * isotonic fit itself is over every dose as given.
  */
 export function selectMtd(doses: DoseLevelData[], target: number): MtdSelection {
-  const tried = doses.map(d => d.nPatients > 0 && !d.eliminated);
+  const firstEliminated = doses.findIndex(d => d.eliminated);
+  const lowestEliminatedIndex = firstEliminated === -1 ? null : firstEliminated;
+  const ceiling = lowestEliminatedIndex ?? doses.length;
+  const tried = doses.map((d, i) => d.nPatients > 0 && i < ceiling);
   const rates = doses.map(d => (d.nPatients > 0 ? d.nDlt / d.nPatients : 0));
   const weights = doses.map(d => Math.max(d.nPatients, 1e-9));
   const iso = isotonicRegression(rates, weights);
@@ -193,5 +245,5 @@ export function selectMtd(doses: DoseLevelData[], target: number): MtdSelection 
       else if (curAbove === newAbove && !newAbove) best = i; // both below ⇒ higher dose
     }
   }
-  return { mtdIndex: best, isotonicRates: iso, target };
+  return { mtdIndex: best, isotonicRates: iso, target, lowestEliminatedIndex };
 }

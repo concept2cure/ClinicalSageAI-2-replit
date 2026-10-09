@@ -1,0 +1,22 @@
+{
+  "surface": "protocol-dev \u203a Reviews \u203a Request a review, reviewer account = Rae Okafor",
+  "signedInAs": "rae.okafor@concept2cure.pro",
+  "before": {
+    "readOnly": true,
+    "value": "Rae Okafor",
+    "bg": "rgb(250, 249, 245)",
+    "color": "rgb(20, 20, 19)",
+    "cursor": "text",
+    "editableBg": "rgb(250, 249, 245)",
+    "editableColor": "rgb(20, 20, 19)"
+  },
+  "after": {
+    "readOnly": true,
+    "value": "Rae Okafor",
+    "bg": "rgb(240, 238, 230)",
+    "color": "rgb(100, 98, 92)",
+    "cursor": "default",
+    "editableBg": "rgb(250, 249, 245)",
+    "editableColor": "rgb(20, 20, 19)"
+  }
+}

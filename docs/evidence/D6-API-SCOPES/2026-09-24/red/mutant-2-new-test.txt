@@ -1,0 +1,6 @@
+ × server/routes/__tests__/public-api-documents.test.ts > the API describes itself truthfully > every listed endpoint REFUSES a key holding every scope but its own
+   → GET /api/v1/trial-design/suggest served a key without trial-design:read: expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/public-api-documents.test.ts > the API describes itself truthfully > every listed endpoint is served — the scope admits it to a real route
+   → GET /api/v1/trial-design/suggest is listed but no route serves it: expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 17 passed (19)

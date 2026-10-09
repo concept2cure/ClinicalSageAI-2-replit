@@ -1,0 +1,42 @@
+$ git rev-parse --short HEAD
+df479b5f
+$ node scripts/ci/check-trivyignore-hygiene.mjs   # against .trivyignore as committed at the audit (unchanged since cc5aa066, 2026-09-23)
+[ci:trivyignore-hygiene] FAIL — 35 violation(s) in /home/user/ClinicalSageAI-2-replit/.trivyignore (10 entries):
+  - line 7: DS002 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+  - line 7: DS002 has no "# owner:" in the comment block above it
+  - line 7: DS002 has no "# reason:" in the comment block above it
+  - line 11: AVD-AWS-0016 (CloudTrail: log-file validation) is a per-resource property and may not be suppressed for the whole tree; fix the resource or except it inline with #trivy:ignore and a reason
+  - line 11: AVD-AWS-0016 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+  - line 11: AVD-AWS-0016 has no "# owner:" in the comment block above it
+  - line 11: AVD-AWS-0016 has no "# reason:" in the comment block above it
+  - line 12: AVD-AWS-0086 (S3: block public ACLs) is a per-resource property and may not be suppressed for the whole tree; fix the resource or except it inline with #trivy:ignore and a reason
+  - line 12: AVD-AWS-0086 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+  - line 12: AVD-AWS-0086 has no "# owner:" in the comment block above it
+  - line 12: AVD-AWS-0086 has no "# reason:" in the comment block above it
+  - line 13: AVD-AWS-0087 (S3: block public bucket policies) is a per-resource property and may not be suppressed for the whole tree; fix the resource or except it inline with #trivy:ignore and a reason
+  - line 13: AVD-AWS-0087 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+  - line 13: AVD-AWS-0087 has no "# owner:" in the comment block above it
+  - line 13: AVD-AWS-0087 has no "# reason:" in the comment block above it
+  - line 14: AVD-AWS-0091 (S3: ignore public ACLs) is a per-resource property and may not be suppressed for the whole tree; fix the resource or except it inline with #trivy:ignore and a reason
+  - line 14: AVD-AWS-0091 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+  - line 14: AVD-AWS-0091 has no "# owner:" in the comment block above it
+  - line 14: AVD-AWS-0091 has no "# reason:" in the comment block above it
+  - line 15: AVD-AWS-0093 (S3: restrict public buckets) is a per-resource property and may not be suppressed for the whole tree; fix the resource or except it inline with #trivy:ignore and a reason
+  - line 15: AVD-AWS-0093 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+  - line 15: AVD-AWS-0093 has no "# owner:" in the comment block above it
+  - line 15: AVD-AWS-0093 has no "# reason:" in the comment block above it
+  - line 24: CVE-2026-45829 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+  - line 24: CVE-2026-45829 has no "# owner:" in the comment block above it
+  - line 24: CVE-2026-45829 has no "# reason:" in the comment block above it
+  - line 37: GHSA-qwww-vcr4-c8h2 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+  - line 37: GHSA-qwww-vcr4-c8h2 has no "# owner:" in the comment block above it
+  - line 37: GHSA-qwww-vcr4-c8h2 has no "# reason:" in the comment block above it
+  - line 55: CVE-2025-71329 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+  - line 55: CVE-2025-71329 has no "# owner:" in the comment block above it
+  - line 55: CVE-2025-71329 has no "# reason:" in the comment block above it
+  - line 56: CVE-2025-71330 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+  - line 56: CVE-2025-71330 has no "# owner:" in the comment block above it
+  - line 56: CVE-2025-71330 has no "# reason:" in the comment block above it
+
+  Every entry: "<ID> exp:YYYY-MM-DD" (future, <= 180 days), preceded by "# owner:" and "# reason:" lines. Per-resource checks are never suppressed tree-wide: fix the resource or except it inline.
+exit=1

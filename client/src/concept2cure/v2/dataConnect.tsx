@@ -320,6 +320,18 @@ export interface DataState<T> {
   data: T | null;
   loading: boolean;
   error?: string;
+  /**
+   * The HTTP status the read returned, when one was received.
+   *
+   * `liveGetOrNull` has always computed this and `useLiveData` dropped it, so
+   * every non-OK response arrived as an undifferentiated `error` — and a
+   * surface could not tell "this resource does not exist" from "the read
+   * failed". Those are different facts with different operator actions: a 404
+   * on a region profile means nobody has codified that region and the filer
+   * should work from agency guidance; a 500 means retry. Undefined on a
+   * transport failure, where no status was received.
+   */
+  status?: number;
   /** The route's envelope `meta` — `pendingStore` above all. A surface that
    *  renders an empty state MUST consult it: `empty` cannot tell "the store
    *  holds nothing" from "there is no store". */
@@ -361,7 +373,14 @@ export function useLiveData<T>(
       const isEmpty =
         !r.error &&
         (r.data == null || (Array.isArray(r.data) && r.data.length === 0));
-      setState({ data: r.data, loading: false, error: r.error, meta: r.meta, empty: isEmpty });
+      setState({
+        data: r.data,
+        loading: false,
+        error: r.error,
+        meta: r.meta,
+        status: r.status,
+        empty: isEmpty,
+      });
     });
     return () => {
       cancelled = true;

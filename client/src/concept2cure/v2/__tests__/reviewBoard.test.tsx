@@ -17,7 +17,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -42,48 +42,65 @@ function fail(status = 500) {
 }
 
 /* Real-shaped board — this is TEST data, defined only in this file and never
-   importable by the surface. It mirrors GET /api/review/board's render contract. */
+   importable by the surface. It mirrors GET /api/review/board's render contract,
+   which is built from the AUTHORING review store (authoring_reviews /
+   authoring_workflow_steps / authoring_comments — VSR-001 F-6). */
+const DOC = '3f2c1a10-0000-4000-8000-000000000055';
+const SECTION = '3f2c1a10-0000-4000-8000-000000000101';
 const BOARD = {
   queue: [
     {
-      id: '101',
+      id: DOC,
       doc: 'Clinical Overview §2.5',
       prog: 'NDA 200100',
-      pid: '55',
-      secKey: '2.5',
-      reviewer: 'Dana Chen',
-      role: 'Clinical',
-      due: 'Today',
-      tone: 'err',
+      programId: 'p-1',
+      pid: DOC,
+      module: 'M2',
+      docStatus: 'IN_REVIEW',
       state: 'in-review',
+      reviews: [
+        { id: 'r-1', reviewerId: '2', reviewer: 'Dana Chen', reviewerEmail: 'dana@x.example', status: 'pending', comments: null, requestedBy: 'author@x.example', requestedAt: '2026-09-20T10:00:00Z', reviewedAt: null },
+      ],
+      myReviewId: 'r-1',
+      myReviewStatus: 'pending',
+      awaitingMyReview: true,
+      requestedByMe: false,
+      atMySignOff: false,
+      mine: true,
+      reviewer: 'Dana Chen',
+      role: 'Reviewer',
+      due: '',
+      tone: '',
       comments: 1,
       esig: 'pending',
       conf: null,
-      prov: 'v3 · last changed by Dana Chen',
+      prov: 'v3 · requested by author@x.example',
       passage: 'The pivotal study met its primary endpoint.',
+      firstSectionId: SECTION,
+      requestedAt: '2026-09-20T10:00:00Z',
     },
   ],
   workflows: {
-    '101': {
-      templateId: 'wft_ctd_section',
-      template: 'CTD section sign-off',
+    [DOC]: {
+      templateId: 'wf-1',
+      template: 'Authoring approval workflow',
       steps: [
-        { id: 1, order: 1, name: 'Author self-review', approverType: 'user', approver: 'Dana Chen', requiredActions: ['review'], status: 'approved', at: 'yesterday' },
-        { id: 2, order: 2, name: 'Regulatory sign-off', approverType: 'role', approver: 'Reg lead', requiredActions: ['review', 'approve', 'sign'], status: 'current', at: null },
+        { id: 's-1', order: 1, name: 'QA', approverType: 'user', approver: 'qa@x.example', requiredActions: ['sign'], status: 'current', at: null },
+        { id: 's-2', order: 2, name: 'RA_CMC', approverType: 'user', approver: 'ra@x.example', requiredActions: ['sign'], status: 'pending', at: null },
       ],
     },
   },
   thread: [
-    { id: '9', author: 'Dana Chen', role: 'Clinical', when: '2h ago', state: 'open', body: 'Please tighten the efficacy claim.', ai: false },
+    { id: '9', author: 'Dana Chen', role: '§2.5', when: '2h ago', state: 'open', body: 'Please tighten the efficacy claim.', ai: false, sectionId: SECTION, parentId: null },
   ],
-  meta: { scope: 'all', total: 1, threadItemId: '101', threadDocumentId: 55, generatedAt: '2026-07-30T00:00:00Z' },
+  meta: { scope: 'all', programId: null, total: 1, threadItemId: DOC, threadDocumentId: DOC, generatedAt: '2026-07-30T00:00:00Z' },
 };
 
 const EMPTY_BOARD = {
   queue: [],
   workflows: {},
   thread: [],
-  meta: { scope: 'all', total: 0, threadItemId: null, threadDocumentId: null, generatedAt: '2026-07-30T00:00:00Z' },
+  meta: { scope: 'all', programId: null, total: 0, threadItemId: null, threadDocumentId: null, generatedAt: '2026-07-30T00:00:00Z' },
 };
 
 /** A string from the RETIRED inline fixture (deleted REVIEW_QUEUE). If it ever
@@ -108,7 +125,21 @@ describe('Review board — real data', () => {
     render(<Review {...props()} />);
     await waitFor(() => expect(apiRequest).toHaveBeenCalled());
     expect(String(apiRequest.mock.calls[0][0])).toBe('GET');
-    expect(String(apiRequest.mock.calls[0][1])).toBe('/api/review/board');
+    // The board is read for the organisation's open review work by default;
+    // the scope is explicit in the URL so the server never guesses it.
+    expect(String(apiRequest.mock.calls[0][1])).toBe('/api/review/board?scope=all');
+  });
+
+  it('switches scope — awaiting my review / requested by me / all open — by re-reading the board', async () => {
+    apiRequest.mockImplementation(async () => ok(BOARD));
+    render(<Review {...props()} />);
+    await screen.findAllByText('Clinical Overview §2.5');
+    fireEvent.click(screen.getByRole('button', { name: /Awaiting my review/ }));
+    await waitFor(() =>
+      expect(apiRequest.mock.calls.some((c) => String(c[1]) === '/api/review/board?scope=mine')).toBe(true));
+    fireEvent.click(screen.getByRole('button', { name: /Requested by me/ }));
+    await waitFor(() =>
+      expect(apiRequest.mock.calls.some((c) => String(c[1]) === '/api/review/board?scope=requested')).toBe(true));
   });
 
   it('renders the real queue, workflow and thread — never a "Sample data" pill', async () => {
@@ -119,9 +150,11 @@ describe('Review board — real data', () => {
     // detail header, doc section), so assert ≥1 rather than exactly one.
     expect((await screen.findAllByText('Clinical Overview §2.5')).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Dana Chen/).length).toBeGreaterThanOrEqual(1);
-    // real workflow template + step
-    expect(screen.getByText('CTD section sign-off')).toBeTruthy();
-    expect(screen.getByText('Regulatory sign-off')).toBeTruthy();
+    // real approval chain from authoring_workflow_steps
+    expect(screen.getByText('Authoring approval workflow')).toBeTruthy();
+    expect(screen.getByText('RA_CMC')).toBeTruthy();
+    // the review request itself, with who asked
+    expect(screen.getAllByText(/author@x\.example/).length).toBeGreaterThanOrEqual(1);
     // real thread comment
     expect(screen.getByText('Please tighten the efficacy claim.')).toBeTruthy();
 

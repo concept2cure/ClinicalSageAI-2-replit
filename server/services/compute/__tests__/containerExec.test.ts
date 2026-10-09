@@ -3,8 +3,12 @@
  * no mocks). These assertions are the security contract for the container
  * isolation profile.
  */
-import { describe, it, expect } from 'vitest';
-import { buildDockerRunArgs, type ContainerExecConfig } from '../containerExec';
+import { describe, it, expect, afterAll } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { buildDockerRunArgs, collectOutputFiles, type ContainerExecConfig } from '../containerExec';
 
 const baseConfig: ContainerExecConfig = {
   enabled: true,
@@ -70,5 +74,54 @@ describe('buildDockerRunArgs — isolation contract', () => {
 
   it('auto-removes the container', () => {
     expect(argsFor({})).toContain('--rm');
+  });
+});
+
+/*
+ * INJ-PATH-002. The work directory is a bind mount the container writes into,
+ * and output collection ran on the HOST with `stat`, which follows links: a
+ * script's `ln -s /etc/passwd out` came back as the script's output file.
+ */
+describe('collectOutputFiles — the host reads only what the container wrote', () => {
+  const made: string[] = [];
+  const workdir = () => {
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'ana-collect-'));
+    made.push(d);
+    return d;
+  };
+  afterAll(() => made.forEach(d => fs.rmSync(d, { recursive: true, force: true })));
+
+  it('returns a regular file the script produced', async () => {
+    const d = workdir();
+    fs.writeFileSync(path.join(d, 'result.csv'), 'a,b\n1,2\n');
+    const out = await collectOutputFiles(d, new Set());
+    expect(Buffer.from(out['result.csv'], 'base64').toString()).toBe('a,b\n1,2\n');
+  });
+
+  it('does not follow a symlink to a host file or to another directory', async () => {
+    const d = workdir();
+    const secret = path.join(workdir(), 'other-tenant.docx');
+    fs.writeFileSync(secret, 'not yours');
+    fs.symlinkSync(secret, path.join(d, 'stolen.docx'));
+    fs.symlinkSync('/etc/hostname', path.join(d, 'host.txt'));
+    const out = await collectOutputFiles(d, new Set());
+    expect(Object.keys(out)).toEqual([]);
+  });
+
+  it('skips a FIFO instead of blocking on it', async () => {
+    const d = workdir();
+    const mk = spawnSync('mkfifo', [path.join(d, 'pipe')]);
+    if (mk.status !== 0) return; // no mkfifo on this runner
+    const out = await collectOutputFiles(d, new Set());
+    expect(Object.keys(out)).toEqual([]);
+  }, 5_000);
+
+  it('leaves out the entry script and the inputs', async () => {
+    const d = workdir();
+    fs.writeFileSync(path.join(d, '__entry.sh'), 'echo');
+    fs.writeFileSync(path.join(d, 'in.csv'), 'x');
+    fs.writeFileSync(path.join(d, 'out.csv'), 'y');
+    const out = await collectOutputFiles(d, new Set(['__entry.sh', 'in.csv']));
+    expect(Object.keys(out)).toEqual(['out.csv']);
   });
 });

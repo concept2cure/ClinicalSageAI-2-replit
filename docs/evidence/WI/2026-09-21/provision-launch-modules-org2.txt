@@ -1,0 +1,8 @@
+# npx tsx scripts/ops/provision-launch-modules.ts --org 2 (after registering protocol-dev)
+{"level":30,"time":"2026-09-21T17:38:32.929Z","pid":3700,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-21T17:38:32.930Z","pid":3700,"hostname":"vm","context":{"mode":"off"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-21T17:38:32.939Z","pid":3700,"hostname":"vm","context":{"op":"pool.connect","caller":"node:internal/modules/esm/module_job:343:25","enforcement":"off"},"msg":"[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)"}
+{"level":40,"time":"2026-09-21T17:38:32.961Z","pid":3700,"hostname":"vm","context":{"op":"pool.query","caller":"server/services/entitlements/module-grants.ts:104:24","queryPreview":"INSERT INTO module_subscriptions (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by, expires_at, expiry_set_by, expiry_se...","enforcement":"off"},"msg":"[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)"}
+{"level":30,"time":"2026-09-21T17:38:32.974Z","pid":3700,"hostname":"vm","context":{"timestamp":{},"poolSize":2},"msg":"[database] Database connection successful"}
+organisation 2: 22/22 launch modules granted
+{"level":30,"time":"2026-09-21T17:38:33.018Z","pid":3700,"hostname":"vm","context":{"organizationId":2,"granted":22,"failed":0},"msg":"[launch-scope] [launch-scope] launch catalog provisioned"}

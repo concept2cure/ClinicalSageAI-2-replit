@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/docs/91828ad5-39a6-41c8-914a-a5e6d6f5152a/signatures",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 14,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "signatures": []
+    }
+  }
+}

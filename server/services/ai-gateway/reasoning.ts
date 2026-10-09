@@ -193,11 +193,14 @@ export interface ResolveModelTierInput {
  * simple questions. Pure; no I/O, no env reads.
  */
 export function resolveModelTier(input: ResolveModelTierInput): ModelTier {
+  /* High risk goes to the flagship tier whatever the effort, Fast included.
+     Only a model approved for high-risk work may serve it (approved-models.ts
+     approvedForHighRisk, enforced in gateway.ts), and neither economy nor
+     standard is. Keeping Fast on economy here would not make the turn cheaper;
+     it would make the gateway refuse it. Fast still governs everything else. */
+  if (input.riskTier === 'high') return 'flagship';
   if (input.effort === 'fast') return 'economy';
   if (input.effort === 'thorough') return 'flagship';
-
-  // Balanced (the default): escalate only when the turn warrants it.
-  if (input.riskTier === 'high') return 'flagship';
 
   const deepLens = !!input.intentLens && DEEP_INTENT_LENSES.has(input.intentLens);
   const heavyTask = !!input.taskType && HEAVY_TASK_TYPES.has(input.taskType);
@@ -239,8 +242,13 @@ export function resolveTierModelIds(
 /**
  * Resolve a tier to a concrete enabled model from the tenant's registry, or
  * null when the tier's configured model isn't enabled (caller falls back to
- * strategy-based selection). Matches on registry id or wire model string, same
- * as the user model-override path. Pure.
+ * strategy-based selection). Matches on registry id or wire model string. Pure.
+ *
+ * Enabled is the only check. Unlike the user model-override path
+ * (effort.ts resolveModelOverride), a tier model — including one an
+ * ANA_TIER_*_MODEL env remap names — is not checked against approved-models.
+ * On high-risk work the gateway refuses one not approved for high risk; on
+ * other work it serves it whether or not it has an entry.
  */
 export function resolveTierModel(
   tier: ModelTier,

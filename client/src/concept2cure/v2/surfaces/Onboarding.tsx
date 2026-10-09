@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -11,7 +11,8 @@ import {
   licBundle as licBundleOf,
 } from '../fixtures/onboarding-data';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
-import { serverMessage } from '@/lib/queryClient';
+import { probeAuditRowOutcome, serverMessage } from '@/lib/queryClient';
+import { useLiveData } from '../dataConnect';
 import '../styles/project-home-v2.css';
 
 /* ── Helpers ── */
@@ -52,6 +53,26 @@ export function archetypeToPrimaryIndustry(archetype: string): PrimaryIndustry {
     case 'pharma':
     default:
       return 'biotech_pharma';
+  }
+}
+
+/** The wizard archetype that stands for a recorded primary industry. The
+ *  mapping above is many-to-one, so this names one archetype per industry —
+ *  the one whose write-back is that same industry, never a different one. */
+export function primaryIndustryToArchetype(primary: string | null | undefined): string | null {
+  switch (primary) {
+    case 'medical_device_diagnostics':
+      return 'medtech';
+    case 'cro':
+      return 'cro';
+    case 'regulatory_consulting':
+      return 'regulatory';
+    case 'academic_research':
+      return 'academic';
+    case 'biotech_pharma':
+      return 'biotech';
+    default:
+      return null;
   }
 }
 
@@ -248,6 +269,30 @@ export interface ActivationOutcome {
 export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
   const [step, setStep] = useState(0);
   const [org, setOrg] = useState({ name: '', archetype: 'virtual_biotech' });
+  /* This wizard sets up the organisation the person is signed into — its
+     writes go to that organisation's own record (PATCH /api/organizations/:id
+     /profile, PATCH /api/mdx/industry-profile). It opened with a blank name
+     and "Virtual biotech" pre-selected, under "new organization", so a
+     person who believed they were creating a second organisation overwrote
+     the first: an untouched archetype wrote biotech_pharma over whatever the
+     org actually was (launch sweep finding 85, 2026-09-23). The form now
+     starts from the organisation's recorded name and industry, once, and
+     never over something the person has already typed or picked. */
+  const orgIdForProfile = getOrgId();
+  const orgRead = useLiveData<{ organization?: { name?: string | null } }>(
+    orgIdForProfile ? `/api/organizations/${encodeURIComponent(String(orgIdForProfile))}` : null,
+    [orgIdForProfile],
+  );
+  const profileRead = useLiveData<{ primaryIndustry?: string | null } | null>('/api/mdx/industry-profile');
+  const currentOrgName = orgRead.data?.organization?.name?.trim() || null;
+  const edited = useRef({ name: false, archetype: false });
+  useEffect(() => {
+    if (currentOrgName && !edited.current.name) setOrg((o) => ({ ...o, name: currentOrgName }));
+  }, [currentOrgName]);
+  useEffect(() => {
+    const recorded = primaryIndustryToArchetype(profileRead.data?.primaryIndustry);
+    if (recorded && !edited.current.archetype) setOrg((o) => ({ ...o, archetype: recorded }));
+  }, [profileRead.data]);
   const [model, setModel] = useState('dtc');
   const [tier, setTier] = useState('standard');
   const [cycle, setCycle] = useState('annual');
@@ -394,6 +439,9 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
             reason: 'Organization name set during workspace activation.',
           }),
         });
+        // A raw fetch, so the transport's audit-row check runs here explicitly:
+        // a saved name whose audit entry was lost is reported, not hidden.
+        probeAuditRowOutcome('PATCH', '/api/organizations/:id/profile', res);
         nameSaved = res.ok;
       } catch {
         nameSaved = false;
@@ -409,8 +457,10 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
         credentials: 'include',
         body: JSON.stringify({
           primaryIndustry: archetypeToPrimaryIndustry(org.archetype),
+          reason: 'Organization industry set during workspace activation.',
         }),
       });
+      probeAuditRowOutcome('PATCH', '/api/mdx/industry-profile', res);
       profileSaved = res.ok;
     } catch {
       profileSaved = false;
@@ -646,12 +696,12 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
     <div className="sp" style={{ maxWidth: 960 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Onboarding {I.dot} new organization</div>
+          <div className="sp-eyebrow">Onboarding {I.dot} {currentOrgName ?? 'your organization'}</div>
           <h1 className="sp-title">Set up your workspace</h1>
           <p className="sp-state">
-            Six steps: organization profile, pricing model, plan, personnel,
-            module provisioning, then activate. Everything a client does begins
-            with a workspace.
+            Six steps for the organization you are signed into: its profile,
+            pricing model, plan, personnel, module provisioning, then activate.
+            Changes here are saved to this organization's own record.
           </p>
         </div>
       </div>
@@ -781,7 +831,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     aria-label="Organization name" placeholder="e.g. Bright Biosciences"
                     value={org.name}
                     onChange={(e) =>
-                      setOrg({ ...org, name: e.target.value })
+                      { edited.current.name = true; setOrg({ ...org, name: e.target.value }); }
                     }
                   />
                   <div className="pj-seclbl">
@@ -806,7 +856,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                           (org.archetype === a.id ? ' on' : '')
                         }
                         onClick={() =>
-                          setOrg({ ...org, archetype: a.id })
+                          { edited.current.archetype = true; setOrg({ ...org, archetype: a.id }); }
                         }
                       >
                         <span className="ob-arch-l">{a.label}</span>
@@ -845,7 +895,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     }}
                   >
                     <div className="ob-model-t">
-                      {I.building || I.users} Enterprise (per-user)
+                      {I.building} Enterprise (per-user)
                     </div>
                     <div className="ob-model-d">
                       Per-user pricing tuned to your archetype, seat bundle
@@ -1173,7 +1223,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     disabled={step === 0}
                     onClick={() => setStep((s) => Math.max(0, s - 1))}
                   >
-                    {I.arrowLeft || '‹'} Back
+                    {I.left} Back
                   </button>
                   <span className="ob-nav-c">
                     Step {step + 1} of {STEPS.length}

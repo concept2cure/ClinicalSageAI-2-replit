@@ -58,25 +58,45 @@ export async function getDocument(orgId: number, id: number) {
 
 export class InvalidTransitionError extends Error {}
 
-export async function transitionDocument(orgId: number, id: number, to: string, approverId?: number | null) {
+export async function transitionDocument(orgId: number, id: number, to: string) {
   const doc = await getDocument(orgId, id);
   if (!doc) return null;
+  /* Becoming effective is an electronic signature (21 CFR 11.50). This used to
+     stamp the caller as approver with no re-authentication, no signing-authority
+     check, no author ≠ approver check and no signature row. The only path that
+     makes a controlled document effective is the signed approval,
+     POST /api/mdx/qms/documents/:id/approve (VSR-001 F-3). Refused here, in the
+     service, so no caller of this function can reach 'effective' unsigned.
+     New-code audit 2026-09-24, finding 1. */
+  if (to === 'effective') {
+    throw new InvalidTransitionError(
+      'Making a controlled document effective is an electronic signature. Approve it with POST /api/mdx/qms/documents/:id/approve, which re-verifies the signer; nothing was changed.',
+    );
+  }
+  /* Retiring is the other signed transition (security review 2026-09-24,
+     DP-32 / P1-29): the terminal state of an effective procedure, reached only
+     through POST /api/mdx/qms/documents/:id/retire, which runs the same
+     ceremony and writes the signature with the UPDATE. This door took it with
+     no reason, no role gate and no ceremony. Refused here, in the service, so no
+     caller of this function can reach 'retired' unsigned. P1-31 (DP-34) deletes
+     the router that is this function's only caller; until then this is the
+     refusal. */
+  if (to === 'retired') {
+    throw new InvalidTransitionError(
+      'Retiring a controlled document is an electronic signature. Retire it with POST /api/mdx/qms/documents/:id/retire, which re-verifies the signer; nothing was changed.',
+    );
+  }
   const allowed = DOC_TRANSITIONS[doc.status] ?? [];
   if (!allowed.includes(to)) {
     throw new InvalidTransitionError(`Cannot move document from ${doc.status} to ${to}`);
   }
-  // Becoming effective stamps the approval + effective date.
-  const setApproval = to === 'effective';
   const { rows } = await pool.query(
     `UPDATE qms_documents
         SET status = $1,
-            approver_id = COALESCE($2, approver_id),
-            approved_at = CASE WHEN $3 THEN now() ELSE approved_at END,
-            effective_date = CASE WHEN $3 THEN CURRENT_DATE ELSE effective_date END,
             updated_at = now()
-      WHERE id = $4 AND organization_id = $5
+      WHERE id = $2 AND organization_id = $3
       RETURNING *`,
-    [to, approverId ?? null, setApproval, id, orgId]
+    [to, id, orgId]
   );
   return rows[0];
 }

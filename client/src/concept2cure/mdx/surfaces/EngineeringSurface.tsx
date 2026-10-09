@@ -21,7 +21,7 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import { DocumentsPanel } from '../components/DocumentsPanel';
+import { DocumentsPanel, averageAssessedCompletion } from '../components/DocumentsPanel';
 import { DataGate } from '../components/DataGate';
 import { EmptyState } from '../../v2/dataConnect';
 import {
@@ -169,9 +169,7 @@ export function EngineeringSurface({
   const draftCount = documents.filter((d) => d.status === 'draft').length;
   const blockedDocs = documents.filter((d) => d.blocker);
   const pendingSig = documents.filter((d) => d.esigState === 'pending').length;
-  const avgCompletion = documents.length
-    ? Math.round(documents.reduce((s, d) => s + d.completion, 0) / documents.length)
-    : 0;
+  const avgCompletion = averageAssessedCompletion(documents);
 
   return (
     <>
@@ -237,7 +235,7 @@ export function EngineeringSurface({
                 <span className="unit">%</span>
               </div>
               <div className="metric-meta">
-                Required sections validated · avg doc {avgCompletion}%
+                Required sections validated · avg doc {avgCompletion === null ? '—' : `${avgCompletion}%`}
               </div>
             </div>
           </div>

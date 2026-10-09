@@ -1,0 +1,9 @@
+$ git rev-parse --short HEAD  # plus the well-known.ts change
+f47aa229
+ ✓ server/__tests__/security/well-known-security-txt.test.ts > RFC 9116 security.txt > serves a valid security.txt (Contact, Expires, Canonical) 21ms
+ ✓ server/__tests__/security/well-known-security-txt.test.ts > RFC 9116 security.txt > Canonical is built on APP_URL, the origin Terraform sets, not on the Host header (P1-14 / INF-32) 5ms
+ ✓ server/__tests__/security/well-known-security-txt.test.ts > RFC 9116 security.txt > the Policy URL it advertises is served by this same router (P1-14 / INF-32) 7ms
+ ✓ server/__tests__/security/well-known-security-txt.test.ts > RFC 9116 security.txt > Expires is a future date (never stale) 4ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+exit=0

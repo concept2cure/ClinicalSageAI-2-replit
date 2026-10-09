@@ -15,6 +15,7 @@ validation (PQ) are deferred to staged, human-reviewed work.
 ## The seams you are wiring (not building)
 
 - **Generation:** `createLocalClient()` reads `LOCAL_AI_BASE_URL` / `LITELLM_BASE_URL` and returns an OpenAI-compatible client — `server/services/ai-gateway/providers/clients.ts`.
+- **Tool calling:** off unless `LOCAL_AI_SUPPORTS_TOOLS=1`. Many self-hosted servers answer a request carrying `tools` with a 400, or print the call as text, so the gateway offers the local provider none by default and tells the model it has none that turn. Set it only for a server started with tool calling on (vLLM `--enable-auto-tool-choice --tool-call-parser <parser>`, llama.cpp `--jinja`); the value must be exactly `1`. Without it AnA cannot navigate or act on a screen on this lane — `applyOpenAIToolParams` in `server/services/ai-gateway/gateway.ts`.
 - **Placement / residency:** the `local` provider is `self_hosted` / `on_prem` / `zeroDataRetention: true`; an on-prem or ZDR request routes **only** here — `server/services/ai-gateway/providers/placement.ts`.
 - **Embeddings:** `EMBEDDING_PROVIDER=local` + `EMBEDDING_LOCAL_BASE_URL` — `server/services/ai-gateway/embeddings/embedding-provider.ts`.
 

@@ -1,0 +1,184 @@
+# terraform test — this change's tests against the modules BEFORE it (git 53c1f3c01)
+# Terraform 1.9.8, hashicorp/aws 5.70.0 mocked (mock_provider), no AWS credentials
+
+## modules/alb
+tests/cloudfront_only.tftest.hcl... in progress
+  run "nothing_but_https_from_cloudfront_reaches_it"... fail
+
+Error: Test assertion failed
+
+  on tests/cloudfront_only.tftest.hcl line 35, in run "nothing_but_https_from_cloudfront_reaches_it":
+  35:     condition = alltrue([
+  36:       for r in aws_security_group.alb.ingress :
+  37:       # The mocked provider leaves unset lists null where AWS returns them empty.
+  38:       try(length(r.cidr_blocks), 0) == 0 && try(length(r.ipv6_cidr_blocks), 0) == 0
+  39:     ])
+    ├────────────────
+    │ aws_security_group.alb.ingress is set of object with 2 elements
+
+An ingress rule admits an address range; the ALB must admit CloudFront's
+origin-facing prefix list alone.
+
+Error: Test assertion failed
+
+  on tests/cloudfront_only.tftest.hcl line 44, in run "nothing_but_https_from_cloudfront_reaches_it":
+  44:     condition = length(aws_security_group.alb.ingress) == 1 && alltrue([
+  45:       for r in aws_security_group.alb.ingress : r.from_port == 443 && r.to_port == 443
+  46:     ])
+    ├────────────────
+    │ aws_security_group.alb.ingress is set of object with 2 elements
+
+The ALB must admit one port, 443.
+
+Error: Test assertion failed
+
+  on tests/cloudfront_only.tftest.hcl line 51, in run "nothing_but_https_from_cloudfront_reaches_it":
+  51:     condition     = contains(aws_lb.this.security_groups, aws_security_group.alb.id)
+    ├────────────────
+    │ aws_lb.this.security_groups is empty set of string
+    │ aws_security_group.alb.id is "j1k0eavb"
+
+The module's own security group must be on the ALB even when the caller
+passes none.
+
+Error: Test assertion failed
+
+  on tests/cloudfront_only.tftest.hcl line 56, in run "nothing_but_https_from_cloudfront_reaches_it":
+  56:     condition     = aws_lb_listener.https.default_action[0].type == "fixed-response" && try(aws_lb_listener.https.default_action[0].fixed_response[0].status_code, "") == "403"
+    ├────────────────
+    │ aws_lb_listener.https.default_action[0].fixed_response is empty list of object
+    │ aws_lb_listener.https.default_action[0].type is "forward"
+
+A request without the origin secret must be refused 403, not forwarded.
+  run "the_prefix_list_is_cloudfronts_and_the_secret_opens_the_listener"... fail
+
+Error: Reference to undeclared resource
+
+  on tests/cloudfront_only.tftest.hcl line 65, in run "the_prefix_list_is_cloudfronts_and_the_secret_opens_the_listener":
+  65:     condition     = data.aws_ec2_managed_prefix_list.cloudfront_origin_facing.name == "com.amazonaws.global.cloudfront.origin-facing"
+
+A data resource "aws_ec2_managed_prefix_list" "cloudfront_origin_facing" has
+not been declared in the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/cloudfront_only.tftest.hcl line 72, in run "the_prefix_list_is_cloudfronts_and_the_secret_opens_the_listener":
+  72:       length(r.prefix_list_ids) == 1 && contains(r.prefix_list_ids, data.aws_ec2_managed_prefix_list.cloudfront_origin_facing.id)
+
+A data resource "aws_ec2_managed_prefix_list" "cloudfront_origin_facing" has
+not been declared in the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/cloudfront_only.tftest.hcl line 79, in run "the_prefix_list_is_cloudfronts_and_the_secret_opens_the_listener":
+  79:       for c in aws_lb_listener_rule.from_cloudfront.condition : anytrue([
+
+A managed resource "aws_lb_listener_rule" "from_cloudfront" has not been
+declared in the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/cloudfront_only.tftest.hcl line 88, in run "the_prefix_list_is_cloudfronts_and_the_secret_opens_the_listener":
+  88:     condition     = aws_lb_listener_rule.from_cloudfront.action[0].type == "forward" && aws_lb_listener_rule.from_cloudfront.action[0].target_group_arn == aws_lb_target_group.api.arn
+
+A managed resource "aws_lb_listener_rule" "from_cloudfront" has not been
+declared in the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/cloudfront_only.tftest.hcl line 88, in run "the_prefix_list_is_cloudfronts_and_the_secret_opens_the_listener":
+  88:     condition     = aws_lb_listener_rule.from_cloudfront.action[0].type == "forward" && aws_lb_listener_rule.from_cloudfront.action[0].target_group_arn == aws_lb_target_group.api.arn
+
+A managed resource "aws_lb_listener_rule" "from_cloudfront" has not been
+declared in the root module.
+  run "a_short_secret_is_refused"... skip
+  run "a_wildcard_secret_is_refused"... skip
+tests/cloudfront_only.tftest.hcl... tearing down
+tests/cloudfront_only.tftest.hcl... fail
+
+Failure! 0 passed, 2 failed, 2 skipped.
+exit=1
+
+## modules/cloudfront
+tests/alb_origin.tftest.hcl... in progress
+  run "api_errors_reach_the_browser_as_errors"... fail
+
+Error: Test assertion failed
+
+  on tests/alb_origin.tftest.hcl line 35, in run "api_errors_reach_the_browser_as_errors":
+  35:     condition     = length(aws_cloudfront_distribution.this.custom_error_response) == 0
+    ├────────────────
+    │ aws_cloudfront_distribution.this.custom_error_response is set of object with 2 elements
+
+No distribution-wide error mapping: it would turn an API 403 or 404 into 200
+with the app's HTML.
+  run "every_server_path_routes_to_the_alb"... fail
+
+Error: Test assertion failed
+
+  on tests/alb_origin.tftest.hcl line 44, in run "every_server_path_routes_to_the_alb":
+  44:     condition = alltrue([
+  45:       for p in [
+  46:         "/api/*", "/readyz", "/healthz", "/collab", "/collab/*", "/scim/*",
+  47:         "/mcp", "/mcp/*", "/.well-known/*", "/authorize", "/token", "/register",
+  48:         "/revoke", "/oauth/*",
+  49:       ] :
+  50:       anytrue([
+  51:         for b in aws_cloudfront_distribution.this.ordered_cache_behavior :
+  52:         b.path_pattern == p && b.target_origin_id == "alb-api"
+  53:       ])
+  54:     ])
+    ├────────────────
+    │ aws_cloudfront_distribution.this.ordered_cache_behavior is list of object with 1 element
+
+A path the API server answers has no behaviour; with the ALB closed to
+everything else, it is unreachable.
+  run "the_alb_sees_the_viewers_headers"... fail
+
+Error: Test assertion failed
+
+  on tests/alb_origin.tftest.hcl line 65, in run "the_alb_sees_the_viewers_headers":
+  65:     condition = alltrue([
+  66:       for b in aws_cloudfront_distribution.this.ordered_cache_behavior :
+  67:       b.forwarded_values[0].headers == toset(["*"]) && b.forwarded_values[0].query_string && b.forwarded_values[0].cookies[0].forward == "all"
+  68:       if b.target_origin_id == "alb-api"
+  69:     ])
+    ├────────────────
+    │ aws_cloudfront_distribution.this.ordered_cache_behavior is list of object with 1 element
+
+Every ALB behaviour must forward all viewer headers (Host, User-Agent), the
+query string and cookies.
+  run "the_alb_origin_carries_the_secret"... fail
+
+Error: Test assertion failed
+
+  on tests/alb_origin.tftest.hcl line 78, in run "the_alb_origin_carries_the_secret":
+  78:     condition = anytrue([
+  79:       for o in aws_cloudfront_distribution.this.origin :
+  80:       o.origin_id == "alb-api" && anytrue([
+  81:         for h in o.custom_header : h.name == var.api_origin_secret_header_name && h.value == var.api_origin_secret
+  82:       ])
+  83:     ])
+    ├────────────────
+    │ aws_cloudfront_distribution.this.origin is set of object with 2 elements
+    │ var.api_origin_secret is "c2cTestOriginSecret_0123456789abcdef"
+    │ var.api_origin_secret_header_name is "X-Origin-Verify"
+
+The ALB origin must send the origin secret header the ALB requires.
+  run "client_routes_are_rewritten_on_the_bucket_behaviour_only"... fail
+
+Error: Reference to undeclared resource
+
+  on tests/alb_origin.tftest.hcl line 94, in run "client_routes_are_rewritten_on_the_bucket_behaviour_only":
+  94:       f.event_type == "viewer-request" && f.function_arn == aws_cloudfront_function.spa_routes.arn
+
+A managed resource "aws_cloudfront_function" "spa_routes" has not been
+declared in the root module.
+  run "api_routing_needs_a_custom_domain"... skip
+  run "api_routing_needs_the_secret"... skip
+  run "without_an_api_origin_nothing_routes_to_it"... skip
+tests/alb_origin.tftest.hcl... tearing down
+tests/alb_origin.tftest.hcl... fail
+
+Failure! 0 passed, 5 failed, 3 skipped.
+exit=1

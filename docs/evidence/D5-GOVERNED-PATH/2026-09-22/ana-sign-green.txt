@@ -1,0 +1,19 @@
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_dms_plan writes nothing and hands the act to the person 4ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > certify_other_support writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_biosketch writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_export_control_determination writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_research_agreement writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_committee_determination writes nothing and hands the act to the person 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_grant_closeout writes nothing and hands the act to the person 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_subaward writes nothing and hands the act to the person 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_no_cost_extension writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_dms_plan is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > certify_other_support is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_biosketch is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_export_control_determination is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_research_agreement is described as a hand-off, not an act 4ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_committee_determination is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_grant_closeout is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_subaward is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_no_cost_extension is described as a hand-off, not an act 0ms
+      Tests  18 passed (18)

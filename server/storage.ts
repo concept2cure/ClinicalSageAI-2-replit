@@ -39,7 +39,11 @@ export interface User {
 export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  // getUserByUsername was deleted on 2026-09-22 for the same reason as createUser
+  // below: it read `users.username`, which exists only in the refused
+  // db/migrations/_consolidated/ legacy shape, so it raised 42703 on every call —
+  // and its catch returned `undefined`, rendering that error as "no such user".
+  // It had no callers. Found by ci:column-reachability.
   // createUser is deliberately absent. Its implementation INSERTed username /
   // password / role / subscribed into `users`, which declares none of them
   // (email, name, password_hash, status), so it 42703'd at PLAN time on every
@@ -406,8 +410,8 @@ export interface IStorage {
   updateReferenceStandard(id: number, organizationId: number | string, standard: any): Promise<any>;
   recordStandardUsage(id: number, organizationId: number | string, usage: any): Promise<any>;
   getExpiringStandards(params: any): Promise<any[]>;
-  qualifyReferenceStandard(id: number, qualification: any): Promise<any>;
-  disposeReferenceStandard(id: number, disposal: any): Promise<any>;
+  qualifyReferenceStandard(id: number, organizationId: number | string, qualification: any): Promise<any>;
+  disposeReferenceStandard(id: number, organizationId: number | string, disposal: any): Promise<any>;
   getStandardUsageLogs(id: number, organizationId: number | string): Promise<any[]>;
 
   // Section Graph methods
@@ -697,10 +701,6 @@ export class MemStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     return this.users.find(u => u.id === id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return this.users.find(u => u.username === username);
   }
 
   async createUser(userData: Omit<User, 'id'>): Promise<User> {
@@ -1599,11 +1599,11 @@ export class MemStorage {
     return [];
   }
 
-  async qualifyReferenceStandard(_id: number, _qualification: any): Promise<any> {
+  async qualifyReferenceStandard(_id: number, _organizationId: number | string, _qualification: any): Promise<any> {
     throw new Error('NOT_IMPLEMENTED: qualifyReferenceStandard');
   }
 
-  async disposeReferenceStandard(_id: number, _disposal: any): Promise<any> {
+  async disposeReferenceStandard(_id: number, _organizationId: number | string, _disposal: any): Promise<any> {
     throw new Error('NOT_IMPLEMENTED: disposeReferenceStandard');
   }
 
@@ -2164,19 +2164,6 @@ export class DatabaseStorage {
       return result.rows[0];
     } catch (error) {
       logger.error('Failed to get user', { id, error });
-      return undefined;
-    }
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    if (!pool) return undefined;
-
-    try {
-      // tenant-isolation-safe: login/auth path — pre-tenant-resolution lookup by unique username; users is a global identity, not org-scoped.
-      const result = await query('SELECT * FROM users WHERE username = $1', [username]);
-      return result.rows[0];
-    } catch (error) {
-      logger.error('Failed to get user by username', { username, error });
       return undefined;
     }
   }
@@ -4146,7 +4133,7 @@ export class DatabaseStorage {
     return (rows as any[]).filter(r => r.expiryDate && new Date(r.expiryDate) <= cutoff);
   }
 
-  async qualifyReferenceStandard(id: number, qualification: any): Promise<any> {
+  async qualifyReferenceStandard(id: number, organizationId: number | string, qualification: any): Promise<any> {
     const [row] = await db
       .update(qcReferenceStandards)
       .set({
@@ -4155,13 +4142,13 @@ export class DatabaseStorage {
         qualificationData: qualification,
         updatedAt: new Date(),
       })
-      .where(eq(qcReferenceStandards.id, id))
+      .where(and(eq(qcReferenceStandards.id, id), eq(qcReferenceStandards.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`Reference standard ${id} not found`);
     return row;
   }
 
-  async disposeReferenceStandard(id: number, disposal: any): Promise<any> {
+  async disposeReferenceStandard(id: number, organizationId: number | string, disposal: any): Promise<any> {
     const [row] = await db
       .update(qcReferenceStandards)
       .set({
@@ -4173,7 +4160,7 @@ export class DatabaseStorage {
         disposalReason: disposal?.disposalReason,
         updatedAt: new Date(),
       })
-      .where(eq(qcReferenceStandards.id, id))
+      .where(and(eq(qcReferenceStandards.id, id), eq(qcReferenceStandards.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`Reference standard ${id} not found`);
     return row;

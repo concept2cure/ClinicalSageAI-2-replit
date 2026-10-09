@@ -1,0 +1,20 @@
+{
+  "role": "c2c",
+  "attrs": {
+    "rolname": "c2c",
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "rolcanlogin": true
+  },
+  "auditedAt": "2026-09-21T01:00:43.732Z",
+  "database": "clinicalsage",
+  "connectedAs": "postgres",
+  "relations": 1263,
+  "deniedCount": 0,
+  "denied": [],
+  "deniedDetail": [],
+  "excess": [],
+  "ownedAppendOnly": [],
+  "ownedInOverrideSchemas": 16,
+  "schemasWithoutUsage": []
+}

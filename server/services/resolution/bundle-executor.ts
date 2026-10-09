@@ -678,7 +678,15 @@ async function getObjectState(
   return 'unknown';
 }
 
-async function markObjectSuperseded(
+/**
+ * Archives a superseded artifact. 2026-09-23 (W5/D7, final pass): the approval
+ * it carried (approved_version_id / published_version_id) is cleared in the
+ * same write by the concept2cure_artifacts trigger
+ * (migrations/20260923b_artifact_approval_follows_status.sql), so a later
+ * archived → approved that is not the approval act cannot make it filable.
+ * Exported for that proof (artifact-approval-follows-status.pglite.test.ts).
+ */
+export async function markObjectSuperseded(
   organizationId: number,
   objectType: string,
   objectId: string

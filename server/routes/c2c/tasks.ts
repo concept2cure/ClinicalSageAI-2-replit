@@ -32,6 +32,31 @@ import {
 const logger = createScopedLogger('concept2cure-tasks');
 const router = Router();
 
+/**
+ * Whether `taskId` is a task of `projectId` in `organizationId`. A subtask names
+ * its parent by id, and project_tasks.parent_task_id is a foreign key, which
+ * Postgres checks without RLS: a task could be filed under another tenant's task,
+ * which that tenant then could not delete (ledger L195).
+ */
+async function isOwnProjectTask(
+  organizationId: number,
+  projectId: number,
+  taskId: number
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: projectTasks.id })
+    .from(projectTasks)
+    .where(
+      and(
+        eq(projectTasks.id, taskId),
+        eq(projectTasks.organizationId, organizationId),
+        eq(projectTasks.projectId, projectId)
+      )
+    )
+    .limit(1);
+  return Boolean(row);
+}
+
 // The same chain the main router applies, in the same order.
 router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
@@ -204,6 +229,9 @@ router.post('/projects/:projectId/tasks', async (req: Request, res: Response) =>
       .from(projects)
       .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)));
     if (!project) return sendError(res, 404, 'Project not found');
+    if (data.parentTaskId && !(await isOwnProjectTask(organizationId, projectId, data.parentTaskId))) {
+      return sendError(res, 404, 'Parent task not found');
+    }
 
     const inserted = (await db
       .insert(projectTasks)
@@ -267,6 +295,12 @@ router.put('/projects/:projectId/tasks/:taskId', async (req: Request, res: Respo
       metadata: z.any().optional(),
     });
     const data = taskUpdateSchema.parse(req.body);
+    if (data.parentTaskId) {
+      const projectId = parseInt(paramStr(req.params.projectId), 10);
+      if (isNaN(projectId) || !(await isOwnProjectTask(organizationId, projectId, data.parentTaskId))) {
+        return sendError(res, 404, 'Parent task not found');
+      }
+    }
 
     const updates: Record<string, unknown> = { ...data, updatedAt: new Date() };
     if (data.dueDate) updates.dueDate = new Date(data.dueDate);

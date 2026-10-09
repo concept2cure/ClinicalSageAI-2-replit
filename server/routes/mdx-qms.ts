@@ -7,7 +7,9 @@
  *   POST   /api/mdx/qms/documents                       create
  *   GET    /api/mdx/qms/documents/:id                   single
  *   PATCH  /api/mdx/qms/documents/:id                   partial update
- *   POST   /api/mdx/qms/documents/:id/approve           approve + flip effective
+ *   POST   /api/mdx/qms/documents/:id/approve           approve = Part 11 e-signature (password re-auth + meaning + reason) → effective
+ *   POST   /api/mdx/qms/documents/:id/revise            open a controlled revision (reason required) → draft, next major version
+ *   POST   /api/mdx/qms/documents/:id/retire            retire = Part 11 e-signature (same ceremony as approve) → retired
  *   POST   /api/mdx/qms/documents/:id/training-ack      user acknowledges training
  *   GET    /api/mdx/qms/training                        list training records
  *   GET    /api/mdx/qms/training/expiring               periodic refresh due
@@ -77,15 +79,39 @@ import { pool } from '../db';
  * that module, so it is no longer imported here directly.
  */
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
+/*
+ * VSR-001 F-3 (OQ-QMS-06). Approving a controlled document makes it effective,
+ * which is a signed act (21 CFR Part 11 §11.50), so the approve route is the one
+ * handler here that does NOT log beside a committed write: it re-authenticates
+ * the signer (§11.200), checks signing authority (§11.10(g)), and then runs the
+ * UPDATE, the chained ledger pair and the electronic_signatures row on one
+ * transaction (services/qms/document-approval-signature). The §11.10(e) row is
+ * inside that transaction, so `meta.auditTrail` on a 200 is always
+ * {persisted: true, chained: true} — a lost row rolls the approval back instead.
+ */
+import { reverifySigner } from '../services/part11/reverify-signer';
+import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
+import {
+  approveQmsDocumentSigned,
+  retireQmsDocumentSigned,
+  QmsApprovalRefusedError,
+  QMS_DOCUMENT_APPROVAL_MEANING,
+} from '../services/qms/document-approval-signature';
 import { SOP_TEMPLATES, getSopTemplate, type SopSection } from '../services/qms/sopTemplates';
 import {
   createChange, listChanges, getChange, updateChange, transitionChange, deleteChange,
   listLinks, addLink, removeLink, changeControlSummary,
   CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES,
   LINK_TYPES, LINK_RELATIONSHIPS,
-  InvalidChangeTransitionError, SegregationOfDutiesError,
+  InvalidChangeTransitionError, ChangeApprovalRequiresSignatureError,
   type ChangeState,
 } from '../services/qms/changeControl.service';
+import { approveQmsChangeSigned } from '../services/qms/change-approval-signature';
+import { clientIpOf } from '../utils/client-ip';
+import { requireEditorAccess } from '../middleware/orgMembership';
+import { governedReason } from './governed-reason';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -105,6 +131,12 @@ function getUserId(req: Request): number | null {
 
 const DOC_TYPE = ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'] as const;
 const DOC_STATUS = ['draft', 'in_review', 'effective', 'superseded', 'retired'] as const;
+/* The statuses a create or an edit may set. 'effective' is reached only by the
+   signed approval below (VSR-001 F-3); 'retired' only by the signed retire
+   route (P1-29 / DP-32), 'superseded' only by the revise route. The schemas
+   admitted all five, so a create or a PATCH could make an SOP effective with no
+   signature (new-code audit 2026-09-24, finding 1). */
+const EDITABLE_DOC_STATUS = ['draft', 'in_review'] as const;
 const CRITICALITY = ['critical', 'major', 'minor'] as const;
 const SUPPLIER_STATUS = ['pending', 'approved', 'conditional', 'revoked'] as const;
 const AUDIT_STATUS = ['planned', 'in_progress', 'closed', 'cancelled'] as const;
@@ -129,7 +161,7 @@ const docCreate = z.object({
   docType:          z.enum(DOC_TYPE),
   category:         z.string().max(60).optional().nullable(),
   version:          z.string().max(20).optional(),
-  status:           z.enum(DOC_STATUS).optional(),
+  status:           z.enum(EDITABLE_DOC_STATUS).optional(),
   effectiveDate:    z.string().date().optional().nullable(),
   nextReviewDate:   z.string().date().optional().nullable(),
   artifactId:       z.number().int().positive().optional().nullable(),
@@ -327,7 +359,7 @@ router.get('/qms/documents', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'doc-list', err); }
 });
 
-router.post('/qms/documents', async (req: Request, res: Response) => {
+router.post('/qms/documents', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = docCreate.safeParse(req.body ?? {});
@@ -414,7 +446,7 @@ router.get('/qms/documents/:id', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'doc-get', err); }
 });
 
-router.patch('/qms/documents/:id', async (req: Request, res: Response) => {
+router.patch('/qms/documents/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -437,13 +469,31 @@ router.patch('/qms/documents/:id', async (req: Request, res: Response) => {
   setFrags.push(`updated_at = NOW()`);
   args.push(id, orgId);
   try {
+    /* Only a draft or in-review document is edited in place. An approved one is
+       bound by its signature to a digest over this row (document-approval-
+       signature.ts), and an edit here left it effective while no longer matching
+       what was signed. It changes through a revision, which returns it to draft
+       for review and a new signature. */
     const { rows } = await pool.query(
       `UPDATE qms_documents SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
+          AND status IN ('draft','in_review')
         RETURNING *`,
       args,
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Document');
+    if (rows.length === 0) {
+      const cur = await pool.query<{ status: string }>(
+        `SELECT status FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+        [id, orgId],
+      );
+      if (cur.rows.length === 0) return notFoundInTenant(res, 'Document');
+      return clientError(
+        res,
+        409,
+        `This document is ${cur.rows[0].status}. An approved document changes only through a revision, which returns it to draft for review and a new signature. Nothing was changed.`,
+        { code: 'QMS_DOCUMENT_CONTROLLED' },
+      );
+    }
     /* Editing a controlled document — including its status, effective date and
        next review date — recorded no §11.10(e) row, while approve / revise /
        retire on the same document each record one. Found by the review of the
@@ -460,6 +510,88 @@ router.patch('/qms/documents/:id', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'doc-patch', err); }
 });
 
+/* Approval = electronic signature. Body: { password, mfaToken?, meaning:
+   'APPROVED', reason, effectiveDate? }. Refusals, in the order they are
+   checked: 400 (a signature component is missing — named), 403 (the signer's
+   org role carries no signing authority; checked BEFORE the credential so the
+   route is not a password oracle for unauthorized callers), 401 (password /
+   MFA did not verify), 404 (not in tenant), 409 (not draft/in_review),
+   403 QMS_SELF_APPROVAL (author signing their own document, §11.10(d)). */
+const approveBody = z.object({
+  password: z.string().min(1, 'Password re-authentication is required (21 CFR Part 11 §11.200)'),
+  mfaToken: z.string().optional(),
+  meaning: z.literal(QMS_DOCUMENT_APPROVAL_MEANING, {
+    errorMap: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_APPROVAL_MEANING}' (21 CFR Part 11 §11.50)` }),
+  }),
+  reason: z.string().trim().min(3, 'A reason for change of at least 3 characters is required').max(2000),
+  effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'effectiveDate must be YYYY-MM-DD').optional(),
+});
+
+/* Retirement = the same electronic signature (P1-29 / DP-32, security review
+   2026-09-24): the approve body without effectiveDate, which a retirement does
+   not set. The reason keeps the floor the whole governed surface applies
+   (`governedReason`, 8), which 6582e3a3 set for this route on 2026-09-25;
+   approve's own floor of 3 predates that rule and is left as it is here. */
+const retireBody = approveBody.omit({ effectiveDate: true }).extend({ reason: governedReason });
+
+/** §11.200(a)(1): the first signing presents every component. Names the ones that did not arrive. */
+function esignatureComponentMissing(res: Response, act: 'Approval' | 'Retirement', fieldErrors: Record<string, unknown>): Response {
+  return clientError(
+    res,
+    400,
+    `${act} is an electronic signature and requires a password, the signature meaning '${QMS_DOCUMENT_APPROVAL_MEANING}' and a reason for change; missing or invalid: ${Object.keys(fieldErrors).join(', ')}`,
+    { code: 'ESIGNATURE_COMPONENT_MISSING', fieldErrors },
+  );
+}
+
+function resolveIpAddress(req: Request): string | null {
+  return clientIpOf(req);
+}
+
+/**
+ * The two pre-transaction checks of a signed QMS act, in the order that keeps
+ * the route from being a password oracle: §11.10(g) authority first, then the
+ * §11.200 credential. Returns the verified factor set, or the refusal already
+ * written to `res`. `act` names the act in the authority refusal.
+ */
+async function verifyApprovalSigner(
+  res: Response,
+  userId: number,
+  orgId: number,
+  body: Pick<z.infer<typeof approveBody>, 'password' | 'mfaToken'>,
+  act = 'approving a controlled document',
+): Promise<{ secondFactorVerified: boolean } | null> {
+  const signerRole = await resolveSignerOrgRole(userId, orgId);
+  if (!isSigningAuthorized(signerRole)) {
+    clientError(
+      res,
+      403,
+      `Your role does not permit ${act} (21 CFR Part 11 §11.10(g)).`,
+      { code: 'QMS_NO_SIGNING_AUTHORITY' },
+    );
+    return null;
+  }
+  // The platform's one signing ceremony: password, enrolled second factor and
+  // the account's lockout (services/part11/reverify-signer.ts).
+  const signoff = await reverifySigner(
+    userId,
+    { password: body.password, mfaToken: body.mfaToken },
+    signerReverificationDeps(),
+  );
+  if (!signoff.ok) {
+    clientError(res, signoff.status, signoff.error, { code: signoff.code });
+    return null;
+  }
+  // Attribution honesty: only the factors the verifier actually checked.
+  return { secondFactorVerified: signoff.secondFactorVerified };
+}
+
+function approvalRefusal(res: Response, err: QmsApprovalRefusedError, what: 'Document' | 'Change' = 'Document'): Response {
+  if (err.code === 'NOT_FOUND') return notFoundInTenant(res, what);
+  if (err.code === 'SELF_APPROVAL') return clientError(res, 403, err.message, { code: 'QMS_SELF_APPROVAL' });
+  return clientError(res, 409, err.message, { code: 'QMS_INVALID_STATE' });
+}
+
 router.post('/qms/documents/:id/approve', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
@@ -467,40 +599,48 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
   if (userId === null) return clientError(res, 401, 'User context required');
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  const effectiveDate = typeof req.body?.effectiveDate === 'string' ? req.body.effectiveDate : null;
+
+  const parsed = approveBody.safeParse(req.body ?? {});
+  if (!parsed.success) return esignatureComponentMissing(res, 'Approval', parsed.error.flatten().fieldErrors);
+  const body = parsed.data;
+
+  let verified: { secondFactorVerified: boolean } | null;
   try {
-    const { rows } = await pool.query(
-      `UPDATE qms_documents
-          SET status = 'effective',
-              approver_id = $3,
-              approved_at = NOW(),
-              effective_date = COALESCE($4::date, effective_date, NOW()::date),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2
-          AND status IN ('draft','in_review')
-          AND deleted_at IS NULL
-        RETURNING *`,
-      [id, orgId, userId, effectiveDate],
-    );
-    if (rows.length === 0) return clientError(res, 409, 'Document not found, or not in draft/in_review state');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The UPDATE above has
-       already flipped the document to `effective` and stamped the approver, so
-       this is a log beside a completed approval, not the approval itself: it is
-       never reverted here. What the caller can now see is whether the Part 11
-       record of who approved exists — `meta.auditTrail`. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: userId ?? undefined, action: 'mdx.qms.document.approve',
-      resourceType: 'qms_document', resourceId: id,
+    verified = await verifyApprovalSigner(res, userId, orgId, body);
+  } catch (err) { return serverError(res, log, 'doc-approve-verify', err); }
+  if (!verified) return res;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await approveQmsDocumentSigned(client, {
+      orgId, userId, documentId: id,
+      reason: body.reason,
+      meaning: body.meaning,
+      effectiveDate: body.effectiveDate ?? null,
+      authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
+      secondFactorVerified: verified.secondFactorVerified,
+      ipAddress: resolveIpAddress(req),
     });
-    return ok(res, rows[0], { auditTrail });
-  } catch (err) { return serverError(res, log, 'doc-approve', err); }
+    await client.query('COMMIT');
+    return ok(res, result.document, {
+      auditTrail: { persisted: true, chained: true },
+      signature: result.signature,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof QmsApprovalRefusedError) return approvalRefusal(res, err);
+    return serverError(res, log, 'doc-approve', err);
+  } finally {
+    client.release();
+  }
 });
 
 /* Change control — open a controlled revision. Bumps to the next major
    version, returns the document to draft, and clears the prior approval so it
    must be re-reviewed and re-approved. A reason for change is required and is
    captured in metadata + the audit trail (21 CFR Part 11). */
-router.post('/qms/documents/:id/revise', async (req: Request, res: Response) => {
+router.post('/qms/documents/:id/revise', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
@@ -550,38 +690,61 @@ router.post('/qms/documents/:id/revise', async (req: Request, res: Response) => 
   } catch (err) { return serverError(res, log, 'doc-revise', err); }
 });
 
-/* Retire a controlled document — terminal lifecycle state. Captures an
-   optional reason in metadata + the audit trail. */
-router.post('/qms/documents/:id/retire', async (req: Request, res: Response) => {
+/* Retire a controlled document — the terminal lifecycle state, and an
+   electronic signature (P1-29 / DP-32, security review 2026-09-24). Until
+   2026-09-26 this was an editor-gated, autocommitted UPDATE with a reason, its
+   audit row written afterwards: a session alone could end an effective SOP's
+   use for everyone trained on it. It is now the approve ceremony against the
+   service sibling `retireQmsDocumentSigned`. `requireEditorAccess` stays in
+   front, as on every write here; the signing-authority check inside the
+   ceremony is the stricter of the two. Body: { password, mfaToken?, meaning:
+   'APPROVED', reason }. Refusals, in the order checked: 403 (not an editor),
+   400 (a signature component missing — named), 403 QMS_NO_SIGNING_AUTHORITY
+   (before the credential), 401/423 (the ceremony), 404 (not in tenant),
+   409 QMS_INVALID_STATE (already retired). The UPDATE, the chained ledger pair
+   and the signature row commit together or not at all, so `meta.auditTrail`
+   on a 200 is always {persisted: true, chained: true}. */
+router.post('/qms/documents/:id/retire', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
+  if (userId === null) return clientError(res, 401, 'User context required');
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : null;
+
+  const parsed = retireBody.safeParse(req.body ?? {});
+  if (!parsed.success) return esignatureComponentMissing(res, 'Retirement', parsed.error.flatten().fieldErrors);
+  const body = parsed.data;
+
+  let verified: { secondFactorVerified: boolean } | null;
   try {
-    const { rows } = await pool.query(
-      `UPDATE qms_documents
-          SET status = 'retired',
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
-                'retired', jsonb_build_object('reason', $3::text, 'at', NOW(), 'by', $4::int)
-              ),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status <> 'retired'
-        RETURNING *`,
-      [id, orgId, reason, userId],
-    );
-    if (rows.length === 0) return clientError(res, 409, 'Document not found, or already retired');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. Retirement is a
-       terminal lifecycle state and the UPDATE above has already set it, so the
-       row stands; `meta.auditTrail` says whether the §11.10(e) record of who
-       retired it, and why, exists. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: userId ?? undefined, action: 'mdx.qms.document.retire',
-      resourceType: 'qms_document', resourceId: id, details: { reason },
+    verified = await verifyApprovalSigner(res, userId, orgId, body, 'retiring a controlled document');
+  } catch (err) { return serverError(res, log, 'doc-retire-verify', err); }
+  if (!verified) return res;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await retireQmsDocumentSigned(client, {
+      orgId, userId, documentId: id,
+      reason: body.reason,
+      meaning: body.meaning,
+      authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
+      secondFactorVerified: verified.secondFactorVerified,
+      ipAddress: resolveIpAddress(req),
     });
-    return ok(res, rows[0], { auditTrail });
-  } catch (err) { return serverError(res, log, 'doc-retire', err); }
+    await client.query('COMMIT');
+    return ok(res, result.document, {
+      auditTrail: { persisted: true, chained: true },
+      signature: result.signature,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof QmsApprovalRefusedError) return approvalRefusal(res, err);
+    return serverError(res, log, 'doc-retire', err);
+  } finally {
+    client.release();
+  }
 });
 
 router.post('/qms/documents/:id/training-ack', async (req: Request, res: Response) => {
@@ -1264,8 +1427,62 @@ router.post('/qms/changes/:id/transition', async (req: Request, res: Response) =
     return ok(res, row, { auditTrail });
   } catch (err) {
     if (err instanceof InvalidChangeTransitionError) return clientError(res, 409, err.message);
-    if (err instanceof SegregationOfDutiesError) return clientError(res, 422, err.message);
+    // 428: the approval exists, through the signed route below (DP-31 / P1-28).
+    if (err instanceof ChangeApprovalRequiresSignatureError) {
+      return clientError(res, 428, err.message, { code: err.code });
+    }
     return serverError(res, log, 'change-transition', err);
+  }
+});
+
+/* Approval of a change = electronic signature (security review 2026-09-24,
+   DP-31; plan P1-28). The same body, ceremony and refusals as the controlled-
+   document approval above: 400 for a missing component, 403 without signing
+   authority (checked before the credential), 401 when the password or code does
+   not verify, 404 outside the tenant, 409 unless the change is under
+   assessment, 403 QMS_SELF_APPROVAL for the proposer. On success the approval
+   stamp, the chained ledger row and one signature bound to the change's content
+   digest commit together (services/qms/change-approval-signature.ts). */
+router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  const userId = getUserId(req);
+  if (orgId === null) return orgRequired(res);
+  if (userId === null) return clientError(res, 401, 'User context required');
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+
+  const parsed = approveBody.safeParse(req.body ?? {});
+  if (!parsed.success) return esignatureComponentMissing(res, 'Approval', parsed.error.flatten().fieldErrors);
+  const body = parsed.data;
+
+  let verified: { secondFactorVerified: boolean } | null;
+  try {
+    verified = await verifyApprovalSigner(res, userId, orgId, body);
+  } catch (err) { return serverError(res, log, 'change-approve-verify', err); }
+  if (!verified) return res;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await approveQmsChangeSigned(client, {
+      orgId, userId, changeId: id,
+      reason: body.reason,
+      meaning: body.meaning,
+      authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
+      secondFactorVerified: verified.secondFactorVerified,
+      ipAddress: resolveIpAddress(req),
+    });
+    await client.query('COMMIT');
+    return ok(res, result.change, {
+      auditTrail: { persisted: true, chained: true },
+      signature: result.signature,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof QmsApprovalRefusedError) return approvalRefusal(res, err, 'Change');
+    return serverError(res, log, 'change-approve', err);
+  } finally {
+    client.release();
   }
 });
 

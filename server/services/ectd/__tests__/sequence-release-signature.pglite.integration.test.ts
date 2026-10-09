@@ -175,6 +175,10 @@ beforeAll(async () => {
   await pglite.exec(`INSERT INTO users (id, email, name) VALUES (${USER},'s@e.test','A Signer');`);
   // The REAL sequence/leaf tables the binding is derived from.
   await pglite.exec(migration('migrations/20260604_submission_core_canonical.sql'));
+  // The later leaf columns the binding digests (2026-09-22, W5/D7): the content
+  // pin and the uuid half of the document pointer. Both are on the applier.
+  await pglite.exec(migration('migrations/20260814e_submission_leaf_source_pin.sql'));
+  await pglite.exec(migration('migrations/20260917b_submission_leaf_document_uuid.sql'));
   await pglite.exec(ANA_ACTIONS_DDL);
   await pglite.exec(ELECTRONIC_SIGNATURES_PRE_D6_DDL);
   // The REAL migration that adds signed_target / binding_basis.
@@ -250,6 +254,50 @@ describe('against the real schema', () => {
       (await resolve(sequenceId, ORG)).verdict,
       'a cross-tenant signature cleared this org’s gate',
     ).not.toBe('signed');
+  });
+
+  /* ── The act the signature authorizes must not destroy it ──────────────────
+     deriveGovernedTargetBinding hashes the ectd_sequences row INCLUDING its
+     `status` column, and applyGovernedSequenceTransition mutates `status`
+     (frozen -> dispatched). So dispatching changes the very bytes the dispatch
+     signature bound.
+
+     Gate 1 never notices: each signature is checked BEFORE its own transition,
+     while the status it bound is still current. Gate 2 is where it lands — the
+     release-signature gate re-derives the DISPATCH signature at TRANSMIT time,
+     after the status has moved, and gets a digest that cannot match. The
+     verdict is 'invalid', which is the tampering verdict and blocks
+     unconditionally, so transmit becomes unreachable for every submission type
+     that requires a release signature. And it reports "the sequence changed
+     after it was signed", which is a true sentence about the wrong thing: no
+     content changed, the workflow advanced.
+
+     `status` is not content. The basis is named for the LEAF MANIFEST and its
+     note says "the ectd_sequences row and its N submission_leaves row(s)";
+     binding the workflow state means a §11.70 signature stops verifying the
+     moment it is used, which is the opposite of durable evidence. */
+  it('survives the dispatch it authorized — advancing the workflow is not tampering', async () => {
+    const sequenceId = await makeSequence(ORG, '0007', 2);
+    await q(`UPDATE ectd_sequences SET status = 'frozen' WHERE id = $1`, [sequenceId]);
+
+    // Signed for dispatch while frozen, exactly as the operator would.
+    await sign(sequenceId, ORG);
+    expect((await resolve(sequenceId)).verdict, 'the signature did not verify even before dispatch').toBe('signed');
+
+    // applyGovernedSequenceTransition's own UPDATE. No leaf is touched.
+    await q(`UPDATE ectd_sequences SET status = 'dispatched', dispatch_status = 'pending' WHERE id = $1`, [sequenceId]);
+
+    const leaves = await q<{ n: number }>(
+      `SELECT count(*)::int AS n FROM submission_leaves WHERE sequence_id = $1 AND deleted_at IS NULL`,
+      [sequenceId],
+    );
+    expect(Number(leaves.rows[0].n), 'the content must be untouched for this to mean anything').toBe(2);
+
+    const status = await resolve(sequenceId);
+    expect(
+      status.verdict,
+      'dispatching destroyed the signature that authorized it, so transmit can never clear Gate 2',
+    ).toBe('signed');
   });
 
   it('re-signing after a change verifies again — the newest signature decides', async () => {

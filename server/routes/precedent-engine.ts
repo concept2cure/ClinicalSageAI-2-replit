@@ -16,9 +16,10 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { precedentEngine } from '../services/precedent-engine';
+import { precedentOrgId } from '../services/precedent-isolation';
 import { authMiddleware } from '../auth.js';
 import { createScopedLogger } from '../utils/logger';
-import { serverError } from '../lib/api-response';
+import { serverError, orgRequired } from '../lib/api-response';
 
 const router = Router();
 const log = createScopedLogger('precedent-routes');
@@ -119,7 +120,7 @@ router.post('/search', async (req: Request, res: Response) => {
       });
     }
 
-    const organizationId = (req as any).user?.organizationId;
+    const organizationId = precedentOrgId((req as any).user?.organizationId);
     const results = await precedentEngine.search(parsed.data, organizationId);
     const offset = parsed.data.offset || 0;
     const limit = parsed.data.limit || 10;
@@ -147,7 +148,11 @@ router.post('/compare', async (req: Request, res: Response) => {
     }
 
     const { precedentId, ...userContext } = parsed.data;
-    const result = await precedentEngine.compare(userContext, precedentId);
+    const result = await precedentEngine.compare(
+      userContext,
+      precedentId,
+      precedentOrgId((req as any).user?.organizationId)
+    );
     res.json({ success: true, data: result });
   } catch (err: any) {
     return serverError(res, log, 'comparing against a precedent', err);
@@ -185,7 +190,10 @@ router.post('/strategy', async (req: Request, res: Response) => {
       });
     }
 
-    const result = await precedentEngine.recommendStrategy(parsed.data);
+    const result = await precedentEngine.recommendStrategy(
+      parsed.data,
+      precedentOrgId((req as any).user?.organizationId)
+    );
     res.json({ success: true, data: result });
   } catch (err: any) {
     return serverError(res, log, 'recommending a submission strategy', err);
@@ -205,7 +213,11 @@ router.post('/check-claim', async (req: Request, res: Response) => {
     }
 
     const { claim, ...context } = parsed.data;
-    const result = await precedentEngine.checkClaim(claim, context);
+    const result = await precedentEngine.checkClaim(
+      claim,
+      context,
+      precedentOrgId((req as any).user?.organizationId)
+    );
     res.json({ success: true, data: result });
   } catch (err: any) {
     return serverError(res, log, 'checking the claim', err);
@@ -224,13 +236,20 @@ router.post('/ingest', async (req: Request, res: Response) => {
       });
     }
 
-    const id = await precedentEngine.ingestPrecedent({
-      ...parsed.data,
-      fdaQuestions: parsed.data.fdaQuestions || [],
-      riskFactors: parsed.data.riskFactors || [],
-      sourceType: parsed.data.sourceType || 'Manual',
-      confidenceScore: parsed.data.confidenceScore ?? 1.0,
-    } as any);
+    // An ingested precedent is private to the ingesting organization; with no
+    // organization there is nothing to attribute it to, so it is refused.
+    const organizationId = precedentOrgId((req as any).user?.organizationId);
+    if (organizationId === undefined) return orgRequired(res);
+    const id = await precedentEngine.ingestPrecedent(
+      {
+        ...parsed.data,
+        fdaQuestions: parsed.data.fdaQuestions || [],
+        riskFactors: parsed.data.riskFactors || [],
+        sourceType: parsed.data.sourceType || 'Manual',
+        confidenceScore: parsed.data.confidenceScore ?? 1.0,
+      } as any,
+      organizationId
+    );
 
     res.status(201).json({ success: true, data: { id } });
   } catch (err: any) {

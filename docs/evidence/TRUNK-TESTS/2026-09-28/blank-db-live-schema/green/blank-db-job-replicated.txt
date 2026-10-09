@@ -1,0 +1,61 @@
+The Blank DB Provisioning job's own steps (.github/workflows/ci.yml, job blank-db-provisioning), run locally in order
+on a database created empty for this run (PostgreSQL 16 with pgvector; CI uses a pgvector PostgreSQL 15 service).
+Code at 7087f46e2 (the tree was 26fbf978, which adds only a board note). Connection strings redacted. Step numbers are the job's own step indices.
+
+Step 4, the database is blank: 0 public tables before provisioning.
+
+== step 5: deploy-migrate must refuse an unprovisioned database
+exit 3 (expected 3)
+== step 6: install-fresh (node scripts/db/install-fresh.mjs)
+exit 0
+== step 7: deploy-migrate (node scripts/db/deploy-migrate.mjs)
+exit 0
+== step 13: ci:tables-live-schema, the parser at this commit (with the fix)
+[ci:tables-live-schema] 1285 relations on the live database; 752 referenced by server SQL; 9 resolved as functions; 40 absent
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (40 baselined)
+exit 0
+== step 13 again: ci:tables-live-schema, the parser as it was before the fix (953517e5)
+[ci:tables-live-schema] 1285 relations on the live database; 753 referenced by server SQL; 9 resolved as functions; 41 absent
+
+[ci:tables-live-schema] ❌ 1 table(s) referenced by server SQL do not exist on the provisioned database:
+
+  server/services/audit/audit-immutability-triggers.ts
+      expected
+
+  These were checked against a REAL database built by install-fresh +
+  deploy-migrate, not against the repo. A CREATE TABLE existing somewhere
+  in the tree is not the question and does not resolve this: the applier
+  may never reach it, a guard clause may skip it, a later migration may
+  drop it, or it may land in a schema the query does not resolve.
+
+  Fix: put the creating migration on a durable apply path (usually
+  C2C_MIGRATION_FILES in scripts/db/migration-set.mjs), then re-run the
+  provisioning locally and confirm the table is there. Or delete the
+  query, if the feature it belongs to is dead.
+
+exit 1
+parser restored to HEAD
+
+== step 8: Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it)
+exit 0
+== step 9: RLS coverage — every org-keyed table carries the tenant policy
+exit 0
+== step 10: RLS parent-scope delegates exist (the coverage gate depends on them)
+exit 0
+== step 11: Verify the readiness contract independently
+exit 0
+== step 12: Post-deploy invariants hold on the real deployed database
+exit 0
+== step 14: Guardrails — what a tenant purge cannot reach (ratchet)
+exit 1
+
+== step 14 output (npm run ci:purge-coverage)
+> concept2cure-riai@1.0.0 ci:purge-coverage
+> node scripts/ci/check-purge-coverage.mjs
+   note: 2 schema-qualified purge entr(y/ies) are OUTSIDE this gate's scope (it measures public.* only): vault.document_chunks, vault.documents
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - ana_record_blobs
+  - ana_turn_records
+Either add it to PURGE_CHILD_TABLES (FK-safe order) or give it an ON DELETE
+CASCADE path from a table already there. A tenant that asks to be erased
+must not keep rows in a table nobody remembered to list.

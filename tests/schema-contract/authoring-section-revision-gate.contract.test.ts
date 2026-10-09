@@ -49,8 +49,19 @@ import { stripComments } from '../ui/_strip-comments';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ROUTER = path.join(REPO_ROOT, 'server/routes/authoring.router.ts');
+/* The revision helper (createRevision) and the section creators (POST /docs
+   seeding, POST /sections) moved out of the router into services (WM,
+   2026-09-21): the router keeps a wrapper that calls the service helper. The
+   write-site gate stays on the router (its PATCH / revert / apply-template
+   overwrites are still there); the helper's own assertions read the service
+   that now holds it, and the ledger census spans all three files so a second
+   history table cannot hide in any of them. */
+const EVIDENCE = path.join(REPO_ROOT, 'server/services/authoring/authoring-evidence.ts');
+const DOCUMENTS = path.join(REPO_ROOT, 'server/services/authoring/authoring-documents.ts');
 
 const src = stripComments(fs.readFileSync(ROUTER, 'utf8'));
+const evidenceSrc = stripComments(fs.readFileSync(EVIDENCE, 'utf8'));
+const documentsSrc = stripComments(fs.readFileSync(DOCUMENTS, 'utf8'));
 const lineOf = (index: number) => src.slice(0, index).split('\n').length;
 
 /** Byte offsets of every `router.get|post|put|patch|delete(` registration. */
@@ -115,7 +126,7 @@ describe('every section-content overwrite is preceded by a revision snapshot', (
     // the table and the columns the history endpoint reads back — column by
     // column rather than as one literal tuple, so reformatting the statement
     // does not read as a missing write.
-    const insert = /INSERT INTO doc_revisions\s*\(([\s\S]{0,400}?)\)\s*VALUES/.exec(src);
+    const insert = /INSERT INTO doc_revisions\s*\(([\s\S]{0,400}?)\)\s*VALUES/.exec(evidenceSrc);
     expect(insert, 'INSERT INTO doc_revisions not found in createRevision').not.toBeNull();
     const columns = insert![1].split(',').map((c) => c.trim());
     expect(columns).toEqual(
@@ -132,7 +143,7 @@ describe('every section-content overwrite is preceded by a revision snapshot', (
     // Bounded by the helper's own closing brace at column 0 rather than a
     // character budget: the ledger work grew this helper past the old 900-char
     // window, which made the gate fail for length instead of for substance.
-    const helper = /const createRevision = async \(([\s\S]*?)\n\};\n/.exec(src);
+    const helper = /export async function createRevision\(([\s\S]*?)\n\}\n/.exec(evidenceSrc);
     expect(helper, 'createRevision helper not found').not.toBeNull();
     expect(helper![1]).toMatch(/tenantId/);
     // Every statement in the helper reads or writes within the tenant, so the
@@ -151,7 +162,7 @@ describe('the section store has exactly one revision ledger', () => {
     // Scoped to revision/version table names on purpose:
     // authoring_export_history also matches a loose "_history" pattern and is a
     // different thing entirely — a log of export runs, not of section content.
-    const inserts = [...src.matchAll(/INSERT\s+INTO\s+(\w*revision\w*|\w*section_version\w*)\b/gi)]
+    const inserts = [...`${src}\n${evidenceSrc}\n${documentsSrc}`.matchAll(/INSERT\s+INTO\s+(\w*revision\w*|\w*section_version\w*)\b/gi)]
       .map((m) => m[1].toLowerCase());
     const distinct = [...new Set(inserts)].sort();
     expect(distinct).toEqual(['doc_revisions']);

@@ -1,0 +1,27 @@
+✗ validation traceability: 22 step(s) recorded differently from their protocol
+
+  [kind-mismatch] OQ-PROJ-07: OQ-001-PROJECTS.md declares it unscripted; tests/validation/oq/projects/run.mjs records it scripted
+  [kind-mismatch] OQ-PROJ-08: OQ-001-PROJECTS.md declares it unscripted; tests/validation/oq/projects/run.mjs records it scripted
+  [kind-mismatch] OQ-PROJ-10: OQ-001-PROJECTS.md declares it unscripted; tests/validation/oq/projects/run.mjs records it scripted
+  [kind-mismatch] OQ-PROJ-11: OQ-001-PROJECTS.md declares it ad-hoc; tests/validation/oq/projects/run.mjs records it scripted
+  [kind-mismatch] OQ-PROJ-12: OQ-001-PROJECTS.md declares it ad-hoc; tests/validation/oq/projects/run.mjs records it scripted
+  [kind-mismatch] OQ-VAULT-00: OQ-002-VAULT.md declares it prerequisite; tests/validation/oq/vault/run.mjs records it scripted
+  [kind-mismatch] OQ-VAULT-09: OQ-002-VAULT.md declares it unscripted; tests/validation/oq/vault/run.mjs records it scripted
+  [kind-mismatch] OQ-AUTH-00: OQ-003-AUTHORING.md declares it prerequisite; tests/validation/oq/authoring/run.mjs records it scripted
+  [kind-mismatch] OQ-AUTH-18: OQ-003-AUTHORING.md declares it ad-hoc; tests/validation/oq/authoring/run.mjs records it scripted
+  [kind-mismatch] OQ-AUTH-19: OQ-003-AUTHORING.md declares it unscripted; tests/validation/oq/authoring/run.mjs records it scripted
+  [kind-mismatch] OQ-AUTH-20: OQ-003-AUTHORING.md declares it ad-hoc; tests/validation/oq/authoring/run.mjs records it scripted
+  [kind-mismatch] OQ-SUBC-00: OQ-004-SUBMISSION-CENTER.md declares it prerequisite; tests/validation/oq/submission-center/run.mjs records it scripted
+  [kind-mismatch] OQ-SUBC-11: OQ-004-SUBMISSION-CENTER.md declares it unscripted; tests/validation/oq/submission-center/run.mjs records it scripted
+  [kind-mismatch] OQ-SUBC-13: OQ-004-SUBMISSION-CENTER.md declares it unscripted; tests/validation/oq/submission-center/run.mjs records it scripted
+  [kind-mismatch] OQ-SUBC-14: OQ-004-SUBMISSION-CENTER.md declares it ad-hoc; tests/validation/oq/submission-center/run.mjs records it scripted
+  [kind-mismatch] OQ-SRDY-00: OQ-005-SUBMISSION-READINESS.md declares it prerequisite; tests/validation/oq/submission-readiness/run.mjs records it scripted
+  [kind-mismatch] OQ-SRDY-05: OQ-005-SUBMISSION-READINESS.md declares it unscripted; tests/validation/oq/submission-readiness/run.mjs records it scripted
+  [kind-mismatch] OQ-SRDY-08: OQ-005-SUBMISSION-READINESS.md declares it ad-hoc; tests/validation/oq/submission-readiness/run.mjs records it scripted
+  [kind-mismatch] OQ-QMS-06a: OQ-006-QMS.md declares it prerequisite; tests/validation/oq/qms/run.mjs records it scripted
+  [kind-mismatch] OQ-QMS-13: OQ-006-QMS.md declares it ad-hoc; tests/validation/oq/qms/run.mjs records it scripted
+  [kind-mismatch] OQ-QMS-14: OQ-006-QMS.md declares it unscripted; tests/validation/oq/qms/run.mjs records it scripted
+  [kind-mismatch] OQ-QMS-15: OQ-006-QMS.md declares it unscripted; tests/validation/oq/qms/run.mjs records it scripted
+
+A record that calls an unscripted step scripted overstates what was verified.
+Give the runner step the kind its protocol declares (kind: ...), or change the protocol.

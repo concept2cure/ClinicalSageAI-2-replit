@@ -30,8 +30,11 @@
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { productTypesToSegments } from '../report-os/segment.js';
+import { validateSectionCode } from '../../../shared/regulatory/placement-vocabulary.js';
 import {
   foldersForView,
+  VAULT_DOC_KINDS,
+  vaultIngestTypeLabel,
   type VaultViewId,
   type VaultDocKind,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
@@ -53,6 +56,9 @@ export interface FilingInput {
   /** Extracted document text; only the first few thousand characters are read. */
   extractedText?: string | null;
   view: VaultViewId;
+  /** The type the uploader declared (VaultIngestDocumentType), when there was one.
+   *  It informs the proposal; a conflict with the name is flagged, not overridden. */
+  documentType?: string | null;
 }
 
 export interface FilingClassification {
@@ -215,6 +221,100 @@ const TMF_ZONE_ID = new Map(TMF_ZONE_REFS.map(z => [z.zone, z.id]));
  * `{ folderId: null, needsReview: true, confidence: 'none' }`.
  */
 export function classifyForFiling(input: FilingInput): FilingClassification {
+  const byName = classifyByName(input);
+  const type = input.documentType ?? '';
+  if (!Object.prototype.hasOwnProperty.call(DECLARED_TYPE, type)) return byName;
+  return reconcileDeclaredType(byName, DECLARED_TYPE[type], type, input.view);
+}
+
+/**
+ * What an uploader's declared type says (VR-04): the kind it names, and the
+ * CTD module it belongs in for a dossier view. A module type names no kind;
+ * OTHER says nothing and is absent.
+ */
+const DECLARED_TYPE: Readonly<Record<string, { kind: VaultDocKind | null; module?: number }>> = {
+  CSR: { kind: 'csr', module: 5 },
+  PROTOCOL: { kind: 'protocol', module: 5 },
+  SAP: { kind: 'protocol', module: 5 },
+  SAR: { kind: 'report', module: 5 },
+  CER: { kind: 'clinical' },
+  IB: { kind: 'clinical' },
+  DSUR: { kind: 'report' },
+  PSUR: { kind: 'capa' },
+  MODULE_2: { kind: null, module: 2 },
+  MODULE_3: { kind: null, module: 3 },
+  MODULE_4: { kind: null, module: 4 },
+  MODULE_5: { kind: null, module: 5 },
+  SOP: { kind: 'qms' },
+  REPORT: { kind: 'report' },
+  CORRESPONDENCE: { kind: 'resp' },
+};
+
+/** Kinds too broad to contradict a declared one: the CTD classifier names every study document a report. */
+const GENERIC_KINDS: ReadonlySet<VaultDocKind> = new Set(['report']);
+
+function moduleOfFolder(folderId: string | null): number | null {
+  const m = folderId ? /^module-(\d)$/.exec(folderId) : null;
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * What the name says, when it contradicts the declared type: a different CTD
+ * module in a dossier view, or a different specific kind. Null when they agree
+ * or the name said nothing.
+ */
+function nameContradiction(
+  byName: FilingClassification,
+  declared: { kind: VaultDocKind | null; module?: number },
+  view: VaultViewId,
+): string | null {
+  const nameModule = view === 'pharma' || view === 'biotech' ? moduleOfFolder(byName.folderId) : null;
+  const moduleConflict = declared.module != null && nameModule != null && nameModule !== declared.module;
+  const nameKind = byName.evidenceKind;
+  const kindConflict = declared.kind != null && nameKind != null && nameKind !== declared.kind && !GENERIC_KINDS.has(nameKind);
+  if (!moduleConflict && !kindConflict) return null;
+  if (!byName.folderId) return `a ${nameKind} document`;
+  return `${folderLabel(view, byName.folderId)}${byName.ctdSection ? ` (${byName.ctdSection})` : ''}`;
+}
+
+function reconcileDeclaredType(
+  byName: FilingClassification,
+  declared: { kind: VaultDocKind | null; module?: number },
+  type: string,
+  view: VaultViewId,
+): FilingClassification {
+  const label = vaultIngestTypeLabel(type);
+  const kind = declared.kind ?? byName.evidenceKind;
+  const nameSays = nameContradiction(byName, declared, view);
+  if (nameSays) {
+    return {
+      evidenceKind: kind,
+      folderId: null,
+      ctdSection: null,
+      confidence: 'none',
+      needsReview: true,
+      rationale: `Uploaded as ${label}${declared.module ? ` (Module ${declared.module})` : ''}, but the name suggests ${nameSays}. Review where it belongs.`,
+    };
+  }
+  if (byName.folderId) return { ...byName, evidenceKind: kind, rationale: `${byName.rationale} Uploaded as ${label}.` };
+  // The name placed nothing, so the declared type is the only signal.
+  const dossier = view === 'pharma' || view === 'biotech';
+  const folderId = dossier && declared.module ? `module-${declared.module}` : null;
+  if (folderId && isFolderInView(view, folderId)) {
+    return {
+      evidenceKind: declared.kind,
+      folderId,
+      ctdSection: null,
+      confidence: 'medium',
+      needsReview: false,
+      rationale: `Uploaded as ${label}, so Module ${declared.module}; the name did not identify a section.`,
+    };
+  }
+  return { ...byName, evidenceKind: kind, rationale: `Uploaded as ${label}. ${byName.rationale}` };
+}
+
+/** The proposal from the name, title and text alone. */
+function classifyByName(input: FilingInput): FilingClassification {
   const view = input.view;
   const name = (input.fileName || '').trim();
   const title = (input.title || '').trim();
@@ -264,7 +364,9 @@ export function classifyForFiling(input: FilingInput): FilingClassification {
             ctdSection: ctd.section,
             confidence: ctd.confidence >= 0.8 ? 'high' : 'medium',
             needsReview: false,
-            rationale: `CTD pattern "${ctd.title}" → Module ${ctd.module} (${ctd.section}).`,
+            rationale: ctd.section
+              ? `CTD pattern "${ctd.title}" → Module ${ctd.module} (${ctd.section}).`
+              : `The name names Module ${ctd.module} but no section; confirm where in the module it belongs.`,
           };
         }
       }
@@ -322,6 +424,43 @@ export function classifyForFiling(input: FilingInput): FilingClassification {
   };
 }
 
+// ─── The vocabulary a filing decision is held to ──────────────────────────────
+
+export type FilingVocabularyRefusal = { code: 'INVALID_EVIDENCE_KIND' | 'INVALID_CTD_SECTION'; message: string };
+
+/**
+ * Refuse a filing whose evidence kind or CTD section is outside the vocabulary
+ * (VR-04, row D4). Both writers of a filing decision, the governed ingest and
+ * the placement service, call this before they write anything, so a value like
+ * 'banana' never enters the record or the chained audit row as a person's
+ * decision. An absent (or blank) value is not checked: saying nothing is
+ * allowed; saying something outside the list is not.
+ *
+ * The section is judged as upsertLeaf judges one (validateSectionCode 'ctd'):
+ * a CTD code with a dot, since a bare module is a container. That validator
+ * accepts 'N.0' by shape; the classifier no longer proposes it
+ * (detectCTDSection), and tightening the shared validator for modules 2-5
+ * would move leaf placement, so it is handed to the D7 lanes.
+ */
+export function filingVocabularyRefusal(input: {
+  evidenceKind?: string | null;
+  ctdSection?: string | null;
+}): FilingVocabularyRefusal | null {
+  const kind = input.evidenceKind?.trim();
+  if (kind && !VAULT_DOC_KINDS.some(k => k.value === kind)) {
+    return {
+      code: 'INVALID_EVIDENCE_KIND',
+      message: `"${kind}" is not an evidence kind the Vault records. Use one of: ${VAULT_DOC_KINDS.map(k => k.value).join(', ')}. Nothing was saved.`,
+    };
+  }
+  const section = input.ctdSection?.trim();
+  if (section) {
+    const verdict = validateSectionCode(section, 'ctd');
+    if (!verdict.ok) return { code: 'INVALID_CTD_SECTION', message: `${verdict.message} Nothing was saved.` };
+  }
+  return null;
+}
+
 // ─── View + folder helpers ────────────────────────────────────────────────────
 
 /** Is `folderId` a real folder in this view's preset taxonomy? */
@@ -356,6 +495,9 @@ export async function resolveVaultView(programId: string, orgId: number): Promis
   } catch (err) {
     // A missing regulatory_programs table (fresh env) degrades to the service
     // view — the classifier still runs, it just files against TMF folders.
+    // Nothing else does (VR-04): a transient failure used to file a pharma
+    // program's document against the TMF folders, silently.
+    if (!isMissingTable(err)) throw err;
     logger.warn('resolveVaultView degraded to service view', {
       err: err instanceof Error ? err.message : String(err),
     });
@@ -377,9 +519,15 @@ export async function resolveOrgVaultView(orgId: number): Promise<VaultViewId> {
     );
     return orgSegs[0] ?? 'service';
   } catch (err) {
+    if (!isMissingTable(err)) throw err;
     logger.warn('resolveOrgVaultView degraded to service view', {
       err: err instanceof Error ? err.message : String(err),
     });
     return 'service';
   }
+}
+
+/** 42P01: the table does not exist in this deployment. */
+function isMissingTable(err: unknown): boolean {
+  return (err as { code?: unknown } | null)?.code === '42P01';
 }

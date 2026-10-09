@@ -1,0 +1,47 @@
+# P1-28 / DP-31 (QMS change approved with no ceremony) — RED, tests added, source unchanged at bf5f3fec5; 2026-09-25T02:38:52Z
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds the controlled-document register and change-control log 7ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > summary reflects the seeded lifecycle spread 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > links a change to its deviation and validation records 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > training compliance has a real (partial) roster number 1ms
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > advances proposed → assessed → approved (by a different user) → implemented → verified → closed 17ms
+   → promise resolved "{ id: 7, organization_id: 1, …(25) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > refuses approval without a signature, for the proposer and anyone else, and changes nothing 11ms
+   → expected Error: The approver must differ from the … to match object { Object (name) }
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > advances a legal transition (proposed → under_assessment) 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 409 on an illegal transition (closed → approved) 3ms
+ × server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 428 for approval through the transition route, whoever asks 12ms
+   → expected 422 to be 428 // Object.is equality
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > the unsigned door is closed > transition {to:"approved"} is refused 428 and writes nothing 37ms
+   → expected 200 to be 428 // Object.is equality
+ ✓ server/routes/__tests__/qms-change-approval-signature.test.ts > the unsigned door is closed > an illegal move is still named as one (closed → approved is 409) 5ms
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 400 on an empty body, naming the missing components; nothing verified 4ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 403 without signing authority, before the password is looked at 4ms
+   → expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 401 on a wrong password; nothing written 4ms
+   → expected 404 to be 401 // Object.is equality
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 403 QMS_SELF_APPROVAL when the proposer signs; rolled back 3ms
+   → expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 409 when the change is not under assessment; rolled back 3ms
+   → expected 404 to be 409 // Object.is equality
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > a valid signing stamps the approval, writes one ledger row and one digest-bound signature, and commits 3ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > cannot approve a change from chat, and the change stays under assessment 10ms
+   → .toMatch() expects to receive a string, but got undefined
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > advances proposed → assessed → approved (by a different user) → implemented → verified → closed
+ Test Files  4 failed (4)
+      Tests  11 failed | 27 passed (38)
+
+# Client: ChangeControlApproval.test.tsx against the unchanged ChangeControl.tsx
+ × client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > offers Approve only on the change under assessment 951ms
+   → Unable to find an accessible element with the role "button" and name `/^Approve$/`
+ × client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > opens the e-signature dialog with the approval meaning only, and posts to the signed route 675ms
+   → Unable to find an accessible element with the role "button" and name `/^Approve$/`
+ × client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > cannot approve a sample change 696ms
+   → Unable to find an accessible element with the role "button" and name `/^Approve$/`
+ × client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > no longer tells AnA to capture an e-signature it cannot capture 147ms
+   → expected 'Advance CC-2026-014 Sterile filter su…' not to match /e-signature/i
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

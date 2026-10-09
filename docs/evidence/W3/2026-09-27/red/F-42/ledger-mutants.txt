@@ -1,0 +1,6 @@
+Each mutant of the F-42 fix, applied alone, against server/routes/__tests__/audit-trail-ledger.routes.test.ts (10 cases).
+M1 audit_logs entries name no account: Tests  1 failed | 9 passed (10); failing: tells apart two accounts that share a display name
+M2 audit_events entries name no account: Tests  1 failed | 9 passed (10); failing: names the account on an audit_events entry too, and names none for the system
+M3 the reference is the display name again: Tests  1 failed | 9 passed (10); failing: tells apart two accounts that share a display name
+M4 the audit_events query reads no user id: Tests  1 failed | 9 passed (10); failing: names the account on an audit_events entry too, and names none for the system
+M5 the system is given a reference: Tests  1 failed | 9 passed (10); failing: names the account on an audit_events entry too, and names none for the system

@@ -30,14 +30,15 @@
  * the submission core. Without the spine the demo's IND programs could be
  * opened but nothing could be filed into them.
  *
- * The submission is linked by the SAME identity convention intake and the
- * checklist assembler use (application type + product_name / title), so it is
- * matched, not duplicated, if one already exists. The sequence is created as
+ * The submission is anchored to its program (submissions.program_id, LX-22),
+ * as intake anchors it, and reused only when already anchored to THAT program.
+ * It is never matched by product name or title: that is how two projects came
+ * to share one filing. The sequence is created as
  * `draft` 0000: which sequence a document is filed into is a regulatory
  * decision, and nothing else in the product creates one as a side effect.
  *
  * Idempotent: a program that already carries a number is left exactly as it
- * is, an existing submission is linked rather than replaced, and a submission
+ * is, a submission already anchored to the program is reused, and a submission
  * that already has any sequence is left alone. Org-scoped. Fail-safe: a schema
  * without the column or the table degrades to a warning.
  */
@@ -52,33 +53,66 @@ async function has(client, table) {
   return !!r.rows[0]?.c;
 }
 
+/** Does `public.submissions` carry the project anchor (migrations/20260925b)? */
+async function hasProgramAnchor(client) {
+  const r = await client.query(
+    `SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'submissions' AND column_name = 'program_id'`,
+  );
+  return r.rows.length > 0;
+}
+
 /**
- * The canonical submission + original sequence for one program, by the identity
- * convention `resolveSubmissionSpine` matches on. Returns a short note for the
- * run log; never throws past the caller's guard.
+ * The canonical submission + original sequence for one program, anchored to it
+ * (submissions.program_id). Returns a short note for the run log; never throws
+ * past the caller's guard.
  */
 async function ensureSpine(client, org, userId, program) {
-  const identityKeys = [program.product_name, program.name, program.code]
-    .map((v) => String(v ?? '').trim().toLowerCase())
-    .filter(Boolean);
-  if (identityKeys.length === 0) return 'no identity keys — skipped';
+  if (!(await hasProgramAnchor(client))) {
+    return 'submissions.program_id absent — apply migrations/20260925b_submissions_program_anchor.sql; skipped';
+  }
 
   const existing = await client.query(
     `SELECT id FROM submissions
-      WHERE organization_id = $1 AND deleted_at IS NULL
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
         AND lower(application_type) = 'ind'
-        AND (lower(coalesce(product_name, '')) = ANY($2) OR lower(title) = ANY($2))
       ORDER BY updated_at DESC NULLS LAST, id DESC LIMIT 1`,
-    [org.id, identityKeys],
+    [org.id, program.id],
   );
   let submissionId = existing.rows[0]?.id ?? null;
   let created = false;
+  let anchored = false;
+  // 2026-09-28 (W5/D7, WO-9): the submission this seed created BEFORE
+  // submissions.program_id existed is this program's, unanchored — the
+  // migration backfills the anchor only from product-created projects' audit
+  // rows. Finding only anchored rows, every later run inserted a second, empty
+  // IND submission, and the spine resolver preferred it: the program's filed
+  // sequence 0000 vanished from compile and readiness. Anchor the one this seed
+  // wrote (its title and product name, still unanchored) — only when exactly
+  // one matches; two look-alikes are not told apart by guessing.
+  if (submissionId == null) {
+    const legacy = await client.query(
+      `SELECT id FROM submissions
+        WHERE organization_id = $1 AND program_id IS NULL AND deleted_at IS NULL
+          AND lower(application_type) = 'ind' AND title = $2 AND product_name = $3
+        ORDER BY id LIMIT 2`,
+      [org.id, program.name, program.product_name],
+    );
+    if (legacy.rows.length === 1) {
+      await client.query(
+        `UPDATE submissions SET program_id = $1 WHERE id = $2 AND organization_id = $3 AND program_id IS NULL`,
+        [program.id, legacy.rows[0].id, org.id],
+      );
+      submissionId = legacy.rows[0].id;
+      anchored = true;
+    }
+  }
   if (submissionId == null) {
     const ins = await client.query(
       `INSERT INTO submissions
-         (title, product_name, application_type, client_type, primary_region, status, lifecycle_stage, organization_id, created_by)
-       VALUES ($1, $2, 'ind', 'biotech', 'fda', 'active', 'original', $3, $4) RETURNING id`,
-      [program.name, program.product_name, org.id, userId],
+         (title, product_name, application_type, client_type, primary_region, status, lifecycle_stage, organization_id, created_by, program_id)
+       VALUES ($1, $2, 'ind', 'biotech', 'fda', 'active', 'original', $3, $4, $5) RETURNING id`,
+      [program.name, program.product_name, org.id, userId, program.id],
     );
     submissionId = ins.rows[0].id;
     created = true;
@@ -91,15 +125,16 @@ async function ensureSpine(client, org, userId, program) {
       ORDER BY sequence_number DESC, id DESC LIMIT 1`,
     [submissionId, org.id],
   );
+  const how = created ? ' (created)' : anchored ? ' (anchored to its program)' : '';
   if (seq.rows[0]) {
-    return `submission ${submissionId}${created ? ' (created)' : ''}, sequence ${seq.rows[0].sequence_number} already present`;
+    return `submission ${submissionId}${how}, sequence ${seq.rows[0].sequence_number} already present`;
   }
   const newSeq = await client.query(
     `INSERT INTO ectd_sequences (submission_id, region, sequence_number, type, status, organization_id, created_by)
      VALUES ($1, 'fda', '0000', 'original', 'draft', $2, $3) RETURNING id`,
     [submissionId, org.id, userId],
   );
-  return `submission ${submissionId}${created ? ' (created)' : ''}, sequence 0000 created (${newSeq.rows[0].id})`;
+  return `submission ${submissionId}${how}, sequence 0000 created (${newSeq.rows[0].id})`;
 }
 
 export default async function seedIndProgramNumbers(client, { org, admin }) {

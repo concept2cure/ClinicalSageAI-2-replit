@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/documents/39ae0064-3fb9-4ea7-a3dd-507572beb02c/comments",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 16,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "comments": [
+        {
+          "id": "987675ec-75bb-4ff2-9bfd-e253a1410494",
+          "doc_id": "39ae0064-3fb9-4ea7-a3dd-507572beb02c",
+          "section_id": "2ec3e8e3-775c-4ef5-85a1-86104026b67d",
+          "body": "OQ-003 step 09 review comment",
+          "anchor": null,
+          "status": "open",
+          "created_by": "17",
+          "user_name": "oq-runner@validation.local",
+          "user_email": "oq-runner@validation.local",
+          "parent_comment_id": null,
+          "position_data": null,
+          "resolution_note": null,
+          "resolved_by": null,
+          "resolved_at": null,
+          "created_at": "2026-09-23T05:19:49.781Z",
+          "updated_at": "2026-09-23T05:19:49.781Z",
+          "tenant_id": 1,
+          "author_name": "oq-runner@validation.local",
+          "author_email": "oq-runner@validation.local",
+          "reply_count": "0",
+          "section_code": "2.5",
+          "section_title": "Clinical Overview",
+          "replies": []
+        }
+      ],
+      "total": 1
+    }
+  }
+}

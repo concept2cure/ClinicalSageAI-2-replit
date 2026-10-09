@@ -23,6 +23,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { adaptChatMessage } from '../V2App';
+import { activityPropsFor } from '../AnaActivity';
 
 const turn = {
   id: 'm1',
@@ -57,6 +58,21 @@ describe('adaptChatMessage — the turn reaches the rail intact', () => {
     expect(a.toolCalls).toHaveLength(1);
     expect(a.toolCalls?.[0].label).toBe('Sample size');
     expect(a.phase).toBe('Reading the results…');
+  });
+
+  it('carries why the turn stopped, and how many rounds it ran', () => {
+    // Without these the transcript's stopped note and Continue, and the work
+    // panel's "Stopped at the round limit", have nothing to read: a turn the
+    // cap cut short renders as a finished one. Every component suite passes
+    // its props in directly, so only this test sees the adapter drop them.
+    const capped = { ...turn, stoppedReason: 'max_rounds', rounds: 12 } as any;
+    expect(activityPropsFor(capped).stoppedReason).toBe('max_rounds');
+    expect(activityPropsFor(capped).rounds).toBe(12);
+    const a = adaptChatMessage(capped).activity!;
+    expect(a.stoppedReason).toBe('max_rounds');
+    expect(a.rounds).toBe(12);
+    // A clean turn claims no stop.
+    expect(adaptChatMessage(turn).activity!.stoppedReason).toBeUndefined();
   });
 
   it('carries the steers AnA accepted', () => {

@@ -1,5 +1,21 @@
 -- Regulatory Correspondence OS foundation (phase scaffold)
 -- Adds normalized submission lifecycle + correspondence + issue + response package entities.
+--
+-- AMENDED IN PLACE 2026-09-20 — c2c_correspondence_issues.structured_extraction.
+--   The issue parser produces a structured extraction per issue (the section
+--   candidates, the evidence the regulator is asking for, the recommended owner
+--   function and the confidence trace) and NOTHING PERSISTED IT: there was no
+--   column and the intake INSERT did not name one, so it lived only in the
+--   intake HTTP response and was gone by the time a response package was
+--   compiled. compileGovernedResponseAssembly then fell back to the generic
+--   string 'Issue evidence attachment' for every issue in every package.
+--   `subcategory` had a column and was likewise never written.
+--
+--   Amended here rather than appended as a new migration because every entry of
+--   C2C_MIGRATION_FILES re-executes on every deploy (CLAUDE.md RULE 1): the
+--   column is added to the CREATE for a fresh database AND by a guarded ALTER
+--   for one this file has already run against, and both are idempotent. No DROP
+--   is offered; removing this column means amending this file again.
 
 CREATE TABLE IF NOT EXISTS c2c_submissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -92,9 +108,20 @@ CREATE TABLE IF NOT EXISTS c2c_correspondence_issues (
   mapped_artifact_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
   owner_user_id INTEGER REFERENCES users(id),
   resolution_status TEXT NOT NULL DEFAULT 'open',
+  -- What the parser actually extracted for this issue: sectionCandidates,
+  -- evidenceNeeds, regulatorAskType, recommendedOwnerFunction, confidenceTrace.
+  -- The response-package compiler reads it; without it the compiler has only
+  -- the category and severity to work from.
+  structured_extraction JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- For databases this file has already created the table on: the CREATE above
+-- is a no-op there, so the column arrives by ALTER. Idempotent, so it replays
+-- with the rest of the set on every deploy.
+ALTER TABLE c2c_correspondence_issues
+  ADD COLUMN IF NOT EXISTS structured_extraction JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 CREATE TABLE IF NOT EXISTS c2c_response_packages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

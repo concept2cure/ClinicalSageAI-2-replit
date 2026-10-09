@@ -1,0 +1,25 @@
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > a retrieval OUTAGE is not reported as an empty corpus 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > names the gap when retrieved evidence cannot all carry citations 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > reports a fully attributable draft plainly 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a claimed (410) draft is discarded — a retry of it can only fail 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a LINEAGE_REQUIRED rollback KEEPS the draft — the candidate survived it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > names an unauthenticated session rather than blaming the draft 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > falls back to the server’s sentence, never to a bare code 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > generating does not save anything — the section is untouched until accept 94ms
+ × client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a deployment with no AI provider is refused on the panel: no draft body, no accept, a refusal that stays 5036ms
+   → Unable to find an element by: [data-testid="ai-draft-refusal"]
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a transport failure yields no draft body and says nothing changed 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a model draft with no parked candidate says citations are impossible for it 30ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > accepts through the lineage endpoint, sending the draftId and the text actually saved 42ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > names the consequence on the regenerate control once edits exist 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > passes a MISSING lineage summary up as absent, never as a summary of zero 32ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > warns while it is still a choice that an edited draft is no longer the model’s words 35ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a consumed (410) draft is cleared, not left behind a button that can only fail 30ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > reports the fail-closed lineage rollback as a rollback, and adopts nothing 25ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > says unsaved editor edits are not part of the draft being accepted 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > DocumentAuthoring — the drafting panel is reachable > opens the panel from the editor toolbar, and drafts nothing until asked 350ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a deployment with no AI provider is refused on the panel: no draft body, no accept, a refusal that stays
+TestingLibraryElementError: Unable to find an element by: [data-testid="ai-draft-refusal"]
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)

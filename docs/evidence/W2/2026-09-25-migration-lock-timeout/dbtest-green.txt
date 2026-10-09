@@ -1,0 +1,5 @@
+ ✓ tests/db/migration-lock-timeout.dbtest.ts > applyMigrationFiles under a live workload > an application query behind a waiting migration returns within the lock timeout, and the migration still applies 4637ms
+ ✓ tests/db/migration-lock-timeout.dbtest.ts > applyMigrationFiles under a live workload > a lock that never frees fails the file after bounded attempts, naming it, with nothing applied 770ms
+ ✓ tests/db/migration-lock-timeout.dbtest.ts > applyMigrationFiles under a live workload > an error that is not a lock timeout is not retried 3ms
+ ✓ tests/db/migration-lock-timeout.dbtest.ts > applyMigrationFiles under a live workload > leaves the session's lock_timeout as it found it 4ms
+      Tests  4 passed (4)

@@ -115,8 +115,8 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!live.loading && !live.error) notifySurfaceActionReady('safety-narrative');
-  }, [live.loading, live.error]);
+    if (!live.loading) notifySurfaceActionReady('safety-narrative');
+  }, [live.loading]);
 
   const sel = cases.find((c) => c.id === selId) || cases[0];
   const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
@@ -442,8 +442,8 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                   <div
                     style={{
                       margin: '8px 0 14px', padding: '10px 12px', borderRadius: 8,
-                      border: '1px solid ' + (sel.reportingOverdue ? 'var(--danger-500,#c0392b)' : 'var(--border-200,#e2e2e2)'),
-                      background: sel.reportingOverdue ? 'var(--danger-50,#fdecea)' : 'var(--surface-100,#f7f7f7)',
+                      border: '1px solid ' + (sel.reportingOverdue ? 'var(--error)' : 'var(--border-200,#e2e2e2)'),
+                      background: sel.reportingOverdue ? 'var(--error-muted)' : 'var(--bg-100)',
                       fontSize: 12.5, lineHeight: 1.5,
                     }}
                   >
@@ -451,7 +451,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                       <div><strong>No expedited reporting clock.</strong> {sel.reportingBasis}</div>
                     ) : sel.reportingDueDate ? (
                       <div>
-                        <strong style={{ color: sel.reportingOverdue ? 'var(--danger-600,#a5281b)' : 'inherit' }}>
+                        <strong style={{ color: sel.reportingOverdue ? 'var(--error)' : 'inherit' }}>
                           {sel.reportingOverdue
                             ? `OVERDUE — ${sel.reportingCategory} report was due ${sel.reportingDueDate}`
                             : `${sel.reportingCategory} expedited report — due ${sel.reportingDueDate}` +

@@ -1,0 +1,7 @@
+The new ga-readiness-report row, exercised in four states. The registry was
+edited, the report run, and the registry restored each time.
+
+1 as committed:          blocked | 0 of 4 approved model(s) have a passed PQ: claude-opus-4=pending, claude-opus-4-legacy=pending, claude-opus-4-bedrock=pending, claude-opus-4-vertex=pending
+2 primary+fallback pass: ready   | 2 of 4 approved model(s) have a passed PQ: claude-opus-4=passed, claude-opus-4-legacy=passed, ...
+3 fallback only passes:  blocked | 1 of 4 approved model(s) have a passed PQ: claude-opus-4=pending, claude-opus-4-legacy=passed, ...
+4 registry unreadable:   blocked | could not read approvedForHighRisk from server/services/ai-governance/approved-models.ts — treated as not qualified

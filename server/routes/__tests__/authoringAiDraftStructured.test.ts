@@ -48,7 +48,10 @@ vi.mock('../../services/clinical-regulatory-evidence/draft-candidate-store.js', 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-structured';
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
+import { runWithTenantScope } from '../../db/tenantStore';
 import router from '../authoring.router';
+
+const ORG_UUID = '77777777-7777-4777-8777-777777777777';
 
 async function bearer(): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -63,6 +66,15 @@ async function bearer(): Promise<string> {
 function makeApp() {
   const app = express();
   app.use(express.json());
+  // In production every /api request passes the global auth boundary, which
+  // opens the session's tenant scope before this router runs; the draft's
+  // retrieval takes its tenant key from that scope (server/db/currentTenant.ts).
+  app.use((_req, _res, next) =>
+    runWithTenantScope(
+      { tenantId: '7', orgUuid: ORG_UUID, role: 'member', source: 'request', caller: 'authoring-structured.test' },
+      () => next()
+    )
+  );
   app.use('/api/authoring', router);
   return app;
 }

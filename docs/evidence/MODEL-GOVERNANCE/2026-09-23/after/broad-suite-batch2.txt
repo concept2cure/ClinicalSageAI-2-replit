@@ -1,0 +1,11 @@
+$ npx vitest run server/services server/routes server/api server/lib server/eval tests/schema-contract
+ Test Files  1 failed | 1595 passed | 2 skipped (1598)
+      Tests  1 failed | 17164 passed | 10 skipped (17175)
+
+The one failure: server/routes/__tests__/authoringAiDraftNoProvider.test.ts > "a provider failure refuses with its classified code" (500, expected 429). Caused by this batch.
+That test mocks the gateway module with a hand-listed set of error classes. gateway-error-map.ts gained 'instanceof MediaNotCarriedError', and an instanceof against a class the mock omits throws, which turned every classified refusal into a 500. This is the same failure mode the test's own comment records for ModelNotApprovedError.
+Fix: the map identifies the media refusal by its code ('MEDIA_NOT_CARRIED') under the GatewayPolicyError branch, so a mock without the class cannot break it.
+
+After the fix:
+ Test Files  6 passed (6)
+      Tests  41 passed (41)

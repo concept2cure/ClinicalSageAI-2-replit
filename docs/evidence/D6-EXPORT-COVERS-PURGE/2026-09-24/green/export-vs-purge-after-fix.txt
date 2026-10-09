@@ -1,0 +1,12 @@
+# GREEN — one shared predicate (server/services/tenant/vault-tenancy.ts)
+
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases every vault document the tenant owns, including one on a soft-deleted programme 12ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases the chunks of those documents too 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > never reaches another tenant's documents 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > the old organization_id-only predicate leaves the bytes behind (why this changed) 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > scopes chunks through the same document predicate, not a weaker one 3ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > keeps the predicate map frozen and free of request-derived input 4ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > exports the document on a soft-deleted programme that the purge will erase 28ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > for every tenant: the purge set is a subset of the export set — exactly equal here 21ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > never exports another tenant's document 21ms
+      Tests  9 passed (9)

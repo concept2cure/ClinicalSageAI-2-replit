@@ -125,6 +125,30 @@ export async function gsprMappingUpsert(
     return { success: false, action, message: 'applicability is required.', error: 'INVALID_INPUT' };
   }
 
+  // A program id a model supplies must be proven to be the caller's before it is
+  // written against, as the HTTP route proves it (requireProgramAccess). This
+  // tool checked only that it was a UUID (ledger L195). The canonical check,
+  // shared with AnaToolExecutor, and imported lazily for the same reason.
+  const { programBelongsToOrg } = await import('../../routes/innovation-routes.js');
+  let ownsProgram: boolean;
+  try {
+    ownsProgram = await programBelongsToOrg(programId, ctx.organizationId);
+  } catch (err: unknown) {
+    if ((err as { name?: string } | null)?.name !== 'GuardUnavailableError') throw err;
+    // The check could not run: neither "yours" nor "not yours". Nothing is
+    // written, and the model is told which, as AnaToolExecutor's tools tell it.
+    return {
+      success: false,
+      action,
+      message:
+        'Program ownership could not be verified, so nothing was written. Do not tell the user the program does not exist; retry, and report it if it persists.',
+      error: 'OWNERSHIP_UNVERIFIABLE',
+    };
+  }
+  if (!ownsProgram) {
+    return { success: false, action, message: 'Program not found.', error: 'NOT_FOUND' };
+  }
+
   try {
     const row = await upsertMapping({
       organizationId: ctx.organizationId,
@@ -473,10 +497,7 @@ export async function postMarketDocumentUpdate(
   }
 
   try {
-    const updated = await updateDocument(ctx.organizationId, documentId, {
-      ...patch,
-      updatedBy: `ana:${ctx.userId}`,
-    });
+    const updated = await updateDocument(ctx.organizationId, documentId, patch, `ana:${ctx.userId}`);
     if (!updated) {
       return { success: false, action, message: 'Document not found.', error: 'NOT_FOUND' };
     }
@@ -653,9 +674,9 @@ export const MDX_COMMAND_METADATA_PHASE2 = [
   {
     name: 'post_market.document.update',
     description:
-      'Patch a post-market document with arbitrary fields. Requires confirm + reason.',
+      'Edit the content of a post-market document (title, summary, content, reporting period, risks, benefit-risk conclusion, related report ids, metadata). Its status, approval, lock, program and organization are not editable here; approval goes through post_market.document.approve. Requires confirm + reason.',
     parameters: 'documentId, patch (object), confirm="yes", reason',
-    example: '"Update PMCF document d-12, patch: {assignee: \'sarah.chen\'}"',
+    example: '"Update PMCF document d-12, patch: {summary: \'Q3 complaint trend within threshold\'}"',
   },
   {
     name: 'post_market.document.validate',

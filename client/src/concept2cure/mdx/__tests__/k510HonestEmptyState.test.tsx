@@ -79,10 +79,20 @@ describe('510(k) surface with no program selected (sample mode off)', () => {
     expect(text).toContain('No program selected');
   });
 
-  it('reports zero blockers when it has zero sections', () => {
+  /* This asserted '0 sections · 0 blockers', which was the right fix for the
+     bug it pinned — the fixture's blocker leaking into an empty tenant as
+     "0 sections · 1 blocker". It is no longer the honest reading, because
+     "0 blockers" is itself an all-clear, and with no program open no section
+     list has been read at all. The fixture is deleted now (K510_ESTAR carried
+     an invented status per section), so the leak it guarded against cannot
+     recur; what this pins is the stronger property — no count of any kind is
+     stated about sections nobody read. */
+  it('states no section or blocker count when no sections were read', () => {
     stubFetch(() => 200);
     const { container } = wrap(<K510Surface program={null} onAskAna={() => {}} />);
-    expect(container.textContent).toContain('0 sections · 0 blockers');
+    const text = container.textContent ?? '';
+    expect(text).toContain('Sections not yet read');
+    expect(text).not.toMatch(/\d+ sections? · \d+ blockers?/);
   });
 });
 

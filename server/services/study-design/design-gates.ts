@@ -25,6 +25,7 @@ import {
   type StudyDesign,
   type Endpoint,
   ESTIMAND_REQUIRED_ROLES,
+  confirmatoryEndpoints,
 } from './study-design-types';
 
 export type FindingSeverity = 'critical' | 'major' | 'minor' | 'info';
@@ -442,8 +443,7 @@ export function powerRedFlags(design: StudyDesign): DesignFinding[] {
  * family-wise type-I error is uncontrolled. Per spec §17 this is Critical.
  */
 export function multiplicityGate(design: StudyDesign): DesignFinding[] {
-  const endpoints = design.endpoints ?? [];
-  const confirmatory = endpoints.filter(e => e.role === 'primary' || e.role === 'key_secondary');
+  const confirmatory = confirmatoryEndpoints(design);
   const hasHierarchy = confirmatory.length > 1;
   const method = design.statisticalPlan?.multiplicity?.method;
 
@@ -672,7 +672,7 @@ export function missingDataGate(design: StudyDesign): DesignFinding[] {
       code: 'MIS-001',
       section: '§12 Missing data',
       severity: 'major',
-      standard: 'ICH E9(R1) §A.6',
+      standard: 'ICH E9(R1) §A.5',
       title: 'No missing-data strategy specified',
       detail: 'The statistical plan does not say how missing outcomes are handled in the primary analysis, so the estimand cannot be shown to be estimated.',
       suggestedFix: 'Pre-specify the primary approach (e.g. MMRM under MAR, multiple imputation, tipping-point sensitivity) aligned with the estimand strategy.',
@@ -698,7 +698,7 @@ export function missingDataGate(design: StudyDesign): DesignFinding[] {
       code: 'MIS-003',
       section: '§12 Missing data',
       severity: 'minor',
-      standard: 'ICH E9(R1) §A.6',
+      standard: 'ICH E9(R1) §A.5',
       title: 'Complete-case analysis as the primary approach',
       detail: 'A complete-case primary analysis assumes missingness is completely at random and discards randomised patients.',
       suggestedFix: 'Use MMRM or multiple imputation as the primary approach and present complete-case as supportive.',
@@ -712,7 +712,7 @@ export function missingDataGate(design: StudyDesign): DesignFinding[] {
       code: 'MIS-004',
       section: '§12 Missing data',
       severity: 'major',
-      standard: 'ICH E9(R1) §A.3',
+      standard: 'ICH E9(R1) §A.3.4',
       endpointName: primaryName,
       title: 'Missing-data approach contradicts the treatment-policy estimand',
       detail:

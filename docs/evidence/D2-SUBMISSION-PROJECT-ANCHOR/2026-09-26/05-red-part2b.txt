@@ -1,0 +1,38 @@
+# source at 9c1a5604 chore(repo-health): auto-refresh baseline after merge [skip ci]
+# the part-2b tests, against the source before the fix
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the open program’s IND, not rows[0], when a match exists
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > falls back to the first IND and SAYS the open program has none
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > with no program open and several INDs, says which one is shown and how to scope
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the IND anchored to the open program, not a same-named IND of another project
+   → expected 'Showing the open program\'s IND (BX-7…' to match /open program's IND \(BX-701 IND \(pro…/
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a same-named IND anchored to another project is not the open program’s
+   → Unable to find an element by: [data-testid="indl-scope-note"]
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > an IND with no recorded project is matched by name only, and the note says so
+   → Unable to find an element by: [data-testid="indl-scope-note"]
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a single IND with no program open needs no note — nothing to disambiguate
+ × server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > two projects for one product each resolve to their own submission
+   → expected { submissionId: 2, …(3) } to match object { submissionId: 2, match: 'program' }
+ × server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > prefers the anchored submission over a newer same-named one with no project
+   → expected { submissionId: 4, …(3) } to match object { submissionId: 3, match: 'program' }
+ × server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > never takes a submission anchored to ANOTHER program by name
+   → expected { submissionId: 9, …(3) } to be null
+ × server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > matches an unanchored submission by name only when that is unambiguous both ways, and says so
+   → expected { submissionId: 5, …(3) } to match object { submissionId: 5, …(1) }
+ × server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > resolves nothing when two programs could equally claim one unanchored submission
+   → expected { submissionId: 6, …(3) } to be null
+ × server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > resolves nothing when two unanchored submissions match one program
+   → expected { submissionId: 8, …(3) } to be null
+ ✓ server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > is organization-scoped: another organization resolves nothing for this program
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > gates the anchored submission, not a newer same-named one of another project
+   → expected 'AnA · dispatch gate · proven, not gen…' to match /Sequence 0000 \(id 9\)/
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission of another project is not this program’s: no submission
+   → expected 'AnA · dispatch gate · proven, not gen…' to match /No submission for OQ-005 Readiness pr…/
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a submission with no recorded project is matched by name only, and says so
+   → expected 'AnA · dispatch gate · proven, not gen…' to match /matched by name/i
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > gates the open program's sequence, not the organisation's first submission
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program whose submission has no sequence yet is an honest empty state — never another program's gate
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program with no submission at all says so, naming the program
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > with no program open the gate is not run against anything
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a failed discovery is an error, not an empty state
+ Test Files  3 failed (3)
+      Tests  12 failed | 10 passed (22)

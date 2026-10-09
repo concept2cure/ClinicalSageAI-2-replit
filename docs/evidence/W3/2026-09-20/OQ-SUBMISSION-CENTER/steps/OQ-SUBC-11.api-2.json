@@ -1,0 +1,85 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/ectd-compile/344000e3-8420-4ddf-8434-b1c0d253933e/status",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 11,
+    "rateLimitRetries": 0,
+    "body": {
+      "projectId": null,
+      "projectIdent": "344000e3-8420-4ddf-8434-b1c0d253933e",
+      "programId": "344000e3-8420-4ddf-8434-b1c0d253933e",
+      "overallReadiness": 0,
+      "contentComplete": false,
+      "submissionReady": false,
+      "submissionBlockers": [
+        "Required sections are not all complete.",
+        "This program has no linked section-tracking store: section tracking is keyed by the legacy numeric project id and no numeric project row exists for this program, so no authored sections are visible to the compiler (pending the document-identity contract).",
+        "No leaf files have been rendered: the linked submission has no eCTD sequence yet, so there are no placed documents to render and the package cannot be transmitted. Create a sequence and place approved documents into it."
+      ],
+      "modules": [
+        {
+          "moduleCode": "m1",
+          "moduleName": "Administrative Information",
+          "totalSections": 0,
+          "requiredSections": 9,
+          "completedRequired": 0,
+          "completionPct": 0,
+          "ready": false
+        },
+        {
+          "moduleCode": "m2",
+          "moduleName": "CTD Summaries",
+          "totalSections": 0,
+          "requiredSections": 8,
+          "completedRequired": 0,
+          "completionPct": 0,
+          "ready": false
+        },
+        {
+          "moduleCode": "m3",
+          "moduleName": "Quality (CMC)",
+          "totalSections": 0,
+          "requiredSections": 12,
+          "completedRequired": 0,
+          "completionPct": 0,
+          "ready": false
+        },
+        {
+          "moduleCode": "m4",
+          "moduleName": "Nonclinical Study Reports",
+          "totalSections": 0,
+          "requiredSections": 6,
+          "completedRequired": 0,
+          "completionPct": 0,
+          "ready": false
+        },
+        {
+          "moduleCode": "m5",
+          "moduleName": "Clinical Study Reports",
+          "totalSections": 0,
+          "requiredSections": 1,
+          "completedRequired": 0,
+          "completionPct": 0,
+          "ready": false
+        }
+      ],
+      "requiredSectionSource": {
+        "source": "rule_pack",
+        "docType": "ind",
+        "agency": "fda",
+        "packVersion": "ich-m4-v2.2"
+      },
+      "totalSections": 0,
+      "totalRequired": 36,
+      "totalCompleted": 0,
+      "lastUpdated": null
+    }
+  }
+}

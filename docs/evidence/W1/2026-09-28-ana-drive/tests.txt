@@ -1,0 +1,84 @@
+Regression sweep — before the merge (a75e3845), 2026-09-28
+ Test Files  539 passed | 1 skipped (540)
+      Tests  6873 passed | 3 skipped (6876)
+
+Regression sweep — the merged tree, 2026-09-28
+npx vitest run --config vitest.config.ts server/services/ana/__tests__ server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__ server/services/ai-gateway server/routes/chat server/routes/__tests__/chat-path-parity.test.ts client/src/concept2cure/v2/__tests__ client/src/concept2cure/components/ana/__tests__
+ Test Files  593 passed | 1 skipped (594)
+      Tests  7454 passed | 3 skipped (7457)
+
+Regression sweep — second pass (history window, program hand-over), 2026-09-28
+npx vitest run --config vitest.config.ts server/services/ana/__tests__ server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__ server/services/ai-gateway server/routes/chat server/routes/__tests__/chat-path-parity.test.ts client/src/concept2cure/v2/__tests__ client/src/concept2cure/components/ana/__tests__ shared/navigation
+ Test Files  1 failed | 598 passed | 1 skipped (600)
+      Tests  1 failed | 7532 passed | 3 skipped (7536)
+ The one failure is not this change's. It fails the same way on the pushed
+ tree with this change stashed (953517e5), alone, three runs out of three:
+   client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx
+   > dispatch workspace — the server gate, verbatim
+   > offers the governed freeze only when the gate is clear and the sequence is validated
+   Unable to find role="button" and name /Freeze sequence \(Part 11 e-signature\)/
+ It arrived with daae5ad4 (D4/D6, the Freeze button), merged after the
+ earlier sweep above; it belongs to that workstream and is left to it.
+
+ New tests in this pass, each seen failing with its fix removed by hand and
+ passing with it restored:
+   server/routes/ana-ri/__tests__/live-drive-turn.test.ts
+     history — the window opens on a question after an unanswered turn (3)
+   server/services/ana/__tests__/drive-program-resolution.test.ts
+     hands the screen the program found, so one past its first page opens
+     a program the model supplies never reaches the screen, as a param or beside one
+   server/services/ana-ri/__tests__/navigation-actions.test.ts
+     carries the program the server resolved, and keeps opens of two programs apart
+   client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx
+     opens the program the server found, even one past this page
+       (failed with each of: the handler's branch, validateDriveAction's carry,
+        the hook proxy's forwarding — removed one at a time)
+     an open offered as a chip (Live Drive off) opens the program the server found
+     the server's program wins over a name the page reads differently
+
+Regression sweep — third pass (stall watch), 2026-09-28
+npx vitest run --config vitest.config.ts server/services/ai-gateway server/services/ana/__tests__ server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__ server/routes/chat server/routes/__tests__/chat-path-parity.test.ts client/src/concept2cure/v2/__tests__ client/src/concept2cure/components/ana/__tests__ shared/navigation
+ Test Files  1 failed | 604 passed | 1 skipped (606)
+      Tests  1 failed | 7608 passed | 3 skipped (7612)
+ The one failure is the same submissionCenterGovernedWorkspaces test as the
+ second pass, still red on concept2cure-v2 and left to D4/D6.
+ New: server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts, 8
+ tests; 5 fail against the gateway as pushed (listed in silent-thinking.txt).
+
+Regression sweep — fourth pass (a cut-off answer says so), 2026-09-28
+npx vitest run --config vitest.config.ts server/services/ai-gateway server/services/ana/__tests__ server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__ server/routes/chat server/routes/__tests__/chat-path-parity.test.ts client/src/concept2cure/v2/__tests__ client/src/concept2cure/components/ana/__tests__ shared/navigation
+ Test Files  1 failed | 660 passed | 1 skipped (662)
+      Tests  1 failed | 8196 passed | 3 skipped (8200)
+ The Submission Center failure of the earlier passes is fixed upstream. The one
+ failure now is server/services/ana/__tests__/ana-launch-scope.test.ts
+ ("classifies every enabled tool"): 16 study-design tools (review_trial_schema,
+ review_spirit_conformance, derive_ctq_factors, export_usdm_projection, …)
+ added on concept2cure-v2 without a launch-scope classification. It fails the
+ same way on e8eb1512b, without this change, and on the merged tree. Whether
+ those tools are in the launch catalog is that workstream's call; left to it.
+ After the push (c9dc4d582): typecheck exit 0; the gateway, stream-route and
+ cut-off suites 64 files / 828 tests passed.
+
+Fifth pass, 2026-09-28 (narration.txt). Before the merge, the sweep
+  npx vitest run server/services/ai-gateway server/services/ana server/routes/ana-ri server/services/ana-ri client/src/concept2cure
+ Test Files  1 failed | 755 passed | 1 skipped (757)
+      Tests  2 failed | 9105 passed | 3 skipped (9110)
+On the merged tree (origin c1f101dc1 + this change):
+  npx vitest run server/services/ai-gateway server/routes/ana-ri server/services/ana server/services/ana-ri client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx
+ Test Files  1 failed | 322 passed | 1 skipped (324)
+      Tests  2 failed | 4392 passed | 3 skipped (4397)
+ Both failures are client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx
+ ("CmQcTesting — recording and second-person review": S-1 / S-2 never
+ render). They fail the same way with this change stashed. The cause is
+ 288411a4e, which scoped /api/cmc/qc-testing to the open program
+ (scopedRegisterPath appends ?projectId=). The tests' GET mock matches the
+ bare path only. Left to that change's owner.
+ The pre-push hook, run by hand on the merged head: every gate passed.
+
+Sixth pass, 2026-09-29 (held-actions.txt).
+  npx vitest run client/src/concept2cure
+ Before the merge: Test Files  1 failed | 437 passed (438); Tests  2 failed | 4740 passed (4742)
+   (the two cmcSuiteWrites.test.tsx failures noted above).
+ On the merged tree (origin aace8b61f + this change): Test Files  441 passed (441); Tests  4799 passed (4799)
+   The cmcSuiteWrites.test.tsx failures are fixed upstream.
+ The pre-push hook, run by hand on the merged head: every gate passed.

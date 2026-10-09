@@ -547,7 +547,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
                       </div>
                     ))}
                     <div className="ub-updated">
-                      {I.refresh || ''} Last updated: {s.lastUpdated ? fmtAgo(s.lastUpdated) : '—'}
+                      {I.rotateCw} Last updated: {s.lastUpdated ? fmtAgo(s.lastUpdated) : '—'}
                     </div>
                   </>
                 )}

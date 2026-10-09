@@ -1,3 +1,25 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: authoring_documents.client_program_id — the project an Authoring
+--          document belongs to.
+--
+-- AMENDED IN PLACE 2026-09-26 (project-first plans PF-04 and PF-07; CLAUDE.md
+-- Rule 1). What changed: the column COMMENT this file replays, and the
+-- meaning of NULL in the header below. No schema object changed.
+--   * The comment said "No FK". migrations/20260926b_program_same_org_keys.sql
+--     now holds (client_program_id, tenant_id) to regulatory_programs (id,
+--     organization_id): authoring_documents_program_same_org_fk, NOT VALID,
+--     ON DELETE SET NULL (client_program_id).
+--   * NULL no longer means "org-wide, adoptable later" for new rows. Founder
+--     decision PF-07 (2026-09-26): a document belongs to a project, and POST
+--     /api/authoring/docs refuses a create with none (400 PROJECT_REQUIRED).
+--     NULL is now only a legacy row written before that, or one un-anchored by
+--     a program's deletion.
+-- The replayed comment text differs, so the journal records drift for this
+-- file; that is this amendment.
+-- =============================================================================
 -- ═══════════════════════════════════════════════════════════════════════════
 -- authoring_documents — scope an authoring document to a UUID-keyed program
 --
@@ -23,6 +45,7 @@
 --
 --   client_program_id set → scoped to a regulatory_programs UUID (project)
 --   NULL                  → org-wide, adoptable into a project later
+--                           (superseded 2026-09-26, PF-07: see the header)
 --
 -- No existing document carries a provable program, so nothing backfills.
 --
@@ -60,7 +83,7 @@ BEGIN
     ADD COLUMN IF NOT EXISTS client_program_id UUID;
 
   COMMENT ON COLUMN authoring_documents.client_program_id IS
-    'regulatory_programs.id (UUID) this document is scoped to. Complements tenant_id, which scopes to the organization. No FK: matches the platform convention (see migrations/20260726_cre_source_program_scope.sql) of a soft program link that survives the fractured migration-application path.';
+    'regulatory_programs.id (UUID) this document belongs to (PF-07: required for new documents). Complements tenant_id, which scopes to the organization. Held to that organization by authoring_documents_program_same_org_fk (migrations/20260926b_program_same_org_keys.sql, PF-04): NOT VALID, ON DELETE SET NULL (client_program_id).';
 
   -- The authoring tree lists a project's documents; that read filters on
   -- (tenant_id, client_program_id) and this is the half the tenant index

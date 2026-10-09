@@ -1,0 +1,19 @@
+$ git rev-parse --short HEAD  # mfaService unchanged; test added
+e715ea1a
+ × server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > redeems a code the enrolment issued, and removes only that code 2928ms
+ × server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > a redeemed code is gone: presenting it again gets nothing 12ms
+ × server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > of two simultaneous presentations of one code, exactly one is accepted 9ms
+ × server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > accepts the code as people type it: lower-case, or without the dash 8ms
+ × server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > another account's code is not this account's 9ms
+ × server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > codes from a disabled enrolment are dead 8ms
+ × server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > a six-digit token takes the authenticator path and touches no recovery code 7ms
+ × server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > text that is neither shape is refused without a query 7ms
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > the authenticator-only entry points (signing, enrolment, disablement) > verifySecondFactor refuses a recovery code and leaves it unconsumed 10ms
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > the authenticator-only entry points (signing, enrolment, disablement) > verifyToken refuses a recovery code and leaves it unconsumed 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: verifyLoginSecondFactor is not a function
+TypeError: verifyLoginSecondFactor is not a function
+TypeError: verifyLoginSecondFactor is not a function
+TypeError: verifyLoginSecondFactor is not a function
+TypeError: verifyLoginSecondFactor is not a function
+exit=1

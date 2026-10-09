@@ -181,8 +181,8 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!live.loading && !live.error) notifySurfaceActionReady('cro-portfolio');
-  }, [live.loading, live.error]);
+    if (!live.loading) notifySurfaceActionReady('cro-portfolio');
+  }, [live.loading]);
 
   /* A sponsor with no `subs` / `studies` at all used to flatMap to a list of
      undefined rows, and the very next filter read `.state` off one of them. */
@@ -630,7 +630,7 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
               </div>
 
               <div className="cro-foot-note">
-                {I.shield} Each sponsor's data is isolated by{' '}
+                {I.shieldCheck} Each sponsor's data is isolated by{' '}
                 <code>organizationId</code>; submissions inherit the sponsor's
                 pathway and run the same freeze/dispatch gates (Part-11
                 e-signature - deterministic readiness).

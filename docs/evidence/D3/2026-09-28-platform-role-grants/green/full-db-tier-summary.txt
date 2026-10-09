@@ -1,0 +1,18 @@
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  6 failed | 66 passed (72)
+      Tests  14 failed | 758 passed (772)
+Failures (the 13 pre-existing ones from docs/evidence/D3/2026-09-28-users-rls/, plus the posture assertion rewritten in this change):
+ FAIL  server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a steer accepted on B is drained exactly once on A
+ FAIL  tests/db/document-catalog-recall.dbtest.ts > filing a chat upload into the vault > performs the same governed admission the Vault surface does, and the file becomes catalogable
+ FAIL  tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden
+ FAIL  tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > accepts a member — the positive control: nothing else stood in the way
+ FAIL  tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched
+ FAIL  tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII
+ FAIL  tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing
+ FAIL  tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable
+ FAIL  tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > catalog_project_document REFUSES a partial read and names what is unread
+ FAIL  tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > hands the comprehension record BACK on the next read, instead of starting from zero
+ FAIL  tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > platform_role_grants is not RLS-governed, and the runtime role may read it
+ FAIL  tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing
+ FAIL  tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides
+ FAIL  tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses AnA acting for a viewer — the path that had no check

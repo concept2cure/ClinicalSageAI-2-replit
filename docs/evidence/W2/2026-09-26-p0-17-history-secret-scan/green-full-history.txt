@@ -1,0 +1,5 @@
+$ gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts="--full-history --diff-filter=tuxdb HEAD" .   # with .gitleaksignore; the command CI runs
+3:32AM INF 8369 commits scanned.
+3:32AM INF scanned ~432587107 bytes (432.59 MB) in 1m17.2s
+3:32AM INF no leaks found
+exit 0

@@ -1,0 +1,55 @@
+-- D5 (Part 11 evidence). The formal decision and its receipt for every governed
+-- authoring action lived only in one process's heap. Measured.
+
+-- ── 1. The table exists, is tenant-forced, and holds nothing ────────────────
+
+SELECT count(*) FROM decision_receipts;                    -- 0
+SELECT relrowsecurity, relforcerowsecurity FROM pg_class
+ WHERE oid='decision_receipts'::regclass;                  -- t | t
+
+-- ── 2. Neither write was awaited ────────────────────────────────────────────
+
+-- server/services/decision-lifecycle-service.ts
+--   persistDecision(decision).then(ok => { if (!ok) log.warn(...) });   // unawaited
+--   this.persistReceipt(receipt).catch(err => log.warn(...));           // unawaited
+--
+-- Each method returned a real id regardless. The id resolved from decisionStore
+-- / receiptStore -- `const decisionStore = new Map<string, FormalDecisionRecord>()`
+-- at :48 -- so it looked correct until a restart and was invisible to every
+-- other worker. Eight routes answer 200 with those ids
+-- (server/routes/authoring-actions.ts).
+
+-- ── 3. The receipt write could not have succeeded for any tenant but one ────
+
+SELECT column_name, data_type, is_nullable, column_default
+  FROM information_schema.columns
+ WHERE table_name='decision_receipts' AND column_name='organization_id';
+organization_id | integer | NO | 1
+
+-- The INSERT never named the column, so every receipt was attributed to
+-- organisation 1 whoever acted. The tenant policy then refuses it for every
+-- other tenant:
+--   tenant_isolation_policy :: (... OR organization_id = current_setting('app.current_tenant_id')::integer ...)
+
+-- ── 4. And the refusal was swallowed behind a false message ─────────────────
+
+--   } catch (err: unknown) {
+--     // Table may not exist yet — degrade gracefully
+--     log.debug('Receipt persistence skipped (table may not exist)', { ... });
+--
+-- The table exists. It held 0 rows. Nothing in the repository ever SELECTs from
+-- decision_receipts, so the id resolved from the heap and looked fine.
+
+-- ── 5. transitionDecision touched no database at all ────────────────────────
+
+-- The 'confirmed' and 'executed' stamps -- the moment a Part 11 reviewer asks
+-- about -- mutated the in-memory record and returned success. Nothing was
+-- written anywhere.
+
+-- ── 6. And the routes swallowed it a second time ────────────────────────────
+
+-- Eight blocks wrapping these calls ended in a bare catch with a comment
+-- reading non-blocking. This file already documents that exact shape as a
+-- defect for the AUTHORITY check, fixed earlier:
+--   "An authorization gate whose failure mode is 'proceed' is not a gate."
+-- The recording half was left as it was.

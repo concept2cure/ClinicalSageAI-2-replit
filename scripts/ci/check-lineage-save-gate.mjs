@@ -164,7 +164,11 @@ const KNOWN_UNGUARDED = [
 const GUARDED = [
   {
     file: 'server/routes/authoring.router.ts',
-    why: 'POST /sections (create) and PATCH /sections/:sectionId (save) write authored section content',
+    why: 'PATCH /sections/:sectionId (save), the history revert and the AnA draft accept write authored section content (POST /docs and POST /sections moved to services/authoring/authoring-documents.ts, WM 2026-09-21)',
+  },
+  {
+    file: 'server/services/authoring/authoring-documents.ts',
+    why: 'createSection (POST /sections) and insertDocumentTx (POST /docs template seeding, POST /docs/from-draft and the draft_authoring_document tool) create authoring_sections rows with their content — each in its own BEGIN/COMMIT with the lineage gate enlisted',
   },
   {
     file: 'server/services/protocol-development/protocol-development-service.ts',

@@ -1,0 +1,20 @@
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > accepts a complete, reasoned, satisfiable policy 3ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses a partial policy — an omitted field must never reset a constraint 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses an unknown key, including a client-supplied organizationId 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > requires a reason for change 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses an empty allow-list — null says "no constraint", [] would refuse everything 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses values this build does not know, rather than dropping them 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses a policy no AI service could satisfy 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > writes the policy and its audit row (before, after, reason) in one transaction, then invalidates 3ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > commits nothing and invalidates nothing when the audit row cannot be written 3ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > the next dispatch sees a tightened policy at once, not after the cache expires 2ms
+ ✓ server/routes/__tests__/ai-placement-policy.test.ts > PUT /api/ai-placement-policy > refuses a member who is not an admin or owner 29ms
+ ✓ server/routes/__tests__/ai-placement-policy.test.ts > PUT /api/ai-placement-policy > writes the caller’s own organization, as the caller 8ms
+ ✓ server/routes/__tests__/ai-placement-policy.test.ts > PUT /api/ai-placement-policy > refuses a body that names an organization — the tenant comes from the session only 4ms
+ ✓ server/routes/__tests__/ai-placement-policy.test.ts > PUT /api/ai-placement-policy > refuses a change with no reason 4ms
+ ✓ server/routes/__tests__/ai-placement-policy.test.ts > PUT /api/ai-placement-policy > says the policy was not changed when the write fails 5ms
+ ✓ server/routes/__tests__/ai-placement-policy.test.ts > GET /api/ai-placement-policy > reads the caller’s own organization 4ms
+ ✓ server/routes/__tests__/ai-placement-policy.test.ts > GET /api/ai-placement-policy > refuses a caller with no organization 3ms
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+exit=0

@@ -1,0 +1,15 @@
+# ci:launch-scope fail-first — 'protocol-dev-unregistered' (no SURFACE_VIEWS key, no UI_SURFACES row) appended to LAUNCH_APPS.authoring.surfaces
+[ci:launch-scope] 6 apps · 43 surfaces · 22 modules · 37 surface files checked for fixture imports
+  ✗ routable: launch surface 'protocol-dev-unregistered' is not a SURFACE_VIEWS key
+  ✗ registered: launch surface 'protocol-dev-unregistered' is not in UI_SURFACES
+❌ 2 finding(s)
+exit=1
+
+# real tree after registering 'protocol-dev'
+[ci:launch-scope] 6 apps · 42 surfaces · 22 modules · 37 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+exit=0
+[ci:launch-scope] 6 apps · 42 surfaces · 21 modules · 37 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+[ci:launch-scope] 6 apps · 41 surfaces · 21 modules · 36 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free

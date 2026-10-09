@@ -1,0 +1,384 @@
+{
+  "protocolId": "OQ-002",
+  "protocolTitle": "Operational Qualification — Vault",
+  "app": "VAULT",
+  "appLabel": "Vault",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "automated runner tests/validation/oq/vault/run.mjs",
+  "executedAt": "2026-09-21T01:14:58.064Z",
+  "finishedAt": "2026-09-21T01:15:39.422Z",
+  "environment": {
+    "baseUrl": "http://localhost:5600",
+    "node": "v22.22.2",
+    "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    "playwrightCore": "1.63.0",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "debdd9664f5759eb9a4a5b024b73c333027baf18"
+    },
+    "testUser": "jonmichaelpsmith@gmail.com",
+    "organizationId": "2",
+    "readyz": {
+      "status": 503,
+      "body": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / KIMI_API_KEY) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE."
+      }
+    }
+  },
+  "counts": {
+    "pass": 9,
+    "fail": 3,
+    "deviation": 0,
+    "not-executed": 0
+  },
+  "steps": [
+    {
+      "id": "OQ-VAULT-00",
+      "title": "Prerequisite: a program to file into; baseline ledger length",
+      "urs": [],
+      "kind": "scripted",
+      "action": "POST /api/c2c/projects (IND); GET /api/audit-trail/ledger?limit=200",
+      "expected": "Program created (201); ledger readable",
+      "status": "pass",
+      "observed": "program ac97f9db-c0fe-46de-ad90-d0bc6b7bbf12; ledger entries before: 0",
+      "startedAt": "2026-09-21T01:14:58.779Z",
+      "finishedAt": "2026-09-21T01:14:59.344Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-00.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/c2c/projects",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-VAULT-00.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/audit-trail/ledger?limit=200",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-01",
+      "title": "Anonymous access refused",
+      "urs": [
+        "URS-VAULT-001"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/:programId with no Authorization header",
+      "expected": "HTTP 401/403",
+      "status": "pass",
+      "observed": "HTTP 401",
+      "startedAt": "2026-09-21T01:14:59.345Z",
+      "finishedAt": "2026-09-21T01:14:59.601Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-01.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/c2c/project-vault/ac97f9db-c0fe-46de-ad90-d0bc6b7bbf12",
+          "status": 401
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-02",
+      "title": "Disallowed file type refused at ingest",
+      "urs": [
+        "URS-VAULT-003"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/vault/ingest with a .exe payload",
+      "expected": "Refused with a 4xx and a message; nothing stored",
+      "status": "pass",
+      "observed": "HTTP 400: {\"error\":{\"code\":\"FILE_TYPE_NOT_ALLOWED\",\"message\":\"File type .exe is not allowed. Accepted: .pdf, .docx, .doc, .txt, .rtf, .xlsx, .xls, .csv, .md.\"}}",
+      "startedAt": "2026-09-21T01:14:59.601Z",
+      "finishedAt": "2026-09-21T01:15:00.031Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-02.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/vault/ingest",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-03",
+      "title": "Ingest a PDF into the program vault",
+      "urs": [
+        "URS-VAULT-002"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/vault/ingest (multipart: file, programId, documentCode, documentTitle, documentType=PROTOCOL)",
+      "expected": "HTTP 201; document.id returned; document.contentHash equals the SHA-256 of the uploaded bytes",
+      "status": "pass",
+      "observed": "document 7ab9a621-84a9-4c28-8a87-55eb7a648687; contentHash matches sha256 2d811d6a9643…; filing: {\"view\":\"biotech\",\"folderId\":null,\"folderLabel\":\"\",\"evidenceKind\":null,\"ctdSection\":null,\"placementStatus\":\"unfiled\",\"confidence\":\"none\",\"rationale\":\"No filing ",
+      "startedAt": "2026-09-21T01:15:00.031Z",
+      "finishedAt": "2026-09-21T01:15:00.786Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-03.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/vault/ingest",
+          "status": 201
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-04",
+      "title": "Vault read model lists the document",
+      "urs": [
+        "URS-VAULT-004"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/:programId",
+      "expected": "success:true; documentCount ≥ 1; the tree names the document",
+      "status": "pass",
+      "observed": "documentCount=73; standard=biotech; tree nodes=2",
+      "startedAt": "2026-09-21T01:15:00.786Z",
+      "finishedAt": "2026-09-21T01:15:01.066Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-04.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/c2c/project-vault/ac97f9db-c0fe-46de-ad90-d0bc6b7bbf12",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-05",
+      "title": "Search finds the document by title",
+      "urs": [
+        "URS-VAULT-005"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/:programId/search?q=<title fragment>",
+      "expected": "results contain the ingested document id",
+      "status": "pass",
+      "observed": "total=1; hit 7ab9a621-84a9-4c28-8a87-55eb7a648687",
+      "startedAt": "2026-09-21T01:15:01.066Z",
+      "finishedAt": "2026-09-21T01:15:01.330Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-05.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/c2c/project-vault/ac97f9db-c0fe-46de-ad90-d0bc6b7bbf12/search?q=OQ-002%20Protocol",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-06",
+      "title": "Download returns the stored bytes unchanged",
+      "urs": [
+        "URS-VAULT-006"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/:programId/documents/:documentId/download",
+      "expected": "HTTP 200; SHA-256 of the body equals the hash recorded at ingest",
+      "status": "pass",
+      "observed": "611 bytes, sha256 2d811d6a9643… matches",
+      "startedAt": "2026-09-21T01:15:01.330Z",
+      "finishedAt": "2026-09-21T01:15:01.346Z",
+      "evidence": [
+        "steps/OQ-VAULT-06.download.json"
+      ],
+      "api": [],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-07",
+      "title": "A person confirms the filing decision",
+      "urs": [
+        "URS-VAULT-007"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/c2c/project-vault/:programId/file {documentId, folderId:\"module-5\", note}; then the same with a folder from another modality (\"k510\")",
+      "expected": "Filing into Module 5 answers success:true with the folder recorded; a folder outside the program's vault view is refused (4xx), not stored",
+      "status": "pass",
+      "observed": "filed: {\"folderId\":\"module-5\",\"folderLabel\":\"Module 5 · Clinical\",\"evidenceKind\":null,\"ctdSection\":null,\"placementStatus\":\"confirmed\",\"confidence\":null,\"rationale\":\"OQ-002 step 07 — filed into Module 5 by va; k510 → 400 INVALID_FOLDER",
+      "startedAt": "2026-09-21T01:15:01.346Z",
+      "finishedAt": "2026-09-21T01:15:01.883Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-07.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/c2c/project-vault/ac97f9db-c0fe-46de-ad90-d0bc6b7bbf12/file",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-VAULT-07.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/c2c/project-vault/ac97f9db-c0fe-46de-ad90-d0bc6b7bbf12/file",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-08",
+      "title": "The hash-chained audit log verifies after the governed writes",
+      "urs": [
+        "URS-VAULT-008"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/actions/verify-chain",
+      "expected": "ok:true — the audit_logs chain is intact after ingest and filing",
+      "status": "fail",
+      "observed": {
+        "ok": false,
+        "rowsChecked": 100,
+        "brokenAt": {
+          "id": "a9989a0f-d67a-41ad-afae-db7f867f6d47",
+          "expected": "d713147801fa786d605f3b84e4bbf61c5640820acd9476ef917bd136ca3a9479",
+          "stored": "5b992f989c3f35290fd2e1b8d3b09e3a6bcef48ba0cb3a41df230aa0e431603e"
+        }
+      },
+      "startedAt": "2026-09-21T01:15:01.883Z",
+      "finishedAt": "2026-09-21T01:15:02.214Z",
+      "evidence": [
+        "steps/OQ-VAULT-08.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-08.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/c2c/actions/verify-chain",
+          "status": 409
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "failure": "verify-chain expected ok, got 409",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-08b",
+      "title": "Ingest and filing appear on the organisation audit ledger surface",
+      "urs": [
+        "URS-VAULT-008"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/audit-trail/ledger?limit=200 (the read model behind /concept2cure/audit-trail)",
+      "expected": "The ledger grew since the baseline taken in OQ-VAULT-00 and the newest entry carries record/previous hashes",
+      "status": "fail",
+      "observed": [],
+      "startedAt": "2026-09-21T01:15:02.214Z",
+      "finishedAt": "2026-09-21T01:15:02.515Z",
+      "evidence": [
+        "steps/OQ-VAULT-08b.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-08b.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/audit-trail/ledger?limit=200",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "The ledger surface reads audit_events (server/routes/audit-trail-ledger.routes.ts:173). Vault ingest and filing write their chained rows through server/services/auditService.ts writeChainedAuditRow (audit_logs). If this step fails, the surface a user is told to inspect does not show the writes the launch apps make.",
+      "failure": "ledger surface did not grow (0 → 0) although ingest and filing were audited",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-09",
+      "title": "Vault surface renders the data room with the document",
+      "urs": [
+        "URS-VAULT-009"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/vault with the program selected",
+      "expected": "The data room renders and the document title is visible",
+      "status": "fail",
+      "observed": "CLIENT CATEGORIES\nWORKSPACE\nSCIENCE & INTELLIGENCE\nEXPLORE\nQUICK ACCESS\nJS\nConcept2Cure.RI\n›\nBiotech & Pharma\n›\nVault (DMS)\nBiotech & Pharma\nCT\nConcept2Cure Therapeutics\nSearch, jump, or run a command\n⌘K\nTask\n4\nDOCUMENTS\nPROJECT VAULT\nVault (DMS)\nIND · 21 CFR 312\n73 documents\nOpen project\nInspection readiness\nCSR\nPROTOCOL\nCER\nIB\nDSUR\nPSUR\nSAP\nSAR\nMODULE 2\nMODULE 3\nMODULE 4\nMODULE 5\nSOP\nREPORT\nCORRESPONDENCE\nOTHER\nUpload\nAsk AnA to import\n Works alongside Veeva Vault, SharePoint & OneDrive — search in place, import with approval (detect, classify, approve), export everything. No rip-and-replace",
+      "startedAt": "2026-09-21T01:15:02.515Z",
+      "finishedAt": "2026-09-21T01:15:39.066Z",
+      "evidence": [
+        "steps/OQ-VAULT-09.at-failure.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T01:15:06.995Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "failure": "page text does not contain \"OQ-002 Protocol 20260921011458\"",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-10",
+      "title": "A program the organisation does not own is not readable",
+      "urs": [
+        "URS-VAULT-010"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/<random uuid>",
+      "expected": "HTTP 404",
+      "status": "pass",
+      "observed": "HTTP 404",
+      "startedAt": "2026-09-21T01:15:39.066Z",
+      "finishedAt": "2026-09-21T01:15:39.326Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-10.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/c2c/project-vault/00000000-0000-4000-8000-000000000000",
+          "status": 404
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    }
+  ]
+}

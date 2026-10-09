@@ -38,6 +38,13 @@ interface PredictionResponse {
   nextMilestone: string;
   criticalPath: string[];
   regulatoryGaps: string[];
+  /**
+   * Whether the model's suggestions are in `suggestions`. `unavailable` when the
+   * model call failed or its reply was unreadable: the list is then rule-based
+   * only. Until 2026-09-23 a failure returned the same shape as "the model had
+   * nothing to add".
+   */
+  aiSuggestions: 'included' | 'unavailable';
 }
 import { ai } from '../lib/unified-ai-client';
 
@@ -142,11 +149,11 @@ class PredictiveSectionService {
       const currentProgress = this.calculateProgress(context);
       const availableSections = this.getAvailableSections(context);
 
-      // Use AI to enhance predictions
+      // Use AI to enhance predictions (null: the model's suggestions are unavailable)
       const aiSuggestions = await this.getAISuggestions(context);
 
       // Combine rule-based and AI suggestions
-      const suggestions = this.rankSuggestions([...availableSections, ...aiSuggestions], context);
+      const suggestions = this.rankSuggestions([...availableSections, ...(aiSuggestions ?? [])], context);
 
       // Identify critical path and gaps
       const criticalPath = this.getCriticalPath(context);
@@ -158,6 +165,7 @@ class PredictiveSectionService {
         nextMilestone: this.getNextMilestone(context),
         criticalPath,
         regulatoryGaps,
+        aiSuggestions: aiSuggestions === null ? 'unavailable' : 'included',
       };
     } catch (error) {
       console.error('Error generating section suggestions:', error);
@@ -168,7 +176,7 @@ class PredictiveSectionService {
   /**
    * Get AI-enhanced section suggestions using OpenAI
    */
-  private async getAISuggestions(context: DocumentContext): Promise<SectionSuggestion[]> {
+  private async getAISuggestions(context: DocumentContext): Promise<SectionSuggestion[] | null> {
     try {
       const prompt = `
         As a regulatory affairs expert, analyze this submission context and suggest the next most logical document sections:
@@ -218,9 +226,9 @@ class PredictiveSectionService {
         temperature: 0.3,
       });
 
-      const content = aiResult.content || '{}';
-      const result = JSON.parse(content);
-      const suggestions = Array.isArray(result.suggestions) ? result.suggestions : [];
+      const result = JSON.parse(aiResult.content ?? '');
+      if (!Array.isArray(result?.suggestions)) throw new Error('model reply had no suggestions list');
+      const suggestions = result.suggestions;
 
       return suggestions.map((suggestion: any) => ({
         ...suggestion,
@@ -229,7 +237,7 @@ class PredictiveSectionService {
       }));
     } catch (error) {
       console.error('Error getting AI suggestions:', error);
-      return [];
+      return null;
     }
   }
 

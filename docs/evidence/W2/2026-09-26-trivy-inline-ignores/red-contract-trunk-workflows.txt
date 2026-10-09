@@ -1,0 +1,14 @@
+$ npx vitest run tests/ci/trivy-steps-run-after-failures.contract.test.ts   # workflows as on trunk (no exception checks before the scans)
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/ci.yml: every Trivy step runs unless the run was cancelled 19ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/deploy-aws.yml: every Trivy step runs unless the run was cancelled 3ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/ci.yml: the scans skip only the named directories and files 17ms
+ × tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/ci.yml: a job that runs a Trivy scan checks the exceptions first 23ms
+   → .github/workflows/ci.yml › security does not run "check-trivy-inline-ignores.mjs --selftest" before its scans: expected '\n\nfor attempt in 1 2 3; do\n  npm i…' to contain 'check-trivy-inline-ignores.mjs --self…'
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/deploy-aws.yml: the scans skip only the named directories and files 1ms
+ × tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/deploy-aws.yml: a job that runs a Trivy scan checks the exceptions first 3ms
+   → .github/workflows/deploy-aws.yml › security-gate does not run "check-trivy-inline-ignores.mjs --selftest" before its scans: expected '\n\nnpm ci\nnpm run ci:saml-fail-clos…' to contain 'check-trivy-inline-ignores.mjs --self…'
+AssertionError: .github/workflows/ci.yml › security does not run "check-trivy-inline-ignores.mjs --selftest" before its scans: expected '\n\nfor attempt in 1 2 3; do\n  npm i…' to contain 'check-trivy-inline-ignores.mjs --self…'
+     96|           expect(`${before}\n`, `${file} › ${job} does not run "${cmd.…
+AssertionError: .github/workflows/deploy-aws.yml › security-gate does not run "check-trivy-inline-ignores.mjs --selftest" before its scans: expected '\n\nnpm ci\nnpm run ci:saml-fail-clos…' to contain 'check-trivy-inline-ignores.mjs --self…'
+     96|           expect(`${before}\n`, `${file} › ${job} does not run "${cmd.…
+      Tests  2 failed | 4 passed (6)

@@ -19,6 +19,12 @@ import { validatePasswordPolicy } from '../services/auth-security-service';
 import { config } from '../config/environment';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
+import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
+import { openSession } from '../services/session-inactivity';
+import {
+  drizzleWorkspaceStore,
+  ensureOrganizationDefaultWorkspace,
+} from '../services/c2c/organization-default-workspace';
 
 const logger = createScopedLogger('setup');
 const router = Router();
@@ -73,7 +79,7 @@ router.post('/initialize', setupLimiter, async (req: Request, res: Response) => 
     const email = parsed.data.email.trim().toLowerCase();
     const name = parsed.data.name?.trim() || email.split('@')[0];
 
-    const policy = validatePasswordPolicy(password);
+    const policy = validatePasswordPolicy(password, { email, name, organizationName });
     if (!policy.valid) {
       return res.status(400).json({
         success: false,
@@ -115,11 +121,34 @@ router.post('/initialize', setupLimiter, async (req: Request, res: Response) => 
         .returning();
 
       await tx.insert(organizationUsers).values({ organizationId: org.id, userId: user.id, role: 'admin' });
+
+      // The organisation's own client workspace, SAME transaction — the PM
+      // spine's NOT NULL parent. Without it every program this install creates
+      // is unanchored and its governed artifacts stay out of the registry.
+      // See services/c2c/organization-default-workspace.ts.
+      await ensureOrganizationDefaultWorkspace(drizzleWorkspaceStore(tx), {
+        orgId: org.id,
+        orgName: org.name,
+        orgSlug: org.slug,
+        userId: user.id,
+      });
+
       return { org, user };
     });
 
+    // Launch catalog on by default (docs/LAUNCH_DEFINITION_OF_DONE.md, D2).
+    // Outside the transaction on purpose: the grant writer holds its own
+    // connection, and an organisation that fails to provision must still
+    // exist so an administrator can provision it by hand. Failures are
+    // logged by the service and returned; they do not fail the signup.
+    await provisionLaunchModules(result.org.id, { actorEmail: null });
+
     logger.info('First-run setup completed', { orgId: result.org.id });
 
+    // The bootstrap token is a session like any sign-in's: its id, start and
+    // idle window from the new organisation's settings, registered against the
+    // account's concurrent-session limit (P1-1; P1-38 brought this door in).
+    const session = await openSession(result.user.id, result.org.settings);
     const token = jwt.sign(
       {
         userId: result.user.id.toString(),
@@ -128,6 +157,7 @@ router.post('/initialize', setupLimiter, async (req: Request, res: Response) => 
         organizationUuid: result.org.uuid,
         role: 'admin',
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: config.jwt.expiresIn }

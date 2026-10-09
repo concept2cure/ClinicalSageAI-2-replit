@@ -64,12 +64,49 @@ const SUBMISSION = {
   lifecycleStage: 'original',
 };
 
+/** A codified region profile, shaped as GET /api/region-profiles/:region returns.
+ *  `requiredFor` is the load-bearing field: 1.3.1 is an NDA obligation and
+ *  1.6 an IND one, so the same profile must produce different required lists. */
+const FDA_PROFILE = {
+  region: 'fda',
+  agency: 'FDA',
+  language: 'en',
+  currency: 'USD',
+  pathways: ['ectd_v322', 'estar'],
+  module1Sections: [
+    { number: '1.1', title: 'Forms', required: true, description: 'FDA forms' },
+    {
+      number: '1.3.1', title: 'Debarment certification', required: true,
+      requiredFor: ['nda', 'bla'], description: 'Marketing applications only',
+    },
+    {
+      number: '1.6', title: 'General investigational plan', required: true,
+      requiredFor: ['ind'], description: 'IND only',
+    },
+    { number: '1.9', title: 'Optional annex', required: false, description: 'Not required' },
+  ],
+  forms: [
+    { name: 'Form 356h', formId: 'FDA-356h', required: true, description: 'Application to market' },
+  ],
+  specificRequirements: ['Submit via ESG with a WebTrader or AS2 account.'],
+  validationRules: [
+    { id: 'FDA-ESG-001', severity: 'error', citation: 'ESG TCG §3.2', description: 'Sequence must be 4-digit' },
+  ],
+  validationRuleCount: 1,
+};
+
 type Res = { ok: boolean; status: number; json: () => Promise<unknown> };
 
 const ok = (payload: unknown): Res => ({ ok: true, status: 200, json: async () => payload });
 const rows = (r: unknown[]): Res => ok({ success: true, data: r });
 /** A failed read. `useLiveRows` reports `error`, and `rows` stays empty. */
 const failed = (): Res => ({ ok: false, status: 500, json: async () => ({}) });
+/** The 404 an unprofiled region returns — seven of the twelve the selector
+ *  offers have no codified profile. */
+const notFound = (): Res => ({
+  ok: false, status: 404,
+  json: async () => ({ error: { code: 'NOT_FOUND', message: 'Unknown region' } }),
+});
 /** A read that has not settled — the in-flight state, held open for the test. */
 const pending = (): Promise<Res> => new Promise<Res>(() => {});
 
@@ -80,10 +117,15 @@ const pending = (): Promise<Res> => new Promise<Res>(() => {});
 function serve(opts: {
   submissions: () => Res | Promise<Res>;
   sequences?: () => Res | Promise<Res>;
+  /** The Planner's region profile. Defaults to a codified FDA profile. */
+  regionProfile?: () => Res | Promise<Res>;
 }) {
   apiRequest.mockImplementation(async (_method: string, url: string) => {
     const u = String(url);
     if (u === '/api/submissions') return opts.submissions();
+    if (/^\/api\/region-profiles\//.test(u)) {
+      return (opts.regionProfile ?? (() => ok(FDA_PROFILE)))();
+    }
     if (/^\/api\/submissions\/\d+\/sequences$/.test(u)) return (opts.sequences ?? (() => rows([])))();
     if (u === '/api/510k/estar/submissions') return ok({ success: true, data: { submissions: [] } });
     if (u === '/api/510k/estar/assemble')
@@ -224,5 +266,79 @@ describe('SubmissionCenter — the lead action over an unread sequence list', ()
 
     expect(await screen.findByRole('button', { name: 'Open the sequences' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Plan the submission' })).toBeNull();
+  });
+});
+
+/* ── The Planner's region profile ─────────────────────────────────────────────
+ *
+ * The Planner NAMED this profile's contents in prose — "required modules,
+ * granularity, regional Module 1, and the validation profile" — over a screen
+ * that never read it. It reads it now, and the read has three outcomes that
+ * must stay apart.
+ *
+ * The one that carries the risk is the 404. The region selector offers twelve
+ * regions and profiles exist for five, so Health Canada, MHRA, Swissmedic, TGA,
+ * ANVISA, CDSCO and HSA all resolve to "no profile". On a submission screen an
+ * empty required-section list is a statement that nothing is required, and for
+ * those seven nobody has codified what is — the same fail-visible rule the
+ * dispatch assessor already applies to an unregistered region.
+ *
+ * The last test is the over-correction guard: a fix that simply never showed
+ * requirements would pass the first three and make the panel useless.
+ */
+describe('SubmissionCenter — the Planner over a region profile', () => {
+  async function openPlanner() {
+    mount();
+    // The title renders in the portfolio row AND the header, so match all.
+    expect((await screen.findAllByText(/C2C-101 original NDA/)).length).toBeGreaterThan(0);
+    const tabs = screen.getAllByText('Planner');
+    fireEvent.click(tabs[0]);
+  }
+
+  it('reports an unprofiled region as not codified, never as no requirements', async () => {
+    serve({ submissions: () => rows([SUBMISSION]), regionProfile: () => notFound() });
+    await openPlanner();
+
+    expect(await screen.findByText(/No region profile is registered/i)).toBeTruthy();
+    expect(body()).toMatch(/not a statement that nothing is required/i);
+    // The forbidden reading: a codified profile with an empty requirement set.
+    expect(body()).not.toMatch(/Required Module 1 for .* · 0\b/);
+  });
+
+  it('reports a failed profile read as unreadable, never as not codified', async () => {
+    serve({ submissions: () => rows([SUBMISSION]), regionProfile: () => failed() });
+    await openPlanner();
+
+    expect(await screen.findByText(/Couldn’t load the .* region profile/i)).toBeTruthy();
+    expect(body()).toMatch(/failed read, not an empty requirement set/i);
+    expect(body()).not.toMatch(/No region profile is registered/i);
+  });
+
+  it('does not answer from an unsettled read', async () => {
+    serve({ submissions: () => rows([SUBMISSION]), regionProfile: () => pending() });
+    await openPlanner();
+
+    expect(await screen.findByText(/Loading the region profile/i)).toBeTruthy();
+    expect(body()).not.toMatch(/No region profile is registered/i);
+    expect(body()).not.toMatch(/Couldn’t load/i);
+  });
+
+  it('shows the codified profile, scoped to THIS application type', async () => {
+    // The over-correction guard, and the requiredFor check in one: SUBMISSION
+    // is an `nda`, so the debarment certification is owed and the IND-only
+    // general investigational plan is NOT.
+    serve({ submissions: () => rows([SUBMISSION]) });
+    await openPlanner();
+
+    expect(await screen.findByText(/Required Module 1 for/i)).toBeTruthy();
+    expect(body()).toMatch(/Debarment certification/);
+    expect(body()).toMatch(/FDA-356h/);
+    expect(body()).toMatch(/FDA-ESG-001/);
+
+    // An NDA does not owe the IND-only section. Listing it would tell a filer
+    // they owe paperwork they do not.
+    expect(body()).not.toMatch(/General investigational plan/);
+    // Nor is a non-required section presented as required.
+    expect(body()).not.toMatch(/Optional annex/);
   });
 });

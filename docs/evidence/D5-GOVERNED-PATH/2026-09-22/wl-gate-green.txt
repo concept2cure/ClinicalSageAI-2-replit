@@ -1,0 +1,2 @@
+# with the two adjudicated entries
+[ci:writerless-stores] OK — 29 declared writerless store(s); no new ones.

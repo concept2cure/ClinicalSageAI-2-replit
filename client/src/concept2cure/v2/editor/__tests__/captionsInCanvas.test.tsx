@@ -66,7 +66,7 @@ const STORED_TABLE =
   `<tr><td>Headache</td><td>12 (4.1)</td></tr></tbody></table>`;
 
 const STORED_FIGURE =
-  `<img ${CAPTION_ID_ATTR}="${CHROMATOGRAM}" src="/api/authoring/images/77" ` +
+  `<img ${CAPTION_ID_ATTR}="${CHROMATOGRAM}" src="/api/authoring/images/file_77_a" ` +
   `alt="Chromatogram of batch 21-004">`;
 
 const canvasText = () => document.querySelector('.tiptap')?.textContent ?? '';
@@ -260,7 +260,7 @@ describe('writing a caption from the ribbon', () => {
         AuthoringImage,
         CaptionNumbering,
       ],
-      content: '<img src="/api/authoring/images/77">',
+      content: '<img src="/api/authoring/images/file_77_a">',
     });
     editor.commands.setNodeSelection(0);
 

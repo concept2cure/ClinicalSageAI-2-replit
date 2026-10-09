@@ -1,0 +1,14 @@
+# scripts/db/install-fresh.mjs and 019_gcc_idempotency_ratelimit.sql with this change, on d46d52515
+# blank PostgreSQL 16 + pgvector; exit status: 0
+
+42:  ✓ non-public uuid-tenant tables policied
+43:  ✓ child tables scoped to their tenant-keyed parents
+66:  tenant isolation: every integer tenant-keyed table is policied ✓
+69:✅ Application schema install complete.
+78:   • set RLS_ENFORCE=on and restart to enforce tenant isolation;
+
+# rls-coverage-check.sql after install-fresh alone: 0 rows
+# deploy-migrate.mjs #1: exit 0; rls-coverage-check.sql: 1 row (see README, handed on):
+#   regulatory_harmonization.export_job_audit_log (child of regulatory_harmonization.export_jobs, row security off)
+# deploy-migrate.mjs #2: exit 0; rls-coverage-check.sql: 0 rows
+# audit.request_correlations present after deploy: false

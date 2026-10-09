@@ -145,15 +145,22 @@ function computeCompletenessScore(payload: CrossObjectReasoningPayload): number 
   const modules = payload.moduleMap.filter((m) => m.module !== 'Unassigned');
   if (modules.length === 0) return 0;
 
-  // Average module completeness
+  /* Average over the modules whose completeness was actually MEASURED. A
+     module with no required-section list reports null, and averaging a null in
+     as zero would drag the score down by the same invention that used to prop
+     it up. With nothing measured there is no completeness score to give. */
+  const assessed = modules.filter(
+    (m): m is typeof m & { completenessPercent: number } => m.completenessPercent !== null,
+  );
+  if (assessed.length === 0) return 0;
   const avgCompleteness =
-    modules.reduce((sum, m) => sum + m.completenessPercent, 0) / modules.length;
+    assessed.reduce((sum, m) => sum + m.completenessPercent, 0) / assessed.length;
 
-  // Factor in overall document count vs a baseline
-  const docCount = payload.documents.length;
-  const docFactor = Math.min(100, (docCount / 15) * 100); // 15 docs = 100%
-
-  return Math.round((avgCompleteness * 0.6 + docFactor * 0.4));
+  /* The document factor was `(docCount / 15) * 100`, a second denominator with
+     nothing behind it — fifteen documents of any kind read as a full score.
+     Completeness is now what the measured modules say it is, and nothing else.
+     Restoring a document factor needs a defensible baseline first. */
+  return Math.round(avgCompleteness);
 }
 
 function computeQualityScore(payload: CrossObjectReasoningPayload): number {
@@ -289,10 +296,15 @@ function computeModuleBreakdown(
       const expected = EXPECTED_DOCS[m.module] || 3;
       const docs = payload.documents.filter((d) => d.module === m.module || d.routedTo?.startsWith(m.module.replace('Module ', '')));
       const validated = docs.filter((d) => validatedIds.has(d.id)).length;
+      /* The completeness term contributes only when completeness was measured;
+         an unassessed module is scored on what IS known (documents present and
+         validated) rather than on a zero standing in for "we did not look". */
+      const completenessTerm =
+        m.completenessPercent === null ? 0 : (m.completenessPercent / 100) * 20;
       const score = Math.round(
         (m.documentCount / expected) * 50 +
         (validated / Math.max(1, m.documentCount)) * 30 +
-        (m.completenessPercent / 100) * 20
+        completenessTerm
       );
 
       const status = deriveStatus(Math.min(100, score), []);

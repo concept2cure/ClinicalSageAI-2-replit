@@ -1,0 +1,4 @@
+raise_monitoring_signal | confirm | - | rbm/rbm-actuator.ts:221 | INSERT rbm_signals
+read_project_document | self | - | vault/document-catalog.service.ts:224 | her read-coverage receipt; extraction outcome backfill
+run_shadow_review | confirm | - | shadow-review/shadow-review-service.ts:169 | INSERT shadow_review_runs + findings + audit
+scan_document_citations | conditional | input.persist === true -> confirm; else read | living-record/document-binder.ts:248 | binds citations to governed facts, writes drift rows

@@ -23,6 +23,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { getAuthToken, getOrgId } from '@/utils/authToken';
+import { probeAuditRowOutcome } from '@/lib/queryClient';
 import { useFetchJson } from './useFetchJson';
 import type { DataState } from '../lib/dataState';
 import type { MdxSpecialization, PrimaryIndustry } from '../lib/industryProfileMapping';
@@ -67,9 +68,10 @@ export interface UseIndustryProfileResult {
   /** `empty` = org has no saved profile yet (honest unset state). */
   profile: DataState<OrgIndustryProfile>;
   saveState: ProfileSaveState;
-  /** PATCH the org profile. Resolves true only on a confirmed write;
-   *  refreshes the read on success. */
-  save: (patch: OrgIndustryProfilePatch) => Promise<boolean>;
+  /** PATCH the org profile under a reason for change (the route refuses
+   *  one without). Resolves true only on a confirmed write; refreshes the
+   *  read on success. */
+  save: (patch: OrgIndustryProfilePatch, reason: string) => Promise<boolean>;
   refresh: () => void;
 }
 
@@ -96,7 +98,7 @@ export function useIndustryProfile(): UseIndustryProfileResult {
           : { status: 'ready', data: data.data };
 
   const save = useCallback(
-    async (patch: OrgIndustryProfilePatch): Promise<boolean> => {
+    async (patch: OrgIndustryProfilePatch, reason: string): Promise<boolean> => {
       const seq = ++seqRef.current;
       setSaveState({ status: 'saving' });
 
@@ -111,8 +113,11 @@ export function useIndustryProfile(): UseIndustryProfileResult {
           method: 'PATCH',
           credentials: 'include',
           headers,
-          body: JSON.stringify(patch),
+          body: JSON.stringify({ ...patch, reason }),
         });
+        // A raw fetch, so the transport's audit-row check runs here explicitly:
+        // a saved profile whose §11.10(e) entry was lost is reported, not hidden.
+        probeAuditRowOutcome('PATCH', URL, res);
 
         if (seq !== seqRef.current) return false; // superseded
 

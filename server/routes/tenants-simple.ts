@@ -10,6 +10,7 @@ import { requirePlatformAdmin, isPlatformAdmin } from '../middleware/requirePlat
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
+import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
 import { pool } from '../db';
 import {
   cancelDeletion,
@@ -192,6 +193,18 @@ router.post('/', requirePlatformAdmin, async (req, res) => {
 
     const newTenant = result[0];
     log.debug('Created tenant in database:', newTenant);
+
+    // Launch catalog on by default (docs/LAUNCH_DEFINITION_OF_DONE.md, D2: "six
+    // apps on by default for a NEW ORGANISATION" — not only a self-serve one).
+    // This path created tenants with no launch grants at all until 2026-09-22.
+    // It runs under the system scope ('/api/tenants' is in SYSTEM_SCOPE_PREFIXES),
+    // which RLS lets write the new tenant's module_subscriptions rows — proven on
+    // a deploy-shaped database by tests/db/signup-launch-catalog.dbtest.ts. A
+    // failure does not fail tenant creation (the tenant must exist to be repaired);
+    // provisionLaunchModules logs it as one error line with the repair command.
+    if (newTenant?.id != null) {
+      await provisionLaunchModules(Number(newTenant.id), { actorEmail: null });
+    }
 
     // Fire-and-forget: seed every regulatory precedent pattern library for
     // the new org. The seeders are idempotent and the orchestrator never
@@ -501,6 +514,8 @@ router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
       organizationId: record.organizationId,
       status: record.status,
       purgedAt: record.purgedAt,
+      // What happened to the vault's stored bytes, stated rather than implied.
+      storageErasure: record.storageErasure,
     });
   } catch (error) {
     if (error instanceof OffboardingStateError) {
@@ -510,49 +525,6 @@ router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
     }
     log.error('Error purging organization:', error);
     res.status(500).json({ error: 'Failed to purge organization' });
-  }
-});
-
-/**
- * POST /api/tenants/:id/api-key
- * Generate a new API key for an organization
- */
-router.post('/:id/api-key', requirePlatformAdmin, async (req, res) => {
-  try {
-    const tenantId = parseInt(String(req.params.id));
-    if (isNaN(tenantId)) {
-      return res.status(400).json({ error: 'Invalid organization ID' });
-    }
-
-    // Generate new API key
-    const newApiKey =
-      'trialsage-api-' +
-      Math.random().toString(36).substring(2, 15) +
-      Math.random().toString(36).substring(2, 15);
-
-    // Update the organization with the new API key
-    const result = await sql`
-      UPDATE organizations
-      SET api_key = ${newApiKey}, updated_at = NOW()
-      WHERE id = ${tenantId}
-      RETURNING id, name, api_key as "apiKey"
-    `;
-
-    if (result.length === 0) {
-      return res.status(404).json({ error: 'Organization not found' });
-    }
-
-    const updatedOrg = result[0];
-
-    res.json({
-      id: updatedOrg.id,
-      name: updatedOrg.name,
-      apiKey: updatedOrg.apiKey,
-      message: 'API key generated successfully',
-    });
-  } catch (error) {
-    log.error('Error generating API key:', error);
-    res.status(500).json({ error: 'Failed to generate API key' });
   }
 });
 

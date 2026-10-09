@@ -40,10 +40,53 @@ const state = vi.hoisted(() => ({
   inserted: [] as Record<string, unknown>[],
 }));
 
-vi.mock('../../db', () => {
-  const pool = {
-    query: vi.fn(async () => ({ rows: state.sourceRows, rowCount: state.sourceRows.length })),
+vi.mock('../../db', async () => {
+  /* 2026-09-23 (W5/D7, round-3 review, repair 1): harness only — no case
+     below changed. A sourced snapshot now takes its text and title from the
+     source's saved sections (services/coauthor/coauthor-snapshot.ts) and
+     re-reads the source FOR UPDATE inside the create's transaction, so the
+     mock answers by statement rather than returning the source row to every
+     query. The text itself is pinned on PGlite in
+     coauthorSnapshotFromSource.test.ts.
+     2026-09-23 (W5/D7, round-3 review, repair 2): harness only again. The
+     placement now re-reads the sections on its transaction and holds an
+     approved/finalized copy to the source's seal (frozen_documents), so the
+     sections carry id and order_index and a matching seal is answered. The
+     seal rule itself is pinned in coauthorSnapshotFromSource.test.ts and, on
+     the real authoring router, coauthorSnapshotSeal.test.ts. */
+  const { PgDialect } = await import('drizzle-orm/pg-core');
+  const { createHash } = await import('node:crypto');
+  const dialect = new PgDialect();
+  const SECTIONS = [{ id: 's1', code: '2.5', title: 'Overview', content: 'Text.', order_index: 0 }];
+  const frozenContent = JSON.stringify({ document: { title: 'M2.5 Clinical Overview' }, sections: SECTIONS });
+  const answer = (text: string) => {
+    if (/FROM frozen_documents/i.test(text)) {
+      const rows = [
+        {
+          version: 'v1.0.frozen',
+          frozen_content: frozenContent,
+          content_hash: createHash('sha256').update(frozenContent).digest('hex'),
+        },
+      ];
+      return { rows, rowCount: 1 };
+    }
+    if (/FROM authoring_sections/i.test(text)) {
+      const rows = state.sourceRows.length ? SECTIONS : [];
+      return { rows, rowCount: rows.length };
+    }
+    if (/SELECT title, module FROM authoring_documents/i.test(text)) {
+      const rows = state.sourceRows.length ? [{ title: 'M2.5 Clinical Overview', module: null }] : [];
+      return { rows, rowCount: rows.length };
+    }
+    if (/FROM authoring_documents/i.test(text)) {
+      return { rows: state.sourceRows, rowCount: state.sourceRows.length };
+    }
+    // The alias writer probes for its table with to_regclass; this database
+    // has none, so the snapshot is created without an alias.
+    if (/to_regclass/i.test(text)) return { rows: [{ present: false }], rowCount: 1 };
+    return { rows: [], rowCount: 0 };
   };
+  const pool = { query: vi.fn(async (text: string) => answer(text)) };
   const insert = () => ({
     values: (v: Record<string, unknown>) => ({
       returning: async () => {
@@ -52,10 +95,8 @@ vi.mock('../../db', () => {
       },
     }),
   });
-  // The create runs the row and its alias-map write in one transaction
-  // (L10). The alias writer first probes for its table with to_regclass;
-  // this database has none, so the snapshot is created without an alias.
-  const tx = { insert, execute: async () => ({ rows: [{ present: false }] }) };
+  // The create runs the row and its alias-map write in one transaction (L10).
+  const tx = { insert, execute: async (q: any) => answer(dialect.sqlToQuery(q).sql) };
   const db = { insert, transaction: async (fn: (t: typeof tx) => unknown) => fn(tx) };
   return { db, pool, transaction: vi.fn(), getPool: () => pool, getDb: () => db };
 });

@@ -1,0 +1,10 @@
+# ESLint per-file warning counts, HEAD vs working tree (ratchet: may only shrink). 2026-09-20
+server/services/ectd/signed-package-export.ts: HEAD=1 now=0
+server/services/submission-package-orchestrator.ts: HEAD=9 now=9
+server/routes/c2c/artifacts.ts: HEAD=29 now=27
+server/services/ectd/sign-payload-seal.ts: HEAD=0 now=0
+server/lib/tamper-proof-audit.ts: HEAD=3 now=3
+server/routes/c2c/__tests__/c2c-router.parity.test.ts: HEAD=0 now=0
+
+# new files
+(empty above = 0 problems)

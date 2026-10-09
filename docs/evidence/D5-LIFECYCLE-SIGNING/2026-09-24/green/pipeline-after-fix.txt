@@ -1,0 +1,14 @@
+# GREEN — the fixed router
+
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > runs the spine authoring → approved with gates, re-verified signatures and a verified audit chain, and refuses to place without a sequence 108ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > scopes reads to the tenant — another org cannot see the document 18ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > instantiates the type's blueprint outline at creation (blueprints reach the document) 23ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > refuses a sign-off with no password, and with a wrong one 25ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > records the server role, never the one in the request body 32ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > approving signs: no password, no approval — and the stage does not move 37ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a signatureRef in the body is never cited: the approval carries a server-minted reference 42ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a role without signing authority cannot sign, even re-verified 21ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a viewer can create, sign and advance nothing 18ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > no user, no write: the actor is the authenticated user or nothing — never "unknown" 14ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > an illegal jump is refused by the gate and costs the signer no credential check 7ms
+      Tests  11 passed (11)

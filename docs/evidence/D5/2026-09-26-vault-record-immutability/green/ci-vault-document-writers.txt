@@ -1,0 +1,7 @@
+  ✓ every named writer, nothing else — expected exit 0, got 0
+  ✓ an unnamed service file writes vault.documents — expected exit 1, got 1
+  ✓ a named writer no longer writes (stale allowlist) — expected exit 1, got 1
+  ✓ a test file writing it is not a finding — expected exit 0, got 0
+[selftest] ✅ the gate fails on an unnamed writer and on a stale entry, and only there.
+[ci:vault-document-writers] 6 file(s) write vault.documents; 6 named.
+[ci:vault-document-writers] OK: every writer is a named one.

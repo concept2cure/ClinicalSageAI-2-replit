@@ -1,0 +1,9 @@
+ × server/routes/c2c/__tests__/vault-recorded-provider.test.ts > readVerifiedVaultBytes reads from the recorded store > serves a document recorded `local` while the server is configured for S3 9ms
+   → expected { ok: false, status: 409, …(2) } to deeply equal { ok: true, …(1) }
+ ✓ server/routes/c2c/__tests__/vault-recorded-provider.test.ts > readVerifiedVaultBytes reads from the recorded store > still refuses another organization's read of it 1ms
+ × server/routes/c2c/__tests__/vault-recorded-provider.test.ts > readVerifiedVaultBytes reads from the recorded store > refuses a recorded store this server does not implement, without asking the configured one 2ms
+   → expected 'STORED_FILE_MISSING' to be 'STORED_FILE_UNREADABLE' // Object.is equality
+ × server/routes/c2c/__tests__/vault-recorded-provider.test.ts > readVerifiedVaultBytes reads from the recorded store > refuses, as unreadable, a recorded store this server cannot currently open 1ms
+   → expected 'STORED_FILE_MISSING' to be 'STORED_FILE_UNREADABLE' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed (4)

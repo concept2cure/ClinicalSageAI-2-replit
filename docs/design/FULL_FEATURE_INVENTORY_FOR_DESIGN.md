@@ -474,7 +474,7 @@ Light mode `:root`; dark mode `.dark, [data-theme="dark"]`. **Brand color = `#D9
 
 **`--accent-main-*` brand scale:** `--accent-main-000` #faf0ec, `-100` **#d97757 (THE brand)**, `-200` #c96442 (pressed/darker), `-900` #431407. Pro badge: `--accent-pro-000/100/200` (#ece9f7/#6c5dac/#544698). AnA assistant persona (muted blue): `--ai` #6a9bcc, `--ai-hover` #5585b3, `--ai-muted` #dce8f3.
 
-**Borders:** `--border` (above), `--border-subtle` = sidebar-border, `--border-strong` = --bg-300, `--border-focus` = accent-main-100.
+**Borders:** `--border` (above), `--border-subtle` = sidebar-border, `--border-strong` = --bg-300, `--border-focus` = accent-main-200 (a focus ring must clear 3:1 non-text contrast; accent-main-100 is 2.96:1 on bg-000).
 
 **Semantic status:** `--success` #788c5d (+`--success-muted` #e4ebd8), `--warning` #c87d2e (+#f8e9d0), `--error` #b93a3a (+#f5dfdd), `--info` = --ai. **Note:** canonical uses `--success/--warning/--error` + shadcn `--destructive` (#141413). `--danger` exists ONLY in legacy `theme.css`. The ana CSS modules reference `--danger`/`--warning`/`--success` with hex fallbacks (`#b4541f`/`#b4831f`/`#2f7d57`).
 

@@ -1,0 +1,17 @@
+ × server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it 119ms
+ × server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker 59ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > is empty only when nothing was left out and nothing is unapproved 0ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > names every leaf left out of the package 2ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > never reads an un-itemised unapproved count as nothing 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ { sectionCode: 'm5.3.5.1', …(1) } ] to deeply equal []
+- Expected
++ Received
++   {
++     "reason": "no resolvable source file for the leaf document",
++     "sectionCode": "m5.3.5.1",
++   },
+AssertionError: expected [ …(2) ] to have a length of 1 but got 2
+- Expected
++ Received
+      Tests  2 failed | 3 passed (5)

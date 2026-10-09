@@ -1,0 +1,47 @@
+# source at 165f35c4 chore(repo-health): auto-refresh baseline after merge [skip ci]
+# the PF-11 placement tests and the shrunk walk baseline, against the source before the fix
+ × server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a Vault document of another project, and writes nothing
+   → expected { id: 1, sequenceId: 1, …(19) } to be an instance of SubmissionError
+ × server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a governed section of another project’s filing document
+   → expected { id: 2, sequenceId: 1, …(19) } to be an instance of SubmissionError
+ × server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s authoring filing copy (reached through the alias map)
+   → expected { id: 3, sequenceId: 1, …(19) } to be an instance of SubmissionError
+ × server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > places the project’s own document, and the ledger names the document, its pin and the project
+   → expected { Object (sequenceId, sectionCode) } to match object { sequenceId: 1, …(5) }
+ × server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses re-pointing an existing leaf at another project’s document
+   → expected { id: 5, sequenceId: 1, …(19) } to be an instance of SubmissionError
+ × server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > allows a placement it cannot judge (the submission records no project), and records both sides
+   → expected { Object (sequenceId, sectionCode) } to match object { …(3) }
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+  RED    bytes-durable — baselined DR-ANA-11 → LX-02; observed null
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  RED    model-recorded — baselined AC-01, DR-ANA-13 → LX-06; observed undefined
+  RED    turn-recorded — baselined AC-01, DR-ANA-13 → LX-06; observed [null,null]
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+  RED    seal-binds-revision-and-lineage — baselined AC-04, AC-10 → LX-08 then LX-09; observed {"heads":2,"bound":0,"lineageDigests":0}
+  RED    filing-names-sealed-version — baselined SUB-7, AC-14 → LX-10; observed false
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+   → place/placement-audit-names-document-and-pin FAILS and is not baselined — each LEAF_CREATED ledger row names the document it placed and the pin it took
+  RED    reachable-from-the-product — baselined SUB-1 → LX-13; observed 0
+  RED    bytes-retained — baselined SUB-2 → LX-12; observed false
+  RED    transmittal-names-sequence — baselined SUB-2 → LX-12; observed false
+  RED    transmit-record-names-bundle — baselined SUB-2 → LX-12; observed false
+  RED    vault-leaf-to-seal — baselined SUB-7 → LX-10; observed 0
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+ Test Files  2 failed (2)
+      Tests  7 failed | 11 passed (18)

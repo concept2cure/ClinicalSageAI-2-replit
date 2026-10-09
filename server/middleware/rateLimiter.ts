@@ -3,15 +3,32 @@
  *
  * This middleware provides protection against abuse through configurable rate limiting
  * with separate limits for different API endpoints and client IPs.
+ *
+ * ── Keyed by verified identity when there is one (VSR-001 F-5, 2026-09-21) ──
+ * Eleven routers mount `createRateLimiter()` after `authenticateToken`, and
+ * every instance shares the ONE store below. Keying that store by client IP
+ * meant one browser session loading Tasks, Vault and the Submission Center —
+ * more than sixty calls across those routers in a minute — tripped the `api`
+ * bucket on the first attempt, and an office behind one NAT address shared it.
+ *
+ * The identity this limiter sees is verified (it runs after auth), so an
+ * authenticated request is now keyed `user:<id>` with the bucket's
+ * `maxRequestsAuthenticated` ceiling (platform-limits.ts). A request with no
+ * verified identity keeps the per-IP key and the per-IP ceiling: nothing
+ * anonymous got looser.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
 import { LEGACY_RATE_LIMITS, RATE_LIMIT_STORE } from '../config/platform-limits';
+import { ipKeyGenerator } from 'express-rate-limit';
+import { clientIpKey } from '../utils/client-ip';
 
 interface RateLimitRule {
   windowMs: number; // Time window in milliseconds
-  maxRequests: number; // Maximum number of requests allowed in the window
+  maxRequests: number; // Maximum number of requests allowed in the window (per IP)
+  /** Ceiling for ONE verified identity; absent → the per-IP ceiling applies to it too. */
+  maxRequestsAuthenticated?: number;
   message: string; // Message to return when rate limit is exceeded
 }
 
@@ -29,12 +46,27 @@ const DEFAULT_RULES: Record<string, RateLimitRule> = {
   ai: { ...LEGACY_RATE_LIMITS.ai },
 };
 
-// In-memory store for rate limit tracking
+// In-memory store for rate limit tracking, keyed by SUBJECT: `user:<id>` for a
+// verified identity, `ip:<address>` otherwise.
 // In a production environment, consider using Redis for distributed rate limiting.
-// A hard cap on the number of tracked IPs prevents unbounded memory growth
+// A hard cap on the number of tracked subjects prevents unbounded memory growth
 // from a flood of unique source IPs (intentional or accidental).
 const IP_LIMITER_MAX_KEYS = RATE_LIMIT_STORE.maxTrackedKeys;
 const ipLimiters: Record<string, Record<string, RateLimitTracker>> = {};
+
+/**
+ * The verified identity on the request, or null. `req.userId` is published by
+ * the auth boundary / tenant context; `req.user.id` by `authenticateToken`.
+ * Both are set only after a token verified, which is why this limiter — which
+ * every mounting router places after auth — may trust them.
+ */
+function verifiedUserId(req: Request): string | null {
+  const r = req as Request & { userId?: unknown; user?: { id?: unknown } };
+  const raw = r.userId ?? r.user?.id;
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return String(raw);
+  if (typeof raw === 'string' && raw.trim() !== '') return raw.trim();
+  return null;
+}
 
 /**
  * Determine the appropriate rate limit category for a given request path
@@ -60,6 +92,44 @@ function getRateLimitCategory(path: string): string {
   }
 }
 
+/** The subject a request counts against, and the ceiling that subject gets. */
+function resolveSubject(req: Request, clientIp: string, rule: RateLimitRule): { subject: string; maxRequests: number } {
+  const userId = verifiedUserId(req);
+  if (userId) {
+    return { subject: `user:${userId}`, maxRequests: rule.maxRequestsAuthenticated ?? rule.maxRequests };
+  }
+  return { subject: `ip:${clientIp}`, maxRequests: rule.maxRequests };
+}
+
+/**
+ * The subject's tracker for this category, allocated on first sight and reset
+ * when its window has expired. Returns null when the table is at its hard cap
+ * and a cleanup pass could not make room — the cap exists to bound memory under
+ * a flood of unique subjects, and once it is reached limiting is best-effort.
+ */
+function trackerFor(subject: string, category: string, rule: RateLimitRule, now: number): RateLimitTracker | null {
+  if (!ipLimiters[subject]) {
+    if (Object.keys(ipLimiters).length >= IP_LIMITER_MAX_KEYS) {
+      cleanupOldEntries();
+      if (Object.keys(ipLimiters).length >= IP_LIMITER_MAX_KEYS) {
+        return null;
+      }
+    }
+    ipLimiters[subject] = {};
+  }
+  const byCategory = ipLimiters[subject];
+  if (!byCategory[category]) {
+    byCategory[category] = { count: 0, resetTime: now + rule.windowMs };
+  }
+  const tracker = byCategory[category];
+  // Reset counter if window has expired
+  if (now > tracker.resetTime) {
+    tracker.count = 0;
+    tracker.resetTime = now + rule.windowMs;
+  }
+  return tracker;
+}
+
 /**
  * Create rate limiter middleware with optional custom rules
  */
@@ -73,13 +143,11 @@ export function createRateLimiter(customRules?: Record<string, RateLimitRule>) {
       return next();
     }
 
-    // Get client IP. Trust req.ip first (Express resolves trust-proxy
-    // config), then take only the LEFTMOST X-Forwarded-For entry — the
-    // rightmost ones are attacker-controllable for any client that can
-    // set the header.
-    const forwardedHeader = req.headers['x-forwarded-for'];
-    const forwarded = Array.isArray(forwardedHeader) ? forwardedHeader[0] : forwardedHeader;
-    const clientIp = req.ip || forwarded?.split(',')[0]?.trim() || 'unknown';
+    // The client address trust proxy resolves (server/utils/client-ip.ts),
+    // IPv6 bucketed by /56 so one host cannot rotate through its own range.
+    // The fallback to the left-most X-Forwarded-For entry is gone: that entry
+    // is the one every client writes (D6).
+    const clientIp = ipKeyGenerator(clientIpKey(req));
 
     // Determine appropriate rate limit category based on request path
     const category = getRateLimitCategory(req.path);
@@ -90,47 +158,28 @@ export function createRateLimiter(customRules?: Record<string, RateLimitRule>) {
       return next();
     }
 
+    // The subject this request counts against, and the ceiling that subject
+    // gets. A verified identity is its own subject with the authenticated
+    // ceiling; everything else is the address with the per-IP ceiling.
+    const { subject, maxRequests } = resolveSubject(req, clientIp, rule);
+
     const now = Date.now();
 
-    // Initialize rate limit tracking for this IP if it doesn't exist.
-    // Apply a hard cap on the number of tracked IPs to prevent
-    // unbounded growth under flood conditions; force a cleanup pass
-    // when at the cap and skip the tracking allocation if cleanup
-    // can't make room (rate limiting becomes best-effort once the
-    // table is saturated — better than OOM).
-    if (!ipLimiters[clientIp]) {
-      if (Object.keys(ipLimiters).length >= IP_LIMITER_MAX_KEYS) {
-        cleanupOldEntries();
-        if (Object.keys(ipLimiters).length >= IP_LIMITER_MAX_KEYS) {
-          return next();
-        }
-      }
-      ipLimiters[clientIp] = {};
-    }
-
-    // Initialize rate limit tracking for this category if it doesn't exist
-    if (!ipLimiters[clientIp][category]) {
-      ipLimiters[clientIp][category] = {
-        count: 0,
-        resetTime: now + rule.windowMs,
-      };
-    }
-
-    const tracker = ipLimiters[clientIp][category];
-
-    // Reset counter if window has expired
-    if (now > tracker.resetTime) {
-      tracker.count = 0;
-      tracker.resetTime = now + rule.windowMs;
+    const tracker = trackerFor(subject, category, rule, now);
+    // No tracker means the table is saturated and cleanup could not make room:
+    // rate limiting is best-effort from here (better than OOM).
+    if (!tracker) {
+      return next();
     }
 
     // Check if rate limit is exceeded
-    if (tracker.count >= rule.maxRequests) {
+    if (tracker.count >= maxRequests) {
       logger.warn(`Rate limit exceeded for ${category}`, {
+        subject,
         ip: clientIp,
         path: req.path,
         count: tracker.count,
-        limit: rule.maxRequests,
+        limit: maxRequests,
         remainingMs: tracker.resetTime - now,
       });
 
@@ -146,9 +195,9 @@ export function createRateLimiter(customRules?: Record<string, RateLimitRule>) {
     // Increment counter and proceed
     tracker.count++;
 
-    // Add rate limit info to headers
-    res.setHeader('X-RateLimit-Limit', rule.maxRequests);
-    res.setHeader('X-RateLimit-Remaining', rule.maxRequests - tracker.count);
+    // Add rate limit info to headers — the ceiling that applied to THIS subject
+    res.setHeader('X-RateLimit-Limit', maxRequests);
+    res.setHeader('X-RateLimit-Remaining', maxRequests - tracker.count);
     res.setHeader('X-RateLimit-Reset', Math.ceil(tracker.resetTime / 1000));
 
     // Clean up old entries periodically (every 100 requests)
@@ -166,20 +215,20 @@ export function createRateLimiter(customRules?: Record<string, RateLimitRule>) {
 function cleanupOldEntries() {
   const now = Date.now();
 
-  Object.keys(ipLimiters).forEach(ip => {
+  Object.keys(ipLimiters).forEach(subject => {
     let allExpired = true;
 
-    Object.keys(ipLimiters[ip]).forEach(category => {
-      if (now > ipLimiters[ip][category].resetTime) {
-        delete ipLimiters[ip][category];
+    Object.keys(ipLimiters[subject]).forEach(category => {
+      if (now > ipLimiters[subject][category].resetTime) {
+        delete ipLimiters[subject][category];
       } else {
         allExpired = false;
       }
     });
 
-    // Remove IP entry if all categories are expired
+    // Remove the subject's entry if all categories are expired
     if (allExpired) {
-      delete ipLimiters[ip];
+      delete ipLimiters[subject];
     }
   });
 }

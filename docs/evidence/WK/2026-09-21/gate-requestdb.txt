@@ -1,0 +1,12 @@
+[ci:requestdb-coverage] RLS request-scoped DB adoption
+  route files touching the DB : 260
+  using requestDb(req)        : 28
+  still on the shared pool    : 232 (migration backlog)
+    JWT boundary auto-scoped  : 230
+    explicit pre-tenant scope : 2
+    unclassified              : 0
+[ci:requestdb-coverage] FAIL — 3 NEW route(s) on the shared pool above baseline of 229. New tenant-facing routes must use requestDb(req):
+  server/routes/ana-ri/utility.ts
+  server/routes/data-origins.routes.ts
+  server/routes/dossier-map.routes.ts
+requestdb exit 1

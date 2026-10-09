@@ -1,0 +1,16 @@
+$ # partition, tiers and gate unchanged at 50b04d99
+ × server/services/ana-ri/__tests__/confirm-tier.test.ts > the propose-only partition > is every state-changing command (no write runs from model output unaided) 10ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the propose-only partition > holds only writes 1ms
+ × server/services/ana-ri/__tests__/confirm-tier.test.ts > the three tiers > an ordinary write is the confirm tier 1ms
+ × server/services/ana-ri/__tests__/confirm-tier.test.ts > the three tiers > the Part 11 sets keep their tiers 1ms
+ × server/services/ana-ri/__tests__/confirm-tier.test.ts > the three tiers > every write has a tier and a confirm-tier command is in neither Part 11 set 1ms
+ × server/services/ana-ri/__tests__/confirm-tier.test.ts > what the agent is told > a confirm-tier proposal asks for a confirmation, not a reason or a signature 1ms
+ × server/services/ana-ri/__tests__/confirm-tier.test.ts > what the agent is told > a reason-tier proposal still asks for the reason, an e-sign one for the signature too 3ms
+ × server/services/ana-ri/__tests__/confirm-tier.test.ts > the tool gate > asks for approval on an ordinary write, at the confirm tier 2ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the tool gate > still leaves reads alone 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: writes a model response still runs by itself: expected [ 'create_project', …(35) ] to deeply equal []
+TypeError: governedTierOf is not a function
+TypeError: governedTierOf is not a function
+TypeError: governedTierOf is not a function
+exit=1

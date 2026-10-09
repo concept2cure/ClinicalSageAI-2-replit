@@ -1,0 +1,9 @@
+ ✓ server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > control: the production posture loads with deterministic mode off 111ms
+ × server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > refuses to boot with AI_GATEWAY_DETERMINISTIC=true and no acceptance 14ms
+ × server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > refuses the legacy alias DETERMINISTIC_MODE=true the same way 3ms
+ × server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > is not accepted by AI_GOVERNANCE_ACCEPT_PERMISSIVE, which accepts a different risk 5ms
+ ✓ server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > boots with the written acceptance (the CI boot job posture) 1ms
+ × server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses it even when accepted 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed | 37 skipped (43)

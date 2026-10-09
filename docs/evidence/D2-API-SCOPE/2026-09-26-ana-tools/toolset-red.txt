@@ -1,0 +1,10 @@
+# RED — AnA toolset: tests against governed-toolset.ts at 5172b0778 (no launch-scope filter)
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every enabled tool: a new one must be added as hiddenApp or inScope 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every platform command 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog 7ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > brings a tool back when its surface joins the launch catalog, without editing the inventory 0ms
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest 6ms
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > withholds them for a request with no organisation too 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > with launch scope off (a development server), offers everything 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 5 passed (7)

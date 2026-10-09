@@ -33,7 +33,8 @@ Bring AnA (`/api/ana-ri/*`) to production-grade operation with clear startup che
 - `SENTRY_DSN` (error telemetry)
 
 ## Deterministic-mode fallback
-- If `AI_GATEWAY_DETERMINISTIC=true` (or `DETERMINISTIC_MODE=true`), AnA can still answer using deterministic responses for validation and non-live smoke testing.
+- If `AI_GATEWAY_DETERMINISTIC=true` (or `DETERMINISTIC_MODE=true`), AnA answers every request with a fixed response instead of model output, and `/readyz` reports `anaState: "deterministic"`. Use it for tests, local development and non-live smoke checks.
+- **Not in production.** Since 2026-09-28 a production process refuses to boot in deterministic mode, and the gateway refuses to serve a fixed response, unless `AI_GATEWAY_ACCEPT_DETERMINISTIC=true` records the risk: fixed responses can be accepted into governed drafts. Set the acceptance only in a throwaway environment that serves no user, as the CI boot job does. `AI_GOVERNANCE_REQUIRE_ENFORCE=true` refuses it even with the acceptance, and `deploy-aws.yml` refuses all three names in a production task definition (`docs/evidence/D2-DETERMINISTIC-PROD/2026-09-28/`).
 
 ---
 

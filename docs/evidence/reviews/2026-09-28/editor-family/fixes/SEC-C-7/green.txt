@@ -1,0 +1,207 @@
+$ npx vitest run --config vitest.config.ts server/services/protocol-reviews/__tests__/ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts server/routes/__tests__/protocol-signatures.routes.test.ts client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts server/services/part11/__tests__/resolve-signer-identity.test.ts
+# 2026-09-28T05:06:32Z at 26e0b3a8 (working tree)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+stderr | server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T05:06:36.580Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T05:06:36.579Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds a visit through the governed visit route and re-reads the protocol 1901ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renames a visit through the visit PATCH, carrying the visit id 1214ms
+ ✓ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > a different name typed beside the account is refused, and nothing is recorded 17ms
+ ✓ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > the same name, typed with other capitals or spacing, is stored as the account spells it 7ms
+ ✓ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > a blank name means the account’s name 7ms
+ ✓ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with no name on record is listed under its email, the name a signature from it would print 7ms
+ ✓ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with neither a name nor an email cannot be listed, and says so 5ms
+ ✓ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > the membership checks still come first: another organisation’s user is refused 4ms
+ ✓ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a reviewer with no account is named as typed > stores the typed name, trimmed 3ms
+ ✓ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a reviewer with no account is named as typed > needs a name 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes a visit through the governed remove route 1007ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a finalized protocol takes no new assessment, and no cell is set or cleared 43ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a superseded protocol takes no new assessment, and no cell is set or cleared 19ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a protocol still in development takes all three 25ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > another tenant cannot claim, block or overwrite a protocol’s budget parameters 18ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against another tenant’s protocol is refused, and nothing is written 16ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against another tenant’s protocol is refused, and nothing is written 22ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against another tenant’s protocol is refused, and nothing is written 17ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against another tenant’s protocol is refused, and nothing is written 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against another tenant’s protocol is refused, and nothing is written 64ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against another tenant’s protocol is refused, and nothing is written 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against a protocol that does not exist is refused 15ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against the caller’s own protocol is written 5ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against the caller’s own protocol is written 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against the caller’s own protocol is written 12ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against the caller’s own protocol is written 21ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds an assessment through the SoA router 616ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against the caller’s own protocol is written 21ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against the caller’s own protocol is written 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes an assessment through the governed remove route 743ms
+stderr | server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T05:06:44.412Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renders the assembler’s findings rather than an empty list 426ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a review bound to an account, names the signer only, never a stored label 325ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a reviewer with no account, keeps the name the decision is recorded for 72ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the request-a-review drawer > says a chosen account is listed under its own name, before anything is typed 283ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > risk register — residual rating, owner and mitigation > writes the residual rating through the risk PATCH 1910ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > says plainly that no budget has been entered instead of printing a verdict 433ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > adds a line item through the budget router 548ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > sets the feasibility parameters through the params PUT 617ms
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+{
+  "timestamp": "2026-09-28T05:06:48.386Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > requests a review through the reviewers route 624ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses without re-authentication, and writes nothing 47ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a wrong password the same way 8ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses an undeclared meaning before asking for credentials (21 CFR 11.50) 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a meaning finalization cannot carry 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a viewer cannot sign, and nothing is asked or written 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > an enrolled second factor that was not given is named as such 13ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > finalizes, checks independence, and writes the ledger AND the signature row in one transaction 7ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > records the second factor only when one was verified 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a non-author cannot sign as the author 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an approval is checked for independence on the signing client 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an author approving their own protocol is refused before the finalization runs 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned 9ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses without re-authentication, and records no disposition 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a viewer cannot sign a disposition 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > passes the signer and the declared meaning to the domain write, then signs 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a review assigned to someone else is refused and rolled back 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses authorship as a review meaning 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > assigns the review to a member's account, so the reviewer signs their own review 577ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > turns a thrown 409 SECTION_CHANGED into the editor’s conflict, not a generic failure 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > names the act and says nothing was written, carrying the server’s sentence 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > reports a thrown 401 as an unauthenticated session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > does not swallow a failure that is not an API refusal 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 409 SECTION_CHANGED as the conflict 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 401 as an unauthenticated session 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a reason under eight characters with no request at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a cover-page save with no field to change 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the section save carries the concurrency token and the status > sends expectedUpdatedAt, status and the reason on the section PATCH 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > finalize sends the meaning, the reason and the credentials for the server to re-verify 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > a disposition carries the decision with the signature 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > a rejected password is reported as a rejected password, not an expired session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > a refused finalize names the act and carries the server’s reason 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > refuses a reason under eight characters with no request at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > posts severity, a boolean safety impact, the rationale and the reason 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > refuses no severity chosen with no request at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > refuses safety impact left open with no request at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > refuses no rationale with no request at all 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > the creator and everyone who edited it through the ledger, and no one else 59ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > whoever built the schedule of assessments or the objectives is an author; a commenting reviewer is not 24ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > reads on the client it is given 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > comments, budget, version snapshots and other modules' records are not authorship of the protocol 19ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a synopsis edit, which records no payload, counts 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a document-level edit counts 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a disposition is independent of the reviewed protocol's authors 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > another tenant's protocol has no authors here, so it cannot be shown independent 13ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization and a disposition bind the same content, re-derivably 31ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > when the member list cannot be read it says so, and a reviewer can still be named without an account 553ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization does not move it: version and workflow status are not content 30ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an objective moves it 19ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an eligibility criterion moves it 18ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing a visit moves it 23ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the synopsis moves it 20ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the sponsor moves it 12ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > returns the printed name, email and title from the membership record 4ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > constrains the lookup on organization_users, bound to the signing org 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > REGRESSION: refuses rather than synthesising when the signer is not a member 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > REGRESSION: refuses a row with no email rather than writing an empty string 0ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > falls back to the email as the printed name, but never past it 0ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > refuses a non-finite or non-positive id without querying at all 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > does not disclose whether the user exists in another tenant 0ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/services/ana/submission-chat-apply-rewrite.ts resolves the signer instead of defaulting one 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/services/ana/verifiedSealService.ts resolves the signer instead of defaulting one 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/services/DocumentOrchestrationService.ts resolves the signer instead of defaulting one 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/routes/esignature.ts resolves the signer instead of defaulting one 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > changing the content moves the digest 33ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > another tenant's protocol binds nothing of its content 5ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > the assigned reviewer, as review 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > not someone else, and nothing is recorded 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a reviewer with no account can only have their decision recorded under responsibility 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a signed disposition is final: a second signing is refused and the decision stands 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > another tenant's assignment is not found 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone independent of the authors finalizes it as approval: the version row finalize writes does not make them an author 32ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a non-author cannot finalize as its author, and nothing is written 10ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author finalizes it as its author 28ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > whatever the act itself writes is not read as authorship of what is being signed 23ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author cannot approve their own protocol 18ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a member who can sign 13ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a named reviewer with no account 5ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a user of another organization: the review could never be signed 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a viewer, who cannot sign 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > the disposition reports the protocol version that was reviewed 12ms
+ ✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > is pending with no assignments 2ms
+ ✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > is pending while any assignment is incomplete 0ms
+ ✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > approves when all complete and all approve 0ms
+ ✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > a single reject is dispositive 0ms
+ ✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > approve_with_changes gates a clean approval when no reject 0ms
+ ✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > all abstentions never decide 0ms
+ ✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > cites the basis 0ms
+ ✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > evaluateReviewReadiness > ready when all completed and no open blocking comments 1ms
+ ✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > evaluateReviewReadiness > not ready with no reviewers 1ms
+ ✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > evaluateReviewReadiness > not ready while assignments incomplete 0ms
+ ✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > evaluateReviewReadiness > not ready with open blocking comments 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > neither an account nor a name: nothing is sent 447ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > a disposition is signed, not submitted: nothing is sent until the signer re-authenticates 502ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > finalize — the replacement for the deleted reason-only drawer is reachable > Finalize protocol opens the e-signature and posts the signed finalization 377ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > cover page — sponsor and principal investigator > writes both through the cover-page PATCH and re-reads 309ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > consent — the tab shows what the read model returns > reports the element the assembled consent form holds 232ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a governed write does not take the protocol off screen > stays on the register being edited while the record is re-read 409ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an empty object reads as a failed load 13ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an envelope around an object reads as a failed load 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an error carried on a 200 reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > rows with no fields reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row with an id and nothing else reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row whose fields are present but null reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a store that is not provisioned says so, and offers no start 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > empty state > names the open project and offers both a start and an AnA draft 33ms
+
+ Test Files  9 passed (9)
+      Tests  150 passed (150)
+   Start at  05:06:34
+   Duration  17.92s (transform 6.68s, setup 1.21s, import 13.60s, tests 31.00s, environment 1.80s)
+
+# exit=0

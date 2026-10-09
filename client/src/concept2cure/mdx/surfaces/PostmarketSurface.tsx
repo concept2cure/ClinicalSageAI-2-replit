@@ -16,18 +16,14 @@
 import * as React from 'react';
 import { I } from '../icons';
 import { DocumentsPanel } from '../components/DocumentsPanel';
-import { SampleDataBanner } from '../components/SampleDataBanner';
 import {
   PV_CAPA_STAGES,
-  PV_PMS_PLAN,
-  PV_TRENDS,
 } from '../data/postmarket';
 import { PV_DOC_FRAMEWORKS } from '../data/postmarket-docs';
 import { usePostmarket } from '../hooks/usePostmarket';
 import { useTriageQueue } from '../hooks/useTriageQueue';
 import { DataGate } from '../components/DataGate';
 import { readyRows } from '../lib/dataState';
-import { useSampleRows, useShowingSample } from '../lib/useSampleRows';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 import type { Program } from '../data/programs';
 
@@ -82,12 +78,6 @@ export function PostmarketSurface({
   /* The framework list is a real category taxonomy, not tenant data, so it
      is not sample content and is no longer gated as though it were. */
   const frameworks = PV_DOC_FRAMEWORKS as unknown as KitDocFramework[];
-  /* The gate above was right and the marking was missing: these rows carry
-     `esigState: 'signed'` with a named signer and a date (data/postmarket-docs.ts),
-     so on the one screen where an example row is least acceptable the user was
-     given no way to tell. The live argument is `null` because no feed exists
-     yet, which makes this permanently either sample-or-empty. */
-  const documentsAreSample = useShowingSample(null);
 
   /* Critical or under-review signals not yet wrapped in a doc. */
   const triageQueue = React.useMemo(
@@ -112,22 +102,19 @@ export function PostmarketSurface({
       (d) => (d.framework ?? '').startsWith('mdr') && d.status === 'draft',
     );
 
-  const mdrDue = documents.filter((d) => {
-    if (!(d.framework ?? '').startsWith('mdr')) return false;
-    const dueIn = (d as unknown as { dueIn?: string }).dueIn;
-    if (!dueIn) return false;
-    if (dueIn.includes('h')) return true;
-    if (dueIn.endsWith('d') && Number.parseInt(dueIn, 10) < 3) return true;
-    return false;
-  }).length;
-
-  const capasInFlight = documents.filter(
-    (d) => d.framework === 'capa' && d.status !== 'locked',
-  );
-  const capasInvestigating = capasInFlight.filter((d) => d.status === 'draft').length;
-  const capasReview = capasInFlight.filter((d) => d.status === 'review').length;
-  const psurs = documents.filter((d) => d.framework === 'psur');
-  const psursSigned = psurs.filter((d) => d.status === 'locked').length;
+  /* The four metric cards used to be computed from `documents` — a list
+     with no live feed, now empty — so they read "MDRs due ≤72h 0", "CAPAs in
+     flight 0", "PSURs 0 · 0 signed": statutory-clock and quality findings
+     stated about data nobody read. Each card now comes from the read that
+     actually holds it, and says "—" until that read is ready. */
+  const triageRows = triage.items.status === 'ready' ? triage.items.data : null;
+  const mdrDue = triageRows
+    ? triageRows.filter((t) => t.kind === 'mdr' && (t.overdue || (t.daysToDue !== null && t.daysToDue <= 3))).length
+    : null;
+  const openCapas = triageRows ? triageRows.filter((t) => t.kind === 'capa') : null;
+  const overdueCapas = openCapas ? openCapas.filter((t) => t.overdue).length : null;
+  const pmsEntries = live.pmsPlan.status === 'ready' || live.pmsPlan.status === 'empty' ? readyRows(live.pmsPlan).length : null;
+  const signalsRead = live.signals.status === 'ready' || live.signals.status === 'empty';
   const openSignals = signals.filter((s) => s.state !== 'closed-trend');
   const criticalSignals = signals.filter((s) => s.severity === 'critical').length;
 
@@ -179,36 +166,32 @@ export function PostmarketSurface({
       <div className="metrics-row metrics-compact">
         <div className="metric-card" data-tone="err">
           <div className="metric-label">MDRs due ≤72h</div>
-          <div className="metric-val">{mdrDue}</div>
+          <div className="metric-val" data-testid="pm-mdr-due">{mdrDue ?? '—'}</div>
           <div className="metric-meta">FDA 5-day · 30-day · EU 15-day clocks</div>
         </div>
         <div className="metric-card" data-tone="warn">
-          <div className="metric-label">CAPAs in flight</div>
-          <div className="metric-val">{capasInFlight.length}</div>
+          <div className="metric-label">CAPAs open</div>
+          <div className="metric-val" data-testid="pm-capas">{openCapas ? openCapas.length : '—'}</div>
           <div className="metric-meta">
-            {capasInvestigating} investigation · {capasReview} review
+            {overdueCapas === null ? 'Not yet read' : `${overdueCapas} past target date`}
           </div>
         </div>
         <div className="metric-card">
-          <div className="metric-label">PSURs + PMS plans</div>
-          <div className="metric-val">{psurs.length}</div>
+          <div className="metric-label">PMS plan entries</div>
+          <div className="metric-val" data-testid="pm-pms">{pmsEntries ?? '—'}</div>
           <div className="metric-meta">
-            {psursSigned} signed · annual + 2-year cadence
+            {pmsEntries === null ? 'Not yet read' : pmsEntries === 0 ? 'No PMS plan recorded' : 'From the PMS plan'}
           </div>
         </div>
         <div className="metric-card">
           <div className="metric-label">Open signals</div>
-          <div className="metric-val">{openSignals.length}</div>
+          <div className="metric-val" data-testid="pm-signals">{signalsRead ? openSignals.length : '—'}</div>
           <div className="metric-meta">
-            {criticalSignals} critical · awaiting MDR roll-up
+            {signalsRead ? `${criticalSignals} critical · awaiting MDR roll-up` : 'Not yet read'}
           </div>
         </div>
       </div>
 
-      <SampleDataBanner
-        show={documentsAreSample}
-        label="regulatory submissions in flight"
-      />
       <DocumentsPanel
         title="Regulatory submissions in flight"
         subtitle="Tap any row to open in the MDR / CAPA / FSCA editor · sparkle to draft the narrative with AnA"
@@ -420,7 +403,6 @@ export function PostmarketSurface({
                   state={live.trends}
                   label="vigilance trends"
                   onRetry={live.refresh}
-                  sample={PV_TRENDS}
                   dense
                   emptyHint="Trend series are not yet computed from the complaint feed in this workspace."
                 >
@@ -466,7 +448,6 @@ export function PostmarketSurface({
                   state={live.pmsPlan}
                   label="PMS plan rows"
                   onRetry={live.refresh}
-                  sample={PV_PMS_PLAN}
                   dense
                   emptyHint="Post-market surveillance plans are not yet tracked in this workspace."
                 >

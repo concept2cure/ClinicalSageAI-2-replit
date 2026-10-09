@@ -1,3 +1,26 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: cre_evidence_sources.client_program_id — the project a Data Room
+--          source belongs to.
+--
+-- AMENDED IN PLACE 2026-09-26 (project-first plans PF-04 and PF-07; CLAUDE.md
+-- Rule 1). What changed: the column COMMENT this file replays, and the
+-- meaning of "neither set" in the header below. No schema object changed.
+--   * The comment said "No FK". migrations/20260926b_program_same_org_keys.sql
+--     now holds (client_program_id, organization_id) to regulatory_programs
+--     (id, organization_id): cre_evidence_sources_program_same_org_fk, NOT
+--     VALID, ON DELETE SET NULL (client_program_id). A source with no
+--     organization (GLOBAL_PUBLIC) may carry no project:
+--     cre_evidence_sources_program_needs_org.
+--   * "Tenant-wide, adoptable later" no longer describes a chat upload with no
+--     project open. Founder decision PF-07 (2026-09-26): that file stays a
+--     conversation file with no source row until POST
+--     /api/c2c/projects/:id/adopt brings it into a project.
+-- The replayed comment text differs, so the journal records drift for this
+-- file; that is this amendment.
+-- =============================================================================
 -- ═══════════════════════════════════════════════════════════════════════════
 -- cre_evidence_sources — scope a canonical source to a UUID-keyed program
 --
@@ -26,6 +49,7 @@
 --   client_program_id   set → scoped to a regulatory_programs UUID
 --   client_workspace_id set → scoped to a numeric workspace (legacy/CSR paths)
 --   neither             set → tenant-wide, adoptable into a project later
+--                             (a chat upload no longer lands here: PF-07, header)
 --
 -- This is deliberately NOT a resolution of the wider CRE collision
 -- (cre_evidence_sources vs clinical_evidence_sources) — see
@@ -69,7 +93,7 @@ BEGIN
     ADD COLUMN IF NOT EXISTS client_program_id UUID;
 
   COMMENT ON COLUMN cre_evidence_sources.client_program_id IS
-    'regulatory_programs.id (UUID) this source is scoped to. Complements client_workspace_id, which scopes to the numeric project id-space. No FK: cre_* deliberately avoids hard cross-schema references (see the spine migration).';
+    'regulatory_programs.id (UUID) this source is scoped to. Complements client_workspace_id, which scopes to the numeric project id-space. Held to the source''s own organization by cre_evidence_sources_program_same_org_fk (migrations/20260926b_program_same_org_keys.sql, PF-04): NOT VALID, ON DELETE SET NULL (client_program_id); a GLOBAL_PUBLIC source carries no project (cre_evidence_sources_program_needs_org).';
 
   -- The Data Room lists a program's sources; that read filters on
   -- (organization_id, client_program_id) and this is the half the org index

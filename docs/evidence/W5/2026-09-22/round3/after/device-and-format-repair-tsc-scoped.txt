@@ -1,0 +1,19 @@
+server/auth.ts(12,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/export/renderers.ts(3,25): error TS7016: Could not find a declaration file for module 'pdfkit'. '/home/user/ClinicalSageAI-2-replit/node_modules/pdfkit/js/pdfkit.js' implicitly has an 'any' type.
+  There are types at '/home/user/ClinicalSageAI-2-replit/server/types/pdfkit.d.ts', but this result could not be resolved when respecting package.json "exports". The 'pdfkit' library may need to update its package.json or typings.
+server/export/renderers.ts(443,20): error TS7006: Parameter 'chunk' implicitly has an 'any' type.
+server/middleware/establishRequestTenantScope.ts(162,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(164,9): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(227,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/ana/AnaToolExecutor.ts(36,28): error TS7016: Could not find a declaration file for module '../../fda_maude_client.js'. '/home/user/ClinicalSageAI-2-replit/server/fda_maude_client.js' implicitly has an 'any' type.
+server/services/ana/AnaToolExecutor.ts(151,28): error TS7016: Could not find a declaration file for module '../../fda_faers_client.js'. '/home/user/ClinicalSageAI-2-replit/server/fda_faers_client.js' implicitly has an 'any' type.
+server/services/cmc/link-to-module3.ts(34,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. '/home/user/ClinicalSageAI-2-replit/server/metrics.js' implicitly has an 'any' type.
+server/services/memory/document-text-extraction.ts(41,54): error TS2339: Property 'default' does not exist on type 'typeof import("/home/user/ClinicalSageAI-2-replit/node_modules/pdf-parse/dist/pdf-parse/esm/index")'.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/signature/kms-signer.ts(26,85): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/kms-signer.ts(165,26): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/kms-signer.ts(167,24): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`

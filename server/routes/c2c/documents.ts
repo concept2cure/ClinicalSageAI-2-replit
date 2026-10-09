@@ -31,7 +31,8 @@
 
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
-import { writeMutation, recordGovernedAction } from './actions.js';
+import { writeMutation, recordGovernedAction, verifyReauth, separationOfDutiesRefusal } from './actions.js';
+import { assertSignerIsNotAuthor } from '../../services/governance/separation-of-duties.js';
 import { detectSpans } from '../../services/sentenceTraceabilityService.js';
 import { sectionHasContentSql, sectionPlainText } from '../../services/c2c/section-content.js';
 import {
@@ -400,6 +401,53 @@ router.get('/:id/sections/:key', async (req: Request, res: Response) => {
     return res.json(rows[0]);
   } catch (err: unknown) {
     console.error('[c2c/documents] GET /:id/sections/:key', err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ── GET /api/c2c/documents/:id/sections/:key/versions ────────────────────────
+//
+// The section's own Part-11 history: the c2c_document_section_versions rows the
+// snapshot trigger writes on every content change, each with its author and
+// reason. This is what the dossier drawer's Activity tab shows. It used to show
+// events the BROWSER wrote into an in-memory list — attributed to "You · Reg
+// Lead", with a Math.random id — before and regardless of whether this route's
+// PATCH succeeded. A record no server witnessed is not an audit trail.
+router.get('/:id/sections/:key/versions', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+  const { id, key } = req.params;
+  try {
+    const docCheck = await pool.query(
+      `SELECT 1 FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
+      [id, orgId],
+    );
+    if (docCheck.rows.length === 0) return send404(res);
+    const { rows } = await pool.query(
+      `SELECT v.id, v.version, v.author_id, v.author_kind, v.reason, v.occurred_at,
+              COALESCE(u.name, u.email) AS author_name
+         FROM c2c_document_section_versions v
+         JOIN c2c_document_sections s ON s.id = v.section_id
+         JOIN c2c_documents d ON d.id = s.document_id AND d.org_id = $3
+         LEFT JOIN users u ON u.id = v.author_id
+        WHERE s.document_id = $1 AND s.section_key = $2
+        ORDER BY v.version DESC
+        LIMIT 200`,
+      [id, key, orgId],
+    );
+    return res.json({
+      data: rows.map((r) => ({
+        id: String(r.id),
+        version: r.version,
+        authorId: r.author_id,
+        authorName: r.author_name ?? null,
+        authorKind: r.author_kind,
+        reason: r.reason,
+        occurredAt: r.occurred_at instanceof Date ? r.occurred_at.toISOString() : r.occurred_at,
+      })),
+    });
+  } catch (err: unknown) {
+    console.error('[c2c/documents] GET /:id/sections/:key/versions', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
@@ -819,9 +867,22 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
   const orgId  = resolveOrgId(req);
   if (!userId || !orgId) return send403(res);
 
-  const { reason, reauth } = req.body as { reason?: string; reauth?: unknown };
+  const { reason, reauth } = req.body as { reason?: string; reauth?: Parameters<typeof verifyReauth>[1] };
   if (!reason || typeof reason !== 'string' || reason.trim() === '') {
     return send400(res, 'reason required');
+  }
+
+  // Locking is the governed `lock` command, and passes the gate every
+  // high-risk command passes on POST /api/c2c/actions/lock: the signer
+  // re-verified (§11.200), then not the document's author (separation of
+  // duties). Until 2026-09-23 this route wrote the same ledger row through
+  // writeMutation, which runs neither: the session alone locked a document,
+  // its author could lock it, and the `reauth` it accepted was never read.
+  // Re-verified first, so an unverified caller learns nothing of the document.
+  const verified = await verifyReauth(userId, reauth);
+  if (!verified.ok) {
+    res.setHeader('WWW-Authenticate', 'ReAuth required');
+    return res.status(401).json({ error: verified.error ?? 'REAUTH_REQUIRED' });
   }
 
   try {
@@ -833,6 +894,7 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
     if ((docCheck.rows[0] as any).status === 'locked') {
       return res.status(409).json({ error: 'ALREADY_LOCKED' });
     }
+    await assertSignerIsNotAuthor(`document:${req.params.id}`, orgId, userId, { command: 'lock' });
 
     // Atomic: the governed-action audit and the lock UPDATE commit or roll back
     // together, so the ledger can never record a lock the document didn't take.
@@ -862,10 +924,8 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
       client.release();
     }
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'INTERNAL_ERROR';
-    if (msg === 'REAUTH_PASSWORD_REQUIRED' || msg.startsWith('REAUTH_')) {
-      return res.status(401).json({ error: msg });
-    }
+    const sod = separationOfDutiesRefusal(err, 'c2c/documents/lock');
+    if (sod) return res.status(sod.status).json(sod.body);
     console.error('[c2c/documents] POST /:id/lock', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }

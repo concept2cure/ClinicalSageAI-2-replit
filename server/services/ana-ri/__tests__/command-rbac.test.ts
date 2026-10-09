@@ -310,3 +310,49 @@ describe('authorization registry — total coverage (anti-drift CI guard)', () =
     expect(reads).toEqual([]);
   });
 });
+
+/* Launch scope (D2/D6, 2026-09-29). The API has refused hidden apps' routes
+   since 2026-09-25 and AnA has not been offered their tools since 2026-09-26,
+   but execute_platform_command, /execute, /governed-action and chat command
+   blocks all dispatch here by name. A command classified hiddenApp in
+   services/ana/ana-launch-scope.inventory.json is refused whenever launch
+   scope is enforced (production by default), reads included, before any
+   tenant policy or role check. */
+describe('launch scope', () => {
+  const HIDDEN = ['pdev.program.get', 'q_sub.create', 'post_market.document.create', 'cmc_status', 'search_precedents'];
+  const KEPT = ['list_projects', 'create_task', 'audit.explain', 'module3_build_all'];
+
+  it('refuses a hidden-app command in production, read or write, whatever the role', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('LAUNCH_SCOPE_ENFORCE', '');
+    rbac.hasRole.mockResolvedValue(true);
+    rbac.getUserRoles.mockResolvedValue(['admin', 'regulatory-author', 'reviewer']);
+    for (const cmd of HIDDEN) {
+      const d = await authorizeCommand(cmd, ctx());
+      expect(d.ok, cmd).toBe(false);
+      expect((d as any).result.error, cmd).toBe('LAUNCH_SCOPE');
+    }
+    vi.unstubAllEnvs();
+  });
+
+  it('leaves in-scope commands to the normal checks', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('LAUNCH_SCOPE_ENFORCE', '');
+    rbac.hasRole.mockResolvedValue(true);
+    rbac.getUserRoles.mockResolvedValue(['admin', 'regulatory-author', 'reviewer']);
+    for (const cmd of KEPT) {
+      const d = await authorizeCommand(cmd, ctx());
+      expect((d as any).result?.error, cmd).not.toBe('LAUNCH_SCOPE');
+    }
+    vi.unstubAllEnvs();
+  });
+
+  it('with launch scope off (a development server), a hidden-app command reaches the normal checks', async () => {
+    vi.stubEnv('LAUNCH_SCOPE_ENFORCE', 'off');
+    rbac.hasRole.mockResolvedValue(true);
+    rbac.getUserRoles.mockResolvedValue(['admin', 'regulatory-author', 'reviewer']);
+    const d = await authorizeCommand('pdev.program.get', ctx());
+    expect((d as any).result?.error).not.toBe('LAUNCH_SCOPE');
+    vi.unstubAllEnvs();
+  });
+});

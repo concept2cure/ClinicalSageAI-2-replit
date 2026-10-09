@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/documents/b46d9b7b-708d-4b03-92a0-718cb2a91225/comments",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 15,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "comments": [
+        {
+          "id": "0438e332-7da1-49e9-982b-51ac45100df1",
+          "doc_id": "b46d9b7b-708d-4b03-92a0-718cb2a91225",
+          "section_id": "24a85f86-f1be-41cf-9257-ae271dbce382",
+          "body": "OQ-003 step 09 review comment",
+          "anchor": null,
+          "status": "resolved",
+          "created_by": "1",
+          "user_name": "oq-runner@validation.local",
+          "user_email": "oq-runner@validation.local",
+          "parent_comment_id": null,
+          "position_data": null,
+          "resolution_note": "OQ-003 step 11b: reviewer query answered; resolved before freeze",
+          "resolved_by": "oq-runner@validation.local",
+          "resolved_at": "2026-09-23T16:29:25.270Z",
+          "created_at": "2026-09-23T16:29:21.837Z",
+          "updated_at": "2026-09-23T16:29:25.270Z",
+          "tenant_id": 1,
+          "author_name": "oq-runner@validation.local",
+          "author_email": "oq-runner@validation.local",
+          "reply_count": "0",
+          "section_code": "2.5",
+          "section_title": "Clinical Overview",
+          "replies": []
+        }
+      ],
+      "total": 1
+    }
+  }
+}

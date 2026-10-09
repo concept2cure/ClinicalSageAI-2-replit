@@ -50,8 +50,21 @@ function fail(status: number, error?: string) {
 }
 const props = () => ({ surface: { id: 'biostat-workbench', label: 'Biostat' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
 
-afterEach(() => cleanup());
+/* A governed document is created in the open project and nowhere else (PF-07,
+   founder decision 2026-09-26), so every case runs with one open: without it
+   the filing write is never attempted, and the BP-W2-4 cases below would pass
+   or fail for that reason alone. The no-project case clears it explicitly. */
+const PROGRAM = '3c7e1f4a-9b2d-4e6f-8a15-2d9c7b4e1f60';
+const setProject = (p: unknown) => {
+  (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = p;
+};
+
+afterEach(() => {
+  cleanup();
+  setProject(undefined);
+});
 beforeEach(() => {
+  setProject({ id: PROGRAM });
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, url: string, body?: any) => {
     if (url === '/api/statistical-defensibility/assess') {
@@ -170,7 +183,9 @@ describe('BiostatWorkbench — real statistical engine', () => {
     expect(toast.getAttribute('role')).toBe('alert');
     expect(toast.getAttribute('data-tone')).toBe('error');
   });
+});
 
+describe('BiostatWorkbench — real statistical engine, controls and errors', () => {
   it('marks the selected calculator for assistive technology, not by colour alone', () => {
     render(<BiostatWorkbench {...props()} />);
     expect(screen.getByRole('button', { name: CALCULATORS[0].title }).getAttribute('aria-pressed')).toBe('true');
@@ -446,6 +461,10 @@ describe('BP-W2-4 — a computed result files into a governed section, stamp int
     await waitFor(() => {
       const sec = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections');
       expect(sec, 'no section write happened').toBeTruthy();
+      // The document is created in the open project (PF-07), never org-wide.
+      const doc = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/docs');
+      expect(doc, 'no document create happened').toBeTruthy();
+      expect(doc![2]).toMatchObject({ client_program_id: PROGRAM });
       const content: string = sec![2].content;
       // A real table — the export parser turns exactly this markup into
       // w:tbl — carrying the numbers the user saw…
@@ -480,5 +499,59 @@ describe('BP-W2-4 — a computed result files into a governed section, stamp int
     });
     // No section write was attempted after the document create failed.
     expect(apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections')).toBeFalsy();
+    // The create that failed was the one bound to the open project.
+    const doc = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/docs');
+    expect(doc, 'no document create was attempted').toBeTruthy();
+    expect(doc![2]).toMatchObject({ client_program_id: PROGRAM });
+  });
+});
+
+describe('BP-W2-4 — with no project open, Insert into document files nothing (PF-07)', () => {
+  const FULL_HASH = 'b'.repeat(64);
+
+  it.each([
+    ['no project open', undefined],
+    ['a legacy numeric workspace id', { id: 42 }],
+  ])('%s: posts no document, claims no filing, and says to open a project first', async (_label, project) => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/biostat/assurance') {
+        return ok({ assurance: 0.7, provenance: { engine: 'c2c-stats', engineVersion: '1.0.0', method: 'assurance', seed: 1, inputsSha256: FULL_HASH, reproducible: true } });
+      }
+      // Would succeed if reached — so a refusal cannot be the server's doing.
+      if (url === '/api/authoring/docs') {
+        return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-1' } }) } as Response;
+      }
+      if (url === '/api/authoring/sections') {
+        return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-1' } }) } as Response;
+      }
+      return ok({});
+    });
+    setProject(project);
+    const p = props();
+
+    render(<BiostatWorkbench {...p} />);
+    fill(/Prior mean effect/, '0.4');
+    fill(/^Prior SD/, '0.15');
+    fill(/^n per arm/, '120');
+    fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Insert into document/ }));
+
+    const toast = await waitFor(() => {
+      const el = document.querySelector('.de-toast');
+      if (!el || !/open a project first/i.test(el.textContent ?? '')) throw new Error('no refusal toast');
+      return el as HTMLElement;
+    });
+    // Reported as a refusal, not the green success tick.
+    expect(toast.getAttribute('data-tone')).toBe('error');
+    expect(toast.getAttribute('role')).toBe('alert');
+    // Nothing reached the authoring store.
+    const urls = apiRequest.mock.calls.map((c) => String(c[1]));
+    expect(urls.some((u) => u.includes('/api/authoring/docs'))).toBe(false);
+    expect(urls.some((u) => u.includes('/api/authoring/sections'))).toBe(false);
+    // No success claim and no navigation; the computed result is still on screen.
+    const body = document.body.textContent ?? '';
+    expect(/Saved to the authoring store/i.test(body)).toBe(false);
+    expect(p.onNav).not.toHaveBeenCalled();
+    expect(screen.getByText('0.7')).toBeTruthy();
   });
 });

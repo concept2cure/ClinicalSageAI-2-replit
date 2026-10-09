@@ -493,8 +493,11 @@ describe('OfficialEstarPanel — Generate', () => {
     expect(body.data).toEqual({ deviceCommonName: 'Glucose monitor' });
     await waitFor(() =>
       expect(
+        // POST /official runs no formatting check (only the draft build does,
+        // 510k-estar-routes.ts), and since 24bacf0 (W5/D7) the line says so
+        // rather than implying a clean check that never ran.
         screen.getByText(
-          'Downloaded BX-204_eSTAR.pdf · 3 of 4 administrative fields filled · 1 left blank'
+          'Downloaded BX-204_eSTAR.pdf · 3 of 4 administrative fields filled · 1 left blank · formatting was not checked'
         )
       ).toBeTruthy()
     );
@@ -667,7 +670,7 @@ describe('OfficialEstarPanel — Generate', () => {
     await waitFor(() =>
       expect(
         screen.getByText(
-          'Export accepted, but the server returned no file to download · 4 of 4 administrative fields filled'
+          'Export accepted, but the server returned no file to download · 4 of 4 administrative fields filled · formatting was not checked'
         )
       ).toBeTruthy()
     );

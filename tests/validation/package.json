@@ -1,0 +1,9 @@
+{
+  "name": "c2c-validation-runners",
+  "private": true,
+  "type": "module",
+  "description": "OQ runners for the CSA validation package (docs/validation). playwright-core drives the real app in the Chromium named by CHROMIUM_PATH.",
+  "dependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

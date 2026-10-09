@@ -1,0 +1,18 @@
+$ git rev-parse --short HEAD  # handlers unchanged; test added
+fdc1e53e
+ × server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a tenant user's session is refused (403) 502ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a platform administrator reads them 20ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > the scrape token reads them (the Prometheus path, unchanged) 9ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > an anonymous caller is refused (401) 4ms
+ × server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > answers an anonymous caller with a status word and nothing about the providers 10ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > gives a platform administrator the provider detail 4ms
+ × server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > a tenant user's session gets the same answer as an anonymous caller 5ms
+ × server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > never echoes an exception to an anonymous caller 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: any signed-in user could read the process metrics: expected 200 to be 403 // Object.is equality
+AssertionError: expected { status: 'healthy', …(4) } to deeply equal { status: 'healthy' }
+AssertionError: expected { status: 'healthy', …(4) } to deeply equal { status: 'healthy' }
+AssertionError: the exception text reached an anonymous caller: expected '{"status":"error","message":"provider…' not to contain 'sk-live'
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 passed (8)
+exit=1

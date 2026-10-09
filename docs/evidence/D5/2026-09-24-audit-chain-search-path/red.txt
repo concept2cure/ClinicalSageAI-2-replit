@@ -1,0 +1,8 @@
+# server/services/audit/__tests__/chain-concurrency.dbtest.ts, PostgreSQL 16, chain.ts WITHOUT the fix
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 1. eight concurrent writers of one tenant never fork the chain 292ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 2. chain order is commit order, not occurred_at order 34ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 3. tenant-scoped (RLS) and unscoped connections write one verifiable chain per tenant 46ms
+ × server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 4. a connection whose search_path puts another schema first still takes the head in chain order 53ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"id":"f87fe96b-3d64-4739-a8e5-7310d1127e31","expected":"5b680a2c5800235303614036099fdef130778e2fd938358e1658937abf4c08cf","stored":"d0817f82dbb7fd2fdb4ebcd00e842b12c1bec283c3ba0f819c20cca0c15773b8","tenantId":7,"segment":"sequenced","commitsTo
+      Tests  1 failed | 3 passed (4)

@@ -28,6 +28,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   C2C_MIGRATION_FILES,
+  CHILD_TABLE_PARENT_SCOPE,
   TENANT_ISOLATION_SWEEP,
   UUID_TENANT_ISOLATION_NONPUBLIC,
 } from '../../scripts/db/migration-set.mjs';
@@ -57,11 +58,14 @@ describe('C-46: the uuid RLS migration is wired and deploy-positioned', () => {
     // creates); the uuid non-public step sits immediately before it. An earlier
     // revision asserted `uuid > sweep`, which contradicted C-33's "sweep last"
     // and left the set ungreenable no matter which order was chosen.
+    //
+    // Since 2026-09-29 (D3) the parent-scoped child RLS sits between them: it
+    // creates no table, and its chained list delegates to parent policies the
+    // uuid step creates, so it must follow the uuid step
+    // (docs/evidence/D3/2026-09-29-child-scope-first-deploy/).
     expect(C2C_MIGRATION_FILES).toContain(UUID_RLS);
     expect(C2C_MIGRATION_FILES).toContain(SWEEP);
-    const lastTwo = C2C_MIGRATION_FILES.slice(-2);
-    expect(lastTwo).toContain(UUID_RLS);
-    expect(lastTwo).toContain(SWEEP);
+    expect(C2C_MIGRATION_FILES.slice(-3)).toEqual([UUID_RLS, CHILD_TABLE_PARENT_SCOPE, SWEEP]);
   });
 });
 

@@ -1,0 +1,101 @@
+$ # server/routes/preclinical.ts as committed at 50b04d99 (git show HEAD:server/routes/preclinical.ts > server/routes/preclinical.ts); test server/routes/__tests__/preclinical-upload-guards.test.ts
+$ NODE_OPTIONS='--max-old-space-size=2048' npx vitest run --config vitest.config.ts server/routes/__tests__/preclinical-upload-guards.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses a body over the size limit with 413 instead of buffering it 287ms
+   → an oversize upload was buffered into the heap: expected 500 to be 413 // Object.is equality
+ × server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses an executable named file whatever type it declares (415) 11ms
+   → a .exe declared as application/pdf was admitted: expected 200 to be 415 // Object.is equality
+ × server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses a declared type this route does not read (415, not a silent "no file") 6ms
+   → expected 400 to be 415 // Object.is equality
+ × server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses bytes that are not a PDF under a PDF declaration (the shared byte check) 5ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > leaves a request with no file to the handler (its own NO_FILE code, unchanged) 5ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > control: a real PDF passes the guard and reaches ingestStudy 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses a body over the size limit with 413 instead of buffering it
+AssertionError: an oversize upload was buffered into the heap: expected 500 to be 413 // Object.is equality
+
+- Expected
++ Received
+
+- 413
++ 500
+
+ ❯ server/routes/__tests__/preclinical-upload-guards.test.ts:51:71
+     49|       .field('programId', '42')
+     50|       .attach('file', oversize, { filename: 'big.pdf', contentType: 'a…
+     51|     expect(r.status, 'an oversize upload was buffered into the heap').…
+       |                                                                       ^
+     52|     expect(ingestStudy).not.toHaveBeenCalled();
+     53|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses an executable named file whatever type it declares (415)
+AssertionError: a .exe declared as application/pdf was admitted: expected 200 to be 415 // Object.is equality
+
+- Expected
++ Received
+
+- 415
++ 200
+
+ ❯ server/routes/__tests__/preclinical-upload-guards.test.ts:60:73
+     58|       .field('programId', '42')
+     59|       .attach('file', Buffer.from('%PDF-1.4 fake'), { filename: 'paylo…
+     60|     expect(r.status, 'a .exe declared as application/pdf was admitted'…
+       |                                                                         ^
+     61|     expect(ingestStudy).not.toHaveBeenCalled();
+     62|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses a declared type this route does not read (415, not a silent "no file")
+AssertionError: expected 400 to be 415 // Object.is equality
+
+- Expected
++ Received
+
+- 415
++ 400
+
+ ❯ server/routes/__tests__/preclinical-upload-guards.test.ts:69:22
+     67|       .field('programId', '42')
+     68|       .attach('file', Buffer.from('study text'), { filename: 'study.tx…
+     69|     expect(r.status).toBe(415);
+       |                      ^
+     70|     expect(ingestStudy).not.toHaveBeenCalled();
+     71|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses bytes that are not a PDF under a PDF declaration (the shared byte check)
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/preclinical-upload-guards.test.ts:78:22
+     76|       .field('programId', '42')
+     77|       .attach('file', Buffer.from('this is not a pdf'), { filename: 's…
+     78|     expect(r.status).toBe(400);
+       |                      ^
+     79|     expect(r.body).toMatchObject({ success: false, code: 'FILE_SIGNATU…
+     80|     expect(ingestStudy).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  23:48:05
+   Duration  986ms (transform 144ms, setup 107ms, import 214ms, tests 323ms, environment 0ms)
+
+exit=1

@@ -98,8 +98,8 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!loading && !error) notifySurfaceActionReady('decision-lineage');
-  }, [loading, error]);
+    if (!loading) notifySurfaceActionReady('decision-lineage');
+  }, [loading]);
 
   // Export runner state — which format is in flight, and the last error (shown
   // inline by the export controls). The surface has no toast; keep it contained.
@@ -715,7 +715,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
             <div className="dl-sign-note">
               Opens the assistant — nothing is routed to a signer from here. A
               binding 21 CFR §11 signature is applied in the authoring workspace,
-              where it is PIN-verified and sealed against a frozen version.
+              where the signer's password is re-verified and the signature is sealed against a frozen version.
             </div>
             </>
           )}

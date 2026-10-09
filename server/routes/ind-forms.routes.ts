@@ -23,6 +23,7 @@ import multer from 'multer';
 import { requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { makeUploadFileFilter } from '../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import {
   generateIndForm,
   generateAllForm1572,
@@ -1059,6 +1060,16 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
       // The declared content type is the client's claim; the bytes are the fact.
       if (bytes.subarray(0, 5).toString('latin1') !== '%PDF-') {
         return res.status(400).json({ error: { code: 'VALIDATION', message: 'The attached file is not a PDF.' } });
+      }
+      // …and scanned before it is stored (the platform guard; fail-closed in
+      // production when no scan could run) — audit IAM-14, P1-5.
+      try {
+        await assertUploadSafe(bytes, 'application/pdf', file?.originalname ?? 'form.pdf');
+      } catch (err) {
+        if (err instanceof UploadSafetyError) {
+          return res.status(err.status).json({ error: { code: err.body.code, message: err.body.error } });
+        }
+        throw err;
       }
 
       const body = (req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>;

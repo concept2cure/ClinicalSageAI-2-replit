@@ -15,10 +15,10 @@
  * and Escape to cancel.
  */
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { Fragment, useEffect, useId, useRef, useState } from 'react';
 
 import styles from './styles.module.css';
-import { useGovernedAction, type PendingSignoff } from './useGovernedAction';
+import { tierOf, useGovernedAction, type PendingSignoff } from './useGovernedAction';
 
 export interface GovernedActionSignoffProps {
   signoff: PendingSignoff;
@@ -38,8 +38,31 @@ const MEANING_OPTIONS: ReadonlyArray<{ value: 'AUTHOR' | 'REVIEWER' | 'APPROVER'
 ];
 type SignatureMeaning = (typeof MEANING_OPTIONS)[number]['value'];
 
+/** A compact, readable key: value list of what AnA proposed — never a raw JSON dump. */
+function summariseParams(params: Record<string, unknown>): Array<[string, string]> {
+  const out: Array<[string, string]> = [];
+  for (const [k, v] of Object.entries(params ?? {})) {
+    if (out.length >= 8) break;
+    if (v === undefined || v === null || v === '') continue;
+    const text =
+      typeof v === 'string' ? v : typeof v === 'number' || typeof v === 'boolean' ? String(v) : Array.isArray(v) ? `${v.length} item${v.length === 1 ? '' : 's'}` : 'details';
+    out.push([k, text.length > 80 ? `${text.slice(0, 77)}…` : text]);
+  }
+  return out;
+}
+
 export function GovernedActionSignoff({ signoff, onResolved, onCancel }: GovernedActionSignoffProps) {
-  const { submit, submitting, error } = useGovernedAction();
+  const { submit, decline, submitting, error } = useGovernedAction();
+
+  // Declining a live prompt tells the run that is waiting on it, so AnA carries
+  // on now rather than at the pause ceiling. A prompt from a finished turn has
+  // nothing waiting; closing it is the whole of declining.
+  const handleCancel = async () => {
+    if (signoff.runId && signoff.toolUseId) {
+      await decline({ runId: signoff.runId, toolUseId: signoff.toolUseId });
+    }
+    onCancel();
+  };
   const [reason, setReason] = useState('');
   const [password, setPassword] = useState('');
   const [mfaToken, setMfaToken] = useState('');
@@ -52,11 +75,15 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
   const consequenceId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const sig = signoff.signatureRequired;
+  const tier = signoff.tier ?? tierOf(signoff);
+  // The confirm tier: an explicit yes, no reason, no credentials (the ordinary
+  // writes AnA proposes; the server requires only `confirm: true`).
+  const confirmOnly = tier === 'confirm';
+  const sig = tier === 'esignature';
   const reasonOk = reason.trim().length >= MIN_REASON_LEN;
   const credsOk = !sig || password.length > 0;
   const meaningOk = !sig || meaning != null;
-  const canSubmit = reasonOk && credsOk && meaningOk && !submitting;
+  const canSubmit = confirmOnly ? !submitting : reasonOk && credsOk && meaningOk && !submitting;
 
   // Move focus into the dialog on open so keyboard + screen-reader users start
   // inside the governed prompt (focus trap below keeps them there).
@@ -71,6 +98,17 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
+    if (confirmOnly) {
+      const confirmed = await submit({
+        command: signoff.command,
+        params: signoff.params,
+        confirm: true,
+        runId: signoff.runId,
+        toolUseId: signoff.toolUseId,
+      });
+      if (confirmed) onResolved(confirmed);
+      return;
+    }
     const outcome = await submit({
       command: signoff.command,
       // The declared §11.50 meaning travels with the action for the audit trail.
@@ -91,7 +129,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       e.preventDefault();
-      onCancel();
+      void handleCancel();
       return;
     }
     if (e.key !== 'Tab' || !dialogRef.current) return;
@@ -124,33 +162,51 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
       onKeyDown={handleKeyDown}
     >
       <p id={titleId} className={styles.signoffTitle}>
-        {sig ? 'Electronic signature required' : 'Reason for change required'}
+        {confirmOnly ? 'Confirm the proposed action' : sig ? 'Electronic signature required' : 'Reason for change required'}
       </p>
       <p id={consequenceId} className={styles.signoffMsg}>
         {signoff.message}
       </p>
 
-      <label className={styles.signoffLabel} htmlFor={reasonId}>
-        Reason for change
-      </label>
-      <textarea
-        id={reasonId}
-        className={styles.signoffInput}
-        value={reason}
-        onChange={e => setReason(e.target.value)}
-        rows={2}
-        aria-required="true"
-        aria-invalid={reasonInvalid}
-        aria-describedby={reasonInvalid ? `${reasonId}-err` : `${reasonId}-hint`}
-      />
-      {reasonInvalid ? (
-        <span id={`${reasonId}-err`} className={styles.signoffError} role="alert">
-          Enter at least {MIN_REASON_LEN} characters describing why this change is being made.
-        </span>
-      ) : (
-        <span id={`${reasonId}-hint`} className={styles.signoffHint}>
-          At least {MIN_REASON_LEN} characters, recorded to the audit trail.
-        </span>
+      {confirmOnly && (
+        <dl className={styles.signoffHint} aria-label="What AnA proposed">
+          <dt>Action</dt>
+          <dd>{signoff.command}</dd>
+          {summariseParams(signoff.params).map(([k, v]) => (
+            <Fragment key={k}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </Fragment>
+          ))}
+        </dl>
+      )}
+      {!confirmOnly && (
+        <label className={styles.signoffLabel} htmlFor={reasonId}>
+          Reason for change
+        </label>
+      )}
+      {!confirmOnly && (
+        <>
+          <textarea
+            id={reasonId}
+            className={styles.signoffInput}
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            rows={2}
+            aria-required="true"
+            aria-invalid={reasonInvalid}
+            aria-describedby={reasonInvalid ? `${reasonId}-err` : `${reasonId}-hint`}
+          />
+          {reasonInvalid ? (
+            <span id={`${reasonId}-err`} className={styles.signoffError} role="alert">
+              Enter at least {MIN_REASON_LEN} characters describing why this change is being made.
+            </span>
+          ) : (
+            <span id={`${reasonId}-hint`} className={styles.signoffHint}>
+              At least {MIN_REASON_LEN} characters, recorded to the audit trail.
+            </span>
+          )}
+        </>
       )}
 
       {sig && (
@@ -212,7 +268,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
       )}
 
       <div className={styles.signoffActions}>
-        <button type="button" className={styles.suggestPill} onClick={onCancel} disabled={submitting}>
+        <button type="button" className={styles.suggestPill} onClick={() => void handleCancel()} disabled={submitting}>
           Cancel
         </button>
         <button
@@ -221,7 +277,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
           onClick={handleSubmit}
           disabled={!canSubmit}
         >
-          {submitting ? 'Signing…' : sig ? 'Sign and run' : 'Confirm and run'}
+          {submitting ? (confirmOnly ? 'Running…' : 'Signing…') : sig ? 'Sign and run' : 'Confirm and run'}
         </button>
       </div>
     </div>

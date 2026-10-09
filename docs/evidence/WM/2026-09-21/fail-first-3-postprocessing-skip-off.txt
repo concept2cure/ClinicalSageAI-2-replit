@@ -1,0 +1,9 @@
+### MUTATION 3: persistCollectedDrafts no longer skips drafts that carry authoringDocId
+ × server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > writes NO artifact row for a draft that carries authoringDocId, and emits no caveat 13ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > still versions a draft WITHOUT authoringDocId (report canvases, generate_document) as before 1ms
+ × server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > a mixed turn: the authoring document is skipped and the other draft is versioned 1ms
+   → expected "vi.fn()" to be called 1 times, but got 2 times
+ × server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > does not warn "could not be saved" for an authoring document when no project is linked — it WAS saved 4ms
+   → expected [ { type: 'warning', …(1) } ] to deeply equal []
+      Tests  3 failed | 1 passed (4)

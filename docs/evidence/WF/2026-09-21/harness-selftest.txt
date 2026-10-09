@@ -1,0 +1,12 @@
+
+> concept2cure-riai@1.0.0 validation:oq:selftest
+> node tests/validation/lib/harness.selftest.mjs
+
+  ST-01  pass
+  ST-02  FAIL  (healthz returned 200, not 418 (this failure is the point))
+  ST-03  deviation  (selftest: deliberately not executable)
+  ST-04  not-executed  (prerequisite step ST-02 did not pass)
+  ST-05  FAIL  (runner error: Error: selftest: runner error |     at file:///home/user/ClinicalSageAI-2-replit/tests/validation/lib/harness.selftest.mjs:37:9 |     at Object.step (file:///home/user/ClinicalSageAI-2-replit/tests/validation/lib/harness.mjs:483:30))
+
+OQ-000 Harness self-test: 1 pass, 2 fail, 1 deviation, 1 not-executed → ../../../tmp/oq-harness-selftest-wqrVhc/OQ-SELFTEST
+harness selftest: OK — false expectation → fail, deviation → deviation, dependent → not-executed, thrown → fail; bundle written

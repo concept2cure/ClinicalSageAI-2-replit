@@ -1,0 +1,6 @@
+== HEAD client/src/concept2cure/v2/editor/askAnaToDraft.ts
+exit 0
+== working client/src/concept2cure/v2/editor/askAnaToDraft.ts
+exit 0
+== new client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts
+exit 0

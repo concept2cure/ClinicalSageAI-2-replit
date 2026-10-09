@@ -4,10 +4,14 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
-import { useLiveData, EmptyState } from '../dataConnect';
+import { VaultEditDetails } from './VaultEditDetails';
+import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
+import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
 import {
   VAULT_INGEST_DOCUMENT_TYPES,
+  vaultDocKindLabel,
+  vaultIngestTypeLabel,
   type VaultIngestDocumentType,
 } from '@shared/constants/domain/vault-taxonomy';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -52,7 +56,8 @@ interface DataRoomRow {
   kind: string;
   sizeLabel: string;
   addedAt: string;
-  stage: 'captured' | 'classified' | 'filed';
+  /** 'needs_review': the classifier ran and refused to propose a folder. */
+  stage: 'captured' | 'needs_review' | 'classified' | 'filed';
   readState: string;
   suggestedFolder: string | null;
   suggestedFolderLabel: string;
@@ -65,14 +70,48 @@ interface DataRoomBlock {
   captured: number;
   classified: number;
   filed: number;
+  /** Absent on a server that predates it. */
+  needsReview?: number;
   sources: DataRoomRow[];
+  /** The newest-N window the counts cover; truncated = the program has more. */
+  window?: { shown: number; truncated: boolean };
+}
+
+/** A count over a truncated window is a floor, and reads as one. */
+function roomCount(n: number, block: DataRoomBlock): string {
+  return block.window?.truncated ? `${n}+` : String(n);
+}
+
+const ROOM_STAGE: Record<DataRoomRow['stage'], { label: string; tone: string }> = {
+  filed: { label: 'Filed', tone: 'ok' },
+  classified: { label: 'Classified', tone: 'ai' },
+  needs_review: { label: 'Needs review', tone: 'warn' },
+  captured: { label: 'Captured', tone: 'idle' },
+};
+
+/** What the lane's counts cover, and what needs a person. */
+function RoomNotes({ block }: { block: DataRoomBlock }) {
+  const review = block.needsReview ?? 0;
+  const truncated = block.window?.truncated === true;
+  if (!review && !truncated) return null;
+  return (
+    <span className="vd-dr-meta">
+      {review > 0 ? `${review} need review — the classifier would not propose a folder. ` : ''}
+      {truncated ? `Counts cover the newest ${block.window?.shown ?? block.captured} sources; this project has more.` : ''}
+    </span>
+  );
 }
 
 interface VaultDisplayShape {
   program: string;
   spine: string;
   standard: string;
+  /** Documents, counted by the server: authored documents (one each, however
+   *  many sections), CMC artifacts, and the programme's uploads — not the
+   *  leaves of the tree, and not the capped uploads page. */
   documentCount: number;
+  /** What documentCount is made of; a branch that could not be read is null. */
+  documentCounts?: { authored: number; cmcArtifacts: number | null; uploads: number | null };
   tree: VaultFolder[];
   pendingStore?: boolean;
   /** Uploads awaiting a person's filing decision (visible queue, not a black hole).
@@ -85,6 +124,8 @@ interface VaultDisplayShape {
   uploadsWindow?: { shown: number; total: number; truncated: boolean };
   /** The capture→classify→file pipeline over the project's data room. */
   dataRoom?: DataRoomBlock;
+  /** Required sections against confirmed filings, from the server (VR-15). */
+  coverage?: VaultCoverageShape;
   /** Branches the server could not serve, with why — rendered, not swallowed:
    *  a vault silently missing "Uploaded files" reads as a vault with no uploads. */
   unavailable?: Array<{ branch: string; reason: string }>;
@@ -103,6 +144,29 @@ const EMPTY_TREE: VaultFolder[] = [];
    It goes through `readShellProject` (v2/shellProject.ts), the ONE reader for
    window.C2C_PROJECT. This surface used to hand-roll its own copy of that
    read, which is exactly the per-surface drift that module exists to stop. */
+/* Why the vault read failed, said as what happened. A 401/403/404 is an answer
+   from the server — expired session, access refused, project not in this
+   organization — and a retry cannot change it; anything else (5xx, network,
+   no status at all) is a failure to answer, which a retry can. */
+function vaultReadFailure(status: number | undefined): { hint: string; retryable: boolean } {
+  switch (status) {
+    case 401:
+      return { hint: 'Your session has expired. Sign in again to load this project’s documents.', retryable: false };
+    case 403:
+      return {
+        hint: 'You don’t have access to this project’s documents. Ask an administrator in your organization to grant it.',
+        retryable: false,
+      };
+    case 404:
+      return { hint: 'This project wasn’t found in your organization. Open a project from Projects.', retryable: false };
+    default:
+      return {
+        hint: 'The document store didn’t respond, so nothing was read. Try again, or check the service is reachable.',
+        retryable: true,
+      };
+  }
+}
+
 function currentProjectId(): string | null {
   const p = readShellProject();
   const id = p && p.id != null ? String(p.id).trim() : '';
@@ -146,7 +210,7 @@ export function vaultDocFamilyCode(
 
 function fileIcon(doc: VaultDoc): React.ReactNode {
   const key = vaultFileIconKey(doc);
-  return (I as any)[key] || I.fileText || I.file;
+  return (I as any)[key] || I.fileText;
 }
 
 /* ── VaultTree — recursive folder nav ── */
@@ -185,10 +249,10 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
               }}
             >
               <span className="vd-caret" data-open={isOpen || undefined}>
-                {I.chevronRight || '›'}
+                {I.chevRight}
               </span>
               <span className="vd-fico">
-                {isOpen ? I.folderOpen || I.folder : I.folder}
+                {isOpen ? I.folderOpen : I.folder}
               </span>
               <span className="vd-flabel">
                 {folder.code ? <b>{folder.code}</b> : null} {folder.label}
@@ -216,6 +280,91 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
   );
 }
 
+/* ── Document history — this document's own audit trail (VR-01) ──
+   Every chained audit_logs row recorded against the document (ingest, filing
+   decisions, downloads), newest first, with the server's verdict on the
+   tenant's chain. Read from the one ledger; nothing here is derived on the
+   client. A failed read is shown as a failure: "no history" would tell an
+   inspector the document was never touched. */
+interface HistoryEntry {
+  id: string;
+  event: string;
+  actor: string;
+  at: string;
+  when: string;
+  hash: string;
+  seq: number | null;
+}
+interface HistoryShape {
+  entries: HistoryEntry[];
+  chain: { ok: boolean; rowsChecked: number; legacyRows: number; brokenAt?: string };
+}
+
+/** A body without an entries list and a chain verdict is a failed read, not an empty history. */
+const isHistoryShape: ShapeGuard<HistoryShape> = (v): v is HistoryShape =>
+  !!v && typeof v === 'object' && Array.isArray((v as HistoryShape).entries) &&
+  !!(v as HistoryShape).chain && typeof (v as HistoryShape).chain === 'object';
+
+function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
+  if (chain.ok) {
+    return (
+      <div className="vd-d-idx">
+        <span className="vd-idx-dot" /> Audit chain verified — {chain.rowsChecked} rows checked
+        {chain.legacyRows ? `, ${chain.legacyRows} recorded before sequencing` : ''}.
+      </div>
+    );
+  }
+  return (
+    <div className="vd-dr-err" role="alert">
+      {I.alertTriangle} Audit chain check failed{chain.brokenAt ? ` at ${chain.brokenAt}` : ''}. The entries below
+      are what is recorded; the chain that should prove them has a break.
+    </div>
+  );
+}
+
+function DocumentHistory({ projectId, documentUuid }: { projectId: string; documentUuid: string }) {
+  const path =
+    '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
+    '/documents/' + encodeURIComponent(documentUuid) + '/history';
+  const st = useLiveData<HistoryShape>(path, [path], isHistoryShape);
+  let body: React.ReactNode;
+  if (st.loading) body = <div className="vd-d-idx">Loading history…</div>;
+  else if (st.error || !st.data) {
+    /* 2026-09-28 (M-0928-3): was role="status" — a failed read announced
+       politely, unlike the ChainVerdict and Data room failures beside it. */
+    body = (
+      <div className="vd-dr-err" role="alert">
+        {I.alertTriangle} This document's history could not be read. Nothing is shown rather than an
+        incomplete history.
+      </div>
+    );
+  } else if (st.data.entries.length === 0) {
+    body = <div className="vd-d-idx">No recorded events for this document.</div>;
+  } else {
+    body = (
+      <>
+        <ChainVerdict chain={st.data.chain} />
+        <div className="vd-vers">
+          {st.data.entries.map((e) => (
+            <div key={e.id} className="vd-ver">
+              <span className="vd-ver-v">{e.event}</span>
+              <span className="vd-ver-m">
+                {e.when || e.at} · {e.actor} · <span className="mono" title={e.hash}>{e.hash.slice(0, 12)}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+  return (
+    <div data-testid="vault-document-history">
+      <div className="vd-d-seclbl">History</div>
+      {body}
+    </div>
+  );
+}
+
 /* ── Data Room lane — the capture → classify → file pipeline ──
    Every file captured for this project (AnA paperclip, Project Home drop-zone,
    Vault upload) passes through the Data Room: it lands as a source
@@ -238,7 +387,7 @@ function DataRoomLane({
     return (
       <div className="vd-dr" data-testid="vault-data-room">
         <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+          <span className="vd-dr-title">{I.inbox} Data room</span>
         </div>
         <div className="vd-dr-err" role="alert">
           {I.alertTriangle} Unavailable — showing nothing because the room could not be
@@ -251,7 +400,7 @@ function DataRoomLane({
     return (
       <div className="vd-dr" data-testid="vault-data-room">
         <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+          <span className="vd-dr-title">{I.inbox} Data room</span>
           <span className="vd-dr-meta">No data room information for this project.</span>
         </div>
       </div>
@@ -262,14 +411,15 @@ function DataRoomLane({
   return (
     <div className="vd-dr" data-testid="vault-data-room">
       <div className="vd-dr-head">
-        <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+        <span className="vd-dr-title">{I.inbox} Data room</span>
         <span className="vd-dr-stages">
-          <span className="vd-dr-stage">Captured <b>{block.captured}</b></span>
+          <span className="vd-dr-stage">Captured <b>{roomCount(block.captured, block)}</b></span>
           <span className="vd-dr-arrow">›</span>
-          <span className="vd-dr-stage">Classified <b>{block.classified}</b></span>
+          <span className="vd-dr-stage">Classified <b>{roomCount(block.classified, block)}</b></span>
           <span className="vd-dr-arrow">›</span>
-          <span className="vd-dr-stage">Filed to vault <b>{block.filed}</b></span>
+          <span className="vd-dr-stage">Filed to vault <b>{roomCount(block.filed, block)}</b></span>
         </span>
+        <RoomNotes block={block} />
         {block.sources.length > 0 && (
           <button className="vd-dr-toggle" onClick={() => setOpen((o) => !o)}>
             {open ? 'Hide sources' : `Show ${block.sources.length} source${block.sources.length === 1 ? '' : 's'}`}
@@ -278,8 +428,9 @@ function DataRoomLane({
       </div>
       {block.sources.length === 0 && (
         <div className="vd-dr-empty">
-          Nothing captured for this project yet. Files attached in AnA chat, dropped on
-          Project home, or uploaded here all pass through the data room.
+          Nothing captured for this project yet. Files attached in AnA chat or dropped on
+          Project home pass through the data room; files uploaded on this page go straight to
+          the filing cabinet and are listed under Uploaded files.
         </div>
       )}
       {rows.length > 0 && (
@@ -292,21 +443,120 @@ function DataRoomLane({
                 {s.sizeLabel !== '—' ? `${s.sizeLabel} · ` : ''}{s.addedAt} · {s.readState}
               </span>
               {s.stage === 'classified' && s.suggestedFolderLabel ? (
-                <span className="vd-dr-suggest" title={s.evidenceKind ? `Looks like: ${s.evidenceKind}` : undefined}>
+                <span className="vd-dr-suggest" title={s.evidenceKind ? `Looks like: ${vaultDocKindLabel(s.evidenceKind)}` : undefined}>
                   → {s.suggestedFolderLabel}
                 </span>
               ) : null}
-              <span
-                className={
-                  'rd-chip tone-' +
-                  (s.stage === 'filed' ? 'ok' : s.stage === 'classified' ? 'ai' : 'idle')
-                }
-              >
-                {s.stage === 'filed' ? 'Filed' : s.stage === 'classified' ? 'Classified' : 'Captured'}
+              <span className={'rd-chip tone-' + (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).tone}>
+                {(ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).label}
               </span>
             </div>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Uploaded files lane — every vault.documents row the read carried ──
+   The tree browses ONE folder at a time and opens on its first node, the
+   governed CTD spine. The filing cabinet — where every upload and every
+   document filed through the API lives — is the LAST node, so its leaves
+   rendered nowhere on the page until a person found and clicked the branch.
+   OQ-VAULT-09 opened the surface after filing a document and did not find its
+   title (VSR-001 §8 F-11); OQ-VAULT-04 had already shown the read model
+   carried it. A reviewer reads "not on the page" as "not in the vault".
+
+   This lane is a projection of the SAME read (the cabinet branch of
+   GET /api/c2c/project-vault/:id), not a second store or a second request:
+   what it lists is exactly what the tree holds, flattened, with the cabinet
+   folder each row sits in — which is its filing decision. The count is the
+   server's programme-wide total, never the rows shown, so a capped window
+   cannot understate the cabinet. A row opens its folder and selects it. */
+const UPLOADS_LANE_ROWS = 8;
+
+function UploadsLane({
+  cabinet,
+  window: win,
+  status,
+  onOpen,
+}: {
+  /** The read model's filing-cabinet branch. Absent when the read carried
+   *  none, which the server reports under `unavailable` (rendered above). */
+  cabinet: VaultFolder | null;
+  window?: { shown: number; total: number; truncated: boolean };
+  status: (s: string) => { tone: string; label: string };
+  /** Open the cabinet folder a row sits in and, when given, select the row. */
+  onOpen: (folderId: string, docId: string | null) => void;
+}) {
+  const [showAll, setShowAll] = useState(false);
+  if (!cabinet) return null;
+  const rows: Array<{ doc: VaultDoc; folder: VaultFolder }> = [];
+  for (const child of cabinet.children) {
+    if (isVaultDoc(child)) {
+      rows.push({ doc: child as VaultDoc, folder: cabinet });
+      continue;
+    }
+    const folder = child as VaultFolder;
+    for (const doc of flattenDocs(folder.children)) rows.push({ doc, folder });
+  }
+  const total = win?.total ?? rows.length;
+  const visible = showAll ? rows : rows.slice(0, UPLOADS_LANE_ROWS);
+  return (
+    <div className="vd-dr" data-testid="vault-uploads-lane">
+      <div className="vd-dr-head">
+        <span className="vd-dr-title">{I.folder} Uploaded files</span>
+        <span className="vd-dr-meta">
+          {total} uploaded file{total === 1 ? '' : 's'} in this programme
+          {win?.truncated ? ` · ${win.shown} in this window` : ''}
+        </span>
+        <button className="vd-dr-toggle" onClick={() => onOpen(cabinet.id, null)}>
+          Open filing cabinet
+        </button>
+      </div>
+      {rows.length === 0 && (
+        <div className="vd-dr-empty">
+          No files uploaded to this programme yet. A file uploaded here, or filed through the
+          API, is listed here and in the filing cabinet.
+        </div>
+      )}
+      {visible.length > 0 && (
+        <div className="vd-dr-rows">
+          {visible.map(({ doc, folder }) => (
+            <div key={doc.id} className="vd-dr-row">
+              <span className="vd-dr-kind">{doc.type}</span>
+              {/* The title is the point of this lane. `.vd-dr-name` caps at 32%
+                  of its container, which inside a shrink-wrapped button is a
+                  few characters — so the cap moves to the button, a flex item
+                  of the row, and the name fills it. */}
+              <button
+                type="button"
+                className="vd-crumb"
+                style={{ minWidth: 0, maxWidth: '45%', flexShrink: 1 }}
+                title={doc.preview || doc.title}
+                onClick={() => onOpen(folder.id, doc.id)}
+              >
+                <span className="vd-dr-name" style={{ maxWidth: 'none' }}>
+                  {doc.title}
+                </span>
+              </button>
+              <span className="vd-dr-detail">
+                {doc.sizeLabel ? `${doc.sizeLabel} · ` : ''}
+                {doc.updated}
+                {doc.owner && doc.owner !== '—' ? ` · ${doc.owner}` : ''}
+              </span>
+              <span className="vd-dr-suggest">→ {folder.label}</span>
+              <span className={'rd-chip tone-' + status(doc.status).tone}>
+                {status(doc.status).label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      {rows.length > visible.length && (
+        <button className="vd-dr-toggle" onClick={() => setShowAll(true)}>
+          Show all {rows.length} in this window
+        </button>
       )}
     </div>
   );
@@ -338,12 +588,20 @@ interface VaultSearchShape {
 /** A search hit rendered in the same row component the tree uses. */
 function searchHitToDoc(h: VaultSearchHit): VaultDoc {
   return {
-    id: h.id,
+    /* Keyed the way the tree keys the same document (`up-<uuid>`, server
+       uploadLeaf), so a hit and its tree leaf are one selection. Keyed by the
+       bare uuid, no hit ever matched, and every click fell back to the first
+       hit. */
+    id: `up-${h.id}`,
     num: h.ctdSection || '',
     title: h.title,
-    type: h.documentType || '',
+    // The same reader-facing name the tree shows (the server maps tree rows
+    // through vaultIngestTypeLabel). A hit mapped here separately rendered the
+    // raw token, so one document read "Module 3 · quality" in the tree and
+    // "MODULE_3" in a search.
+    type: h.documentType ? vaultIngestTypeLabel(h.documentType) : '',
     status: h.placementStatus || 'unfiled',
-    pct: 0,
+    pct: null,
     owner: '',
     ver: '',
     updated: '',
@@ -362,6 +620,10 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
    the project's live eCTD / eSTAR / IVDR / TMF spine (segment- and
    build-type-aware), served by GET /api/c2c/project-vault/:id straight from the
    governed document store. Real data → honest empty → honest error; no fixture. */
+
+/** The Vault shows one program's documents; with none open there is no vault
+ *  to operate, and "no documents" or "no such folder" would misstate why. */
+const NO_PROGRAM_OPEN = 'No program is open, so there is no vault here yet — open a program first.';
 
 export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const projectId = currentProjectId();
@@ -422,6 +684,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
      locally: what the Vault shows is what the Vault stored. */
   const [filing, setFiling] = useState(false);
   const [filingNote, setFilingNote] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  /* §11.10(e): the placement write is audited already; this is the reason the
+     person gives for it, sent as the route's `note` and recorded as the
+     placement rationale. Optional — a filing is not a signature — but when
+     given it travels with the decision rather than being lost. */
+  const [filingReason, setFilingReason] = useState('');
   /**
    * Download one uploaded vault document.
    *
@@ -475,7 +742,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
 
   const fileDocument = async (
     docId: string,
-    body: { confirm?: boolean; folderId?: string | null; note?: string },
+    body: { confirm?: boolean; folderId?: string | null; ctdSection?: string; note?: string },
   ) => {
     if (!projectId || filing) return;
     setFiling(true);
@@ -514,6 +781,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           : 'Moved to Unfiled — awaiting a filing decision.',
       });
       setVaultEpoch((n) => n + 1);
+      setFilingReason('');
     } catch (e) {
       /* A refusal is reported as a refusal — the placement on screen stays
          what the server last stored, never what the click hoped for. */
@@ -529,16 +797,35 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
+  /* The read model's filing-cabinet branch: every upload and every document
+     filed through the API. One lookup, shared by the uploads lane and the
+     "Move to…" folder list below. */
+  const cabinet = useMemo(
+    () => (tree.find((f) => f.id === 'cabinet') as VaultFolder | undefined) ?? null,
+    [tree],
+  );
   /* Folder options for "Move to…" — derived from the server's cabinet (the
      program's real view taxonomy), never a client-side folder list. */
   const cabinetFolders = useMemo(() => {
-    const cab = tree.find((f) => f.id === 'cabinet');
-    if (!cab) return [] as Array<{ id: string; label: string }>;
-    return cab.children
+    if (!cabinet) return [] as Array<{ id: string; label: string }>;
+    return cabinet.children
       .filter((c): c is VaultFolder => !isVaultDoc(c) && (c as VaultFolder).id !== 'cab-unfiled')
       .map((c) => ({ id: c.id.replace(/^cab-/, ''), label: c.label }));
-  }, [tree]);
+  }, [cabinet]);
   const [moveTarget, setMoveTarget] = useState('');
+  /* The uploaded documents a person may file at a missing section (VR-15). */
+  const coverageDocuments = useMemo<CoverageDocument[]>(() => {
+    const out: CoverageDocument[] = [];
+    const walk = (nodes: (VaultDoc | VaultFolder)[]) => {
+      for (const n of nodes) {
+        if (isVaultDoc(n)) {
+          if (n.docId) out.push({ docId: n.docId, title: n.title });
+        } else if ((n as VaultFolder).children) walk((n as VaultFolder).children);
+      }
+    };
+    if (cabinet) walk(cabinet.children);
+    return out;
+  }, [cabinet]);
 
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -546,6 +833,15 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const [selId, setSel] = useState<string | null>(null);
   const toggle = (id: string) =>
     setExpanded((e) => ({ ...e, [id]: e[id] === false ? true : false }));
+  /* From the uploads lane: browse the cabinet folder the row sits in (with the
+     cabinet un-collapsed down to it) and select the row — the same state the
+     tree's own controls drive, so the list, breadcrumb and detail pane agree. */
+  const openUpload = (folderId: string, docId: string | null) => {
+    setQ('');
+    setActiveFolder(folderId);
+    setExpanded((e) => ({ ...e, cabinet: true, [folderId]: true }));
+    if (docId) setSel(docId);
+  };
 
   const findFolder = (
     nodes: (VaultDoc | VaultFolder)[],
@@ -576,15 +872,25 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     'vault.search': (params) => {
       const query = (params.query ?? '').trim();
       if (!query) return { ok: false, reason: 'No search term given.' };
+      if (!projectId) return { ok: false, reason: NO_PROGRAM_OPEN };
       if (vaultState.error) return { ok: false, reason: 'The vault could not be read.' };
-      // No loading guard: the query is pure view state — it filters whatever
-      // the read delivers, so applying it mid-load is correct, not early.
+      /* Held until the read settles, then refused on an empty vault. The query
+         is view state, and it used to be applied mid-load on the grounds that
+         it filters whatever arrives. But an empty vault renders its empty
+         state and no search box at all, so the query went nowhere visible
+         while AnA was told "Searching the vault" and said so — a search the
+         person could not see, over documents that do not exist. */
+      if (vaultState.loading)
+        return { ok: false, reason: 'The vault is still loading.', retry: true };
+      if (allDocs.length === 0)
+        return { ok: false, reason: 'This vault has no documents yet, so there is nothing to search.' };
       setQ(query);
       return { ok: true, detail: `Searching the vault for "${query}"` };
     },
     'vault.open-folder': (params) => {
       const wanted = (params.folder ?? '').trim().toLowerCase();
       if (!wanted) return { ok: false, reason: 'No folder named.' };
+      if (!projectId) return { ok: false, reason: NO_PROGRAM_OPEN };
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // this surface's ready signal below — the navigate→act gap.
       if (vaultState.loading)
@@ -659,11 +965,22 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* The vault document currently being filed into a submission, if any. The
      tree id is `up-<uuid>`; the uuid is what a leaf names. */
   const [filingIntoSubmission, setFilingIntoSubmission] = React.useState<
-    { documentUuid: string; documentTitle: string } | null
+    { documentUuid: string; documentTitle: string; mimeType?: string | null } | null
   >(null);
 
-  const sel =
-    allDocs.find((d) => d.id === selId) || results[0] || allDocs[0] || null;
+  /* The tree's record of a document wins over a search hit for the same one:
+     it carries the filing block (Confirm, Move, Place into submission) that a
+     hit does not, and keeps the hit's matching excerpt. A document only the
+     search found is shown as its hit. */
+  const pick = (id: string | undefined): VaultDoc | undefined => {
+    if (id === undefined) return undefined;
+    const leaf = allDocs.find((d) => d.id === id);
+    const hit = searching ? results.find((d) => d.id === id) : undefined;
+    if (!leaf) return hit;
+    // While searching, the excerpt that matched is what the reader needs to see.
+    return hit?.preview ? { ...leaf, preview: hit.preview } : leaf;
+  };
+  const sel = pick(selId ?? undefined) || pick(results[0]?.id) || allDocs[0] || null;
 
   /* What AnA can see of this screen.
      Until now she knew the user was on "vault" and nothing else — not which
@@ -689,19 +1006,28 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     const shown = results.length;
     return {
       summary:
-        `Document vault: ${allDocs.length} document(s) in the tree` +
+        `Document vault: ${vault?.documentCount ?? 0} document(s)` +
         (vault?.unfiledCount ? `, ${vault.unfiledCount} upload(s) unfiled` : '') +
         (folder ? `, folder "${folder.label}" open` : '') +
         (searching ? `, filtered to ${shown} by the search "${q.trim()}"` : '') +
         (sel ? `, "${sel.title}" selected` : ''),
       facts: {
-        totalDocuments: allDocs.length,
+        // The server's count of documents. allDocs is the tree's leaves: each
+        // section of an authored document, and only the uploads on the page.
+        totalDocuments: vault?.documentCount ?? 0,
+        documentCounts: vault?.documentCounts ?? null,
         unfiledUploads: vault?.unfiledCount ?? 0,
+        // Required sections against confirmed filings (VR-15), as the server
+        // counted them, or why there is no figure. Not a readiness figure.
+        vaultCoverage: vault?.coverage ?? null,
         dataRoom: vault?.dataRoom
           ? {
               captured: vault.dataRoom.captured,
               classified: vault.dataRoom.classified,
               filed: vault.dataRoom.filed,
+              needsReview: vault.dataRoom.needsReview ?? null,
+              // When true, the three counts above cover the newest sources only.
+              truncated: vault.dataRoom.window?.truncated === true,
             }
           : vault?.unavailable?.some((u) => u.branch === 'Data room')
             ? 'unavailable — counts unknown, not zero'
@@ -714,7 +1040,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           ? {
               id: sel.id, number: sel.num, title: sel.title, type: sel.type,
               status: sel.status, version: sel.ver, owner: sel.owner,
-              updated: sel.updated, percentComplete: sel.pct,
+              updated: sel.updated,
+              // An upload has no authoring completion. The server sends null;
+              // a 0 from one that has not caught up is still not a figure.
+              percentComplete: sel.src === 'upload' ? null : sel.pct,
               blocker: sel.blocker ?? false, flag: sel.flag ?? null,
               filing: sel.filing ?? null,
             }
@@ -728,7 +1057,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         'Confirm or move an upload’s suggested filing (governed, audited)',
       ],
     };
-  }, [vaultState.loading, vaultState.error, allDocs, results.length, folder, searching, q, sel, vault]);
+  }, [vaultState.loading, vaultState.error, results.length, folder, searching, q, sel, vault]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -797,7 +1126,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           <div className="vd-sub">
             <span className="vd-sub-x">
               {vault && vault.spine ? <>{vault.spine} {I.dot} </> : null}
-              {allDocs.length} document{allDocs.length === 1 ? '' : 's'}
+              {vault ? (
+                <>
+                  {vault.documentCount} document{vault.documentCount === 1 ? '' : 's'}
+                </>
+              ) : null}
               {vault && (vault.unfiledCount ?? 0) > 0 ? (
                 <> {I.dot} {vault.unfiledCount} unfiled — needs review</>
               ) : null}
@@ -822,7 +1155,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
             picker can never offer a type the server refuses. MODULE_3 is how
             an uploaded CMC document declares itself and gets handled as one
             downstream; the default stays OTHER rather than a guess from the
-            filename. */}
+            filename.
+            Options are NAMED by vaultIngestTypeLabel, the label map kept
+            beside the enum: the wire token ("OTHER", "MODULE 3") is not a
+            reader's vocabulary. The width is the content's, not the row's —
+            `.c2c-input` is `width:100%`, which in this wrapping header pushed
+            the picker onto a line of its own with the buttons below it. */}
         <select
           className="c2c-input"
           aria-label="Document type for uploaded files"
@@ -830,10 +1168,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           onChange={(e) => setDocType(e.target.value as VaultIngestDocumentType)}
           disabled={uploading}
           data-testid="vault-upload-type"
+          title="Document type for uploaded files"
+          style={{ width: 'auto', maxWidth: 260 }}
         >
           {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
             <option key={t} value={t}>
-              {t.replace(/_/g, ' ')}
+              {vaultIngestTypeLabel(t)}
             </option>
           ))}
         </select>
@@ -865,7 +1205,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           }
           data-testid="vault-upload-button"
         >
-          {I.upload || I.plus} {uploading ? 'Uploading…' : 'Upload'}
+          {I.upload} {uploading ? 'Uploading…' : 'Upload'}
         </button>
         {/* The conversational route is kept, but as what it is: a second way
             in, not the thing the upload icon promises. */}
@@ -900,6 +1240,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         <VaultPlaceIntoSubmission
           documentUuid={filingIntoSubmission.documentUuid}
           documentTitle={filingIntoSubmission.documentTitle}
+          mimeType={filingIntoSubmission.mimeType}
           onClose={() => setFilingIntoSubmission(null)}
         />
       )}
@@ -945,23 +1286,35 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         </button>
       </div>
 
+      {/* The state panels sit on the header's 24px gutter. As bare children of
+          `.vd-wrap` they ran edge to edge, flush against the nav rail and out
+          of line with everything above them. */}
       {!projectId ? (
-        <EmptyState
-          icon={I.folder}
-          title="Open a project to see its vault"
-          hint="The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine."
-        />
+        <div style={{ padding: '16px 24px' }}>
+          <EmptyState
+            icon={I.folder}
+            title="Open a project to see its vault"
+            hint="The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine."
+          />
+        </div>
       ) : vaultState.loading ? (
-        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
+        <div role="status" className="scaf-note" style={{ padding: '18px 24px' }}>
           Loading the project vault…
         </div>
       ) : vaultState.error ? (
-        <EmptyState
-          tone="error"
-          icon={I.alertTriangle}
-          title="Couldn't load the project vault"
-          hint="The governed document store didn't respond. This is the project's real CTD / eSTAR / IVDR / TMF document tree — sign in and retry, or check the service is reachable."
-        />
+        <div style={{ padding: '16px 24px' }}>
+          {/* A refusal is said as a refusal. Every failure used to read "the
+              governed document store didn't respond" — false for a 403, where
+              it answered and said no, and for a 404, where the open project is
+              not in this organization. Only a failure retry can fix offers one. */}
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load the project vault"
+            hint={vaultReadFailure(vaultState.status).hint}
+            retry={vaultReadFailure(vaultState.status).retryable ? () => setVaultEpoch((n) => n + 1) : undefined}
+          />
+        </div>
       ) : (
         <>
           <DataRoomLane
@@ -970,6 +1323,27 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               vault?.unavailable?.find((u) => u.branch === 'Data room')?.reason ?? null
             }
           />
+          <VaultCoverage
+            coverage={vault?.coverage}
+            documents={coverageDocuments}
+            onUpload={() => fileInputRef.current?.click()}
+            onFileHere={(docId, target) =>
+              void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
+            }
+            busy={filing}
+          />
+          {/* The lane is a BROWSE aid — every upload in the programme. While a
+              search is running it would sit above the results listing files the
+              search excluded, contradicting the very list the person asked for,
+              so it steps aside until the search is cleared. */}
+          {!searching && (
+            <UploadsLane
+              cabinet={cabinet}
+              window={vault?.uploadsWindow}
+              status={st}
+              onOpen={openUpload}
+            />
+          )}
           {filingNote && (
             <div
               className="scaf-note"
@@ -980,15 +1354,17 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           )}
           {allDocs.length === 0 ? (
-            <EmptyState
-              icon={I.fileText}
-              title="No documents in this project's vault yet"
-              hint={
-                vault?.pendingStore
-                  ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified and version-tracked."
-                  : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine, version-tracked."
-              }
-            />
+            <div style={{ padding: '16px 24px' }}>
+              <EmptyState
+                icon={I.fileText}
+                title="No documents in this project's vault yet"
+                hint={
+                  vault?.pendingStore
+                    ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified and version-tracked."
+                    : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine, version-tracked."
+                }
+              />
+            </div>
           ) : (
         <div className="vd-grid">
           <aside className="vd-tree">
@@ -1177,6 +1553,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                                 // prefix is refused server-side as a malformed uuid.
                                 documentUuid: sel.docId!,
                                 documentTitle: sel.title || sel.num || 'Vault document',
+                                mimeType: sel.mimeType,
                               })
                             }
                             data-testid="vault-place-into-submission"
@@ -1200,7 +1577,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       {sel.filing.evidenceKind && (
                         <div className="vd-d-filing-row">
                           <span className="k">Looks like</span>
-                          <span className="v">{sel.filing.evidenceKind}</span>
+                          <span className="v">{vaultDocKindLabel(sel.filing.evidenceKind)}</span>
                         </div>
                       )}
                       {sel.filing.ctdSection && (
@@ -1211,19 +1588,34 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       )}
                       {sel.filing.rationale && (
                         <div className="vd-d-filing-why">
-                          {sel.filing.placementStatus === 'suggested'
-                            ? `Classifier${sel.filing.confidence ? ` (${sel.filing.confidence} confidence)` : ''}: `
+                          {/* "Classifier" only for the classifier's own proposal, which
+                              always carries its confidence. A suggestion AnA made has
+                              none, and its rationale already names her — labelling it
+                              "Classifier" would misattribute it all over again. */}
+                          {sel.filing.placementStatus === 'suggested' && sel.filing.confidence
+                            ? `Classifier (${sel.filing.confidence} confidence): `
                             : ''}
                           {sel.filing.rationale}
                         </div>
                       )}
                       <div className="vd-d-filing-acts">
+                        {sel.docId && (sel.filing.placementStatus === 'suggested' || cabinetFolders.length > 0) && (
+                          <input
+                            className="vd-d-filing-reason"
+                            value={filingReason}
+                            onChange={(e) => setFilingReason(e.target.value)}
+                            placeholder="Reason (optional, recorded with the placement)"
+                            aria-label="Reason for this filing decision"
+                            disabled={filing}
+                            data-testid="vault-filing-reason"
+                          />
+                        )}
                         {sel.filing.placementStatus === 'suggested' && sel.docId && (
                           <button
                             className="sp-primary"
                             style={{ padding: '7px 11px' }}
                             disabled={filing}
-                            onClick={() => void fileDocument(sel.docId!, { confirm: true })}
+                            onClick={() => void fileDocument(sel.docId!, { confirm: true, ...(filingReason.trim() ? { note: filingReason.trim() } : {}) })}
                             data-testid="vault-confirm-filing"
                           >
                             {I.check || I.fileText} Confirm filing
@@ -1247,7 +1639,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                               disabled={filing || !moveTarget}
                               onClick={() => {
                                 if (moveTarget) {
-                                  void fileDocument(sel.docId!, { folderId: moveTarget });
+                                  void fileDocument(sel.docId!, { folderId: moveTarget, ...(filingReason.trim() ? { note: filingReason.trim() } : {}) });
                                   setMoveTarget('');
                                 }
                               }}
@@ -1267,6 +1659,16 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                         )}
                       </div>
                     </div>
+
+                    {projectId && sel.docId && sel.details ? (
+                      <VaultEditDetails
+                        key={`${sel.docId}-${vaultEpoch}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        details={sel.details}
+                        onSaved={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
 
                     <div className="vd-d-seclbl">File</div>
                     <div className="vd-d-filing">
@@ -1289,6 +1691,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                         </div>
                       )}
                     </div>
+                    {projectId && sel.docId ? (
+                      <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
+                    ) : null}
                   </>
                 ) : (
                   <>

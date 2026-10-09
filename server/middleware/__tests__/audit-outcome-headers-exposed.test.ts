@@ -78,9 +78,12 @@ describe('Access-Control-Expose-Headers covers the audit-outcome carriers', () =
     const { execSync } = require('node:child_process') as typeof import('node:child_process');
     // `-- server/routes` rather than a `**` glob: git grep does not expand the
     // glob here and silently matched nothing, which made this test pass
-    // vacuously the first time it ran.
+    // vacuously the first time it ran. The routes now set the pair through the
+    // one shared `setAuditRowHeaders` (services/audit/audit-write-outcome.ts),
+    // so that file is where the literal names live and is searched too; the
+    // last inline copy (routes/submissions.ts) moved onto it on 2026-09-25.
     const hits = execSync(
-      String.raw`git grep -ohE "set(Header)?\('X-Audit-Row-(Persisted|Code)'" -- server/routes || true`,
+      String.raw`git grep -ohE "set(Header)?\('X-Audit-Row-(Persisted|Code)'" -- server/routes server/services/audit/audit-write-outcome.ts || true`,
       { cwd: ROOT, encoding: 'utf8' },
     );
     const used = new Set(
@@ -88,7 +91,7 @@ describe('Access-Control-Expose-Headers covers the audit-outcome carriers', () =
     );
     expect(
       used.size,
-      'no X-Audit-Row-* header found in server/routes — has the outcome carrier been renamed?',
+      'no X-Audit-Row-* header found in server/routes or the shared setter — has the outcome carrier been renamed?',
     ).toBeGreaterThan(0);
     for (const h of used) {
       expect(AUDIT_OUTCOME_HEADERS, `${h} is used by a route but not listed in this test`).toContain(h);

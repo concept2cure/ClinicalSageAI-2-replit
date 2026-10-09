@@ -507,6 +507,9 @@ export interface EvidenceSource {
   storedArtifactRef: string | null;
   checksum: string | null;
   version: string | null;
+  /** False once a re-upload has superseded this source (is_current). True on a
+   *  row older than the column: it was never superseded. */
+  isCurrent: boolean;
   provenance: Record<string, unknown>;
   ingestionStatus: IngestionStatus;
   extractionStatus: ExtractionStatus;

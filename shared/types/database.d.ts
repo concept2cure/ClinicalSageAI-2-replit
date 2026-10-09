@@ -847,6 +847,9 @@ export interface Submission {
   createdAt?: Date | null;
   updatedAt?: Date | null;
   deletedAt?: Date | null;
+  /** The project (regulatory_programs.id) this submission belongs to, held to
+   *  the same organization by submissions_program_same_org_fk (20260925b). */
+  programId?: string | null;
 }
 export type NewSubmission = Omit<Submission, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
 
@@ -895,6 +898,14 @@ export interface SubmissionLeaf {
   // list went stale, so it is deliberately not restated.
   documentTable?: string | null;
   documentId?: number | null; // polymorphic id within documentTable
+  // The uuid key for a uuid-keyed store (vault_documents), written by
+  // upsertLeaf and carried by the drizzle table since
+  // migrations/20260917b_submission_leaf_document_uuid.sql. It was absent
+  // here for the same reason documentContentSha256 was, with the same
+  // consequence: every caller of listLeaves saw a leaf with no uuid, so the
+  // dispatch-readiness resolver could not reach a vault document and called
+  // every vault-filed leaf unresolvable.
+  documentUuid?: string | null;
   documentType?: string | null; // classifier hint for pathway leaf→slot matching
   leafGuid?: string | null;
   parentLeafId?: number | null;

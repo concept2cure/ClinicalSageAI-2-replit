@@ -1,0 +1,16 @@
+[ci:fixture-fallback] `live ?? FIXTURE` and `live?.length ? live : FIXTURE` in client/src/concept2cure
+  ungated content fallbacks  : 1
+  baselined (known, unfixed) : 0
+
+❌ 1 new ungated fixture fallback(s):
+
+  client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:326  ?? FIXTURE_REGION_SECTIONS
+
+  This substitutes example content for a tenant's own data on exactly the
+  occasions they cannot detect it: an empty tenant, an expired token, a 500,
+  a fetch that has not started.
+
+  Use `useSampleRows(live, fixture)` — it returns the fixture only under the
+  explicit sample-mode boundary and an honest empty otherwise — and drive a
+  <SampleDataBanner> from `useShowingSample(live)` so the substitution is
+  never silent. See client/src/concept2cure/mdx/lib/useSampleRows.ts.

@@ -62,6 +62,15 @@
 import { readFileSync, readdirSync, statSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import {
+  columnsAddedIn,
+  columnsCreatedIn,
+  dynamicColumnAdds,
+  drizzleColumns,
+  stripSqlComments,
+  lastPart,
+} from './lib/sql-columns.mjs';
+import { serverSqlFiles } from './check-migration-reachability.mjs';
 
 /**
  * True only when this file is the process entry point. The parser below is
@@ -147,28 +156,12 @@ function walk(dir, ext, out = []) {
 export function declaredColumns() {
   const byTable = new Map();
   for (const file of walk(path.join(ROOT, 'shared'), '.ts')) {
-    const src = readFileSync(file, 'utf8');
-    // pgTable('table_name', {   … })   — capture the body up to the closing
-    // brace that precedes the table's extras callback or the call's end.
-    const re = /pgTable\(\s*['"]([a-z0-9_]+)['"]\s*,\s*\{/gi;
-    let m;
-    while ((m = re.exec(src)) !== null) {
-      const table = m[1];
-      // Walk braces from the opening `{` to find the column-object body.
-      let depth = 1;
-      let i = re.lastIndex;
-      while (i < src.length && depth > 0) {
-        const c = src[i];
-        if (c === '{') depth++;
-        else if (c === '}') depth--;
-        i++;
-      }
-      const body = src.slice(re.lastIndex, i - 1);
+    // The shared drizzle parser (lib/sql-columns.mjs): column object found by
+    // matching braces, a column read only in property position — one parser
+    // for every guard that asks what a table declares.
+    for (const { table, column } of drizzleColumns(readFileSync(file, 'utf8')).columns) {
       const cols = byTable.get(table) ?? new Set();
-      // field: someType('sql_name'  — the sql name is what the database sees.
-      for (const cm of body.matchAll(/^\s*[A-Za-z0-9_]+\s*:\s*[A-Za-z0-9_]+\s*\(\s*['"]([a-z0-9_]+)['"]/gmi)) {
-        cols.add(cm[1]);
-      }
+      cols.add(column);
       byTable.set(table, cols);
     }
   }
@@ -239,81 +232,30 @@ export function sqlLineageColumns() {
     ...walk(path.join(ROOT, 'db/migrations'), '.sql'),
   ].filter((f) => !f.includes(`${path.sep}_consolidated${path.sep}`));
 
+  const sweeps = [];
   for (const file of files) {
     let src;
     try {
-      src = readFileSync(file, 'utf8');
+      src = stripSqlComments(readFileSync(file, 'utf8'));
     } catch {
       continue;
     }
-
-    // ── CREATE TABLE [IF NOT EXISTS] [public.]<t> ( … ) ──────────────────────
-    const create = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:public\.)?["`]?([a-z0-9_]+)["`]?\s*\(/gi;
-    let m;
-    while ((m = create.exec(src)) !== null) {
-      const table = m[1].toLowerCase();
-      // Balance parens rather than matching a terminator: the generated files
-      // are tab-indented and end `);`, while the hand-written ones are not —
-      // a terminator regex got this wrong before.
-      let depth = 1;
-      let i = create.lastIndex;
-      while (i < src.length && depth > 0) {
-        const c = src[i];
-        if (c === '(') depth++;
-        else if (c === ')') depth--;
-        i++;
-      }
-      // Comments come out BEFORE the split, not after.
-      //
-      // A trailing comment can contain commas, and 022_stability_v2.sql has
-      // exactly that: `label text not null,  -- '0M','3M','6M',…` — splitting
-      // first turned that comment into six phantom fragments and glued the NEXT
-      // real column (`month int not null`) onto the tail of the last one, where
-      // it began with a quote and matched no name. The guard then reported
-      // stab_timepoints.month as existing nowhere, when the DDL declares it and
-      // the router both writes AND orders by it. Crying wolf on a real column,
-      // from a comma inside a comment.
-      const body = src
-        .slice(create.lastIndex, i - 1)
-        .replace(/\/\*[\s\S]*?\*\//g, ' ')
-        .replace(/--[^\n]*/g, '');
-
-      // Split on TOP-LEVEL commas only; a type like numeric(10,2) has its own.
-      let d = 0;
-      let cur = '';
-      const parts = [];
-      for (const ch of body) {
-        if (ch === '(') d++;
-        else if (ch === ')') d--;
-        if (ch === ',' && d === 0) {
-          parts.push(cur);
-          cur = '';
-        } else cur += ch;
-      }
-      parts.push(cur);
-
-      for (const part of parts) {
-        const line = part.trim();
-        if (!line) continue;
-        // Table-level constraints are not columns.
-        if (/^(CONSTRAINT|PRIMARY\s+KEY|UNIQUE|FOREIGN\s+KEY|CHECK|EXCLUDE|LIKE)\b/i.test(line)) continue;
-        const nameMatch = line.match(/^["`]?([a-z0-9_]+)["`]?/i);
-        if (nameMatch) add(table, nameMatch[1]);
-      }
+    // CREATE TABLE bodies by balanced parentheses, and EVERY action of an ALTER
+    // (lib/sql-columns.mjs) — comments come out first, because a comma inside
+    // a trailing comment (022_stability_v2.sql: `label text not null, -- '0M',
+    // '3M',…`) once split into phantom fragments and hid the next real column.
+    for (const { table, column } of [...columnsCreatedIn(src), ...columnsAddedIn(src)]) add(table, column);
+    sweeps.push(...dynamicColumnAdds(src).sweeps);
+  }
+  // Catalog sweeps (`ALTER TABLE %I.%I ADD COLUMN …` over a table set) vouch for
+  // the tables they name or match. Order does not matter here: this guard
+  // deliberately over-counts what exists (see above).
+  for (const sw of sweeps) {
+    for (const table of [...byTable.keys()]) {
+      const name = lastPart(table);
+      if (sw.names.includes(name) || sw.patterns.some((re) => re.test(name))) for (const c of sw.columns) add(table, c);
     }
-
-    // ── ALTER TABLE [ONLY] [public.]<t> … ADD COLUMN [IF NOT EXISTS] <col> ───
-    // One ALTER may add several columns, so every ADD COLUMN in the statement
-    // is collected, not just the first.
-    const alter = /ALTER\s+TABLE\s+(?:ONLY\s+)?(?:IF\s+EXISTS\s+)?(?:public\.)?["`]?([a-z0-9_]+)["`]?([\s\S]*?);/gi;
-    while ((m = alter.exec(src)) !== null) {
-      const table = m[1].toLowerCase();
-      for (const cm of m[2].matchAll(
-        /ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?["`]?([a-z0-9_]+)["`]?/gi
-      )) {
-        add(table, cm[1]);
-      }
-    }
+    for (const [table, column] of sw.pairs) add(table, column);
   }
   return byTable;
 }
@@ -325,8 +267,10 @@ export function sqlLineageColumns() {
 function insertStatements() {
   const found = [];
   const skipped = [];
-  for (const file of walk(path.join(ROOT, 'server'), '.ts')) {
-    if (file.includes('__tests__') || file.endsWith('.test.ts')) continue;
+  // The same server files every reference-side guard reads (.ts, .js AND .mjs;
+  // see serverSqlFiles): a .js router writing a column that does not exist
+  // fails exactly as a .ts one does.
+  for (const file of serverSqlFiles(path.join(ROOT, 'server'))) {
     const src = readFileSync(file, 'utf8');
     const re = /INSERT\s+INTO\s+(?:public\.)?["`]?([a-z0-9_]+)["`]?\s*\(/gi;
     let m;

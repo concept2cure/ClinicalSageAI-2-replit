@@ -1,0 +1,6 @@
+[terraform-preflight-proof] ok — preflight step found in job "migrate" (6078 bytes of shell)
+[terraform-preflight-proof] ok — rendered family matches the pipeline's ECS_API_TASK_FAMILY (c2c-production-api)
+::error::STORAGE_PROVIDER must be exactly 's3' on ECS Fargate; got 'local'. A task's local disk is deleted with the task, and the vault's documents with it.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+
+[terraform-preflight-proof] 1 check(s) failed.

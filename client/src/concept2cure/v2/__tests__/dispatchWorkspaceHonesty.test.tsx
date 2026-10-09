@@ -5,10 +5,11 @@
  *
  * `shadowReviewMissing` is a hard blocker merged into the gate, so the note it
  * drives only ever rendered beneath "Dispatch blocked" — while saying the gate
- * was clear and dispatch permitted. And the AI advisory's "cleared to dispatch"
- * is floored on the structural gate only, so it could sit green under the same
- * blocked gate with no qualifier. Revert-proven: both cases fail with the
- * fixes removed.
+ * was clear and dispatch permitted. And a dispatch-QC verdict of "cleared to
+ * dispatch" (deterministic since VSR-001 F-9, but a counts-only verdict covers
+ * less than the composed gate) must never sit green under the same blocked
+ * gate with no qualifier. Revert-proven: both cases fail with the fixes
+ * removed.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -60,16 +61,25 @@ describe('DispatchWorkspace — nothing says "permitted" under a blocked gate', 
     expect(text()).not.toMatch(/The gate is clear/);
   });
 
-  it('a "cleared" AI advisory under a blocked gate is not green and says the gate decides', async () => {
-    serve({ clearedToDispatch: true, blockers: [], warnings: [], checklist: [{ item: 'Forms present', pass: true }] });
+  it('a "cleared" dispatch-QC verdict under a blocked gate is not green and says the gate decides', async () => {
+    serve({
+      clearedToDispatch: true,
+      blockers: [],
+      warnings: [],
+      checklist: [{ item: 'Forms present', pass: true }],
+      verdictSource: 'dispatch-gate',
+      narrative: null,
+      narrativeUnavailable: { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is configured.' },
+    });
     render(<DispatchWorkspace {...({ sub: SUB, seq: SEQ, onGoverned: vi.fn() } as any)} />);
     await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
     fireEvent.click(screen.getByRole('button', { name: /Run dispatch QC/ }));
-    await waitFor(() => expect(text()).toMatch(/QC advisory: cleared to dispatch/));
+    await waitFor(() => expect(text()).toMatch(/Dispatch QC: cleared to dispatch/));
     expect(text()).toMatch(/deterministic gate above still blocks dispatch/);
-    const verdict = Array.from(document.querySelectorAll('.sc-verdict')).find((el) => /QC advisory/.test(el.textContent ?? ''))!;
+    const verdict = Array.from(document.querySelectorAll('.sc-verdict')).find((el) => /Dispatch QC:/.test(el.textContent ?? ''))!;
     expect(verdict.className).not.toMatch(/tone-ok/);
-    // The advisory was posted with the sequence's REAL leaves, not [].
+    expect(text()).toMatch(/No model narrative: No AI provider is configured\./);
+    // The QC request was posted with the sequence's REAL leaves, not [].
     const post = apiRequest.mock.calls.find((c) => c[0] === 'POST' && String(c[1]).endsWith('/dispatch-qc'));
     expect((post![2] as any).leaves).toEqual([{ sectionCode: 'm1-1.3', operation: 'new' }]);
   });

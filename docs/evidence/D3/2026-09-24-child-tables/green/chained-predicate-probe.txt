@@ -1,0 +1,39 @@
+# The chained predicate, shown on the from-blank install before it was written into the migration:
+# a rolled-back transaction that installs it on c2c_document_section_versions, seeds a document,
+# section and version for two tenants (as owner), then SET LOCAL ROLE app_service with tenant A's
+# scope, counts versions from the child alone, and edits A's own section content so the SECURITY
+# INVOKER snapshot trigger inserts a version under WITH CHECK.
+
+\set ON_ERROR_STOP 1
+BEGIN;
+INSERT INTO organizations (id, name, slug, status) VALUES (90901,'probe-a','probe-a','active'),(90902,'probe-b','probe-b','active') ON CONFLICT (id) DO NOTHING;
+INSERT INTO c2c_documents (id, org_id, doc_type, agency, rule_pack_version, title) VALUES
+  ('probe-doc-a', 90901, 'k510', 'fda', 'fda-510k-2024', 'A'), ('probe-doc-b', 90902, 'k510', 'fda', 'fda-510k-2024', 'B');
+INSERT INTO c2c_document_sections (document_id, section_key, label, path_order) VALUES
+  ('probe-doc-a', 's1', 'A section', 1), ('probe-doc-b', 's1', 'B section', 1);
+INSERT INTO c2c_document_section_versions (section_id, version, content, author_id, reason)
+  SELECT id, 99, '{"t":"prior text"}'::jsonb, 1, 'probe' FROM c2c_document_sections WHERE document_id IN ('probe-doc-a','probe-doc-b');
+ALTER TABLE public.c2c_document_section_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.c2c_document_section_versions FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_policy ON public.c2c_document_section_versions FOR ALL
+  USING (NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+         OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+         OR EXISTS (SELECT 1 FROM public.c2c_document_sections p WHERE p.id = c2c_document_section_versions.section_id))
+  WITH CHECK (NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+         OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+         OR EXISTS (SELECT 1 FROM public.c2c_document_sections p WHERE p.id = c2c_document_section_versions.section_id));
+SELECT 'probe versions in the table (owner view): ' || count(*) FROM c2c_document_section_versions WHERE reason='probe';
+SET LOCAL ROLE app_service;
+SELECT set_config('app.rls_enforce', 'on', true), set_config('app.current_tenant_id', '90901', true);
+SELECT 'probe versions tenant A sees, counted from the child alone: ' || count(*) FROM c2c_document_section_versions WHERE reason='probe';
+SELECT set_config('app.actor_id', '1', true), set_config('app.reason', 'probe edit', true);
+UPDATE c2c_document_sections SET content = '{"t":"new text"}'::jsonb WHERE document_id='probe-doc-a';
+SELECT 'A versions after own edit (trigger snapshot): ' || count(*) FROM c2c_document_section_versions v JOIN c2c_document_sections s ON s.id=v.section_id WHERE s.document_id='probe-doc-a';
+ROLLBACK;
+
+## output
+probe versions in the table (owner view): 2
+probe versions tenant A sees, counted from the child alone: 1
+UPDATE 1
+A versions after own edit (trigger snapshot): 2
+ROLLBACK

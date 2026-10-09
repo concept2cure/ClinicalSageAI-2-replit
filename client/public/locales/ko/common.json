@@ -33,5 +33,11 @@
   "language": {
     "label": "언어",
     "select": "언어 선택"
+  },
+  "session": {
+    "stillThere": "계속 이용 중이신가요?",
+    "signOutIn": "활동이 없어 {{seconds}}초 후 로그아웃됩니다.",
+    "staySignedIn": "로그인 유지",
+    "signOutNow": "지금 로그아웃"
   }
 }

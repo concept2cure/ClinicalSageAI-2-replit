@@ -1,0 +1,5 @@
+✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation
+✅ selftest: gate exits 1 and names 'ectd-publishing' when it is missing from the 20260810 keep-list
+✅ selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route
+✅ selftest: gate passes on the real tree
+selftest exit 0

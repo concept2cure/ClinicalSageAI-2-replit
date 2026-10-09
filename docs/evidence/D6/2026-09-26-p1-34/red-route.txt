@@ -1,0 +1,19 @@
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > an ordinary write runs with no reason and no password, confirmed by a person 24ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run without an explicit yes 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run when the confirmation could not be recorded 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > the Part 11 tiers still demand what they demanded 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > a read is still not something this route runs 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held run runs the command from the ROW and releases the run 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline records the decision, runs nothing, and releases the run at once 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline whose audit row was lost still releases the run, and says so 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline needs a run to apply to 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > an approval proposed by AnA asks for a reason, not a click 5ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs on a yes, with the run's own context and the confirmation stamped 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run without an explicit yes 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run from a body alone — there is no held run to take its context from 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > can be declined like any proposal 2ms
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > any write the register classes confirm runs on a yes — not only the original five 9ms
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > never runs a person's own act, whatever the held row says and whatever was clicked 3ms
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > a tool the register does not know is still a tool, confirmed like any write (it failed closed) 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 14 passed (17)

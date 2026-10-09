@@ -44,8 +44,15 @@ vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async (..._a:
 vi.mock('../../../routes/c2c/actions', () => ({
   recordGovernedAction: vi.fn(async () => ({ actionId: 'act_test', auditId: 'aud_test', sha256Chain: '' })),
 }));
+// 2026-09-28 (Q-0928-2): revise_qms_document now reads the caller's org role
+// from organization_users (resolveSignerOrgRole), which this suite's DDL does
+// not create. An editor-capable role here; the refusal is pinned in
+// revise-qms-document-role.test.ts.
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: vi.fn(async () => 'member') }));
 
 import { getToolHandler } from '../AnaToolExecutor';
+import auditService from '../../auditService';
+import { recordGovernedAction } from '../../../routes/c2c/actions';
 
 const DDL = `
 CREATE TABLE qms_documents (
@@ -73,7 +80,7 @@ CREATE TABLE qms_change_links (
 );
 `;
 
-const CTX = { organizationId: 1, userId: 10 };
+const CTX = { organizationId: 1, userId: 10, humanConfirmed: true };
 
 beforeAll(async () => {
   pglite = new PGlite();
@@ -123,16 +130,44 @@ describe('qms_change_transition', () => {
     expect(res.error).toMatch(/reason for change is required/i);
   });
 
-  it('enforces segregation of duties (approver ≠ proposer)', async () => {
+  /* AnA cannot approve a change: approval is an electronic signature (DP-31 /
+     P1-28) and a chat turn cannot collect a password. The refusal comes from
+     transitionChange itself, so it holds for any caller, and it holds for a
+     user who is not the proposer (so it is not the segregation-of-duties check). */
+  it('cannot approve a change from chat, and the change stays under assessment', async () => {
     const created = await call('qms_change_create', { change_number: 'CC-2026-053', title: 'y', reason: 'r' }); // proposed_by = 10
     await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'assess' });
-    const res = await call('qms_change_transition', { change_id: created.id, to: 'approved', reason: 'approve' }, CTX); // same user 10
-    expect(res.error).toMatch(/approver must differ/i);
+    const res = await call('qms_change_transition', { change_id: created.id, to: 'approved', reason: 'approve' }, { organizationId: 1, userId: 11, humanConfirmed: true });
+    expect(res.error).toMatch(/electronic signature/i);
+    // AnA tells the person what to do, so it needs the kind of refusal and a
+    // place a person can go: the Approve button, not an API path.
+    expect(res.code).toBe('CHANGE_APPROVAL_REQUIRES_SIGNATURE');
+    expect(res.error).toMatch(/Approve button/);
+    expect(res.error).not.toMatch(/\/api\//);
+    const { rows } = await pglite.query<{ status: string; approved_by: number | null }>(
+      `SELECT status, approved_by FROM qms_change_controls WHERE id = $1`, [created.id]);
+    expect(rows[0]).toMatchObject({ status: 'under_assessment', approved_by: null });
+  });
+
+  /* Hand-on from the review follow-through lane: after DP-31 the definition
+     still offered `approved` and promised a segregation-of-duties check, so AnA
+     would offer the user an approval that transitionChange refuses for every
+     caller. What the model is told has to match what the tool can do. */
+  it('does not offer AnA an approval, and says where a change is approved', async () => {
+    const { QMS_CHANGE_TRANSITION } = await import('../qms-labeling-analytics-tool-defs');
+    const to = (QMS_CHANGE_TRANSITION.input_schema.properties as Record<string, { enum?: string[] }>).to;
+    expect(to.enum).not.toContain('approved');
+    expect(QMS_CHANGE_TRANSITION.description).not.toMatch(/segregation of duties/i);
+    expect(QMS_CHANGE_TRANSITION.description).toMatch(/cannot approve/i);
+    expect(QMS_CHANGE_TRANSITION.description).toMatch(/Approve button/);
   });
 
   it('rejects an illegal transition', async () => {
     const created = await call('qms_change_create', { change_number: 'CC-2026-054', title: 'y', reason: 'r' });
-    const res = await call('qms_change_transition', { change_id: created.id, to: 'closed', reason: 'skip ahead' });
+    // Not 'closed': AnA may not close a change at all (the tool register refuses
+    // it before the state machine is asked — tool-authorization.test.ts). This
+    // pins the state machine on a target she may otherwise request.
+    const res = await call('qms_change_transition', { change_id: created.id, to: 'in_implementation', reason: 'skip ahead' });
     expect(res.error).toMatch(/cannot move change/i);
   });
 });
@@ -144,6 +179,45 @@ describe('qms_change_link', () => {
     expect(res.ok).toBe(true);
     const db = await pglite.query(`SELECT link_type, linked_ref FROM qms_change_links WHERE change_id = $1`, [created.id]);
     expect((db.rows[0] as { linked_ref: string }).linked_ref).toBe('DEV-2026-099');
+  });
+});
+
+// WO-16C hand-on item 2. The three change-control tools wrote their §11.10(e)
+// row as `void auditService.logAction(...)`: the change committed, the outcome
+// was discarded, and AnA told the user "Raised change …" whether or not the
+// record of it existed. The REST routes (routes/mdx-qms.ts) carry the outcome
+// as `meta.auditTrail`; the tools now carry it too, and say so when it is lost.
+describe('the audit row each change-control tool writes', () => {
+  const lost = { persisted: false, chained: false, tamperProof: false, error: 'relation "audit_logs" is unavailable' };
+  const loseNextAuditRow = () => vi.mocked(auditService.logAction).mockResolvedValueOnce(lost as never);
+
+  function expectLost(res: Record<string, unknown>) {
+    expect(res.ok, 'the change itself stands').toBe(true);
+    expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+    expect(String(res.message)).toMatch(/audit entry .* could not be written/i);
+    expect(JSON.stringify(res), 'the store text stays in the log').not.toMatch(/audit_logs/);
+  }
+
+  it('carries a recorded row out as auditTrail', async () => {
+    const res = await call('qms_change_create', { change_number: 'CC-2026-060', title: 'y', reason: 'r' });
+    expect(res.auditTrail).toEqual({ persisted: true, chained: true });
+  });
+
+  it('create: says the record was not written when it was not', async () => {
+    loseNextAuditRow();
+    expectLost(await call('qms_change_create', { change_number: 'CC-2026-061', title: 'y', reason: 'r' }));
+  });
+
+  it('transition: says the record was not written when it was not', async () => {
+    const created = await call('qms_change_create', { change_number: 'CC-2026-062', title: 'y', reason: 'r' });
+    loseNextAuditRow();
+    expectLost(await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'Begin assessment.' }));
+  });
+
+  it('link: says the record was not written when it was not', async () => {
+    const created = await call('qms_change_create', { change_number: 'CC-2026-063', title: 'y', reason: 'r' });
+    loseNextAuditRow();
+    expectLost(await call('qms_change_link', { change_id: created.id, link_type: 'deviation', linked_ref: 'DEV-2026-100' }));
   });
 });
 
@@ -172,13 +246,42 @@ describe('revise_qms_document / retire_qms_document (SOP register)', () => {
     expect(res.error).toMatch(/reason for change is required/i);
   });
 
-  it('retires a document (terminal)', async () => {
+  it('a revision reason under 8 characters is refused and nothing is written', async () => {
+    // 2026-09-28 (Q-0928-2): the floor was 3, not QMS_REASON_MIN.
+    const id = await effectiveDoc('SOP-904');
+    vi.mocked(recordGovernedAction).mockClear();
+    const res = await call('revise_qms_document', { document_id: id, reason: 'fix' });
+    expect(res.error).toMatch(/at least 8 characters/i);
+    const db = await pglite.query(`SELECT status, version FROM qms_documents WHERE id = $1`, [id]);
+    expect(db.rows[0]).toMatchObject({ status: 'effective', version: '3.1' });
+    expect(vi.mocked(recordGovernedAction)).not.toHaveBeenCalled();
+  });
+
+  /* 2026-09-28 (Q-0928-1 / SEC-0928-1): these two cases pinned that the tool
+     retired the document, given a reason. Retirement is an electronic
+     signature on the route (verifyApprovalSigner + retireQmsDocumentSigned);
+     the tool now refuses with or without a reason, and writes nothing. */
+  it('without a reason: refuses, nothing is written and no placeholder reaches the ledger', async () => {
+    const id = await effectiveDoc('SOP-903');
+    vi.mocked(recordGovernedAction).mockClear();
+    const res = await call('retire_qms_document', { document_id: id });
+    expect(res.ok).toBe(false);
+    expect(res.signatureRequired).toBe(true);
+    const db = await pglite.query(`SELECT status FROM qms_documents WHERE id = $1`, [id]);
+    expect((db.rows[0] as { status: string }).status).toBe('effective');
+    expect(vi.mocked(recordGovernedAction)).not.toHaveBeenCalled();
+  });
+
+  it('with a reason: still refuses — retirement is signed from the Quality register', async () => {
     const id = await effectiveDoc('SOP-902');
-    const res = await call('retire_qms_document', { document_id: id, reason: 'Superseded.' });
-    expect(res.ok).toBe(true);
-    expect(res.status).toBe('retired');
-    // Retiring an already-retired doc is refused.
-    const again = await call('retire_qms_document', { document_id: id });
-    expect(again.error).toMatch(/already retired/i);
+    vi.mocked(recordGovernedAction).mockClear();
+    const res = await call('retire_qms_document', { document_id: id, reason: 'Superseded by SOP-905.' });
+    expect(res.ok).toBe(false);
+    expect(res.signatureRequired).toBe(true);
+    expect(res.message).toMatch(/electronic signature/i);
+    const db = await pglite.query(`SELECT status, metadata FROM qms_documents WHERE id = $1`, [id]);
+    expect((db.rows[0] as { status: string }).status).toBe('effective');
+    expect((db.rows[0] as { metadata: Record<string, unknown> }).metadata?.retired).toBeUndefined();
+    expect(vi.mocked(recordGovernedAction)).not.toHaveBeenCalled();
   });
 });

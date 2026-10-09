@@ -1,0 +1,15 @@
+# multi-agent-council.test.ts and council-tool.test.ts, the new cases against the service and tool before this change
+ × server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > a session is created for an organization, and records it
+   → expected 'INSERT INTO lumen.council_sessions (\…' to match /organization_id/
+ × server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > a session with no organization is refused, and nothing is written
+   → promise resolved "'2cfe9b30-569e-4dbc-9ccc-60cb6a1e75c1'" instead of rejecting
+ × server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > every agent's model call names the session's organization
+   → expected { taskType: 'regulatory_review', …(8) } to match object { organizationId: 42 }
+ × server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > all four agents pass it, not only the one exercised above
+   → expected 'this.executeLLMWithFailover(\n      \…' to match /organizationId: session\.organization…/
+ × server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > an execution row and a verification row take their tenant from the session's row
+   → agent_executions: expected 'INSERT INTO lumen.agent_executions (\…' to match /organization_id[\s\S]*SELECT s\.organ…/
+ × server/services/ana/__tests__/council-tool.test.ts > convene_drafting_council — executor handler > refuses a call with no organization before touching the database (D6)
+   → expected 'The drafting council is not provision…' to match /organization/i
+      Tests  6 failed | 38 passed (44)
+exit=1

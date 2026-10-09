@@ -1,0 +1,29 @@
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > GET /api/cmc-changes > 403 without org context 17ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > GET /api/cmc-changes > projects the real-store changes through the classifier, source = cmc_change_controls 11ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > GET /api/cmc-changes > fails closed to an empty list when the store is missing (42P01) 3ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > 403 without org context 9ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > proposes a change and returns the classified view (audited) 5ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > 400 on invalid input 3ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > write-throughs to the canonical §3.2 source layer when a CMC project is stated 3ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > says skipped when no project is stated — the change persists org-wide but feeds nothing 3ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > reports a failed write-through instead of pretending it recorded, and meters it 5ms
+ × server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > 404 for another organization's project — nothing is written 7ms
+ × server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > 404 for an id that names no project — nothing is written 5ms
+ × server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > a project lookup that cannot complete writes nothing and is not answered as a success 11ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /source-objects/foreign-proj is not found, and nothing is read or written 41ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /compile/foreign-proj is not found, and nothing is read or written 5ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /source-changed/foreign-proj is not found, and nothing is read or written 4ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > get /sections/foreign-proj is not found, and nothing is read or written 4ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > get /sections/foreign-proj/3.2.P.5 is not found, and nothing is read or written 5ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > get /provenance/foreign-proj/3.2.P.5 is not found, and nothing is read or written 5ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > get /readiness/foreign-proj is not found, and nothing is read or written 9ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /sections/foreign-proj/3.2.P.5/approve is not found, and nothing is read or written 5ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /sections/foreign-proj/3.2.P.5/refresh is not found, and nothing is read or written 8ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /guard/final-export/foreign-proj is not found, and nothing is read or written 11ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /place-into-submission/foreign-proj is not found, and nothing is read or written 4ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > the organization asked about is the caller's own 11ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > a project lookup that cannot complete is a 500, never a "not found" 4ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > with no organization in context, the handler's own refusal stands and no project is looked up 3ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  16 failed | 10 passed (26)

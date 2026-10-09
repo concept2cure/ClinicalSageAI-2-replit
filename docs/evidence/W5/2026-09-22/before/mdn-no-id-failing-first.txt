@@ -1,0 +1,3 @@
+ × server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses an accepting MDN that names no message — it cannot be tied to what was sent (2026-09-22 W5/D7) 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 25 passed (26)

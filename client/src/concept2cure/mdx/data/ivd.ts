@@ -26,7 +26,10 @@ export interface IvdClassification {
   id: string;
   device: string;
   intendedPurpose: string;
-  classification: IvdClass;
+  /** null when the server recorded no Annex VIII class, or one outside A–D.
+   *  It used to default to 'B' — a risk class nobody determined, which also
+   *  sets the conformity route the manufacturer then follows. */
+  classification: IvdClass | null;
   /** Top matched Annex VIII rule, if known. */
   rule?: string;
   selfTest?: boolean;

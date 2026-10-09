@@ -472,6 +472,13 @@ export async function createMdrEvent(
   input: CreateMdrEventInput
 ): Promise<MdrEvent> {
   await assertProgramAccess(organizationId, input.programId);
+  // The complaint this event is sourced from must be one this org can see.
+  // The link below writes to `complaints`, which has no organization column and
+  // no RLS policy, so a foreign id would have re-pointed another tenant's
+  // complaint at this event with nothing under the app to stop it (ledger L195).
+  if (input.sourceComplaintId && !(await getComplaint(organizationId, input.sourceComplaintId))) {
+    throw new NotFoundError('Source complaint not found');
+  }
 
   const clock = computeReportDue({
     jurisdiction: input.jurisdiction,

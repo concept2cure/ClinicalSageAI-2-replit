@@ -17,6 +17,7 @@
 import type { AnaTool } from '../ai-gateway/types';
 import { capToolResultForModel } from './agentic-loop.js';
 import type { ToolContext } from './AnaToolExecutor.js';
+import { handleUpdatePlan, UPDATE_PLAN_TOOL_NAME } from './turn-plan.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool definitions
@@ -138,6 +139,17 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
     ...(context ? { source_context: context } : {}),
   };
 
+  // The council runs for one tenant: its sessions are tenant content, and its
+  // model calls are placed under that tenant's policy (D6). No organization,
+  // no council — refused before anything is read or written.
+  const organizationId = Number(ctx?.organizationId);
+  if (!Number.isInteger(organizationId) || organizationId <= 0) {
+    return JSON.stringify({
+      error: 'The drafting council runs for an organization, and this call carries none. It was not convened.',
+      tool: 'convene_drafting_council',
+    });
+  }
+
   const { getPool } = await import('../../db.js');
   const pool = getPool();
 
@@ -159,22 +171,29 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
   try {
     const { MultiAgentCouncilService } = await import('../multi-agent-council.js');
     const council = new MultiAgentCouncilService(pool);
-    const sessionId = await council.initializeSession(sectionPath, councilRequirements, []);
+    const sessionId = await council.initializeSession(sectionPath, councilRequirements, [], { organizationId });
     const session = await council.executeCouncil(
       sessionId,
       ctx?.userId != null ? String(ctx.userId) : undefined,
     );
+    const verifications = session.statisticianResult?.verifications ?? [];
     return JSON.stringify({
       status: 'completed',
       session_id: session.id,
       section_path: sectionPath,
       final_text: session.finalText,
       corrections_applied: session.corrections,
+      // Every numerical claim is one of: checked against bound data (verified or
+      // a discrepancy), or UNVERIFIABLE — no data source answered it. The last
+      // is reported so it is never narrated as checked.
+      claims_found: verifications.length,
+      claims_checked_against_data: verifications.filter(v => v.status !== 'UNVERIFIABLE').length,
+      claims_unverifiable: verifications.filter(v => v.status === 'UNVERIFIABLE').length,
       issues_found: session.issues,
       critic_assessment: session.criticResult?.overallAssessment,
       // Bounded detail so the model can narrate what the council caught
       // without the payload swamping the loop context.
-      discrepancies: (session.statisticianResult?.verifications || [])
+      discrepancies: verifications
         .filter(v => v.status === 'DISCREPANCY')
         .slice(0, 10),
       high_severity_issues: (session.criticResult?.issues || [])
@@ -329,4 +348,8 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
     });
   }
 });
+
+// AnA's declared plan for the turn (turn-plan.ts). Pure validation, no side
+// effect: the stream route turns the normalised result into a `plan` event.
+  register(UPDATE_PLAN_TOOL_NAME, async (input) => handleUpdatePlan(input));
 }

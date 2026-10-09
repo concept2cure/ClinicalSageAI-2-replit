@@ -182,7 +182,7 @@ export function attributeMachineSpans(
   //    claimed the clause.
   const haystacks = opts.accepted
     .filter((a) => typeof a?.authorId === 'string' && a.authorId.length > 0 && typeof a?.text === 'string')
-    .map((a) => ({ authorId: a.authorId, norm: comparable(a.text) }))
+    .map((a, index) => ({ index, authorId: a.authorId, norm: comparable(a.text) }))
     .filter((h) => h.norm.length > 0);
   if (haystacks.length > 0) {
     const budget = new Map<string, number>();
@@ -191,7 +191,19 @@ export function attributeMachineSpans(
       const needle = comparable(c.text);
       if (needle.length < MIN_MACHINE_CLAUSE_CHARS) return;
       for (const h of haystacks) {
-        const key = `${h.authorId} ${needle}`;
+        /* Keyed by the ACCEPTED TEXT the count was taken from, not by author
+           alone. The count is occurrences(h.norm, needle) — a fact about this
+           one accepted insertion — so caching it under a key that names only
+           the author makes a zero from one insertion answer for every other.
+           A reviewer who accepted two suggestions in one session then had the
+           second one's clauses fall through to their own author_assertion:
+           the human recorded as asserting prose a machine wrote and they
+           merely accepted, which is the statement this module exists to stop.
+           Per-insertion is also the honest bound: two accepted insertions that
+           each contain the same clause are two clauses a machine wrote and a
+           human accepted, and the bound still holds inside each one, which is
+           where it was ever doing work. */
+        const key = `${h.index} ${h.authorId} ${needle}`;
         let left = budget.get(key);
         if (left === undefined) {
           left = occurrences(h.norm, needle);

@@ -1,0 +1,96 @@
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > names exactly the five 2ms
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > save_document_to_vault is proposed at the confirm tier, carrying what it would do 1ms
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > update_vault_document is proposed at the confirm tier, carrying what it would do 0ms
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > file_chat_upload_to_vault is proposed at the confirm tier, carrying what it would do 0ms
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > seed_tmf is proposed at the confirm tier, carrying what it would do 0ms
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > save_report_definition is proposed at the confirm tier, carrying what it would do 0ms
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > an unreadable call is refused, not proposed 0ms
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > a read-only neighbour is not 0ms
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the registry refuses to run one no person confirmed > on a path that cannot ask, the handler answers with a proposal and writes nothing 2ms
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the registry refuses to run one no person confirmed > once a person has confirmed, it runs 2ms
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the registry refuses to run one no person confirmed > the confirmation is read from the context, never from what the model wrote 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every tool with a free-text input is classified — a new one cannot ship unclassified 2ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > no tool is in both maps 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every classified name is a real tool — no stale entries 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every entry says why 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > the scan still finds the tools the defect was found through 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > author_docx_native: refused when Sonnet produced the call 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > commit_document_revision: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > draft_authoring_document: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > generate_document: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > insert_document_content: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > pdf_overlay: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > save_document_to_vault: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_biosketch_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_consent_element: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_dms_plan_element: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_protocol_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_vault_document: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_kit_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_q_sub_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused when the serving model is unknown — absent means refused 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused for GPT-4o, which the registry caps below high-risk 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > an approved model is not refused by the gate 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool that only analyses free text is not gated 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool calling another tool’s handler directly is gated too (assemble_crl_premortem_artifact → author_docx_native) 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Sonnet is refused and nothing is stored 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Opus reaches the handler 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > the caller cannot vouch for the model: a servingModel in the toolContext is overwritten by the one in the response 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a confirm-tier tool is proposed on this door, even from an approved model — nothing is stored 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > hands every tool call the model that produced it 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > sets the served model from the first response and updates it after every round 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Draft the clinical overview for this project as an authoring document 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: please write section 2.5.4 for me 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Prepare a response to the FDA information request 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: compose the cover letter for the submission 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: take me to CMC 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: what does section 2.5 require? 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: summarise this thread 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: is the submission ready? 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > a drafting request on Balanced is scored high-risk and routed to the flagship tier 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > both routes compute the hint from the message (source pin) 1ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > an ordinary write runs with no reason and no password, confirmed by a person 19ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run without an explicit yes 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run when the confirmation could not be recorded 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > the Part 11 tiers still demand what they demanded 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > a read is still not something this route runs 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held run runs the command from the ROW and releases the run 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline records the decision, runs nothing, and releases the run at once 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline whose audit row was lost still releases the run, and says so 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline needs a run to apply to 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > an approval proposed by AnA asks for a reason, not a click 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs on a yes, with the run's own context and the confirmation stamped 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run without an explicit yes 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run from a body alone — there is no held run to take its context from 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > can be declined like any proposal 2ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE when the input carries no command — the streamed-empty-input case 2ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE is NOT UNGOVERNED — the distinction is the point 1ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE when the arguments failed to parse mid-stream 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE for a non-object input, however it arrived 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE for a blank or whitespace command 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > asks for approval on every propose-only command 1ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > leaves reads alone and asks for a confirmation on ordinary writes 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > carries the command and params forward for the person to read 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > defaults params to an empty object rather than undefined 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > demands a signature for the e-sign tier 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > demands a signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12) 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > demands only a reason for the reason tier, and only a confirmation below it 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > every e-sign command in the partition is classified as the signature tier 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the command tool, and the tools that write on their own handlers > a tool that writes on its own handler is a confirm-tier proposal (P0-12) 1ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the command tool, and the tools that write on their own handlers > a tool named like a governed command is still just a tool 0ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all) 381ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > FAILS CLOSED — a broken audit write rolls the document back 11ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses without a verified actor (no anonymous controlled-document creation) 2ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > approve_qms_document — AnA cannot make a document effective > writes nothing and hands the approval to the person 4ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > bumps the version AND writes the audit row in one transaction 9ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > FAILS CLOSED — a broken audit write rolls the revision back 11ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > retire_qms_document — terminal lifecycle transition is audited atomically > retires the document AND writes the audit row 8ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > retire_qms_document — terminal lifecycle transition is audited atomically > FAILS CLOSED — a broken audit write rolls the retirement back 8ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > writes the artifact, its immutable version AND the audit row 44ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > REFUSES without a project — a vault document belonging to no project is an orphaned capture 3ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > FAILS CLOSED — a broken audit write rolls back the artifact AND its version 20ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > update_vault_document — new regulated version is audited atomically > writes v2 AND the audit row 32ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > update_vault_document — new regulated version is audited atomically > FAILS CLOSED — a broken audit write rolls the new version back 32ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input 9ms
+ Test Files  5 passed (5)
+      Tests  94 passed (94)

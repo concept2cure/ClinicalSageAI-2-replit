@@ -71,7 +71,7 @@ function richDossier(): DocumentLineageDossier {
         createdAt: '2026-07-15T00:00:00.000Z',
       },
     ],
-    decisionSummary: { total: 1, anaAuthored: 1, humanAuthored: 0, humanDecided: 1, approved: 1, rejected: 0, pending: 0 },
+    decisionSummary: { unavailable: null, total: 1, anaAuthored: 1, humanAuthored: 0, humanDecided: 1, approved: 1, rejected: 0, pending: 0 },
     provenanceEvents: [
       { eventId: 'ev_1', eventType: 'generation', eventAction: 'ai_generate', actorId: null, actorName: 'AnA', actorEmail: null, artifactVersionId: 1, sourceDescription: 'from evidence corpus', backendService: 'ana-ri-stream', details: { model: 'claude' }, createdAt: '2026-07-01T00:00:00.000Z' },
     ],
@@ -91,7 +91,7 @@ function thinDossier(): DocumentLineageDossier {
   return {
     ...richDossier(),
     decisions: [],
-    decisionSummary: { total: 0, anaAuthored: 0, humanAuthored: 0, humanDecided: 0, approved: 0, rejected: 0, pending: 0 },
+    decisionSummary: { unavailable: null, total: 0, anaAuthored: 0, humanAuthored: 0, humanDecided: 0, approved: 0, rejected: 0, pending: 0 },
     provenanceEvents: [],
     reasoning: [],
     humanControls: [],

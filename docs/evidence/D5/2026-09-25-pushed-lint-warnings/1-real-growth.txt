@@ -1,0 +1,20 @@
+# 1. The real trunk growth: --base ba49982cb (the commit that last wrote the baseline)
+    +4  server/routes/sso.ts  (2 -> 6)
+    +1  server/jobs/__tests__/auditChainIntegritySweep.test.ts  (0 -> 1)
+    +1  server/routes/__tests__/ssoRoutes.test.ts  (0 -> 1)
+    +1  server/routes/c2c/tasks.ts  (2 -> 3)
+    +1  server/routes/scim.ts  (5 -> 6)
+    +1  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts  (0 -> 1)
+    +1  server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts  (0 -> 1)
+    +1  server/services/ai-gateway/gateway.ts  (25 -> 26)
+    +1  server/services/ana/ana-realtime.ts  (1 -> 2)
+    +1  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts  (0 -> 1)
+    +1  server/services/audit/__tests__/audit-archive.test.ts  (2 -> 3)
+    +1  server/services/authoring/authoring-file-to-vault.ts  (0 -> 1)
+    +1  server/services/tools/index.ts  (20 -> 21)
+    +1  server/services/vault/document-chunking.service.ts  (0 -> 1)
+    +1  server/startup/audit-enforcement.ts  (0 -> 1)
+    +1  server/startup/env.ts  (1 -> 2)
+[ci:eslint-warning-ratchet] net +11 warning(s) across the files changed since ba49982cbaebcad26b0180900269fcc16952e1c2.
+[ci:eslint-warning-ratchet] FAIL -- the changed files gained 11 warning(s) (listed above).
+exit=1

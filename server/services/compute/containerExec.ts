@@ -17,6 +17,7 @@
 
 import { Buffer } from 'node:buffer';
 import fs from 'node:fs/promises';
+import { constants as fsConstants } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -146,14 +147,7 @@ export async function runInContainer(input: ContainerExecInput): Promise<Contain
 
     // Collect files the script produced (excluding the entry script + inputs).
     const reserved = new Set(['__entry.sh', ...Object.keys(input.inputFiles ?? {}).map(n => path.basename(n))]);
-    const outputFiles: Record<string, string> = {};
-    for (const name of await fs.readdir(hostWorkdir)) {
-      if (reserved.has(name)) continue;
-      const full = path.join(hostWorkdir, name);
-      const stat = await fs.stat(full).catch(() => null);
-      if (!stat || !stat.isFile() || stat.size > MAX_OUTPUT_FILE_BYTES) continue;
-      outputFiles[name] = (await fs.readFile(full)).toString('base64');
-    }
+    const outputFiles = await collectOutputFiles(hostWorkdir, reserved);
 
     return {
       ok: exitCode === 0 && !timedOut,
@@ -167,6 +161,45 @@ export async function runInContainer(input: ContainerExecInput): Promise<Contain
   } finally {
     await fs.rm(hostWorkdir, { recursive: true, force: true }).catch(() => {});
   }
+}
+
+/**
+ * The regular files the container left in its work directory, as base64.
+ *
+ * The work directory is a bind mount, and the script inside the container
+ * writes whatever it likes into it — including a SYMLINK. Collected with
+ * `stat`, `out -> /etc/passwd` (or `-> <cwd>/uploads/org-2/…`) was followed on
+ * the HOST, and the host file came back as the script's output: the container
+ * boundary crossed by one `ln -s` (INJ-PATH-002). Every file is now opened with
+ * O_NOFOLLOW, which refuses a symlink at the last component, and the open
+ * handle — not the name, which the script could swap — is checked to be a
+ * regular file before a byte is read. Names are
+ * directory entries of the work directory itself, so no other component can be
+ * a link.
+ */
+export async function collectOutputFiles(
+  hostWorkdir: string,
+  reserved: ReadonlySet<string>,
+): Promise<Record<string, string>> {
+  const outputFiles: Record<string, string> = {};
+  for (const name of await fs.readdir(hostWorkdir)) {
+    if (reserved.has(name)) continue;
+    const handle = await fs
+      // O_NONBLOCK: a FIFO the script left would otherwise block this open
+      // until something wrote to it, and hang the request. It opens at once,
+      // and the isFile check below skips it.
+      .open(path.join(hostWorkdir, name), fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW | fsConstants.O_NONBLOCK)
+      .catch(() => null);
+    if (!handle) continue;
+    try {
+      const stat = await handle.stat();
+      if (!stat.isFile() || stat.size > MAX_OUTPUT_FILE_BYTES) continue;
+      outputFiles[name] = (await handle.readFile()).toString('base64');
+    } finally {
+      await handle.close();
+    }
+  }
+  return outputFiles;
 }
 
 function spawnDocker(

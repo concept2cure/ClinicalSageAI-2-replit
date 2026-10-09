@@ -12,7 +12,8 @@ import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth';
 import { requireOrganizationContext, requireTenantContext } from '../middleware/tenantContext';
 import { createRateLimiter } from '../middleware/rateLimiter';
-import { db } from '../db';
+import { db, getPool } from '../db';
+import { currentTenantOrgUuid } from '../db/currentTenant';
 import { requestDb } from '../db/requestDb';
 import { eq, and, desc, or, inArray } from 'drizzle-orm';
 import {
@@ -24,6 +25,9 @@ import {
 import { createScopedLogger } from '../utils/logger';
 import { respondVerificationUnavailable } from '../lib/verification-outcome';
 import { serverError } from '../lib/api-response';
+import { clientIpOf } from '../utils/client-ip';
+import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer';
+import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
 
 const logger = createScopedLogger('ana-features');
 
@@ -2098,6 +2102,14 @@ const applyRewriteSchema = z.object({
   /**
    * Optional 21 CFR Part 11 e-signature. Required when the artifact's
    * metadata flags requiresSignature; otherwise recorded if supplied.
+   *
+   * The signer's credentials, re-verified by the platform's one signing
+   * ceremony before anything is applied (services/part11/reverify-signer.ts):
+   * the account password, and the authenticator code when one is enrolled.
+   * Until 2026-09-23 this took `authenticationMethod` and
+   * `secondFactorVerified` from the caller and recorded both verbatim, with no
+   * credential checked: the session alone signed. The signer's name and email
+   * were already resolved server-side; they are no longer accepted at all.
    */
   signature: z
     .object({
@@ -2105,12 +2117,8 @@ const applyRewriteSchema = z.object({
         .string()
         .min(8, 'signature.meaning must attest to what is being signed')
         .max(2000),
-      signerName: z.string().max(255).nullable().optional(),
-      signerEmail: z.string().email().nullable().optional(),
-      authenticationMethod: z
-        .enum(['password', 'sso', 'mfa', 'session'])
-        .optional(),
-      secondFactorVerified: z.boolean().optional(),
+      password: z.string().max(1024).optional(),
+      mfaToken: z.string().max(12).optional(),
     })
     .nullable()
     .optional(),
@@ -2223,6 +2231,25 @@ router.post(
       });
     }
 
+    // A signature is the signer re-verified now, never a claim about how.
+    const signed = parsed.data.signature;
+    let signature: { meaning: string; reverified: SignerReverified } | null = null;
+    if (signed) {
+      const signerId = Number(userId);
+      if (!Number.isInteger(signerId) || signerId <= 0) {
+        return res.status(401).json({ error: 'A verified signer identity is required to sign.', code: 'AUTH_REQUIRED' });
+      }
+      const reverified = await reverifySigner(
+        signerId,
+        { password: signed.password, mfaToken: signed.mfaToken },
+        signerReverificationDeps(),
+      );
+      if (!reverified.ok) {
+        return res.status(reverified.status).json({ error: reverified.error, code: reverified.code });
+      }
+      signature = { meaning: signed.meaning, reverified };
+    }
+
     try {
       const { applyRewrite } = await import(
         '../services/ana/submission-chat-apply-rewrite'
@@ -2236,7 +2263,7 @@ router.post(
         targetAgency: parsed.data.targetAgency ?? null,
         rationale: parsed.data.rationale ?? null,
         threadId: parsed.data.threadId ?? null,
-        signature: parsed.data.signature ?? null,
+        signature,
         acknowledgeUnsupported: parsed.data.acknowledgeUnsupported ?? false,
         organizationId,
         userId,
@@ -2248,10 +2275,7 @@ router.post(
         userName: (req as any).user?.name ?? null,
         userEmail: (req as any).user?.email ?? null,
         userRole: (req as any).user?.role ?? 'regulatory',
-        ipAddress:
-          req.ip ||
-          (req.headers['x-forwarded-for'] as string | undefined) ||
-          'ip-not-captured',
+        ipAddress: clientIpOf(req),
         userAgent: (req.headers['user-agent'] as string | undefined) ?? null,
       });
       return res.json({
@@ -2332,14 +2356,18 @@ router.post(
       (req as any).tenantContext?.organizationId ||
       (req as any).tenantId ||
       (req as any).organizationId;
-    const organizationUuid =
-      (req as any).tenantContext?.organizationUuid ||
-      (req.headers['x-org-uuid'] as string | undefined);
+    // The session's tenant key, never the client's x-org-uuid header.
+    const organizationUuid = await currentTenantOrgUuid(getPool());
     const userId = (req as any).userId || (req as any).user?.id;
     if (!organizationId) {
       return res
         .status(401)
         .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    if (!organizationUuid) {
+      return res
+        .status(403)
+        .json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
     }
     try {
       const { runCitationEngine } = await import(
@@ -2351,7 +2379,7 @@ router.post(
         {
           persist: true,
           ctdSectionOverride: parsed.data.ctdSectionOverride ?? undefined,
-          organizationUuid: organizationUuid ?? undefined,
+          organizationUuid,
           userId: userId ?? null,
         }
       );
@@ -2569,14 +2597,18 @@ router.post(
       (req as any).tenantContext?.organizationId ||
       (req as any).tenantId ||
       (req as any).organizationId;
-    const organizationUuid =
-      (req as any).tenantContext?.organizationUuid ||
-      (req.headers['x-org-uuid'] as string | undefined);
+    // The session's tenant key, never the client's x-org-uuid header.
+    const organizationUuid = await currentTenantOrgUuid(getPool());
     const userId = (req as any).userId || (req as any).user?.id;
     if (!organizationId) {
       return res
         .status(401)
         .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    if (!organizationUuid) {
+      return res
+        .status(403)
+        .json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
     }
     try {
       const { runCitationEngineForProject } = await import(
@@ -2589,7 +2621,7 @@ router.post(
           staleOnly: bodyParsed.data.staleOnly ?? true,
           ctdSectionPrefix: bodyParsed.data.ctdSectionPrefix,
           concurrency: bodyParsed.data.concurrency,
-          organizationUuid: organizationUuid ?? undefined,
+          organizationUuid,
           userId: userId ?? null,
         }
       );
@@ -4851,10 +4883,14 @@ router.post(
       (req as any).tenantContext?.organizationId ||
       (req as any).tenantId ||
       (req as any).organizationId;
-    const organizationUuid =
-      (req as any).tenantContext?.organizationUuid ||
-      (req.headers['x-org-uuid'] as string | undefined);
+    // The session's tenant key, never the client's x-org-uuid header.
+    const organizationUuid = await currentTenantOrgUuid(getPool());
     const userId = (req as any).userId || (req as any).user?.id;
+    if (!organizationUuid) {
+      return res
+        .status(403)
+        .json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
+    }
 
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -4887,7 +4923,7 @@ router.post(
           artifactId: parsed.data.artifactId,
           question: parsed.data.question,
           organizationId: organizationId ?? null,
-          organizationUuid: organizationUuid ?? null,
+          organizationUuid,
           userId: userId ?? null,
         },
         writeEvent
@@ -4924,10 +4960,14 @@ router.post(
       (req as any).tenantContext?.organizationId ||
       (req as any).tenantId ||
       (req as any).organizationId;
-    const organizationUuid =
-      (req as any).tenantContext?.organizationUuid ||
-      (req.headers['x-org-uuid'] as string | undefined);
+    // The session's tenant key, never the client's x-org-uuid header.
+    const organizationUuid = await currentTenantOrgUuid(getPool());
     const userId = (req as any).userId || (req as any).user?.id;
+    if (!organizationUuid) {
+      return res
+        .status(403)
+        .json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
+    }
 
     try {
       const { handleSubmissionChat } = await import(
@@ -4938,7 +4978,7 @@ router.post(
         artifactId: parsed.data.artifactId,
         question: parsed.data.question,
         organizationId: organizationId ?? null,
-        organizationUuid: organizationUuid ?? null,
+        organizationUuid,
         userId: userId ?? null,
       });
       return res.json(result);
@@ -4954,7 +4994,8 @@ router.post(
         return res.status(400).json({ error: error.message, code });
       }
       if (code === 'AI_PROVIDER_UNAVAILABLE') {
-        return res.status(503).json({ error: error.message, code });
+        logger.error('[AnA submission-chat] AI provider unavailable', { err: error?.message });
+        return res.status(503).json({ error: 'The AI provider is unavailable.', code });
       }
       logger.error('[AnA submission-chat] failed:', { error: error?.message || error });
       return res.status(500).json({
@@ -5009,14 +5050,18 @@ router.post(
       (req as any).tenantContext?.organizationId ||
       (req as any).tenantId ||
       (req as any).organizationId;
-    const organizationUuid =
-      (req as any).tenantContext?.organizationUuid ||
-      (req.headers['x-org-uuid'] as string | undefined);
+    // The session's tenant key, never the client's x-org-uuid header.
+    const organizationUuid = await currentTenantOrgUuid(getPool());
     const userId = (req as any).userId || (req as any).user?.id || null;
     if (!organizationId) {
       return res
         .status(401)
         .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    if (!organizationUuid) {
+      return res
+        .status(403)
+        .json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
     }
     try {
       const { generateAuthoringPlan } = await import(
@@ -5025,7 +5070,7 @@ router.post(
       const plan = await generateAuthoringPlan({
         projectId: parsed.data.projectId,
         organizationId,
-        organizationUuid: organizationUuid ?? null,
+        organizationUuid,
         ctdSection: parsed.data.ctdSection,
         submissionType: parsed.data.submissionType,
         artifactId: parsed.data.artifactId ?? null,
@@ -5041,8 +5086,9 @@ router.post(
         return res.status(400).json({ error: err.message, code });
       }
       if (code === 'MIGRATION_PENDING') {
+        logger.error('[AnA authoring-plan generate] store not provisioned', { err: err?.message });
         return res.status(503).json({
-          error: err.message,
+          error: 'This feature is not yet provisioned in this deployment.',
           code,
         });
       }

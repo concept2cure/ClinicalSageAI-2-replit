@@ -24,6 +24,15 @@ const preclinicalTranslationLimiter = rateLimit({
   message: 'Too many preclinical translation requests, please try again after a minute',
 });
 import { ai } from '../../lib/unified-ai-client';
+
+// Model governance (2026-09-23): every call here pinned `model: 'gpt-4o'` as a
+// 'general' request, which the gateway's high-risk approval check never sees —
+// so gpt-4o drafted scale-up strategies, process-validation protocols "suitable
+// for CMC submission" and master batch records. Each drafting call is now
+// document_drafting: only a model approved for high-risk regulatory drafting
+// serves it. The one extraction call is document_analysis. Calls that read `.choices[0].message.content` — a shape the
+// unified client does not return, so they threw on every request — read
+// `.content`.
 import { serverError } from '../../lib/api-response.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
@@ -144,7 +153,8 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     ];
 
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'document_drafting',
+      callerModule: 'cmc/preclinical-translator.scale-up-strategy',
       messages: messages,
       temperature: 0.3,
       max_tokens: 2500,
@@ -165,7 +175,8 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     Format the response as valid JSON only.`;
 
     const equipmentResponse = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'document_drafting',
+      callerModule: 'cmc/preclinical-translator.equipment',
       messages: [
         {
           role: 'system',
@@ -182,7 +193,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     // Parse the equipment requirements
     let equipmentRequirements = {};
     try {
-      equipmentRequirements = JSON.parse(equipmentResponse.choices[0].message.content);
+      equipmentRequirements = JSON.parse(equipmentResponse.content);
     } catch (error) {
       console.error('Error parsing equipment requirements JSON:', error);
     }
@@ -201,7 +212,8 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     Provide a detailed risk assessment with mitigation strategies.`;
 
     const failurePointResponse = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'document_drafting',
+      callerModule: 'cmc/preclinical-translator.failure-points',
       messages: [
         {
           role: 'system',
@@ -215,7 +227,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     });
 
     // Get the failure point analysis
-    const failurePointAnalysis = failurePointResponse.choices[0].message.content;
+    const failurePointAnalysis = failurePointResponse.content;
 
     // Generate draft validation protocol
     const validationPrompt = `Based on the formulation and scale-up strategy:
@@ -231,7 +243,8 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     Structure this as a validation protocol outline suitable for CMC submission.`;
 
     const validationResponse = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'document_drafting',
+      callerModule: 'cmc/preclinical-translator.validation-protocol',
       messages: [
         {
           role: 'system',
@@ -245,7 +258,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     });
 
     // Get the validation protocol
-    const validationProtocol = validationResponse.choices[0].message.content;
+    const validationProtocol = validationResponse.content;
 
     // Structure the results
     const translationResult = {
@@ -331,7 +344,9 @@ router.post('/upload', checkForOpenAIKey, upload.array('files', 5), async (req, 
       Please extract structured information in JSON format with these fields.`;
 
       const extractionResponse = await ai.chat({
-        model: 'gpt-4o',
+        // Reading the uploaded formulation document, not drafting one.
+        taskType: 'document_analysis',
+        callerModule: 'cmc/preclinical-translator.mbr-extract',
         messages: [
           {
             role: 'system',
@@ -347,7 +362,7 @@ router.post('/upload', checkForOpenAIKey, upload.array('files', 5), async (req, 
         max_tokens: 1500,
       });
 
-      const extractedData = extractionResponse.choices[0].message.content;
+      const extractedData = extractionResponse.content;
 
       // Add processed file info
       processedFiles.push({
@@ -442,7 +457,8 @@ router.post('/generate-mbr', checkForOpenAIKey, preclinicalTranslationLimiter, a
     ];
 
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'document_drafting',
+      callerModule: 'cmc/preclinical-translator.master-batch-record',
       messages: messages,
       temperature: 0.3,
       max_tokens: 3000,

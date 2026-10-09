@@ -101,3 +101,104 @@ describe('POST /api/batch-draft/documents/:id/accept (ledger L160)', () => {
     expect(Number(versions.rows[0].n)).toBe(0);
   });
 });
+
+/* 2026-09-23 (W5/D7, co-author final pass): the accept route wrote content
+   into any coauthor_documents row it could lock, whatever its status — so an
+   ordinary member could replace the text of an approved (placed) snapshot,
+   the column the PUT rule (services/coauthor/coauthor-status-write.ts)
+   protects. A verdict row is refused here by the same rule, imported, and
+   nothing is written: not the content, not a version row, not a lineage span,
+   not an audit row. */
+describe('POST /api/batch-draft/documents/:id/accept refuses a verdict row', () => {
+  const counts = async (id: number) => {
+    const v = await pg.query<{ n: number }>(`SELECT count(*)::int AS n FROM coauthor_document_versions WHERE document_id = $1`, [id]);
+    const a = await pg.query<{ n: number }>(`SELECT count(*)::int AS n FROM audit_events WHERE entity_id = $1`, [id]);
+    return { versions: Number(v.rows[0].n), audits: Number(a.rows[0].n), spans: (await spans(id)).length };
+  };
+
+  it.each(['approved', 'finalized', 'signed', 'locked', ' Approved '])(
+    "status %j: 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched",
+    async (status) => {
+      const r0 = await pg.query<{ id: number }>(
+        `INSERT INTO coauthor_documents (organization_id, content, status, metadata) VALUES ($1, '<p>approved text</p>', $2, '{"k":1}') RETURNING id`,
+        [ORG, status],
+      );
+      const id = r0.rows[0].id;
+      const before = (await pg.query('SELECT content, status, metadata::text AS metadata, updated_at FROM coauthor_documents WHERE id = $1', [id])).rows[0];
+
+      const res = await request(app)
+        .post(`/api/batch-draft/documents/${id}/accept`)
+        .send({ content: 'Text nobody approved, written into an approved snapshot by an ordinary member.' });
+
+      expect(res.status, JSON.stringify(res.body)).toBe(409);
+      expect(res.body.error).toBe('FINALIZED_DOCUMENT_READ_ONLY');
+      const after = (await pg.query('SELECT content, status, metadata::text AS metadata, updated_at FROM coauthor_documents WHERE id = $1', [id])).rows[0];
+      expect(after).toEqual(before);
+      expect(await counts(id)).toEqual({ versions: 0, audits: 0, spans: 0 });
+    },
+  );
+
+  it('a working row is still accepted (the refusal is the verdict, not the route)', async () => {
+    const r0 = await pg.query<{ id: number }>(
+      `INSERT INTO coauthor_documents (organization_id, content, status) VALUES ($1, 'Prior working text.', 'review') RETURNING id`,
+      [ORG],
+    );
+    const res = await request(app)
+      .post(`/api/batch-draft/documents/${r0.rows[0].id}/accept`)
+      .send({ content: 'The accepted draft of this working section, written for review.' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+  });
+});
+
+describe('POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one', () => {
+  it('refuses a draft the model cut off at its output limit, and writes nothing', async () => {
+    /* A draft that hit maxTokens stops mid-sentence. This route writes into
+       `coauthor_documents` — the table leaf-source-resolver materializes eCTD
+       leaves from — so an accepted truncated narrative is versioned, audited
+       and filed exactly like a finished one. MAX_CONTENT_CHARS cannot catch it:
+       8192 tokens is nowhere near 400,000 characters, which is why it was
+       invisible. 21 CFR 11.10(a) requires a system able to discern an invalid
+       record. */
+    const id = await seedDoc();
+    const res = await request(app)
+      .post(`/api/batch-draft/documents/${id}/accept`)
+      .send({
+        content: 'The primary endpoint was met at week twelve in the intent-to-treat popul',
+        finish_reason: 'max_tokens',
+        model: 'test-model',
+      });
+    expect(res.status, JSON.stringify(res.body)).toBe(422);
+    expect(res.body.code).toBe('DRAFT_TRUNCATED');
+
+    // Nothing landed: not the content, not a version, not a lineage span.
+    const doc = await pg.query<{ content: string }>(`SELECT content FROM coauthor_documents WHERE id = $1`, [id]);
+    expect(doc.rows[0].content).toBe('The prior text of the section.');
+    expect(await spans(id)).toHaveLength(0);
+    const versions = await pg.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM coauthor_document_versions WHERE document_id = $1`, [id]);
+    expect(Number(versions.rows[0].n)).toBe(0);
+  });
+
+  it('refuses on the explicit truncated flag as well as the raw reason', async () => {
+    const id = await seedDoc();
+    const res = await request(app)
+      .post(`/api/batch-draft/documents/${id}/accept`)
+      .send({ content: 'Cut off here', truncated: true });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('DRAFT_TRUNCATED');
+  });
+
+  it('accepts a completed draft that reports its finish reason', async () => {
+    /* The other half of the rule: reporting the reason must not itself block a
+       complete draft, or callers will stop sending it. */
+    const id = await seedDoc();
+    const content =
+      'The primary endpoint was met at week twelve. No new safety signal was identified.';
+    const res = await request(app)
+      .post(`/api/batch-draft/documents/${id}/accept`)
+      .send({ content, finish_reason: 'end_turn', truncated: false, model: 'test-model' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const doc = await pg.query<{ content: string }>(`SELECT content FROM coauthor_documents WHERE id = $1`, [id]);
+    expect(doc.rows[0].content).toBe(content);
+  });
+});

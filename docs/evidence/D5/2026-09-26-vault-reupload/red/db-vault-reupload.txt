@@ -1,0 +1,109 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+{"level":30,"time":"2026-09-26T13:36:17.405Z","pid":2395,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-26T13:36:17.406Z","pid":2395,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-26T13:36:17.406Z","pid":2395,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-reupload.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-26T13:36:17.479Z', poolSize: 1 }
+stdout | tests/db/vault-reupload.dbtest.ts
+[database] Database connection successful
+stderr | tests/db/vault-reupload.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+{"level":40,"time":"2026-09-26T13:36:17.795Z","pid":2395,"hostname":"vm","context":{"filename":"protocol.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > admits the document with a classification and a retention policy
+Warning: Indexing all PDF objects
+(node:2395) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-09-26T13:36:18.053Z","pid":2395,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-26T13:36:18.123Z","pid":2395,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > admits the document with a classification and a retention policy
+{
+  "timestamp": "2026-09-26T13:36:18.197Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6f1abc3c-a601-42eb-afca-047bf983b651",
+    "code": "DBTEST-VR05-DOC",
+    "type": "OTHER",
+    "size": 83,
+    "hasText": false
+  }
+}
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > admits the document with a classification and a retention policy 432ms
+{"level":40,"time":"2026-09-26T13:36:18.212Z","pid":2395,"hostname":"vm","context":{"filename":"protocol.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-26T13:36:18.215Z","pid":2395,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-26T13:36:18.216Z","pid":2395,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that omits them changes nothing, writes no audit row, and leaves no second copy
+{
+  "timestamp": "2026-09-26T13:36:18.232Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6f1abc3c-a601-42eb-afca-047bf983b651",
+    "code": "DBTEST-VR05-DOC",
+    "type": "OTHER",
+    "size": 83,
+    "hasText": false
+  }
+}
+{"level":40,"time":"2026-09-26T13:36:18.247Z","pid":2395,"hostname":"vm","context":{"filename":"protocol.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-26T13:36:18.249Z","pid":2395,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-26T13:36:18.250Z","pid":2395,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that changes the title records it once, with the value before and after
+{
+  "timestamp": "2026-09-26T13:36:18.256Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6f1abc3c-a601-42eb-afca-047bf983b651",
+    "code": "DBTEST-VR05-DOC",
+    "type": "OTHER",
+    "size": 83,
+    "hasText": false
+  }
+}
+ × tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that omits them changes nothing, writes no audit row, and leaves no second copy 39ms
+   → expected { …(6) } to match object { Object (classification, retention_policy, ...) }
+(2 matching properties omitted from actual)
+ × tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that changes the title records it once, with the value before and after 18ms
+   → expected [] to have a length of 1 but got +0
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that omits them changes nothing, writes no audit row, and leaves no second copy
+AssertionError: expected { …(6) } to match object { Object (classification, retention_policy, ...) }
+(2 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "classification": "CONFIDENTIAL",
++   "classification": "INTERNAL",
+    "file_name": "protocol.pdf",
+-   "retention_policy": "DBTEST-VR05-POLICY",
+-   "storage_version_id": "180f5c2b-9d04-49e5-ab12-08faabb2a97a",
++   "retention_policy": null,
++   "storage_version_id": "93879ccb-431b-42a6-9add-96de3e1f30d1",
+  }
+ ❯ tests/db/vault-reupload.dbtest.ts:166:19
+    164|     // What the record holds first; the response's account of it last.
+    165|     const after = await recorded();
+    166|     expect(after).toMatchObject({
+       |                   ^
+    167|       classification: 'CONFIDENTIAL',
+    168|       retention_policy: 'DBTEST-VR05-POLICY',
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that changes the title records it once, with the value before and after
+AssertionError: expected [] to have a length of 1 but got +0
+- Expected
++ Received
+- 1
++ 0
+ ❯ tests/db/vault-reupload.dbtest.ts:189:23
+    187|     const rows = await auditRows(String(before.id));
+    188|     const reuploads = rows.filter((r) => r.action === 'vault.document.…
+    189|     expect(reuploads).toHaveLength(1);
+       |                       ^
+    190|     expect(JSON.stringify(reuploads[0].new_values)).toContain('"from":…
+    191|     // Still the recorded copy and classification.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  13:36:15
+   Duration  2.80s (transform 1.03s, setup 78ms, import 150ms, tests 2.30s, environment 0ms)

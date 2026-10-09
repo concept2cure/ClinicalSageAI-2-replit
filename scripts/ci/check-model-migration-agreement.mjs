@@ -43,7 +43,10 @@
  * a phantom column to the vault model did not trip the gate.
  *
  * So the parsing here is schema-qualified throughout. It is a different
- * measurement, not a second copy of the same one.
+ * measurement, not a second copy of the same one — and since 2026-09-22 the
+ * parsing itself is shared: lib/sql-columns.mjs is schema-qualified, reads
+ * `vault.table(`, and is what all three column guards use. What stays here is
+ * the question and the file selection (no journal snapshot, no archives).
  *
  * ── What counts as a violation ───────────────────────────────────────────────
  * A table the migration lineage CREATEs, where a Drizzle model declares columns
@@ -75,6 +78,14 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  columnsAddedIn,
+  columnsCreatedIn,
+  dynamicColumnAdds,
+  drizzleColumns,
+  stripSqlComments,
+  lastPart,
+} from './lib/sql-columns.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BASELINE = path.join(ROOT, 'scripts', 'ci', 'model-migration-agreement-baseline.json');
@@ -113,18 +124,6 @@ function walkFiles(dir, ext, out = []) {
 }
 
 /** Read the body of a `{ … }` starting just after its opening brace. */
-function braceBody(src, startIndex) {
-  let depth = 1;
-  let i = startIndex;
-  while (i < src.length && depth > 0) {
-    const c = src[i];
-    if (c === '{') depth++;
-    else if (c === '}') depth--;
-    i++;
-  }
-  return { body: src.slice(startIndex, i - 1), end: i };
-}
-
 /**
  * Qualified table name → Set of column names the Drizzle models declare.
  *
@@ -135,6 +134,7 @@ function braceBody(src, startIndex) {
  */
 function modelTables() {
   const byTable = new Map();
+  const key = (t) => (t.includes('.') ? t : `public.${t}`);
   for (const file of walkFiles(path.join(ROOT, 'shared'), '.ts')) {
     let src;
     try {
@@ -142,34 +142,11 @@ function modelTables() {
     } catch {
       continue;
     }
-
-    // Which local identifiers are pgSchema handles in THIS file.
-    const schemaOf = new Map();
-    for (const m of src.matchAll(/(?:const|let|var)\s+([A-Za-z0-9_$]+)\s*=\s*pgSchema\(\s*['"]([a-z0-9_]+)['"]/gi)) {
-      schemaOf.set(m[1], m[2].toLowerCase());
-    }
-
-    const re = /(?:([A-Za-z0-9_$]+)\.table|pgTable)\(\s*['"]([a-z0-9_]+)['"]\s*,\s*\{/gi;
-    let m;
-    while ((m = re.exec(src)) !== null) {
-      const handle = m[1];
-      // `foo.table(` where `foo` is not a pgSchema handle is some other API.
-      if (handle && !schemaOf.has(handle)) continue;
-      const schema = handle ? schemaOf.get(handle) : 'public';
-      const key = `${schema}.${m[2].toLowerCase()}`;
-
-      const { body, end } = braceBody(src, re.lastIndex);
-      re.lastIndex = end;
-
-      const cols = byTable.get(key) ?? new Set();
-      // field: someType('sql_name'  — the sql name is what the database sees.
-      for (const cm of body.matchAll(
-        /^\s*[A-Za-z0-9_]+\s*:\s*[A-Za-z0-9_]+\s*\(\s*['"]([a-z0-9_]+)['"]/gim,
-      )) {
-        cols.add(cm[1].toLowerCase());
-      }
-      byTable.set(key, cols);
-    }
+    // lib/sql-columns.mjs: pgTable AND pgSchema handles, braces matched, a
+    // column read only in property position.
+    const { tables, columns } = drizzleColumns(src);
+    for (const t of tables) if (!byTable.has(key(t))) byTable.set(key(t), new Set());
+    for (const { table, column } of columns) byTable.get(key(table)).add(column);
   }
   return byTable;
 }
@@ -199,7 +176,6 @@ function lineageTables() {
     }
     return e;
   };
-  const qualify = (schema, name) => `${(schema || 'public').toLowerCase()}.${name.toLowerCase()}`;
 
   /* The Drizzle-generated journal snapshot is excluded, and this one matters
      most of all.
@@ -238,6 +214,8 @@ function lineageTables() {
       !journalTags.has(path.basename(f)),
   );
 
+  const key = (t) => (t.includes('.') ? t : `public.${t}`);
+  const sweeps = [];
   for (const file of files) {
     let src;
     try {
@@ -251,87 +229,28 @@ function lineageTables() {
        paren and swallow the NEXT table's columns. Measured: this attributed 34
        columns to `vault.documents`, a table whose one non-archived definition
        declares 13 — which silently made the guard unable to flag the very
-       divergence it was written for. The sibling guard records the same lesson
-       about splitting; it applies to balancing too. */
-    src = src.replace(/--[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
-
-    // CREATE TABLE [IF NOT EXISTS] [schema.]name ( … )
-    const create =
-      /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:["`]?([a-z0-9_]+)["`]?\s*\.\s*)?["`]?([a-z0-9_]+)["`]?\s*\(/gi;
-    let m;
-    while ((m = create.exec(src)) !== null) {
-      const key = qualify(m[1], m[2]);
-      const e = entry(key);
+       divergence it was written for. */
+    src = stripSqlComments(src);
+    for (const { table, column } of columnsCreatedIn(src)) {
+      const e = entry(key(table));
       e.created = true;
-
-      // Balance parens rather than matching a terminator — indentation and
-      // trailing comments vary too much across these files for a terminator.
-      let depth = 1;
-      let i = create.lastIndex;
-      while (i < src.length && depth > 0) {
-        const c = src[i];
-        if (c === '(') depth++;
-        else if (c === ')') depth--;
-        i++;
-      }
-      const body = src.slice(create.lastIndex, i - 1);
-      create.lastIndex = i;
-
-      const clean = body; // comments already stripped file-wide above
-      // Top-level column definitions only; a nested paren is a type or a
-      // constraint argument, not a new column.
-      let d = 0;
-      let cur = '';
-      const frags = [];
-      for (const ch of clean) {
-        if (ch === '(') d++;
-        else if (ch === ')') d--;
-        if (ch === ',' && d === 0) {
-          frags.push(cur);
-          cur = '';
-        } else cur += ch;
-      }
-      frags.push(cur);
-      for (const frag of frags) {
-        const cm = frag.trim().match(/^["`]?([a-z0-9_]+)["`]?\s+/i);
-        if (!cm) continue;
-        const name = cm[1].toLowerCase();
-        // Table-level constraint clauses are not columns.
-        if (
-          ['primary', 'unique', 'foreign', 'constraint', 'check', 'exclude', 'like'].includes(name)
-        ) {
-          continue;
-        }
-        e.columns.add(name);
-      }
+      e.columns.add(column);
     }
-
-    // ALTER TABLE [schema.]name ADD COLUMN [IF NOT EXISTS] col [, ADD COLUMN ...]
-    //
-    // Matched in two stages, because one ALTER TABLE may carry any number of
-    // comma-separated ADD COLUMN clauses:
-    //
-    //   ALTER TABLE cmc_impurity_profiles
-    //     ADD COLUMN IF NOT EXISTS ames_result text,
-    //     ADD COLUMN IF NOT EXISTS structural_alert text,
-    //     ...
-    //
-    // A single regex anchored on ALTER TABLE captures only the FIRST clause, so
-    // every later column read as "declared by the model, created by no
-    // migration" — a false divergence against a table the database has in full.
-    // db/migrations/20260906_cmc_impurity_m7_inputs.sql is exactly this shape:
-    // it adds five columns, four of which the gate could not see, and the fix it
-    // then demanded was a migration re-adding columns that already existed.
-    for (const stmt of src.matchAll(
-      /ALTER\s+TABLE\s+(?:ONLY\s+)?(?:["`]?([a-z0-9_]+)["`]?\s*\.\s*)?["`]?([a-z0-9_]+)["`]?([^;]*)/gi,
-    )) {
-      const e = entry(qualify(stmt[1], stmt[2]));
-      for (const col of stmt[3].matchAll(
-        /ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?["`]?([a-z0-9_]+)["`]?/gi,
-      )) {
-        e.columns.add(col[1].toLowerCase());
-      }
+    // Every action of every ALTER (lib/sql-columns.mjs). A single regex
+    // anchored on ALTER TABLE captured only the FIRST clause, so every later
+    // column read as "declared by the model, created by no migration" — the
+    // shape of db/migrations/20260906_cmc_impurity_m7_inputs.sql.
+    for (const { table, column } of columnsAddedIn(src)) entry(key(table)).columns.add(column);
+    sweeps.push(...dynamicColumnAdds(src).sweeps);
+  }
+  // Catalog sweeps add their columns to every lineage table they name or match.
+  for (const sw of sweeps) {
+    for (const [k, e] of byTable) {
+      if (sw.schema && `${sw.schema}.` !== k.slice(0, k.lastIndexOf('.') + 1)) continue;
+      const name = lastPart(k);
+      if (sw.names.includes(name) || sw.patterns.some((re) => re.test(name))) for (const c of sw.columns) e.columns.add(c);
     }
+    for (const [t, c] of sw.pairs) entry(key(sw.schema && sw.schema !== 'public' ? `${sw.schema}.${t}` : t)).columns.add(c);
   }
   return byTable;
 }

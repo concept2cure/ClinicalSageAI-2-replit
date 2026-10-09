@@ -1,0 +1,11 @@
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'document_span_lineage kinds (20260803…' > a fresh database converges on the newest definition 2131ms
+ × tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'document_span_lineage kinds (20260803…' > the next deploy succeeds over a row only the newest definition admits 1623ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'c2c_documents doc types (20260528 → 2…' > a fresh database converges on the newest definition 1601ms
+ × tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'c2c_documents doc types (20260528 → 2…' > the next deploy succeeds over a row only the newest definition admits 1612ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'submission_orchestrator_runs status (…' > a fresh database converges on the newest definition 1614ms
+ × tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'submission_orchestrator_runs status (…' > the next deploy succeeds over a row only the newest definition admits 1595ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+Caused by: error: check constraint "document_span_lineage_kind_valid" of relation "document_span_lineage" is violated by some row
+Caused by: error: check constraint "c2c_documents_doc_type_check" of relation "c2c_documents" is violated by some row
+Caused by: error: check constraint "submission_orchestrator_runs_status_check" of relation "submission_orchestrator_runs" is violated by some row
+      Tests  3 failed | 3 passed (6)

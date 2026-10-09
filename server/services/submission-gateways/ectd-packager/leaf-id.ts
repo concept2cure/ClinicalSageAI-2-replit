@@ -31,6 +31,16 @@ export function leafIdSlug(fileName: string): string {
 }
 
 /**
+ * The ID a leaf gets in its backbone when no other leaf there collides with it:
+ * the section plus a filename slug. What `createLeafIdAssigner` starts from, so
+ * a fixture that names a filed leaf (a golden lifecycle's modified-file) names
+ * it by the same rule rather than a copy of it.
+ */
+export function baseLeafId(leaf: LeafIdInput): string {
+  return `leaf-${leaf.ctdSection.replace(/\./g, '-')}-${leafIdSlug(leaf.fileName)}`;
+}
+
+/**
  * Create a leaf-ID assigner scoped to a single backbone document.
  *
  * eCTD leaf IDs are XML ID-typed and must be unique within their document. The
@@ -44,7 +54,7 @@ export function leafIdSlug(fileName: string): string {
 export function createLeafIdAssigner(): (leaf: LeafIdInput) => string {
   const used = new Set<string>();
   return (leaf: LeafIdInput): string => {
-    const base = `leaf-${leaf.ctdSection.replace(/\./g, '-')}-${leafIdSlug(leaf.fileName)}`;
+    const base = baseLeafId(leaf);
     let id = base;
     let n = 2;
     while (used.has(id)) id = `${base}-${n++}`;

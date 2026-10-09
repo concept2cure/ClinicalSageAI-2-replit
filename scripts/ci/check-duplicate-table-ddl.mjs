@@ -106,13 +106,27 @@ const BASELINE_PATH = path.join(repoRoot, 'scripts', 'ci', 'duplicate-table-ddl-
  *
  * Same narrowness rule: `scripts/db-verify/` only. A .sql file elsewhere under
  * scripts/ is still scanned.
+ *
+ * EVIDENCE (`docs/evidence/`), added 2026-09-24. A finding's record may carry
+ * the DDL it reproduces, and that is a record like docs/archive/, not lineage:
+ * no applier, script or test reads it. The first one,
+ * docs/evidence/D6/2026-09-24-security-audit/repro/ddl-from-0000.sql, holds
+ * `audit_logs` and `electronic_signatures` "extracted verbatim from
+ * migrations/0000_sweet_joseph.sql", and it turned this gate red on trunk the
+ * moment it landed — a copy reported as a second creator. Checked before
+ * excluding, as above: both statements are byte-identical to 0000's, so the
+ * exclusion hides no shape. Narrow the same way: `docs/evidence/` only.
  */
 const ARCHIVED = ['_legacy/', '_deprecated_migrations/', 'docs/archive/', '_consolidated/', 'node_modules/'];
 const TEST_FIXTURE = /(^|\/)tests\/.*\/fixtures\//;
 const DB_VERIFY_BOOTSTRAP = /(^|\/)scripts\/db-verify\//;
+const EVIDENCE_RECORD = /(^|\/)docs\/evidence\//;
 
 const isArchived = (p) =>
-  ARCHIVED.some((a) => p.includes(a)) || TEST_FIXTURE.test(p) || DB_VERIFY_BOOTSTRAP.test(p);
+  ARCHIVED.some((a) => p.includes(a)) ||
+  TEST_FIXTURE.test(p) ||
+  DB_VERIFY_BOOTSTRAP.test(p) ||
+  EVIDENCE_RECORD.test(p);
 
 /** Recursively collect .sql files under the repo. */
 function collectSql(dir, acc = []) {

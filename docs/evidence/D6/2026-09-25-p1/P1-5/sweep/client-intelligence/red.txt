@@ -1,0 +1,136 @@
+$ # server/routes/client-intelligence.ts as committed at 50b04d99 (git show HEAD:server/routes/client-intelligence.ts > server/routes/client-intelligence.ts); test server/routes/__tests__/client-intelligence-upload-guards.test.ts
+$ NODE_OPTIONS='--max-old-space-size=2048' npx vitest run --config vitest.config.ts server/routes/__tests__/client-intelligence-upload-guards.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+    "mode": "on"
+
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+[ProjectIntelligence] POST documents/upload error: TypeError: Cannot read properties of undefined (reading 'id')
+    at /home/user/ClinicalSageAI-2-replit/server/routes/client-intelligence.ts:513:17
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+ × server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses a body over the size limit with 413 instead of buffering it 282ms
+   → an oversize upload was buffered into the heap: expected 500 to be 413 // Object.is equality
+ × server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses an executable named file whatever type it declares (415) 10ms
+   → a .exe declared as text/plain was admitted: expected 200 to be 415 // Object.is equality
+ × server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses a declared type these routes do not read (415, not a 500) 9ms
+   → expected 500 to be 415 // Object.is equality
+ × server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses bytes that are not what the declared type says (the shared byte check) 5ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > leaves a request with no file to the handler (its own 400, unchanged) 6ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > control: a real text document passes the guard and reaches ingestDocument 4ms
+ × server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > control: the project route runs the same guard 6ms
+   → expected 500 to be 400 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses a body over the size limit with 413 instead of buffering it
+AssertionError: an oversize upload was buffered into the heap: expected 500 to be 413 // Object.is equality
+
+- Expected
++ Received
+
+- 413
++ 500
+
+ ❯ server/routes/__tests__/client-intelligence-upload-guards.test.ts:72:71
+     70|       .field('profileId', '1')
+     71|       .attach('file', oversize, { filename: 'big.txt', contentType: 't…
+     72|     expect(r.status, 'an oversize upload was buffered into the heap').…
+       |                                                                       ^
+     73|     expect(ingestDocument).not.toHaveBeenCalled();
+     74|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses an executable named file whatever type it declares (415)
+AssertionError: a .exe declared as text/plain was admitted: expected 200 to be 415 // Object.is equality
+
+- Expected
++ Received
+
+- 415
++ 200
+
+ ❯ server/routes/__tests__/client-intelligence-upload-guards.test.ts:81:68
+     79|       .field('profileId', '1')
+     80|       .attach('file', Buffer.from('plain text'), { filename: 'payload.…
+     81|     expect(r.status, 'a .exe declared as text/plain was admitted').toB…
+       |                                                                    ^
+     82|     expect(ingestDocument).not.toHaveBeenCalled();
+     83|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses a declared type these routes do not read (415, not a 500)
+AssertionError: expected 500 to be 415 // Object.is equality
+
+- Expected
++ Received
+
+- 415
++ 500
+
+ ❯ server/routes/__tests__/client-intelligence-upload-guards.test.ts:90:22
+     88|       .field('profileId', '1')
+     89|       .attach('file', Buffer.from('GIF89a'), { filename: 'x.gif', cont…
+     90|     expect(r.status).toBe(415);
+       |                      ^
+     91|     expect(ingestDocument).not.toHaveBeenCalled();
+     92|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses bytes that are not what the declared type says (the shared byte check)
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/client-intelligence-upload-guards.test.ts:99:22
+     97|       .field('profileId', '1')
+     98|       .attach('file', Buffer.from('this is not a pdf'), { filename: 'r…
+     99|     expect(r.status).toBe(400);
+       |                      ^
+    100|     expect(r.body).toMatchObject({ success: false, code: 'FILE_SIGNATU…
+    101|     expect(ingestDocument).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > control: the project route runs the same guard
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/client-intelligence-upload-guards.test.ts:123:22
+    121|       .post('/api/client-intelligence/project/3/documents/upload')
+    122|       .attach('file', Buffer.from('this is not a pdf'), { filename: 'r…
+    123|     expect(r.status).toBe(400);
+       |                      ^
+    124|     expect(r.body).toMatchObject({ code: 'FILE_SIGNATURE_MISMATCH' });
+    125|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  23:47:56
+   Duration  2.91s (transform 1.12s, setup 114ms, import 2.10s, tests 326ms, environment 0ms)
+
+exit=1

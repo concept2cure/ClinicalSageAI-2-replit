@@ -24,7 +24,7 @@ import type { AnaTool } from '../ai-gateway/types';
 export const LIST_VAULT_DOCUMENTS: AnaTool = {
   name: 'list_vault_documents',
   description:
-    "List documents in the organization's vault (concept2cure_artifacts) — every program artifact with title, type, CTD section, status, version, and last update. Filter by a title query, lifecycle status, or CTD section prefix. Use this to see what documents exist before reading one with read_vault_document. Tenant-scoped, read-only.",
+    "List the organization's Artifacts Center documents (concept2cure_artifacts) — governed program artifacts with title, type, CTD section, status, version, and last update. This is not the files uploaded to the Vault: those are a different store, read with list_project_documents when that tool is offered. An empty result here says nothing about the Vault. Filter by a title query, lifecycle status, or CTD section prefix. Use this to see which artifacts exist before reading one with read_vault_document. Tenant-scoped, read-only.",
   input_schema: {
     type: 'object',
     properties: {
@@ -44,7 +44,7 @@ export const LIST_VAULT_DOCUMENTS: AnaTool = {
 export const READ_VAULT_DOCUMENT: AnaTool = {
   name: 'read_vault_document',
   description:
-    "Read a vault document's metadata AND content by its id (numeric id or 'artifact_…' external id). Returns title, type, category, CTD section, status, version, content hash, timestamps, and the document text (truncated to max_chars with the full length reported — raise max_chars or read again for more). Use list_vault_documents first to find the id. Tenant-scoped, read-only.",
+    "Read an Artifacts Center document's metadata AND content by its id (numeric id or 'artifact_…' external id). Returns title, type, category, CTD section, status, version, content hash, timestamps, and the document text (truncated to max_chars with the full length reported — raise max_chars or read again for more). This reads governed artifacts, not the files uploaded to the Vault (those carry UUID ids and are read with read_project_document when offered). Use list_vault_documents first to find the id. Tenant-scoped, read-only.",
   input_schema: {
     type: 'object',
     properties: {
@@ -134,6 +134,34 @@ export const SAVE_DOCUMENT_TO_VAULT: AnaTool = {
       reason: { type: 'string', description: 'Reason-for-change (min 8 chars) — recorded in the audit trail.' },
     },
     required: ['title', 'content', 'reason'],
+  },
+};
+
+export const DRAFT_AUTHORING_DOCUMENT: AnaTool = {
+  name: 'draft_authoring_document',
+  description:
+    "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content } with the content stored as sanitized HTML, provenance recorded as drafted by AnA, a genesis revision and a Part 11 CREATE audit row per section. The person then sees it as a canvas in the conversation, can open it in the full editor, and can file it into the project vault. Use this — not save_document_to_vault — whenever the deliverable is a document with sections (a Module 2.5 excerpt, an IB section set, a 510(k) summary). Requires an open project; refuses otherwise. Tenant-scoped. Returns { status: 'generated', authoringDocId, programId, title, sectionCount, content }.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string', description: 'Document title.' },
+      module: { type: 'string', description: "CTD module, e.g. 'M2', 'M3'. Default 'M2'." },
+      documentType: { type: 'string', description: "Document type / product code, e.g. 'clinical_overview'." },
+      sections: {
+        type: 'array',
+        description: 'The sections in reading order. content is HTML (p, h1-h6, ul/ol/li, table, strong/em); scripts and unknown markup are stripped.',
+        items: {
+          type: 'object',
+          properties: {
+            code: { type: 'string', description: "Section code, e.g. '2.5.1'." },
+            title: { type: 'string', description: 'Section title.' },
+            content: { type: 'string', description: 'Section body as HTML.' },
+          },
+          required: ['code', 'title', 'content'],
+        },
+      },
+    },
+    required: ['title', 'sections'],
   },
 };
 

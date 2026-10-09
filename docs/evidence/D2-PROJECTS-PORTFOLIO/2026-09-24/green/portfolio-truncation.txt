@@ -1,0 +1,3 @@
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > says the list is the first page, and the count is a floor
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > a complete read says nothing extra
+      Tests  2 passed (2)

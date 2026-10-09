@@ -22,9 +22,10 @@ import { useDialog } from './useDialog';
        (task assignments, blocked/completed events and Collaborate
        messages all land here).
 
-   Every source degrades independently to its own honest empty; a
-   failed source never fabricates a count. The trigger badge is the
-   real total of open work — the hardcoded rail "12" is gone (D40).
+   Every source degrades independently: a failed source says so in
+   its own group and never renders as empty, and never fabricates a
+   count. The trigger badge is the real total of open work — the
+   hardcoded rail "12" is gone (D40) — or "?" when a count read failed.
    ================================================================ */
 
 interface MyWorkItem {
@@ -115,7 +116,16 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
      available failure. Surfaced the same way myWork's error already is. */
   const approvalsError = approvals.error;
   const queueError = queue.error;
+  const notifsError = notifs.error;
   const badge = (work?.total ?? 0) + (unread.data?.unread ?? 0);
+  /* The badge is a sum of two reads. When either failed, `?? 0` made the failed
+     half vanish, so a bell with nothing on it meant "you're clear" when it
+     meant "we don't know" — the failure the comment above exists to rule out.
+     A failed count shows as unknown, never as a smaller or zero total. */
+  const countsIncomplete = Boolean(myWork.error || unread.error);
+  const triggerLabel = countsIncomplete
+    ? `Your work — couldn't load every count${badge ? `; at least ${badge} item${badge === 1 ? '' : 's'} waiting` : ''}`
+    : `Your work${badge ? ` — ${badge} item${badge === 1 ? '' : 's'} waiting` : ''}`;
 
   const markRead = async (id: number) => {
     const res = await apiCall('POST', `/api/mdx/notifications/${id}/read`);
@@ -133,12 +143,16 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
       <button
         className="tt-trigger tb-btn"
         onClick={() => setOpen(o => !o)}
-        title="Your tasks, approvals and messages"
-        aria-label={`Your work${badge ? ` — ${badge} item${badge === 1 ? '' : 's'} waiting` : ''}`}
+        title={countsIncomplete ? "Your tasks, approvals and messages — some counts couldn't be loaded" : 'Your tasks, approvals and messages'}
+        aria-label={triggerLabel}
         aria-expanded={open}
       >
         {I.bell}
-        {badge > 0 && <span className="tt-badge">{badge > 99 ? '99+' : badge}</span>}
+        {countsIncomplete ? (
+          <span className="tt-badge" aria-hidden="true">?</span>
+        ) : (
+          badge > 0 && <span className="tt-badge">{badge > 99 ? '99+' : badge}</span>
+        )}
       </button>
       {open && (
         <TrayPanel
@@ -153,6 +167,7 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
           approvalsError={approvalsError}
           notifs={notifs.rows}
           notifsLoading={notifs.loading}
+          notifsError={notifsError}
           markRead={markRead}
           go={go}
           onAsk={onAsk}
@@ -164,7 +179,7 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
 
 function TrayPanel({
   onClose, work, workLoading, workError, assigned, queue, queueError, approvalRows, approvalsError,
-  notifs, notifsLoading, markRead, go, onAsk,
+  notifs, notifsLoading, notifsError, markRead, go, onAsk,
 }: {
   onClose: () => void;
   work: MyWork | null;
@@ -180,6 +195,8 @@ function TrayPanel({
   approvalsError?: string;
   notifs: NotificationRow[];
   notifsLoading: boolean;
+  /** Same rule as queueError: a failed read is not an empty inbox. */
+  notifsError?: string;
   markRead: (id: number) => void;
   go: (surface: string) => void;
   onAsk?: (text: string) => void;
@@ -318,6 +335,10 @@ function TrayPanel({
             <div className="tt-group-head">Messages &amp; alerts</div>
             {notifsLoading ? (
               <div className="tt-empty">Loading…</div>
+            ) : notifsError ? (
+              <div className="tt-empty" role="alert">
+                Couldn't load your messages and alerts. Close and reopen this panel to try again.
+              </div>
             ) : !notifs.length ? (
               <div className="tt-empty">No unread messages or alerts.</div>
             ) : notifs.map(n => (

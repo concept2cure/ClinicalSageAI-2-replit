@@ -1,0 +1,8 @@
+$ node scripts/ci/check-trivy-inline-ignores.mjs --root <terraform/ at abc1c99a5>
+[ci:trivy-inline-ignores] FAIL — 1 inline Trivy exception(s) attached to nothing:
+  - terraform/modules/cloudfront/main.tf:116 #trivy:ignore:AWS-0011 — line 117 below it is a comment ("# Security headers for the SPA (security plan P0-15, INF-04)")
+
+  Trivy applies an ignore comment to the line directly below it (or, chained, to the first
+  code line after a run of ignore lines). Move it so it sits on the resource or attribute it
+  excepts, with any explanation ABOVE it, not between it and the block.
+exit 1

@@ -1,0 +1,37 @@
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults > returns the request unchanged when there is no policy 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults > fills residency/ZDR from policy when the request omits them 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults > an explicit request value never lowers the org floor 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults > a request that names only a residency still inherits the org zero-retention floor 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults — the org policy is a floor (D6) > a request cannot lower the org zero-retention floor 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults — the org policy is a floor (D6) > a request residency that contradicts the org residency is flagged as a conflict 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults — the org policy is a floor (D6) > a request residency that agrees with the org residency is no conflict 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults — the org policy is a floor (D6) > a request may add a constraint the org did not set 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > org placement resolver registry > defaults to a null resolver (no policy → explicit-only behavior) 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > org placement resolver registry > honors an injected resolver and resets cleanly 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a lookup failure throws — it never reads as "this org has no policy" 4ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a failure is not cached: the next call looks the policy up again 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a missing row is "no policy" and is cached 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > reads the vendor allow-list and the public-source switches 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > an allow-list that names nothing valid allows nothing (fail closed), rather than everything 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > looks the policy up in the scope of the org it resolves, not the caller's ambient scope 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > selection honours the tenant floor for every data class > a tenant restricted to self_hosted is served only on the self-hosted lane 25ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > selection honours the tenant floor for every data class > with no permitted lane the request is refused as a tenant-policy decision and no SDK is called 6ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > selection honours the tenant floor for every data class > the vendor allow-list is honoured on every rung: Kimi is never reached when the tenant lists only Claude and OpenAI 4ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > selection honours the tenant floor for every data class > the fallback ladder never crosses into a substrate the tenant has not allowed 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the tenant floor cannot be lowered by the request > a request zeroDataRetention:false does not defeat the org zero-retention floor 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the tenant floor cannot be lowered by the request > a request residency that contradicts the tenant residency is refused, not silently honoured 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the tenant is bound even when the caller forgets to say which > binds the tenant from the ambient request scope when organizationId is omitted 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the tenant is bound even when the caller forgets to say which > under enforcement, a call with no tenant binding at all is refused for a tenant payload 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the tenant is bound even when the caller forgets to say which > platform work in the explicit system scope is not refused (it carries no tenant) 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > an unknown policy fails closed where enforcement is on > under enforcement, a policy lookup failure refuses the tenant payload 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > an unknown policy fails closed where enforcement is on > outside enforcement, a lookup failure is recorded and the request still runs 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > an unknown policy fails closed where enforcement is on > an on-prem tenant with no self-hosted lane gets a placement refusal, not "No AI provider is configured" 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the last mile re-checks the floor before any SDK call > refuses a disallowed substrate even when selection is bypassed 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the last mile re-checks the floor before any SDK call > performance qualification resolves the tenant floor before it reaches a model 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > embeddings are held to the same floor > refuses to embed a self_hosted-only tenant on a shared embedding service 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > public-source payloads reach a shared API only on the tenant's opt-in > without the opt-in, a public payload stays on the tenant's allowed lane 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > public-source payloads reach a shared API only on the tenant's opt-in > with the opt-in, a public payload may reach a shared frontier API 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > public-source payloads reach a shared API only on the tenant's opt-in > the opt-in never opens the shared API to a tenant payload 1ms
+ Test Files  3 passed (3)
+      Tests  34 passed (34)
+exit=0

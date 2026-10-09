@@ -17,7 +17,8 @@
  * @module server/middleware/uploadAllowlist
  */
 
-import type { Request } from 'express';
+import type { Request, RequestHandler } from 'express';
+import multer from 'multer';
 
 export interface UploadAllowlistOptions {
   /** Allowed lowercase extensions (no dot). Defaults to the regulatory doc set. */
@@ -76,5 +77,33 @@ export function makeUploadFileFilter(opts: UploadAllowlistOptions = {}) {
     } else {
       cb(new Error(`Unsupported file type: ${file.originalname}`));
     }
+  };
+}
+
+/**
+ * Wrap a multer receiver so its outcomes are answered as the 4xx they are:
+ * `LIMIT_FILE_SIZE` → 413, a `fileFilter` refusal → 415, any other multer
+ * complaint → 400. Left to `next(err)` each became a 500 at the generic
+ * handler, and every router that noticed wrote its own copy of this mapping
+ * (chat, vault-ingest, stability). One place, one shape
+ * (`{ error, code }`), so a client can tell "too large" from "wrong type".
+ */
+export function receiveUpload(receiver: RequestHandler, opts: { maxBytes?: number } = {}): RequestHandler {
+  return (req, res, next) => {
+    receiver(req, res, (err?: unknown) => {
+      if (!err) return next();
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          const limit = opts.maxBytes ? ` of ${Math.round(opts.maxBytes / (1024 * 1024))} MB` : '';
+          return res.status(413).json({ error: `The file exceeds the upload limit${limit}.`, code: 'FILE_TOO_LARGE' });
+        }
+        return res.status(400).json({ error: `Upload rejected: ${err.message}`, code: 'UPLOAD_INVALID' });
+      }
+      if (err instanceof Error) {
+        // A fileFilter refuses with its own Error; nothing else reaches here.
+        return res.status(415).json({ error: err.message, code: 'UNSUPPORTED_FILE_TYPE' });
+      }
+      return next(err);
+    });
   };
 }

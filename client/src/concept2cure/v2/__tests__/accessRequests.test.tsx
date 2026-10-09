@@ -329,13 +329,65 @@ describe('AccessRequestQueue — the administrator answering', () => {
     expect(screen.queryByRole('table')).toBeNull();
   });
 
-  it('reads every workspace only in the all scope, and shows the workspace column', async () => {
+  /* The workspace endpoint runs under the caller's own workspace, where the
+     database shows nothing else: asked for every workspace, it answered with
+     the owner's alone and this screen called every other workspace empty
+     (reproduced on real PostgreSQL, tests/db/module-access-requests.dbtest.ts).
+     So the all scope reads the platform console's endpoint, and the workspace
+     scope never asks its endpoint for more than one workspace. */
+  it('reads every workspace from the platform console endpoint, and shows the workspace column', async () => {
     api.fn.mockImplementation(async () =>
       json({ scope: 'all', requests: [ROW], openCount: 1, truncated: false }),
     );
     render(<AccessRequestQueue scope="all" />);
 
     expect(await screen.findByText('Northwind Bio')).toBeTruthy();
-    expect(api.fn.mock.calls[0][1]).toContain('scope=all');
+    expect(api.fn.mock.calls[0][1]).toBe('/api/admin/master/access-requests?status=open');
+    expect(api.fn.mock.calls.every((c) => !String(c[1]).startsWith('/api/module-access-requests'))).toBe(
+      true,
+    );
+  });
+
+  it('reads one workspace from the workspace endpoint, and never asks it for every workspace', async () => {
+    api.fn.mockImplementation(async () =>
+      json({ scope: 'organization', requests: [ROW], openCount: 1, truncated: false }),
+    );
+    render(<AccessRequestQueue scope="organization" />);
+
+    expect(await screen.findByText('A Member')).toBeTruthy();
+    expect(api.fn.mock.calls[0][1]).toBe('/api/module-access-requests?status=open');
+    expect(api.fn.mock.calls.some((c) => String(c[1]).includes('scope=all'))).toBe(false);
+    expect(screen.queryByText('Northwind Bio')).toBeNull();
+  });
+
+  it("answers another workspace's request through the platform console endpoint", async () => {
+    api.fn.mockImplementation(async (method: string) => {
+      if (method === 'GET') {
+        return json({ scope: 'all', requests: [ROW], openCount: 1, truncated: false });
+      }
+      return json({ request: { ...ROW, status: 'approved' }, granted: true });
+    });
+    render(<AccessRequestQueue scope="all" />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /^Approve/ }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(dialog.querySelector('textarea') as HTMLTextAreaElement, {
+      target: { value: 'Granted under the pilot agreement.' },
+    });
+    fireEvent.change(dialog.querySelector('input') as HTMLInputElement, {
+      target: { value: 'yes' },
+    });
+    fireEvent.click(
+      Array.from(dialog.querySelectorAll('button')).find((b) =>
+        /confirm/i.test(b.textContent ?? ''),
+      ) as HTMLButtonElement,
+    );
+
+    await waitFor(() =>
+      expect(api.fn).toHaveBeenCalledWith('POST', '/api/admin/master/access-requests/12/decision', {
+        decision: 'approved',
+        reason: 'Granted under the pilot agreement.',
+      }),
+    );
   });
 });

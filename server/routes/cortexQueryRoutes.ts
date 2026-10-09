@@ -25,6 +25,7 @@ import { getGateway } from '../services/ai-gateway/index.js';
 import type { RoutingStrategy } from '../services/ai-gateway/types.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { ragRouter } from '../services/ragRouter.js';
+import { currentTenantOrgUuid } from '../db/currentTenant.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -122,21 +123,31 @@ router.post('/query', async (req: Request, res: Response) => {
 
     const body = req.body as CortexQueryRequest;
     const { query, mode = 'generate', options = {}, context = {}, persistCitations } = body;
-    const organizationUuid =
-      req.tenantContext?.organizationUuid || (req.headers['x-org-uuid'] as string | undefined);
 
     if (!query || typeof query !== 'string') {
       return res.status(400).json({ error: 'Query string is required' });
     }
 
-    if (persistCitations && !organizationUuid) {
-      return res.status(400).json({
-        error: 'organizationUuid is required when persistCitations is enabled',
-      });
-    }
+    /* The tenant key comes from the verified session, never the request.
 
+       This read the tenant context's uuid and fell back to the client's
+       x-org-uuid header.
+       Mounted under cortex-unified.ts, whose extractTenantContext replaces
+       req.tenantContext without an organizationUuid, the left side was always
+       undefined — so the client's header was the ONLY tenant key this route
+       ever used, and a request without one ran the search's unfiltered branch
+       and answered graph mode with an empty "successful" graph. Enforcing RLS
+       contained it (the policy keys on the session's GUC), which is why the
+       contract that pins this asserts positive controls: a caller naming another
+       tenant is served its own data, not nothing.
+       docs/evidence/D3/2026-09-24-cortex-tenant-header/. */
+    // The session's key or nothing — server/db/currentTenant.ts, which this
+    // route's own resolver was folded into. A session with no usable org has
+    // no tenant scope (organizationId 0 is a resolution failure, not an org),
+    // so it is refused here rather than queried.
+    const organizationUuid = await currentTenantOrgUuid(pool);
     if (!organizationUuid) {
-      console.warn('[Cortex] Missing organizationUuid; RLS may return empty results.');
+      return res.status(403).json({ error: 'Tenant context required' });
     }
 
     let response: CortexQueryResponse;
@@ -186,19 +197,17 @@ router.post('/query', async (req: Request, res: Response) => {
 async function handleSearchMode(
   query: string,
   options: CortexQueryRequest['options'],
-  organizationUuid?: string
+  organizationUuid: string
 ): Promise<CortexQueryResponse> {
   const embeddingService = getEmbeddingService(pool!);
 
-  // Scope search to requesting org. If no org provided, RLS on the
-  // underlying lumen_data_atoms table will return empty — this is
-  // intentional defense-in-depth per multi-tenant isolation rules.
-  const results = await embeddingService.searchHybrid(
-    query,
-    options?.limit || 10,
-    0.7, // semantic weight
-    organizationUuid
-  );
+  // Scoped to the session's tenant key; searchHybrid refuses to run without
+  // one, and refuses a key that is not the session's.
+  const results = await embeddingService.searchHybrid(query, {
+    limit: options?.limit || 10,
+    semanticWeight: 0.7,
+    organizationUuid,
+  });
 
   return {
     success: true,

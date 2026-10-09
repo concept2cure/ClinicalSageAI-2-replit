@@ -20,6 +20,7 @@ import crypto from 'crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { orderDomainParts } from './seed/ga-demo-order.mjs';
 
 const { Pool } = pg;
 
@@ -917,7 +918,7 @@ async function seed() {
     {
       const domainDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'seed', 'ga-demo.d');
       if (fs.existsSync(domainDir)) {
-        const files = fs.readdirSync(domainDir).filter((f) => f.endsWith('.mjs')).sort();
+        const files = orderDomainParts(fs.readdirSync(domainDir).filter((f) => f.endsWith('.mjs')));
         let domainOk = 0;
         let domainSkipped = 0;
         for (const file of files) {

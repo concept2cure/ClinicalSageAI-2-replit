@@ -1,0 +1,254 @@
+# 2026-09-22 periodic review — follow-through
+
+**Launch row:** D5 (Part 11 evidence). **Lane:** "Launch-catalog review follow-through" in
+`docs/work-orders/README.md` (`…session_01WcyqbqWn6LszBqUWUSNnqA`).
+
+## Status at HEAD, 2026-09-24
+
+Every finding in this lane was re-checked against HEAD (then `98b49d6f9`), and each
+OPEN verdict was given to a second agent told to refute it. None was refuted.
+
+| Finding | Status | Evidence |
+|---|---|---|
+| P1 protocol finalize / review disposition | fixed | `d622ca53a` |
+| P2 QMP create / activate / delete | fixed | `f4c9c50ca` |
+| P3 contradiction resolution | fixed | `9f3f40d72`, `docs/evidence/D5-GOVERNED-PATH/2026-09-22/` |
+| T1 discarded task-ledger outcome | fixed (WO-16C's) | `a7955fc10`, `95aa4216c` |
+| T2 task-write authority | fixed | `a7955fc10` |
+| T3 archive / sign swallow a 401 | fixed | `6f79a000f` (sign), `a7955fc10` (archive) |
+| T4 archive reason optional on the server | fixed | `a7955fc10` |
+| SEC-1 reads outside the request-scoped client | fixed | `fe78e4c3c` |
+| **P4** release signature shows no signer, time or meaning | **fixed here** (server and client) | below |
+| P5 reason-for-change enforced on the client only | open | `authoring.router.ts` — skip window, see below |
+| P6 Revert enabled on a sealed document | open | `DocumentWorkbench.tsx` — skip window |
+| P7 activity feed shows `User <id>` | open | `c2c/projects.ts` — skip window |
+| V1 Vault filing sends no reason | open | `c2c/project-vault.ts` — skip window |
+
+"Skip window": another session changed the file in the last 24 hours, and this
+lane does not edit such a file (`docs/work-orders/README.md` §0).
+
+## P4 — server half
+
+§11.50(b): a signature's human-readable form carries the printed name, the date and
+time, and the meaning. The Submission Center's "Release signature · §11.70" panel
+had none of them. That was because `findActiveReleaseSignature` ran
+`SELECT id FROM electronic_signatures`, so nothing downstream could carry them.
+
+**Change.**
+- `findActiveReleaseSignature` selects `signer_id, signer_name, signer_title,
+  signature_meaning, signed_at` and returns them.
+- `SignedExportDescriptor` carries them.
+- `GET /api/ectd/export/by-run/:runId/signed` returns them in `signature`.
+
+A field the row does not hold is `null` all the way to the wire; nothing fills it
+in. The query's WHERE clause and ORDER BY, the tenant guard, and the WO-16B
+finding-14 throw are unchanged. A test pins each of them.
+
+**Failing first.**
+- `p11-4-server-red.txt`: the tests were added with the source unchanged, giving
+  5 failures. The lookup returned `{ id: 7 }` and the descriptor had no signer
+  fields. With only the route file reverted, the route case also fails: its body
+  carried 3 of the 8 signature fields.
+- `p11-4-server-green.txt`: with the change applied, 79/79 across the new tests
+  and the suites that depend on the lookup: the WO-16B gate, the sign-payload
+  snapshot, the sign-release route, and orchestrator moves 3/5/6.
+
+**Also run.**
+- `tsc --noEmit`: clean.
+- `ci:eslint-warning-ratchet --since HEAD`: no file changed its count.
+- `ci:fabricated-identity`: OK.
+
+**Client half, done 2026-09-24.** `EctdCompile.tsx` had not been touched for more
+than 24 hours, so it was free. The panel now shows:
+- **Signed by:** the printed name and title, or "Printed name not recorded".
+- **Signed at:** through `GovernedTimestamp`, in UTC.
+- **Meaning:** through `signatureMeaningLabel`, lifted out of
+  `AuthoringSignatures.tsx` into `client/src/concept2cure/_shared/signatureMeaning.ts`
+  so both panels use one label.
+
+The same fields go to AnA in `signedPackage`.
+- `p11-4-client-red.txt`: the two new cases fail against the unchanged panel.
+- `p11-4-client-green.txt`: 44/44, including the authoring-signature suite that
+  now imports the shared label.
+
+## New-code audit, 2026-09-24
+
+An adversarial pass over the governed files added between 09-19 and 09-24 found
+13 distinct defects. Each was checked through three lenses, and none was refuted
+outright. #1 is fixed here, and the rest are written up for their lanes. Ranking and
+reach are from the audit.
+
+### #1 — a QMS controlled document made effective with no electronic signature (fixed)
+
+§11.50: making an SOP effective is a signed act. VSR-001 F-3 made
+`POST /api/mdx/qms/documents/:id/approve` one: signing authority, password and
+second factor re-verified, the meaning, author ≠ approver, and one
+`electronic_signatures` row bound to the version's content digest. Three other
+writes reached the same `status = 'effective'` with none of that:
+
+1. **AnA tool `approve_qms_document`.**
+   - It set the document effective, stamped the chat user as approver, and
+     recorded a stock reason.
+   - It wrote `command: 'transition'`, not `'sign'`, so both the
+     `35794a160` sweep and `ci:sign-ceremony` missed it.
+   - The register's **"Ask AnA to approve"** chip sent every approval here. Its
+     tooltip said "you still capture the e-signature".
+2. **`POST /api/qms/documents/:id/transition {to:'effective'}`**, which stamped the
+   caller as approver.
+3. **`POST` and `PATCH /api/mdx/qms/documents`.** Both admitted every status.
+   PATCH could also rewrite the title or version of a signed document, which then
+   stayed effective while no longer matching its signed digest.
+
+**Change.**
+- The tool returns the canonical `refuseSignatureInChat`, and its description
+  says "AnA cannot sign".
+- `transitionDocument` refuses `effective` in the service.
+- The mdx-qms create and patch schemas admit only `draft` and `in_review`.
+- PATCH edits only a draft or in-review document. Any other answers 409
+  `QMS_DOCUMENT_CONTROLLED`.
+- The chip is replaced in the same change by an **Approve** button. It opens the
+  shared `EsignModal` (approval meaning only) and posts to the signed route. The
+  time it shows is the server's `signedAt`, and it is disabled on sample rows.
+- **Removed:** AnA making a document effective. **Replacement, by path:**
+  `client/src/concept2cure/quality/SopRegister.tsx` → `POST
+  /api/mdx/qms/documents/:id/approve`, proven by `SopRegisterApproval.test.tsx`.
+
+**Failing first.**
+- `qms-approval-red.txt`: 7 server failures at HEAD with the source unchanged
+  (the PGlite contract test shows the real handler making the document
+  effective). The client suite failed 5/5 against the HEAD register.
+- `qms-approval-green.txt`: 95/95 across the new tests and every QMS suite, and
+  the client suite 5/5.
+
+**Also run.**
+- `tsc`: clean.
+- ESLint ratchet `--since HEAD`: unchanged.
+- `ci:sign-ceremony`: 23 baselined sites, unchanged.
+- `ci:canvas-path`: wired.
+- The AnA manifest was regenerated.
+
+**Still open.** `ci:sign-ceremony` only sees `command: 'sign'`. An approval
+recorded under another verb is invisible to it, and that is how this one survived.
+Widening the gate is a follow-up.
+
+### Handed off (not edited here)
+
+| # | Finding | Launch reach | Where it goes |
+|---|---|---|---|
+| 2 | The review quorum counts approvals of an earlier version (`artifact-approval-act.ts:77-93`); v2 becomes filable on reviewer R's v1 decision | Authoring → Submission Center, API-only reviewer routes | next in this lane |
+| 3 | Batch leaf resolution shares one leaf's pin verdict across every leaf on the same document (`ectd/leaf-document-resolver.ts:263`), so dispatch and transmit Gate 2 can clear stale content | Submission Readiness / Center | **fixed** in this lane (below) |
+| 5 | The model-governance gate misses prose tools its field regex does not name (`governed-write-tools.ts:32`) | AnA drafting (D4 model governance) | AnA lane `…01DiJJAk` |
+| 6 | The MCP connector accepts suspended or deprovisioned accounts (`server/mcp/auth/platform-token.ts:104`, `provider.ts:116`) | D8, live only with `MCP_ENABLED=true` | D8 owner, before staging |
+| 9 | File-to-vault leaves a vault row behind when placement throws, then says nothing was written (`authoring-file-to-vault.ts:306`) | Authoring → Vault | AnA lane (canvas → vault path) |
+| 10 | An emailed code bypasses an enrolled authenticator | sign-in | already the owner's open decision (D6 §4) |
+| 4, 7, 8, 11, 12 | IRB expiry, EU burden indicator, endpoint derivation, CTIS results slot, Q3A wording | not in the launch catalog | recorded here only (RULE 2) |
+| 13 | The AnA draft's default module `M2` becomes a confirmed placement; `FileToVaultDialog.tsx:51` misreads the folder object | Authoring canvas | AnA lane |
+
+The QMS retire route (`mdx-qms.ts:656`) and `retire_qms_document` also take the
+reason as optional, and the tool records a stock sentence. That belongs with P5
+and V1 (server-side reason-for-change) in this lane.
+
+### #3 — batch leaf resolution lent one leaf's pin verdict to the others (fixed)
+
+`resolveLeafDocuments` cached the whole resolution, pin verdict included, under a
+key naming only the document. Two leaves on one document took the first leaf's
+verdict. The assessor reads leaves with no ORDER BY, so a stale pin read as
+`resolved` whenever an unpinned or fresh leaf on the same document came first.
+Dispatch readiness, freeze and transmit Gate 2 then cleared content its placement
+never pinned. The cache now shares only the store read, and each leaf's own pin is
+compared against it. The file was last touched on 09-22, so it is in no lane's
+window.
+
+- `leaf-pin-red.txt`: the two new orderings, [unpinned, stale] and [fresh, stale],
+  fail on real PGlite with the source unchanged. The stale leaf reads `resolved`.
+- `leaf-pin-green.txt`: 26/26 across the resolver and both dispatch-readiness
+  suites.
+- One existing assertion changed from `toBe` to `toEqual`. Identical pointers no
+  longer share a single resolution object, and that shared object was the defect.
+
+## P1-28 / DP-31 — a QMS change was approved with no ceremony (fixed 2026-09-25)
+
+Security review 2026-09-24, DP-31 (remediation plan P1-28). Two doors approved a
+change with segregation of duties as their only control. One was
+`POST /api/mdx/qms/changes/:id/transition {to:'approved'}`; the other was the AnA
+tool `qms_change_transition`, whose "reason" could be three characters of model
+output. Neither re-verified the approver, captured a meaning or wrote a
+signature. In the UI, the only way to approve was "Advance", which asked AnA to
+"capture the reason and e-signature".
+
+**Change.**
+- `transitionChange` refuses `approved`, after the legality check so an illegal
+  move is still named as one. The transition route answers 428
+  `CHANGE_APPROVAL_REQUIRES_SIGNATURE`, and the AnA tool relays the same refusal.
+  That tool's handler is `…01AiwZKG`'s claimed code and is not edited here.
+- A new `POST /api/mdx/qms/changes/:id/approve` uses the document approval's
+  body, signer check and refusals.
+- A new `services/qms/change-approval-signature.ts` locks the row, refuses the
+  proposer (`QMS_SELF_APPROVAL`) and anything not under assessment, and in one
+  transaction writes the approval stamp and `metadata.approval`, the chained
+  ledger row (command `approve`), and one signature bound to the change's
+  content digest.
+- `SegregationOfDutiesError` has no thrower any more and is deleted.
+- ChangeControl gains **Approve** on a change under assessment (the shared
+  `EsignModal`, approval meaning only, disabled on sample rows).
+- The "Advance" prompt no longer promises an e-signature.
+- The POST helper is shared with SopRegister (`quality/qmsApproval.ts`).
+- Both surfaces read the signer's name through `useAuthUser`, the display-only
+  hook, so they render outside an `AuthProvider`.
+- **Removed:** AnA approving a change, and the transition route approving one.
+  **Replacement, by path:** `ChangeControl.tsx` → `POST
+  /api/mdx/qms/changes/:id/approve`. `ChangeControlApproval.test.tsx` proves the
+  UI path and `qms-change-approval-signature.test.ts` the route.
+
+**Also fixed on the way.** `6582e3a3e` (another session) put
+`requireEditorAccess` on the QMS document writes. Three suites whose harnesses
+grant no role have been red on trunk since:
+`qms-effective-only-by-signature`, `qms-governed-writes-audited` and
+`mdx-qms-labeling-search-analytics-routes`. Each is about what an editor's write
+does, so each harness now grants the gate, which has its own tests.
+
+**Failing first.**
+- `p1-28-change-approval-red.txt`, server: 11 failures across the four suites
+  with the source unchanged. The unsigned doors approve, and the signed route is
+  a 404.
+- Same file, client: 4 failures against the unchanged ChangeControl.
+- `p1-28-change-approval-green.txt`: every QMS server suite and the whole
+  quality client folder pass.
+
+**Also run.** `tsc`: clean. ESLint ratchet: unchanged, and the new server files
+add no warnings. `ci:sign-ceremony`: 23 baselined sites, unchanged.
+
+**Handed to `…01AiwZKG` (the `qms_change_*` tool handlers).**
+- The `qms_change_transition` description should say AnA cannot approve.
+- Its handler comment still names `SegregationOfDutiesError`, which no longer
+  exists.
+
+## Status, 2026-09-25 07:20 UTC
+
+Everything this lane was waiting on has been fixed by `…01FSu2RL`'s pass over
+this week's review (`docs/evidence/reviews/2026-09-24/`):
+- P5 in `fde9d704e`;
+- P6 in `896e96fb9`;
+- P7 in `896e96fb9`;
+- Q1 (audit #2, the quorum bound to the version reviewed) in `42eb291d6`.
+
+V1 has a reason on the placement in `95fcbffcc`.
+
+**The other half of Q1 is open (found here, not edited: `server/routes/c2c/artifacts.ts`
+is in WO-16C's 24h window until 19:05 UTC).** `42eb291d6` refuses an approval
+whose decisions were made against another version, and asks for "another review
+round". No route opens one:
+- the assign route puts new assignments in the highest existing round
+  (`reviewRound = existingAssignments[0].reviewRound`), and a reviewer already in
+  it comes back `already_assigned` (unique on artifact, reviewer, round);
+- the decision route refuses a second decision in the round (409 "already
+  submitted a decision for this review round");
+- a completed assignment cannot be withdrawn.
+
+So an artifact edited after any reviewer decided can never be approved. It fails
+closed, which is safe but a dead end. Reach is limited today, because the c2c
+reviewer routes have no client caller.
+
+**Fix:** in the assign route, open round `latest + 1` when any decision in the
+latest round has `version_reviewed` ≠ `artifact.version`. The quorum then reads the
+new round, which is pending until its reviewers decide on the current version.

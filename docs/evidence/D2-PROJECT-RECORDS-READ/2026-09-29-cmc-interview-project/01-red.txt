@@ -1,0 +1,8 @@
+ × server/services/cmc/__tests__/interview-sessions.test.ts > createInterviewSession > inserts an org-scoped row carrying the FlowState and returns the session 9ms
+ × server/services/cmc/__tests__/interview-sessions.test.ts > createInterviewSession > refuses a project the organization does not hold — nothing is created (PF-15) 3ms
+ × server/services/cmc/__tests__/interview-sessions.test.ts > createInterviewSession > a project lookup that cannot complete creates nothing 1ms
+ × server/services/cmc/__tests__/interview-commit.test.ts > commitInterviewSession — holds the session, checks the project, checks the plan > a session bound at start to a project the tenant does not hold is refused at commit — nothing is held or written 8ms
+ × server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > refuses a project the organization does not hold — the interview is not started and nothing is written (PF-15) 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  5 failed | 73 passed (78)

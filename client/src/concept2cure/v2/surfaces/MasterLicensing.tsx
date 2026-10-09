@@ -48,6 +48,7 @@ import {
 } from '../../_shared/components/GovernedConfirmDialog';
 import AccessRequestsPanel from './licensing/AccessRequestsPanel';
 import EnforcementModeControl from './licensing/EnforcementModeControl';
+import EnterpriseRequestsPanel from './licensing/EnterpriseRequestsPanel';
 import LicensingHistoryPanel from './licensing/LicensingHistoryPanel';
 import { TrialsPanel } from './licensing/TrialsPanel';
 import '../styles/misc-surfaces-v2.css';
@@ -207,6 +208,7 @@ const TABS = [
   { id: 'packaging', label: 'Packaging', icon: 'layers' },
   { id: 'tenants', label: 'Tenants', icon: 'building' },
   { id: 'access-requests', label: 'Access requests', icon: 'clipboardList' },
+  { id: 'enterprise-requests', label: 'Enterprise requests', icon: 'send' },
   { id: 'trials', label: 'Trials', icon: 'clock' },
   { id: 'flags', label: 'Feature flags', icon: 'sliders' },
   { id: 'enforcement', label: 'Enforcement', icon: 'shieldAlert' },
@@ -1265,6 +1267,11 @@ export function MasterLicensing() {
           org-scoped view of the same queue is its own surface — one
           implementation, parameterised by scope. */}
       {tab === 'access-requests' && <AccessRequestsPanel />}
+
+      {/* ══ Enterprise requests ════════════════════════════════════════════
+          Prospects who asked for Enterprise at the end of onboarding. Read
+          only: until this tab, those requests were stored and shown to no one. */}
+      {tab === 'enterprise-requests' && <EnterpriseRequestsPanel />}
 
       {/* ══ Enforcement ════════════════════════════════════════════════════
           The rollout instrument. Route-level enforcement ships switched off,

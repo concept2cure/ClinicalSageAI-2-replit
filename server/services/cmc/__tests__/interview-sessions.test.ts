@@ -86,7 +86,10 @@ function fakePool(script: Scripted[] = []) {
 
 describe('createInterviewSession', () => {
   it('inserts an org-scoped row carrying the FlowState and returns the session', async () => {
-    const { q, statements } = fakePool([{ match: /INSERT INTO cmc_interview_sessions/, rows: [sessionRow()] }]);
+    const { q, statements } = fakePool([
+      { match: /SELECT 1 AS present/, rows: [{ present: 1 }] },
+      { match: /INSERT INTO cmc_interview_sessions/, rows: [sessionRow()] },
+    ]);
     const state = flowState();
 
     const session = await createInterviewSession(
@@ -94,19 +97,52 @@ describe('createInterviewSession', () => {
       q,
     );
 
-    expect(statements).toHaveLength(1);
-    expect(statements[0].text).toMatch(/INSERT INTO cmc_interview_sessions/);
-    expect(statements[0].params[0]).toBe(ORG);
-    expect(statements[0].params[1]).toBe('prog-1');
-    expect(statements[0].params[2]).toBe(7);
-    expect(statements[0].params[3]).toBe('cmc-specification-v1');
-    expect(statements[0].params[4]).toBe('cmc_specification');
-    expect(JSON.parse(String(statements[0].params[5]))).toEqual(state);
+    // The project is checked first (PF-15), then the row is written.
+    expect(statements).toHaveLength(2);
+    expect(statements[0].text).toMatch(/SELECT 1 AS present/);
+    expect(statements[0].params).toEqual(['prog-1', ORG]);
+    expect(statements[1].text).toMatch(/INSERT INTO cmc_interview_sessions/);
+    expect(statements[1].params[0]).toBe(ORG);
+    expect(statements[1].params[1]).toBe('prog-1');
+    expect(statements[1].params[2]).toBe(7);
+    expect(statements[1].params[3]).toBe('cmc-specification-v1');
+    expect(statements[1].params[4]).toBe('cmc_specification');
+    expect(JSON.parse(String(statements[1].params[5]))).toEqual(state);
 
     expect(session.id).toBe(SESSION_ID);
     expect(session.organizationId).toBe(ORG);
     expect(session.status).toBe('active');
     expect(session.state.flowId).toBe('cmc-specification-v1');
+  });
+
+  it('refuses a project the organization does not hold — nothing is created (PF-15)', async () => {
+    const { q, statements } = fakePool([{ match: /INSERT INTO cmc_interview_sessions/, rows: [sessionRow()] }]);
+    await expect(
+      createInterviewSession({ organizationId: ORG, userId: 7, projectId: 'someone-elses', state: flowState() }, q),
+    ).rejects.toMatchObject({ code: 'PROJECT_NOT_IN_TENANT' });
+    expect(statements.map(s => s.text).some(t => /INSERT/.test(t))).toBe(false);
+  });
+
+  it('a project lookup that cannot complete creates nothing', async () => {
+    const statements: string[] = [];
+    const q: Queryable = {
+      async query(text: string) {
+        statements.push(text);
+        if (/SELECT 1 AS present/.test(text)) throw new Error('connection reset');
+        return { rows: [sessionRow()], rowCount: 1 };
+      },
+    };
+    await expect(
+      createInterviewSession({ organizationId: ORG, userId: 7, projectId: 'prog-1', state: flowState() }, q),
+    ).rejects.toThrow('connection reset');
+    expect(statements.some(t => /INSERT/.test(t))).toBe(false);
+  });
+
+  it('with no project, nothing is looked up and the session is created unbound', async () => {
+    const { q, statements } = fakePool([{ match: /INSERT INTO cmc_interview_sessions/, rows: [sessionRow({ project_id: null })] }]);
+    await createInterviewSession({ organizationId: ORG, userId: 7, projectId: '  ', state: flowState() }, q);
+    expect(statements).toHaveLength(1);
+    expect(statements[0].params[1]).toBeNull();
   });
 
   it('refuses without an organization — before touching the database', async () => {

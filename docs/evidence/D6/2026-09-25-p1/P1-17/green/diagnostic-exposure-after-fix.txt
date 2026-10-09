@@ -1,0 +1,12 @@
+$ git diff --stat  # fix applied on top of fdc1e53e
+ server/startup/inline-endpoints.ts | 94 +++++++++++++++++++++++++-------------
+ 1 file changed, 63 insertions(+), 31 deletions(-)
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > PLATFORM_ADMIN_EMAILS behind authenticateToken > does not admit an allow-listed e-mail asserted by an IdP (provider saml): isPlatformAdmin false, requirePlatformAdmin 403 5ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a tenant user's session is refused (403) 33ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > answers an anonymous caller with a status word and nothing about the providers 5ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > gives a platform administrator the provider detail, at /detail 4ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > the detail refuses a tenant user's session (403) and an anonymous caller (401) 7ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > never echoes an exception to an anonymous caller 4ms
+ Test Files  5 passed (5)
+      Tests  38 passed (38)
+exit=0

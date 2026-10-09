@@ -1,0 +1,9 @@
+=== AFTER (with the check): same task definition ===
+[terraform-preflight-proof] ok — preflight step found in job "migrate" (9338 bytes of shell)
+[terraform-preflight-proof] ok — rendered family matches the pipeline's ECS_API_TASK_FAMILY (c2c-production-api)
+::error::The task definition carries AI_GATEWAY_DETERMINISTIC: AnA would serve fixed responses in place of model output. Remove it from terraform/stack.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+
+=== AFTER: control task definition still passes ===
+
+[terraform-preflight-proof] every check holds.

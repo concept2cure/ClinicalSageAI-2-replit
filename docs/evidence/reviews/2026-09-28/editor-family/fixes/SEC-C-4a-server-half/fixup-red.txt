@@ -1,0 +1,43 @@
+# fixup-red: documentation that states SEC-C-4 (a) as already fixed, at the working tree before this fix-up (HEAD e6822dac + lane diff)
+## surface-context-block.ts: selection JSDoc and module header
+95:   * The text the user selected, sent for one turn by an editor action such as
+96:   * "Ask for a source". It used to be spliced into the chat message, so text
+## surface-context-block.test.ts: new describe docblock
+218: * The editor's "Ask for a source" spliced the user's selected text into the
+221: * selection now has its own field, `module_context.selection`, rendered here as
+## present state that contradicts it
+RichSectionEditor.tsx still splices:
+1407:      if (s) onAsk(`Suggest a source for this claim: "${s}"`);
+AnaSendOptions has no selection field:
+  (none in useAnaChat.types.ts:705-720)
+useAnaChat sends only the hook-level module_context:
+904:        module_context: options.moduleContext ?? undefined,
+stream.ts mentions module_context / buildSurfaceContextBlock / buildChatContext:
+0
+stream.ts imports from chat-context-builder (buildChatContext absent):
+import {
+  buildAuthoringContextBlock,
+  buildOrchestratorAuthoringContext,
+  buildRouteContextBlock,
+  prefetchRouteIntelligenceContext,
+  resolveProjectIdFromBody,
+} from '../../services/ana-ri/chat-context-builder.js';
+production references to buildChatContext outside its own file:
+  (none)
+## added test lines over the printWidth of 100
+102 cols:     const block = buildSurfaceContextBlock({ selection: 'Drug X lowered HbA1c by...
+101 cols:       .filter(({ line }) => /SYSTEM|approve every|<\/screen>|<\/system>|Ignore p...
+## module header (pre-existing, same class: says the consumer exists, silent that no production route calls it)
+ * ── The open half of a loop ───────────────────────────────────────────────────
+ * `client/src/concept2cure/v2/surfaceContext.ts` lets a surface publish what it
+ * is showing; `V2App` reads it and forwards it to `useAnaChat`, which sends it
+ * as `module_context` on every turn. Server-side, `chat-context-builder` used
+ * that field in exactly one place: a branch gated on `workstream === 'mdx'`.
+ *
+ * So every surface that is not the medical-device workstream published into a
+ * void. The publisher shipped with the client half complete and no general
+ * consumer — AnA could "see the screen she is on" only as far as the wire. This
+ * module is the consumer, and it is deliberately GENERIC: one block that works
+ * for all 119 surfaces, rather than a second special case beside MDX. The MDX
+ * branch stays as it is — that is a richer, database-backed resolver, not the
+ * same thing as reading what the screen published.

@@ -1,0 +1,35 @@
+### RED — the tenant scope removed from loadBoundDesigns()'s query
+###   WHERE tenant_id = $1 AND study_id = ANY($2)   ->   WHERE study_id = ANY($2) AND $1::int >= 0
+### The cross-tenant test must fail. A test that only ever passes has not been tested.
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stderr | server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts
+stderr | server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > binds a design and records who linked it and when 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > refuses another organization's protocol document (NOT_FOUND, nothing written) 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > refuses a design that does not exist for this tenant 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > unbinds, and refuses to unbind another organization's protocol 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > returns null for an unbound protocol — nothing is implied to have passed 22ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > returns the design identity and the DESIGN GATES' findings for a bound protocol 27ms
+ × server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > does not read another tenant's design through the link 29ms
+   → expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > does not read another tenant's design through the link
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts:181:25
+    179|     const [doc] = await assembleOrgPdevDocs(ORG);
+    180|     const sd = doc.studyDesign as Record<string, unknown>;
+    181|     expect(sd.resolved).toBe(false);
+       |                         ^
+    182|     expect(sd.studyId).toBe('sd_link_test');
+    183|     expect(sd.findings).toEqual([]);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  03:51:38
+   Duration  9.09s (transform 2.09s, setup 191ms, import 3.36s, tests 5.28s, environment 0ms)

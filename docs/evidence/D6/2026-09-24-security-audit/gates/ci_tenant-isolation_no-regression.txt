@@ -1,0 +1,30 @@
+[ci:tenant-isolation] WARN — 8 candidate violation(s) (32 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit):
+
+  server/routes/module-access-requests.ts  (1)
+    L290  tables=[]
+      `${SELECT_REQUEST}
+
+  server/services/advancedRAGPipeline.ts  (1)
+    L907  tables=[rag_chunks,rag_documents]
+      `SELECT rc.content FROM rag_chunks rc
+
+  server/services/deep-research-orchestrator.ts  (1)
+    L419  tables=[deep_research_jobs]
+      `SELECT id, uuid, organization_id, project_id, user_id, status, query, progress,
+
+  server/services/kernel-adaptive-policy.ts  (1)
+    L85  tables=[]
+      `SELECT strategy, AVG(quality_score)::float AS avg_quality, COUNT(*)::int AS samples
+
+  server/services/kernel-observability.ts  (4)
+    L53  tables=[]
+      `SELECT
+    L63  tables=[]
+      `SELECT
+    L72  tables=[]
+      `SELECT
+    … 1 more
+
+Total: 8 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] 1 previously-flagged finding(s) resolved — consider re-running with --write-baseline to ratchet down.
+[ci:tenant-isolation] OK — no new findings above baseline (8 current, 9 baseline)

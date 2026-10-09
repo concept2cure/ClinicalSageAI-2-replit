@@ -1,0 +1,30 @@
+# Scoped tsc over the six WE files + the repo's ambient .d.ts (tsconfig extends tsconfig.json, files-only).
+# Run because two concurrent full-program tsc runs are OOM-killed by the 15 GB cgroup (dmesg: 'Memory cgroup out of memory: Killed process … node').
+# The scoped program resolves a different Express req.user augmentation than the full program, so its diagnostics are scoping artefacts.
+# Check below: none of the diagnostics is on a WE-changed line (authoring.router.ts 3611-3830; any line of the other five files).
+
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/mdx/lib/sampleMode.ts(37,29): error TS2339: Property 'PROD' does not exist on type 'ImportMetaEnv'.
+server/middleware/orgMembership.ts(337,43): error TS2339: Property 'userId' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'.
+server/routes/authoring.router.ts(127,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+server/routes/authoring.router.ts(143,30): error TS18048: 'req.user' is possibly 'undefined'.
+server/routes/authoring.router.ts(144,34): error TS18048: 'req.user' is possibly 'undefined'.
+server/routes/authoring.router.ts(144,43): error TS2551: Property 'roles' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'. Did you mean 'role'?
+server/routes/authoring.router.ts(144,53): error TS18048: 'req.user' is possibly 'undefined'.
+server/routes/authoring.router.ts(144,62): error TS2551: Property 'roles' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'. Did you mean 'role'?
+server/routes/authoring.router.ts(144,77): error TS18048: 'req.user' is possibly 'undefined'.
+server/routes/authoring.router.ts(144,86): error TS2551: Property 'roles' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'. Did you mean 'role'?
+server/routes/authoring.router.ts(145,50): error TS7006: Parameter 'r' implicitly has an 'any' type.
+server/routes/authoring.router.ts(450,45): error TS2339: Property 'userId' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'.
+server/routes/authoring.router.ts(467,45): error TS2339: Property 'userId' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'.
+server/routes/authoring.router.ts(6276,50): error TS2339: Property 'userId' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'.
+server/services/authoring/authoring-permissions.ts(95,43): error TS2339: Property 'userId' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'.
+server/services/authoring/authoring-permissions.ts(98,30): error TS2551: Property 'roles' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'. Did you mean 'role'?
+server/services/concept2cure/governedDocumentContractService.ts(254,66): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(551,60): error TS2339: Property 'userEmail' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(608,30): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(674,30): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+exit=2

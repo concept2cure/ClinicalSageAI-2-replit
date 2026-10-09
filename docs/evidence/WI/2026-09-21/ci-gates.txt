@@ -1,0 +1,19 @@
+# npm run ci:launch-scope:selftest
+✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation
+✅ selftest: gate passes on the real tree
+exit=0
+
+# npm run ci:ana-surface-context
+
+[ci:ana-surface-context] OK — 114 of 120 routable surface ids publish screen state (baseline 114 exact), 6 exempt, 0 still blind.
+  111 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (document-authoring, ectd-coauthor, rbm) — surfaces that own the
+  conversation are grounded on that channel, because the shell draws no rail there.
+exit=0
+
+# npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+# npm run ci:fixture-fallback
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.

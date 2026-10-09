@@ -1,0 +1,96 @@
+=== (1) New test, with the one outside-scope change (export isFinalizedStatus in server/services/ectd/leaf-source-resolver.ts) applied IN MEMORY by a scratch transform plugin; file on disk untouched ===
+config: /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/coauthor-put/vitest.export-applied.config.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+[apply-resolver-export] added `export` to isFinalizedStatus in /home/user/ClinicalSageAI-2-replit/server/services/ectd/leaf-source-resolver.ts
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an APPROVED document files as approved — the case that was impossible
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a FROZEN document files as finalized
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a DRAFT document still files as a draft, and still fails completeness
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an unrecognised state files as a draft, never as something better
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a source with no status at all files as a draft
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status sent in the body
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status even with no source document named
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > records which document the status came from
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > leaves an unsourced snapshot with no provenance claim
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an APPROVED document files as approved — the case that was impossible 31ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a FROZEN document files as finalized 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a DRAFT document still files as a draft, and still fails completeness 5ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an unrecognised state files as a draft, never as something better 3ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a source with no status at all files as a draft 3ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status sent in the body 6ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status even with no source document named 3ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > refuses a source document that is not this organization's 3ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > records which document the status came from 5ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > leaves an unsourced snapshot with no provenance claim 3ms
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > deletes and audits in one transaction
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > fails closed — an audit failure rolls the delete back (500)
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > deletes and audits in one transaction 1914ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > fails closed — an audit failure rolls the delete back (500) 6ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > 404 when the document is absent performs no audit 4ms
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > fails closed — an audit failure rolls the delete back (500)
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > deletes and audits in one transaction 164ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > fails closed — an audit failure rolls the delete back (500) 5ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > 404 when the document is absent performs no audit 4ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses {status:'approved'} on a draft with 400, names the governed path, and writes nothing 37ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > writes none of a refused request, including the fields that were allowed on their own 9ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses 'finalized' and any spelling the resolver counts as finalized 17ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > does not let an approved snapshot be relabelled as a different finalized status 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > leaves the transmit refusal the PUT used to clear standing 175ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses a status that is not a string, rather than failing inside the rule 5ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > saves a content-only PUT — the one client caller, EctdCoauthor.saveContent 9ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > moves a document to a non-finalized status ({status:'draft'}, 'review') 10ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > accepts a PUT that restates an existing finalized status unchanged 5ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone 10ms
+ Test Files  3 passed (3)
+      Tests  26 passed (26)
+   Start at  04:45:40
+   Duration  4.91s (transform 2.72s, setup 245ms, import 4.10s, tests 4.64s, environment 0ms)
+
+=== (2) Same files under the repo's plain vitest.config.ts, resolver NOT yet exporting isFinalizedStatus (shows the outside-scope export is required; status writes fail closed with 500, content saves still work) ===
+      8     "err": "(0 , __vite_ssr_import_8__.isFinalizedStatus) is not a function"
+      1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      1  ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > saves a content-only PUT — the one client caller, EctdCoauthor.saveContent 8ms
+      1  ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses a status that is not a string, rather than failing inside the rule 4ms
+      1  × server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone 4ms
+      1  × server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > moves a document to a non-finalized status ({status:'draft'}, 'review') 5ms
+      1  × server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > accepts a PUT that restates an existing finalized status unchanged 6ms
+      1  × server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > writes none of a refused request, including the fields that were allowed on their own 6ms
+      1  × server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses {status:'approved'} on a draft with 400, names the governed path, and writes nothing 35ms
+      1  × server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses 'finalized' and any spelling the resolver counts as finalized 5ms
+      1  × server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > leaves the transmit refusal the PUT used to clear standing 149ms
+      1  × server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > does not let an approved snapshot be relabelled as a different finalized status 4ms
+      1       Tests  8 failed | 2 passed (10)
+
+=== (3) The round-2 skeptic's bypass probe (review-d7-r2/skeptic-assembly-transmit/put-status-bypass.probe.test.ts), which ASSERTS the bypass works, run against the fix (resolver export applied in memory). It now fails: PUT is 400 and the transmit blocker stands. ===
+before: ["1 leaf document(s) are not approved (m1.2: draft)"] | PUT: 400 undefined | after: ["1 leaf document(s) are not approved (m1.2: draft)"]
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/review-d7-r2/skeptic-assembly-transmit/put-status-bypass.probe.test.ts > PUT status > clears the unfinalized refusal with a bare status write 197ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 400 to be 200 // Object.is equality
+     61|     console.log('before:', JSON.stringify(before), '| PUT:', res.statu…
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+
+=== (4) The only client caller of PUT /api/coauthor/documents/:id (EctdCoauthor.saveContent, sends { content } only): its surface test ===
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders the REAL eCTD tree + selected document content 272ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > derives tree-footer KPIs from the real rows (not hardcoded) 90ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders REAL server validation findings when Validation is opened 122ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders the REAL ICH M4 compliance score when Compliance is opened 116ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > answers in its own pane and never writes to the rail this screen hides 157ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — honest empty state > shows an EmptyState — never a fixture — when the org has no documents 33ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — honest error state > shows an error EmptyState — never a fixture — when the read fails 29ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — tree search really filters (no dead input) > filters by title and section number, says so on no match, and clears 146ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — no fabricated validation or compliance results > reports validation as unavailable rather than inventing findings 89ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — no fabricated validation or compliance results > reports compliance as unavailable rather than inventing a score 98ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — the Co-Author can AUTHOR > mounts the ONE canonical editor over the document and saves through the store’s own PUT 232ms
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+
+=== (5) Scoped tsc over server/routes/coauthor.ts + the new test: the only coauthor error is the missing export (outside scope); the other lines are pre-existing in unrelated files ===
+server/auth.ts(12,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/middleware/establishRequestTenantScope.ts(162,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(164,9): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(227,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/coauthor.ts(13,10): error TS2459: Module '"../services/ectd/leaf-source-resolver.js"' declares 'isFinalizedStatus' locally, but it is not exported.
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`

@@ -1,0 +1,49 @@
+### With the blanket loading gate restored (if (loading) …) — a governed write unmounts the workspace.
+
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds a visit through the governed visit route and re-reads the protocol
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renames a visit through the visit PATCH, carrying the visit id
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes a visit through the governed remove route
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds an assessment through the SoA router
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes an assessment through the governed remove route
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renders the assembler’s findings rather than an empty list
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > risk register — residual rating, owner and mitigation > writes the residual rating through the risk PATCH
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > says plainly that no budget has been entered instead of printing a verdict
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > adds a line item through the budget router
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > sets the feasibility parameters through the params PUT
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > requests a review through the reviewers route
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > records a disposition against the assignment
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > cover page — sponsor and principal investigator > writes both through the cover-page PATCH and re-reads
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > consent — the tab shows what the read model returns > reports the element the assembled consent form holds
+ × client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a governed write does not take the protocol off screen > stays on the register being edited while the record is re-read 705ms
+   → Unable to find an accessible element with the role "heading" and name "Schedule of assessments"
+
+Here are the accessible roles:
+
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+    [33mstyle[39m=[32m"margin: 16px;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+
+### After the fix — the gate is on there being NO document, not on loading.
+
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds a visit through the governed visit route and re-reads the protocol
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renames a visit through the visit PATCH, carrying the visit id
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes a visit through the governed remove route
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds an assessment through the SoA router
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes an assessment through the governed remove route
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renders the assembler’s findings rather than an empty list
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > risk register — residual rating, owner and mitigation > writes the residual rating through the risk PATCH
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > says plainly that no budget has been entered instead of printing a verdict
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > adds a line item through the budget router
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > sets the feasibility parameters through the params PUT
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > requests a review through the reviewers route
+ ↓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > records a disposition against the assignment
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a governed write does not take the protocol off screen > stays on the register being edited while the record is re-read 746ms
+      Tests  1 passed | 15 skipped (16)

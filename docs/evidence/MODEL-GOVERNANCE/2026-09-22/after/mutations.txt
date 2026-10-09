@@ -1,0 +1,22 @@
+Mutation testing of the enforcement, 2026-09-22.
+Each mutant replaces server/services/ai-gateway/gateway.ts, runs
+server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts, and is
+restored. A mutant that leaves every test green would mean that enforcement
+point is untested.
+
+M0  pre-fix routing (approvedForTask always true)   Tests  7 failed | 9 passed (16)
+M1  fallback ladder not filtered                     Tests  2 failed | 14 passed (16)
+M2  primary selection not filtered                   Tests  4 failed | 12 passed (16)
+M3  explicit model honoured as named                 Tests  1 failed | 15 passed (16)
+M4  "no approved model" returned as null             Tests  2 failed | 14 passed (16)
+--  original                                         Tests  16 passed (16)
+
+M0 is the defect itself: making the approval predicate always true restores the
+selection behaviour trunk had before this change, and 7 cases fail on it.
+
+Suites around the change, after it:
+  vitest server/services/ai-gateway server/services/ai-governance
+    Test Files  31 passed (31)
+    Tests       307 passed (307)
+  tsc --noEmit -p tsconfig.json                       exit 0, 0 errors
+  ci:eslint-ratchet:since origin/concept2cure-v2      no file changed its warning count

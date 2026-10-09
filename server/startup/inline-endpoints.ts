@@ -3,19 +3,21 @@
  *
  * Extracted from server/index.ts. Preserves:
  *  - /healthz, /readyz, /api/health (fast-path, mounted before security middleware)
- *    (/readyz covers database, schema, AnA's AI provider, Redis and the worker tier)
+ *    (/readyz covers database, schema, AnA's AI provider, the vault store, Redis and the worker tier)
  *  - /api/health/full (HealthCheckService)
  *  - /api/metrics (Prometheus text format)
- *  - /api/ai-gateway/health (provider health summary)
+ *  - /api/ai-gateway/health (status word; /detail for operators)
  *  - /api/time (server-authoritative timestamp, for signature display)
  *  - /api/diag (HTML diagnostic — no React/Vite)
  *  - /api/shadow/health (shadow service proxy)
  */
 
-import type { Express, NextFunction, Request, Response } from 'express';
+import type { Express, Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { BUILD_COMMIT, PROCESS_STARTED_AT } from '../buildStamp';
 import { createScopedLogger } from '../utils/logger';
+import { gatewayHealthSummary, requireMetricsAuth } from './operator-endpoints';
+import { probeVaultStore } from '../services/storage/store-readiness';
 import {
   getSchemaReadiness,
   getSchemaReadinessDetail,
@@ -37,34 +39,6 @@ const logger = createScopedLogger('inline-endpoints');
  *  (skip), never as a failure. */
 function isRedisConfigured(): boolean {
   return Boolean(process.env.REDIS_URL || process.env.REDIS_TLS_URL);
-}
-
-/**
- * Guard for sensitive observability endpoints (/api/metrics,
- * /api/health/full). Allows the request when EITHER:
- *   - a valid JWT is presented (reuses the platform auth middleware), OR
- *   - a bearer token matching METRICS_TOKEN is presented (so Prometheus can
- *     scrape with a shared secret, no user session required).
- *
- * If METRICS_TOKEN is unset, only JWT auth is accepted. The token path is
- * checked first so a scrape never pays the JWT-verification cost.
- */
-function requireMetricsAuth(req: Request, res: Response, next: NextFunction): void {
-  const metricsToken = process.env.METRICS_TOKEN;
-  if (metricsToken) {
-    const auth = req.headers.authorization;
-    const match = auth ? /^Bearer\s+(\S+)$/i.exec(auth) : null;
-    if (match && match[1] === metricsToken) {
-      return next();
-    }
-  }
-  // Fall back to the platform JWT auth middleware (loaded lazily to avoid a
-  // load-order coupling with the auth module at module-init time).
-  void import('../middleware/auth')
-    .then(({ authenticateToken }) => authenticateToken(req, res, next))
-    .catch(() => {
-      res.status(503).json({ error: { code: 'AUTH_UNAVAILABLE', message: 'Auth unavailable' } });
-    });
 }
 
 /**
@@ -107,6 +81,11 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
     // dead. See ana-readiness-state.ts for the full incident.
     const ana = getAnaReadiness();
     deps.ana = isAnaReadinessServing(ana) ? 'ok' : 'down';
+
+    // Vault storage — always required: uploads refuse without it
+    // (services/storage/store-readiness.ts).
+    const storage = await probeVaultStore();
+    deps.storage = storage.status;
 
     // Redis + Bull action-queue worker tier. Only required when Redis is
     // configured; otherwise the platform runs on in-memory fallbacks, so we
@@ -175,6 +154,7 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
             ? 'schema was never verified — no boot-time verdict was recorded'
             : 'schema verification did not complete');
       }
+      if (storage.detail) body.storageDetail = storage.detail;
       if (deps.ana === 'down') {
         body.anaDetail =
           anaDetail ||
@@ -683,29 +663,26 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
     }
   });
 
+  // Public (auth-boundary allow-listed): the status word, nothing else.
   app.get('/api/ai-gateway/health', async (_req: Request, res: Response) => {
     try {
-      const { getGateway } = await import('../services/ai-gateway');
-      const gw = getGateway();
-      if (!gw) {
-        return res.status(503).json({
-          status: 'unavailable',
-          message: 'AI Gateway not initialized',
-        });
-      }
-      const providers = gw.getProviderHealth();
-      const enabled = gw.getEnabledProviders();
-      const healthyCount = providers.filter((p: any) => p.healthy).length;
-
-      res.json({
-        status: healthyCount > 0 ? 'healthy' : 'degraded',
-        providers,
-        enabledProviders: enabled,
-        healthyProviders: healthyCount,
-        totalProviders: providers.length,
-      });
+      const summary = await gatewayHealthSummary();
+      res.status(summary.status === 'unavailable' ? 503 : 200).json({ status: summary.status });
     } catch (err: any) {
-      res.status(500).json({ status: 'error', message: err?.message });
+      logger.warn('ai-gateway health probe failed', { error: err?.message });
+      res.status(500).json({ status: 'error' });
+    }
+  });
+
+  // Operators: the provider detail, behind the scrape token or a platform
+  // administrator (and, being outside the public allow-list, the auth boundary).
+  app.get('/api/ai-gateway/health/detail', requireMetricsAuth, async (_req: Request, res: Response) => {
+    try {
+      const summary = await gatewayHealthSummary();
+      res.status(summary.status === 'unavailable' ? 503 : 200).json(summary);
+    } catch (err: any) {
+      logger.warn('ai-gateway health probe failed', { error: err?.message });
+      res.status(500).json({ status: 'error' });
     }
   });
 

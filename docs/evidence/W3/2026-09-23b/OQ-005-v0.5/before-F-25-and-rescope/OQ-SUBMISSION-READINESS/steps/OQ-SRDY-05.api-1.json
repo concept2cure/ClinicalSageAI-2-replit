@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/orchestration/execute",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "templateId": "submission_readiness_review",
+      "projectId": "80e3e426-84a4-41fb-be92-6bfc20ac429f",
+      "module": "ind"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 15,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "projectId must be a positive integer"
+    }
+  }
+}

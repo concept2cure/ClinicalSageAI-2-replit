@@ -18,8 +18,11 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+// useAuthUser is the display-only hook SopRegister and ChangeControl read the
+// e-signature signer's name from (028a0c704); the server resolves the signer.
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({ user: { id: 7, firstName: 'Ada' } }),
+  useAuthUser: () => ({ id: 7, firstName: 'Ada' }),
 }));
 vi.mock('@/utils/authToken', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/utils/authToken')>()),

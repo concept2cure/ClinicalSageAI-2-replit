@@ -10,11 +10,15 @@
  * ─────────────────────────────────────────────────────────────────────
  * Why each entry is here:
  *
- *   organization_users — temporarily retained from the staged rollout.
- *     `requireTenantContext` now establishes a JWT-claimed tenant bootstrap
- *     scope before resolving membership, so this entry is no longer required
- *     to prevent an authentication chicken-and-egg failure. Remove it only via
- *     a migration/allowlist-sync change with live two-tenant evidence.
+ *   organization_users — its READS stay unscoped: the membership check runs
+ *     pre-auth (server/auth.ts, runWithPreAuthScope), and a user's organization
+ *     list, login's organization choice and token refresh read across
+ *     organizations. Its WRITES are not exempt: since 2026-09-26 they are
+ *     own-organization-or-platform, and a platform-staff role is minted by the
+ *     platform scope only (migrations/20260926_organization_users_own_writes.sql,
+ *     policies named so the sweep's heal pass cannot drop them;
+ *     docs/evidence/D3/2026-09-26-memberships/). Narrowing reads needs every
+ *     cross-organization reader moved first; that evidence lists them.
  *
  *   __drizzle_migrations — Drizzle's internal migration ledger. Has no
  *     tenant column today, so technically the audit migration won't try

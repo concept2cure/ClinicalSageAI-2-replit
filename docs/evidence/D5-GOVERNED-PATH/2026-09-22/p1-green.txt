@@ -1,0 +1,16 @@
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature > refuses without re-authentication, and writes nothing 57ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature > refuses a wrong password the same way 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature > refuses an undeclared meaning before asking for credentials (21 CFR 11.50) 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature > refuses a meaning finalization cannot carry 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature > finalizes, checks independence, and writes the ledger AND the signature row in one transaction 8ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature > records the second factor only when one was verified 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature > an author approving their own protocol is refused, and the finalization rolls back 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature > if the signature row cannot be written, nothing is committed 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses without re-authentication, and records no disposition 11ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > passes the signer and the declared meaning to the domain write, then signs 11ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a review assigned to someone else is refused and rolled back 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses authorship as a review meaning 6ms
+ ✓ server/services/ana/__tests__/finalize-protocol-tool.test.ts > finalize_protocol_document never signs > a complete protocol is not finalized by AnA: nothing is written, and the user is told to sign it 5ms
+ ✓ server/services/ana/__tests__/finalize-protocol-tool.test.ts > finalize_protocol_document never signs > an incomplete protocol reports what is missing 1ms
+ ✓ server/services/ana/__tests__/finalize-protocol-tool.test.ts > finalize_protocol_document never signs > the tool description does not promise a finalization it cannot perform 1ms
+      Tests  15 passed (15)

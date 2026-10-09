@@ -254,17 +254,32 @@ export function canonicalAuditPayload(e: DocumentAuditEvent): string {
 }
 
 /**
- * Verify append-only chain linkage for one document's audit events (in order).
- * Pure: checks that each event's `prevEventHash` equals the previous event's
- * `eventHash` — it does not recompute hashes. Returns the index of the first
- * broken link, or -1 when the chain is intact.
+ * Verify one document's audit events (in order). Returns the index of the first
+ * broken event, or -1 when the chain is intact.
+ *
+ * Linkage: each event's `prevEventHash` equals the previous event's `eventHash`.
+ * With a `hash` function (the server passes sha256), each event's `eventHash`
+ * is also RECOMPUTED over canonicalAuditPayload and must match. Linkage alone
+ * cannot see an edit to an event whose stored hashes were left in place — an
+ * actor rewritten, a reason changed — and until 2026-09-25 (VR-03) linkage was
+ * all this checked, so such an edit read as a valid chain.
+ *
+ * The hasher is injected so this module stays crypto-free. `hashesRecomputed`
+ * says which check ran, so no caller can report linkage as tamper-evidence.
  */
-export function verifyAuditChain(events: DocumentAuditEvent[]): { valid: boolean; brokenAt: number } {
+export function verifyAuditChain(
+  events: DocumentAuditEvent[],
+  hash?: (payload: string) => string,
+): { valid: boolean; brokenAt: number; hashesRecomputed: boolean } {
+  const hashesRecomputed = typeof hash === 'function';
   for (let i = 0; i < events.length; i++) {
     const expectedPrev = i === 0 ? '' : (events[i - 1].eventHash ?? '');
-    if ((events[i].prevEventHash ?? '') !== expectedPrev) return { valid: false, brokenAt: i };
+    if ((events[i].prevEventHash ?? '') !== expectedPrev) return { valid: false, brokenAt: i, hashesRecomputed };
+    if (hash && (!events[i].eventHash || hash(canonicalAuditPayload(events[i])) !== events[i].eventHash)) {
+      return { valid: false, brokenAt: i, hashesRecomputed };
+    }
   }
-  return { valid: true, brokenAt: -1 };
+  return { valid: true, brokenAt: -1, hashesRecomputed };
 }
 
 /** Build the audit event for a permitted transition. Callers persist it. */
@@ -283,6 +298,32 @@ export function buildAuditEvent(
     signatureRef: ctx.signatureRef,
     placement: state.placement,
     at: ctx.at,
+    contentHash: ctx.contentHash,
+  };
+}
+
+/**
+ * The trail event for a sign-off. A signature is not a transition, so the event
+ * stays at the current stage (from === to — no legal transition is a self-loop,
+ * so the two can never be confused). It names the signer and the signature, and
+ * its reason carries the meaning, inside the hashed payload. The event is what
+ * keeps a review round's sign-off in the record after the revision transition
+ * closes that round and clears the column.
+ */
+export function buildSignatureEvent(
+  state: RegulatedDocumentState,
+  signature: ApprovalSignature,
+  ctx: { contentHash?: string } = {},
+): DocumentAuditEvent {
+  return {
+    documentId: state.documentId,
+    version: state.version,
+    from: state.stage,
+    to: state.stage,
+    actor: signature.actor,
+    reason: `signed: ${signature.meaning}`,
+    signatureRef: signature.signatureRef,
+    at: signature.signedAt,
     contentHash: ctx.contentHash,
   };
 }

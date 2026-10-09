@@ -118,3 +118,70 @@ describe('issue parser governance config', () => {
     expect(config.reason).toContain('Unsupported');
   });
 });
+
+/**
+ * The taxonomy is a list of UNANCHORED regular expressions tested against the
+ * whole letter, so any rule whose keyword happens to be a substring of an
+ * ordinary word fires on every letter containing that word.
+ *
+ * `/format/` is the one that matters: "format" is a substring of
+ * "in-FORMAT-ion", so EVERY letter carrying the word "information" — which is
+ * every regulatory letter, and definitionally every Request for Additional
+ * Information — was classified `ectd_technical_formatting` and mapped to
+ * `module_index`. The existing suite could not see it: its multi-topic case
+ * asserts only `issues.length > 0`, and a spurious extra issue raises that
+ * number rather than lowering it.
+ *
+ * Measured 2026-09-20 across the whole taxonomy: four accidents, one common
+ * ("information"/"informational") and three rare ("asterisk" → risk,
+ * "equality" → quality).
+ */
+describe('the taxonomy matches words, not substrings of other words', () => {
+  const INNOCENT = [
+    // word,          the rule it must NOT trigger
+    ['information', 'ectd_technical_formatting'],
+    ['informational', 'ectd_technical_formatting'],
+    ['asterisk', 'clinical_safety_issue'],
+    ['equality', 'cmc_quality_issue'],
+  ] as const;
+
+  for (const [word, mustNotBe] of INNOCENT) {
+    it(`"${word}" alone is not a ${mustNotBe}`, () => {
+      const r = runGovernedIssueParser(`Please provide the ${word} requested.`, 'c');
+      expect(r.issues.map((i) => i.category)).not.toContain(mustNotBe);
+    });
+  }
+
+  it('an Additional Information request is not an eCTD formatting issue', () => {
+    /* The letter FDA actually sends. Nothing in it is about eCTD formatting. */
+    const r = runGovernedIssueParser(
+      'ADDITIONAL INFORMATION REQUEST\nWe require additional information before we can ' +
+        'complete our review of your submission.',
+      'c',
+    );
+    expect(r.issues.map((i) => i.category)).not.toContain('ectd_technical_formatting');
+    expect(r.issues.flatMap((i) => i.mappedCtdSections)).not.toContain('module_index');
+  });
+
+  /* The other half of the contract: narrowing must not lose a true match. */
+  const REAL = [
+    ['The eCTD format of your submission is incorrect.', 'ectd_technical_formatting'],
+    ['Formatting errors were found in the backbone.', 'ectd_technical_formatting'],
+    ['A technical validation error was reported.', 'ectd_technical_formatting'],
+    ['Stability data are incomplete.', 'cmc_quality_issue'],
+    ['The specification is not justified.', 'cmc_quality_issue'],
+    ['Quality of the drug substance is not established.', 'cmc_quality_issue'],
+    ['An adverse event was not reported.', 'clinical_safety_issue'],
+    ['The risk analysis is incomplete.', 'clinical_safety_issue'],
+    ['We refuse to file this application.', 'filing_acceptance_issue'],
+    ['The submission was rejected.', 'filing_acceptance_issue'],
+    ['A deficiency was noted.', 'missing_information_clarification'],
+  ] as const;
+
+  for (const [text, expected] of REAL) {
+    it(`still classifies: ${JSON.stringify(text)}`, () => {
+      const r = runGovernedIssueParser(text, 'c');
+      expect(r.issues.map((i) => i.category)).toContain(expected);
+    });
+  }
+});

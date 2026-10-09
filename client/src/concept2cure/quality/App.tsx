@@ -18,7 +18,7 @@
  */
 
 import * as React from 'react';
-import { I } from './icons';
+import { I } from '../v2/icons';
 import { SopRegister, STATUS_FILTERS, type StatusFilter } from './SopRegister';
 import { ChangeControl } from './ChangeControl';
 import { useChangeRegister } from './changeHooks';
@@ -68,6 +68,22 @@ const ASK_STARTER: Record<QualityTab, string> = {
 
 export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
   const [tab, setTab] = React.useState<QualityTab>(initialTab);
+  // ARIA tabs pattern: the tablist is one tab stop; Arrow, Home and End move
+  // between tabs and select as they go (APG tablist). Without this a
+  // screen-reader user hears "tab" but arrows do nothing.
+  const onTabKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    const idx = TABS.findIndex((t) => t.id === tab);
+    let next = -1;
+    if (e.key === 'ArrowRight') next = (idx + 1) % TABS.length;
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + TABS.length) % TABS.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = TABS.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    setTab(TABS[next].id);
+    const el = e.currentTarget.parentElement?.children[next] as HTMLElement | undefined;
+    el?.focus();
+  };
   /* Pane view state, lifted here so the panes' controls and AnA's surface
      actions drive one state — never a second path. */
   const [sopFilter, setSopFilter] = React.useState<StatusFilter>('all');
@@ -272,7 +288,7 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
         </div>
         <div className="qms-spacer" />
         <button className="qms-tb-btn" onClick={() => onAsk(ASK_STARTER[tab])}>
-          {I.sparkle} Ask AnA
+          {I.sparkles} Ask AnA
         </button>
       </div>
 
@@ -284,7 +300,9 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
             aria-selected={tab === t.id}
             className="qms-tab"
             data-on={tab === t.id || undefined}
+            tabIndex={tab === t.id ? 0 : -1}
             onClick={() => setTab(t.id)}
+            onKeyDown={onTabKey}
           >
             <span className="qms-tab-ico">{t.icon}</span>
             {t.label}
@@ -306,6 +324,8 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
               changes={changes}
               loading={changeReg.loading}
               showingSample={showingSampleChanges}
+              error={changeReg.error}
+              onRetry={changeReg.refresh}
             />
           )}
         </div>

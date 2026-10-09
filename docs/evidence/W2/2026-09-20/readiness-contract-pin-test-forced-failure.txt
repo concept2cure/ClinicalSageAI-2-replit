@@ -1,0 +1,26 @@
+# 2026-09-20T23:58:11Z — 'licenses' removed from SECURITY_CRITICAL_TABLES in scripts/db/readiness-contract.mjs, then restored
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > CRITICAL_TABLES agree with ensureCoreTables.ts 2ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > REQUIRED_SCHEMAS agree with ensureCoreTables.ts 0ms
+ × server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > SECURITY_CRITICAL_TABLES agree with startup/services.ts 7ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > demands the vector extension and the Part 11 audit store 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > base sentinels are a superset of the critical tables 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > passes on a complete contract 1ms
+ × server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names the missing security-critical table (the licenses case) 2ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names the missing Part 11 audit store 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names a missing schema and a missing extension 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > as the runtime role: refuses a superuser and an unreadable table 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > as the owner: does not check SELECT reach 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > SECURITY_CRITICAL_TABLES agree with startup/services.ts
+AssertionError: expected [ 'organization_users', …(3) ] to deeply equal [ 'organization_users', …(4) ]
+- Expected
++ Received
+-   "licenses",
+ FAIL  server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names the missing security-critical table (the licenses case)
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)

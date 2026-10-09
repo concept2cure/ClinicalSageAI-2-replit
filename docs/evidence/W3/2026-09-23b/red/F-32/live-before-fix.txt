@@ -1,0 +1,11 @@
+Live, before the fix: a server started at 5b3a240a4 in the validation posture (RLS_ENFORCE=on,
+ALLOW_DEV_AUTH=0), probed with no session and no API key (curl, from the host).
+
+POST /api/billing/webhooks/stripe -> 401 {"error":{"code":"AUTH_001","message":"No authentication token provided"}}
+GET /api/billing/dtc-pricing -> 401 {"error":{"code":"AUTH_001","message":"No authentication token provided"}}
+GET /api/v1/health -> 401 {"error":{"code":"AUTH_001","message":"No authentication token provided"}}
+GET /api/cortex/health -> 401 {"error":{"code":"AUTH_001","message":"No authentication token provided"}}
+# controls
+GET /api/510k/1/documents -> 401 {"error":"Bearer token required"}
+POST /api/v1/drafting/start_task -> 401 {"error":{"code":"AUTH_001","message":"No authentication token provided"}}
+GET /api/c2c/projects -> 401 {"error":"Bearer token required"}

@@ -697,8 +697,8 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (applied && !board.loading && !board.error) notifySurfaceActionReady('precedent-intelligence');
-  }, [applied, board.loading, board.error]);
+    if (applied && !board.loading) notifySurfaceActionReady('precedent-intelligence');
+  }, [applied, board.loading]);
 
   usePublishSurfaceContext('precedent-intelligence', anaContext);
 

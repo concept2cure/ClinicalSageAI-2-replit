@@ -80,10 +80,25 @@ function wire(boardData: unknown) {
 
 type CmWindow = { __cmSetTab?: (id: string) => void };
 
+/* A response draft is a governed document, and a governed document is created
+   in the open project and nowhere else (PF-07, founder decision 2026-09-26).
+   The drafting cases below open this one; without it the create is never
+   attempted and the draft cases would fail — or, worse, a refusal case would
+   pass for that reason alone. The Overview, simulator and log/close cases do
+   not open it: with a project in context the Overview reads the board as
+   `?projectId=…`, and those cases pin the org-scoped board this file wires.
+   None of them reaches the create path. */
+const PROGRAM = '3c1f8a2e-7b4d-4e9a-8c21-5d6e7f8a9b0c';
+const setProject = (p: unknown) => { (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = p; };
+
+/** The body of the authoring-document create, if one was sent. */
+const docCreateBody = () => calls().find((c) => c[0] === 'POST' && c[1] === '/api/authoring/docs')?.[2];
+
 beforeEach(() => apiRequest.mockReset());
 afterEach(() => {
   cleanup();
   delete (window as unknown as CmWindow).__cmSetTab;
+  setProject(undefined);
 });
 
 /* ══════════════════ Overview — the IR-overdue tile ══════════════════ */
@@ -211,14 +226,22 @@ const CORR_BOARD = {
   },
 };
 
+/** The board serving that one question with the given fields changed. */
+const corrBoard = (row: Record<string, unknown>) =>
+  res({ ...CORR_BOARD, data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], ...row }] } });
+
+/** Every CmPathway case starts from clean channels — no project open, no
+    editor target. The drafting cases then open their project explicitly. */
+function resetPathwayChannels() {
+  apiRequest.mockReset();
+  setProject(undefined);
+  // The editor-target channel is one-shot; a target left by one test must
+  // not satisfy an assertion in the next.
+  delete window.C2C_EDITOR_TARGET;
+}
+
 describe('CmPathway — logging and closing agency questions', () => {
-  beforeEach(() => {
-    apiRequest.mockReset();
-    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
-    // The editor-target channel is one-shot; a target left by one test must
-    // not satisfy an assertion in the next.
-    delete window.C2C_EDITOR_TARGET;
-  });
+  beforeEach(resetPathwayChannels);
 
   it('Log question POSTs the form and reloads the card from the server', async () => {
     const posts: Array<{ url: string; body: unknown }> = [];
@@ -252,10 +275,7 @@ describe('CmPathway — logging and closing agency questions', () => {
     });
     // Confirmed + reloaded from the server, not appended locally.
     await screen.findByText(/Agency question logged · §3\.2\.S\.2/);
-    const boardReads = apiRequest.mock.calls.filter(
-      (c) => c[0] === 'GET' && c[1] === '/api/cmc/module3-board',
-    );
-    expect(boardReads.length).toBeGreaterThanOrEqual(2);
+    expect(boardReads().length).toBeGreaterThanOrEqual(2);
   });
 
   it('Close confirms first, PATCHes CLOSED, and reloads', async () => {
@@ -300,6 +320,10 @@ describe('CmPathway — logging and closing agency questions', () => {
     await waitFor(() => expect(patches).toHaveLength(1));
     expect(patches[0].body).toMatchObject({ status: 'CLOSED', expectedStatus: 'OPEN' });
   });
+});
+
+describe('CmPathway — lifecycle transitions are the ones the row allows, guarded', () => {
+  beforeEach(resetPathwayChannels);
 
   it('a DRAFTED question can be SENT FOR REVIEW — the transition the row allows, guarded', async () => {
     const patches: Array<{ body: unknown }> = [];
@@ -308,12 +332,7 @@ describe('CmPathway — logging and closing agency questions', () => {
         patches.push({ body });
         return res({ success: true, data: { id: 9, status: 'IN_REVIEW' } });
       }
-      if (method === 'GET' && url === '/api/cmc/module3-board') {
-        return res({
-          ...CORR_BOARD,
-          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], status: 'DRAFTED' }] },
-        });
-      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return corrBoard({ status: 'DRAFTED' });
       return res({ success: true, data: [] });
     });
     render(<CmPathway ask={() => {}} />);
@@ -333,12 +352,7 @@ describe('CmPathway — logging and closing agency questions', () => {
         patches.push({ body });
         return res({ success: true, data: { id: 9, status: 'DRAFTED' } });
       }
-      if (method === 'GET' && url === '/api/cmc/module3-board') {
-        return res({
-          ...CORR_BOARD,
-          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], status: 'IN_REVIEW' }] },
-        });
-      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return corrBoard({ status: 'IN_REVIEW' });
       return res({ success: true, data: [] });
     });
     render(<CmPathway ask={() => {}} />);
@@ -358,10 +372,7 @@ describe('CmPathway — logging and closing agency questions', () => {
       }
       if (method === 'GET' && url === '/api/cmc/module3-board') {
         boardCalls += 1;
-        return res({
-          ...CORR_BOARD,
-          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], status: 'DRAFTED' }] },
-        });
+        return corrBoard({ status: 'DRAFTED' });
       }
       return res({ success: true, data: [] });
     });
@@ -372,6 +383,10 @@ describe('CmPathway — logging and closing agency questions', () => {
     // The stale row is re-read: the honest next state is the server's.
     await waitFor(() => expect(boardCalls).toBeGreaterThanOrEqual(2));
   });
+});
+
+describe('CmPathway — the response owner is editable in place', () => {
+  beforeEach(resetPathwayChannels);
 
   it('the Assigned cell is editable in place: rename PATCHes the owner, blank clears it', async () => {
     const patches: Array<{ body: unknown }> = [];
@@ -403,12 +418,7 @@ describe('CmPathway — logging and closing agency questions', () => {
         patches.push({ body });
         return res({ success: true, data: { id: 9, assignedTo: null } });
       }
-      if (method === 'GET' && url === '/api/cmc/module3-board') {
-        return res({
-          ...CORR_BOARD,
-          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], assignedTo: 'old.owner@x' }] },
-        });
-      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return corrBoard({ assignedTo: 'old.owner@x' });
       return res({ success: true, data: [] });
     });
     render(<CmPathway ask={() => {}} />);
@@ -421,6 +431,10 @@ describe('CmPathway — logging and closing agency questions', () => {
     await waitFor(() => expect(patches).toHaveLength(1));
     expect(patches[0].body).toEqual({ assignedTo: null });
   });
+});
+
+describe('CmPathway — the closed file, and refused writes', () => {
+  beforeEach(resetPathwayChannels);
 
   it('the closed file is readable, and Reopen returns a question to the open list — guarded', async () => {
     const patches: Array<{ body: unknown }> = [];
@@ -507,36 +521,32 @@ describe('CmPathway — logging and closing agency questions', () => {
    question OPEN forever. Pinned: after the authoring write succeeds, an OPEN
    question is PATCHed to DRAFTED before navigation; a non-OPEN question is
    never downgraded by re-drafting. */
+
+/** The server answers every leg of the draft handoff; the board serves the
+    question at the given status and every PATCH to it is recorded. */
+function wireDraft(status: string, patches: Array<{ url: string; body: unknown }>) {
+  apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+    if (method === 'POST' && url === '/api/authoring/docs') {
+      return res({ success: true, document: { id: 'DOC9', title: 'Response…' } }, 201);
+    }
+    if (method === 'POST' && url === '/api/authoring/sections') {
+      return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response' } }, 201);
+    }
+    if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+      patches.push({ url, body });
+      return res({ success: true, data: { id: 9, status: 'DRAFTED' } });
+    }
+    if (method === 'GET' && url === '/api/cmc/module3-board') return corrBoard({ status });
+    return res({ success: true, data: [] });
+  });
+}
+
 describe('CmPathway — draft response advances the question to DRAFTED', () => {
   beforeEach(() => {
-    apiRequest.mockReset();
-    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
-    // The editor-target channel is one-shot; a target left by one test must
-    // not satisfy an assertion in the next.
-    delete window.C2C_EDITOR_TARGET;
+    resetPathwayChannels();
+    // The draft is created in the open project (PF-07).
+    setProject({ id: PROGRAM });
   });
-
-  function wireDraft(status: string, patches: Array<{ url: string; body: unknown }>) {
-    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'POST' && url === '/api/authoring/docs') {
-        return res({ success: true, document: { id: 'DOC9', title: 'Response…' } }, 201);
-      }
-      if (method === 'POST' && url === '/api/authoring/sections') {
-        return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response' } }, 201);
-      }
-      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
-        patches.push({ url, body });
-        return res({ success: true, data: { id: 9, status: 'DRAFTED' } });
-      }
-      if (method === 'GET' && url === '/api/cmc/module3-board') {
-        return res({
-          ...CORR_BOARD,
-          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], status }] },
-        });
-      }
-      return res({ success: true, data: [] });
-    });
-  }
 
   it('an OPEN question is marked DRAFTED once the draft persisted, then the editor opens', async () => {
     const patches: Array<{ url: string; body: unknown }> = [];
@@ -547,6 +557,8 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
 
     fireEvent.click(screen.getByTitle(/Create a governed response draft/));
     await waitFor(() => expect(patches).toHaveLength(1));
+    // The draft was created IN the open project — the one the editor lists.
+    expect(docCreateBody()).toMatchObject({ client_program_id: PROGRAM });
     // The flip carries the LINK: the file records which document holds the
     // response, so "Open draft" works after any reload.
     expect(patches[0].body).toMatchObject({ status: 'DRAFTED', responseDocId: 'DOC9' });
@@ -573,6 +585,7 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
     // concurrently closed question answers 409 instead of being re-linked.
     expect(patches[0].body).toMatchObject({ responseDocId: 'DOC9', expectedStatus: 'IN_REVIEW' });
     expect((patches[0].body as Record<string, unknown>).status).toBeUndefined();
+    expect(docCreateBody()).toMatchObject({ client_program_id: PROGRAM });
     await waitFor(() => expect(navd).toContain('document-authoring'));
   });
 
@@ -600,22 +613,14 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
     await screen.findByText(/The draft was created, but the correspondence file was not updated — The question is CLOSED now/);
     // …and the user is NOT navigated into the editor believing the file followed.
     expect(navd).toHaveLength(0);
+    // The draft that WAS created is in the open project.
+    expect(docCreateBody()).toMatchObject({ client_program_id: PROGRAM });
   });
 
   it('a linked question renders the Open-draft door, which targets the EXACT document', async () => {
     const navd: string[] = [];
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/cmc/module3-board') {
-        return res({
-          ...CORR_BOARD,
-          data: {
-            ...CORR_BOARD.data,
-            correspondence: [
-              { ...CORR_BOARD.data.correspondence[0], status: 'DRAFTED', responseDocId: 'DOC42' },
-            ],
-          },
-        });
-      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return corrBoard({ status: 'DRAFTED', responseDocId: 'DOC42' });
       return res({ success: true, data: [] });
     });
     render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
@@ -633,5 +638,55 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
     expect(
       screen.queryByTitle('Open the drafted response in the document editor'),
     ).toBeNull();
+  });
+});
+
+/* ── With no project open, nothing persists — so nothing advances ──
+   An OPEN question is marked DRAFTED only once its draft persisted (above).
+   Before PF-07 the draft was created org-wide when no project was open, where
+   no project's editor ever listed it; now the handoff refuses before any
+   request. So the question must stay OPEN, no link may be written to the file,
+   and the user must stay on the card where the refusal is stated. */
+describe('CmPathway — with no project open, a draft response is refused (PF-07)', () => {
+  beforeEach(resetPathwayChannels);
+
+  it.each([
+    ['no project is open', undefined],
+    // A numeric workspace id is not a project: the draft would land where no
+    // project's list shows it.
+    ['the open id is not a project', { id: 7 }],
+  ])('when %s: nothing is written, the question stays OPEN, and the user stays put', async (_label, project) => {
+    setProject(project);
+    const patches: Array<{ url: string; body: unknown }> = [];
+    const navd: string[] = [];
+    wireDraft('OPEN', patches);
+    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByTitle(/Create a governed response draft/));
+    // The refusal is stated, in the handoff's own words, and promises the work.
+    await screen.findByText(/open a project first/i);
+    expect(screen.getByText(/Nothing was saved; the draft response is still here/)).toBeTruthy();
+
+    // Nothing was created — no document, no section…
+    const urls = calls().map((c) => String(c[1]));
+    expect(docCreateBody()).toBeUndefined();
+    expect(urls).not.toContain('/api/authoring/sections');
+    // …so no link and no status is written to the correspondence file…
+    expect(patches).toHaveLength(0);
+    expect(urls.some((u) => u.startsWith('/api/cmc/agency-questions'))).toBe(false);
+    // …the question has NOT advanced: still OPEN on its row, never DRAFTED…
+    const row = screen.getByText('Clarify the shelf-life claim.').closest('tr') as HTMLElement;
+    expect(within(row).getByText('OPEN')).toBeTruthy();
+    expect(within(row).queryByText('DRAFTED')).toBeNull();
+    expect(within(row).queryByTitle('Open the drafted response in the document editor')).toBeNull();
+    expect(screen.queryByText(/The draft was created/)).toBeNull();
+    // …and the user is not sent into an editor that has nothing in it.
+    expect(navd).toHaveLength(0);
+    expect(window.C2C_EDITOR_TARGET).toBeUndefined();
+    // The control is live again and still offers the first draft.
+    const again = screen.getByTitle(/Create a governed response draft/) as HTMLButtonElement;
+    expect(again.disabled).toBe(false);
+    expect(again.textContent).toMatch(/Draft response/);
   });
 });

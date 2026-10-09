@@ -97,8 +97,16 @@ declare global {
  * This prevents tenant impersonation attacks where a user sends a forged
  * x-org-id / x-organization-id header to access another tenant's data.
  *
- * Non-sensitive supplemental context (clientWorkspaceId, module) may still
- * come from headers as they are scoped within the tenant boundary.
+ * The client workspace id (X-Client-ID) and module (X-Module) still come from
+ * headers, but the workspace id is a CLAIM, not context: client_workspaces
+ * belong to organizations, and nothing here checks that the workspace named is
+ * the session organization's own. This middleware only puts the claim on
+ * req.tenantContext.clientWorkspaceId; every consumer verifies it before it
+ * counts — FeatureToggleService.workspaceInOrganization (featureToggleMiddleware,
+ * cerv2-document-routes, regulatorySubmissions) or c2c/project-access.ts
+ * resolveClientWorkspaceId — and scripts/check-security-patterns.ts
+ * (workspace-trust-header) refuses a new direct header read outside this file
+ * (security audit 2026-09-24, IAM-15 / plan P1-7b).
  */
 export function tenantContextMiddleware(req: Request, res: Response, next: NextFunction) {
   // SECURITY: organizationId MUST come from verified JWT (set by auth middleware),

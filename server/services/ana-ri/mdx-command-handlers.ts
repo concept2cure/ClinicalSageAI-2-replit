@@ -707,8 +707,11 @@ export async function preflightModule(
  *
  * Fail-closed: with no FDA ESG credentials the gateway raises `CredentialError`
  * naming exactly which FDA_ESG_* variables are missing, and that is returned as
- * a structured refusal. No simulated success, no fabricated acknowledgement
- * number, no transactionId that has no agency meaning.
+ * a structured refusal. With `FDA_ESG_TRANSPORT=rest` (the ESG NextGen REST
+ * adapter) the gateway raises `UnverifiedTransportError` until that contract is
+ * verified in FDA's UAT, returned as TRANSPORT_NOT_VERIFIED. No simulated
+ * success, no fabricated acknowledgement number, no transactionId that has no
+ * agency meaning.
  *
  * NOTE ON `projectId`. The old parameter named an `fda_510k_projects` row, and
  * the deleted service "packaged" it as a zip of JSON documents plus a
@@ -818,6 +821,7 @@ export async function esgTransmit(
     const { executeGovernedTransmit } = await import(
       '../submission-gateways/governed-transmit'
     );
+    const { transmitOutcomeNotices } = await import('../submission-gateways/transmit-notices');
     const { recordGovernedAction } = await import('../../routes/c2c/actions');
 
     const outcome = await executeGovernedTransmit({
@@ -831,8 +835,16 @@ export async function esgTransmit(
       metadata: { threadId: ctx.threadId ?? null, initiatedBy: 'agent:ana' },
       reason: gate.reason,
       meaning: signatureMeaning,
-      authenticationMethod: ctx.signoff?.signatureVerified ? 'password' : 'session',
-      secondFactorVerified: false,
+      /* The factors the route's re-verification actually checked, carried on
+         the sign-off (2026-09-28). This was `secondFactorVerified: false`
+         whatever happened, so a signer who passed MFA was recorded on an FDA
+         transmission as having given a password only. Spelled in the transmit
+         ledger's vocabulary ('password+totp', as the HTTP transmit route
+         records it) so both paths write the same value for the same factor.
+         validateSignoff above required a verified signature, and the route
+         verifies a password for every one, so 'password' is the floor. */
+      authenticationMethod: ctx.signoff?.secondFactorVerified === true ? 'password+totp' : 'password',
+      secondFactorVerified: ctx.signoff?.secondFactorVerified === true,
       reauthVerifiedAt,
       recordGovernedAction,
       surface: 'ana-mdx-command',
@@ -848,6 +860,14 @@ export async function esgTransmit(
        ledger entry is written inside executeGovernedTransmit, which reports its
        own failure as `outcome.ledgerWriteFailed`, recorded in this row's details
        below. */
+    // The package checks the transmit guard ran that FAILED without blocking,
+    // and its warnings (preTransmitFindings, via the governed transmit): on this
+    // row and in the returned data, where they were dropped. null = the guard
+    // reported nothing. 2026-09-23 (W5/D7, round-2 review).
+    const preTransmitFacts = {
+      preTransmitFailedChecks: outcome.preTransmitFailedChecks,
+      preTransmitWarnings: outcome.preTransmitWarnings,
+    };
     const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
@@ -863,9 +883,20 @@ export async function esgTransmit(
         bundleSha256: outcome.bundle.sha256,
         ledgerWriteFailed: outcome.ledgerWriteFailed,
         contentAfterTransmit: outcome.contentAfterTransmit,
+        ...preTransmitFacts,
       },
     });
 
+    /* 2026-09-28: a lost ledger entry, a content change during the send and an
+       unrecorded filed sequence were kept in the agent audit row above and the
+       caller got a plain success. The transmission did leave, so success stays
+       true — reporting it un-sent would be false too — but each is now said, in
+       `data` and on the message, with the HTTP route's own wording. */
+    const notices = transmitOutcomeNotices(outcome);
+    const noticeText = [notices.ledgerWarning, notices.contentWarning, notices.filedSequenceWarning]
+      .filter(Boolean)
+      .map(t => ` ${t}`)
+      .join('');
     return {
       success: true,
       action,
@@ -879,6 +910,8 @@ export async function esgTransmit(
         region: 'fda',
         gateway: 'esg',
         environment,
+        ...preTransmitFacts,
+        ...notices,
         agentAuditTrail,
       },
       message:
@@ -886,7 +919,7 @@ export async function esgTransmit(
         `Transmittal #${outcome.result.transmittalId}, status '${outcome.result.status}'. ` +
         `${outcome.result.message} ` +
         'Poll the transmittal for the ack1/ack2/ack3 ladder — an FDA acknowledgement exists only ' +
-        `once the agency sends one.${auditNote(agentAuditTrail)}`,
+        `once the agency sends one.${noticeText}${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     /* WO-16C #133. This row records a refused or failed transmit — the
@@ -966,6 +999,21 @@ function mapTransmitError(action: string, err: unknown): CommandResult {
         `Nothing was transmitted. ${detail} ` +
         'No submission was made and no FDA acknowledgement exists.',
       error: 'GATEWAY_NOT_CONFIGURED',
+    };
+  }
+  if (name === 'UnverifiedTransportError') {
+    // The selected transport (today: FDA_ESG_TRANSPORT=rest, the ESG NextGen
+    // REST adapter) resolved its credentials but refuses to put bytes on a wire
+    // contract the platform has not verified. Distinct from GATEWAY_NOT_CONFIGURED
+    // (missing variables) and TRANSMIT_FAILED (the agency answered); no
+    // transmittal row exists and no identifier was minted.
+    return {
+      success: false,
+      action,
+      message:
+        `Nothing was transmitted. ${detail} ` +
+        'No submission was made and no FDA acknowledgement exists.',
+      error: 'TRANSPORT_NOT_VERIFIED',
     };
   }
   if (name === 'TransmitAuthorizationError') {

@@ -1,0 +1,16 @@
+# PF-07 (slices A–D), green.
+
+## Full vitest run (vitest.config.ts) on the working tree merged with trunk 00870fe4
+ Test Files  2826 passed | 8 skipped (2834)
+      Tests  32349 passed | 81 skipped (32482)
+exit=0
+
+## npm run test:db (tests/db, unmocked pg, RLS_ENFORCE=on) on a deploy-shaped PostgreSQL 16.13 (install-fresh + deploy-migrate x2)
+ Test Files  70 passed (70)
+      Tests  755 passed (755)
+exit=0
+
+## The suites this change touched, individually (final runs)
+authoringCreateExport 13/13 · authoringHandoff 12/12 · biostatAttachHonesty 4/4 · openInEditorHandoff 20/20 · biostatWorkbench 56/56 · cmcCorrCrossLinks 23/23
+authoring-program-scope 6/6 · authoringFileToVault 9/9 · ind-authoring journey 1/1 · the nine seeded suites (verifier-checked)
+chat-upload-source-identity 17/17 · canonical-source-identity · authoringFromDraft · the LX-00 walk (adopt hop green)

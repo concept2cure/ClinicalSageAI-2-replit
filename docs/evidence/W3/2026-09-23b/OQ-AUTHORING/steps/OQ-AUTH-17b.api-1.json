@@ -1,0 +1,509 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/review/board",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 30,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "queue": [
+          {
+            "id": "39ae0064-3fb9-4ea7-a3dd-507572beb02c",
+            "doc": "OQ-003 Clinical Overview 20260923051945",
+            "prog": "OQ-003 Authoring program 20260923051945",
+            "programId": "f4e5ab1b-d1b8-4563-ac17-f6de4535bf3b",
+            "pid": "39ae0064-3fb9-4ea7-a3dd-507572beb02c",
+            "module": "M2",
+            "docStatus": "IN_REVIEW",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "9fbabb1b-6a55-4a21-8f7b-d850fc07cb93",
+                "reviewerId": "17",
+                "reviewer": "OQ Runner",
+                "reviewerEmail": "oq-runner@validation.local",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "oq-runner@validation.local",
+                "requestedAt": "2026-09-23T05:19:50.589Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "9fbabb1b-6a55-4a21-8f7b-d850fc07cb93",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "OQ Runner",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 1,
+            "esig": "pending",
+            "conf": null,
+            "prov": "in review · review requested by oq-runner@validation.local",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "2ec3e8e3-775c-4ef5-85a1-86104026b67d",
+            "requestedAt": "2026-09-23T05:19:50.589Z"
+          },
+          {
+            "id": "bb8af817-52ad-4e6e-96e2-cdd6824ad3b5",
+            "doc": "OQ-003 Clinical Overview 20260923044144",
+            "prog": "OQ-003 Authoring program 20260923044144",
+            "programId": "0b31a0b6-6eef-46b3-b61f-d0c8b319f156",
+            "pid": "bb8af817-52ad-4e6e-96e2-cdd6824ad3b5",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "11ae13c7-fe69-4a64-99fa-319666704bfd",
+                "reviewerId": "17",
+                "reviewer": "OQ Runner",
+                "reviewerEmail": "oq-runner@validation.local",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "oq-runner@validation.local",
+                "requestedAt": "2026-09-23T04:41:50.203Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "11ae13c7-fe69-4a64-99fa-319666704bfd",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "OQ Runner",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by oq-runner@validation.local",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "22b003b4-9450-4e9a-a250-c5f31091f2f2",
+            "requestedAt": "2026-09-23T04:41:50.203Z"
+          },
+          {
+            "id": "5db22e8b-c512-4256-87df-75ce11faf202",
+            "doc": "OQ-003 Clinical Overview 20260923025023",
+            "prog": "OQ-003 Authoring program 20260923025023",
+            "programId": "9693d8f7-926e-41ad-89f0-54df97729bd8",
+            "pid": "5db22e8b-c512-4256-87df-75ce11faf202",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "24a942bc-4749-4807-8464-2d80c480bcce",
+                "reviewerId": "17",
+                "reviewer": "OQ Runner",
+                "reviewerEmail": "oq-runner@validation.local",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "oq-runner@validation.local",
+                "requestedAt": "2026-09-23T02:50:29.147Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "24a942bc-4749-4807-8464-2d80c480bcce",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "OQ Runner",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by oq-runner@validation.local",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "a1d95ac5-0c5c-4cfd-af0c-91041da95428",
+            "requestedAt": "2026-09-23T02:50:29.147Z"
+          },
+          {
+            "id": "77994ca8-ff10-4b89-8865-1bdc48ae81a1",
+            "doc": "OQ-003 Clinical Overview 20260923022624",
+            "prog": "OQ-003 Authoring program 20260923022624",
+            "programId": "5c3e86b0-132e-478f-a076-a54d33dc0466",
+            "pid": "77994ca8-ff10-4b89-8865-1bdc48ae81a1",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "132963a4-f25e-4e57-9b5f-0ee79867828a",
+                "reviewerId": "17",
+                "reviewer": "OQ Runner",
+                "reviewerEmail": "oq-runner@validation.local",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "oq-runner@validation.local",
+                "requestedAt": "2026-09-23T02:26:29.488Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "132963a4-f25e-4e57-9b5f-0ee79867828a",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "OQ Runner",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by oq-runner@validation.local",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "8e4dfed2-0a9e-4c5a-acf3-983089f9f136",
+            "requestedAt": "2026-09-23T02:26:29.488Z"
+          },
+          {
+            "id": "17b59545-fc89-4110-b618-127f4108618d",
+            "doc": "OQ-003 Clinical Overview 20260923021803",
+            "prog": "OQ-003 Authoring program 20260923021803",
+            "programId": "8963d674-a10a-48d1-b582-900916642142",
+            "pid": "17b59545-fc89-4110-b618-127f4108618d",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "bed64e6e-8642-4b85-b69f-5f25bd9ce9a9",
+                "reviewerId": "17",
+                "reviewer": "OQ Runner",
+                "reviewerEmail": "oq-runner@validation.local",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "oq-runner@validation.local",
+                "requestedAt": "2026-09-23T02:18:09.077Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "bed64e6e-8642-4b85-b69f-5f25bd9ce9a9",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "OQ Runner",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by oq-runner@validation.local",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "190e8750-773a-4a73-a209-0cef4af1fbc5",
+            "requestedAt": "2026-09-23T02:18:09.077Z"
+          },
+          {
+            "id": "72c545bc-5115-430b-9045-d274135e4f84",
+            "doc": "OQ-003 Clinical Overview 20260922232830",
+            "prog": "OQ-003 Authoring program 20260922232830",
+            "programId": "acf913fc-4e66-4324-a491-9766df1ddb5a",
+            "pid": "72c545bc-5115-430b-9045-d274135e4f84",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "62e7c964-286b-4f07-8594-4cafb0b85ca1",
+                "reviewerId": "17",
+                "reviewer": "OQ Runner",
+                "reviewerEmail": "oq-runner@validation.local",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "oq-runner@validation.local",
+                "requestedAt": "2026-09-22T23:28:36.145Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "62e7c964-286b-4f07-8594-4cafb0b85ca1",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "OQ Runner",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by oq-runner@validation.local",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "2868ebdc-f16c-40f9-b12f-87636adde042",
+            "requestedAt": "2026-09-22T23:28:36.145Z"
+          },
+          {
+            "id": "8ac00c3e-8b3d-43ae-b730-6987ca6ef197",
+            "doc": "OQ-003 Clinical Overview 20260922223601",
+            "prog": "OQ-003 Authoring program 20260922223601",
+            "programId": "e76aedb6-69c5-4b42-b529-c232310a62d7",
+            "pid": "8ac00c3e-8b3d-43ae-b730-6987ca6ef197",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "562d69ca-a927-4098-9470-65a5c7f3388c",
+                "reviewerId": "2",
+                "reviewer": "JM Smith",
+                "reviewerEmail": "jonmichaelpsmith@gmail.com",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-22T22:36:07.397Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": null,
+            "myReviewStatus": null,
+            "awaitingMyReview": false,
+            "requestedByMe": false,
+            "atMySignOff": false,
+            "mine": false,
+            "reviewer": "JM Smith",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "81200d37-6db0-49fa-9914-b07e4c9e23f3",
+            "requestedAt": "2026-09-22T22:36:07.397Z"
+          },
+          {
+            "id": "e531989d-3206-42bc-b95e-6698011d7c9a",
+            "doc": "OQ-003 Clinical Overview 20260922220523",
+            "prog": "OQ-003 Authoring program 20260922220523",
+            "programId": "53691100-8887-4f3c-98f5-a95c03a10ca1",
+            "pid": "e531989d-3206-42bc-b95e-6698011d7c9a",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "6d32940f-cf8a-4914-b3a4-87ff2f9699cd",
+                "reviewerId": "2",
+                "reviewer": "JM Smith",
+                "reviewerEmail": "jonmichaelpsmith@gmail.com",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-22T22:05:28.800Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": null,
+            "myReviewStatus": null,
+            "awaitingMyReview": false,
+            "requestedByMe": false,
+            "atMySignOff": false,
+            "mine": false,
+            "reviewer": "JM Smith",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "ff8f45ef-d46e-43d0-a201-cc2820de9660",
+            "requestedAt": "2026-09-22T22:05:28.800Z"
+          }
+        ],
+        "workflows": {
+          "39ae0064-3fb9-4ea7-a3dd-507572beb02c": {
+            "templateId": "69100bd4-4d27-4cf4-9f91-98dd20c7ae6c",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "674a53da-81d7-4676-b032-05347f30eb2e",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-runner@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "bb8af817-52ad-4e6e-96e2-cdd6824ad3b5": {
+            "templateId": "88c3fc86-20ce-4d68-9008-30386cfb1d1c",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "d692d10a-8140-4a50-b368-0238144c9a29",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-runner@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "5db22e8b-c512-4256-87df-75ce11faf202": {
+            "templateId": "c499e596-90bc-46af-95ad-313eacb8a7ea",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "e33b8196-aab4-4fab-b19a-7502b0f5aae3",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-runner@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "77994ca8-ff10-4b89-8865-1bdc48ae81a1": {
+            "templateId": "25fad4fe-2644-4567-a1a6-a2abe4b24969",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "3abf3dc3-0d8e-40ba-abc6-caae57d692fb",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-runner@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "17b59545-fc89-4110-b618-127f4108618d": {
+            "templateId": "959b0dbf-b133-41b5-b0ec-4a9f888cbe73",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "5ea65b3c-eff4-4b3a-9816-7220fda11c7a",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-runner@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "72c545bc-5115-430b-9045-d274135e4f84": {
+            "templateId": "47a00db1-2669-426c-abd5-e4d711bed6b1",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "1871aaf2-403c-4ab6-b856-bc093ba66683",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-runner@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "8ac00c3e-8b3d-43ae-b730-6987ca6ef197": {
+            "templateId": "8e85ed67-b8ff-4a7a-8e7b-e6e6db6ab8b3",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "c3178372-6af9-4d25-8ccc-7c80bace4ddc",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "jonmichaelpsmith@gmail.com",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "e531989d-3206-42bc-b95e-6698011d7c9a": {
+            "templateId": "7fa3ae00-dae0-4b6e-a8c9-520456855e0d",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "258d2647-8f50-429c-8425-d97cb65ea8c7",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "jonmichaelpsmith@gmail.com",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          }
+        },
+        "thread": [
+          {
+            "id": "987675ec-75bb-4ff2-9bfd-e253a1410494",
+            "author": "oq-runner@validation.local",
+            "role": "§2.5",
+            "when": "1m ago",
+            "state": "open",
+            "body": "OQ-003 step 09 review comment",
+            "ai": false,
+            "sectionId": "2ec3e8e3-775c-4ef5-85a1-86104026b67d",
+            "parentId": null
+          }
+        ],
+        "meta": {
+          "scope": "all",
+          "programId": null,
+          "total": 8,
+          "threadItemId": "39ae0064-3fb9-4ea7-a3dd-507572beb02c",
+          "threadDocumentId": "39ae0064-3fb9-4ea7-a3dd-507572beb02c",
+          "generatedAt": "2026-09-23T05:19:51.677Z"
+        }
+      }
+    }
+  }
+}

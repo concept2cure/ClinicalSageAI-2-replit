@@ -1,0 +1,7 @@
+# ana-task-cascade-ledger.pglite.integration.test.ts against HEAD's command-executor.ts and task-side-effects.ts
+   → the dependent moved with no task.transition row: expected [] to have a length of 1 but got +0
+   → the completion committed while its dependents could not be moved: expected 'completed' to be 'in-progress' // Object.is equality
+ FAIL  AnA completes a task: its dependents move with it, on the ledger > unblocks the dependent and records its move, after the completion’s own row
+ FAIL  AnA completes a task: its dependents move with it, on the ledger > a cascade that cannot finish takes the completion back with it, and says so
+ Test Files  1 failed (1)
+      Tests  2 failed (2)

@@ -1,0 +1,10 @@
+# PF-07: the two real-database suites that create Authoring documents, at trunk's version, against this change (red), then fixed (green in 03 of the PF-04 evidence and in the full test:db run: 70/70 files, 755/755).
+
+ × tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > authors the table into a governed section
+ × tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > survives the hard reload — the grid is re-read from the store, not from memory
+ × tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > exports to Word as a REAL table — <w:tbl>, 10 rows, 70 cells
+ × tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > creates a document and a section to contend over
+ × tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > refuses a save whose token is stale, and overwrites nothing
+ × tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > accepts a save that carries the current token
+ × tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > leaves a caller that sends no token exactly as it was
+AssertionError: expected [ 200, 201 ] to include 400

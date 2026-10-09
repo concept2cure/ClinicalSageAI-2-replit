@@ -1,0 +1,9 @@
+# PF-07 UI, red: each mutation of the new route or the mount, with the test that catches it.
+
+## mutation: no user filter
+      Tests  1 failed | 13 passed (14)
+## mutation: files already in a project not excluded
+      Tests  1 failed | 13 passed (14)
+## mutation: the control unmounted from ProjectHome's Data Room
+ × client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > is mounted in ProjectHome’s Data Room for the open project
+      Tests  1 failed | 4 passed (5)

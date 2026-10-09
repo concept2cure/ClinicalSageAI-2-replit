@@ -269,18 +269,25 @@ describe('assess_nonclinical_safety handler', () => {
   });
 });
 
-describe('assemble_briefing_book handler — fixture questions are labelled in the content itself', () => {
-  it('prepends a SAMPLE DATA banner when the questions for the Agency come from the fixture', async () => {
+describe('assemble_briefing_book handler — no fixture content is passed off as the sponsor\'s', () => {
+  /* These asserted a "SAMPLE DATA" banner over the fixture's questions when the
+     sponsor supplied none. The banner covered the questions only; the fixture's
+     Background and Supporting Data (an invented N=36 Phase 1, a complete-
+     remission signal) sat below it under the caller's real product name. The
+     handler no longer has a fixture: without the sponsor's own questions it
+     builds nothing. */
+  it('builds no book when the sponsor supplied no questions for the Agency', async () => {
     const handler = getToolHandler('assemble_briefing_book')!;
-    const out = JSON.parse(await handler({ product_name: 'BX-115', indication: 'type 2 diabetes', run_premortem: false }));
-    expect(String(out.content)).toMatch(/^> SAMPLE DATA — the questions for the Agency below are a fixture/);
+    const out = JSON.parse(await handler({ product_name: 'BX-115', indication: 'type 2 diabetes', meeting_type: 'pre_ind', run_premortem: false }));
+    expect(out.content).toBeUndefined();
+    expect(out.missing).toEqual(['key_questions']);
   });
 
-  it('does not add the banner when the sponsor supplied its own key questions', async () => {
+  it('builds from the sponsor\'s own questions, with nothing borrowed', async () => {
     const handler = getToolHandler('assemble_briefing_book')!;
-    const out = JSON.parse(await handler({ product_name: 'BX-115', key_questions: ['Does the Agency agree with the proposed primary endpoint?'], run_premortem: false }));
-    expect(String(out.content)).not.toMatch(/SAMPLE DATA — the questions for the Agency/);
+    const out = JSON.parse(await handler({ product_name: 'BX-115', meeting_type: 'pre_ind', key_questions: ['Does the Agency agree with the proposed primary endpoint?'], run_premortem: false }));
     expect(String(out.content)).toContain('Does the Agency agree with the proposed primary endpoint?');
+    expect(String(out.content)).not.toMatch(/SAMPLE DATA|N=36|complete-remission/);
   });
 });
 

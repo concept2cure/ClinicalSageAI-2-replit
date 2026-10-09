@@ -1,0 +1,4 @@
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts > filingCabinet — a document filed under another view > every upload the cabinet is given appears in it exactly once
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts > filingCabinet — a document filed under another view > shows it under a folder that says it was filed under another view, naming where
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts > filingCabinet — a document filed under another view > adds no such folder when every document is in view
+      Tests  3 passed (3)

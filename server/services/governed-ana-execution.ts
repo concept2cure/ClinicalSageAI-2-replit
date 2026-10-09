@@ -4,7 +4,7 @@ import {
 } from '../src/control-plane/governed-document-evaluator.js';
 import { hasUnresolvedGovernedDecisions } from './governed-decision-repository.js';
 import { integrateSignal } from './intelligence/rim-integration.js';
-import { tagArtifact, type TagArtifactResult } from './artifact-tagger.js';
+import { tagArtifact, type ArtifactWriteHook, type TagArtifactResult } from './artifact-tagger.js';
 import type {
   CanonicalGovernedState,
   GovernedArtifactMutationContract,
@@ -20,6 +20,13 @@ import {
 interface ExecuteGovernedAnaOperationInput {
   evaluationInput: GovernedEvaluationInput;
   artifactMutation?: GovernedArtifactMutationContract;
+  /**
+   * Handed to tagArtifact: runs inside the artifact write's own transaction,
+   * before COMMIT. A throw rolls the write back (persistenceStatus 'failed').
+   * Used by AnA revert_to_version to sign the version in the transaction that
+   * writes it.
+   */
+  inTransaction?: ArtifactWriteHook;
 }
 
 interface ExecuteGovernedAnaOperationResult {
@@ -138,9 +145,13 @@ export async function buildCanonicalGovernedState(
 ): Promise<CanonicalGovernedState> {
   const evaluated = evaluateAndInterceptGovernedDocument(input);
   const orgId = Number(evaluated.evaluation.context.organizationId) || 0;
-  const projectId = Number(evaluated.evaluation.context.projectId) || 0;
+  /* The project key travels as the platform addresses it. `Number(uuid) || 0`
+     sent every Module 3 project to bucket 0, which is why one review queue
+     answered for all of them — and why the write behind it failed a foreign key
+     to projects(id) on every attempt. */
+  const projectRef = String(evaluated.evaluation.context.projectId ?? '');
 
-  const lifecycle = await hasUnresolvedGovernedDecisions(projectId, orgId);
+  const lifecycle = await hasUnresolvedGovernedDecisions(projectRef, orgId);
   const blockers = [
     ...evaluated.evaluation.readiness.blockers,
     ...(evaluated.evaluation.placement.blockingReasons || []),
@@ -282,6 +293,7 @@ export async function executeGovernedAnaOperation(
             qualityValidationIssues: validation.issues,
             decisionReference: canonical.decisionReference.decisionId,
           },
+          inTransaction: input.inTransaction,
         });
         persistenceStatus = 'persisted';
       } catch {

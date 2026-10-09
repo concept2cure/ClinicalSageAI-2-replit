@@ -1,0 +1,10 @@
+OQ-PROJ-19's idle answer reproduced on a fresh server, the auth boundary in its non-production
+default (warn). The idle session is the standing subject's; the window is one minute.
+
+window → 1 min: 200
+own session reads projects: {"status":200,"code":null}
+after 65 s idle:
+  GET /api/c2c/projects: {"status":401,"code":"SESSION_ENDED"}
+  GET /api/c2c/projects again: {"status":401,"code":"SESSION_ENDED"}
+  GET /api/auth/session: {"status":401,"code":"SESSION_ENDED"}
+window restored: 200

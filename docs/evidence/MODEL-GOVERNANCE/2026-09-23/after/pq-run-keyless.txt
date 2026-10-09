@@ -1,0 +1,14 @@
+
+PQ PQ-DRAFT-001 v0.1.0 (draft) — claude-opus-4 → claude-opus-5 [anthropic], 4 generation task(s), gold bank 0.2.0-seed
+────────────────────────────────────────────────────────────────────────
+  510k-se-summary-generate           [510k] NOT EXECUTED — PQ: "claude-opus-4" is known but its provider (anthropic) is not configured — nothing was evaluated.
+  cer-clinical-eval-generate         [cer] NOT EXECUTED — PQ: "claude-opus-4" is known but its provider (anthropic) is not configured — nothing was evaluated.
+  ind-m2-summary-generate            [ind] NOT EXECUTED — PQ: "claude-opus-4" is known but its provider (anthropic) is not configured — nothing was evaluated.
+  nonclinical-tox-summary-generate   [ind] NOT EXECUTED — PQ: "claude-opus-4" is known but its provider (anthropic) is not configured — nothing was evaluated.
+────────────────────────────────────────────────────────────────────────
+Verdict: NOT_EXECUTED
+  - no generation task produced a scorable output
+  - 510k-se-summary-generate: PQ: "claude-opus-4" is known but its provider (anthropic) is not configured — nothing was evaluated.
+  - cer-clinical-eval-generate: PQ: "claude-opus-4" is known but its provider (anthropic) is not configured — nothing was evaluated.
+  - ind-m2-summary-generate: PQ: "claude-opus-4" is known but its provider (anthropic) is not configured — nothing was evaluated.
+  - nonclinical-tox-summary-generate: PQ: "claude-opus-4" is known but its provider (anthropic) is not configured — nothing was evaluated.

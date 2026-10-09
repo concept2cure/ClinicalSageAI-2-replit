@@ -1,0 +1,5 @@
+P4 upsertLeaf into frozen -> INVALID_STATE Sequence is frozen; its leaves are immutable.
+P4 classifyDocument into sequence 1 -> ok
+P4 classifyDocument into sequence 2 -> ok
+P4 leaves now: [{"sequence_id":1,"status":"frozen","section_code":"m2.4","document_id":201},{"sequence_id":2,"status":"dispatched","section_code":"m2.4","document_id":201}]
+      Tests  1 passed (1)

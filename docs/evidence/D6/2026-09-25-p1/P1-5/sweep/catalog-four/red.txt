@@ -1,0 +1,6 @@
+$ # the four launch-catalog upload files as committed at 298079ba, scanned by scripts/ci/check-upload-guards.mjs scanFileText
+server/routes/c2c/knowledge-sources.ts: [{"line":56,"missing":["fileFilter","assertUploadSafe"]}]
+server/routes/c2c/templates.ts: [{"line":40,"missing":["assertUploadSafe"]}]
+server/routes/onboarding-proposals.ts: [{"line":64,"missing":["fileFilter","assertUploadSafe"]}]
+server/routes/ind-forms.routes.ts: [{"line":1023,"missing":["assertUploadSafe"]}]
+exit=0  # each site lacks at least assertUploadSafe; two also lack a fileFilter

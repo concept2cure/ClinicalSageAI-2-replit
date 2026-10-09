@@ -100,9 +100,11 @@ describe('executeCommands — central RBAC gate', () => {
       return { rows: [{ id: 77, name: 'Legit Program', status: 'active' }], rowCount: 1 };
     });
 
+    // A person confirmed the proposal (P0-12: every write is a proposal; the
+    // confirm tier is the governed-action route's, the only writer of this flag).
     const res = await executeCommands(
       [{ command: 'create_project', params: { name: 'Legit Program' } }] as any,
-      ctx(),
+      ctx({ humanConfirmed: true }),
     );
 
     expect(res[0].error).toBeUndefined();
@@ -250,7 +252,7 @@ describe('executeCommands — fail-CLOSED governance configuration', () => {
 
     const res = await executeCommands(
       [{ command: 'create_project', params: { name: 'Default Tenant Program' } }] as any,
-      ctx(),
+      ctx({ humanConfirmed: true }), // the person confirmed the proposal (P0-12)
     );
 
     expect(res[0].error).toBeUndefined();

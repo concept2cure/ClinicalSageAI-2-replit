@@ -9,7 +9,8 @@
  *   thread_id    — captured for continuity across turns
  *   orchestration — metadata (noop at this layer)
  *   text         — token chunk appended to the streaming message
- *   done         — captures latencyMs + provider (fallback detection)
+ *   done         — captures latencyMs + provider (fallback detection), and why
+ *                  the loop stopped (stoppedReason) with its rounds
  *   post_done    — cleaned response + executedActions chips
  *   warning      — degraded-mode signal appended to the message's warnings
  *   grounding_strip — evidence verdict stored for the grounding chip on the reply
@@ -51,15 +52,27 @@ export type {
   RunControlStatus,
   UseAnaChatReturn,
   DriveSseEvent,
+  DriveTurnControls,
+  AnaSendOptions,
   AnaProgressPhase,
+  AnaPlanStep,
+  AnaPlanChange,
+  AnaContextUsed,
+  AnaTurnRecordStatus,
 } from './useAnaChat.types';
 
 import {
   advanceProgress,
+  applyPlanEvent,
   closeProgress,
+  readContextUsed,
+  readPlanSteps,
+  readTurnEnding,
+  readTurnRecord,
   settleRunningCalls,
   CLIENT_PHASE_LABELS,
 } from './anaProgress';
+import { getAnaLockedScreens } from './anaLockedScreens';
 
 import type {
   AnaChatAction,
@@ -75,7 +88,10 @@ import type {
   RunControlStatus,
   UseAnaChatReturn,
   DriveSseEvent,
+  DriveTurnControls,
+  AnaSendOptions,
 } from './useAnaChat.types';
+
 
 /**
  * Abort the stream if no bytes arrive for this long. Guards against a stalled
@@ -84,8 +100,22 @@ import type {
  */
 const STREAM_IDLE_TIMEOUT_MS = 90_000;
 
+/** When to ask the server, by run id, for the record of a turn that ended here first. */
+const RECORD_CONFIRM_WAITS_MS = [1_500, 4_000];
+
+
+
 /** Client-side cap on the tool result kept for the inspect disclosure (state size). */
 const TOOL_RESULT_VIEW_CAP = 4000;
+
+/**
+ * What POST /api/ana-ri/stream/:runId/control accepts. The first four are a
+ * person's controls; `screen_report` is the app's observation, which the
+ * server queues for her next round without recording it as anyone's decision.
+ */
+type RunControlAction = 'pause' | 'resume' | 'interject' | 'cancel' | 'screen_report' | 'move_landed';
+
+
 
 /**
  * Map a parsed `assemble_crl_premortem_artifact` tool result into the client
@@ -93,7 +123,7 @@ const TOOL_RESULT_VIEW_CAP = 4000;
  * artifact. Exported for unit testing the parse in isolation from the stream.
  */
 export function mapCrlPremortemArtifact(
-  parsed: Record<string, unknown> | null | undefined
+  parsed: Record<string, unknown> | null | undefined,
 ): import('./CrlPremortemPanel').CrlPremortemArtifact | null {
   if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
   const a = parsed.artifact;
@@ -111,7 +141,7 @@ export function mapCrlPremortemArtifact(
  * never re-flagged as sealable.
  */
 export function mapBriefingPremortem(
-  parsed: Record<string, unknown> | null | undefined
+  parsed: Record<string, unknown> | null | undefined,
 ): BriefingBookPremortemResult | null {
   if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
   const pm = parsed.premortem as Record<string, unknown> | undefined;
@@ -126,8 +156,7 @@ export function mapBriefingPremortem(
     anticipated: true,
     perQuestion,
     unmappedChallenges: unmapped,
-    overallRisk:
-      (pm.overallRisk as BriefingBookPremortemResult['overallRisk']) ?? 'insufficient_data',
+    overallRisk: (pm.overallRisk as BriefingBookPremortemResult['overallRisk']) ?? 'insufficient_data',
     precedentCount: typeof pm.precedentCount === 'number' ? pm.precedentCount : 0,
     dataSource: pm.dataSource === 'live' ? 'live' : 'fixture',
     // Sample/not_assessed is never sealable: only a true server flag passes.
@@ -143,16 +172,14 @@ export function mapBriefingPremortem(
  * Exported for unit testing the parse in isolation from the SSE stream.
  */
 export function mapVerificationResult(
-  parsed: Record<string, unknown> | null | undefined
+  parsed: Record<string, unknown> | null | undefined,
 ): VerificationResult | null {
   if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
   const div = parsed.divergence;
   return {
     ok: Boolean(parsed.ok),
     missingRequiredStrings: Array.isArray(parsed.missingRequiredStrings)
-      ? (parsed.missingRequiredStrings as unknown[]).filter(
-          (s): s is string => typeof s === 'string'
-        )
+      ? (parsed.missingRequiredStrings as unknown[]).filter((s): s is string => typeof s === 'string')
       : [],
     requiredStringsChecked:
       typeof parsed.requiredStringsChecked === 'number' ? parsed.requiredStringsChecked : undefined,
@@ -162,22 +189,21 @@ export function mapVerificationResult(
   };
 }
 
+
+
+
+
 /**
  * Map a parsed `check_dossier_consistency` tool result into the client
  * ConsistencyResult shape. Returns null for an error envelope or non-object.
  * Mirrors mapVerificationResult; exported for unit testing in isolation.
  */
 export function mapConsistencyResult(
-  parsed: Record<string, unknown> | null | undefined
+  parsed: Record<string, unknown> | null | undefined,
 ): ConsistencyResult | null {
   if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
 
-  const allowedVerdicts: ConsistencyVerdict[] = [
-    'clean',
-    'minor_issues',
-    'needs_review',
-    'blocker',
-  ];
+  const allowedVerdicts: ConsistencyVerdict[] = ['clean', 'minor_issues', 'needs_review', 'blocker'];
   const verdict = allowedVerdicts.includes(parsed.verdict as ConsistencyVerdict)
     ? (parsed.verdict as ConsistencyVerdict)
     : 'clean';
@@ -253,11 +279,16 @@ const TOOL_LABELS: Record<string, string> = {
   verify_docx_against_source: 'Verifying against your source',
 };
 
+
 function toolLabel(name: string): string {
   if (TOOL_LABELS[name]) return TOOL_LABELS[name];
   const spaced = name.replace(/_/g, ' ').trim();
   return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : 'Running a tool';
 }
+
+
+
+
 
 /**
  * Persisted tool-trace entries → the transcript's step rows. Exported for its
@@ -266,9 +297,7 @@ function toolLabel(name: string): string {
  * same whether it was watched live or reopened later.
  */
 export function hydrateToolTrace(
-  trace:
-    | Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }>
-    | undefined
+  trace: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }> | undefined,
 ): AnaToolCall[] {
   if (!Array.isArray(trace)) return [];
   const calls: AnaToolCall[] = [];
@@ -278,7 +307,13 @@ export function hydrateToolTrace(
     const label = typeof t.label === 'string' && t.label ? t.label : toolLabel(name);
     const humanStep = label.charAt(0).toLowerCase() + label.slice(1);
     if (t.status === 'success') {
-      calls.push({ name, label, status: 'success' });
+      // The persisted result summary rides along as the call's `result`: it
+      // is the server's capped copy of what the tool returned, and it is how
+      // a reopened thread still knows which authoring document a
+      // draft_authoring_document step produced (ConversationThread reads the
+      // ids out of it). Absent when the trace carried none.
+      const result = typeof t.resultSummary === 'string' && t.resultSummary ? t.resultSummary : undefined;
+      calls.push({ name, label, status: 'success', ...(result ? { result } : {}) });
     } else if (t.status === 'not_found') {
       calls.push({
         name,
@@ -298,12 +333,83 @@ export function hydrateToolTrace(
   return calls;
 }
 
+/**
+ * What the person is told when the stream route refuses a turn outright. Each
+ * refusal says what actually happened: a rate limit or a usage cap was read as
+ * "AnA is unreachable — the network or the AI gateway did not respond", which
+ * sent people to check a connection that was fine.
+ */
+export function streamRefusalText(err: unknown): string {
+  const failure = err as { code?: string; status?: number } | undefined;
+  if (failure?.code === 'GATEWAY_UNAVAILABLE') {
+    return 'No AI provider is configured for this deployment, so AnA cannot answer. This is a server setting, not your connection. Prior turns are preserved.';
+  }
+  if (failure?.code === 'WEEKLY_LIMIT_EXCEEDED') {
+    return 'This organization has reached its weekly limit for AnA requests, so this one was not sent. An administrator can review the limit. Prior turns are preserved.';
+  }
+  if (failure?.status === 429) {
+    return 'Too many AnA requests in the last minute, so this one was not taken. Wait a moment and ask again. Prior turns are preserved.';
+  }
+  return 'AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved.';
+}
+
 export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const [messages, setMessages] = useState<AnaChatMessage[]>([]);
+  /* The transcript `send` forwards as `conversation_history`, read at call
+     time. Read from `send`'s closure it was the transcript of the render
+     `send` was made in, so a caller that clears the conversation and asks in
+     the same tick — the conversation screen starting a new conversation with
+     the question it was handed — sent the conversation it had just cleared as
+     the new one's history. The server reads that history whenever the thread
+     is new, so AnA answered a fresh conversation inside the last one. `reset`
+     and `loadThread` write it as they replace the transcript. */
+  const messagesRef = useRef<AnaChatMessage[]>(messages);
+  messagesRef.current = messages;
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoadingThread, setIsLoadingThread] = useState(false);
   const threadIdRef = useRef<string | null>(options.initialThreadId || null);
   const abortRef = useRef<AbortController | null>(null);
+  /* The latest options, read by `send` at call time. `send` is memoized and
+     its dependency list had drifted from what its body reads — `driveMode` and
+     `selectedSourceIds` were missing — so a demonstration started while Live
+     Drive was already on was sent as an ordinary turn (3 moves, then silence).
+     Reading through a ref makes that class of drift impossible. */
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+  /* True once the in-flight turn has MOVED the screen (a `drive_navigation`
+     or `drive_action` reached the shell). Such a turn is not aborted when the
+     hosting panel unmounts — its move is what unmounts it.
+
+     Not set by an enabled `drive_state`. It used to be, and an enabled drive
+     is only permission to move: a turn that had it and never used it was
+     exempt from the unmount abort all the same, so the person left the panel
+     and the answer kept generating headless, for nobody. Whether the turn was
+     drive-enabled at all is a separate, per-turn fact (see `send`), and it is
+     that fact which releases the shell's drive when the turn ends. */
+  const drivingRef = useRef(false);
+  /* Set while the in-flight turn is drive-enabled: tells the shell the person
+     has ended that turn early (`drive_stopped`). Called, then cleared, by every
+     path here that ends a turn before it finishes — see haltTurnDrive. */
+  const haltDriveRef = useRef<(() => void) | null>(null);
+  /* Halt the in-flight turn's drive on the shell, once, before anything is
+     awaited. Stop cancels the run on the server FIRST and drops the stream
+     only when that answers, and until then the stream goes on delivering moves
+     the server had already written — which the shell applies while its drive
+     is live. Only the drive strip's Stop halted the drive itself; the rail's,
+     the conversation screen's and the docks' reach nothing but this hook, so
+     the screen went on moving through the stopped turn's moves, queued and
+     still arriving. A new or other conversation replacing a driving turn
+     abandons it the same way. */
+  const haltTurnDrive = useCallback(() => {
+    const halt = haltDriveRef.current;
+    haltDriveRef.current = null;
+    if (!halt) return;
+    try {
+      halt();
+    } catch {
+      /* listener error — the turn is still ended below */
+    }
+  }, []);
   // Live mirror of isStreaming for send()'s re-entrancy guard. The state value
   // is a render-time snapshot: a caller that aborts (reset/stop) and re-sends
   // in the same tick would be wrongly no-opped by the stale closure — the
@@ -316,25 +422,40 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const [runStatus, setRunStatus] = useState<RunControlStatus>(null);
 
   /**
-   * Send a mid-run control action for the active run. `pause` holds AnA at the
-   * next agentic-round boundary; `interject` splices a steering message into the
-   * next round; `resume` continues; `cancel` stops the run server-side. Returns
-   * false when there is no active run or the request fails.
+   * Send a mid-run control action for a run. `pause` holds AnA at the next
+   * agentic-round boundary; `interject` splices a person's steering message
+   * into the next round; `resume` continues; `cancel` stops the run
+   * server-side; `screen_report` tells her what the app observed on screen (a
+   * move that did not land) — an observation, not a human control. Returns
+   * false, without a request, when there is no run to address, and false when
+   * the request fails.
+   *
+   * The run is an argument, not read here, because not every caller means
+   * the run in flight NOW: a drive turn's controls are bound to the run that
+   * turn started (see `send`). `control` below is the in-flight case.
    */
-  const control = useCallback(
+  const controlRun = useCallback(
     async (
-      action: 'pause' | 'resume' | 'interject' | 'cancel',
-      message?: string
+      runId: string | null,
+      action: RunControlAction,
+      message?: string,
+      moveId?: string,
     ): Promise<boolean> => {
-      const runId = runIdRef.current;
       if (!runId) return false;
       try {
-        const res = await fetch(`/api/ana-ri/stream/${encodeURIComponent(runId)}/control`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          credentials: 'include',
-          body: JSON.stringify(message !== undefined ? { action, message } : { action }),
-        });
+        const res = await fetch(
+          `/api/ana-ri/stream/${encodeURIComponent(runId)}/control`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            credentials: 'include',
+            body: JSON.stringify({
+              action,
+              ...(message !== undefined ? { message } : {}),
+              ...(moveId !== undefined ? { moveId } : {}),
+            }),
+          },
+        );
         if (!res.ok) return false;
         // Optimistic local status; the server also echoes control SSE events.
         if (action === 'pause') setRunStatus('paused');
@@ -345,7 +466,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         return false;
       }
     },
-    []
+    [],
+  );
+  /** A control action for the run in flight now. */
+  const control = useCallback(
+    (action: RunControlAction, message?: string) => controlRun(runIdRef.current, action, message),
+    [controlRun],
   );
 
   const pause = useCallback(() => control('pause'), [control]);
@@ -354,14 +480,68 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   // lands at the NEXT round boundary, which can be many seconds away; until
   // the `interjected` event confirms it, this is the only evidence it exists.
   const [pendingSteers, setPendingSteers] = useState<string[]>([]);
-  const interject = useCallback(
-    async (message: string) => {
-      const ok = await control('interject', message);
-      if (ok) setPendingSteers(prev => [...prev, message]);
+  /* A person's steer into a run — the one path for it, whether typed into the
+     composer (`interject`) or into the drive strip (a drive turn's controls).
+     Accepted, it waits in `pendingSteers` until the server's `interjected`
+     echo confirms it spliced. The echo is matched by POSITION, so a steer the
+     server accepted without being queued here would consume the confirmation
+     meant for another, still-waiting one.
+
+     Queued only if its run is still in flight when the acceptance arrives. A
+     run whose last round ended while the request was out never splices it,
+     and the turn's end has already cleared the queue: added after that, it
+     sat as "waiting to reach AnA" with no run to reach, and the next turn's
+     first echo consumed it instead of the steer that echo confirmed. It is
+     still reported accepted — the server did accept it — and is lost with the
+     run, like any steer the run never reached. */
+  const steerRun = useCallback(
+    async (runId: string | null, message: string) => {
+      const ok = await controlRun(runId, 'interject', message);
+      if (ok && runId !== null && runIdRef.current === runId) {
+        setPendingSteers(prev => [...prev, message]);
+      }
       return ok;
     },
-    [control]
+    [controlRun],
   );
+  const interject = useCallback(
+    (message: string) => steerRun(runIdRef.current, message),
+    [steerRun],
+  );
+
+  /**
+   * A turn that ended here before the server said whether it filed the
+   * record — Stop, a timeout, a dropped connection — is shown "not confirmed".
+   * The server usually did file it (a stopped turn is recorded as stopped), and
+   * the record carries the run id, so ask for it: once shortly after, once
+   * more a little later. Only a turn still unconfirmed is updated; anything
+   * the server cannot confirm stays unconfirmed, never recorded by default.
+   */
+  const confirmTurnRecordByRun = useCallback((runId: string, messageId: string) => {
+    void (async () => {
+      for (const waitMs of RECORD_CONFIRM_WAITS_MS) {
+        await new Promise((r) => setTimeout(r, waitMs));
+        try {
+          const res = await fetch(`/api/ana-ri/turn-records?run_id=${encodeURIComponent(runId)}&limit=1`, {
+            headers: getAuthHeaders(),
+            credentials: 'include',
+          });
+          if (!res.ok) return;
+          const body = await res.json().catch(() => null);
+          const rec = body?.data?.records?.[0];
+          const turnRecord = rec ? readTurnRecord({ status: 'recorded', id: rec.id, sha256: rec.recordSha256 }) : undefined;
+          if (turnRecord) {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === messageId && m.turnRecord?.status === 'unconfirmed' ? { ...m, turnRecord } : m)),
+            );
+            return;
+          }
+        } catch {
+          return;
+        }
+      }
+    })();
+  }, []);
 
   const stop = useCallback(async () => {
     // Cancel server-side too (the fetch abort alone leaves the server
@@ -375,6 +555,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     // event — inverting the one distinction the audit is there to draw. The
     // cancel already aborts the run server-side, so waiting for it costs
     // nothing: generation stops on the server's acknowledgement, not on ours.
+    // The screen is another matter, so the drive is halted before the wait.
+    haltTurnDrive();
     if (runIdRef.current) {
       try {
         await control('cancel');
@@ -383,27 +565,42 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       }
     }
     abortRef.current?.abort();
-  }, [control]);
+  }, [control, haltTurnDrive]);
+  const stopRef = useRef(stop);
+  stopRef.current = stop;
 
   // Abort any in-flight stream when the hosting panel unmounts — otherwise the
   // fetch keeps the connection (and the server-side generation) alive until
   // completion or the idle timeout.
+  //
+  // Except a turn that has moved the screen (see drivingRef). AnA moving the
+  // person to another screen is what unmounts a panel that owns its
+  // conversation, and aborting there killed every driven turn at its first
+  // move: the screen changed once, the answer stopped mid-sentence and the
+  // server closed the run as `client_disconnected`. A driving turn runs to its
+  // end — its moves keep reaching the shell through `onDriveEvent` — and Take
+  // over / Stop still end it on request. A turn that was allowed to drive but
+  // has not moved is aborted like any other: the person left, not AnA.
   useEffect(() => {
     return () => {
+      if (drivingRef.current) return;
       abortRef.current?.abort();
     };
   }, []);
 
   const reset = useCallback(() => {
+    haltTurnDrive();
     abortRef.current?.abort();
     threadIdRef.current = null;
+    messagesRef.current = [];
     setMessages([]);
     isStreamingRef.current = false;
     setIsStreaming(false);
-  }, []);
+  }, [haltTurnDrive]);
 
   const loadThread = useCallback(async (threadId: string) => {
     if (!threadId) return;
+    haltTurnDrive();
     abortRef.current?.abort();
     isStreamingRef.current = false;
     setIsStreaming(false);
@@ -431,13 +628,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           content?: string;
           metadata?: {
             reasoning?: string;
-            toolTrace?: Array<{
-              tool?: string;
-              label?: string;
-              status?: string;
-              resultSummary?: string;
-            }>;
+            toolTrace?: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }>;
             humanControls?: Array<{ action?: string; message?: string }>;
+            plan?: unknown;
+            stoppedReason?: unknown;
+            rounds?: unknown;
           } | null;
         }>;
       };
@@ -467,21 +662,29 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           const interjections =
             m.role === 'assistant'
               ? (m.metadata?.humanControls ?? [])
-                  .filter(
-                    c => c?.action === 'interject' && typeof c.message === 'string' && c.message
-                  )
+                  .filter(c => c?.action === 'interject' && typeof c.message === 'string' && c.message)
                   .map(c => c.message as string)
               : [];
+          // Her last declared plan, as the server validated it. Only the final
+          // list is persisted, not when each step changed, so no plan changes
+          // are invented for it.
+          const plan = m.role === 'assistant' ? readPlanSteps(m.metadata?.plan) : null;
+          // Why the turn stopped, when it was not because she was done — so a
+          // turn the round limit cut short does not reopen as a finished one.
+          const ending = m.role === 'assistant' ? readTurnEnding(m.metadata) : {};
           return {
             id: `t-${threadId}-${idx}`,
             role: m.role as 'user' | 'assistant',
             text: m.content as string,
+            ...(plan ? { plan } : {}),
+            ...ending,
             ...(reasoning ? { thinking: reasoning } : {}),
             ...(toolCalls.length > 0 ? { toolCalls } : {}),
             ...(interjections.length > 0 ? { interjections } : {}),
           };
         });
       threadIdRef.current = threadId;
+      messagesRef.current = hydrated;
       setMessages(hydrated);
     } catch (err: any) {
       console.warn('[useAnaChat] loadThread failed:', err?.message);
@@ -489,16 +692,54 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     } finally {
       setIsLoadingThread(false);
     }
-  }, []);
+  }, [haltTurnDrive]);
 
   const send = useCallback(
     async (
       rawText: string,
       attachments?: MessageAttachment[],
-      sendOpts?: { toolsOverride?: string[]; agentMode?: boolean }
+      sendOpts?: AnaSendOptions,
     ) => {
+      // Read at call time, never from the memoized closure (see optionsRef).
+      const options = optionsRef.current;
       const text = rawText.trim();
       if (!text || isStreamingRef.current) return;
+      drivingRef.current = false;
+      /* The run THIS turn started, from its own `run_started`. The drive
+         controls below are bound to it, never to `runIdRef.current`: the shell
+         holds a turn's controls past the turn (its move queue drains after the
+         stream ends), and a report about a move that turn made, read through
+         the live ref, was delivered to whichever run was in flight by then —
+         telling a newer turn that a move it never made had failed. */
+      let turnRunId: string | null = null;
+      /* Whether this turn received an enabled `drive_state`. It is what
+         releases the shell's drive when the turn ends — moved or not — and it
+         is deliberately not `drivingRef`, which only a move sets. */
+      let turnDriveEnabled = false;
+      /* This turn's run, while it is still the run in flight; otherwise null,
+         which `controlRun` answers with false and no request. */
+      const ownRun = (): string | null =>
+        turnRunId !== null && runIdRef.current === turnRunId ? turnRunId : null;
+      // Handed to the shell with every drive event (see DriveTurnControls).
+      const driveControls: DriveTurnControls = {
+        stop: () => {
+          void stopRef.current?.();
+        },
+        interject: (message: string) => steerRun(ownRun(), message),
+        /* The app's report, on its own channel. It used to ride `interject`,
+           so a move that failed was recorded as the person's steer and shown
+           back to them as "You steered AnA". Not a steer, so not queued as a
+           pending one either. */
+        reportScreen: (message: string, moveId?: string) =>
+          controlRun(ownRun(), 'screen_report', message, moveId),
+        /* The server holds her next round until the screen settles each move
+           it sent (drive_acks below); a landing settles one without a word
+           for the model. */
+        moveLanded: (moveId: string) => controlRun(ownRun(), 'move_landed', undefined, moveId),
+      };
+      /* Armed in `haltDriveRef` once this turn is drive-enabled (see
+         haltTurnDrive), and disarmed when the turn ends. */
+      const haltThisTurn = () => options.onDriveEvent?.({ type: 'drive_stopped' }, driveControls);
 
       const sentAt = Date.now();
       const userMsg: AnaChatMessage = {
@@ -520,7 +761,6 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           role: 'assistant',
           text: '',
           streaming: true,
-          ...(sendOpts?.agentMode ? { agentMode: true } : {}),
           statusPhase: 'Planning response…',
           sentAt,
         },
@@ -539,6 +779,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // user-initiated stop so the message reads correctly.
       let idleTimer: ReturnType<typeof setTimeout> | null = null;
       let didTimeout = false;
+      // Set when the server's closing event said whether the turn was recorded;
+      // only a turn it did not speak for is looked up afterwards.
+      let serverStatedRecord = false;
       const clearIdleTimer = () => {
         if (idleTimer) {
           clearTimeout(idleTimer);
@@ -629,9 +872,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       const pinnedFromShell: Array<number | string> = (() => {
         try {
           const g = (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS;
-          return Array.isArray(g)
-            ? (g as Array<number | string>).filter(v => v != null && v !== '')
-            : [];
+          return Array.isArray(g) ? (g as Array<number | string>).filter((v) => v != null && v !== '') : [];
         } catch {
           return [];
         }
@@ -641,11 +882,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           ? options.selectedSourceIds
           : pinnedFromShell;
       if (pinnedFromShell.length > 0) {
-        try {
-          delete (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS;
-        } catch {
-          /* noop */
-        }
+        try { delete (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS; } catch { /* noop */ }
       }
 
       const body = JSON.stringify({
@@ -681,7 +918,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           module: ac?.moduleCode,
           artifactStatus: ac?.artifactStatus,
         },
-        conversation_history: messages.slice(-10).map(m => ({
+        conversation_history: messagesRef.current.slice(-10).map(m => ({
           role: m.role,
           content: m.text,
         })),
@@ -698,10 +935,26 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         model_override: options.modelOverride ?? undefined,
         // Live Drive opt-in — sent only while the toggle is on, so the common
         // case stays byte-identical and the server does zero extra work.
-        live_drive: options.liveDrive === true ? true : undefined,
+        // Screens closed to this person (launch scope, plan, grants) — AnA's
+        // self-drive tools refuse them instead of moving onto a locked panel.
+        locked_screens: (() => {
+          const locked = getAnaLockedScreens();
+          return locked.length > 0 ? locked : undefined;
+        })(),
+        live_drive: (sendOpts?.liveDrive ?? options.liveDrive) === true ? true : undefined,
+        /* This chat's drive events reach the shell, which reports every move
+           back — landed, refused or dropped — so the server may wait for the
+           screen before AnA's next round. A host without the shell's handler
+           reports nothing, and must not be waited on. */
+        drive_acks:
+          (sendOpts?.liveDrive ?? options.liveDrive) === true && options.onDriveEvent ? true : undefined,
         // Demonstration mode rides only on opted-in turns (the server ignores
         // it otherwise), so a stale mode can never outlive the toggle.
-        drive_mode: options.liveDrive === true && options.driveMode === 'demo' ? 'demo' : undefined,
+        drive_mode:
+          (sendOpts?.liveDrive ?? options.liveDrive) === true &&
+          (sendOpts?.driveMode ?? options.driveMode) === 'demo'
+            ? 'demo'
+            : undefined,
       });
 
       let streamedText = '';
@@ -716,7 +969,23 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         });
 
         if (!res.ok || !res.body) {
-          throw new Error(`Stream request failed: ${res.status}`);
+          /* Carry the server's own reason. A 503 GATEWAY_UNAVAILABLE means the
+             deployment has no AI provider configured — nothing about the
+             network or the user's connection — and the message below must
+             say that, not "unreachable". */
+          let code: string | undefined;
+          try {
+            // Nested ({ error: { code } }) from the route; top-level ({ code })
+            // from the platform's usage limiter.
+            const j = (await res.clone().json()) as { error?: { code?: string } | string; code?: string };
+            code = (typeof j?.error === 'object' ? j.error?.code : undefined) ?? j?.code;
+          } catch {
+            /* not JSON: keep the status-only error */
+          }
+          const e = new Error(`Stream request failed: ${res.status}`) as Error & { code?: string; status?: number };
+          e.code = code;
+          e.status = res.status;
+          throw e;
         }
 
         const reader = res.body.getReader();
@@ -724,6 +993,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         let buffer = '';
 
         armIdleTimer();
+        // Every server path closes a turn with post_done or error. A stream
+        // that ends without either did not finish, whatever it rendered.
+        let turnClosed = false;
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -763,8 +1035,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     ? {
                         ...m,
                         detectedLens: lens && lens !== 'auto' ? lens : m.detectedLens,
-                        suggestedActions:
-                          actions && actions.length > 0 ? actions : m.suggestedActions,
+                        suggestedActions: actions && actions.length > 0 ? actions : m.suggestedActions,
                         detectedDocumentType: docTemplate?.chipLabel ?? m.detectedDocumentType,
                         detectedDocumentTemplate: docTemplate ?? m.detectedDocumentTemplate,
                       }
@@ -776,8 +1047,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // have arrived yet (statusPhase is cleared on first text chunk).
               const phase: string = event.message || event.phase || '';
               if (phase) {
-                const phaseId: string =
-                  typeof event.phase === 'string' && event.phase ? event.phase : phase;
+                const phaseId: string = typeof event.phase === 'string' && event.phase ? event.phase : phase;
                 const at = Date.now();
                 setMessages(prev =>
                   prev.map(m =>
@@ -806,12 +1076,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                         ...m,
                         text: next,
                         statusPhase: undefined,
-                        progress: advanceProgress(
-                          m.progress,
-                          'composing',
-                          CLIENT_PHASE_LABELS.composing,
-                          at
-                        ),
+                        progress: advanceProgress(m.progress, 'composing', CLIENT_PHASE_LABELS.composing, at),
                       }
                     : m
                 )
@@ -831,19 +1096,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                         ...m,
                         thinking: thinkingNow,
                         statusPhase: undefined,
-                        progress: advanceProgress(
-                          m.progress,
-                          'reasoning',
-                          CLIENT_PHASE_LABELS.reasoning,
-                          at
-                        ),
+                        progress: advanceProgress(m.progress, 'reasoning', CLIENT_PHASE_LABELS.reasoning, at),
                       }
                     : m
                 )
               );
             } else if (event.type === 'run_started') {
-              // Capture the run id so the user can pause/interject/cancel it.
+              // Capture the run id so the user can pause/interject/cancel it,
+              // and bind this turn's drive controls to it (see turnRunId).
               runIdRef.current = typeof event.runId === 'string' ? event.runId : null;
+              turnRunId = runIdRef.current;
               setRunStatus('running');
             } else if (event.type === 'approval_required') {
               // AnA has HELD the turn at an action only a person may take.
@@ -912,6 +1174,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // the request when a governance policyHint pinned the strategy).
               capturedEffortUsed =
                 typeof event.effortUsed === 'string' ? event.effortUsed : undefined;
+              // Why the loop stopped and how many rounds it ran — only values
+              // the server produces; see readTurnEnding. A turn the round limit
+              // cut short is not a finished one, and every surface says so.
+              const ending = readTurnEnding(event);
               // The answer has landed; the server's background finishing work
               // (evidence check, actions, persistence) runs until `post_done`.
               const at = Date.now();
@@ -920,17 +1186,14 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   m.id === assistantId
                     ? {
                         ...m,
-                        progress: advanceProgress(
-                          m.progress,
-                          'finalizing',
-                          CLIENT_PHASE_LABELS.finalizing,
-                          at
-                        ),
+                        ...ending,
+                        progress: advanceProgress(m.progress, 'finalizing', CLIENT_PHASE_LABELS.finalizing, at),
                       }
                     : m
                 )
               );
             } else if (event.type === 'post_done') {
+              turnClosed = true;
               const cleaned: string | undefined = event.cleanedResponse;
               const actions: AnaChatAction[] | undefined = Array.isArray(event.executedActions)
                 ? (event.executedActions as AnaChatAction[])
@@ -941,13 +1204,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               const groundingSources: string[] | undefined = Array.isArray(event.enrichmentSources)
                 ? event.enrichmentSources.filter((s: unknown): s is string => typeof s === 'string')
                 : undefined;
+              const turnRecord = readTurnRecord(event.turnRecord);
               setMessages(prev =>
                 prev.map(m => {
                   if (m.id !== assistantId) return m;
                   return {
                     ...m,
                     text:
-                      typeof cleaned === 'string' && cleaned.trim().length > 0 ? cleaned : m.text,
+                      typeof cleaned === 'string' && cleaned.trim().length > 0
+                        ? cleaned
+                        : m.text,
                     streaming: false,
                     statusPhase: undefined,
                     completedAt: Date.now(),
@@ -960,8 +1226,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                         : m.groundingSources,
                     latencyMs: capturedLatencyMs,
                     fallback:
-                      capturedProvider !== undefined ? capturedProvider !== 'anthropic' : undefined,
+                      capturedProvider !== undefined
+                        ? capturedProvider !== 'anthropic'
+                        : undefined,
                     effortUsed: capturedEffortUsed ?? m.effortUsed,
+                    turnRecord: turnRecord ?? m.turnRecord,
                   };
                 })
               );
@@ -977,17 +1246,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                           validated: Boolean(ev.validated),
                           sourceCount: typeof ev.source_count === 'number' ? ev.source_count : 0,
                           groundedClaims:
-                            typeof ev.grounded_claim_count === 'number'
-                              ? ev.grounded_claim_count
-                              : 0,
+                            typeof ev.grounded_claim_count === 'number' ? ev.grounded_claim_count : 0,
                           weakClaims:
                             typeof ev.weak_or_ungrounded_claim_count === 'number'
                               ? ev.weak_or_ungrounded_claim_count
                               : 0,
                           missingSupport:
-                            typeof ev.missing_support_count === 'number'
-                              ? ev.missing_support_count
-                              : 0,
+                            typeof ev.missing_support_count === 'number' ? ev.missing_support_count : 0,
                           riskSummary:
                             typeof ev.reviewer_risk_summary === 'string'
                               ? ev.reviewer_risk_summary
@@ -1019,8 +1284,23 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // applies (v2/liveDrive.ts + v2/surfaceActions.ts). A listener
               // throw must not kill the stream: the turn's answer matters more
               // than the drive.
+              if (event.type === 'drive_state') {
+                // Once enabled, the turn owes the shell a `drive_turn_end`. A
+                // later `drive_state` (a mid-turn promotion to demo mode) never
+                // takes that back. Armed for an early stop on the first enable
+                // only: a promotion arriving after Stop must not re-arm it.
+                if (event.enabled === true && !turnDriveEnabled) {
+                  turnDriveEnabled = true;
+                  if (abortRef.current === abortCtl) haltDriveRef.current = haltThisTurn;
+                }
+              } else {
+                // A move. Marked BEFORE the shell sees it: applying it is what
+                // unmounts a panel that owns this chat, and the unmount must
+                // already find the turn driving or it aborts it.
+                drivingRef.current = true;
+              }
               try {
-                options.onDriveEvent?.(event as DriveSseEvent);
+                options.onDriveEvent?.(event as DriveSseEvent, driveControls);
               } catch {
                 /* listener error — drive skips, stream continues */
               }
@@ -1029,7 +1309,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               if (msg) {
                 setMessages(prev =>
                   prev.map(m =>
-                    m.id === assistantId ? { ...m, warnings: [...(m.warnings || []), msg] } : m
+                    m.id === assistantId
+                      ? { ...m, warnings: [...(m.warnings || []), msg] }
+                      : m
                   )
                 );
               }
@@ -1058,6 +1340,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                               name,
                               label,
                               status: 'running' as const,
+                              ...(typeof event.toolUseId === 'string' && event.toolUseId
+                                ? { toolUseId: event.toolUseId }
+                                : {}),
                               startedAt: Date.now(),
                               ...(round ? { round } : {}),
                               ...(event.input !== undefined ? { input: event.input } : {}),
@@ -1069,9 +1354,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 );
               }
             } else if (event.type === 'tool_result') {
-              // Resolve the most recent running call for this tool name. Prefer
-              // the server's authoritative status; fall back to parsing the
-              // result for an error envelope when status wasn't sent.
+              // Resolve the running call this result belongs to — by toolUseId,
+              // else the first running call of that name in the result's own
+              // step (see the pairing block below; last-in matching was a
+              // defect). Prefer the server's authoritative status; fall back to
+              // parsing the result for an error envelope when status wasn't sent.
               const name: string = event.name || '';
               let failed = false;
               let parsedResult: Record<string, unknown> | null = null;
@@ -1094,9 +1381,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // E14 — capture the CRL/RTF pre-mortem decision artifact so the
               // Document Studio can render the board-ready pre-mortem panel.
               const crlPremortem =
-                name === 'assemble_crl_premortem_artifact'
-                  ? mapCrlPremortemArtifact(parsedResult)
-                  : null;
+                name === 'assemble_crl_premortem_artifact' ? mapCrlPremortemArtifact(parsedResult) : null;
               // Capture the dossier-consistency sweep so the Document Studio
               // ConsistencyPanel (the second verification surface) can show the
               // verdict + per-divergence conflicts. This is the natural surface
@@ -1117,11 +1402,45 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   if (m.id !== assistantId) return m;
                   let next = m;
                   if (m.toolCalls) {
-                    const idx = [...m.toolCalls]
-                      .reverse()
-                      .findIndex(t => t.name === name && t.status === 'running');
-                    if (idx !== -1) {
-                      const realIdx = m.toolCalls.length - 1 - idx;
+                    /* Pair the result with the call that produced it.
+
+                       This used to take the MOST RECENT running call of the same
+                       name. The server runs a step's calls concurrently and emits
+                       their results in the ORIGINAL call order, so first-reported
+                       results were matched last-in — two same-named calls in one
+                       step were swapped every time, not by a race. Each query was
+                       shown against the other's results, on the very rows kept so
+                       a reviewer can see what each step returned.
+
+                       By id when the server sends one. Without it (an older server
+                       mid-deploy) the FIRST running call of the name is the right
+                       one, precisely because emission follows call order. */
+                    const resultId = typeof event.toolUseId === 'string' && event.toolUseId ? event.toolUseId : null;
+                    const byId = resultId
+                      ? m.toolCalls.findIndex(t => t.toolUseId === resultId && t.status === 'running')
+                      : -1;
+                    /* The fallback is confined to the result's own step. Running
+                       calls are settled only when a turn ends badly, never between
+                       steps, so a call a step left running is still "running" in
+                       the next one — and first-in matching by name alone would hand
+                       it the next step's result. */
+                    const resultRound = typeof event.round === 'number' && event.round > 0 ? event.round : undefined;
+                    const realIdx =
+                      byId !== -1
+                        ? byId
+                        : m.toolCalls.findIndex(
+                            t =>
+                              t.name === name &&
+                              t.status === 'running' &&
+                              /* A row that carries its own id is paired by that id
+                                 and nothing else. Once the server has said which
+                                 call a result belongs to, guessing by name could
+                                 pin it on a sibling — so the name fallback only
+                                 ever considers rows announced WITHOUT an id. */
+                              !t.toolUseId &&
+                              (resultRound === undefined || t.round === undefined || t.round === resultRound)
+                          );
+                    if (realIdx !== -1) {
                       const calls = m.toolCalls.slice();
                       // Keep a capped copy of the result for the audit disclosure
                       // so a reviewer can see exactly what this step returned,
@@ -1161,11 +1480,32 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               const title: string = event.title || 'Generated document';
               const content: string = event.content || '';
               const documentType: string | undefined = event.documentType;
-              if (content) {
+              // A draft persisted as an authoring document carries its id and
+              // program (docs/design/ANA_DOCUMENT_CANVAS.md); the thread reads
+              // the document itself from the authoring store, so such a draft
+              // is recorded even when the event carries no inline content.
+              const authoringDocId: string | undefined =
+                typeof event.authoringDocId === 'string' && event.authoringDocId.trim()
+                  ? event.authoringDocId.trim()
+                  : undefined;
+              const programId: string | undefined =
+                typeof event.programId === 'string' && event.programId.trim()
+                  ? event.programId.trim()
+                  : undefined;
+              if (content || authoringDocId) {
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
-                      ? { ...m, generatedDraft: { title, content, documentType } }
+                      ? {
+                          ...m,
+                          generatedDraft: {
+                            title,
+                            content,
+                            documentType,
+                            ...(authoringDocId ? { authoringDocId } : {}),
+                            ...(programId ? { programId } : {}),
+                          },
+                        }
                       : m
                   )
                 );
@@ -1210,12 +1550,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
-                      ? {
-                          ...m,
-                          intelligenceQuestion: question,
-                          intelligenceFlowState: flowState,
-                          intelligenceSessionId: sessionId,
-                        }
+                      ? { ...m, intelligenceQuestion: question, intelligenceFlowState: flowState, intelligenceSessionId: sessionId }
                       : m
                   )
                 );
@@ -1228,22 +1563,32 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
-                      ? {
-                          ...m,
-                          intelligenceFlowComplete: completion,
-                          intelligenceFlowState: flowState,
-                          intelligenceSessionId: sessionId,
-                          intelligenceQuestion: undefined,
-                        }
+                      ? { ...m, intelligenceFlowComplete: completion, intelligenceFlowState: flowState, intelligenceSessionId: sessionId, intelligenceQuestion: undefined }
                       : m
                   )
                 );
               }
+            } else if (event.type === 'plan' || event.type === 'context_used') {
+              // Her declared plan, and what the turn read before answering. Both
+              // parsed and applied by pure helpers in anaProgress.ts.
+              const at = Date.now();
+              const used = event.type === 'context_used' ? readContextUsed(event) : null;
+              setMessages(prev =>
+                prev.map(m => {
+                  if (m.id !== assistantId) return m;
+                  if (event.type === 'plan') return applyPlanEvent(m, event, at);
+                  return used ? { ...m, contextUsed: used } : m;
+                })
+              );
             } else if (event.type === 'war_game_report') {
               const report = event.report;
               if (report) {
                 setMessages(prev =>
-                  prev.map(m => (m.id === assistantId ? { ...m, warGameReport: report } : m))
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? { ...m, warGameReport: report }
+                      : m
+                  )
                 );
               }
             } else if (event.type === 'report_canvas') {
@@ -1258,11 +1603,23 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 );
               }
             } else if (event.type === 'error') {
+              // A failed turn is still recorded; say so before the error
+              // closes it, so the record line is not lost with the turn.
+              const turnRecord = readTurnRecord(event.turnRecord);
+              if (turnRecord) {
+                serverStatedRecord = true;
+                setMessages(prev => prev.map(m => (m.id === assistantId ? { ...m, turnRecord } : m)));
+              }
               throw new Error(event.error || 'Stream error');
             }
           }
         }
+        if (!turnClosed) throw new Error('The stream ended before the turn finished');
       } catch (err: any) {
+        // The run this turn was served under, while it is still known: the
+        // record of an interrupted turn is looked up by it.
+        const interruptedRunId = runIdRef.current;
+        if (interruptedRunId && !serverStatedRecord) confirmTurnRecordByRun(interruptedRunId, assistantId);
         if (err?.name === 'AbortError' && didTimeout) {
           // Idle timeout — the stream went silent. Seal any partial tokens and
           // tell the user, rather than leaving a half-rendered reply.
@@ -1274,20 +1631,18 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 text:
                   m.text.length > 0
                     ? m.text
-                    : // Drop apologetic voice + generic "please try again" per
-                      // the microcopy rule; state what happened, the user
-                      // already sees the composer to retry.
-                      'AnA stopped responding before finishing this turn. The prior turns are preserved.',
+                    // Drop apologetic voice + generic "please try again" per
+                    // the microcopy rule; state what happened, the user
+                    // already sees the composer to retry.
+                    : 'AnA stopped responding before finishing this turn. The prior turns are preserved.',
                 streaming: false,
                 statusPhase: undefined,
                 completedAt: Date.now(),
+                interrupted: true,
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
-                toolCalls: settleRunningCalls(
-                  m.toolCalls,
-                  'Not finished — AnA stopped responding.',
-                  Date.now()
-                ),
+                toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — AnA stopped responding.', Date.now()),
                 warnings: [...(m.warnings || []), 'Response timed out'],
+                turnRecord: m.turnRecord ?? { status: 'unconfirmed' },
               };
             })
           );
@@ -1303,11 +1658,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     stopped: true,
                     completedAt: Date.now(),
                     progress: closeProgress(m.progress, 'stopped', Date.now()),
-                    toolCalls: settleRunningCalls(
-                      m.toolCalls,
-                      'Not finished — the run was stopped.',
-                      Date.now()
-                    ),
+                    toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the run was stopped.', Date.now()),
+                    turnRecord: m.turnRecord ?? { status: 'unconfirmed' },
                   }
                 : m
             )
@@ -1319,25 +1671,37 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               if (m.id !== assistantId) return m;
               return {
                 ...m,
-                text:
-                  m.text.length > 0
-                    ? m.text
-                    : 'AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved.',
+                text: m.text.length > 0 ? m.text : streamRefusalText(err),
                 streaming: false,
                 statusPhase: undefined,
                 completedAt: Date.now(),
+                interrupted: true,
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
-                toolCalls: settleRunningCalls(
-                  m.toolCalls,
-                  'Not finished — the connection was lost.',
-                  Date.now()
-                ),
+                toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the connection was lost.', Date.now()),
+                turnRecord: m.turnRecord ?? { status: 'unconfirmed' },
               };
             })
           );
         }
       } finally {
         clearIdleTimer();
+        // Over, so there is nothing left to stop early. By identity: a newer
+        // turn may already have armed its own.
+        if (haltDriveRef.current === haltThisTurn) haltDriveRef.current = null;
+        // A turn the server enabled a drive for tells the shell it is over,
+        // whichever way it ended and whether or not it ever moved — the shell
+        // engaged its drive on the `drive_state`, and it cannot see another
+        // chat instance's streaming state to know when to let go.
+        if (abortRef.current === abortCtl) {
+          drivingRef.current = false;
+          if (turnDriveEnabled) {
+            try {
+              options.onDriveEvent?.({ type: 'drive_turn_end' }, driveControls);
+            } catch {
+              /* listener error — the drive is released on the next turn anyway */
+            }
+          }
+        }
         // Only clean up if this stream still owns the shared refs: an aborted
         // stream's finally runs asynchronously, and by then a replacement
         // send() may already be live — clobbering its controller/flags would
@@ -1358,7 +1722,6 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     },
     [
       isStreaming,
-      messages,
       options.projectId,
       options.screenName,
       options.projectName,
@@ -1372,6 +1735,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       options.liveDrive,
       options.onDriveEvent,
       options.onArtifactSaved,
+      controlRun,
+      steerRun,
+      confirmTurnRecordByRun,
     ]
   );
 

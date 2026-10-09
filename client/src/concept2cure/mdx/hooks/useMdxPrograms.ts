@@ -69,7 +69,11 @@ export function deriveKitPathway(programType: string, regulatoryPath: string | n
 
 function deriveKitStatus(status: string | null, phase: string | null): ProgramStatus {
   const s = (status ?? '').toLowerCase();
-  if (s === 'approved' || s === 'submitted') return 'complete';
+  /* 'submitted' used to be 'complete' as well, which set stage 7 "Cleared"
+     and counted the program as cleared on the Overview — for a submission
+     still under agency review. Submitted is in flight; only an approval is
+     complete. */
+  if (s === 'approved') return 'complete';
   if (s === 'rejected')                      return 'blocked';
   if (s === 'draft' || phase === 'planning')  return 'idle';
   return 'active';
@@ -153,7 +157,8 @@ function rowToKit(row: ServerProgramRow): Program | null {
   if (!pathway) return null;
 
   const status = deriveKitStatus(row.status, row.phase);
-  const stageIdx = status === 'complete' ? 7 : deriveStageIdx(row.phase, row.progressPercent);
+  const submitted = (row.status ?? '').toLowerCase() === 'submitted';
+  const stageIdx = status === 'complete' ? 7 : submitted ? 6 : deriveStageIdx(row.phase, row.progressPercent);
   const stage = deriveStageLabel(stageIdx);
   const due = formatDueLabel(row.targetSubmissionDate, status);
 

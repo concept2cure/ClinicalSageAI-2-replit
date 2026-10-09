@@ -1,0 +1,30 @@
+
+> concept2cure-riai@1.0.0 ci:eslint-ratchet
+> node scripts/ci/check-eslint-warning-ratchet.mjs
+
+[ci:eslint-warning-ratchet] running `eslint . --format json` (the CI lint step's exact scope; takes a few minutes)…
+[ci:eslint-warning-ratchet] 6544 warning(s) across 1799 file(s), 21 rule(s) (baseline 6521).
+
+[ci:eslint-warning-ratchet] FAIL — 23 more warning(s) than the baseline allows (6544 > 6521). Rules that grew:
+
+  no-console  854 → 865  (+11)
+  no-undef  73 → 79  (+6)
+  max-lines-per-function  1235 → 1239  (+4)
+  max-lines  482 → 484  (+2)
+  max-depth  248 → 249  (+1)
+  no-useless-assignment  120 → 121  (+1)
+  security/detect-possible-timing-attacks  2 → 3  (+1)
+
+  Every count here was frozen so the backlog could be paid down, not added to —
+  6.7k warnings is already a green light bolted over a wall of noise, and a new
+  one is invisible in it without this gate.
+
+  To find WHICH FILES grew — the question this per-rule report cannot answer —
+  lint both versions of everything you changed:
+    node scripts/ci/check-eslint-warning-ratchet.mjs --since origin/concept2cure-v2
+  (a SHA, a tag or HEAD~n works too; it takes seconds, not the minutes a full
+  `eslint .` does, because it lints only the changed files). `node scripts/ci/check-eslint-warning-ratchet.mjs --list`
+  gives per-rule counts. Fix the new warnings. Do NOT regenerate the baseline to
+  make room; it moves in one direction.
+
+exit=1

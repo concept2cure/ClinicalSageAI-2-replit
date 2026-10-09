@@ -1,0 +1,9 @@
+# c2c_cs_red: provisioned from blank at trunk 00a41915 by scripts/db/provision-test-db.sh (install-fresh, then ONE deploy-migrate)
+## child-rls lines from deploy-migrate:
+507:      [NOTICE] [child-rls] 9 policied, 97 skipped
+528:      [WARNING] [child-rls] regulatory_harmonization.export_job_audit_log → regulatory_harmonization.export_jobs: the parent is not scoped, so delegating to it would scope nothing — skipping
+529:      [NOTICE] [child-rls] chained: 1 policied, 20 skipped
+811:✅ c2c_cs_red provisioned — 1238 base tables
+
+## scripts/db/rls-coverage-check.sql after the first deploy (1 row):
+regulatory_harmonization.export_job_audit_log (child of regulatory_harmonization.export_jobs, row security off)

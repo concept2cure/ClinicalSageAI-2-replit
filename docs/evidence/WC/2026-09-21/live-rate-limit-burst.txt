@@ -1,0 +1,9 @@
+== F-5 burst: ONE authenticated session, 150 GET /api/submissions inside one minute (pre-fix: 429 from the 61st on the router's legacy limiter; the W3 runs saw 429 on the first surface load)
+    150 200
+elapsed: 3s
+== F-5 burst: same session, 150 GET /api/c2c/projects inside one minute (pre-fix: 429 from the 101st on the /api Redis limiter, per IP)
+    150 200
+elapsed: 2s
+== F-5 control: 105 ANONYMOUS GET /api/c2c/projects from this IP (per-IP bucket 100 still enforced → 429s after the 100th; the rest 401)
+    100 401
+      5 429

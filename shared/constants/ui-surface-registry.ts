@@ -162,7 +162,10 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'folder',
     group: 'workspace',
     uiKit: 'home',
-    apiPrefixes: ['/api/projects', '/api/programs'],
+    // 2026-09-29: '/api/programs' removed: every route under it is the device
+    // 510(k) app's predicate intelligence, SE render or RTM, and Projects calls
+    // none of them (docs/evidence/D2-API-SCOPE/2026-09-29-programs-claim/).
+    apiPrefixes: ['/api/projects'],
     anaToolFamilies: ['plan_submission'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -194,7 +197,14 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'sparkles',
     group: 'evidence',
     uiKit: null,
-    apiPrefixes: ['/api/biotech-artifacts', '/api/atoms', '/api/corpus'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx ArtifactsCenter reads and exports the gallery.
+    // 2026-09-29: '/api/biotech-artifacts' removed. It generates ICSRs, PSURs,
+    // CIOMS forms, expedited safety reports, clinical-operations reports and
+    // eCTD cover letters from the request body and records none of them (no
+    // vault document, version or audit row). No screen calls it, and PV and
+    // clinical operations are outside the release. A regulated document is
+    // produced only through a path that records it (Authoring → Vault).
+    apiPrefixes: ['/api/atoms', '/api/corpus', '/api/artifacts-center'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -212,7 +222,11 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'home',
     group: 'workspace',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/projects', '/api/programs', '/api/rim'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): ProjectHome reads and generates the schedule of events.
+    // 2026-09-29: '/api/rim' removed: ProjectHome does not call it; it is the
+    // hidden Registrations app's API.
+    // 2026-09-29: '/api/programs' removed for the same reason as on Projects.
+    apiPrefixes: ['/api/projects', '/api/concept2cure/projects'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -228,6 +242,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'penLine',
     group: 'authoring',
     uiKit: 'authoring',
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): useFilingOutline.ts reads the filing outline.
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): authoring reads data origins, holds collaborative locks, and assigns review tasks.
     apiPrefixes: [
       '/api/document-authoring',
       '/api/authoring',
@@ -235,6 +251,10 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/coauthor',
       '/api/workflow',
       '/api/esignature',
+      '/api/c2c/documents',
+      '/api/data-origins',
+      '/api/realtime-collab',
+      '/api/tasks',
     ],
     anaToolFamilies: ['get_csr_template', 'get_nonclinical_template', 'draft_clinical_overview_m2_5'],
     sharedContract: '@shared/types/document-contract',
@@ -252,7 +272,9 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'layoutPanels',
     group: 'authoring',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/document-authoring', '/api/project-sections'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): BiopharmaProject.tsx reads these two.
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): the regulatory workspace reads its tree and the CSR board.
+    apiPrefixes: ['/api/document-authoring', '/api/project-sections', '/api/clinical-regulatory-evidence/findings', '/api/clinical-regulatory-evidence/outcome', '/api/regulatory-workspace', '/api/csr-workflow'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/authoring-context',
     discoveryCatalog: null,
@@ -268,7 +290,9 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'vault',
     group: 'evidence',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) calls these for the Vault too.
+    // '/api/mdx/vault' (2026-09-26): mdx/hooks/useVault.ts, the list and version reads.
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops', '/api/mdx/vault'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -284,7 +308,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'checkCircle',
     group: 'review',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/workflow', '/api/part11'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): Review reads its board, queue, threads and tasks.
+    apiPrefixes: ['/api/workflow', '/api/part11', '/api/review', '/api/concept2cure/review-tasks', '/api/concept2cure/review-threads', '/api/concept2cure/reviews'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -300,7 +325,20 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'rocket',
     group: 'submission',
     uiKit: 'submission',
-    apiPrefixes: ['/api/submissions', '/api/submission-center', '/api/region-profiles'],
+    // `/api/submission-center` is NOT listed, deliberately. That router is
+    // unmounted (server/bootstrap/register-governance-routes.ts) because it
+    // carried no tenant column in any handler and its tables have no RLS
+    // backstop — an unscoped cross-tenant write API with no consumer. This
+    // field is contracted to be grounded in the mount table, so advertising it
+    // here would point the next reader at a capability that was removed for
+    // exactly that reason. The surface reads /api/submissions,
+    // /api/region-profiles, /api/510k/estar/* and /api/c2c/projects.
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): the Submission Center signs governed actions.
+    // 2026-09-29: '/api/510k/estar' narrowed to the two sub-paths
+    // SubmissionCenter.tsx calls (the eSTAR tracker and the assembly verdict).
+    // The rest of eSTAR (build, official fields, registration, filing
+    // readiness) is the hidden device 510(k) kit.
+    apiPrefixes: ['/api/submissions', '/api/region-profiles', '/api/510k/estar/submissions', '/api/510k/estar/assemble', '/api/c2c/projects', '/api/c2c/actions/sign'],
     anaToolFamilies: ['plan_submission', 'validate_submission'],
     sharedContract: '@shared/types/submission-ui',
     discoveryCatalog: 'SUBMISSION_WORKSPACES (shared/types/submission-ui.ts)',
@@ -334,7 +372,14 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'rocket',
     group: 'submission',
     uiKit: 'submission',
-    apiPrefixes: ['/api/mdx'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): GatewayTransmittals.tsx assembles, preflights and reads identifiers through the package model.
+    // 2026-09-26: '/api/mdx' narrowed to '/api/mdx/gateways' (the routes this
+    // surface owns, per `engineering` below). The whole namespace made every
+    // device-kit API — risk items, clinical studies, IVD, labeling — answer as
+    // launch in production. The other launch callers under /api/mdx are
+    // claimed by their own surfaces (vault, admin-console) or on
+    // LAUNCH_PLATFORM_API (industry profile, notifications).
+    apiPrefixes: ['/api/mdx/gateways', '/api/submission-ops'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -367,7 +412,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'gitBranch',
     group: 'submission',
     uiKit: 'ectd_coauthor',
-    apiPrefixes: ['/api/ectd-compile', '/api/ectd'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): EctdCompile reads orchestrator runs and their audit.
+    apiPrefixes: ['/api/ectd-compile', '/api/ectd', '/api/submission-orchestrator'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,
@@ -401,7 +447,9 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'fileCheck',
     group: 'device',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms'],
+    // 2026-09-29: '/api/programs' added: /api/programs/:id/predicate-intel,
+    // se-matrix and rtm are this app's (they were claimed by Projects).
+    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms', '/api/programs'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/predicate-intelligence',
     discoveryCatalog: null,
@@ -510,7 +558,9 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'checkSquare',
     group: 'collaboration',
     uiKit: 'tasking',
-    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) and the shell's TaskTray call these.
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): the task board and the shell's task tray.
+    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections', '/api/regulatory-programs', '/api/submission-ops', '/api/approval-workflows/pending', '/api/tasks'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,
@@ -526,7 +576,11 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'network',
     group: 'submission',
     uiKit: null,
-    apiPrefixes: ['/api/rim', '/api/global-ri'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): DossierMap reads the map.
+    // 2026-09-29: '/api/rim' and '/api/global-ri' removed. DossierMap calls
+    // neither; they are the hidden Registrations and Global RI apps, and the
+    // claim made both answer as launch in production.
+    apiPrefixes: ['/api/dossier-map'],
     anaToolFamilies: ['global_ri_dossier'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -809,7 +863,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'settings',
     group: 'admin',
     uiKit: null,
-    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/enterprise/rbac', '/api/api-keys'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx Setup reads the GAMP 5 validation kit.
+    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -825,7 +880,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'scroll',
     group: 'admin',
     uiKit: null,
-    apiPrefixes: ['/api/admin/audit', '/api/part11'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx AuditTrail reads the ledger.
+    apiPrefixes: ['/api/admin/audit', '/api/part11', '/api/audit-trail/ledger'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

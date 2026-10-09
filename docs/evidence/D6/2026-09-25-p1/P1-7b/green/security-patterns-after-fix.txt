@@ -1,0 +1,4 @@
+# P1-7b green run — check-security-patterns with the workspace-trust-header rule after the change (2026-09-26T12:58Z)
+# npx tsx scripts/check-security-patterns.ts
+check-security-patterns: 0 violations across 2854 file(s).
+exit=0

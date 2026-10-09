@@ -1,0 +1,16 @@
+{
+  "page": {
+    "content-security-policy": null,
+    "content-security-policy-report-only": "default-src 'self';script-src 'self' 'nonce-5aVb9t0QqEQW9TFyPvh1Wg==' 'strict-dynamic' 'unsafe-eval';style-src-elem 'self' 'nonce-5aVb9t0QqEQW9TFyPvh1Wg==' 'unsafe-inline';style-src-attr 'unsafe-inline';connect-src 'self' ws: wss: http://localhost:*;img-src 'self' data: https: blob:;frame-src 'self';base-uri 'self';form-action 'self';frame-ancestors 'self';report-uri /api/csp-report;report-to csp-endpoint;font-src 'self' https: data:;object-src 'none';script-src-attr 'none';style-src 'self' https: 'unsafe-inline'",
+    "x-content-type-options": "nosniff",
+    "strict-transport-security": null,
+    "x-frame-options": null,
+    "referrer-policy": "no-referrer"
+  },
+  "api": {
+    "x-ratelimit-limit": "600",
+    "x-ratelimit-remaining": "599",
+    "x-request-id": "0753248a-ee58-428d-a9a9-8c760a73da0c",
+    "content-security-policy": null
+  }
+}

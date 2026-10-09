@@ -1,0 +1,9 @@
+28:{"level":30,"time":"2026-09-20T19:17:43.689Z","pid":6541,"hostname":"vm","context":{},"msg":"[submission-readiness] Submission-readiness routes initialised"}
+165:✅ Dossier readiness routes mounted (/api/dossier-readiness)
+281:✅ Database connection successful
+282:✅ Database readiness verified (3 schemas, 972 tables, authoring subsystem present)
+289:⚠️ Auth schema bootstrap warning: must be owner of table organizations
+359:✅ Premarket Cybersecurity (FDA §524B SBOM + readiness) routes mounted successfully
+407:🚀 Server running on http://0.0.0.0:5100
+408:📊 Health check: http://localhost:5100/api/health
+409:🔐 Login: http://localhost:5100/auth

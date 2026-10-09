@@ -1,0 +1,12 @@
+/home/user/ClinicalSageAI-2-replit/server/routes/c2c/actions.ts
+  127:1   warning  Async function 'resolveTarget' has too many lines (102). Maximum allowed is 100   max-lines-per-function
+  127:1   warning  Async function 'resolveTarget' has a complexity of 31. Maximum allowed is 15      complexity
+  393:8   warning  Async function 'writeMutation' has too many parameters (8). Maximum allowed is 5  max-params
+  542:46  warning  Async arrow function has a complexity of 35. Maximum allowed is 15                complexity
+/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts
+  256:8  warning  Async function 'writeChainedAuditRow' has a complexity of 21. Maximum allowed is 15  complexity
+  340:3  warning  Async method 'logAction' has too many lines (101). Maximum allowed is 100            max-lines-per-function
+  340:3  warning  Async method 'logAction' has too many parameters (6). Maximum allowed is 5           max-params
+  340:3  warning  Async method 'logAction' has a complexity of 32. Maximum allowed is 15               complexity
+  526:3  warning  Async method 'getAuditLog' has a complexity of 33. Maximum allowed is 15             complexity
+✖ 9 problems (0 errors, 9 warnings)

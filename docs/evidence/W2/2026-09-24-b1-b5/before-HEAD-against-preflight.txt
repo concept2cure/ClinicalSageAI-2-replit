@@ -1,0 +1,17 @@
+tests/head.tftest.hcl... in progress
+  run "head_against_the_preflight_list"... fail
+Error: Test assertion failed
+  on tests/head.tftest.hcl line 48, in run "head_against_the_preflight_list":
+  48:     condition     = length(output.api_task_names) < 0
+    ├────────────────
+    │ output.api_task_names is list of string with 9 elements
+HEAD carries: CONCEPT2CURE_SIGNER_KMS_KEY_ID, CONCEPT2CURE_SIGNER_KMS_REGION,
+CONCEPT2CURE_SIGNER_MODE, DATABASE_URL, JWT_SECRET, NODE_ENV, OPENAI_API_KEY,
+PORT, TRUST_PROXY_HOPS || missing from the preflight list: RLS_ENFORCE,
+APP_DATABASE_URL, REFRESH_TOKEN_SECRET, MFA_ENCRYPTION_KEY, AUDIT_HMAC_KEY,
+AUDIT_HMAC_SECRET, CONNECTOR_ENCRYPTION_KEY, AI_SENSITIVE_DATA_POLICY_MODE,
+AI_PROVIDER_PLACEMENT_APPROVALS || db_name: concept2cure-ri || health check:
+CMD-SHELL wget -qO- http://localhost:5000/api/health || exit 1
+tests/head.tftest.hcl... tearing down
+tests/head.tftest.hcl... fail
+Failure! 0 passed, 1 failed.

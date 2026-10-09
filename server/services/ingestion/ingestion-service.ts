@@ -29,8 +29,6 @@ import { db } from '../../db';
 import {
   coauthorDocuments,
   submissions,
-  submissionLeaves,
-  ectdSequences,
   submissionEvidenceLinks,
 } from '../../../shared/schema';
 import { getGateway } from '../ai-gateway';
@@ -40,6 +38,7 @@ import {
   GatewayAllProvidersFailedError,
 } from '../ai-gateway/gateway';
 import auditService from '../auditService';
+import { upsertLeaf, SubmissionError } from '../submission-service/submission-service';
 import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 
@@ -78,6 +77,19 @@ export interface ClassificationResult {
   rationale: string;
   /** How much of the document the answer is actually based on. */
   readCoverage?: DocumentReadCoverage;
+  /**
+   * The outcome of drafting a leaf placement into the requested sequence —
+   * present only when a sequenceId was given, and computed here, never taken
+   * from the model. `refusal` is the canonical leaf writer's refusal
+   * (`<code>: <message>`, e.g. a frozen or dispatched sequence) when nothing
+   * was placed. 2026-09-23 (W5/D7, residual repair).
+   */
+  leafPlacement?: LeafPlacementOutcome;
+}
+
+export interface LeafPlacementOutcome {
+  placed: boolean;
+  refusal: string | null;
 }
 
 export interface ExtractionResult {
@@ -312,6 +324,10 @@ export async function classifyDocument(params: {
   } catch (err) {
     throw mapGatewayError(err);
   }
+  // 2026-09-23 (W5/D7, residual repair): the model's JSON is cast, not
+  // validated — a placement outcome it supplied is dropped before anything is
+  // persisted or returned; only the one computed below is reported.
+  delete (result as { leafPlacement?: unknown }).leafPlacement;
 
   // Persist the proposal onto the document (sectionCode -> moduleNumber, full
   // proposal into metadata) — only adopt a section code we are confident in.
@@ -331,33 +347,25 @@ export async function classifyDocument(params: {
       )
     );
 
-  // When a target sequence is supplied (and owned), draft a leaf placement.
-  if (sequenceId && result.sectionCode) {
-    const [seq] = await db
-      .select()
-      .from(ectdSequences)
-      .where(
-        and(
-          eq(ectdSequences.id, sequenceId),
-          eq(ectdSequences.organizationId, organizationId),
-          isNull(ectdSequences.deletedAt)
-        )
-      )
-      .limit(1);
-    if (seq) {
-      await db.insert(submissionLeaves).values({
-        sequenceId,
-        sectionCode: result.sectionCode,
-        title: doc.title,
-        granularity: result.granularity ?? null,
-        lifecycleOp: 'new',
-        documentTable: CANONICAL_DOCUMENT_TABLE,
-        documentId,
-        documentType: result.documentType ?? null,
-        organizationId,
-        createdBy: userId,
-      });
-    }
+  // When a target sequence is supplied, draft a leaf placement.
+  //
+  // 2026-09-23 (W5/D7, residual repair): through the canonical leaf writer.
+  // This block used to select the sequence and `db.insert(submissionLeaves)`
+  // itself — no status check and no sequence row lock — so a classify request
+  // wrote leaves into FROZEN and DISPATCHED sequences: a frozen sequence's
+  // leaves stopped being immutable, a draft leaf in a dispatched one made
+  // transmit refuse with no way back (removeLeaf refuses there), and a leaf
+  // added after dispatch never met the dispatch-time filing-order rule. It also
+  // skipped the section vocabulary, the tenancy/source pin and the Part 11
+  // audit every other placement gets. upsertLeaf enforces all of those, under
+  // the row lock the governed freeze/dispatch takes. Its refusal is reported,
+  // not swallowed and not thrown: the classification itself stands, and the
+  // caller is told the placement did not happen and why. A sequence that is not
+  // this organization's used to be skipped silently; it is now a NOT_FOUND
+  // refusal. Any error that is not a SubmissionError propagates.
+  let leafPlacement: LeafPlacementOutcome | undefined;
+  if (sequenceId) {
+    leafPlacement = await placeClassifiedLeaf({ sequenceId, doc, documentId, result, organizationId, userId });
   }
 
   await auditService.logAction({
@@ -372,6 +380,7 @@ export async function classifyDocument(params: {
       sectionCode: result.sectionCode,
       confidence: result.confidence,
       sequenceId: sequenceId ?? null,
+      leafPlacement: leafPlacement ?? null,
     },
   });
 
@@ -384,7 +393,44 @@ export async function classifyDocument(params: {
     truncated: bounded.truncated,
     percentRead: bounded.percentRead,
   };
+  if (leafPlacement) result.leafPlacement = leafPlacement;
   return result;
+}
+
+/**
+ * Draft the classified document's leaf into the requested sequence through the
+ * canonical writer (upsertLeaf), reporting a refusal instead of placing.
+ */
+async function placeClassifiedLeaf(p: {
+  sequenceId: number;
+  doc: { title: string };
+  documentId: number;
+  result: ClassificationResult;
+  organizationId: number;
+  userId: number;
+}): Promise<LeafPlacementOutcome> {
+  if (!p.result.sectionCode) {
+    return { placed: false, refusal: 'The classification proposed no section code, so there is nothing to place.' };
+  }
+  try {
+    await upsertLeaf(
+      {
+        sequenceId: p.sequenceId,
+        sectionCode: p.result.sectionCode,
+        title: p.doc.title,
+        granularity: p.result.granularity ?? null,
+        lifecycleOp: 'new',
+        documentTable: CANONICAL_DOCUMENT_TABLE,
+        documentId: p.documentId,
+        documentType: p.result.documentType ?? null,
+      },
+      { organizationId: p.organizationId, userId: p.userId },
+    );
+    return { placed: true, refusal: null };
+  } catch (err) {
+    if (!(err instanceof SubmissionError)) throw err;
+    return { placed: false, refusal: `${err.code}: ${err.message}` };
+  }
 }
 
 // ── extractStructure ──────────────────────────────────────────────────────────

@@ -1,0 +1,41 @@
+{
+    "step": "01-create-sop-as-user1",
+    "method": "POST",
+    "path": "/api/mdx/qms/documents",
+    "request": {
+        "docNumber": "SOP-WB-20260921010026",
+        "title": "WB F-3 evidence SOP",
+        "docType": "sop",
+        "nextReviewDate": "2027-09-21"
+    },
+    "status": 201,
+    "response": {
+        "data": {
+            "id": 16,
+            "organization_id": 2,
+            "doc_number": "SOP-WB-20260921010026",
+            "title": "WB F-3 evidence SOP",
+            "doc_type": "sop",
+            "category": null,
+            "version": "1.0",
+            "status": "draft",
+            "effective_date": null,
+            "next_review_date": "2027-09-21T00:00:00.000Z",
+            "author_id": 1,
+            "approver_id": null,
+            "approved_at": null,
+            "superseded_by_id": null,
+            "artifact_id": null,
+            "metadata": {},
+            "created_at": "2026-09-21T01:00:27.028Z",
+            "updated_at": "2026-09-21T01:00:27.028Z",
+            "deleted_at": null
+        },
+        "meta": {
+            "auditTrail": {
+                "persisted": true,
+                "chained": true
+            }
+        }
+    }
+}

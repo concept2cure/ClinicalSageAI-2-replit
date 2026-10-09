@@ -1,0 +1,30 @@
+$ # server/routes/client-intelligence.ts as edited (restored from the scratch copy); test server/routes/__tests__/client-intelligence-upload-guards.test.ts
+$ NODE_OPTIONS='--max-old-space-size=2048' npx vitest run --config vitest.config.ts server/routes/__tests__/client-intelligence-upload-guards.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+    "mode": "on"
+
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses a body over the size limit with 413 instead of buffering it 261ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses an executable named file whatever type it declares (415) 11ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses a declared type these routes do not read (415, not a 500) 5ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses bytes that are not what the declared type says (the shared byte check) 6ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > leaves a request with no file to the handler (its own 400, unchanged) 5ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > control: a real text document passes the guard and reaches ingestDocument 5ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > control: the project route runs the same guard 5ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  23:48:13
+   Duration  3.05s (transform 1.21s, setup 128ms, import 2.28s, tests 301ms, environment 0ms)
+
+exit=0

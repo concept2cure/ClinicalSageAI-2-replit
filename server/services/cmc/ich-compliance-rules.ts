@@ -235,8 +235,18 @@ export function checkQ2(inp: ProjectInputs): IchCheckFinding[] {
     return findings;
   }
 
-  const unvalidated = inp.methods.filter(m => {
-    const s = String(m.validationStatus ?? '').toLowerCase();
+  /* A method whose validation status was never RECORDED has not been shown to
+     fail validation. Reporting it as unvalidated is a finding against the
+     project for a fact nobody entered — the same class of defect as rendering
+     a failed read as an empty result. The two are separated: a recorded
+     non-validated status is a fail; an absent one is not evaluated. */
+  const statusOf = (m: (typeof inp.methods)[number]) =>
+    String(m.validationStatus ?? '').trim().toLowerCase();
+  const withStatus = inp.methods.filter(m => statusOf(m) !== '');
+  const withoutStatus = inp.methods.filter(m => statusOf(m) === '');
+
+  const unvalidated = withStatus.filter(m => {
+    const s = statusOf(m);
     return s !== 'validated' && s !== 'verified' && s !== 'transferred';
   });
   if (unvalidated.length > 0) {
@@ -247,6 +257,16 @@ export function checkQ2(inp: ProjectInputs): IchCheckFinding[] {
       message: `${unvalidated.length} method(s) lack validated / verified status.`,
       evidence: unvalidated.slice(0, 5).map(m => `${m.methodName}: ${m.validationStatus ?? 'unknown'}`),
       citation: 'ICH Q2(R1) §1 — Methods used for release and stability must be validated.',
+    });
+  }
+  if (withoutStatus.length > 0) {
+    findings.push({
+      guideline: 'Q2(R1)',
+      ruleId: 'Q2_VALIDATION_STATUS_NOT_RECORDED',
+      status: 'not_evaluated',
+      message: `${withoutStatus.length} method(s) record no validation status, so their validation could not be evaluated.`,
+      evidence: withoutStatus.slice(0, 5).map(m => `${m.methodName}: no validation status recorded`),
+      citation: 'ICH Q2(R1) §1 — Validation of analytical procedures.',
     });
   }
 
@@ -319,15 +339,45 @@ export function checkQ3AandQ3B(inp: ProjectInputs): IchCheckFinding[] {
     return findings;
   }
 
-  if (totalImpurities === 0) {
-    findings.push({
-      guideline: 'Q3A(R2)',
-      ruleId: 'Q3A_NO_IMPURITY_PROFILE',
-      status: 'fail',
-      message: 'Drug substance records have no impurity profile data.',
-      evidence: inp.drugSubs.map(ds => `Substance: ${ds.substanceName}`),
-      citation: 'ICH Q3A(R2) §2 — Identification and qualification thresholds.',
-    });
+  /* The impurity register is its own source type. `impurities` on the
+     drug-substance record is ONE place a project may carry impurity data;
+     `source_type = 'impurity_profile'` is the other, and it is the one the
+     impurity-profile surface actually writes. On the reference database a
+     project held FOUR impurity_profile source objects while the drug
+     substance's own `impurities` field was null — so concluding absence from
+     that field alone puts a failed ICH Q3A(R2) finding on a dossier that
+     carries a complete impurity register.
+
+     Unreachable until now, because the drug-substance read itself raised
+     42703 and Q3A never ran. Making the read work is exactly what makes this
+     conclusion reachable, so both land together. Same shape as Q3D below,
+     which already corroborates across specs and source objects before
+     concluding that no assessment exists. */
+  const impurityRegisterEntries = inp.sourceObjects.filter(
+    o => String(o.sourceType ?? '').toLowerCase() === 'impurity_profile',
+  ).length;
+
+  if (totalImpurities === 0 && impurityRegisterEntries === 0) {
+    const blockedForAbsence = blockedInputs(inp, ['sourceObjects']);
+    findings.push(
+      blockedForAbsence.length > 0
+        ? notEvaluatedFinding(
+            'Q3A(R2)',
+            'Q3A_NOT_EVALUATED',
+            blockedForAbsence,
+            'ICH Q3A(R2) §2 — Identification and qualification thresholds.',
+          )
+        : {
+            guideline: 'Q3A(R2)',
+            ruleId: 'Q3A_NO_IMPURITY_PROFILE',
+            status: 'fail',
+            message:
+              'No impurity data is recorded for this project, on the drug substance record or in ' +
+              'the impurity register.',
+            evidence: inp.drugSubs.map(ds => `Substance: ${ds.substanceName}`),
+            citation: 'ICH Q3A(R2) §2 — Identification and qualification thresholds.',
+          },
+    );
   }
 
   // The Q3B sub-check reasons over specifications. If the spec read failed we

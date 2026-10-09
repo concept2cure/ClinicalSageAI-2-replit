@@ -92,12 +92,18 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
   const [atoms, setAtoms] = useState<MemoryAtom[]>([]);
   const [atomsLoading, setAtomsLoading] = useState(true);
   const [atomsError, setAtomsError] = useState<string | null>(null);
+  /* The failed read's HTTP status. A 401/403 is a refusal — the route answers
+     403 when the session carries no organization — and saying "the memory
+     store didn't respond" over it sent the reader to check a service that was
+     working. 0 means no response arrived at all. */
+  const [atomsErrorStatus, setAtomsErrorStatus] = useState(0);
+  const [reload, setReload] = useState(0);
   const [cat, setCat] = useState('all');
   const [toast, fire] = useToast();
 
   /* Left panel — AnA's self-maintained relational notes. Read-only from the
      REAL ana_relational_profiles store; honest empty / error, no fixture. */
-  const profState = useLiveData<RelationalProfile>('/api/mdx/ana/memory/profile');
+  const profState = useLiveData<RelationalProfile>('/api/mdx/ana/memory/profile', [reload]);
   const prof = profState.data;
 
   /* Fixture-free read: adopt the org's REAL curated memory atoms
@@ -113,6 +119,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
       if (cancelled) return;
       if (res.error) {
         setAtomsError(res.error);
+        setAtomsErrorStatus(res.status);
         setAtomsLoading(false);
         return;
       }
@@ -120,7 +127,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
       setAtomsLoading(false);
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [reload]);
 
   const verify = (id: number) => {
     // Optimistic flip — reverted below if the server did not persist it.
@@ -153,25 +160,28 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
 
       {loading ? (
         <div role="status" className="amem-lead-sub" style={{ padding: '18px 14px' }}>Loading AnA's memory…</div>
+      ) : atomsError && (atomsErrorStatus === 401 || atomsErrorStatus === 403) ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load AnA's memory"
+          hint="You don't have access to this organization's memory — the server refused the read. Nothing is shown in its place."
+        />
       ) : atomsError ? (
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load AnA's memory"
-          hint="The memory store didn't respond. These are your organization's curated memory atoms — sign in and retry, or check the service is reachable."
+          hint="The read failed, so nothing is shown in its place. This is not an empty memory."
+          retry={() => setReload((n) => n + 1)}
         />
       ) : nothing ? (
+        /* Plain words, not the two relation names this used to print — the
+           stores are named in the header comment for engineers, not here. */
         <EmptyState
           icon={Ico.database || Ico.layers || I.dot}
           title="AnA hasn't formed any memories yet"
-          hint={
-            <>
-              As you work with AnA she records durable facts about your programs
-              (<span className="mono">client_memory_entries</span>) and how she
-              should work with you (<span className="mono">ana_relational_profiles</span>).
-              Nothing has been captured for your organization yet.
-            </>
-          }
+          hint="As you work with AnA she records durable facts about your programs and how she should work with you. Nothing has been captured for your organization yet."
         />
       ) : (
         <>
@@ -194,7 +204,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
           <div className="amem-grid">
             {/* Left — relational profile (read-only, server-maintained) */}
             <div className="amem-col amem-col-narrow">
-              <div className="amem-sec">{Ico.heart || Ico.user || I.dot} How AnA is tuned to you <span className="amem-sec-x">-- ana_relational_profiles</span></div>
+              <div className="amem-sec">{Ico.heart || Ico.user || I.dot} How AnA is tuned to you <span className="amem-sec-x">-- kept by AnA, read-only</span></div>
               {prof ? (
                 <>
                   <div className="amem-prof">
@@ -225,12 +235,12 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
               ) : (
                 <div className="amem-note">{Ico.info || I.dot} AnA hasn't formed relational notes yet — as you work together she'll record how you like to work and own any mistakes she makes.</div>
               )}
-              <div className="amem-note">{Ico.info || I.dot} AnA writes these notes to <code>ana_relational_profiles</code> after each turn and reads them back into her context every conversation. Shown here read-only.</div>
+              <div className="amem-note">{Ico.info || I.dot} AnA updates these notes after each turn and reads them back into her context every conversation. Shown here read-only.</div>
             </div>
 
             {/* Right — memory atoms (verifiable) */}
             <div className="amem-col">
-              <div className="amem-sec">{Ico.database || Ico.layers || I.dot} What I remember about your programs <span className="amem-sec-x">-- client_memory_entries · verify what's right</span></div>
+              <div className="amem-sec">{Ico.database || Ico.layers || I.dot} What I remember about your programs <span className="amem-sec-x">-- verify what's right</span></div>
               {active.length === 0 ? (
                 <div className="amem-empty">No active memories yet — AnA records durable facts about your programs here as you work.</div>
               ) : (

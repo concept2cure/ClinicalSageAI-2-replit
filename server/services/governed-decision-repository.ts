@@ -22,10 +22,27 @@ import type {
   GovernedMutationIntent,
 } from '../../shared/types/governed-document-fabric';
 import type { RecommendationType, ActionState, DecisionRecord } from './decision-record-service.js';
+import { domainTrackForCtdSection } from './domain-track.js';
+import { enqueueLedgerWrite, resolveGovernedDecisionRow, projectFilterFor, GOVERNED_FABRIC_CODE_PREFIX } from './governed-decision-ledger.js';
 
 const log = createScopedLogger('governed-decision-repository');
 
 export const GOVERNED_DECISION_REPOSITORY_VERSION = '2.0.0';
+
+/**
+ * The discriminator that marks a decision_records row as a governed-fabric
+ * decision. It lives in decision_context (JSONB, unconstrained) rather than in
+ * domain_track or recommendation_type, both of which are CHECK-constrained to
+ * clinical vocabularies with no member for "governance".
+ *
+ * Defined in the shared vocabulary because three places must agree on it — this
+ * writer, getRecentGovernedDecisions(), and the boundary rule that must NOT
+ * count machine rows as human decisions. Re-exported here for callers already
+ * importing from this module.
+ */
+export { GOVERNED_FABRIC_DECISION_KIND as GOVERNED_FABRIC_KIND } from '../../shared/constants/operating-system-vocab';
+import { GOVERNED_FABRIC_DECISION_KIND as GOVERNED_FABRIC_KIND } from '../../shared/constants/operating-system-vocab';
+
 
 // ═══════════════════════════════════════════════════════════════════════
 // Types
@@ -111,7 +128,16 @@ export interface GovernedDecisionTransitionEvent {
   id: string;
   decisionId: string;
   organizationId: number;
-  projectId: number;
+  /**
+   * The project as the platform addresses it: a regulatory-program uuid, or a
+   * legacy numeric projects.id rendered as text.
+   *
+   * Was `projectId: number` against an INTEGER column with a foreign key to
+   * projects(id). A Module 3 project is a uuid, so the writer coerced with
+   * Number(...) || 0, every insert failed the foreign key with a 23503 that the
+   * catch below swallowed, and every project collapsed to bucket 0 on read.
+   */
+  projectRef: string;
   fromState: string;
   toState: string;
   action: string;
@@ -148,7 +174,6 @@ export function isValidTransition(from: string, to: GovernedLifecycleState): boo
 
 // ═══════════════════════════════════════════════════════════════════════
 // Recording — DB-first
-// ═══════════════════════════════════════════════════════════════════════
 
 /**
  * Record a governed decision durably. Async, DB-first.
@@ -179,21 +204,74 @@ export async function recordGovernedDecision(
     );
   }
 
-  try {
+  await enqueueLedgerWrite(async () => {
     const { decisionRecordService } = await import('./decision-record-service.js');
     await decisionRecordService.create({
+      // The reference returned to the caller carries decisionId; the row must
+      // be fetchable by it. Without this the row took a generated uuid, the
+      // list API reported decision_context.governedDecisionId, and
+      // GET /governed/decisions/:decisionId looked up the OTHER one — 404 for
+      // every decision, to every tenant, including the one that owned it.
+      id: decisionId,
       organizationId: orgIdNumeric,
+      /* decision_records.project_id is INTEGER NOT NULL, and this platform's
+         projects are uuid-keyed programs, so a governed-fabric decision has no
+         integer to put here. 0 is a placeholder meaning "not addressable as an
+         integer" — never project number zero — and the real reference travels
+         in decision_context.projectRef below, which is what the per-project
+         reads filter on. */
       projectId: Number(evaluation.context.projectId) || 0,
-      decisionCode: `governed-fabric:${decisionId}`,
+      decisionCode: `${GOVERNED_FABRIC_CODE_PREFIX}${decisionId}`,
       title: `Governed ${evaluation.context.intendedAction}: ${evaluation.decision.outcome}`.slice(0, 200),
-      domainTrack: 'governance',
-      // Governed-fabric decisions are tagged with a repository-specific
-      // discriminator that is intentionally outside the base RecommendationType
-      // enum; the column is free text and create/search use the same literal.
-      recommendationType: 'governed_fabric_decision' as RecommendationType,
+      /* BOTH of these columns are CHECK-constrained in the live DDL
+         (db/migrations/20260323_assumption_decision_contradiction.sql). This
+         wrote domain_track='governance' and
+         recommendation_type='governed_fabric_decision', neither of them a
+         member, so EVERY governed-fabric insert was rejected and swallowed by
+         the catch below — the fabric persisted nothing while still handing its
+         caller a decision reference. A comment here previously asserted the
+         column was "free text"; it never was. The discriminator now lives in
+         decision_context->>'kind', which is JSONB and unconstrained. No data
+         migration is implied: the CHECK meant no row with the old literals can
+         exist in any database.
+
+         domain_track is a DISCIPLINE, and the CTD's own module numbering is the
+         discipline split — so a governed act on a placed artifact is attributed
+         from where it sits rather than bucketed flat. A Module 3 decision
+         records as 'cmc', which is what makes a per-discipline ledger worth
+         reading. */
+      domainTrack: domainTrackForCtdSection(
+        evaluation.context.ctdSection,
+        evaluation.context.sectionCode,
+        evaluation.context.moduleCode,
+      ),
+      recommendationType: 'regulatory_strategy' as RecommendationType,
       recommendationSummary: evaluation.decision.rationale.slice(0, 500),
       recommendationRationale: evaluation.decision.rationale,
       confidenceLevel: evaluation.readiness.score >= 75 ? 'high' : evaluation.readiness.score >= 40 ? 'moderate' : 'low',
+      // A gate evaluation has ALREADY concluded by the time it is recorded, so
+      // it must not be filed at the 'proposed' column default. 'proposed' says
+      // "a recommendation awaiting a human's answer" — false for a machine's
+      // finished evaluation, and it is what getProjectReviewQueue() and any
+      // other reader of decision_records would then show a reviewer.
+      //
+      // The state records what the evaluation concluded; only the two outcomes
+      // that genuinely want a human stay open in the review queue:
+      //   allow    -> executed     the gate permitted it; the action proceeded
+      //   block    -> rejected     the gate refused it; concluded
+      //   review   -> under_review a human is genuinely required
+      //   degraded -> under_review the evaluation could not complete; fail closed
+      //
+      // Separately, the boundary rules' requiresAllDecisionsResolved does NOT
+      // count these rows at all (governance-boundary-service excludes
+      // GOVERNED_FABRIC_KIND): an open machine evaluation of one document is
+      // for the review queue, not a lock on the whole project.
+      actionState:
+        evaluation.decision.outcome === 'allow'
+          ? 'executed'
+          : evaluation.decision.outcome === 'block'
+            ? 'rejected'
+            : 'under_review',
       decidedBy: evaluation.context.actorId || 'system',
       notes: JSON.stringify({
         fabricVersion: GOVERNED_DECISION_REPOSITORY_VERSION,
@@ -215,7 +293,15 @@ export async function recordGovernedDecision(
       }),
       decisionContext: {
         governedDecisionId: decisionId,
-        kind: 'governed-fabric-decision',
+        kind: GOVERNED_FABRIC_KIND,
+        /* The artifact this decision governs, as the platform addresses it.
+           Without it the row is unlinkable: executed_artifact_id is NULL on
+           every governed-fabric row (412 of 412 on the reference database), so
+           the lineage dossier's artifact join matched nothing and reported
+           zero decisions for a document that had them. */
+        artifactId: evaluation.context.artifactId ?? null,
+        // The addressable project reference. See the projectId note above.
+        projectRef: String(evaluation.context.projectId ?? ''),
         intent: evaluation.context.intendedAction,
         outcome: evaluation.decision.outcome,
         readinessLevel: evaluation.readiness.level,
@@ -225,13 +311,7 @@ export async function recordGovernedDecision(
     });
     governanceMetrics.recordDecisionCreated(evaluation.decision.outcome);
     governanceMetrics.recordPersistenceWrite();
-  } catch (err) {
-    governanceMetrics.recordPersistenceFailure('recordGovernedDecision', err);
-    log.warn('Governed decision durable write failed', {
-      decisionId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+  }, decisionId);
 
   return ref;
 }
@@ -307,20 +387,42 @@ export async function getRecentGovernedDecisions(options: {
   try {
     const { decisionRecordService } = await import('./decision-record-service.js');
     const limit = Math.max(1, Math.min(options.limit ?? 50, 500));
+    /* search() is tenant-scoped and now refuses an absent organizationId. It
+       always did filter on it — the claim in the comment this replaces was
+       false, and an org-less call became `organization_id = NULL`, which
+       matched nothing and served an empty ledger as the answer. */
+    /* A uuid-keyed project cannot be matched on the integer column, so it is
+       matched on decision_context.projectRef instead. Filtering the integer
+       column with NaN (or with the 0 placeholder) would return nothing, or
+       every project's decisions — both of which read as an answer. */
     const records = await decisionRecordService.search({
-      // Repository supports org-less queries; search's column filter treats an
-      // absent organizationId as no filter. Pass the value through unchanged.
-      organizationId: (options.organizationId ? Number(options.organizationId) : undefined) as number,
-      projectId: options.projectId ? Number(options.projectId) : undefined,
-      // See note above: governed-fabric discriminator is outside the base enum.
-      recommendationType: 'governed_fabric_decision' as RecommendationType,
+      // An absent organizationId is NOT "no filter". search() always binds
+      // `organization_id = $1`, so undefined becomes `= NULL` and matches no
+      // row: an org-less call returns [] however many decisions exist. Dropping
+      // the clause would make this a cross-tenant read, so search() refuses an
+      // unscoped call outright and the refusal is counted below rather than
+      // returned as an empty ledger. Callers must pass the caller's org.
+      organizationId: Number(options.organizationId),
+      // A uuid-keyed project cannot be matched on the INTEGER project_id
+      // column: Number(uuid) is NaN, which search() reads as "no project
+      // filter" and so answers with every project's decisions. It is matched on
+      // decision_context->>'projectRef' instead, which the writer stamps.
+      ...projectFilterFor(options.projectId),
+      // Discriminate on the JSONB key the writer stamps, not on
+      // recommendation_type — that column is CHECK-constrained and cannot carry
+      // a fabric-specific literal. See the note at the write site.
+      decisionContextKind: GOVERNED_FABRIC_KIND,
       limit,
     });
     governanceMetrics.recordQueryExecuted();
     return records.map((r: DecisionRecord) => mapRow(r as unknown as Record<string, unknown>));
   } catch (err) {
+    // A read the database could not answer is an error, never "no decisions".
+    // This returned [] here, and the summary and trace built on it inherited
+    // the empty answer, so an outage read as "this project has no governed
+    // decisions" (ledger L186). The routes above answer a rejection with 500.
     governanceMetrics.recordQueryFailure('getRecentGovernedDecisions', err);
-    return [];
+    throw err;
   }
 }
 
@@ -358,11 +460,24 @@ export async function getGovernedDecisionSummary(options: {
   return summary;
 }
 
+/**
+ * The organization is REQUIRED. This used to take (projectId, artifactId) and
+ * query with no org, which search() turns into `organization_id = NULL` — so
+ * every trace came back empty however many decisions the artifact had, at all
+ * three callers, including the client-facing governance route (ledger L182).
+ * Making the org a parameter rather than optional is the point: an org-less
+ * call cannot be written, so it cannot silently answer "no decisions" again.
+ */
 export async function getArtifactDecisionTrace(
   projectId: string,
-  artifactId: string
+  artifactId: string,
+  organizationId: number
 ): Promise<GovernedDecisionRecord[]> {
-  const records = await getRecentGovernedDecisions({ projectId, limit: 200 });
+  const records = await getRecentGovernedDecisions({
+    organizationId: String(organizationId),
+    projectId,
+    limit: 200,
+  });
   return records.filter(d => d.artifactId === artifactId);
 }
 
@@ -371,13 +486,16 @@ export async function getGovernedDecision(
   organizationId: number
 ): Promise<GovernedDecisionRecord | null> {
   try {
-    const { decisionRecordService } = await import('./decision-record-service.js');
-    const record = await decisionRecordService.getById(decisionId, organizationId);
+    const record = await resolveGovernedDecisionRow(decisionId, organizationId);
     return record ? mapRow(record as unknown as Record<string, unknown>) : null;
-  } catch {
-    return null;
+  } catch (err) {
+    // null means "this org has no such decision", which a caller answers 404. A
+    // read that failed is not that (ledger L186).
+    governanceMetrics.recordQueryFailure('getGovernedDecision', err);
+    throw err;
   }
 }
+
 
 // ═══════════════════════════════════════════════════════════════════════
 // Lifecycle Transitions
@@ -390,7 +508,7 @@ export async function transitionGovernedDecision(
 
   try {
     const { decisionRecordService } = await import('./decision-record-service.js');
-    const current = await decisionRecordService.getById(input.decisionId, input.organizationId);
+    const current = await resolveGovernedDecisionRow(input.decisionId, input.organizationId);
     if (!current) {
       return { success: false, decisionId: input.decisionId, previousState: 'unknown', newState: input.targetState, transitionedAt: timestamp, error: 'Decision not found' };
     }
@@ -400,7 +518,9 @@ export async function transitionGovernedDecision(
       return { success: false, decisionId: input.decisionId, previousState: currentState, newState: input.targetState, transitionedAt: timestamp, error: `Invalid transition: ${currentState} → ${input.targetState}` };
     }
 
-    const transitioned = await decisionRecordService.transition(input.decisionId, {
+    /* transition() addresses the row by primary key, which is not the id the
+       caller holds — see resolveGovernedDecisionRow. Use the row we resolved. */
+    const transitioned = await decisionRecordService.transition(current.id, {
       organizationId: input.organizationId,
       // targetState is a GovernedLifecycleState; every state reachable as a
       // transition target is also a valid ActionState (only the start state
@@ -422,7 +542,7 @@ export async function transitionGovernedDecision(
     await recordTransitionEvent({
       decisionId: input.decisionId,
       organizationId: input.organizationId,
-      projectId: input.projectId,
+      projectRef: String(input.projectId ?? ''),
       fromState: currentState,
       toState: input.targetState,
       action: input.targetState,
@@ -475,13 +595,13 @@ export async function recordTransitionEvent(
     const { pool } = await import('../db.js');
     await pool.query(
       `INSERT INTO governed_decision_transitions
-       (id, decision_id, organization_id, project_id, from_state, to_state,
+       (id, decision_id, organization_id, project_ref, from_state, to_state,
         action, actor_id, actor_role, reason, notes,
         linked_artifact_id, linked_package_id, linked_workflow_run_id,
         superseded_by_decision_id, created_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        ON CONFLICT (id) DO NOTHING`,
-      [record.id, record.decisionId, record.organizationId, record.projectId,
+      [record.id, record.decisionId, record.organizationId, record.projectRef,
        record.fromState, record.toState, record.action, record.actorId,
        record.actorRole || null, record.reason || null, record.notes || null,
        record.linkedArtifactId || null, record.linkedPackageId || null,
@@ -506,13 +626,15 @@ export async function getDecisionTimeline(
       [decisionId, organizationId]
     );
     return result.rows.map(mapTransitionRow);
-  } catch {
-    return [];
+  } catch (err) {
+    // An empty history is a claim that nothing happened (ledger L186).
+    governanceMetrics.recordQueryFailure('getDecisionTimeline', err);
+    throw err;
   }
 }
 
 export async function getProjectReviewQueue(
-  projectId: number,
+  projectRef: string,
   organizationId: number
 ): Promise<{ pending: string[]; escalated: string[]; deferred: string[]; rejected: string[] }> {
   try {
@@ -521,12 +643,12 @@ export async function getProjectReviewQueue(
       `WITH latest AS (
         SELECT DISTINCT ON (decision_id) decision_id, to_state
         FROM governed_decision_transitions
-        WHERE project_id = $1 AND organization_id = $2
+        WHERE project_ref = $1 AND organization_id = $2
         ORDER BY decision_id, created_at DESC
       )
       SELECT decision_id, to_state FROM latest
       WHERE to_state IN ('under_review', 'escalated', 'deferred', 'rejected')`,
-      [projectId, organizationId]
+      [projectRef, organizationId]
     );
     const pending: string[] = [], escalated: string[] = [], deferred: string[] = [], rejected: string[] = [];
     for (const row of result.rows) {
@@ -537,16 +659,22 @@ export async function getProjectReviewQueue(
       else if (row.to_state === 'rejected') rejected.push(id);
     }
     return { pending, escalated, deferred, rejected };
-  } catch {
-    return { pending: [], escalated: [], deferred: [], rejected: [] };
+  } catch (err) {
+    // THE GATE CASE. hasUnresolvedGovernedDecisions below is built on this
+    // queue, and two gates decide on it: the CMC final export gate and governed
+    // AnA execution. Empty queues here meant a database outage answered
+    // "nothing unresolved", so both gates opened. A rejection is what both
+    // already treat as blocking (ledger L186).
+    governanceMetrics.recordQueryFailure('getProjectReviewQueue', err);
+    throw err;
   }
 }
 
 export async function hasUnresolvedGovernedDecisions(
-  projectId: number,
+  projectRef: string,
   organizationId: number
 ): Promise<{ hasUnresolved: boolean; unresolvedCount: number; escalatedCount: number; states: Record<string, number> }> {
-  const queue = await getProjectReviewQueue(projectId, organizationId);
+  const queue = await getProjectReviewQueue(projectRef, organizationId);
   const unresolvedCount = queue.pending.length + queue.escalated.length;
   return {
     hasUnresolved: unresolvedCount > 0,
@@ -565,7 +693,7 @@ function mapTransitionRow(row: Record<string, unknown>): GovernedDecisionTransit
     id: String(row.id),
     decisionId: String(row.decision_id),
     organizationId: Number(row.organization_id),
-    projectId: Number(row.project_id),
+    projectRef: String(row.project_ref ?? ''),
     fromState: String(row.from_state),
     toState: String(row.to_state),
     action: String(row.action),

@@ -1,0 +1,24 @@
+# sha256 of the S3 files in the tree the red, green and mutation runs were recorded against (HEAD b50d45577 + the S3 working tree after the review fixes, uncommitted when filed).
+# source (modified)
+c85a294cc5b94a5696cf0e30a7fd3d98d58f3dc1519169cdfce883436755ccce  server/routes/ana-ri/stream.ts
+cd88d53ad9be0ece072e26a8df91e7645cc4ca2d2b8a945e31e527e9629921fc  server/services/ai-gateway/gateway.ts
+a6d01551abd4bf0d7882356dfbb224e55a33601e36af222e6cd8e8ad84254762  server/services/ana/AnaToolExecutor.ts
+b1cbb843ef19853a14888008a163116c89cea10a3293fe0c787f72a78a606e1d  server/services/ana/agentic-loop.ts
+d2816ac85d42f371a415ffc96e217da1ed927a9c27c131e30f8e4af9fc4b50f3  server/services/ana/run-control.ts
+b3db18c5a6dcebf6fe754e6683d90a6c923909edb2366e513c5085d5125810ea  server/services/ana/run-status.ts
+1ce8a856430b0eb739394de3401cd11c4e67aa3245c9cc141c27bd7dca3aa769  server/services/intelligence/cross-artifact-consistency.ts
+c6a7ff5904a816349b8ba77976246ccc8dd6609c1c5f8f8265c435d6e8cecdf3  shared/ana/run-control-limits.ts
+# source (new)
+a7691aaf6a36d2684ccee6fb4b6a43afc73874b5c8b67dc582f180d76dab0894  server/services/ana/run-hold.ts
+b9275d7cf2ce02f334667bb709ed222cb01709021e210649224c4ba3d68b295c  server/services/ai-gateway/model-call-scope.ts
+15c0454e2eb84a2c42574c75c5c3c46ba7e66b49ad8ed3de66abdfe69a3137ce  server/services/ana/agentic-tool-dispatch.ts
+# tests (new; no existing test file is modified)
+eac3639ab5aba42a4e0ab24a32d2b67c7d9a4407460e098725c5a3bf4faee082  server/services/ana/__tests__/agentic-loop-rounds-control.test.ts
+0df7241c7305113f318917378ae1e618cda6ad959dac7cfccca1c6e2e69257f6  server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+9c532a54ceca9bba5cb0364c718c54b0939a8f0de57833343a9d567e03907440  server/services/ai-gateway/__tests__/model-call-scope.test.ts
+6697a3c16809bd9a975cdfd7a4d51b947fe956727d1556fd91ff6b9474d50504  server/services/ana/__tests__/tool-authorization-rule-zero.test.ts
+2a8ddc0bcb36497bbb40ad24f1f9c8f002cc1e0f68d8aaf8062d286dd8ac9c2d  server/services/ana/__tests__/run-hold.test.ts
+dbcd2387ff9711c6bce49e36dc78c750172d8aa74d83273f6bafe78431417b65  server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts
+2d32e43f4683bdcc1344f0423fc4751216f3a6fb494603d1ad29585c70b3bd22  server/routes/ana-ri/__tests__/stream-run-hold.test.ts
+a0631840066a3f7fdafbcfc1f91d310e8eda8ca753ecac8f8a3e701cc2baf3d6  server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts
+172b308880d12a3ebb83f9b2af38bafdc8adc029fc9c5b310d7393849968e6d2  server/services/ana/__tests__/project-knowledge-search-model-free.test.ts

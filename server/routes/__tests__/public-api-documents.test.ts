@@ -53,7 +53,6 @@ vi.mock('../../services/vault/vault-document-index.service.js', () => ({
   isUuid: (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v),
   VaultStoreUnavailableError: StoreUnavailable,
   VAULT_CLASSIFICATIONS: ['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC'],
-  VAULT_PROCESSING_STATUSES: ['PENDING', 'EXTRACTING', 'VECTORIZING', 'INDEXED', 'FAILED', 'ARCHIVED'],
 }));
 // The remaining data services, stubbed only so the router's module graph loads.
 vi.mock('../../services/csr-search-service.js', () => ({ csrSearchService: { searchCSRs: vi.fn() } }));
@@ -62,6 +61,7 @@ vi.mock('../../services/endpoint-recommender-service.js', () => ({ getEndpointRe
 vi.mock('../../services/precedent-engine.js', () => ({ precedentEngine: {} }));
 
 import express from 'express';
+import { API_KEY_SCOPES } from '../../../shared/schema/api-keys';
 import request from 'supertest';
 
 const DOC_ID = '2f1c9d8e-0b3a-4c5d-8e7f-a1b2c3d4e5f6';
@@ -142,7 +142,6 @@ describe('input refusal', () => {
   it.each([
     ['/api/v1/documents?programId=not-a-uuid', 'programId'],
     ['/api/v1/documents?classification=SUPER_SECRET', 'classification'],
-    ['/api/v1/documents?processingStatus=NOPE', 'processingStatus'],
     ['/api/v1/documents/not-a-uuid', 'id'],
   ])('refuses %s with 400 before touching the store', async (path, parameter) => {
     const res = await call(path);
@@ -150,6 +149,25 @@ describe('input refusal', () => {
     expect(res.body).toMatchObject({ error: 'INVALID_PARAMETER', parameter });
     expect(listMock).not.toHaveBeenCalled();
     expect(getMock).not.toHaveBeenCalled();
+  });
+
+  /* processingStatus was a filter over a column nothing advances off PENDING:
+     five of its six values returned no rows and PENDING returned all of them.
+     Ignoring it now would be worse — a client asking for INDEXED would get the
+     whole cabinet back — so it is refused by name. */
+  it('refuses processingStatus by name instead of ignoring it', async () => {
+    for (const value of ['INDEXED', 'PENDING']) {
+      const res = await call(`/api/v1/documents?processingStatus=${value}`);
+      expect(res.status, value).toBe(400);
+      expect(res.body).toMatchObject({ error: 'UNSUPPORTED_PARAMETER', parameter: 'processingStatus' });
+    }
+    expect(listMock).not.toHaveBeenCalled();
+  });
+
+  it('/docs does not advertise a processingStatus filter', async () => {
+    const res = await request(await mountApp()).get('/api/v1/docs');
+    const list = res.body.endpoints.find((e: { path: string }) => e.path === '/api/v1/documents');
+    expect(Object.keys(list.parameters)).not.toContain('processingStatus');
   });
 
   it('accepts a valid classification case-insensitively', async () => {
@@ -191,18 +209,47 @@ describe('fetch by id', () => {
 });
 
 describe('the API describes itself truthfully', () => {
-  it('every GRANTABLE scope is advertised and required by a real endpoint', async () => {
+  type Listed = { path: string; method: string; scope: string };
+  const listed = async (): Promise<Listed[]> =>
+    (await request(await mountApp()).get('/api/v1/docs')).body.endpoints;
+  const concrete = (path: string) => path.replace(':id', DOC_ID);
+  /** A scope refusal names the scope; a quota or tenant 403 does not. */
+  const refusedFor = (body: { required?: string; missing?: string[] }, scope: string) =>
+    body.required === scope || (body.missing ?? []).includes(scope);
+
+  /*
+   * These used to read the endpoint list from /docs and compare it with /docs'
+   * own scope list — so a route that stopped requiring its scope, or a listed
+   * path no route serves, still passed. They now CALL every listed endpoint.
+   */
+  it('every grantable scope is advertised and required by a listed endpoint', async () => {
     const res = await request(await mountApp()).get('/api/v1/docs');
     expect(res.status).toBe(200);
-
-    const advertised: string[] = res.body.authentication.scopes;
-    const routeScopes = new Set(res.body.endpoints.map((e: { scope: string }) => e.scope));
-
-    // The invariant that was broken: every advertised scope must be reachable.
-    for (const scope of advertised) {
-      expect(routeScopes.has(scope), `scope ${scope} is advertised but no endpoint requires it`).toBe(true);
+    expect([...res.body.authentication.scopes].sort()).toEqual([...API_KEY_SCOPES].sort());
+    const routeScopes = new Set((res.body.endpoints as Listed[]).map((e) => e.scope));
+    for (const scope of API_KEY_SCOPES) {
+      expect(routeScopes.has(scope), `scope ${scope} is grantable but no endpoint lists it`).toBe(true);
     }
-    expect(advertised).toContain('documents:read');
+  });
+
+  it('every listed endpoint REFUSES a key holding every scope but its own', async () => {
+    for (const e of await listed()) {
+      keyWithScopes(...API_KEY_SCOPES.filter((s) => s !== e.scope));
+      const res = await call(concrete(e.path));
+      expect(res.status, `${e.method} ${e.path} served a key without ${e.scope}`).toBe(403);
+      expect(refusedFor(res.body, e.scope), `${e.path}: 403 did not name ${e.scope}`).toBe(true);
+    }
+  });
+
+  it('every listed endpoint is served — the scope admits it to a real route', async () => {
+    for (const e of await listed()) {
+      keyWithScopes(e.scope);
+      const res = await call(concrete(e.path));
+      expect(res.status, `${e.path} refused its own scope`).not.toBe(403);
+      // An unmatched path is Express's HTML 404; a route's own 404 is JSON with a code.
+      const unmatched = res.status === 404 && !res.body?.error;
+      expect(unmatched, `${e.method} ${e.path} is listed but no route serves it`).toBe(false);
+    }
   });
 
   it('/health reports the endpoint count /docs actually lists', async () => {

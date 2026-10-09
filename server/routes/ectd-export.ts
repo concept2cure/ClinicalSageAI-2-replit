@@ -22,6 +22,7 @@
  * @compliance ICH eCTD v3.2.2
  */
 
+import { setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import { Router, Request, Response } from 'express';
 import { createHash, randomUUID } from 'crypto';
 import { z } from 'zod';
@@ -35,6 +36,9 @@ import {
   type ValidationResult as LeafValidationResult,
 } from '../services/ectd/ectd4-validator';
 import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
+import { createAuditedUnplacedExport } from '../services/export/governedExportConsequence';
+import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
+import { requestDb } from '../db/requestDb';
 import {
   applyExportGovernanceHeaders,
   evaluateExportGovernance,
@@ -121,6 +125,17 @@ function classifyError(error: unknown): {
       code: 'REGION_MISMATCH',
       message: raw,
     };
+  }
+  // The program's record decides the application number (assembleSubmissionEctd).
+  if (/does not match the program's recorded application number/i.test(raw)) {
+    return { status: 409, code: 'APPLICATION_NUMBER_MISMATCH', message: raw };
+  }
+  if (/is not a usable application number/i.test(raw)) {
+    return { status: 400, code: 'APPLICATION_NUMBER_INVALID', message: raw };
+  }
+  // A rehearsal asked of an original sequence: nothing precedes 0000.
+  if (/rehearsal binds a follow-up sequence/i.test(raw)) {
+    return { status: 400, code: 'REHEARSAL_NOT_APPLICABLE', message: raw };
   }
   if (/not found|no such|does not exist/i.test(raw)) {
     return {
@@ -322,6 +337,13 @@ router.get('/by-run/:runId/signed', async (req: Request, res: Response) => {
       payloadDigest: d.payloadDigest,
       signatureId: d.signatureId,
       sealVerdict: d.sealVerdict,
+      // §11.50 manifestation. Null means the signature row does not hold it;
+      // the client says so rather than filling it in.
+      signerId: d.signerId,
+      signerName: d.signerName,
+      signerTitle: d.signerTitle,
+      signatureMeaning: d.signatureMeaning,
+      signedAt: d.signedAt,
     },
     // The signed manifest. Checksums are the content fingerprint a transmit
     // hop must re-verify rendered bytes against.
@@ -427,9 +449,89 @@ function validateExportGovernance(req: Request, res: Response) {
   return evaluation.governance;
 }
 
+/**
+ * Record a governed eCTD export against the project that anchors the
+ * submission's program (projects.regulatory_program_id, Document Identity
+ * Contract C1), through the one resolver for that bridge. With no anchor — a
+ * program created before C1, a seeded one, or a submission with no program —
+ * the export is delivered audited-unplaced by the one implementation the CER,
+ * eSTAR and technical-file exports share: an EXPORT_GENERATED row carrying the
+ * delivered bytes' SHA-256, refused if that row does not persist.
+ *
+ * 2026-09-29 (W5/D7, WO-9 Click 6): the route registered the export with
+ * projectId = the SUBMISSION id. concept2cure_artifacts.project_id is a foreign
+ * key to projects.id — a different id space. On a clean build (submission 6,
+ * no project 6) every export 500'd; where a project happened to share the id,
+ * the governed record was filed under an unrelated project.
+ *
+ * Returns 'placed' or 'unplaced'; null when registry placement was refused.
+ */
+async function recordGovernedEctdExport(
+  req: Request,
+  p: {
+    organizationId: number;
+    userId: number;
+    userName: string;
+    submissionId: number;
+    packageSha256: string;
+    result: Awaited<ReturnType<typeof assembleSubmissionEctd>>;
+  },
+): Promise<'placed' | 'unplaced' | null> {
+  const { result } = p;
+  const backendRoute = `/api/ectd/export/${p.submissionId}`;
+  const anchorProjectId = result.programId
+    ? await resolveProgramProjectAnchor(requestDb(req), {
+        programId: result.programId,
+        orgId: p.organizationId,
+        context: 'ectd-export',
+      })
+    : null;
+  if (anchorProjectId === null) {
+    await createAuditedUnplacedExport({
+      organizationId: p.organizationId,
+      userId: p.userId,
+      sourceType: 'export_zip',
+      backendRoute,
+      resourceType: 'ectd_export',
+      resourceId: result.programId ?? `submission:${p.submissionId}`,
+      programUuid: result.programId,
+      filename: result.filename,
+      mimeType: 'application/zip',
+      buffer: result.buffer,
+      metadata: {
+        submissionId: p.submissionId,
+        sequenceNumber: result.sequenceNumber,
+        region: result.region,
+        priorState: result.priorState,
+        unfiledPriorSequences: result.unfiledPriorSequences,
+      },
+    });
+    return 'unplaced';
+  }
+  const governanceResult = await registerExportGovernanceQuick({
+    organizationId: p.organizationId,
+    projectId: anchorProjectId,
+    userId: p.userId,
+    userName: p.userName,
+    title:
+      result.priorState === 'rehearsal'
+        ? `eCTD Package (rehearsal — prior not filed: ${result.unfiledPriorSequences.join(', ') || 'none'}): ${result.filename}`
+        : `eCTD Package: ${result.filename}`,
+    exportFormat: 'zip',
+    exportFilename: result.filename,
+    exportFileSize: result.buffer.length,
+    exportHash: p.packageSha256,
+    docType: 'ectd_package',
+    backendRoute,
+    ipAddress: req.ip,
+  });
+  return governanceResult ? 'placed' : null;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ectd/export/:submissionId — Generate & download eCTD package
 // ─────────────────────────────────────────────────────────────────────────────
+
 
 // Body schema for the export route. The canonical core records the sequence's
 // region and the submission's application type, so both are OPTIONAL here:
@@ -449,6 +551,9 @@ const exportBodySchema = z
     // assembling a package with unmaterialized leaves or no content — so a
     // substantively-empty dossier can never be filed.
     requireComplete: z.boolean().default(false),
+    // A follow-up sequence bound against earlier sequences that were never
+    // filed — for an agency validator only (package-from-core PriorState).
+    rehearsal: z.boolean().default(false),
   })
   .passthrough(); // governance + future fields ride through untouched
 
@@ -475,7 +580,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       details: parsedBody.error.flatten(),
     });
   }
-  const { region, sequenceNumber, applicationNumber, validateAfter, requireComplete } =
+  const { region, sequenceNumber, applicationNumber, validateAfter, requireComplete, rehearsal } =
     parsedBody.data;
 
   if (!validateExportGovernance(req, res)) return;
@@ -494,6 +599,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       sequenceNumber,
       applicationNumber,
       requireComplete,
+      priorState: rehearsal ? 'rehearsal' : 'filed',
     });
 
     // Optionally validate the generated package
@@ -518,6 +624,9 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
         errors: validation.errors.slice(0, 50),
         sequenceNumber: result.sequenceNumber,
         region: result.region,
+        // The assembly's audit rows were written (or not) before the package was
+        // refused; the refusal does not unwrite them. WO-16C.
+        auditTrail: result.auditTrail,
       });
     }
 
@@ -527,31 +636,9 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
         (validation ? ` — valid: ${validation.valid}` : '')
     );
 
-    // Set headers for file download
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
-    res.setHeader('X-ECTD-Total-Modules', String(result.stats.totalModules));
-    res.setHeader('X-ECTD-Total-Files', String(result.stats.totalFiles));
-    res.setHeader('X-ECTD-Generated-At', result.stats.generatedAt);
-    // Recorded identity of what was actually packaged (the core is authoritative).
-    res.setHeader('X-ECTD-Sequence', result.sequenceNumber);
-    res.setHeader('X-ECTD-Region', result.region);
-    // Surface submission-completeness on every export (draft builds included) so
-    // callers can see how much of the dossier is still placeholder content.
-    const comp = result.stats.completeness;
-    if (comp) {
-      res.setHeader('X-ECTD-Completeness-Pct', String(comp.completenessPct));
-      res.setHeader('X-ECTD-Incomplete-Leaves', String(comp.placeholderLeaves));
-      res.setHeader('X-ECTD-Submission-Complete', String(comp.complete));
-    }
-    if (validation) {
-      res.setHeader('X-ECTD-Valid', String(validation.valid));
-      if (validation.errors.length > 0) {
-        res.setHeader('X-ECTD-Validation-Errors', String(validation.errors.length));
-      }
-    }
-
-    // Register governed export (fail-closed for regulated export path).
+    /* Record the governed export BEFORE any download header is set, so a
+       refusal below is a JSON error — not a body labelled application/zip
+       with an attachment disposition. Fail-closed for the regulated path. */
     // SECURITY: the org/user attribution on the export audit record
     // must be the JWT principal. requireTenant() already guaranteed an
     // organizationId at the top; we re-fetch the user object here for
@@ -572,25 +659,55 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
        defect was fixed on the DOCX route (20dc3980b); this is the eCTD package,
        where it matters most. */
     const packageSha256 = createHash('sha256').update(result.buffer).digest('hex');
-    const governanceResult = await registerExportGovernanceQuick({
+    const registry = await recordGovernedEctdExport(req, {
       organizationId,
-      projectId: submissionId,
       userId: Number(user.id),
       userName: user?.name || user?.email || 'unknown',
-      title: `eCTD Package: ${result.filename}`,
-      exportFormat: 'zip',
-      exportFilename: result.filename,
-      exportFileSize: result.buffer.length,
-      exportHash: packageSha256,
-      docType: 'ectd_package',
-      backendRoute: `/api/ectd/export/${submissionId}`,
-      ipAddress: req.ip,
+      submissionId,
+      packageSha256,
+      result,
     });
-    if (!governanceResult) {
+    if (registry === null) {
       return res.status(500).json({
         error: 'Governed export registration failed',
         code: 'EXPORT_GOVERNANCE_REQUIRED',
       });
+    }
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/zip');
+    // Whether the artifact registry holds this export ('placed') or only the
+    // audit log does ('unplaced' — the program has no project anchor yet).
+    res.setHeader('X-Export-Registry', registry);
+    // WO-16C: a ZIP body cannot carry the assembly's audit outcome, so it
+    // travels as the header pair the client transport reads.
+    setAuditRowHeaders(res, result.auditTrail);
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.setHeader('X-ECTD-Total-Modules', String(result.stats.totalModules));
+    res.setHeader('X-ECTD-Total-Files', String(result.stats.totalFiles));
+    res.setHeader('X-ECTD-Generated-At', result.stats.generatedAt);
+    // Recorded identity of what was actually packaged (the core is authoritative).
+    res.setHeader('X-ECTD-Sequence', result.sequenceNumber);
+    res.setHeader('X-ECTD-Region', result.region);
+    // What the lifecycle acts were bound against. A rehearsal names the earlier
+    // sequences it bound to that were never filed.
+    res.setHeader('X-ECTD-Prior-State', result.priorState);
+    if (result.priorState === 'rehearsal') {
+      res.setHeader('X-ECTD-Unfiled-Prior', result.unfiledPriorSequences.join(','));
+    }
+    // Surface submission-completeness on every export (draft builds included) so
+    // callers can see how much of the dossier is still placeholder content.
+    const comp = result.stats.completeness;
+    if (comp) {
+      res.setHeader('X-ECTD-Completeness-Pct', String(comp.completenessPct));
+      res.setHeader('X-ECTD-Incomplete-Leaves', String(comp.placeholderLeaves));
+      res.setHeader('X-ECTD-Submission-Complete', String(comp.complete));
+    }
+    if (validation) {
+      res.setHeader('X-ECTD-Valid', String(validation.valid));
+      if (validation.errors.length > 0) {
+        res.setHeader('X-ECTD-Validation-Errors', String(validation.errors.length));
+      }
     }
 
     // Audit the export BEFORE returning the buffer. Even if the
@@ -603,6 +720,8 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       packageSha256,
       region: result.region,
       sequenceNumber: result.sequenceNumber,
+      priorState: result.priorState,
+      unfiledPriorSequences: result.unfiledPriorSequences,
     });
 
     return res.send(result.buffer);

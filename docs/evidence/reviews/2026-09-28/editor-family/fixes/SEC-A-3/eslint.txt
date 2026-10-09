@@ -1,0 +1,13 @@
+# ESLint (stylish; the unix formatter is not installed in ESLint 9 here). before = HEAD content via --stdin under the same path
+client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx | before: 0 errors, 0 warnings | after: 0 errors, 0 warnings
+server/utils/fileSignature.ts | before: 0 errors, 1 warnings | after: 0 errors, 1 warnings
+server/middleware/uploadSafety.ts | before: 0 errors, 0 warnings | after: 0 errors, 0 warnings
+server/utils/__tests__/fileSignature.test.ts | before: 0 errors, 0 warnings | after: 0 errors, 0 warnings
+server/middleware/__tests__/uploadSafety.test.ts | before: 0 errors, 0 warnings | after: 0 errors, 0 warnings
+client/src/concept2cure/v2/editor/pdfBytes.ts | new file | after: 0 errors, 0 warnings
+client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx | new file | after: 0 errors, 0 warnings
+server/routes/__tests__/vault-ingest-type-binding.test.ts | new file | after: 0 errors, 0 warnings
+
+# max-lines count for ProjectFilesPanel.tsx (skipBlankLines, skipComments; limit 500)
+HEAD: too many lines (497)
+now:  too many lines (499)

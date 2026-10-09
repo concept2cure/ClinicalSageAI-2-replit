@@ -1,3 +1,9 @@
+-- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
+-- c2c_documents_doc_type_check is now replaced only when the live definition
+-- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
+-- and re-added it — a full validation scan under lock (ACCESS EXCLUSIVE for a CHECK;
+-- writes blocked on child and parent for a FOREIGN KEY) while the application served.
+-- The definitions are unchanged. Pinned by npm run ci:replay-rebuilds-nothing.
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- mdr:ema and ivdr:ema — EU MDR 2017/745 and IVDR 2017/746 technical documentation
 --
@@ -60,11 +66,19 @@ BEGIN
   -- EXISTS because on a drizzle-push database the table exists while the named
   -- constraint does not.
   IF to_regclass('public.c2c_documents') IS NOT NULL THEN
-    ALTER TABLE c2c_documents DROP CONSTRAINT IF EXISTS c2c_documents_doc_type_check;
-    ALTER TABLE c2c_documents ADD CONSTRAINT c2c_documents_doc_type_check
-      CHECK (doc_type IN ('ind','cta','nda','anda','bla','maa','jnda','k510','denovo','pma',
-                          'ide','cer','mdr','ivdr','psur','ib','protocol','csr','briefing',
-                          'mod3','mod2','haq'));
+    -- Replaced only when the live definition differs (2026-09-25, see the header):
+    -- unconditionally, every deploy re-validated it under lock while the app served.
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+       WHERE conrelid = to_regclass('public.c2c_documents') AND conname = 'c2c_documents_doc_type_check'
+         AND pg_get_constraintdef(oid) = $def$CHECK ((doc_type = ANY (ARRAY['ind'::text, 'cta'::text, 'nda'::text, 'anda'::text, 'bla'::text, 'maa'::text, 'jnda'::text, 'k510'::text, 'denovo'::text, 'pma'::text, 'ide'::text, 'cer'::text, 'mdr'::text, 'ivdr'::text, 'psur'::text, 'ib'::text, 'protocol'::text, 'csr'::text, 'briefing'::text, 'mod3'::text, 'mod2'::text, 'haq'::text])))$def$
+    ) THEN
+      ALTER TABLE c2c_documents DROP CONSTRAINT IF EXISTS c2c_documents_doc_type_check;
+      ALTER TABLE c2c_documents ADD CONSTRAINT c2c_documents_doc_type_check
+        CHECK (doc_type IN ('ind','cta','nda','anda','bla','maa','jnda','k510','denovo','pma',
+                            'ide','cer','mdr','ivdr','psur','ib','protocol','csr','briefing',
+                            'mod3','mod2','haq'));
+    END IF;
   END IF;
 
   IF to_regclass('public.c2c_rule_packs') IS NULL THEN

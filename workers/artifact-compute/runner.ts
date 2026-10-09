@@ -9,21 +9,18 @@
  * share the same policy: no network egress, bounded CPU/memory, strict
  * timeout. New profiles must be added here so the policy gate covers them.
  *   - docx-python   → native Word authoring (docx-python-runtime.py)
- *   - python-script → AnA-authored general scripting sandbox (python-script-runtime.py)
  *   - docx-insert   → surgical insertions into an existing .docx (docx-insert-runtime.py)
  *   - docx-xml      → raw OOXML surgery on word/document.xml (docx-xml-runtime.py)
  *   - docx-validate → OOXML/ZIP integrity validation (docx-validate-runtime.py)
  */
 export type RuntimeProfile =
   | 'docx-python'
-  | 'python-script'
   | 'docx-insert'
   | 'docx-xml'
   | 'docx-validate';
 
 const ALLOWED_PROFILES: ReadonlySet<RuntimeProfile> = new Set<RuntimeProfile>([
   'docx-python',
-  'python-script',
   'docx-insert',
   'docx-xml',
   'docx-validate',

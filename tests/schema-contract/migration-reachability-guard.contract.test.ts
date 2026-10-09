@@ -33,6 +33,8 @@ import {
   NOT_A_RELATION,
   sqlishSegments,
   REF_RE,
+  cteNames,
+  relationsIn,
 } from '../../scripts/ci/check-migration-reachability.mjs';
 
 /** Every relation name REF_RE finds in one SQL segment, qualified as the guard does. */
@@ -167,5 +169,52 @@ describe('C-35: the reference scan ignores non-relations', () => {
       expect(NOT_A_RELATION.has(w), `${w} should be excluded`).toBe(true);
     }
     expect(NOT_A_RELATION.has('authoring_documents')).toBe(false);
+  });
+});
+
+describe('a CTE is a name the query binds, however it is written', () => {
+  // `WITH scoped AS MATERIALIZED (…) … FROM scoped s` (advancedRAGPipeline.ts,
+  // ffc1643a2) was read as a query of a table named `scoped`, and the live-schema
+  // guard failed every Blank DB run on a relation that cannot exist.
+  it('binds MATERIALIZED and NOT MATERIALIZED CTEs', () => {
+    const sql = `WITH scoped AS MATERIALIZED (SELECT 1), kept AS NOT MATERIALIZED (SELECT 2), plain AS (SELECT 3)
+                 SELECT * FROM scoped s JOIN kept k ON true JOIN plain p ON true`;
+    expect([...cteNames(sql)].sort()).toEqual(['kept', 'plain', 'scoped']);
+  });
+
+  it('does not bind a table merely named after a CTE keyword', () => {
+    expect([...cteNames('SELECT * FROM materialized_views')]).toEqual([]);
+  });
+
+  // `WITH expected(schema_name, table_name, trigger_name) AS (VALUES …) … FROM
+  // expected e` (audit-immutability-triggers.ts, e8724680) names its columns.
+  // Only `WITH x AS (` was bound, so the live-schema guard read `expected` as a
+  // table no database has, and Blank DB Provisioning was red on every run.
+  it('binds a CTE that names its columns', () => {
+    const sql = `WITH expected(schema_name, table_name, trigger_name) AS (VALUES ($1::text, $2::text, $3::text))
+                 SELECT e.schema_name FROM expected e
+                 LEFT JOIN pg_namespace n ON n.nspname::text = e.schema_name`;
+    expect([...cteNames(sql)]).toEqual(['expected']);
+    expect([...relationsIn(sql)]).toEqual(['pg_namespace']);
+  });
+
+  it('binds RECURSIVE and later column-list CTEs, however they are spaced', () => {
+    const sql = `WITH RECURSIVE tree (id, parent_id) AS (SELECT id, parent_id FROM nodes),
+                 leaves(id)AS MATERIALIZED (SELECT id FROM tree)
+                 SELECT * FROM leaves`;
+    expect([...cteNames(sql)].sort()).toEqual(['leaves', 'tree']);
+    expect([...relationsIn(sql)]).toEqual(['nodes']);
+  });
+
+  it('still reports the storage a column-list CTE reads', () => {
+    // Binding the CTE's name must not hide what its body queries.
+    const sql = 'WITH counted(n) AS (SELECT count(*) FROM no_such_store) SELECT n FROM counted';
+    expect([...relationsIn(sql)]).toEqual(['no_such_store']);
+  });
+
+  it('does not bind a function call or a column alias', () => {
+    const sql = 'SELECT id, lower(name) AS n, unnest($1::int[]) AS ids FROM people';
+    expect([...cteNames(sql)]).toEqual([]);
+    expect([...relationsIn(sql)]).toEqual(['people']);
   });
 });

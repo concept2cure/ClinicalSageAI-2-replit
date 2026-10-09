@@ -553,22 +553,25 @@ const rules: AuditRule[] = [
     dimension: 'regulatory_alignment',
     title: 'Protocol deviations not catalogued',
     question:
-      'Per ICH E3 Section 10.2 and ICH E6(R2) Section 4.5.3, all significant protocol ' +
-      'deviations must be catalogued and classified by type and impact on data integrity. ' +
-      'Are deviations listed, and were subjects with major deviations excluded from the ' +
-      'per-protocol population?',
+      'ICH E3 Section 10.2 describes the important protocol deviations in the CSR, and ' +
+      'ICH E6(R2) 4.5.3 has the investigator document and explain every deviation. ' +
+      'Are deviations listed, and were subjects with important deviations handled as the ' +
+      'per-protocol population definition requires?',
     check(answers) {
       if (isBlank(answers.protocol_deviations)) {
         return makeFinding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'Protocol deviations are not catalogued. This omission may lead the FDA to ' +
           'question data integrity and GCP compliance across study sites.',
-          'ICH E3 Section 10.2 requires listing all important deviations with their impact ' +
-          'on data quality. Deviations must be classified as major or minor.',
+          'ICH E3 Section 10.2 requires describing the important deviations and their impact ' +
+          'on the data. Which deviations are important is defined per trial from its design, ' +
+          'critical procedures and planned analyses (ICH E3 Q&A (R1)) — the regulatory ' +
+          'distinction is important / not important, not major / minor.',
           'ICH E3, Section 10.2; ICH E6(R2), Section 4.5.3; 21 CFR 312.62',
           'Catalogue all deviations (I/E criteria violations, prohibited concomitant ' +
-          'medications, visit window breaches, dosing errors). Classify each as major or ' +
-          'minor and assess the impact on the per-protocol population definition.',
+          'medications, visit window breaches, dosing errors). Classify each as important or ' +
+          'not against the trial\'s predefined criteria and assess the impact on the ' +
+          'per-protocol population definition.',
           ['protocol_deviations'],
         );
       }

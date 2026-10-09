@@ -198,7 +198,7 @@ export const DOMAIN_HISTORY_TABLES: readonly DomainHistoryTable[] = [
     table: 'stab_audit',
     rowSemantics: 'One stability-study action with its JSON payload.',
     linked: false,
-    owner: 'server/src/routes/stability.router.ts:254',
+    owner: 'server/src/routes/stability.router.ts:270',
   },
   {
     table: 'rule_execution_log',

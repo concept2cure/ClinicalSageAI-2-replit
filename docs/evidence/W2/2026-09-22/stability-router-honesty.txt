@@ -1,0 +1,19 @@
+# /api/stability against the reference DB inside a real tenant scope (org 1), signed-in actor unless noted: the router as it was vs fixed
+== BEFORE (HEAD)
+  POST, no status            -> 500  INTERNAL_ERROR
+  POST, status PAUSED        -> 500  INTERNAL_ERROR
+  POST, status DRAFT         -> 500  INTERNAL_ERROR
+  POST, condition REF        -> 500  INTERNAL_ERROR
+  POST, no signed-in actor   -> 500  INTERNAL_ERROR
+  PATCH status (no write)    -> 200 COMPLETED Study status updated successfully
+== AFTER
+  POST, no status            -> 201 ONGOING Study created successfully
+  POST, status PAUSED        -> 201 ON_HOLD Study created successfully
+  POST, status DRAFT         -> 400  Invalid status
+  POST, condition REF        -> 400  Invalid storageConditions
+  POST, no signed-in actor   -> 401  Actor identity required
+  PATCH status (no write)    -> 501  NOT_IMPLEMENTED
+
+# rows written by those requests, and their audit records:
+B-5-1|ONGOING|1
+B-5-2|ON_HOLD|1

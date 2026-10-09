@@ -1,0 +1,101 @@
+# against 259e22e5 (every changed source file at HEAD; gateway-outcome.ts absent)
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks shared frontier providers as multi-tenant without ZDR by default 6ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks private-cloud Claude (bedrock) as frontier_private with ZDR by default 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks local as the only self-hosted, on-prem, air-gappable substrate 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > allows any provider when no requirements are set 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > excludes shared frontier when zero data retention is required 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > requires a self-hosted substrate for on-prem residency 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > enforces regional residency against the provider region list 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > combines residency and ZDR (both must hold) 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > default Vertex (us-east5) claims us only — never eu 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Vertex pointed at an EU region claims eu 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Bedrock residency comes from the client region, not a declaration 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > a region with no residency code guarantees none 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Azure claims no residency unless one is declared 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > Bedrock is zero-retention unless the operator says otherwise 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > Vertex and Azure claim zero retention only when the operator records it 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > refuses a declared Bedrock residency the client region does not serve 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > refuses a declared Vertex residency list wider than the client region 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > boots when the declaration matches the client region 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > judges only enabled lanes, and only in production 1ms
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > London and Zurich are not EU residency; the EU regions are 9ms
+   → expected 'eu' to be null
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > an SDK base-URL override means the region no longer says where requests go 6ms
+   → expected [ 'eu' ] to deeply equal [ 'global' ]
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > Bedrock zero retention is claimed only for unset or true 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > delegates to the gateway and maps the response to CouncilLLMResult 3ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > routes prose agents as document_drafting (jsonMode off) 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > threads correlationId + operation into the gateway audit metadata 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > throws SERVICE_DEGRADED (without calling the gateway) when the feature is gated off 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > converts a gateway failure into a recoverable CouncilError and audits it 3ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > prepends the intelligence prefix to the system turn when org/project context is present 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > does not fetch an intelligence prefix when no org/project context is given 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > routes the reviewing agents as regulatory_review, with jsonMode on (not structured_output) 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > DRAFTER is routed as document_drafting whatever its output format 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > STATISTICIAN is routed as regulatory_review whatever its output format 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > CRITIC is routed as regulatory_review whatever its output format 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > SYNTHESIZER is routed as document_drafting whatever its output format 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > a governance refusal is final and not audited as an outage 2ms
+ × server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > a tenant placement refusal is final, named for what it is, and not audited as an outage (D6) 22ms
+   → expected CouncilError: AI service is temporarily u… { …(4) } to match object { …(3) }
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > withRetry does not retry an error marked unrecoverable, and does retry a recoverable one 6ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a claim that matches the data is VERIFIED; one that differs is a DISCREPANCY corrected to the data 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > the model's own VERIFIED is not a verdict: no matching binding means UNVERIFIABLE 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > the model's own correction is not a figure: it is dropped when no data answered 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a binding that returns nothing is UNVERIFIABLE, not a DISCREPANCY corrected to an empty string 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a count of 0 read from the data is a value, and verifies a claim of 0 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (prose) fails, and is not recorded as zero claims 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (JSON without a verifications list) fails, and is not recorded as zero claims 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (an empty reply) fails, and is not recorded as zero claims 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an empty verifications list is a real answer — a draft with no numerical claims 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Critic — an unreadable review is not "no issues" > unreadable → fails and records nothing 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Critic — an unreadable review is not "no issues" > a readable review keeps its issues and its assessment; an unknown assessment is the cautious REVISE 0ms
+ × server/routes/__tests__/ai-assistance-refusal.test.ts > a placement refusal is final on /api/ai-assistance > /assist answers 403 with the reason, sends nothing to the legacy router, and invents no recommendation 140ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/ai-assistance-refusal.test.ts > a placement refusal is final on /api/ai-assistance > /verify answers 403 and reports no verification 12ms
+   → expected 200 to be 403 // Object.is equality
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > accepts a complete, reasoned, satisfiable policy 7ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses a partial policy — an omitted field must never reset a constraint 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses an unknown key, including a client-supplied organizationId 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > requires a reason for change 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses an empty allow-list — null says "no constraint", [] would refuse everything 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses values this build does not know, rather than dropping them 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses a policy no AI service could satisfy 1ms
+ × server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses a residency or retention no allowed lane could ever provide (D6 review) 7ms
+   → .toMatch() expects to receive a string, but got object
+ × server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > writes the policy and its audit row (before, after, reason) in one transaction, then invalidates 6ms
+   → expected [ Array(5) ] to deeply equal [ 'BEGIN', 'LOCK', …(4) ]
+ × server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > commits nothing and invalidates nothing when the audit row cannot be written 3ms
+   → expected [ Array(5) ] to deeply equal [ 'BEGIN', 'LOCK', …(4) ]
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > the next dispatch sees a tightened policy at once, not after the cache expires 1ms
+ × server/services/__tests__/aiProviderRouter-refusal-final.test.ts > AIProviderRouter — a gateway refusal is final > is not re-sent to another vendor 12ms
+   → expected [ 'anthropic', 'openai' ] to have a length of 1 but got 2
+ × server/services/__tests__/aiProviderRouter-refusal-final.test.ts > AIProviderRouter — a gateway refusal is final > does not count against the refused provider’s health, so other tenants are not steered 3ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a lookup failure throws — it never reads as "this org has no policy" 3ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a failure is not cached: the next call looks the policy up again 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a missing row is "no policy" and is cached 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > reads the vendor allow-list and the public-source switches 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > an allow-list that names nothing valid allows nothing (fail closed), rather than everything 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > looks the policy up in the scope of the org it resolves, not the caller's ambient scope 1ms
+ × server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a lookup in flight when the policy changes does not put the superseded policy back (D6 review) 6ms
+   → expected null to match object { residency: 'eu', …(1) }
+ × server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > the same request from a second tenant is routed for that tenant, not served from the first tenant’s entry 10ms
+   → expected [ '1' ] to deeply equal [ '1', '2' ]
+ ✓ server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > a repeat from the same tenant is still served from the cache 1ms
+ × server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > a change to the tenant’s placement policy is a new key 2ms
+   → expected [ '1' ] to deeply equal [ '1', '1' ]
+ × server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > a policy that cannot be read bypasses the cache 2ms
+   → expected [ '1' ] to deeply equal [ '1', '1' ]
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  7 failed (7)
+      Tests  15 failed | 59 passed (74)
+exit=1
+# citation egress against 259e22e5 (citation-verification-service.ts at HEAD)
+ × a tenant that turned public-source egress off (D6 review) > checks nothing outbound and reports unverifiable, never verified 9ms
+   → expected [ 'verified', 'verified' ] to deeply equal [ 'unverifiable', 'unverifiable' ]
+ × a tenant that turned public-source egress off (D6 review) > a policy that cannot be read makes no outbound check and says so 2ms
+   → expected 'verified' to be 'error' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 13 passed (15)

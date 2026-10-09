@@ -1,0 +1,2 @@
+# npm run typecheck:fast — 2026-09-21T02:09:00Z — run after the other worker's tsc exited (two full-program tsc runs OOM the 15 GB cgroup)
+exit=0

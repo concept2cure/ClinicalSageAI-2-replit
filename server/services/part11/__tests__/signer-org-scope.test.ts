@@ -25,6 +25,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
 import { persistGovernedActionSignature } from '../signature-persistence';
+import { SignerNotAttributableError } from '../resolve-signer-identity';
 
 /** A client that records the statements it is asked to run. */
 function clientReturning(signerRows: Array<Record<string, unknown>>) {
@@ -42,7 +43,12 @@ const params = {
   userId: 42,
   target: 'financial-disclosure:1',
   reason: 'Certified as accurate and complete',
-  payload: { meaning: 'Certified' },
+  /* A meaning from GOVERNED_SIGN_MEANINGS. Since 3d09bf2a9 (§11.50(a)(3),
+     DP-17) the writer refuses a `sign` with any other meaning BEFORE the signer
+     lookup, so the original 'Certified' never reached the lookup these cases
+     exist to test. The meaning rule is pinned in governed-sign-meaning.test.ts;
+     here it only has to be satisfied. */
+  payload: { meaning: 'responsibility' },
   actionId: 'act-1',
   auditId: 'aud-1',
   sha256Chain: 'a'.repeat(64),
@@ -90,7 +96,12 @@ describe('the signer lookup is scoped by org membership', () => {
     // Non-membership and non-existence share one refusal on purpose:
     // distinguishing them would disclose that a user id exists in another
     // tenant.
+    // `rejects.not.toThrow(/not found/i)` alone passes for ANY other rejection —
+    // it stayed green while the meaning check refused this fixture before the
+    // lookup ran. So pin that the refusal is the membership one first.
     const { client } = clientReturning([]);
-    await expect(persistGovernedActionSignature(client, params)).rejects.not.toThrow(/not found/i);
+    const err = await persistGovernedActionSignature(client, params).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(SignerNotAttributableError);
+    expect((err as Error).message).not.toMatch(/not found|does not exist/i);
   });
 });

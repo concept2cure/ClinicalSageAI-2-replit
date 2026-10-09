@@ -10,7 +10,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { verifyFileSignature } from '../fileSignature';
+import { verifyDeclaredTypeForName, verifyFileSignature } from '../fileSignature';
 
 // Build a buffer that starts with `prefix` and pads to at least
 // minLen bytes. The pad isn't strictly needed for magic-number checks
@@ -168,5 +168,71 @@ describe('verifyFileSignature — edge cases', () => {
   it('rejects a buffer too short to contain the magic', () => {
     // PDF magic is 4 bytes; a 2-byte buffer can't possibly match.
     expect(verifyFileSignature(Buffer.from('%P'), 'application/pdf').ok).toBe(false);
+  });
+});
+
+/**
+ * The name binds the type (periodic review 2026-09-28, editor family, SEC-A-3).
+ *
+ * verifyFileSignature checks the bytes against the DECLARED type, and the
+ * uploader writes the declared type. `report.pdf` declared `text/html` with
+ * HTML bytes passed it — text-shaped bytes for a text type — so the vault
+ * stored text/html under a .pdf name and the editor's viewer framed it.
+ * verifyDeclaredTypeForName ties the declared type, and the bytes, to what the
+ * file's extension says.
+ */
+describe('verifyDeclaredTypeForName — the extension binds the declared type and the bytes', () => {
+  const HTML = Buffer.from('<!doctype html><script>alert(document.domain)</script>');
+  const PDF = makeBuf('%PDF-1.7\n', 32);
+
+  it('the SEC-A-3 upload passes the declared-type check on its own — the gap this closes', () => {
+    expect(verifyFileSignature(HTML, 'text/html').ok).toBe(true);
+  });
+
+  it('refuses a .pdf declared text/html, naming the type a .pdf must be declared as', () => {
+    const res = verifyDeclaredTypeForName(HTML, 'report.pdf', 'text/html');
+    expect(res.ok).toBe(false);
+    expect(res.reason).toMatch(/a \.pdf file must be declared as application\/pdf/);
+    // The ingest route's extension allowlist lower-cases, so REPORT.PDF gets this far too.
+    expect(verifyDeclaredTypeForName(HTML, 'REPORT.PDF', 'text/html').ok).toBe(false);
+  });
+
+  it('refuses a .pdf whose bytes are not a PDF, whatever was declared', () => {
+    const res = verifyDeclaredTypeForName(HTML, 'report.pdf', 'application/pdf');
+    expect(res.ok).toBe(false);
+    expect(res.reason).toMatch(/not a \.pdf file.*%PDF/);
+  });
+
+  it('accepts a real PDF, whatever the case of its extension', () => {
+    expect(verifyDeclaredTypeForName(PDF, 'report.pdf', 'application/pdf').ok).toBe(true);
+    expect(verifyDeclaredTypeForName(PDF, 'REPORT.PDF', 'application/pdf').ok).toBe(true);
+  });
+
+  it('binds rather than blacklists: text/html is refused for .txt and .md, and left alone for .html', () => {
+    expect(verifyDeclaredTypeForName(HTML, 'notes.txt', 'text/html').ok).toBe(false);
+    expect(verifyDeclaredTypeForName(HTML, 'notes.md', 'text/html').ok).toBe(false);
+    expect(verifyDeclaredTypeForName(HTML, 'page.html', 'text/html').ok).toBe(true);
+  });
+
+  it('accepts the types a text file is actually sent as, parameters and case aside', () => {
+    const csv = Buffer.from('a,b\n1,2\n');
+    expect(verifyDeclaredTypeForName(csv, 'data.csv', 'text/csv').ok).toBe(true);
+    // A multipart part with no Content-Type reaches multer as text/plain.
+    expect(verifyDeclaredTypeForName(csv, 'data.csv', 'text/plain').ok).toBe(true);
+    expect(verifyDeclaredTypeForName(Buffer.from('# Title\n'), 'notes.md', 'text/markdown').ok).toBe(true);
+    expect(verifyDeclaredTypeForName(Buffer.from('hello\n'), 'notes.txt', 'Text/Plain; charset=utf-8').ok).toBe(true);
+  });
+
+  it('refuses one Office format declared as another', () => {
+    const zip = makeBuf([0x50, 0x4b, 0x03, 0x04]);
+    const docx = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const xlsx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    expect(verifyDeclaredTypeForName(zip, 'tables.xlsx', docx).ok).toBe(false);
+    expect(verifyDeclaredTypeForName(zip, 'tables.xlsx', xlsx).ok).toBe(true);
+  });
+
+  it('leaves a name it does not bind to the caller’s own allowlist', () => {
+    expect(verifyDeclaredTypeForName(Buffer.from('{"a":1}'), 'data.json', 'application/json').ok).toBe(true);
+    expect(verifyDeclaredTypeForName(HTML, 'no-extension', 'text/html').ok).toBe(true);
   });
 });

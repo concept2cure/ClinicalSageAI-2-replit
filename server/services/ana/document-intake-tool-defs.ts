@@ -119,7 +119,9 @@ export const READ_SPREADSHEET: AnaTool = {
   description:
     'Structured, cell-level read of an uploaded Excel (.xlsx) or CSV file: returns the sheet inventory plus the requested ' +
     'sheet\'s rows as a table — display values with row numbers, and formulas preserved alongside their cached results. ' +
-    'Page through big sheets with start_row/max_rows. Use this (not read_uploaded_document) whenever you need to study ' +
+    'Page through big sheets with start_row/max_rows, and keep paging while `truncated` is true: `lastRow` is where the ' +
+    'sheet ends, while `totalRows` only counts rows that hold values, so a sheet with blank rows ends after totalRows. ' +
+    'Use this (not read_uploaded_document) whenever you need to study ' +
     'specific cells, formulas, or a particular sheet; use edit_spreadsheet to change cells afterwards.',
   input_schema: {
     type: 'object',

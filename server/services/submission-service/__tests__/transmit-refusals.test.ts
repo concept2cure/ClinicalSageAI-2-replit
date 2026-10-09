@@ -110,8 +110,12 @@ describe('transmit claim — source contract', () => {
   });
 
   it('takes the claim BEFORE the package is assembled', () => {
-    const claim = CODE.indexOf('claimTransmitSlot(sequenceId');
-    const assemble = CODE.indexOf('await assembleSequence(');
+    // Within transmitSequence: the governed freeze/dispatch also assemble
+    // (assertSequencePackageable, 2026-09-23) and hold no transmit claim.
+    const fn = CODE.indexOf('export async function transmitSequence');
+    expect(fn).toBeGreaterThan(-1);
+    const claim = CODE.indexOf('claimTransmitSlot(sequenceId', fn);
+    const assemble = CODE.indexOf('await assembleSequence(', fn);
     expect(claim).toBeGreaterThan(-1);
     expect(assemble).toBeGreaterThan(-1);
     expect(claim).toBeLessThan(assemble);
@@ -123,11 +127,19 @@ describe('transmit claim — source contract', () => {
 
   it('never releases the claim after the bytes may have left', () => {
     // Delivery is ambiguous once gw.transmit is entered, so the claim is left
-    // standing for a human. Every release must precede it.
+    // standing for a human. Every release must precede it — except one: a
+    // refusal the gateway GUARD made before handing anything to the gateway
+    // (refusedBeforeWire), which left a never-sent sequence stuck 'transmitting'
+    // (2026-09-23, W5/D7; behaviour pinned in
+    // transmit-guard-refusal-releases-claim.test.ts). That release must be
+    // conditioned on refusedBeforeWire and nothing else.
     const transmit = CODE.indexOf('await gw.transmit(');
     expect(transmit).toBeGreaterThan(-1);
     const releases = [...CODE.matchAll(/releaseTransmitSlot\(sequenceId/g)].map((m) => m.index ?? -1);
     expect(releases.length).toBeGreaterThan(0);
-    for (const at of releases) expect(at).toBeLessThan(transmit);
+    const after = releases.filter((at) => at > transmit);
+    expect(after).toHaveLength(1);
+    const line = CODE.slice(CODE.lastIndexOf('\n', after[0]) + 1, CODE.indexOf('\n', after[0]));
+    expect(line).toMatch(/^\s*if \(refusedBeforeWire\(err\)\) await releaseTransmitSlot\(sequenceId/);
   });
 });

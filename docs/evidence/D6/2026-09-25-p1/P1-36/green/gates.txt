@@ -1,0 +1,14 @@
+$ npm run ci:server-error-leaks
+
+> concept2cure-riai@1.0.0 ci:server-error-leaks
+> node scripts/ci/check-server-error-leaks.mjs
+
+[ci:server-error-leaks] OK — 145 baselined site(s) across 89 file(s); no file gained one.
+exit=0
+$ npm run check:security-patterns
+
+> concept2cure-riai@1.0.0 check:security-patterns
+> tsx scripts/check-security-patterns.ts
+
+check-security-patterns: 0 violations across 2854 file(s).
+exit=0

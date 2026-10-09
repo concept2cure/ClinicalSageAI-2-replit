@@ -33,7 +33,7 @@
 
 import { __testing } from './logger';
 
-const { redactContext } = __testing;
+const { redactContext, maskPersonalData } = __testing;
 
 let installed = false;
 
@@ -44,14 +44,18 @@ interface InstallableConsole {
 }
 
 /**
- * Redact each argument: pass-through for primitives, walk objects /
- * errors / arrays through the existing redaction logic. Returns a
- * new array so the original arguments object isn't mutated.
+ * Redact each argument: a string is masked for e-mail and IP addresses
+ * (P1-27 / P1-37 follow-up, 2026-09-26 — a legacy console.error carrying an
+ * address is the same leak as a log message carrying one); numbers and
+ * booleans pass through; objects / errors / arrays walk through the existing
+ * redaction logic. Returns a new array so the original arguments object
+ * isn't mutated.
  */
 function redactArgs(args: unknown[]): unknown[] {
   return args.map(arg => {
     if (arg == null) return arg;
-    if (typeof arg === 'string' || typeof arg === 'number' || typeof arg === 'boolean') {
+    if (typeof arg === 'string') return maskPersonalData(arg);
+    if (typeof arg === 'number' || typeof arg === 'boolean') {
       return arg;
     }
     if (arg instanceof Error) {

@@ -317,22 +317,39 @@ router.post('/estimand/:estimandId/methods', authMiddleware, async (req: Request
 
 /**
  * POST /api/biostat/multiplicity/design
- * Design a multiplicity adjustment strategy.
+ * Design a multiplicity adjustment strategy. Defaults (method 'graphical',
+ * alpha 0.025) are visible in the response's `approach` and `overallAlpha`.
+ * `alphaAllocation` is each hypothesis's initial level; for holm and hochberg
+ * that is alpha/m, and their thresholds for the ordered p-values are in
+ * `rankThresholds`, by rank, never by hypothesis. An input the engine refuses
+ * (TypeError / RangeError naming it) is a 400, not a 500, and so is a top-level
+ * `weights` or `familyStructure`, which the designer does not read — until
+ * 2026-09-28 both were accepted and silently ignored.
  */
 router.post('/multiplicity/design', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const userId = resolveUserId(req);
-    const { hypotheses, familyStructure, method, alpha, weights } = req.body;
+    const { hypotheses, method, alpha } = req.body;
+    const unread = (['weights', 'familyStructure'] as const).filter((k) => req.body[k] !== undefined);
+    if (unread.length) {
+      return res.status(400).json({
+        success: false,
+        error: `${unread.join(' and ')} ${unread.length > 1 ? 'are' : 'is'} not read by the multiplicity designer; ` +
+          `give a hypothesis's weight as hypotheses[i].weight (read by the fallback approach only)`,
+      });
+    }
 
     const result = await estimandEngineService.designMultiplicityStrategy({
       threadId: req.body.threadId,
-      hypotheses: hypotheses || [],
+      hypotheses,
       overallAlpha: alpha ?? 0.025,
       approach: method || 'graphical',
     }, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
+    if (error instanceof TypeError || error instanceof RangeError) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
     return serverError(res, logger, 'saving design', error);
   }
 });

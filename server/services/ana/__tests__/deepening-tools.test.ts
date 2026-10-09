@@ -1,6 +1,18 @@
-import { describe, it, expect } from 'vitest';
-import { getToolHandler } from '../AnaToolExecutor.js';
+import { runWithTenantScope } from '../../../db/tenantStore';
+import { describe, it, expect, type Mock } from 'vitest';
+import { mockPool } from '../../../../tests/setup';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
+
+/* Tools run inside the caller's tenant scope (see the process-capability
+   helper below), where the instrumented pool runs each query on a connection
+   from the ORIGINAL pool.connect. The shared mock's client answers undefined,
+   so it is given the pool's own empty result here — captured before the
+   executor's import graph instruments the pool and replaces connect. */
+(mockPool.connect as unknown as Mock).mockResolvedValue({
+  query: () => Promise.resolve({ rows: [], rowCount: 0 }),
+  release: () => undefined,
+});
+const { getToolHandler } = await import('../AnaToolExecutor.js');
 
 const names = ALL_ANA_TOOLS.map(t => t.name);
 
@@ -366,8 +378,16 @@ describe('assess_recorded_stability_trend', () => {
 });
 
 describe('assess_recorded_process_capability', () => {
-  const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) =>
-    getToolHandler('assess_recorded_process_capability')!(input, ctx as never);
+  /* Inside the caller's tenant scope, as production runs it — see the note on
+     the same helper in intelligence-flow-sessions.test.ts. Unscoped when the
+     context has no organisation, which the refusal case relies on. */
+  const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) => {
+    const run = () => getToolHandler('assess_recorded_process_capability')!(input, ctx as never);
+    const org = ctx?.organizationId;
+    return org == null
+      ? run()
+      : runWithTenantScope({ tenantId: String(org), source: 'test', caller: 'tool:assess_recorded_process_capability' }, run);
+  };
 
   it('refuses without an organization', async () => {
     const out = await call({ project_id: 'p1' }, {});

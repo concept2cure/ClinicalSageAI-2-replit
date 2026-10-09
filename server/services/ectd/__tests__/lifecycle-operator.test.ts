@@ -76,7 +76,11 @@ describe('computeLifecycleOperations', () => {
       ctdSection: '5.3.5.1',
       fileName: 'old-study.pdf',
       title: 'Old Study',
-      sourcePath: '/archive/old.pdf',
+      // No bytes, whatever path the prior or desired leaf carries (2026-09-23,
+      // W5/D7): the packager packages a delete that has a sourcePath as an
+      // ordinary file, which shipped the withdrawn document again. This pinned
+      // '/archive/old.pdf'.
+      sourcePath: '',
       md5: 'ccc',
     });
   });
@@ -93,6 +97,32 @@ describe('computeLifecycleOperations', () => {
     const res = computeLifecycleOperations(p, d);
     expect(res.summary).toMatchObject({ replace: 1, new: 0, delete: 0 });
     expect(res.leaves[0].fileName).toBe('summary-v2.pdf');
+  });
+
+  it('a keyed leaf still matches an UNKEYED prior leaf by path — a history filed before keys existed is not re-filed whole', () => {
+    const p = [prior({ ctdSection: '2.5', fileName: 'overview.pdf', md5: 'o1' })]; // no leafKey
+    const d = [desired({ leafKey: 'artifact:a@2.5', ctdSection: '2.5', fileName: 'overview.pdf', md5: 'o2' })];
+    const res = computeLifecycleOperations(p, d);
+    expect(res.summary).toMatchObject({ replace: 1, new: 0, unchanged: 0 });
+  });
+
+  it('two DIFFERENTLY keyed leaves at one path are two documents — never a replace of one by the other', () => {
+    // The path is only a stand-in for identity when one side has none. When
+    // both carry keys and they differ, a shared file name is a coincidence,
+    // and a replace would supersede the wrong document at the agency.
+    const p = [prior({ leafKey: 'artifact:a@2.5', ctdSection: '2.5', fileName: 'overview.pdf', md5: 'o1' })];
+    const d = [desired({ leafKey: 'artifact:b@2.5', ctdSection: '2.5', fileName: 'overview.pdf', md5: 'o2' })];
+    const res = computeLifecycleOperations(p, d);
+    expect(res.summary).toMatchObject({ new: 1, replace: 0, unchanged: 1 });
+    expect(res.leaves[0]).not.toHaveProperty('modifiedFile');
+  });
+
+  it('counts unchanged by what was MATCHED: a replaced leaf is not also reported as still on file', () => {
+    // A keyed desired leaf and an unkeyed prior leaf never compare equal by
+    // key shape, so counting leftovers by key shape reported one leaf twice.
+    const p = [prior({ ctdSection: '1.2', fileName: 'cover.pdf', md5: 'c1' })];
+    const d = [desired({ leafKey: 'artifact:c@1.2', ctdSection: '1.2', fileName: 'cover.pdf', md5: 'c2' })];
+    expect(computeLifecycleOperations(p, d).summary).toMatchObject({ replace: 1, unchanged: 0 });
   });
 
   it('handles a mixed sequence: new + replace + delete + unchanged together', () => {
@@ -134,49 +164,83 @@ describe('computeLifecycleOperations', () => {
       expect(res.leaves[0].modifiedFile).toBeUndefined();
     });
 
-    it('a replace points modified-file at the prior published href, prefixed to the prior sequence', () => {
+    // ICH eCTD v3.2.2: modified-file names the filed LEAF — the backbone of the
+    // sequence that filed it, '#', and its ID — never the file's path.
+    // 2026-09-29 (W5/D7): these pinned the file path ('../0000/m3/…/general.pdf').
+    it('a replace names the prior leaf by its backbone and ID, prefixed to the prior sequence', () => {
       const p = [prior({
         ctdSection: '3.2.S.1', fileName: 'general.pdf', md5: 'a',
-        href: 'm3/32-body-data/32s-drug-sub/general.pdf',
+        href: 'm3/32-body-data/32s-drug-sub/general.pdf', leafId: 'leaf-3-2-S-1-general', backbone: 'index.xml',
       })];
       const d = [desired({ ctdSection: '3.2.S.1', fileName: 'general.pdf', md5: 'b' })];
       const res = computeLifecycleOperations(p, d, { priorSequencePrefix: '../0000/' });
       expect(res.leaves[0].operation).toBe('replace');
-      expect(res.leaves[0].modifiedFile).toBe('../0000/m3/32-body-data/32s-drug-sub/general.pdf');
+      expect(res.leaves[0].modifiedFile).toBe('../0000/index.xml#leaf-3-2-S-1-general');
     });
 
-    it('an append also carries modified-file at the leaf it extends', () => {
-      const p = [prior({ ctdSection: '1.1', fileName: 'cover.pdf', md5: 'a', href: 'm1/us/11-forms/cover.pdf' })];
+    it('an append of a Module 1 leaf names the regional backbone, from the sequence root', () => {
+      const p = [prior({
+        ctdSection: '1.1', fileName: 'cover.pdf', md5: 'a', href: 'm1/us/11-forms/cover.pdf',
+        leafId: 'leaf-1-1-cover', backbone: 'm1/us/us-regional.xml',
+      })];
       const d = [desired({ ctdSection: '1.1', fileName: 'cover.pdf', md5: 'b', appendOnChange: true })];
       const res = computeLifecycleOperations(p, d, { priorSequencePrefix: '../0000' });
       expect(res.leaves[0].operation).toBe('append');
-      expect(res.leaves[0].modifiedFile).toBe('../0000/m1/us/11-forms/cover.pdf');
+      expect(res.leaves[0].modifiedFile).toBe('../0000/m1/us/us-regional.xml#leaf-1-1-cover');
     });
 
-    it('a delete points modified-file at the withdrawn prior leaf', () => {
-      const p = [prior({ ctdSection: '5.3.5.1', fileName: 'old-study.pdf', md5: 'c', href: 'm5/53-clin-stud-rep/535/old-study.pdf' })];
+    it('a delete names the withdrawn prior leaf the same way', () => {
+      const p = [prior({
+        ctdSection: '5.3.5.1', fileName: 'old-study.pdf', md5: 'c', href: 'm5/53-clin-stud-rep/535/old-study.pdf',
+        leafId: 'leaf-5-3-5-1-old-study', backbone: 'index.xml',
+      })];
       const d = [desired({ ctdSection: '5.3.5.1', fileName: 'old-study.pdf', md5: '', withdraw: true })];
       const res = computeLifecycleOperations(p, d, { priorSequencePrefix: '../0000' });
       expect(res.leaves[0].operation).toBe('delete');
-      expect(res.leaves[0].modifiedFile).toBe('../0000/m5/53-clin-stud-rep/535/old-study.pdf');
+      expect(res.leaves[0].modifiedFile).toBe('../0000/index.xml#leaf-5-3-5-1-old-study');
     });
 
-    it('preserves a #leafId fragment and normalizes a leading slash on the prior href', () => {
-      const p = [prior({ ctdSection: '2.7', fileName: 's.pdf', md5: 'a', href: '/m2/27-clin-sum/s.pdf#node42' })];
+    it('traverses to the sequence that last published the leaf, over the caller prefix', () => {
+      const p = [prior({
+        ctdSection: '2.7', fileName: 's.pdf', md5: 'a', sequenceNumber: '0001',
+        leafId: 'leaf-2-7-s', backbone: '/index.xml',
+      })];
       const d = [desired({ ctdSection: '2.7', fileName: 's.pdf', md5: 'b' })];
-      const res = computeLifecycleOperations(p, d, { priorSequencePrefix: '../../0001/' });
-      expect(res.leaves[0].modifiedFile).toBe('../../0001/m2/27-clin-sum/s.pdf#node42');
+      const res = computeLifecycleOperations(p, d, { priorSequencePrefix: '../0002/' });
+      expect(res.leaves[0].modifiedFile).toBe('../0001/index.xml#leaf-2-7-s');
     });
 
-    it('with no prefix, emits the bare prior href (ungrouped / same-root lifecycle)', () => {
-      const p = [prior({ ctdSection: '2.5', fileName: 'o.pdf', md5: 'a', href: 'm2/25-clin-over/o.pdf' })];
+    it('with no prefix and no sequence, names the backbone in the same root', () => {
+      const p = [prior({ ctdSection: '2.5', fileName: 'o.pdf', md5: 'a', leafId: 'leaf-2-5-o', backbone: 'index.xml' })];
       const d = [desired({ ctdSection: '2.5', fileName: 'o.pdf', md5: 'b' })];
       const res = computeLifecycleOperations(p, d);
-      expect(res.leaves[0].modifiedFile).toBe('m2/25-clin-over/o.pdf');
+      expect(res.leaves[0].modifiedFile).toBe('index.xml#leaf-2-5-o');
     });
 
-    it('omits modified-file (rather than guessing) when the prior href is unknown', () => {
-      const p = [prior({ ctdSection: '2.5', fileName: 'o.pdf', md5: 'a' })]; // no href
+    it('never names a leaf by its file path: a prior leaf with only an href gets no modified-file', () => {
+      const p = [prior({ ctdSection: '2.5', fileName: 'o.pdf', md5: 'a', href: 'm2/25-clin-over/o.pdf#node42' })];
+      const d = [desired({ ctdSection: '2.5', fileName: 'o.pdf', md5: 'b' })];
+      const res = computeLifecycleOperations(p, d, { priorSequencePrefix: '../0000' });
+      expect(res.leaves[0].operation).toBe('replace');
+      expect(res.leaves[0].modifiedFile).toBeUndefined();
+    });
+
+    it('refuses to name a malformed ID or a backbone outside the sequence', () => {
+      for (const bad of [
+        { leafId: 'not an id', backbone: 'index.xml' },
+        { leafId: 'leaf-2-5-o', backbone: '../index.xml' },
+        { leafId: 'leaf-2-5-o', backbone: 'm2/o.pdf' },
+      ]) {
+        const p = [prior({ ctdSection: '2.5', fileName: 'o.pdf', md5: 'a', ...bad })];
+        const res = computeLifecycleOperations(p, [desired({ ctdSection: '2.5', fileName: 'o.pdf', md5: 'b' })], {
+          priorSequencePrefix: '../0000',
+        });
+        expect(res.leaves[0].modifiedFile, JSON.stringify(bad)).toBeUndefined();
+      }
+    });
+
+    it('omits modified-file (rather than guessing) when the prior leaf is not identified at all', () => {
+      const p = [prior({ ctdSection: '2.5', fileName: 'o.pdf', md5: 'a' })]; // no ID, no href
       const d = [desired({ ctdSection: '2.5', fileName: 'o.pdf', md5: 'b' })];
       const res = computeLifecycleOperations(p, d, { priorSequencePrefix: '../0000' });
       expect(res.leaves[0].operation).toBe('replace');

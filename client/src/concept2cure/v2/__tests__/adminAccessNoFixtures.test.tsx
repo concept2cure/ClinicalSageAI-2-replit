@@ -55,7 +55,7 @@ const REAL = {
       { id: 'key-7', name: 'prod ingest key', owner: 'u-11', scopes: ['documents:read'], created: '2026-06-01', lastUsed: '2026-07-29T00:00:00Z', rotateIn: '' },
     ],
     audit: [
-      { id: 'aud-90ab12', when: '2026-07-30T00:00:00Z', actor: 'u-11', action: 'data_modify', target: 'organizations · 2', sha: 'dead…babe' },
+      { id: 'aud-90ab12', when: '2026-07-30T00:00:00Z', actor: 'Ada Rivera', action: 'Organization settings changed', target: 'Bright Biosciences', sha: 'dead…babe' },
     ],
     settings: [
       { id: 'mfa-required', label: 'MFA required', kind: 'toggle', value: 'Yes (all roles)', desc: '21 CFR Part 11 §11.10(d) compliance' },
@@ -131,9 +131,10 @@ describe('AdminAccess — real admin estate renders (no fixture)', () => {
     expect((await screen.findAllByText('Ada Rivera')).length).toBeGreaterThan(0);
     expect(screen.getByText('Ben Kwan')).toBeTruthy();
     expect(screen.getByText('ben@brightbio.io')).toBeTruthy();
-    // The admin audit band (always shown with real data) adopted the live row.
-    expect(screen.getByText('data_modify')).toBeTruthy();
-    expect(screen.getByText('aud-90ab12')).toBeTruthy();
+    // The admin audit band (always shown with real data) adopted the live row —
+    // by its event, not by a row id.
+    expect(screen.getByText('Organization settings changed')).toBeTruthy();
+    expect(screen.queryByText('aud-90ab12')).toBeNull();
 
     // No "Sample data" pill and none of the retired FX content.
     expect(document.querySelector('.c2c-sample-tag')).toBeNull();
@@ -146,7 +147,7 @@ describe('AdminAccess — real admin estate renders (no fixture)', () => {
 
     expect(kpiValue('Members')).toBe('2');
     expect(kpiValue('Roles')).toBe('2');
-    expect(kpiValue('MFA enabled')).toBe('1'); // only Ada has MFA
+    expect(kpiValue('Authenticator app')).toBe('1'); // only Ada has one enrolled
     expect(kpiValue('API keys')).toBe('1');
   });
 
@@ -192,16 +193,26 @@ describe('AdminAccess — honest empty state', () => {
 });
 
 describe('AdminAccess — honest error state', () => {
-  beforeEach(() => {
+  const answer = (status: number) =>
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url === '/api/mdx/admin') {
-        return { ok: false, status: 403, json: async () => ({ error: 'Organization admin access required.' }) } as Response;
+        return { ok: false, status, json: async () => ({ error: 'Organization admin access required.' }) } as Response;
       }
       return { ok: true, status: 200, json: async () => ({}) } as Response;
     });
+
+  it('says "no access" — not "didn\'t respond" — when the caller is not an org admin (403)', async () => {
+    answer(403);
+    render(<AdminAccess {...props()} />);
+
+    expect(await screen.findByText('Organization admin access required')).toBeTruthy();
+    expect(screen.queryByText("Couldn't load admin and access")).toBeNull();
+    await waitFor(() => expect(kpiValue('Members')).toBe('--'));
+    for (const s of RETIRED) expect(document.body.textContent).not.toContain(s);
   });
 
-  it('shows an error EmptyState — never a fixture — when the read fails or the caller is not an org admin', async () => {
+  it('shows an error state — never a fixture — when the read fails (500)', async () => {
+    answer(500);
     render(<AdminAccess {...props()} />);
 
     expect(await screen.findByText("Couldn't load admin and access")).toBeTruthy();

@@ -70,9 +70,35 @@ const BZH = { submissionType: '510(k)', productCode: 'BZH', limit: 10 } as any;
 beforeEach(() => {
   query.mockReset();
   openFda.mockReset();
-  // Every other strategy's table is absent in this environment, exactly as it
-  // is in a fresh one. The registry result must stand on its own.
-  query.mockRejectedValue(new Error('relation does not exist'));
+  // The unified corpus exists (the migration set creates it and, since
+  // 2026-09-22, its organization_id) and is empty here; every other strategy's
+  // optional table is absent. The registry result must stand on its own.
+  //
+  // This used to reject EVERY query, the corpus read included — which only
+  // passed because the engine swallowed a failed corpus read to []. That
+  // swallow was the defect: it answered "no precedents" about a corpus it had
+  // never read. The engine now lets that error surface (see the test below).
+  query.mockImplementation((sql: unknown) =>
+    /precedent\.regulatory_precedents/.test(String(sql))
+      ? Promise.resolve({ rows: [] })
+      : Promise.reject(new Error('relation does not exist'))
+  );
+});
+
+describe('a corpus that could not be read is not an empty corpus', () => {
+  it('rejects instead of answering "no precedents" when the corpus query fails', async () => {
+    openFda.mockResolvedValue({ available: true, results: BZH_HITS, source: 'openfda' });
+    query.mockRejectedValue(new Error('column "organization_id" does not exist'));
+    await expect(precedentEngine.searchWithSources(BZH)).rejects.toThrow(/organization_id/);
+  });
+
+  it('scopes the corpus read to public rows plus the caller\'s own organization', async () => {
+    openFda.mockResolvedValue({ available: true, results: [], source: 'openfda' });
+    await precedentEngine.searchWithSources(BZH, 7);
+    const call = query.mock.calls.find((c) => /precedent\.regulatory_precedents/.test(String(c[0])));
+    expect(String(call?.[0])).toMatch(/\(organization_id IS NULL OR organization_id = \$1\)/);
+    expect(call?.[1]?.[0]).toBe(7);
+  });
 });
 
 describe('a 510(k) search reaches the FDA registry', () => {

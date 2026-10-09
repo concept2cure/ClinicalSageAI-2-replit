@@ -25,6 +25,7 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import { checkOrgMembership } from '../middleware/orgMembership';
 
 const router = Router();
 const log = createScopedLogger('mdx-risk');
@@ -41,6 +42,21 @@ function getUserId(req: Request): number | null {
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * An assignee must belong to the risk's organization. `public.users` has no RLS,
+ * and the engineering panel (mdx-engineering.ts) joins users on assigned_to to
+ * show the owner's name — so an unchecked id here let an editor in one tenant
+ * assign another tenant's user and read that user's name back. Refused with 422,
+ * not silently dropped; an unverifiable membership throws and fails closed.
+ */
+async function assigneeRefusal(orgId: number, assignedTo: number | null | undefined): Promise<string | null> {
+  if (assignedTo === null || assignedTo === undefined) return null;
+  const membership = await checkOrgMembership(assignedTo, orgId);
+  if (membership === 'member') return null;
+  if (membership === 'revoked') return 'assignedTo is not a member of this organization';
+  throw new Error('assignee organization membership could not be verified');
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -132,6 +148,8 @@ router.post('/risk-items', async (req: Request, res: Response) => {
   const initialRisk = p.severity * p.probability;
 
   try {
+    const refusal = await assigneeRefusal(orgId, p.assignedTo);
+    if (refusal) return clientError(res, 422, refusal);
     const { rows } = await pool.query(
       `INSERT INTO risk_items (
          organization_id, program_id, ref_code, hazard, hazardous_situation, harm,
@@ -262,6 +280,8 @@ router.patch('/risk-items/:id', async (req: Request, res: Response) => {
   args.push(id, orgId);
 
   try {
+    const refusal = await assigneeRefusal(orgId, parsed.data.assignedTo);
+    if (refusal) return clientError(res, 422, refusal);
     const { rows } = await pool.query(
       `UPDATE risk_items SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL

@@ -1,0 +1,13 @@
+$ node -e '...scanFileText(HEAD:server/src/routes/stability.router.ts)'  # the router as committed at 65b55123
+[ci:upload-guards] A multer site needs limits.fileSize, a fileFilter and an assertUploadSafe call in its file (server/middleware/uploadAllowlist.ts, server/middleware/uploadSafety.ts).
+(one site at line 85 lacking all three: the audit's IAM-14 observation, now countable)
+
+$ node scripts/ci/check-upload-guards.mjs --selftest
+[ci:upload-guards] selftest caught: bare site is one site lacking all three
+[ci:upload-guards] selftest caught: guarded site lacks nothing
+[ci:upload-guards] selftest caught: comment is not a site; the real site lacks only fileFilter
+[ci:upload-guards] selftest caught: empty baseline: the two unguarded files fail
+[ci:upload-guards] selftest caught: a reasonless baseline entry fails even at its count
+[ci:upload-guards] selftest caught: a file above its baseline count fails
+[ci:upload-guards] selftest 6/6 caught
+exit=0

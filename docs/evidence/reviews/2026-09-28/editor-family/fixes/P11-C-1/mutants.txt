@@ -1,0 +1,27 @@
+=== mutant: the schedule-of-assessments router without the gate
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 110 passed (113)
+can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/documents/1/assessments
+can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/cells
+can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/cells/clear
+=== mutant: the gate passes every request
+⎯⎯⎯⎯⎯⎯ Failed Tests 46 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  46 failed | 67 passed (113)
+can read a protocol and cannot change it (P11-C-1) > a viewer adding a risk is refused, and nothing is filed or ledgered
+can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-amendments/amendments
+can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-amendments/amendments/1/changes
+can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-amendments/amendments/1/status
+=== mutant: POST counted as a read
+⎯⎯⎯⎯⎯⎯ Failed Tests 33 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  33 failed | 80 passed (113)
+can read a protocol and cannot change it (P11-C-1) > a viewer adding a risk is refused, and nothing is filed or ledgered
+can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-amendments/amendments
+can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-amendments/amendments/1/changes
+can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-budget/documents/1/items
+=== mutant: reads gated too
+⎯⎯⎯⎯⎯⎯ Failed Tests 21 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  21 failed | 92 passed (113)
+can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendme
+can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendme
+can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendme
+can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendme

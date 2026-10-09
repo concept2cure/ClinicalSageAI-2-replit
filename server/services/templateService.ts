@@ -531,7 +531,10 @@ export class TemplateService {
       if (updateData.ichGuidance) updateFields.ichGuidance = updateData.ichGuidance;
       if (updateData.tags) updateFields.tags = updateData.tags;
       if (updateData.isActive !== undefined) updateFields.isActive = updateData.isActive;
-      if (updateData.fileUrl) updateFields.wordTemplate = updateData.fileUrl;
+      // No fileUrl: the stored file path is set by the upload route alone.
+      // Taking it from an update body let a user point their template at
+      // another organization's upload, or any file on the host, and have AnA
+      // read it back as a "filled template" (INJ-PATH-002).
 
       updateFields.updatedAt = new Date();
 

@@ -53,3 +53,18 @@ export function buildProvenance(args: {
     note: args.note ?? 'Deterministic given the same seed and inputs.',
   };
 }
+
+/** A provenance record without its wall-clock reading. */
+export type ReproducibleProvenance = Omit<StatsProvenance, 'generatedAt'>;
+
+/**
+ * The record minus `generatedAt`: what reproduces the result (method, version,
+ * seed, input hash) without the time it happened to be computed. A projection
+ * that must be a pure function of its input embeds this, so the same input
+ * yields byte-identical output.
+ */
+export function reproducibleProvenance(p: StatsProvenance): ReproducibleProvenance {
+  const out: Partial<StatsProvenance> = { ...p };
+  delete out.generatedAt;
+  return out as ReproducibleProvenance;
+}

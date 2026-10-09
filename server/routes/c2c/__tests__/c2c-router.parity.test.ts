@@ -184,7 +184,7 @@ const ARTIFACT_PATHS = [
   'POST /vault/register-artifact',
   'PUT /projects/:projectId/artifacts/:artifactId/placement',
   'GET /projects/:projectId/dossier-metrics',
-  'POST /projects/:projectId/artifacts/:artifactId/signatures',
+  // POST …/signatures was REMOVED 2026-09-20 (second signature substrate; see artifact-signature-route-removed.test.ts).
   'GET /projects/:projectId/artifacts/:artifactId/signatures',
   'GET /projects/:projectId/artifacts/:artifactId/snapshots',
   'GET /projects/:projectId/artifacts/:artifactId/provenance',

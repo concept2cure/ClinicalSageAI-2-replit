@@ -1,0 +1,43 @@
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > names the vault document by uuid, on the vault_documents table 520ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > writes NO snapshot — that is the whole point of the uuid column 104ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > shows the filed document by title once the read settles, with the spine still the open folder 163ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > reports the leaf the server actually wrote 147ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it 111ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > a vault with no uploads says so in the lane rather than rendering nothing 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder 341ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > surfaces the server verdict verbatim and never claims a placement 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents" 53ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > writes nothing for a section code no document can be filed at 128ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the target picker is the shared one > offers the draft sequence and disables the frozen one, saying why 111ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand 140ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room 107ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty 93ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree 119ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree 376ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded 108ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use 219ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter 148ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches 805ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them 195ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page 99ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case 69ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count 106ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid 746ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > publishes the selected section on the editor deep-link channel before navigating 267ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no class that no stylesheet defines 494ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > renders the shared dialog shell the other dialogs use 32ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > is labelled by its own title 26ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > carries the section but NOT an invented family for a dossier the channel cannot name 79ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > leaves no stale target behind for the next, unrelated visit to the editor 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > moves focus into the dialog on open 50ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > returns focus to whatever opened it 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on Escape 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on a click outside, but not on a click inside 33ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion 79ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review 57ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file 59ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires 4ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials 4ms
+ Test Files  6 passed (6)
+      Tests  41 passed (41)

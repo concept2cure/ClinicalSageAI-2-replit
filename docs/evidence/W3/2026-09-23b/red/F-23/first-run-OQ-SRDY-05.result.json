@@ -1,0 +1,44 @@
+{
+ "protocolId": "OQ-005",
+ "executedAt": "2026-09-23T04:42:40.907Z",
+ "commit": "af798a862c7f68e3b7adb3206f43d3f1417bb6fe",
+ "authentication": "password+totp",
+ "counts": {
+  "pass": 9,
+  "fail": 0,
+  "deviation": 0,
+  "not-executed": 0
+ },
+ "step": {
+  "id": "OQ-SRDY-05",
+  "title": "Execute the readiness review for the program",
+  "urs": [
+   "URS-SRDY-005"
+  ],
+  "kind": "scripted",
+  "action": "POST /api/orchestration/execute {templateId:\"submission_readiness_review\", projectId}; GET /executions/:id",
+  "expected": "Execution starts (2xx) and its status is readable; steps are orchestrator_logic (no model call)",
+  "status": "pass",
+  "observed": "execution eec14ecf-dcd4-498c-8afa-7997df74f822: {\"executionId\":\"eec14ecf-dcd4-498c-8afa-7997df74f822\",\"templateId\":\"submission_readiness_review\",\"status\":\"completed\",\"projectId\":\"0d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc\",\"organizationId\":1,\"module\":\"ind\",\"steps\":[{\"stepId\":\"inspect_project_state\",\"name\":\"Inspect project state\",\"status\":\"completed\",\"s",
+  "startedAt": "2026-09-23T04:42:45.210Z",
+  "finishedAt": "2026-09-23T04:42:47.273Z",
+  "evidence": [],
+  "api": [
+   {
+    "file": "steps/OQ-SRDY-05.api-1.json",
+    "method": "POST",
+    "url": "http://localhost:5200/api/orchestration/execute",
+    "status": 200
+   },
+   {
+    "file": "steps/OQ-SRDY-05.api-2.json",
+    "method": "GET",
+    "url": "http://localhost:5200/api/orchestration/executions/eec14ecf-dcd4-498c-8afa-7997df74f822",
+    "status": 200
+   }
+  ],
+  "consoleErrors": [],
+  "note": null,
+  "rateLimitRetries": 0
+ }
+}

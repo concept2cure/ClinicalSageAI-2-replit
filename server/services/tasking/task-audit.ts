@@ -7,18 +7,32 @@
  * transparent data lineage — who did what, to which task, when, with a tamper-
  * evident chain — which the legacy `/api/regulatory/tasks` mutations lacked.
  *
- * Best-effort and graceful: a lineage-write failure NEVER breaks the task
- * mutation. The DB persistence is certified in the preview/CI loop (the tables
- * ship in migrations/20260527_mutation_primitives.sql); the wiring + graceful
- * degradation are unit-tested.
+ * Two contracts, chosen by the caller. The /api/tasks routes
+ * (taskManagement.routes.ts) use `auditTaskActionInTx`: the lineage row is
+ * written on the task write's own transaction and a failure THROWS, so the write
+ * rolls back with it — "the task changed and its ledger says so" is one fact.
+ * (2026-09-23: those routes used the owned, best-effort branch below and
+ * discarded its outcome at nine sites, so a PIN-signed completion could commit
+ * with no ledger row and answer 200.) The owned branch of `auditTaskAction`
+ * remains best-effort for callers with no transaction of their own, and REPORTS
+ * its outcome rather than hiding it. Handed the completion's transaction, the
+ * completion cascade (task-side-effects) returns one row per dependent whose
+ * record it changed — a status move, or only its blockedBy[] — and
+ * PATCH /api/tasks/tasks/:id writes them this way, after the completion's own
+ * row, and the /api/regulatory/tasks routes (unifiedTasks.routes.ts) use the
+ * same contract for every write, the cascade included. Not yet moved: the
+ * cascade as the AnA command executor calls it, with no transaction, which
+ * still changes dependents' status and blockedBy[] with no lineage row.
  *
  * @module server/services/tasking/task-audit
  */
+import type { PoolClient } from 'pg';
 import { pool } from '../../db.js';
 
 /** Anything that can run a query — the pool, or a client inside a transaction. */
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
-import { recordGovernedAction } from '../../routes/c2c/actions.js';
+import { recordGovernedAction, type RecordGovernedActionParams } from '../../routes/c2c/actions.js';
+import { queryableFromDrizzle, type DrizzleRunner } from '../../db/drizzle-queryable.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
 const logger = createScopedLogger('task-audit');
@@ -177,14 +191,27 @@ export async function auditTaskAction(
     return { recorded: true, enlisted: true };
   }
 
-  const client = await pool.connect();
+  return recordInOwnedTransaction(row);
+}
+
+/**
+ * The owned-transaction branch of `auditTaskAction`: open a transaction, write
+ * the lineage row on it, and REPORT the outcome. Best-effort — never throws.
+ */
+async function recordInOwnedTransaction(row: RecordGovernedActionParams): Promise<TaskAuditOutcome> {
+  // Acquired INSIDE the try: a connection that cannot be opened is a lineage
+  // row that was not written, and says so like any other failure here. Outside
+  // it, the rejection escaped to the caller's catch-all — the notify route then
+  // reported a notification it had already delivered as "Failed to send".
+  let client: PoolClient | undefined;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
     await recordGovernedAction(client, row);
     await client.query('COMMIT');
     return { recorded: true, enlisted: false };
   } catch (err: any) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    await client?.query('ROLLBACK').catch(() => undefined);
     // Best-effort lineage — never break the task mutation on an audit failure.
     // The ROLLBACK above is what keeps a failure from leaving half a pair. The
     // store's own message stays in this log line and is NOT returned: several
@@ -192,6 +219,47 @@ export async function auditTaskAction(
     console.warn('[tasking] audit lineage write failed (non-fatal):', err?.message);
     return { recorded: false, reason: 'WRITE_FAILED', enlisted: false };
   } finally {
-    client.release();
+    client?.release();
   }
+}
+
+/**
+ * A task write's lineage row did not land. Thrown INSIDE the write's transaction
+ * so the write rolls back with it; the route answers 500 AUDIT_WRITE_FAILED.
+ * Carries no store text — callers forward their result to a tenant client.
+ */
+export class TaskAuditNotRecordedError extends Error {
+  readonly code = 'AUDIT_WRITE_FAILED' as const;
+  constructor(readonly reason: 'NOT_ATTRIBUTABLE' | 'WRITE_FAILED') {
+    super(`Task lineage was not recorded (${reason}).`);
+    this.name = 'TaskAuditNotRecordedError';
+  }
+}
+
+/**
+ * Record the lineage row on the SAME transaction as the task write it describes,
+ * or throw so that transaction rolls back.
+ *
+ * `tx` is the Drizzle transaction the route holds; it is adapted, not escaped
+ * (queryableFromDrizzle), so recordGovernedAction's chain lock and both INSERTs
+ * run on the write's own connection. NOT_ATTRIBUTABLE throws too: a governed
+ * write whose actor cannot be named must not commit silently unrecorded.
+ */
+export async function auditTaskActionInTx(
+  tx: DrizzleRunner,
+  params: AuditTaskActionParams,
+): Promise<void> {
+  let outcome: TaskAuditOutcome;
+  try {
+    outcome = await auditTaskAction(params, queryableFromDrizzle(tx));
+  } catch (err: any) {
+    // The store's message stays in the log, never in the thrown error.
+    logger.error('Task lineage write failed; rolling back the task write', {
+      command: params.command,
+      taskId: params.taskId,
+      err: err?.message,
+    });
+    throw new TaskAuditNotRecordedError('WRITE_FAILED');
+  }
+  if (!outcome.recorded) throw new TaskAuditNotRecordedError(outcome.reason);
 }

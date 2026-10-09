@@ -1,0 +1,38 @@
+# 2026-09-26T03:31:57Z — client half, after the fix
+$ npx vitest run client/src/utils/__tests__/sessionEnd.test.ts client/src/services/portal/__tests__/idleSession.test.ts client/src/services/portal/__tests__/authService-session-end.test.ts client/src/lib/__tests__/api-request-session-end.test.ts client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx client/src/services/portal/__tests__/authService-logout.test.ts client/src/i18n/__tests__/locale-integrity.test.ts
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > warns a minute before the window ends and ends the session at the window 6ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > activity before the warning starts the window again 2ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > while the warning stands, ordinary activity does not extend the session; extend() does 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > the tab becoming visible is activity; stop() ends the watch silently 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > throttles activity to once a second 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > a warning longer than the window is clamped to it: the warning stands from the start 1ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a 401 SESSION_IDLE on an API call ends the session: no refresh, storage cleared, reason kept, session_expired with the reason 175ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a refresh refused with SESSION_LIFETIME keeps that reason 8ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > any other 401 still refreshes and retries 6ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > remembers the session policy the probe reports and defaults to 15 minutes and 12 hours 6ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > keeps every locale bundle key/placeholder/markup-faithful to English 35ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > renders nothing until a minute before the window, then the warning with the seconds left 257ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > "Stay signed in" closes the warning, tells the server, and the window starts again 52ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > resolves every static t()/i18nKey reference in the client to a real key 93ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > keeps the client registry, locale dirs and server AnaLanguage overlays in sync 2ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > gives every non-English language a non-empty response + cultural overlay 7ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > maps every language home-market to a real market brief 5ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > declares a usable Intl locale and endonym for every registered language 78ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > signs out at the end of the window with the reason kept; "Sign out now" does so at once 79ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > uses the window the server reports, and ends the session at the end of its lifetime 3ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > keeps the server informed of activity while the person works without API traffic 2ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 26ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 1ms
+ ✓ client/src/utils/__tests__/sessionEnd.test.ts > sessionEndReasonOf / sessionEndReasonOfResponse > names the two codes and nothing else 2ms
+ ✓ client/src/utils/__tests__/sessionEnd.test.ts > sessionEndReasonOf / sessionEndReasonOfResponse > reads both envelope shapes from a 401 without consuming the body, and nothing from other answers 5ms
+ ✓ client/src/utils/__tests__/sessionEnd.test.ts > the remembered reason > is read once 1ms
+ ✓ client/src/utils/__tests__/sessionEnd.test.ts > the remembered reason > ignores a value it did not write 0ms
+ ✓ client/src/utils/__tests__/sessionEnd.test.ts > announceSessionEnded > remembers the reason and dispatches the window event with it 1ms
+ ✓ client/src/lib/__tests__/api-request-session-end.test.ts > apiRequest on a 401 > announces SESSION_IDLE / SESSION_LIFETIME and still returns the response 14ms
+ ✓ client/src/lib/__tests__/api-request-session-end.test.ts > apiRequest on a 401 > announces nothing for an ordinary 401 1ms
+ Test Files  7 passed (7)
+      Tests  30 passed (30)
+   Start at  03:31:58
+   Duration  3.48s (transform 814ms, setup 940ms, import 691ms, tests 904ms, environment 5.22s)
+exit=0

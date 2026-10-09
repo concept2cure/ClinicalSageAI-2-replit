@@ -8,7 +8,6 @@ import {
   healthCheck,
   db,
 } from './db.ts';
-import 'dotenv/config';
 import EventEmitter from 'events';
 
 // Database connection status tracker

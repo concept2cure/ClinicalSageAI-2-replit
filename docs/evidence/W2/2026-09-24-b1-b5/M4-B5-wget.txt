@@ -1,0 +1,26 @@
+# M4-B5-wget: health check back to wget on /api/health
+# The fix reverted in place, then restored. terraform test exit=1 (non-zero = caught)
+
+tests/boot_contract.tftest.hcl... in progress
+  run "every_name_the_deploy_preflight_requires_is_in_the_task_definition"... pass
+  run "the_database_urls_are_urls_not_the_rds_json_secret"... pass
+  run "the_database_name_is_one_rds_accepts"... pass
+  run "the_health_check_is_the_images_own_probe_on_readyz"... fail
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_key"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+Failure! 6 passed, 1 failed.
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 147, in run "the_health_check_is_the_images_own_probe_on_readyz":
+ 147:     condition     = length([for c in output.api_task_boot_contract.health_check : c if strcontains(c, "wget")]) == 0
+    ├────────────────
+    │ output.api_task_boot_contract.health_check is tuple with 2 elements
+The health check must not call wget: the image does not have it.
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 151, in run "the_health_check_is_the_images_own_probe_on_readyz":
+ 151:     condition     = length([for c in output.api_task_boot_contract.health_check : c if strcontains(c, "/readyz")]) == 1
+    ├────────────────
+    │ output.api_task_boot_contract.health_check is tuple with 2 elements
+The health check must probe /readyz, the endpoint D1's acceptance line reads.

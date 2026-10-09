@@ -1,0 +1,30 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents/37/approve",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 8,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Approval is an electronic signature and requires a password, the signature meaning 'APPROVED' and a reason for change; missing or invalid: password, meaning, reason",
+      "details": {
+        "code": "ESIGNATURE_COMPONENT_MISSING",
+        "fieldErrors": {
+          "password": "[REDACTED]",
+          "meaning": [
+            "Signature meaning must be 'APPROVED' (21 CFR Part 11 §11.50)"
+          ],
+          "reason": [
+            "Required"
+          ]
+        }
+      }
+    }
+  }
+}

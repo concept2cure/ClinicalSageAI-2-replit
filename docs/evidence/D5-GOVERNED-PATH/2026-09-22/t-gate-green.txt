@@ -1,0 +1,2 @@
+check-discarded-audit-write: no new occurrences. 151 baselined across 71 file(s).
+exit=0

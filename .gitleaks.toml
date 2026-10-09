@@ -1,0 +1,69 @@
+# gitleaks — the full-history secret scan in CI (security plan P0-17, audit INF-22).
+#
+# The working tree is scanned by scripts/ci/check-committed-secrets.mjs; this
+# scans every commit reachable from the branch, because a credential deleted
+# from the tree is still in its history. Findings already in history are listed
+# by fingerprint in .gitleaksignore, each with its reason.
+#
+# gitleaks' default rules do not know the two shapes this history actually
+# leaked (the neondb_owner password, INF-22): a connection URI with an inline
+# password, and a bare Neon `npg_` password. They are added below with the same
+# patterns, placeholders and non-live hosts as check-committed-secrets.mjs, so
+# the two scanners agree (tests/ci/secret-history-scan.contract.test.ts).
+
+title = "concept2cure secret scan"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "c2c-connection-uri-password"
+description = "Database or broker connection URI with an inline password"
+regex = '''\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis|rediss|amqps?)://[A-Za-z0-9._%-]+:([^@\s'"`]{6,})@([A-Za-z0-9._-]+)'''
+secretGroup = 1
+keywords = ["postgres", "mysql", "mongodb", "redis", "amqp"]
+
+  # A stand-in, not a password (check-committed-secrets.mjs PLACEHOLDER).
+  [[rules.allowlists]]
+  regexTarget = "secret"
+  regexes = [
+    '''(?i)^(?:\$\{?[A-Z_][A-Z0-9_]*\}?|<[^>]*>|\[[^\]]*\]|\.{3,}|x{3,}|\*{3,}|change[_-]?me[\w-]*|your[_-]?\w+|example\w*|placeholder\w*|redacted\w*|dummy\w*|fake\w*|sample\w*|test\w*|password\w*|pass(?:word)?123|secret\w*|s3cret|user\w*|admin\w*|postgres\w*|localhost|REPLACE\w*|TODO\w*)$''',
+  ]
+
+  # A host that cannot be a live target (check-committed-secrets.mjs NON_LIVE_HOST).
+  [[rules.allowlists]]
+  regexTarget = "match"
+  regexes = [
+    '''(?i)@(?:localhost|127\.0\.0\.1|\[?::1\]?|0\.0\.0\.0|host\.docker\.internal|postgres|db|database|redis|mysql|mongo)$''',
+    '''(?i)@[A-Za-z0-9._-]*\.(?:example\.(?:com|org|net)|example|invalid|test|local|localdomain|internal)$''',
+  ]
+
+[[rules]]
+id = "c2c-neon-password"
+description = "Neon Postgres password"
+regex = '''\b(npg_[A-Za-z0-9]{12,})\b'''
+secretGroup = 1
+keywords = ["npg_"]
+
+# The repository's one escape hatch, shared with check-committed-secrets.mjs: a
+# line carrying `ci-secret-scan-ignore` (with a reason) is a fixture or a test
+# vector. Never for a real credential "about to be rotated": rotate it.
+[[allowlists]]
+description = "ci-secret-scan-ignore marker"
+regexTarget = "line"
+regexes = ['''ci-secret-scan-ignore''']
+
+# generic-api-key reads any `key: '...'` as a key. A value made only of
+# lowercase words joined by - _ or . is an identifier (catalog keys, citation
+# keys, feature-flag names), not a credential. Declared under the default rule's
+# ID with no regex, so `extend` merges this allowlist into it. Not as
+# `[[allowlists]] targetRules = [...]`: in gitleaks v8.28.0 that form is
+# silently dropped by any config that extends the default (the extend depth is
+# never reset, so the step that attaches targeted allowlists never runs).
+[[rules]]
+id = "generic-api-key"
+
+  [[rules.allowlists]]
+  description = "identifiers read as keys"
+  regexTarget = "secret"
+  regexes = ['''^[a-z0-9]+(?:[-_.][a-z0-9]+)+$''']

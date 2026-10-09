@@ -1,0 +1,42 @@
+# psql on c2c_d3b (from empty), SET LOCAL ROLE app_service, RLS enforcing, tenant A's GUC; both transactions rolled back. Script:
+\set ON_ERROR_STOP 1
+BEGIN;
+INSERT INTO organizations (id, name, slug) VALUES (90393,'probe-A','probe-a-90393'),(90394,'probe-B','probe-b-90394');
+SELECT uuid::text AS a FROM organizations WHERE id=90393 \gset
+SELECT uuid::text AS b FROM organizations WHERE id=90394 \gset
+INSERT INTO ectd_v4.regulatory_submissions (org_id, application_type, authority_id, sponsor_name) VALUES (:'b','IND','FDA','B-CONFIDENTIAL-IND');
+\echo '-- the table as it was before this change: no RLS (inside this transaction only)'
+ALTER TABLE identity.org_relationships NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE identity.org_relationships DISABLE ROW LEVEL SECURITY;
+SET LOCAL ROLE app_service;
+SELECT set_config('app.rls_enforce','on',true), set_config('app.current_org_id', :'a', true) \g /dev/null
+\echo '-- 1. tenant A reads B''s submissions before (expect 0):'
+SELECT count(*) AS a_sees_b FROM ectd_v4.regulatory_submissions WHERE sponsor_name='B-CONFIDENTIAL-IND';
+\echo '-- 2. tenant A writes itself a delegation from B:'
+INSERT INTO identity.org_relationships (sponsor_org_id, delegate_org_id, contract_start_date, scope_all_programs) VALUES (:'b', :'a', CURRENT_DATE, true);
+\echo '-- 3. tenant A reads and rewrites B''s submission:'
+UPDATE ectd_v4.regulatory_submissions SET sponsor_name = sponsor_name || ' (tampered by A)' WHERE sponsor_name='B-CONFIDENTIAL-IND' RETURNING sponsor_name;
+ROLLBACK;
+\echo '-- 4. after this change (committed state): the same grant, as tenant A'
+BEGIN;
+INSERT INTO organizations (id, name, slug) VALUES (90393,'probe-A','probe-a-90393'),(90394,'probe-B','probe-b-90394');
+SELECT uuid::text AS a FROM organizations WHERE id=90393 \gset
+SELECT uuid::text AS b FROM organizations WHERE id=90394 \gset
+SET LOCAL ROLE app_service;
+SELECT set_config('app.rls_enforce','on',true), set_config('app.current_org_id', :'a', true) \g /dev/null
+\set ON_ERROR_STOP 0
+INSERT INTO identity.org_relationships (sponsor_org_id, delegate_org_id, contract_start_date, scope_all_programs) VALUES (:'b', :'a', CURRENT_DATE, true);
+ROLLBACK;
+# Output:
+-- the table as it was before this change: no RLS (inside this transaction only)
+-- 1. tenant A reads B's submissions before (expect 0):
+a_sees_b
+0
+(1 row)
+-- 2. tenant A writes itself a delegation from B:
+-- 3. tenant A reads and rewrites B's submission:
+sponsor_name
+B-CONFIDENTIAL-IND (tampered by A)
+(1 row)
+-- 4. after this change (committed state): the same grant, as tenant A
+psql:org_delegate.sql:27: ERROR:  new row violates row-level security policy for table "org_relationships"

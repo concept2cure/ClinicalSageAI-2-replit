@@ -27,6 +27,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { randomBytes } from 'node:crypto';
+import bcrypt from 'bcryptjs';
 import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
 
 // The authoring router carries its own jose JWT verification (HS256 over
@@ -34,9 +35,13 @@ import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps, a
 // signature check stays fully active. A forged-secret token is a known-bad step.
 const JWT_SECRET = randomBytes(32).toString('hex');
 const FORGED_JWT_SECRET = randomBytes(32).toString('hex');
-const AUTHOR_PIN = randomBytes(12).toString('hex');
-const APPROVER_PIN = randomBytes(12).toString('hex');
-const WRONG_PIN = randomBytes(12).toString('hex');
+// Signing re-verifies the account password through the platform ceremony
+// (services/part11/reverify-signer.ts), so the signers are accounts with one.
+const AUTHOR_PASSWORD = randomBytes(12).toString('hex');
+const APPROVER_PASSWORD = randomBytes(12).toString('hex');
+const WRONG_PASSWORD = randomBytes(12).toString('hex');
+const AUTHOR_PASSWORD_HASH = bcrypt.hashSync(AUTHOR_PASSWORD, 4);
+const APPROVER_PASSWORD_HASH = bcrypt.hashSync(APPROVER_PASSWORD, 4);
 process.env.JWT_SECRET = JWT_SECRET;
 // The authoring router now verifies via the CANONICAL verifyJwtWithRotation,
 // which in test env (NODE_ENV=test → suffix DEV) reads JWT_SECRET_DEV ?? JWT_SECRET.
@@ -92,6 +97,15 @@ const OUTSIDER = {
   name: 'Iris Intruder',
 };
 
+// The project the IND document is authored IN. PF-07 (founder decision
+// 2026-09-26): a document belongs to a project, so POST /docs refuses a create
+// that names none (400 PROJECT_REQUIRED), and LX-20 refuses one that names a
+// project its organization does not own as a live regulatory_programs row
+// (404). The journey therefore opens a real IND project of org 1 — seeded into
+// the real table (migrations/20260524_program_workbench_schema.sql) below —
+// and authors its document there, the way the shipped UI does.
+const IND_PROGRAM = '5a1d0c7e-2b4f-4e8a-9c3d-6f7e8a9b0c1d';
+
 // Subject ids are INTEGERS because that is what the product has: users.id is a
 // serial (shared/schema.ts) and organization_users.user_id is an integer
 // referencing it. These were UUIDs sharing a '3f1c2a10…' prefix, seeded under
@@ -130,7 +144,10 @@ const PREREQ = `
     old_values    JSON,
     new_values    JSON,
     ip_address    TEXT,
-    user_agent    TEXT
+    user_agent    TEXT,
+    -- The person's stated reason, as migrations/20260527_mutation_primitives.sql
+    -- adds it; writeChainedAuditRow writes it when an act states one (D5).
+    reason        TEXT
   );
   -- \`uuid\` as db/migrations/20260129_add_org_uuid_alignment.sql adds it; the
   -- org-membership middleware LEFT JOINs it on every request and, without it,
@@ -140,25 +157,38 @@ const PREREQ = `
   -- a history join that read u.id = r.created_by::uuid; that join was removed
   -- (Postgres rejects integer = uuid at parse time) and now compares as text,
   -- u.id::text = r.created_by, which matches either shape.
-  CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
+  --
+  -- The account columns the signing ceremony reads and writes: the password,
+  -- whether a second factor is enrolled, whether the account is in use (its
+  -- status, as migrations/0000_sweet_joseph.sql defines it: VSR-001 F-28), and
+  -- the lockout (shared/schema.ts).
+  CREATE TABLE users (
+    id INTEGER PRIMARY KEY, name TEXT, email TEXT,
+    password_hash TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    mfa_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+    last_failed_login TIMESTAMP,
+    locked_until TIMESTAMP
+  );
   CREATE TABLE organization_users (
     organization_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     role TEXT NOT NULL DEFAULT 'member'
   );
   INSERT INTO organizations (id, name) VALUES (1, 'journey-org'), (2, 'other-org');
-  INSERT INTO users (id, name, email) VALUES
-    ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}'),
-    ('${APPROVER.id}', '${APPROVER.name}', '${APPROVER.email}'),
-    ('${OUTSIDER.id}', '${OUTSIDER.name}', '${OUTSIDER.email}');
+  INSERT INTO users (id, name, email, password_hash) VALUES
+    ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}', '${AUTHOR_PASSWORD_HASH}'),
+    ('${APPROVER.id}', '${APPROVER.name}', '${APPROVER.email}', '${APPROVER_PASSWORD_HASH}'),
+    ('${OUTSIDER.id}', '${OUTSIDER.name}', '${OUTSIDER.email}', NULL);
   -- AUTHOR + APPROVER are in org 1; OUTSIDER is a genuine member of org 2 (its
   -- own org) — tenant isolation to org 1 is enforced separately by the router,
   -- not by this membership row.
   -- Roles, not just membership: §11.10(g) asks whether the signer has the
   -- AUTHORITY to sign, and DEFAULT_SIGNING_ROLES is admin/approver/reviewer.
   -- Both signers were seeded 'member', so once that gate landed neither could
-  -- sign — the wrong-PIN step got 403 from the authority check before the PIN
-  -- was ever read, and the happy-path step got the same 403.
+  -- sign — the wrong-credential step got 403 from the authority check before
+  -- the credential was ever read, and the happy-path step got the same 403.
   --
   -- The org role is not the signature's MEANING: a 'reviewer' applying a
   -- signature that means AUTHOR is the intended shape, identity and authority
@@ -176,7 +206,7 @@ let app: express.Express;
 
 const R = new JourneyRecorder(
   'Journey A (phase 1) — IND document authoring to freeze and e-sign',
-  'The flagship authoring loop over HTTP against the C-11 code-derived canonical DDL: create document, author sections with automatic revisions, history and revert, comment, cite, PIN, freeze with content hash, Part 11 e-sign (JWT-attributed), approver sign-off with auto-freeze — plus tenant-isolation and honest-failure checks.',
+  'The flagship authoring loop over HTTP against the C-11 code-derived canonical DDL: create document, author sections with automatic revisions, history and revert, comment, cite, freeze with content hash, Part 11 e-sign (JWT-attributed, password re-verified), approver sign-off with auto-freeze — plus tenant-isolation and honest-failure checks.',
 );
 
 const tokens = new Map<string, string>();
@@ -188,7 +218,29 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
+      // The account columns the signing ceremony reads, from the file that adds
+      // them rather than hand-mirrored in PREREQ: the account-standing read
+      // gained password_changed_at (613c6e00) and, without it, every signature
+      // here was refused ACCOUNT_STATE_UNKNOWN — fail-closed, correctly.
+      'db/migrations/20260725_users_signing_lockout_columns.sql',
+      // The project the document belongs to (PF-07). createDocument checks the
+      // anchor against the real regulatory_programs table (LX-20:
+      // programInOrganization — this org, not soft-deleted), so the table is
+      // built from its own migration rather than hand-mirrored.
+      'migrations/20260524_program_workbench_schema.sql',
+      // A create inside a project asks which governed filing it contributes to
+      // (resolveGovernedDocument reads c2c_documents for an IND × FDA
+      // project). The system-of-record table, with the c2c_ana_actions table
+      // its section-version FK names, from the files that create them — so the
+      // binding read answers "this project has no governed document yet"
+      // against a real table instead of a 42P01 the schema-gap check would
+      // (rightly) reject. The document stays unbound, as it was before PF-07.
+      'migrations/20260527_mutation_primitives.sql',
+      'migrations/20260528_phase9_document_schema.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // authoring_documents.client_program_id — the column the project anchor
+      // is written to. Guarded on the loop tables above, so it follows them.
+      'migrations/20260727_authoring_document_program_scope.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
       // (content/chain hashes, origin, input manifest) and installs the
@@ -244,6 +296,15 @@ beforeAll(async () => {
   h.db = jdb.db;
   h.pool = jdb.pool;
 
+  // The live IND project of org 1 that the document is created in (PF-07).
+  // Only the NOT NULL columns; the rest take the migration's defaults.
+  await jdb.pool.query(
+    `INSERT INTO regulatory_programs
+       (id, organization_id, name, code, program_type, product_type, primary_agency, product_name)
+     VALUES ($1, $2, 'IND 12345', 'IND-12345', 'ind', 'drug', 'FDA', 'C2C-001')`,
+    [IND_PROGRAM, AUTHOR.organizationId],
+  );
+
   for (const u of [AUTHOR, APPROVER, OUTSIDER]) tokens.set(u.id, await mint(u));
 
   const { default: authoringRouter } = await import('../../server/routes/authoring.router');
@@ -277,21 +338,63 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
 
   it('runs the authoring spine', async () => {
     // ── KNOWN-BAD: no title → 400, honest validation ─────────────────────────
+    // Sent inside the project (PF-07), so the only thing missing is the title:
+    // without it the 400 could equally be the no-project refusal below.
     await R.expectBlocked('create-doc-without-title', async () => {
-      const res = await asUser(AUTHOR)(request(app).post('/api/authoring/docs')).send({});
+      const res = await asUser(AUTHOR)(request(app).post('/api/authoring/docs')).send({
+        client_program_id: IND_PROGRAM,
+      });
       return { blocked: res.status === 400, status: res.status, error: res.body.error };
     });
 
-    // ── 1. Create the IND Module 2 document ─────────────────────────────────
+    // ── KNOWN-BAD: no project → 400 PROJECT_REQUIRED, nothing written ────────
+    // PF-07 (founder decision 2026-09-26): a document belongs to a project. The
+    // create that step 1 used to make — titled, with no client_program_id —
+    // is refused before anything is written, where it used to land org-wide.
+    // Keyed on the refusal's message, which POST /docs returns verbatim; the
+    // service's PROJECT_REQUIRED code is recorded as evidence when the route
+    // forwards it.
+    // The request and the row counts run OUTSIDE expectBlocked: it files any
+    // thrown non-assertion error as the block, so a failing count query inside
+    // it would read as the refusal this step exists to prove.
+    const docsBefore = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    const noProject = await asUser(AUTHOR)(request(app).post('/api/authoring/docs')).send({
+      title: 'IND 12345 — Module 2.5 Clinical Overview',
+      module: 'M2',
+      product_code: 'C2C-001',
+    });
+    const docsAfter = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    const written = (docsAfter.rows[0] as { n: number }).n - (docsBefore.rows[0] as { n: number }).n;
+    await R.expectBlocked('create-doc-without-project', async () => ({
+      blocked: noProject.status === 400 && noProject.body.code === 'PROJECT_REQUIRED' && written === 0,
+      status: noProject.status,
+      code: noProject.body.code,
+      error: noProject.body.error,
+      documentsWritten: written,
+    }));
+
+    // ── 1. Create the IND Module 2 document, in its project ─────────────────
     await R.step('create-document', async () => {
       const res = await asUser(AUTHOR)(request(app).post('/api/authoring/docs')).send({
         title: 'IND 12345 — Module 2.5 Clinical Overview',
         module: 'M2',
         product_code: 'C2C-001',
+        client_program_id: IND_PROGRAM,
       });
       expect(res.status).toBe(201);
       docId = res.body.document.id;
-      return { docId, status: res.body.document.status, createdBy: res.body.document.created_by };
+      // Anchored to the project it was created in, read back from durable state.
+      const row = await jdb.pool.query(
+        `SELECT client_program_id FROM authoring_documents WHERE id = $1 AND tenant_id = 1`,
+        [docId],
+      );
+      expect(row.rows).toEqual([{ client_program_id: IND_PROGRAM }]);
+      return {
+        docId,
+        status: res.body.document.status,
+        createdBy: res.body.document.created_by,
+        clientProgramId: (row.rows[0] as { client_program_id: string }).client_program_id,
+      };
     });
 
     // ── 2. Author a section (creates the initial revision) ──────────────────
@@ -312,7 +415,13 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     await R.step('save-section-creates-revision', async () => {
       const res = await asUser(AUTHOR)(
         request(app).patch(`/api/authoring/sections/${sectionId}`),
-      ).send({ content: 'Revised rationale: effect size assumption corrected to 0.25.' });
+      ).send({
+        content: 'Revised rationale: effect size assumption corrected to 0.25.',
+        // §11.10(e): a content change carries its reason (fde9d704 made the server
+        // require it). Without one this step stopped at 400 and never reached the
+        // UPDATE, which is how a broken UPDATE shipped with this journey red.
+        changeReason: 'Corrected the effect size assumption to 0.25 per the updated prior-trial data.',
+      });
       expect(res.status).toBe(200);
       expect(res.body.revision_created).toBe(true);
       return { revisionCreated: res.body.revision_created };
@@ -401,13 +510,15 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       return { blocked: res.status === 401, status: res.status, error: res.body.error };
     });
 
-    // ── 7. Part 11: PIN from the VERIFIED identity ───────────────────────────
-    await R.step('create-signing-pin', async () => {
+    // ── 7. Part 11: no separate signing credential ───────────────────────────
+    // The signing PIN is retired (VSR-001 §13.3 item 3): a session could set it,
+    // and it signed without the enrolled second factor. Signing re-verifies the
+    // account's own credentials, so there is nothing to enrol here.
+    await R.expectBlocked('signing-pin-route-retired', async () => {
       const res = await asUser(AUTHOR)(
         request(app).post('/api/authoring/users/pin'),
-      ).send({ pin: AUTHOR_PIN });
-      expect(res.status).toBe(200);
-      return { pinCreated: true, identitySource: 'verified JWT (getActorEmail)' };
+      ).send({ pin: randomBytes(12).toString('hex') });
+      return { blocked: res.status === 404, status: res.status };
     });
 
     // ── 7b. Settle before the seal ───────────────────────────────────────────
@@ -440,12 +551,12 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       return { contentHash: freezeHash, frozenBy: snap.frozen_by ?? snap.frozenBy };
     });
 
-    // ── KNOWN-BAD: e-sign with a wrong PIN → 401 ─────────────────────────────
-    await R.expectBlocked('e-sign-wrong-pin', async () => {
+    // ── KNOWN-BAD: e-sign with a wrong password → 401 ────────────────────────
+    await R.expectBlocked('e-sign-wrong-password', async () => {
       const res = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/docs/${docId}/e-sign`),
-      ).send({ pin: WRONG_PIN, meaning: 'AUTHOR', intent: 'I authored this document' });
-      return { blocked: res.status === 401, status: res.status };
+      ).send({ password: WRONG_PASSWORD, meaning: 'AUTHOR', intent: 'I authored this document' });
+      return { blocked: res.status === 401, status: res.status, code: res.body.code };
     });
 
     // ── 9. E-sign (AUTHOR) — hash verified against an INDEPENDENT recomputation
@@ -457,7 +568,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     await R.step('e-sign-author', async () => {
       const res = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/docs/${docId}/e-sign`),
-      ).send({ pin: AUTHOR_PIN, meaning: 'AUTHOR', intent: 'I authored this document' });
+      ).send({ password: AUTHOR_PASSWORD, meaning: 'AUTHOR', intent: 'I authored this document' });
       expect(res.status).toBe(200);
 
       // Independent recomputation of the signature hash from durable state.
@@ -491,12 +602,9 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
 
     // ── 10. Approver signs — status APPROVED + auto-freeze 'approved' ────────
     await R.step('e-sign-approver', async () => {
-      await asUser(APPROVER)(
-        request(app).post('/api/authoring/users/pin'),
-      ).send({ pin: APPROVER_PIN });
       const res = await asUser(APPROVER)(
         request(app).post(`/api/authoring/docs/${docId}/e-sign`),
-      ).send({ pin: APPROVER_PIN, meaning: 'APPROVER', intent: 'Approved for submission' });
+      ).send({ password: APPROVER_PASSWORD, meaning: 'APPROVER', intent: 'Approved for submission' });
       expect(res.status).toBe(200);
       const doc = await asUser(APPROVER)(request(app).get(`/api/authoring/docs/${docId}`));
       const rows = await jdb.pool.query(
@@ -535,7 +643,8 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       const list = res.body.signatures as { signer_email: string; meaning: string; method: string }[];
       expect(list).toHaveLength(2);
       expect(new Set(list.map((s) => s.meaning))).toEqual(new Set(['AUTHOR', 'APPROVER']));
-      expect(list.every((s) => s.method === 'PIN')).toBe(true);
+      // What the ceremony verified: the password, no second factor enrolled.
+      expect(list.every((s) => s.method === 'password')).toBe(true);
       return { count: list.length, meanings: list.map((s) => s.meaning) };
     });
 
@@ -736,7 +845,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       'Fixed while building this journey: POST /docs/:docId/export inserted into `authoring_exports` and GET /docs/:docId/diff-since-export read `doc_exports` — NEITHER table is created by any migration or any runtime DDL in this repo, and both queries were unguarded. Every export request and every diff request returned 500. The flagship authoring loop could draft, freeze and sign a document but could not export one (ledger C-14).',
       'Fixed while building this journey: the export record is now written by logExport() AFTER the bytes are generated, so file_name and file_size are the real ones rather than placeholders, and ANA-initiated exports (command-executor) record to the same table instead of the phantom one.',
       'Fixed while building this journey: freeze queried authoring_sections.document_id — a column that does not exist (doc_id everywhere else). Freeze had never been executable.',
-      'Fixed while building this journey: the canonical user PIN enrollment route, freeze and e-sign take signer identity from the verified JWT via getActorEmail. The former document-scoped create-pin route, which trusted an attacker-controlled x-user-email header and duplicated PIN enrollment, remains deleted (Part 11 §11.100).',
+      'Fixed while building this journey: freeze and e-sign take signer identity from the verified JWT via getActorEmail. The former document-scoped create-pin route, which trusted an attacker-controlled x-user-email header, remains deleted (Part 11 §11.100). Since 2026-09-23 the signing PIN is retired altogether: e-sign re-verifies the account password, and the second factor when one is enrolled, through the platform ceremony (VSR-001 §13.3 item 3).',
       'Fixed while building this journey (was recorded here as an INTEGRITY GAP): freeze and signature hashes each verified independently but nothing said WHICH snapshot a signature attested to, which is exactly what 21 CFR Part 11 §11.70 requires. Signatures now carry the covered snapshot version and hash, and signature_digest is computed over durable columns only — no timestamp — so an auditor can recompute it from the stored row and detect tampering with the signer, the meaning, the content, or the snapshot binding (ledger C-11 residual 2).',
     );
     R.limitations.push(

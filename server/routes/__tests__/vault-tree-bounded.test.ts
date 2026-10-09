@@ -147,7 +147,7 @@ describe('the filing cabinet page is bounded and says so', () => {
     wireStore({ total: 500, unfiled: 137, filedHashes: [] });
     await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
     const page = query.mock.calls.find(
-      ([sql]) => /FROM vault\.documents d/.test(String(sql)) && /LEFT JOIN users/.test(String(sql)),
+      ([sql]) => /FROM vault\.documents d/.test(String(sql)) && /LEFT JOIN LATERAL public\.actor_name/.test(String(sql)),
     );
     expect(page, 'the filing-cabinet page query was never issued').toBeDefined();
     expect(String(page![0])).toMatch(/LIMIT \$3/);
@@ -319,5 +319,69 @@ describe('the authored-document sections are read in one query', () => {
     // Two documents, one complete section each. Four would mean the maps were
     // shared — precisely the bug collapsing the loop can introduce.
     expect(complete).toHaveLength(2);
+  });
+});
+
+/* VR-15 (row D2): a numbered index, and what the Vault holds against what the
+   program's rule pack requires. A leaf's number was its raw ctd_section or '—',
+   and nothing showed coverage. */
+describe('Vault coverage and the index numbers (VR-15)', () => {
+  const leaf = (n: number, folder: string, section: string | null, status = 'confirmed') => ({
+    ...filedRow(n),
+    document_title: `Doc ${n}`,
+    folder_id: folder,
+    ctd_section: section,
+    placement_status: status,
+  });
+  function wire(opts: { productType: string; page: Record<string, unknown>[]; pack?: unknown[]; filings?: unknown[] }) {
+    process.env.VAULT_TREE_MAX_DOCS = '50';
+    query.mockImplementation(async (sql: string) => {
+      const q = String(sql);
+      if (/FROM c2c_rule_packs\s+WHERE doc_type = \$1 AND agency = \$2 AND superseded_by IS NULL/.test(q)) return { rows: opts.pack ?? [] };
+      if (/placement_status = 'confirmed' AND d\.ctd_section IS NOT NULL/.test(q)) return { rows: opts.filings ?? [] };
+      if (/content_hash = ANY/.test(q)) return { rows: [] };
+      if (/COUNT\(\*\)::int AS total/.test(q)) return { rows: [{ total: opts.page.length, unfiled: 0 }] };
+      if (/d\.document_code/.test(q)) return { rows: opts.page };
+      if (/SELECT id, name, product_type/.test(q)) {
+        return { rows: [{ id: PROGRAM, name: 'P', product_type: opts.productType, program_type: 'ind', primary_agency: 'FDA' }] };
+      }
+      return { rows: [] };
+    });
+  }
+  const folderNums = (data: any, folderId: string): string[] =>
+    data.tree.find((t: any) => t.id === 'cabinet').children.find((f: any) => f.id === folderId).children.map((d: any) => d.num);
+
+  it('carries "Vault coverage" from the live pack, naming it, counting confirmed filings only', async () => {
+    wire({
+      productType: 'drug',
+      page: [],
+      pack: [{ version: '2.1', required_sections: [{ key: '2.5', mandatory: true }, { key: '3.2.P.8', mandatory: true }] }],
+      filings: [{ ctd_section: '3.2.P.8', placement_status: 'confirmed' }],
+    });
+    const res = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.coverage).toMatchObject({
+      state: 'available',
+      required: 2,
+      covered: 1,
+      provenance: { source: 'rule_pack', packVersion: '2.1' },
+    });
+  });
+
+  it('numbers a CTD leaf by its normalized section, in section order, the same on every read', async () => {
+    const page = [leaf(1, 'module-3', '3.2.P.8'), leaf(2, 'module-3', null), leaf(3, 'module-3', '3.2.s.1')];
+    wire({ productType: 'drug', page });
+    const first = folderNums((await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`)).body.data, 'cab-module-3');
+    expect(first).toEqual(['3.2.S.1', '3.2.P.8', '—']);
+    wire({ productType: 'drug', page: [...page].reverse() });
+    const second = folderNums((await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`)).body.data, 'cab-module-3');
+    expect(second).toEqual(first);
+  });
+
+  it('numbers a leaf outside a CTD view by folder ordinal and position, with no coverage figure', async () => {
+    wire({ productType: 'device', page: [leaf(2, 'eng', null), leaf(1, 'eng', null)] });
+    const data = (await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`)).body.data;
+    expect(folderNums(data, 'cab-eng')).toEqual(['4.1', '4.2']);
+    expect(data.coverage).toMatchObject({ state: 'not_applicable' });
   });
 });

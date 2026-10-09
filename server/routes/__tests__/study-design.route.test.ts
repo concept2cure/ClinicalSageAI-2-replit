@@ -159,7 +159,7 @@ describe('POST /api/study-design/schedule-of-activities', () => {
     const res = await request(authedApp()).post('/api/study-design/schedule-of-activities').send({ design: d });
     expect(res.status).toBe(200);
     expect(res.body.scheduleOfActivities.present).toBe(true);
-    expect(res.body.scheduleOfActivities.standard).toBe('ICH M11 §7');
+    expect(res.body.scheduleOfActivities.standard).toBe('ICH M11 §1.3');
     expect(res.body.scheduleOfActivities.counts.visits).toBe(1);
   });
 

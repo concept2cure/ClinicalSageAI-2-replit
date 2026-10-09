@@ -1,0 +1,34 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/sections/e1c25ac0-ada8-48f2-b4d3-34e9d279197b/revert",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "rev_id": "b678f277-5761-4700-83b9-1b272ef060b9"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 35,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "section": {
+        "id": "e1c25ac0-ada8-48f2-b4d3-34e9d279197b",
+        "doc_id": "ad3c56cf-9f12-424c-a285-62208e030217",
+        "code": "2.5",
+        "title": "Clinical Overview",
+        "content": "<p>Initial 2.5 text.</p>",
+        "order_index": 0,
+        "track_changes": false,
+        "tenant_id": 1,
+        "created_at": "2026-09-27T23:53:19.805Z",
+        "updated_at": "2026-09-27T23:53:21.974Z"
+      },
+      "message": "Section reverted to revision b678f277-5761-4700-83b9-1b272ef060b9",
+      "reverted_from": "2026-09-27T23:53:19.812Z"
+    }
+  }
+}

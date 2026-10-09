@@ -175,3 +175,36 @@ describe('an AI draft is never reported as inserted when it is discarded', () =>
     expect(document.querySelector('.tiptap')?.textContent).toContain('Proposed wording.');
   });
 });
+
+/* 2026-09-28, coverage-gap sweep GA-3. `RB` set `aria-pressed={active ?? false}`
+   on every ribbon button, so Undo, Redo, Insert table, the row/column commands
+   and Delete table were each announced as a toggle that was "not pressed" —
+   and Toggle header row, which IS stateful, read "not pressed" with a header
+   row in place, because nothing passed it a state. */
+describe('only a toggle reports a pressed state', () => {
+  it('leaves aria-pressed off one-shot commands', () => {
+    render(<RichSectionEditor {...base} />);
+    for (const name of [/^undo/i, /^redo/i, /^insert table/i]) {
+      const b = screen.getByRole('button', { name });
+      expect(b.hasAttribute('aria-pressed'), `${b.getAttribute('aria-label')} is not a toggle`).toBe(false);
+    }
+    /* The real toggles keep an explicit false while off. */
+    expect(screen.getByRole('button', { name: /^italic/i }).getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByRole('button', { name: /^bullet list/i }).getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('reports the header row state and leaves table commands untoggled', () => {
+    render(<RichSectionEditor {...base} />);
+    fireEvent.click(screen.getByRole('button', { name: /insert table/i }));
+    expect(document.querySelectorAll('.tiptap th').length).toBeGreaterThan(0);
+
+    for (const name of [/^add row below/i, /^add column right/i, /^delete row/i, /^delete column/i, /^delete table/i]) {
+      const b = screen.getByRole('button', { name });
+      expect(b.hasAttribute('aria-pressed'), `${b.getAttribute('aria-label')} is not a toggle`).toBe(false);
+    }
+    /* insertTable({ withHeaderRow: true }) makes the first row header cells
+       and no header column. */
+    expect(screen.getByRole('button', { name: /^toggle header row/i }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: /^toggle header column/i }).getAttribute('aria-pressed')).toBe('false');
+  });
+});

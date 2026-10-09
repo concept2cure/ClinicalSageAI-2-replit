@@ -1,0 +1,8 @@
+{"code":"head","case":"own section","status":200,"error":null}
+{"code":"head","case":"another document's section","status":200,"error":null}
+{"code":"head","case":"sectionId not a uuid","status":200,"error":null}
+{"code":"head","case":"bulk, another document's section","status":200,"error":null}
+{"code":"fixed","case":"own section","status":200,"error":null}
+{"code":"fixed","case":"another document's section","status":400,"error":"SECTION_NOT_IN_DOCUMENT"}
+{"code":"fixed","case":"sectionId not a uuid","status":400,"error":"SECTION_NOT_IN_DOCUMENT"}
+{"code":"fixed","case":"bulk, another document's section","status":400,"error":"SECTION_NOT_IN_DOCUMENT"}

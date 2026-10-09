@@ -1,0 +1,48 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/mdx/qms/documents/1",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 9,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": 1,
+        "organization_id": 1,
+        "doc_number": "SOP-OQ-20260922223720",
+        "title": "OQ-006 Document control SOP 20260922223720",
+        "doc_type": "sop",
+        "category": "validation",
+        "version": "1.0",
+        "status": "effective",
+        "effective_date": "2026-09-22T00:00:00.000Z",
+        "next_review_date": "2026-10-02T00:00:00.000Z",
+        "author_id": 2,
+        "approver_id": 11,
+        "approved_at": "2026-09-22T22:37:22.572Z",
+        "superseded_by_id": null,
+        "artifact_id": null,
+        "metadata": {
+          "approval": {
+            "at": "2026-09-22T22:37:22.572+00:00",
+            "by": 11,
+            "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+            "meaning": "APPROVED",
+            "bindingBasis": "qms-document-version-content-sha256",
+            "contentDigest": "e506c5351d518abe90df7dc514c6b135d0efaabd08886b850946e2509f731200",
+            "twoPersonRule": "enforced"
+          }
+        },
+        "created_at": "2026-09-22T22:37:21.152Z",
+        "updated_at": "2026-09-22T22:37:22.569Z",
+        "deleted_at": null
+      }
+    }
+  }
+}

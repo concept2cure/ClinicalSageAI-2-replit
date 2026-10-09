@@ -1,3 +1,29 @@
+-- ══ AMENDED IN PLACE 2026-09-22 (CLAUDE.md Rule 1) ══════════════════════════
+-- WHAT CHANGED: 'ectd-publishing' added to step 1's keep-list, and a heal step
+-- (step 1b) that clears the `deprecated` flag this file had been setting on it.
+--
+-- WHY: this file runs AFTER migrations/20260814j_catalog_missing_product_surfaces.sql
+-- in scripts/db/migration-set.mjs, and Rule 1 replays every file on every
+-- deploy. Step 1 retires every module_id not on its list — so it retired
+-- 'ectd-publishing', a row 20260814j adds and a LAUNCH module
+-- (shared/constants/launch-scope.ts, Submission Center; docs/
+-- LAUNCH_DEFINITION_OF_DONE.md row D2), on every single deploy. getModuleCatalog
+-- filters deprecated rows, so on a deploy-shaped database the launch catalog had
+-- no verdict for it and the Apps catalog omitted it, while every local check
+-- stayed green because none of them replays the set in deploy order.
+--
+-- WHY A HEAL STEP AND NOT JUST THE LIST: 20260814j inserts with ON CONFLICT DO
+-- NOTHING, so on a database this file has already run against, the row keeps
+-- the `deprecated: true` this file wrote. Adding the id to the list stops the
+-- next re-deprecation; only 1b undoes the earlier ones.
+--
+-- FOUND BY: tests/db/entitlement-grants-resolution.dbtest.ts on a database built
+-- by scripts/db/provision-test-db.sh (install-fresh + the full replay), which is
+-- also what now pins it. scripts/ci/check-launch-scope.mjs additionally refuses
+-- a launch module missing from step 1's list, so the next one is caught before
+-- a database is needed.
+-- ═════════════════════════════════════════════════════════════════════════════
+
 -- Reconcile the Apps catalog with the apps the product actually ships.
 --
 -- THE DEFECT. `available_modules` (the Apps catalog + entitlement catalogue)
@@ -158,6 +184,7 @@ UPDATE available_modules
    'dossier',
    'dossier-map',
    'ectd-coauthor',
+   'ectd-publishing',   -- added 2026-09-22: a launch module; see the amendment note at the top
    'ectd-compile',
    'evidence-search',
    'filings-catalog',
@@ -207,6 +234,16 @@ UPDATE available_modules
    'template-library',
    'vault'
  );
+
+-- 1b) Undo step 1's earlier retirements of rows that are live app surfaces added
+-- by LATER migrations (added 2026-09-22 — see the amendment note at the top).
+-- Idempotent: touches the row only while the flag is present. It clears only
+-- the flag, never the row's name, path or policy, which stay with 20260814j.
+UPDATE available_modules
+   SET metadata = (COALESCE(metadata::jsonb, '{}'::jsonb) - 'deprecated')::json,
+       updated_at = now()
+ WHERE module_id IN ('ectd-publishing')
+   AND COALESCE(metadata::jsonb, '{}'::jsonb) ? 'deprecated';
 
 -- 2) Upsert one row per real app, keyed by the surface id.
 INSERT INTO available_modules (module_id, name, description, category, path, icon, sort_order, metadata) VALUES

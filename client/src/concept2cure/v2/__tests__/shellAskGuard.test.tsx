@@ -185,6 +185,27 @@ describe('⌘K on a surface that owns its conversation', () => {
   });
 });
 
+describe('a seeded conversation carries its files', () => {
+  it('sends the seeding composer\'s uploads by id, so the stream can open them', async () => {
+    // Home's composer seeds the thread with the text AND the files it
+    // attached. The line "Attached: …" is only what the thread shows; the ids
+    // are what the stream opens and reports in context_used.
+    (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = {
+      id: 'new',
+      seed: 'Summarise this\n\nAttached: Protocol v3.pdf',
+      seedFiles: [{ id: 'att_1', name: 'Protocol v3.pdf', fileId: 'file_xyz' }],
+    };
+    renderShellAt('conversation-thread');
+    await waitFor(() => {
+      const calls = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+      const turn = calls
+        .filter((c) => String(c[0]).includes('/api/ana-ri/stream'))
+        .map((c) => JSON.parse(((c[1] as { body?: string }) ?? {}).body ?? '{}') as { file_ids?: string[] })[0];
+      expect(turn?.file_ids).toEqual(['file_xyz']);
+    });
+  });
+});
+
 describe('⌘K on a surface that keeps the rail', () => {
   it('opens the rail and streams there', async () => {
     renderShellAt('crl-library');

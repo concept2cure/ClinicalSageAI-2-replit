@@ -632,9 +632,34 @@ describe('EstarFilingPanel — readiness is scoped to the programme', () => {
     return hit ? (JSON.parse((hit[1] as { body: string }).body) as Record<string, unknown>) : null;
   }
 
+  /* A complete FilingReadinessResult, as assessFilingReadiness() on the server
+     always returns it (estar-filing-readiness.ts). The fixture used to be
+     `{ canFileNow, blockers, completeness }` only: the panel then rendered the
+     verdict card, dereferenced `programType` (and the two missing arrays) and
+     threw an uncaught render error AFTER this suite's assertions had passed —
+     the fixture broke the API contract, the component did not. */
+  const VERDICT = {
+    catalogKey: 'k510',
+    label: '510(k)',
+    programType: '510k',
+    variant: 'device',
+    eligible: false,
+    registrationMissing: ['fei'],
+    contentReady: false,
+    missingSections: ['device_description'],
+    completeness: 0,
+    templateAvailable: false,
+    fieldMapPopulated: false,
+    officialTemplateProducible: false,
+    canFileNow: false,
+    blockers: [],
+    currentVersion: null,
+    ombNumbers: [],
+  };
+
   function mockForAssess() {
     mockFetch((url) => {
-      if (url.includes('/filing-readiness')) return okJson({ canFileNow: false, blockers: [], completeness: 0 });
+      if (url.includes('/filing-readiness')) return okJson(VERDICT);
       if (url.includes('/catalog')) return okJson({ catalog: [{ key: 'k510', label: '510(k)' }] });
       if (url.includes('/registration')) return okJson({ registration: REGISTRATION, satisfied: [] });
       return okJson({ submissions: [] });
@@ -648,6 +673,9 @@ describe('EstarFilingPanel — readiness is scoped to the programme', () => {
     fireEvent.change(select.closest('select')!, { target: { value: 'k510' } });
     await waitFor(() => expect(sentReadinessPost()).not.toBeNull());
     expect(sentReadinessPost()).toMatchObject({ programId: PROGRAM_ID, useProjectContent: true });
+    // The verdict actually renders — a render error here now fails this test
+    // instead of escaping as an unhandled error after it has passed.
+    expect(await screen.findByText(/510K · device/)).toBeTruthy();
   });
 
   /* Null must not degrade into the org-wide read — that is the defect. */

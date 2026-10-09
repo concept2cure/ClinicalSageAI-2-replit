@@ -1,0 +1,1 @@
+[ci:jwt-verify-pinned] OK — every production jwt.verify call pins an algorithm

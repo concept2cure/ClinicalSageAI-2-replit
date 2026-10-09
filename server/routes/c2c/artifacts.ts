@@ -16,7 +16,6 @@ import { Router, type Request, type Response } from 'express';
 import { concept2cureArtifactVersions, concept2cureArtifacts, concept2cureConversations, concept2cureNotifications, concept2cureProvenanceEvents, concept2cureReviewAssignments, concept2cureReviewComments, concept2cureReviewDecisions, concept2cureSignatures, concept2cureSubmissionSnapshots, organizationUsers, projects, users } from '../../../shared/schema';
 import { type GovernedDocumentActionContract } from '../../../shared/types/document-contract';
 import { db, pool } from '../../db';
-import { parseIntegerProjectId } from '../../lib/project-id.js';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable';
 import { guardDemoContent, guardEmptyContent } from '../../middleware/documentLoopGuards';
 import { cacheResponse } from '../../middleware/enterprise-performance';
@@ -24,6 +23,10 @@ import { enforceAuthorLineage } from '../../services/clinical-regulatory-evidenc
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService';
 import { createTraceId, emitTraceEvent } from '../../services/generation-guard.js';
 import { markPackagesContentChangedForArtifact } from '../../services/ectd/package-content-change';
+import { artifactApproval } from '../../services/ectd/package-content-fingerprint';
+import { ARTIFACT_ACT_MEANING, reviewQuorumVerdict } from '../../services/artifact-approval-act';
+import { ArtifactActConflictError, commitSignedArtifactAct } from '../../services/artifact-signed-act';
+import { SignerNotAttributableError } from '../../services/part11/resolve-signer-identity';
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
 import * as crypto from 'crypto';
@@ -36,22 +39,20 @@ import {
   type Artifact,
   calculateContentHash,
   concept2cureRateLimiter,
-  getClientIp,
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   logConcept2cureError,
   paramStr,
   sanitizeContent,
-  sanitizeObject,
   sendError,
   sendSuccess,
   verifyIntegrityChain,
 } from './shared';
-import { verifyProjectAccess } from './project-access';
-import { isSigningAuthorized } from '../../services/part11/signing-authority.js';
-import { reverifySigner } from '../../services/part11/reverify-signer.js';
-import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
+import { authorizedProjectId, loadProjectArtifact } from './artifact-project-scope';
+import { verifyReauth } from './actions';
+import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-artifacts');
 const router = Router();
@@ -63,10 +64,6 @@ router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
 
 /* ── Helpers this domain owns ─────────────────────────────────────────────── */
-
-function calculateSignatureHash(payload: Record<string, unknown>): string {
-  return crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
-}
 
 /**
  * Emit a provenance event for an artifact.
@@ -196,23 +193,6 @@ const createArtifactSchema = z.object({
     .optional(),
 });
 
-/* `authenticationMethod` and `secondFactorVerified` are DELIBERATELY ABSENT.
-   They used to be accepted here — a free string and a boolean, taken from the
-   request body and persisted verbatim onto the Part 11 signature row. That is an
-   assertion by the party being authenticated, and it is the exact defect POST
-   /api/part11/signatures was deleted for (see routes/part11-compliance.ts:359-380).
-   Both are now DERIVED from what reverifySigner actually checked. */
-const createSignatureSchema = z.object({
-  signatureType: z.string().min(1).max(50).optional(),
-  signaturePurpose: z.string().min(1).max(500),
-  signatureMeaning: z.string().max(500).optional(),
-  /** Re-authenticated server-side at the moment of signing (§11.200). */
-  password: z.string().min(1),
-  /** Required when the signer has MFA enrolled; verified server-side. */
-  mfaToken: z.string().optional(),
-  signatureManifest: z.record(z.any()).optional(),
-  version: z.number().int().min(1).optional(),
-});
 
 async function getArtifactsFromDb(projectId: number, organizationId: number): Promise<Artifact[]> {
   const dbArtifacts = await db
@@ -372,10 +352,9 @@ router.get('/projects/all/artifacts-summary', async (req: Request, res: Response
 router.get('/projects/:projectId/artifacts', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const numericProjectId = parseIntegerProjectId(req.params.projectId);
-
-    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess || numericProjectId === null) {
+    // The URL's project, integer or program UUID, authorized (PF-17).
+    const numericProjectId = await authorizedProjectId(req, organizationId);
+    if (numericProjectId === null) {
       return sendError(res, 404, 'Project not found');
     }
 
@@ -399,10 +378,9 @@ router.post(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
-      const numericProjectId = parseIntegerProjectId(req.params.projectId);
-
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess || numericProjectId === null) {
+      // The URL's project, integer or program UUID, authorized (PF-17).
+      const numericProjectId = await authorizedProjectId(req, organizationId);
+      if (numericProjectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -596,7 +574,7 @@ router.post(
 
       // Log audit entry with content hash
       await logAuditEntry(req, 'CREATE', 'artifact', artifactId, null, {
-        projectId: paramStr(req.params.projectId),
+        projectId: numericProjectId,
         type: newArtifact.type,
         title: newArtifact.title,
         templateId: data.templateId || null,
@@ -629,13 +607,13 @@ router.post(
           : 'Manual document creation',
         backendRoute: 'POST /api/concept2cure/projects/:projectId/artifacts',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
 
       // RIM: capture artifact creation signal (non-blocking)
       interceptArtifactChange({
         organizationId,
-        projectId: parseInt(paramStr(req.params.projectId), 10),
+        projectId: numericProjectId,
         userId,
         artifactId,
         artifactVersionId: newDbArtifact.id?.toString(),
@@ -782,24 +760,15 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
 
-    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess) {
+    const projectId = await authorizedProjectId(req, organizationId);
+    if (projectId === null) {
       return sendError(res, 404, 'Project not found');
     }
 
     const { content, title, ctdSection } = req.body;
 
     // Find artifact in database
-    const [dbArtifact] = await db
-      .select()
-      .from(concept2cureArtifacts)
-      .where(
-        and(
-          eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-          eq(concept2cureArtifacts.organizationId, organizationId)
-        )
-      )
-      .limit(1);
+    const dbArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
     if (!dbArtifact) {
       return sendError(res, 404, 'Artifact not found');
@@ -1037,14 +1006,14 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         sourceDescription: `Updated from v${dbArtifact.version} to v${newVersion}`,
         backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
     }
 
     // RIM: capture artifact update signal (non-blocking)
     interceptArtifactChange({
       organizationId,
-      projectId: parseInt(paramStr(req.params.projectId), 10),
+      projectId,
       userId,
       artifactId: paramStr(req.params.artifactId),
       artifactVersionId: dbArtifact.id?.toString(),
@@ -1134,9 +1103,9 @@ router.put(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      const projectId = await authorizedProjectId(req, organizationId);
 
-      if (!hasAccess) {
+      if (projectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -1157,16 +1126,7 @@ router.put(
       }
 
       // Find the artifact
-      const [dbArtifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const dbArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!dbArtifact) {
         return sendError(res, 404, 'Artifact not found');
@@ -1294,7 +1254,7 @@ router.put(
         } → ${toSection} — ${reason.trim()}`,
         backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
 
       logger.info('Artifact placement updated', {
@@ -1381,16 +1341,10 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) {
+      // The URL's project, integer or program UUID, authorized (PF-17).
+      const projectDbId = await authorizedProjectId(req, organizationId);
+      if (projectDbId === null) {
         return sendError(res, 404, 'Project not found');
-      }
-
-      // Get project DB id
-      const projectDbIdStr = paramStr(req.params.projectId);
-      const projectDbId = parseInt(projectDbIdStr, 10);
-      if (isNaN(projectDbId)) {
-        return sendError(res, 400, 'Invalid project ID');
       }
 
       // Fetch all artifacts for project
@@ -1518,164 +1472,26 @@ router.get(
   }
 );
 
-/**
- * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
- * Create an electronic signature for an artifact version (21 CFR Part 11).
- */
-router.post(
-  '/projects/:projectId/artifacts/:artifactId/signatures',
-  async (req: Request, res: Response) => {
-    try {
-      const organizationId = getOrganizationId(req);
-      const userId = getUserId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-
-      if (!hasAccess) {
-        return sendError(res, 404, 'Project not found');
-      }
-
-      /* §11.10(g) — identity is not authority. This used to inline
-         ['admin','approver','reviewer'], which is the DEFAULT of the shared
-         policy but ignores the ESIGNATURE_SIGNING_ROLES override, so a
-         deployment that narrowed its signing roles was still wide open here. */
-      const signerRole = (req.userRole || 'user').toLowerCase();
-      if (!isSigningAuthorized(signerRole)) {
-        return sendError(
-          res,
-          403,
-          'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-        );
-      }
-
-      const data = createSignatureSchema.parse(req.body);
-
-      /* §11.200(a)(1) — re-verify the signer HERE, at the moment of signing,
-         against stored credentials. The route previously reached the INSERT with
-         nothing but a role check. */
-      const reverified = await reverifySigner(
-        userId,
-        { password: data.password, mfaToken: data.mfaToken },
-        signerReverificationDeps(),
-      );
-      if (!reverified.ok) {
-        return sendError(res, reverified.status, reverified.error);
-      }
-
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
-
-      if (!artifact) {
-        return sendError(res, 404, 'Artifact not found');
-      }
-
-      const targetVersion = data.version ?? artifact.version;
-      const [versionRow] = await db
-        .select()
-        .from(concept2cureArtifactVersions)
-        .where(
-          and(
-            eq(concept2cureArtifactVersions.artifactId, artifact.id),
-            eq(concept2cureArtifactVersions.version, targetVersion)
-          )
-        )
-        .limit(1);
-
-      if (!versionRow) {
-        return sendError(res, 404, 'Artifact version not found');
-      }
-
-      const signedAt = new Date();
-      const signatureId = `sig_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-      const signatureType = data.signatureType ?? 'approval';
-      const signaturePurpose = sanitizeContent(data.signaturePurpose);
-      const signatureMeaning = data.signatureMeaning
-        ? sanitizeContent(data.signatureMeaning)
-        : null;
-      const signatureManifest = data.signatureManifest
-        ? sanitizeObject(data.signatureManifest)
-        : null;
-
-      const signatureHash = calculateSignatureHash({
-        signatureId,
-        artifactId: artifact.artifactId,
-        version: targetVersion,
-        contentHash: versionRow.contentHash,
-        signerId: userId,
-        signatureType,
-        signaturePurpose,
-        signatureMeaning,
-        signedAt: signedAt.toISOString(),
-      });
-
-      const signerName = (req as any).userName || req.userEmail || 'unknown';
-      const signerEmail = req.userEmail || 'unknown';
-
-      const [signature] = await db
-        .insert(concept2cureSignatures)
-        .values({
-          organizationId,
-          signatureId,
-          artifactId: artifact.id,
-          artifactVersionId: versionRow.id,
-          signatureType,
-          signaturePurpose,
-          signatureMeaning,
-          signerId: userId,
-          signerName,
-          signerEmail,
-          signerRole: req.userRole || 'user',
-          // Server-derived from the re-verification above — never a client value.
-          authenticationMethod: reverified.authenticationMethod,
-          authenticationTimestamp: signedAt,
-          secondFactorVerified: reverified.secondFactorVerified,
-          signatureHash,
-          signatureManifest,
-          ipAddress: getClientIp(req),
-          deviceInfo: null,
-          status: 'active',
-          signedAt,
-        })
-        .returning();
-
-      await logAuditEntry(req, 'CREATE', 'signature', signatureId, null, {
-        artifactId: paramStr(req.params.artifactId),
-        version: targetVersion,
-        signatureType,
-        signaturePurpose,
-        signatureHash,
-      });
-
-      res.status(201);
-      return sendSuccess(res, {
-        id: signature.signatureId,
-        artifactId: paramStr(req.params.artifactId),
-        version: targetVersion,
-        signatureType,
-        signaturePurpose,
-        signatureMeaning,
-        signerId: userId,
-        signerName,
-        signerEmail,
-        signedAt: signature.signedAt,
-        signatureHash,
-      });
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        return sendError(res, 400, 'Validation failed', error.errors);
-      }
-      logConcept2cureError('create signature', error, { artifactId: req.params.artifactId });
-      return sendError(res, 500, 'Failed to create signature');
-    }
-  }
-);
+/* POST /projects/:projectId/artifacts/:artifactId/signatures — REMOVED 2026-09-20.
+   It was the second signature substrate: it wrote `concept2cure_signatures`
+   with its own hash recipe (sha256 over a locally assembled object), no
+   §11.70 binding basis, no supersession chain, and a signer name taken from
+   `req.userName || req.userEmail || 'unknown'`. VAULT_DATA_ROOM_ASSESSMENT
+   _2026-09-05.md §4.3 named it; the 2026-09-05 fix put reverifySigner in
+   front of it but left the second write path in place. Zero duplication: the
+   ONE signing substrate is `electronic_signatures` through
+   server/services/part11/signature-persistence.ts, reached by
+   POST /api/esignature/sign (documents) and POST /api/c2c/actions/sign
+   (governed typed targets, e.g. `document:<id>`). No client called this
+   route (grep client/src for the path: none). The GET below stays: rows
+   already written are §11.70 history and must remain readable.
+   Pinned by server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts.
+   2026-09-28 (D5), correcting the note above: this router still writes
+   `concept2cure_signatures`, from the status route's approve and lock, and
+   that table is what the readiness engine, the Artifacts Center and the DOCX
+   signature block read for an artifact. Those two acts now re-authenticate the
+   signer and commit the signature on the status change's transaction (see
+   PUT …/status); consolidating the two substrates is not done here. */
 
 /**
  * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
@@ -1686,19 +1502,10 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -1741,19 +1548,10 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -1815,22 +1613,13 @@ router.get(
     try {
       const organizationId = getOrganizationId(req);
 
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) {
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
       // 1. Get artifact
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) {
         return sendError(res, 404, 'Artifact not found');
@@ -2044,19 +1833,10 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -2101,21 +1881,12 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
       const mode = (req.query.mode as string) === 'detailed' ? 'detailed' : 'summary';
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -2313,19 +2084,10 @@ router.post(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -2515,6 +2277,16 @@ router.post(
           ctdSection: artifact.ctdSection,
           lockedAt: now,
           lockedById: userId,
+          // 2026-09-23 (W5/D7, residual repair): a lock records the version it
+          // locked, as the status route's approved → locked does
+          // (publishedVersionId / publishedAt). approvedVersionId is left unset
+          // on purpose: this report is generated and frozen as an inspection
+          // record, and nobody approved it. Recording an approval here would
+          // fabricate one, and would make an unreviewed report filable; unset,
+          // the filing rule (artifactApproval) refuses it as
+          // 'no-approved-version' (fail closed).
+          publishedVersionId: 1,
+          publishedAt: now,
           metadata: {
             sourceArtifactId: artifact.artifactId,
             harness: {
@@ -2560,7 +2332,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/audit-report/export`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           exportedArtifactId: exportArtifactId,
           reportMode: 'detailed',
@@ -2667,8 +2439,13 @@ router.put(
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
       const userRole = (req.userRole || 'user').toLowerCase();
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      // The project the change is made in, integer or program UUID, authorized;
+      // a lookup that could not complete is this route's 500 (PF-17,
+      // ./artifact-project-scope).
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) {
+        return sendError(res, 404, 'Project not found');
+      }
 
       const { status, reason, attestation } = req.body;
       const validStatuses = ['draft', 'review', 'approved', 'locked'];
@@ -2676,34 +2453,45 @@ router.put(
         return sendError(res, 400, `Invalid status. Must be one of: ${validStatuses.join(', ')}`);
       }
 
-      // ── Attestation required for approve and lock/publish ────────────
+      // ── Approve and lock are electronic signatures ───────────────────
+      // 2026-09-28 (D5): each act fixes its own §11.50(a)(3) meaning —
+      // 'approval' for review → approved, 'release' for approved → locked —
+      // and the signer confirms it. Free text ("Approved", "Released") was
+      // accepted and written as the meaning; a different meaning, or none, is
+      // refused here, before the password is asked for or anything is read.
       const requiresAttestation = status === 'approved' || status === 'locked';
-      if (requiresAttestation) {
+      const actMeaning = requiresAttestation
+        ? ARTIFACT_ACT_MEANING[status as 'approved' | 'locked']
+        : null;
+      if (actMeaning) {
+        const act = status === 'approved' ? 'Approving' : 'Locking';
         if (
           !attestation ||
           typeof attestation !== 'object' ||
-          !attestation.meaning ||
-          !attestation.attestationText
+          typeof attestation.attestationText !== 'string' ||
+          !attestation.attestationText.trim()
         ) {
           return sendError(
             res,
             400,
-            `Attestation is required for ${status}. Must include: meaning (e.g. "Approved", "Released"), attestationText (acknowledgement of intent)`
+            `${act} is an electronic signature. Send attestation.attestationText (your statement of intent) and attestation.meaning '${actMeaning}'. Nothing was signed.`,
+            undefined,
+            'ATTESTATION_REQUIRED'
+          );
+        }
+        if (attestation.meaning !== actMeaning) {
+          return sendError(
+            res,
+            400,
+            `${act} this document is signed with the meaning '${actMeaning}'. Nothing was signed.`,
+            undefined,
+            attestation.meaning ? 'SIGNATURE_MEANING_MISMATCH' : 'SIGNATURE_MEANING_REQUIRED'
           );
         }
       }
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
-
+      // Another project's artifact is not found through this project's URL.
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
       const previousStatus = artifact.status || 'draft';
@@ -2754,6 +2542,35 @@ router.put(
         }
       }
 
+      // ── A lock must cover the approval ───────────────────────────────
+      // 2026-09-23 (W5/D7, residual repair): approved → locked used to check
+      // status alone and stamp published_version_id = the CURRENT version, so
+      // approved v1 → PUT edit to v2 (status stays 'approved') → lock recorded
+      // "locked at v2" over content no one reviewed. The filing rule already
+      // refuses that artifact; the lock is now refused too, so an unreviewed
+      // edit is never recorded as locked. The verdict is artifactApproval's —
+      // the one filing rule, imported, not restated: an approved artifact may
+      // be locked only when it is filable as approved (version =
+      // approved_version_id, and an approval that recorded no version fails
+      // closed). Its remedy names the re-approval (approved → review → approved).
+      if (previousStatus === 'approved' && status === 'locked') {
+        const approval = artifactApproval({
+          status: previousStatus,
+          version: artifact.version,
+          approvedVersionId: artifact.approvedVersionId,
+          publishedVersionId: artifact.publishedVersionId,
+        });
+        if (!approval.filable) {
+          return sendError(
+            res,
+            409,
+            `Cannot lock: ${approval.problem}. Re-approval is required first: ${approval.remedy}.`,
+            { reason: approval.reason },
+            'LOCK_NOT_COVERED_BY_APPROVAL'
+          );
+        }
+      }
+
       // ── Contradiction governance gate ───────────────────────────────
       // Hard block promotion if unresolved contradictions with blocks_promotion authority
       if (status === 'approved' || status === 'locked') {
@@ -2764,7 +2581,7 @@ router.put(
           const { blocked, blockingFindings, warningFindings } =
             await contradictionEngineService.checkPromotionBlocked(
               organizationId,
-              Number(req.params.projectId),
+              projectId,
               artifact.id
             );
           if (blocked) {
@@ -2800,63 +2617,16 @@ router.put(
       // ── P12: Review quorum gate ─────────────────────────────────────
       // Block review → approved if reviewers are assigned but not all approved.
       // Withdrawn assignments are excluded from the quorum check.
+      // 2026-09-23 (W5/D7, residual repair, round 3; amended final pass): the
+      // gate moved, unchanged, to server/services/artifact-approval-act.ts
+      // (reviewQuorumVerdict), the one implementation this route and
+      // authoring-actions approve-artifact — the two governed approval acts —
+      // apply. A quorum that cannot be read throws, and the catch below
+      // answers 500 before anything is written: an unread quorum is not met.
       if (previousStatus === 'review' && status === 'approved') {
-        const roundAssignments = await db
-          .select()
-          .from(concept2cureReviewAssignments)
-          .where(
-            and(
-              eq(concept2cureReviewAssignments.artifactId, artifact.id),
-              eq(concept2cureReviewAssignments.organizationId, organizationId)
-            )
-          )
-          .orderBy(desc(concept2cureReviewAssignments.reviewRound));
-
-        if (roundAssignments.length > 0) {
-          const latestRound = roundAssignments[0].reviewRound;
-          // Exclude withdrawn assignments from quorum
-          const activeAssignments = roundAssignments.filter(
-            a => a.reviewRound === latestRound && a.status !== 'withdrawn'
-          );
-
-          if (activeAssignments.length === 0) {
-            // All were withdrawn — no quorum to enforce, allow approval
-          } else {
-            const pendingReviews = activeAssignments.filter(a => a.status !== 'completed');
-
-            if (pendingReviews.length > 0) {
-              return sendError(
-                res,
-                400,
-                `Cannot approve: ${pendingReviews.length} of ${activeAssignments.length} reviewers have not yet submitted their decision`
-              );
-            }
-
-            // All completed — verify all decisions are "approve"
-            const roundDecisions = await db
-              .select()
-              .from(concept2cureReviewDecisions)
-              .where(
-                and(
-                  eq(concept2cureReviewDecisions.artifactId, artifact.id),
-                  eq(concept2cureReviewDecisions.reviewRound, latestRound),
-                  eq(concept2cureReviewDecisions.organizationId, organizationId)
-                )
-              );
-
-            const nonApprovals = roundDecisions.filter(d => d.decision !== 'approve');
-            if (nonApprovals.length > 0) {
-              return sendError(
-                res,
-                400,
-                `Cannot approve: ${
-                  nonApprovals.length
-                } reviewer(s) did not approve (decisions: ${nonApprovals
-                  .map(d => d.decision)
-                  .join(', ')})`
-              );
-            }
-          }
+        const quorum = await reviewQuorumVerdict(pool, artifact.id, organizationId, artifact.version);
+        if (!quorum.met) {
+          return sendError(res, 400, quorum.message);
         }
       }
 
@@ -2864,6 +2634,11 @@ router.put(
         status,
         updatedAt: new Date(),
       };
+      // Leaving approved/locked (approved → review, locked → draft) clears
+      // approvedVersionId and publishedVersionId in this same write: the
+      // concept2cure_artifacts trigger does it for every writer
+      // (migrations/20260923b_artifact_approval_follows_status.sql, 2026-09-23
+      // W5/D7 final pass), so a revoked approval cannot be resurrected.
       if (status === 'approved') {
         updateData.approvedVersionId = artifact.version;
       }
@@ -2939,149 +2714,26 @@ router.put(
         },
       };
 
-      const [updated] = await db
-        .update(concept2cureArtifacts)
-        .set(updateData)
-        .where(eq(concept2cureArtifacts.id, artifact.id))
-        .returning();
-
-      const signerName = (req as any).userName || req.userEmail || 'unknown';
-      const signerEmail = req.userEmail || 'unknown';
-
-      // ── Create attestation signature for approve/lock ────────────────
-      let signatureRecord = null;
-      if (requiresAttestation && attestation) {
-        const signedAt = new Date();
-        const signatureId = `sig_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-        const signaturePurpose =
-          status === 'approved' ? 'approval_attestation' : 'publish_attestation';
-
-        // Find version record for signature linkage
-        const [versionRow] = await db
-          .select()
-          .from(concept2cureArtifactVersions)
-          .where(
-            and(
-              eq(concept2cureArtifactVersions.artifactId, artifact.id),
-              eq(concept2cureArtifactVersions.version, artifact.version)
-            )
-          )
-          .limit(1);
-
-        if (versionRow) {
-          const signatureHash = crypto
-            .createHash('sha256')
-            .update(
-              JSON.stringify({
-                signatureId,
-                artifactId: artifact.artifactId,
-                version: artifact.version,
-                contentHash: versionRow.contentHash,
-                signerId: userId,
-                signaturePurpose,
-                signatureMeaning: attestation.meaning,
-                signedAt: signedAt.toISOString(),
-              })
-            )
-            .digest('hex');
-
-          const [sig] = await db
-            .insert(concept2cureSignatures)
-            .values({
-              organizationId,
-              signatureId,
-              artifactId: artifact.id,
-              artifactVersionId: versionRow.id,
-              signatureType: status === 'approved' ? 'approval' : 'publish',
-              signaturePurpose,
-              signatureMeaning: attestation.meaning,
-              signerId: userId,
-              signerName,
-              signerEmail,
-              signerRole: userRole,
-              authenticationMethod: 'session_jwt',
-              authenticationTimestamp: signedAt,
-              secondFactorVerified: false,
-              signatureHash,
-              signatureManifest: {
-                attestationText: attestation.attestationText,
-                reason: attestation.reason || reason || null,
-                previousStatus,
-                newStatus: status,
-              },
-              ipAddress: getClientIp(req),
-              deviceInfo: null,
-              status: 'active',
-              signedAt,
-            })
-            .returning();
-
-          signatureRecord = {
-            signatureId: sig.signatureId,
-            signatureType: sig.signatureType,
-            signatureMeaning: sig.signatureMeaning,
-            signerName: sig.signerName,
-            signerRole: sig.signerRole,
-            signedAt: sig.signedAt,
-            signatureHash: sig.signatureHash,
-          };
-
-          await logAuditEntry(req, 'SIGN', 'signature', signatureId, null, {
-            artifactId: paramStr(req.params.artifactId),
-            version: artifact.version,
-            signatureType: sig.signatureType,
-            signaturePurpose,
-            signatureMeaning: attestation.meaning,
-            attestationText: attestation.attestationText,
-          });
-        }
-      }
-
-      // ── Create submission snapshot for lock/publish ──────────────────
-      let snapshotRecord = null;
-      if (status === 'locked') {
-        const snapshotId = `snap_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-        const [snapshot] = await db
-          .insert(concept2cureSubmissionSnapshots)
-          .values({
-            snapshotId,
-            artifactId: artifact.id,
-            organizationId,
-            versionId: artifact.version,
-            approvedVersionId: artifact.approvedVersionId ?? artifact.version,
-            publishedVersionId: artifact.version,
-            contentHash: artifact.contentHash || '',
-            title: artifact.title,
-            ctdSection: artifact.ctdSection,
-            templateId: artifact.templateId,
-            actionType: 'publish',
-            actorId: userId,
-            actorName: signerName,
-            actorEmail: signerEmail,
-            actorRole: userRole,
-            attestationText: attestation?.attestationText || null,
-            signatureMeaning: attestation?.meaning || null,
-            metadata: {
-              previousStatus,
-              newStatus: status,
-              reason: reason || null,
-              signatureId: signatureRecord?.signatureId || null,
-            },
-          })
-          .returning();
-
-        snapshotRecord = {
-          snapshotId: snapshot.snapshotId,
-          versionId: snapshot.versionId,
-          contentHash: snapshot.contentHash,
-          actionType: snapshot.actionType,
-          actorName: snapshot.actorName,
-          createdAt: snapshot.createdAt,
-        };
-      }
-
-      // Log provenance
-      await db.insert(concept2cureProvenanceEvents).values({
+      // ── The signed acts: re-authenticate, then one transaction ──────────
+      // 2026-09-28 (D5). Approve and lock wrote their Part 11 signature from the
+      // session alone (authentication_method 'session_jwt', §11.200 not met),
+      // printed the signer as `userName || email || 'unknown'`, committed the
+      // status first and the signature after it on its own, and skipped the
+      // signature silently when the version had no stored row — so an approval
+      // could stand unsigned. Now the signer re-authenticates before anything is
+      // written, and the status, the version signed, the ledger pair, the
+      // signature, the lock's snapshot and the provenance event commit together
+      // (server/services/artifact-signed-act.ts). Nothing after the COMMIT can
+      // turn a committed signature into an error answer: the audit entry and the
+      // feedback signal below do not throw.
+      let updated: typeof concept2cureArtifacts.$inferSelect;
+      let signatureRecord: Record<string, unknown> | null = null;
+      let snapshotRecord: Record<string, unknown> | null = null;
+      const provenanceEvent = (
+        actor: { name: string; email: string },
+        signatureId: string | null,
+        snapshotId: string | null
+      ) => ({
         organizationId,
         artifactId: artifact.id,
         eventId: `evt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
@@ -3091,11 +2743,11 @@ router.put(
           attestation?.meaning ? ` (${attestation.meaning})` : ''
         }`,
         actorId: userId,
-        actorName: (req as any).userName || req.userEmail || 'unknown',
-        actorEmail: req.userEmail || 'unknown',
+        actorName: actor.name,
+        actorEmail: actor.email,
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/status`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           previousStatus,
           newStatus: status,
@@ -3104,16 +2756,124 @@ router.put(
             ? {
                 meaning: attestation.meaning,
                 attestationText: attestation.attestationText,
-                signerName: (req as any).userName || req.userEmail || 'unknown',
+                signerName: actor.name,
                 signerRole: userRole,
               }
             : null,
-          signatureId: signatureRecord?.signatureId || null,
-          snapshotId: snapshotRecord?.snapshotId || null,
+          signatureId,
+          snapshotId,
         },
       });
 
-      await logAuditEntry(
+      if (actMeaning) {
+        const reauth = await verifyReauth(userId, req.body?.reauth);
+        if (!reauth.ok) {
+          return sendError(
+            res,
+            401,
+            'Re-enter your password to sign. Nothing was signed.',
+            undefined,
+            reauth.error ?? 'REAUTH_REQUIRED'
+          );
+        }
+        const [storedVersion] = await db
+          .select()
+          .from(concept2cureArtifactVersions)
+          .where(
+            and(
+              eq(concept2cureArtifactVersions.artifactId, artifact.id),
+              eq(concept2cureArtifactVersions.version, artifact.version)
+            )
+          )
+          .limit(1);
+        const signed = await db
+          .transaction(async tx => {
+            const act = await commitSignedArtifactAct(tx, {
+              artifact,
+              version: storedVersion ?? null,
+              status: status as 'approved' | 'locked',
+              previousStatus,
+              updateData,
+              organizationId,
+              userId,
+              userRole,
+              attestationText: attestation.attestationText.trim(),
+              reason: (typeof reason === 'string' && reason.trim()) || null,
+              // verifyReauth refuses a TOTP it could not verify (actions.ts), so
+              // a code present here is a verified second factor.
+              secondFactorVerified: Boolean(req.body?.reauth?.totp),
+              ipAddress: clientIpKey(req),
+            });
+            await tx.insert(concept2cureProvenanceEvents).values({
+              ...provenanceEvent(act.signer, act.signature.signatureId, act.snapshot?.snapshotId ?? null),
+              organizationId,
+            });
+            return act;
+          })
+          .catch((err: unknown) => {
+            // A stale read and an unnamed signer are answered as such; anything
+            // else is the 500 below. Nothing was written in any of them.
+            if (err instanceof ArtifactActConflictError || err instanceof SignerNotAttributableError) {
+              return err;
+            }
+            throw err;
+          });
+        if (signed instanceof ArtifactActConflictError) {
+          return sendError(res, 409, signed.message, undefined, signed.code);
+        }
+        if (signed instanceof SignerNotAttributableError) {
+          return sendError(
+            res,
+            403,
+            'Your account has no name or membership this signature can print, so it cannot sign here. Nothing was signed.',
+            undefined,
+            signed.code
+          );
+        }
+
+        updated = signed.row;
+        signatureRecord = {
+          signatureId: signed.signature.signatureId,
+          signatureType: signed.signature.signatureType,
+          signatureMeaning: signed.signature.signatureMeaning,
+          signerName: signed.signature.signerName,
+          signerRole: signed.signature.signerRole,
+          signedAt: signed.signature.signedAt,
+          signatureHash: signed.signature.signatureHash,
+          authenticationMethod: signed.signature.authenticationMethod,
+          versionSigned: signed.version.version,
+        };
+        if (signed.snapshot) {
+          snapshotRecord = {
+            snapshotId: signed.snapshot.snapshotId,
+            versionId: signed.snapshot.versionId,
+            contentHash: signed.snapshot.contentHash,
+            actionType: signed.snapshot.actionType,
+            actorName: signed.snapshot.actorName,
+            createdAt: signed.snapshot.createdAt,
+          };
+        }
+      } else {
+        [updated] = await db
+          .update(concept2cureArtifacts)
+          .set(updateData)
+          .where(eq(concept2cureArtifacts.id, artifact.id))
+          .returning();
+        await db.insert(concept2cureProvenanceEvents).values({
+          ...provenanceEvent(
+            {
+              name: (req as any).userName || req.userEmail || 'unknown',
+              email: req.userEmail || 'unknown',
+            },
+            null,
+            null
+          ),
+          organizationId,
+        });
+      }
+
+      // WO-16C: the outcome was discarded; it is now answered as `auditTrail`.
+      const statusAudit = await logAuditEntry(
         req,
         requiresAttestation ? 'APPROVE' : 'UPDATE',
         'artifact_status',
@@ -3139,7 +2899,9 @@ router.put(
       if (feedbackType) {
         interceptFeedback({
           organizationId,
-          projectId: parseInt(paramStr(req.params.projectId), 10),
+          // The resolved, authorized project — never the URL text: parseInt of
+          // a program UUID is a different project, possibly another tenant's.
+          projectId,
           userId,
           artifactId: paramStr(req.params.artifactId),
           artifactVersionId: artifact.id?.toString(),
@@ -3157,6 +2919,7 @@ router.put(
         publishedVersionId: updated.publishedVersionId,
         publishedAt: updated.publishedAt,
         enforcedRole: userRole,
+        auditTrail: auditTrailFromEntry(statusAudit),
         signature: signatureRecord,
         snapshot: snapshotRecord,
       });
@@ -3177,24 +2940,15 @@ router.put(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
       const { ctdSection } = req.body;
       if (!ctdSection || typeof ctdSection !== 'string') {
         return sendError(res, 400, 'ctdSection is required');
       }
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3297,7 +3051,7 @@ router.put(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/ctd-section`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { previousSection, newSection: ctdSection },
       });
 
@@ -3328,19 +3082,10 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3402,8 +3147,8 @@ router.post(
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
       const userRole = (req.userRole || 'user').toLowerCase();
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
       // ── Role check: only reviewer, approver, admin can rollback ──────
       if (!ROLLBACK_ROLES.includes(userRole)) {
@@ -3419,16 +3164,7 @@ router.post(
         return sendError(res, 400, 'targetVersion is required and must be a positive integer');
       }
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3585,7 +3321,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/rollback`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           rolledBackFromVersion: artifact.version,
           targetVersion,
@@ -3641,24 +3377,15 @@ router.post(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
       const { comment } = req.body;
       if (!comment || typeof comment !== 'string' || comment.trim().length === 0) {
         return sendError(res, 400, 'comment is required');
       }
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3692,7 +3419,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/comments`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { commentId, version: artifact.version },
       });
 
@@ -3727,19 +3454,10 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3785,8 +3503,13 @@ router.put(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
+      // The comment is resolved only on the URL's artifact, in its project: it
+      // was found by id and organization alone, so any project's comment could
+      // be resolved through this project's URL.
+      const commentArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      if (!commentArtifact) return sendError(res, 404, 'Artifact not found');
 
       const [comment] = await db
         .select()
@@ -3794,12 +3517,13 @@ router.put(
         .where(
           and(
             eq(concept2cureReviewComments.commentId, paramStr(req.params.commentId)),
-            eq(concept2cureReviewComments.organizationId, organizationId)
+            eq(concept2cureReviewComments.organizationId, organizationId),
+            eq(concept2cureReviewComments.artifactId, commentArtifact.id)
           )
         )
         .limit(1);
 
-      if (!comment) return sendError(res, 404, 'Comment not found');
+      if (!comment || comment.artifactId !== commentArtifact.id) return sendError(res, 404, 'Comment not found');
       if (comment.status === 'resolved') {
         return sendError(res, 400, 'Comment is already resolved');
       }
@@ -3858,8 +3582,8 @@ router.post(
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
       const userRole = (req.userRole || 'user').toLowerCase();
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
       if (!['admin', 'approver', 'reviewer'].includes(userRole)) {
         return sendError(res, 403, 'Only admin, approver, or reviewer can assign reviewers');
@@ -3876,16 +3600,7 @@ router.post(
         return sendError(res, 400, 'All reviewer IDs must be valid numbers');
       }
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3983,7 +3698,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviewers`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           reviewerIds: numericIds,
           reviewRound,
@@ -4019,19 +3734,10 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -4118,8 +3824,8 @@ router.delete(
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
       const userRole = (req.userRole || 'user').toLowerCase();
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
       if (!['admin', 'approver'].includes(userRole)) {
         return sendError(res, 403, 'Only admin or approver can withdraw reviewer assignments');
@@ -4138,17 +3844,8 @@ router.delete(
 
       if (!assignment) return sendError(res, 404, 'Assignment not found');
 
-      // Validate the assignment belongs to the artifact in the URL
-      const [withdrawArtifact] = await db
-        .select({ id: concept2cureArtifacts.id })
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      // Validate the assignment belongs to the artifact in the URL, in its project
+      const withdrawArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!withdrawArtifact || assignment.artifactId !== withdrawArtifact.id) {
         return sendError(res, 404, 'Assignment not found for this artifact');
@@ -4183,7 +3880,7 @@ router.delete(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviewers/${req.params.assignmentId}`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { assignmentId: req.params.assignmentId, reviewerId: assignment.reviewerId },
       });
 
@@ -4213,8 +3910,8 @@ router.delete(
 router.get('/projects/:projectId/team', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess) return sendError(res, 404, 'Project not found');
+    // Access to the URL's project, integer or program UUID (PF-17).
+    if ((await authorizedProjectId(req, organizationId)) === null) return sendError(res, 404, 'Project not found');
 
     // Get all users in this organization
     const members = await db
@@ -4262,8 +3959,11 @@ router.post(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
+      // The assignment is reminded only on the URL's artifact, in its project.
+      const remindArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      if (!remindArtifact) return sendError(res, 404, 'Artifact not found');
 
       // Get the assignment
       const [assignment] = await db
@@ -4272,12 +3972,13 @@ router.post(
         .where(
           and(
             eq(concept2cureReviewAssignments.assignmentId, paramStr(req.params.assignmentId)),
-            eq(concept2cureReviewAssignments.organizationId, organizationId)
+            eq(concept2cureReviewAssignments.organizationId, organizationId),
+            eq(concept2cureReviewAssignments.artifactId, remindArtifact.id)
           )
         )
         .limit(1);
 
-      if (!assignment) {
+      if (!assignment || assignment.artifactId !== remindArtifact.id) {
         return sendError(res, 404, 'Assignment not found');
       }
 
@@ -4296,8 +3997,10 @@ router.post(
         body: `You have a pending review for artifact ${req.params.artifactId}. Please complete your review.`,
         severity: 'warning',
         status: 'unread',
-        artifactId: Number(req.params.artifactId) || undefined,
-        projectId: Number(req.params.projectId) || undefined,
+        // The artifact's and project's ids — Number('artifact_…') was NaN,
+        // and Number of a program UUID named no project at all.
+        artifactId: remindArtifact.id,
+        projectId,
       });
 
       // Log audit entry
@@ -4332,8 +4035,8 @@ router.post(
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
       const userRole = (req.userRole || 'user').toLowerCase();
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
       const { decision, comment } = req.body;
       const validDecisions = ['approve', 'request_changes', 'reject'];
@@ -4351,16 +4054,7 @@ router.post(
         return sendError(res, 403, 'Only reviewer, approver, or admin can submit review decisions');
       }
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
       if (artifact.status !== 'review') {
@@ -4443,7 +4137,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviews/submit`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           decisionId,
           decision,
@@ -4523,19 +4217,10 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      const projectId = await authorizedProjectId(req, organizationId);
+      if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
+      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 

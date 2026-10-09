@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import { K510_ESTAR, K510_PREDICATES, K510_SE_ROWS, K510_STAGES } from '../data/k510';
+import { K510_STAGES } from '../data/k510';
 import type { Predicate } from '../data/k510';
 import type { Program } from '../data/programs';
 import {
@@ -28,8 +28,8 @@ import { PathwayPanes } from './pathway/PathwayPanes';
 import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
-import { useSampleRows, useShowingSample } from '../lib/useSampleRows';
-import { useSampleMode } from '../components/DataGate';
+import { readyRows, toDataState } from '../lib/dataState';
+import { DataGate, useSampleMode } from '../components/DataGate';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 import { downloadCsv } from '../../v2/download';
 
@@ -164,12 +164,40 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
       : 'Locked — requires a higher plan (device assembly readiness)'
     : null;
 
-  const sourcePredicates = useSampleRows(predicates.rows, K510_PREDICATES);
-  const sourceSeRows     = useSampleRows(seMatrix.rows, K510_SE_ROWS);
-  const sourceEstar      = useSampleRows(estar.rows, K510_ESTAR);
-  /* Through the same gate as the rows: outside sample mode an unresolved
-     source is zero blockers, never the fixture's one. */
-  const estarBlockerCount = estar.rows ? estar.blockerCount : sourceEstar.filter((s) => s.blocker).length;
+  /* Live or nothing. The three sets these replaced were K510_PREDICATES,
+     K510_SE_ROWS and K510_ESTAR.
+
+     K510_SE_ROWS was the clearest case: an invented substantial-equivalence
+     comparison, attribute by attribute, including a MARD accuracy of 8.2%
+     against a predicate's 8.7%. Substantial equivalence IS the 510(k)
+     argument, and those two numbers are the kind a reviewer weighs.
+
+     K510_PREDICATES paired real cleared devices — K221847, K213163 and the
+     rest are genuine FDA records — with an invented `match` score against
+     the sponsor's device, which is an assessment nobody performed. The claim
+     control already refused to write an example K-number into the device
+     profile, on the grounds this file states: "an example K-number claimed as
+     a predicate would reach FDA as this sponsor's own assertion." That
+     refusal was a tooltip on a disabled button; nothing on screen said the
+     six rows were examples at all.
+
+     K510_ESTAR carried the real FDA eSTAR section list with an invented
+     per-section status, and drove both the blocker count and the completion
+     readout. The server owns that list. */
+  const predicatesState = toDataState(predicates.rows, predicates.loading, predicates.error, {
+    idleReason: 'Predicate candidates are searched per device program.',
+  });
+  const seState = toDataState(seMatrix.rows, seMatrix.loading, seMatrix.error, {
+    idleReason: 'The substantial-equivalence matrix is held per program.',
+  });
+  const estarState = toDataState(estar.rows, estar.loading, estar.error, {
+    idleReason: 'eSTAR sections are held per submission.',
+  });
+
+  const sourcePredicates = readyRows(predicatesState);
+  const sourceSeRows     = readyRows(seState);
+  const sourceEstar      = readyRows(estarState);
+  const estarBlockerCount = estar.rows ? estar.blockerCount : 0;
   const estarTotal = sourceEstar.length;
 
   const initialSelectedKey = sourcePredicates[0]?.k ?? '';
@@ -207,10 +235,12 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   const predicateOnFile = predicateDevicesOnFile(deviceProfile.profile?.predicateDevices);
   const predicateUnreadable = predicateOnFile.unreadable > 0;
   const claimedPredicate = predicateUnreadable ? null : predicateOnFile.devices[0] ?? null;
-  /* Fixtures are for populating a demo screen, never for writing into a
-     submission — an example K-number claimed as a predicate would reach FDA
-     as this sponsor's own assertion. */
-  const predicatesAreSample = useShowingSample(predicates.rows);
+  /* The claim control used to refuse example rows, because "an example
+     K-number claimed as a predicate would reach FDA as this sponsor's own
+     assertion". The refusal is gone because the rows it guarded are: the
+     candidate table reads live or reads nothing, so every K-number on screen
+     is one the predicate search actually returned. The reasoning is kept here
+     because it is the reason this table may never be given a fixture again. */
   const [claiming, setClaiming] = React.useState<string | null>(null);
 
   const claimPredicate = React.useCallback(
@@ -226,7 +256,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   );
 
   /** The claim control for one candidate row. */
-  const claimControl = (device: PredicateDeviceInput, fromSample: boolean) => {
+  const claimControl = (device: PredicateDeviceInput) => {
     if (claimedPredicate?.id === device.id) {
       return (
         <div style={{ marginTop: 3, fontSize: 10, color: 'var(--accent-100)' }}>
@@ -234,11 +264,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         </div>
       );
     }
-    const refusal = fromSample
-      ? 'Example rows cannot be claimed as the predicate of record'
-      : !deviceIdent
-        ? 'Open a device program to claim a predicate of record'
-        : null;
+    const refusal = !deviceIdent
+      ? 'Open a device program to claim a predicate of record'
+      : null;
     return (
       <button
         type="button"
@@ -456,6 +484,25 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 </button>
               </div>
             </div>
+{/* Reports the read WITHOUT gating the table.
+                The candidate rows and the reduced openFDA fallback share one
+                <table>, and the fallback is precisely what renders when the
+                predicate service is DOWN — so wrapping the table in the gate
+                would have hidden the degraded-mode path behind the error it
+                exists to answer. The gate speaks only when there is nothing
+                at all to show. */}
+            {predicatesState.status !== 'ready' &&
+              !(predicateFallbackActive && (predicateFallback.rows?.length ?? 0) > 0) && (
+                <DataGate
+                  state={predicatesState}
+                  label="predicate candidates"
+                  onRetry={predicates.refresh}
+                  emptyHint="Run a predicate search for this device to populate candidates."
+                  regulation="Serves the 510(k) predicate comparison (21 CFR 807.92)"
+                >
+                  {() => null}
+                </DataGate>
+              )}
             <table className="tbl">
               <thead>
                 <tr>
@@ -499,7 +546,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                       </td>
                       <td>
                         <span className="k-num">{p.k}</span>
-                        {claimControl(claimFromCandidate(p), predicatesAreSample)}
+                        {claimControl(claimFromCandidate(p))}
                       </td>
                       <td>
                         <div className="k-name">{p.name}</div>
@@ -566,7 +613,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                                 clearance IS claimable as the predicate of
                                 record, which is the one thing about it that
                                 does not depend on the shadow service. */}
-                            {claimControl(claimFromClearance(r), false)}
+                            {claimControl(claimFromClearance(r))}
                           </td>
                           <td>
                             <div className="k-name">{r.deviceName}</div>
@@ -622,63 +669,74 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 </button>
               </div>
             </div>
-            {multi ? (
-              <>
-                <div
-                  className="se-matrix-multi header"
-                  style={{
-                    gridTemplateColumns: `160px 1fr ${selectedList.map(() => '1fr').join(' ')}`,
-                  }}
-                >
-                  <div>Attribute</div>
-                  <div className="col-subject">{subjectName}</div>
-                  {selectedList.map(p => (
-                    <div key={p.k} className="col-predicate">
-                      {p.k}
+            <DataGate
+              state={seState}
+              label="substantial-equivalence rows"
+              onRetry={seMatrix.refresh}
+              emptyHint="Compare this device against a selected predicate to build the SE matrix."
+              regulation="Serves the 510(k) substantial-equivalence discussion"
+            >
+              {() => (
+                multi ? (
+                  <>
+                    <div
+                      className="se-matrix-multi header"
+                      style={{
+                        gridTemplateColumns: `160px 1fr ${selectedList.map(() => '1fr').join(' ')}`,
+                      }}
+                    >
+                      <div>Attribute</div>
+                      <div className="col-subject">{subjectName}</div>
+                      {selectedList.map(p => (
+                        <div key={p.k} className="col-predicate">
+                          {p.k}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                {sourceSeRows.map((r, i) => (
-                  <div
-                    key={i}
-                    className="se-matrix-multi"
-                    style={{
-                      gridTemplateColumns: `160px 1fr ${selectedList.map(() => '1fr').join(' ')}`,
-                    }}
-                  >
-                    <div className="se-attr">{r.attr}</div>
-                    <div className="se-val">{r.subject}</div>
-                    {selectedList.map(p => (
-                      <div key={p.k} className="se-val" style={{ color: 'var(--text-300)' }}>
-                        {r.predicate}
+                    {sourceSeRows.map((r, i) => (
+                      <div
+                        key={i}
+                        className="se-matrix-multi"
+                        style={{
+                          gridTemplateColumns: `160px 1fr ${selectedList.map(() => '1fr').join(' ')}`,
+                        }}
+                      >
+                        <div className="se-attr">{r.attr}</div>
+                        <div className="se-val">{r.subject}</div>
+                        {selectedList.map(p => (
+                          <div key={p.k} className="se-val" style={{ color: 'var(--text-300)' }}>
+                            {r.predicate}
+                          </div>
+                        ))}
                       </div>
                     ))}
-                  </div>
-                ))}
-              </>
-            ) : (
-              <>
-                <div className="se-row header">
-                  <div>Attribute</div>
-                  <div>{subjectName} (Subject)</div>
-                  <div style={{ textAlign: 'center' }}>Verdict</div>
-                  <div>{selectedList[0]?.k} (Predicate)</div>
-                </div>
-                {sourceSeRows.map((r, i) => (
-                  <div key={i} className="se-row">
-                    <div className="se-attr">{r.attr}</div>
-                    <div className="se-val">{r.subject}</div>
-                    <div className={`se-verdict ${r.verdict}`}>
-                      {r.verdict === 'same' && I.check}
-                      {r.verdict === 'equivalent' && I.eq}
-                      {r.verdict === 'different' && I.minus}
+                  </>
+                ) : (
+                  <>
+                    <div className="se-row header">
+                      <div>Attribute</div>
+                      <div>{subjectName} (Subject)</div>
+                      <div style={{ textAlign: 'center' }}>Verdict</div>
+                      <div>{selectedList[0]?.k} (Predicate)</div>
                     </div>
-                    <div className="se-val">{r.predicate}</div>
-                    {r.note && <div className="se-note">{r.note}</div>}
-                  </div>
-                ))}
-              </>
-            )}
+                    {sourceSeRows.map((r, i) => (
+                      <div key={i} className="se-row">
+                        <div className="se-attr">{r.attr}</div>
+                        <div className="se-val">{r.subject}</div>
+                        <div className={`se-verdict ${r.verdict}`}>
+                          {r.verdict === 'same' && I.check}
+                          {r.verdict === 'equivalent' && I.eq}
+                          {r.verdict === 'different' && I.minus}
+                          {r.verdict === 'unassessed' && <span title="No verdict recorded">—</span>}
+                        </div>
+                        <div className="se-val">{r.predicate}</div>
+                        {r.note && <div className="se-note">{r.note}</div>}
+                      </div>
+                    ))}
+                  </>
+                )
+              )}
+            </DataGate>
           </div>
         </div>
 
@@ -687,7 +745,14 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
             <div className="panel-hdr">
               <div>
                 <div className="t">eSTAR sections</div>
-                <div className="s">{estarTotal} sections · {estarBlockerCount} blocker{estarBlockerCount === 1 ? '' : 's'}</div>
+                {/* "0 sections · 0 blockers" is an all-clear, and it was what
+                    an unread submission produced once the fixture stopped
+                    guaranteeing rows. A count nobody has read is not zero. */}
+                <div className="s">
+                  {estarState.status === 'ready'
+                    ? `${estarTotal} sections · ${estarBlockerCount} blocker${estarBlockerCount === 1 ? '' : 's'}`
+                    : 'Sections not yet read'}
+                </div>
               </div>
               <div className="actions">
                 <button
@@ -704,33 +769,43 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 </button>
               </div>
             </div>
-            <div className="estar">
-              {sourceEstar.map(s => (
-                <React.Fragment key={s.id}>
-                  <button
-                    className={`estar-row ${s.blocker ? 'blocker' : ''}`}
-                    onClick={() => onOpenEditor && onOpenEditor({ code: s.id, label: s.label })}
-                    title={`Open ${s.label} in editor`}
-                  >
-                    <div className="estar-num">§{String(s.id).padStart(2, '0')}</div>
-                    <div className="estar-label">{s.label}</div>
-                    <span className={`status-pill ${s.status}`}>{s.status}</span>
-                    <span className="estar-open">{I.arrowRight}</span>
-                  </button>
-                  {/* Surface AnA's pending draft so the user can accept or
-                      open the editor to refine. The banner reads the live
-                      draft provenance from the hook and disappears after
-                      a successful accept (estar.refresh re-fetches). */}
-                  {s.draft ? (
-                    <AnaDraftBanner
-                      draft={s.draft}
-                      onRefine={() => onOpenEditor && onOpenEditor({ code: s.id, label: s.label })}
-                      onAccepted={estar.refresh}
-                    />
-                  ) : null}
-                </React.Fragment>
-              ))}
-            </div>
+            <DataGate
+              state={estarState}
+              label="eSTAR sections"
+              onRetry={estar.refresh}
+              emptyHint="Start the eSTAR package for this submission to list its sections."
+              regulation="Serves the FDA eSTAR 510(k) submission template"
+            >
+              {() => (
+                <div className="estar">
+                  {sourceEstar.map(s => (
+                    <React.Fragment key={s.id}>
+                      <button
+                        className={`estar-row ${s.blocker ? 'blocker' : ''}`}
+                        onClick={() => onOpenEditor && onOpenEditor({ code: s.id, label: s.label })}
+                        title={`Open ${s.label} in editor`}
+                      >
+                        <div className="estar-num">§{String(s.id).padStart(2, '0')}</div>
+                        <div className="estar-label">{s.label}</div>
+                        <span className={`status-pill ${s.status}`}>{s.status}</span>
+                        <span className="estar-open">{I.arrowRight}</span>
+                      </button>
+                      {/* Surface AnA's pending draft so the user can accept or
+                          open the editor to refine. The banner reads the live
+                          draft provenance from the hook and disappears after
+                          a successful accept (estar.refresh re-fetches). */}
+                      {s.draft ? (
+                        <AnaDraftBanner
+                          draft={s.draft}
+                          onRefine={() => onOpenEditor && onOpenEditor({ code: s.id, label: s.label })}
+                          onAccepted={estar.refresh}
+                        />
+                      ) : null}
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
+            </DataGate>
           </div>
         </div>
       </div>

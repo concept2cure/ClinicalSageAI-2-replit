@@ -11,6 +11,7 @@
  */
 
 import { pool } from '../db.js';
+import { writeChainedAuditRow } from './auditService.js';
 
 /**
  * Ensure critical chat tables exist. Called lazily on first use.
@@ -43,20 +44,6 @@ async function ensureChatTables(): Promise<void> {
         metadata JSONB,
         created_at TIMESTAMP DEFAULT NOW()
       );
-      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS project_id INTEGER;
-      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS organization_id INTEGER;
-      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS title TEXT;
-      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS model TEXT;
-      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS system_prompt TEXT;
-      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS metadata JSONB;
-      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
-      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS model TEXT;
-      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS tokens_used INTEGER DEFAULT 0;
-      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS metadata JSONB;
-      CREATE INDEX IF NOT EXISTS idx_chat_threads_org ON chat_threads (organization_id);
-      CREATE INDEX IF NOT EXISTS idx_chat_threads_user ON chat_threads (user_id);
-      CREATE INDEX IF NOT EXISTS idx_chat_threads_project ON chat_threads (project_id);
-      CREATE INDEX IF NOT EXISTS idx_chat_messages_thread ON chat_messages (thread_id, created_at);
     `);
     tablesEnsured = true;
   } catch (e: unknown) {
@@ -73,10 +60,7 @@ async function ensureChatTables(): Promise<void> {
     // which both creates it and repairs databases carrying the old narrow
     // shape. The DDL here is kept as a same-shape fallback for a database that
     // has not had migrations applied — it must stay in sync with that file.
-    console.warn(
-      '[chat-thread-helpers] Table ensure warning:',
-      e instanceof Error ? e.message : String(e)
-    );
+    console.warn('[chat-thread-helpers] Table ensure warning:', e instanceof Error ? e.message : String(e));
     tablesEnsured = true; // Don't retry
   }
 }
@@ -335,6 +319,11 @@ export async function getWindowedMessages(
 /**
  * Persist a single chat message.
  */
+/**
+ * Save one message to the working transcript. Returns the row's id, so the
+ * turn record (services/ana/turn-record.ts) can name the question and the
+ * answer it is the record of.
+ */
 export async function saveChatMessage(
   threadId: string,
   role: string,
@@ -342,17 +331,100 @@ export async function saveChatMessage(
   model?: string,
   tokens?: number,
   metadata?: Record<string, unknown> | null
-): Promise<void> {
-  await pool.query(
-    'INSERT INTO chat_messages (thread_id, role, content, model, tokens_used, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
-    [
-      threadId,
-      role,
-      content,
-      model || null,
-      tokens || 0,
-      metadata ? JSON.stringify(metadata) : null,
-    ]
+): Promise<number | null> {
+  const inserted = await pool.query(
+    'INSERT INTO chat_messages (thread_id, role, content, model, tokens_used, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id',
+    [threadId, role, content, model || null, tokens || 0, metadata ? JSON.stringify(metadata) : null]
   );
   await pool.query('UPDATE chat_threads SET updated_at = NOW() WHERE id = $1', [threadId]);
+  const id = Number((inserted as { rows?: Array<{ id?: unknown }> })?.rows?.[0]?.id);
+  return Number.isFinite(id) ? id : null;
+}
+
+export const CONVERSATION_DELETED_AUDIT_ACTION = 'chat.thread.deleted';
+
+export type DeleteConversationResult =
+  | { status: 'deleted'; messagesDeleted: number; turnRecordsRetained: number | null }
+  | { status: 'not_found' }
+  | { status: 'forbidden' };
+
+/**
+ * Remove a conversation from the working transcript, as the person who owns
+ * it, with a chained audit row in the same transaction.
+ *
+ * Both delete routes (DELETE /api/chat/thread/:id and
+ * DELETE /api/cortex/threads/:id) removed a thread and its messages with no
+ * audit row, and the chat route did not check the owner: any member of the
+ * organization could remove a colleague's conversation by id. There is no
+ * sharing model for AnA conversations (see ThreadAccessError), so deleting
+ * one is its owner's act.
+ *
+ * What is removed is the working copy only. The retained turn records
+ * (ana_turn_records) reference the thread by id, not by foreign key, and are
+ * append-only: they stay, and the audit row says how many did.
+ */
+export async function deleteConversation(args: {
+  threadId: string;
+  organizationId: number;
+  userId: number | string | null | undefined;
+  ipAddress?: string;
+  userAgent?: string;
+}): Promise<DeleteConversationResult> {
+  const { threadId, organizationId, userId } = args;
+  // Read outside the transaction: a database that has not had the turn-record
+  // migration yet has no such table, which must not stop a delete. Unknown is
+  // recorded as null, never as zero.
+  let turnRecordsRetained: number | null;
+  try {
+    const kept = await pool.query(
+      'SELECT count(*)::int AS n FROM ana_turn_records WHERE organization_id = $1 AND thread_id = $2',
+      [organizationId, threadId]
+    );
+    turnRecordsRetained = Number((kept as { rows: Array<{ n: number }> }).rows[0]?.n ?? 0);
+  } catch {
+    turnRecordsRetained = null;
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const found = await client.query(
+      'SELECT id, user_id, title FROM chat_threads WHERE id = $1 AND organization_id = $2 FOR UPDATE',
+      [threadId, organizationId]
+    );
+    const row = found.rows[0] as { id: string; user_id: number | null; title: string | null } | undefined;
+    if (!row) {
+      await client.query('ROLLBACK');
+      return { status: 'not_found' };
+    }
+    if (!threadOwnerMatches(row.user_id, userId)) {
+      await client.query('ROLLBACK');
+      return { status: 'forbidden' };
+    }
+    const messages = await client.query('DELETE FROM chat_messages WHERE thread_id = $1', [threadId]);
+    await client.query('DELETE FROM chat_threads WHERE id = $1 AND organization_id = $2', [threadId, organizationId]);
+    const messagesDeleted = messages.rowCount ?? 0;
+    await writeChainedAuditRow(client, {
+      tenantId: organizationId,
+      userId: userId ?? undefined,
+      action: CONVERSATION_DELETED_AUDIT_ACTION,
+      resourceType: 'chat_thread',
+      resourceId: threadId,
+      details: {
+        threadId,
+        title: row.title ?? null,
+        ownerUserId: row.user_id ?? null,
+        messagesDeleted,
+        turnRecordsRetained,
+      },
+      ipAddress: args.ipAddress,
+      userAgent: args.userAgent,
+    });
+    await client.query('COMMIT');
+    return { status: 'deleted', messagesDeleted, turnRecordsRetained };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
 }

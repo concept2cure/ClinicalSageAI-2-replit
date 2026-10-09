@@ -1,0 +1,17 @@
+  OQ-SUBC-00  pass
+  OQ-SUBC-01  pass
+  OQ-SUBC-02  pass
+  OQ-SUBC-03  pass
+  OQ-SUBC-04  pass
+  OQ-SUBC-05  pass
+  OQ-SUBC-06  pass
+  OQ-SUBC-07  pass
+  OQ-SUBC-08  pass
+  OQ-SUBC-09  pass
+  OQ-SUBC-10  pass
+  OQ-SUBC-11  pass
+  OQ-SUBC-12  pass
+  OQ-SUBC-13  pass
+  OQ-SUBC-14  pass
+
+OQ-004 Submission Center: 15 pass, 0 fail, 0 deviation, 0 not-executed → ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/e53791ae-6a3a-59c5-8827-5906a64a34f6/scratchpad/subc-scratch/OQ-SUBMISSION-CENTER

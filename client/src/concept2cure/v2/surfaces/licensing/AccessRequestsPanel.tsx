@@ -15,6 +15,11 @@
  * all-workspaces read is refused for anybody without the platform-owner grant,
  * so mounting this in the wrong place shows an error, never another customer's
  * requests.
+ *
+ * `scope="all"` reads and answers through the platform console's endpoint, not
+ * the workspace one (2026-09-22): the workspace endpoint is confined by the
+ * database to the caller's own workspace, so this tab used to show the owner's
+ * workspace alone and call every other one empty.
  */
 import React from 'react';
 import { AccessRequestQueue } from '../AccessRequests';

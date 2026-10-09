@@ -1,0 +1,12 @@
+# PostgreSQL 16, as app_service: CREATE ... IF NOT EXISTS is refused even when the object EXISTS.
+# Does CREATE ... IF NOT EXISTS need CREATE privilege when the object ALREADY EXISTS?  (as app_service, PG16)
+## CREATE TABLE IF NOT EXISTS license_requests (id int)
+ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS license_requests (id int)
+## CREATE INDEX IF NOT EXISTS idx_license_requests_created_at ON license_requests (created_at DESC)
+ERROR:  must be owner of table license_requests
+## ALTER TABLE license_requests ADD COLUMN IF NOT EXISTS name VARCHAR(200)
+ERROR:  must be owner of table license_requests
+## CREATE TABLE IF NOT EXISTS organizations (id int)
+ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS organizations (id int)

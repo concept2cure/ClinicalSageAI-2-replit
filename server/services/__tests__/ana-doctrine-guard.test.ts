@@ -32,8 +32,12 @@ describe('AnA core persona — doctrine guard', () => {
   });
 
   it('keeps the tone floor (no cheerleading: no exclamation marks, no emoji)', () => {
-    expect(core).toMatch(/no exclamation marks/i);
-    expect(core).toMatch(/no emoji/i);
+    // The floor is stated once, in ANA_PERSONALITY_CORE, which every assembled
+    // prompt composes (WJ 2026-09-21: the core's duplicate copy was removed so
+    // there is one tone section). Assert on the assembled prompt.
+    const assembled = buildAnaRISystemPrompt();
+    expect(assembled).toMatch(/no exclamation marks/i);
+    expect(assembled).toMatch(/no emoji/i);
   });
 
   it('every core doctrine survives into the assembled system prompt', () => {

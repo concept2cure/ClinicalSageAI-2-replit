@@ -1,0 +1,9 @@
+The same, the auth boundary enforcing (AUTH_BOUNDARY_MODE=enforce), as production does by default.
+
+window → 1 min: 200
+own session reads projects: {"status":200,"code":null}
+after 65 s idle:
+  GET /api/c2c/projects: {"status":401,"code":"SESSION_IDLE"}
+  GET /api/c2c/projects again: {"status":401,"code":"SESSION_ENDED"}
+  GET /api/auth/session: {"status":401,"code":"SESSION_ENDED"}
+window restored: 200

@@ -1,0 +1,2 @@
+[ci:path-containment] 3 file(s) match the shape; 3 baselined
+[ci:path-containment] OK

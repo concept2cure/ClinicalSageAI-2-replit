@@ -8,7 +8,8 @@ import {
 } from '@shared/schema';
 import { eq, count, inArray } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
+import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
 
 const router = Router();
 
@@ -24,6 +25,17 @@ router.use(authMiddleware);
 function isPlatformStaff(role: unknown): boolean {
   return role === 'platform_admin' || role === 'superadmin' || role === 'super_admin';
 }
+
+/**
+ * Staff may name any organization here (validateOrgOwnership, requireOrgAdmin).
+ * Their write must run in the system scope, not the staff member's own tenant
+ * scope: under public.organizations' own-org write policy it otherwise writes
+ * nothing (D3, docs/evidence/D3/2026-09-26-organizations-writes/).
+ */
+const staffAcrossOrgs = staffCrossOrgScope({
+  param: 'id',
+  isStaff: (req: any) => isPlatformStaff(req.userRole ?? req.user?.role),
+});
 
 /**
  * Validate that the requesting user belongs to the organization in :id param.
@@ -262,7 +274,7 @@ const profilePatchSchema = z
     { message: 'At least one of name, clientType, industryMode is required' }
   );
 
-router.patch('/:id/profile', validateOrgOwnership, requireOrgAdmin, async (req, res) => {
+router.patch('/:id/profile', validateOrgOwnership, requireOrgAdmin, staffAcrossOrgs, async (req, res) => {
   try {
     const orgId = parseInt(req.params.id, 10);
     if (isNaN(orgId)) {
@@ -306,8 +318,19 @@ router.patch('/:id/profile', validateOrgOwnership, requireOrgAdmin, async (req, 
         industryMode: organizations.industryMode,
         updatedAt: organizations.updatedAt,
       });
+    if (!updated) {
+      // The row was read above, so a write that matched nothing was refused,
+      // not missing. Never answer it as a change.
+      return res.status(404).json({ success: false, error: 'Organization not found' });
+    }
 
-    await auditService.logAction({
+    /* WO-16C. Was `await auditService.logAction(…)` with its outcome thrown
+       away, so a profile change whose §11.10(e) row was lost answered exactly
+       like one whose row was written. The change stands either way — an audit
+       outage must not undo an org admin's edit — and the response now says
+       which happened. The client's transport reads `auditTrail` and shows
+       "The request completed, but the audit trail did not record it". */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: req.userId ?? (req as any).user?.id,
       action: 'data_modify',
@@ -327,7 +350,7 @@ router.patch('/:id/profile', validateOrgOwnership, requireOrgAdmin, async (req, 
       },
     });
 
-    res.json({ success: true, organization: updated });
+    res.json({ success: true, organization: updated, auditTrail });
   } catch (error) {
     console.error('Error updating organization profile:', req.params.id, error);
     res.status(500).json({
@@ -439,7 +462,7 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
  * Update organization settings
  * API: PATCH /api/organizations/:id/settings
  */
-router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, async (req, res) => {
+router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcrossOrgs, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -490,17 +513,25 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, async (req,
     const currentSettings = organization.settings || {};
     const updatedSettings = { ...currentSettings, ...settingsUpdate };
 
-    await db
+    // Checked: this used to answer success without looking, so a write that
+    // matched nothing (the own-org write policy, for staff in their own scope)
+    // was reported and audited as a change (D3, 2026-09-26).
+    const written = await db
       .update(organizations)
       .set({
         settings: updatedSettings,
         updatedAt: new Date(),
       })
-      .where(eq(organizations.id, parseInt(id)));
+      .where(eq(organizations.id, parseInt(id)))
+      .returning({ id: organizations.id });
+    if (written.length === 0) {
+      return res.status(404).json({ success: false, error: 'Organization not found' });
+    }
 
     // Audit the changed section keys, not the values — settings sections can
     // carry integration credentials that must not be duplicated into the log.
-    await auditService.logAction({
+    // WO-16C: the outcome is carried, not discarded (see the profile route).
+    const auditTrail = await recordAuditRow({
       tenantId: parseInt(id),
       userId: req.userId ?? (req as any).user?.id,
       action: 'data_modify',
@@ -519,6 +550,7 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, async (req,
       success: true,
       message: 'Organization settings updated successfully',
       settings: settingsUpdate,
+      auditTrail,
     });
   } catch (error) {
     console.error('Error updating organization settings:', error);

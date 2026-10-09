@@ -1,0 +1,6 @@
+566:      [NOTICE] [platform-role-grants-writes] reads open; grants written by the platform scope only
+567:  ✓ applied: migrations/20260928_platform_role_grants_platform_writes.sql
+602:✅ Schema migration complete — safe to roll services.
+second run: 566:      [NOTICE] [platform-role-grants-writes] reads open; grants written by the platform scope only
+second run: 567:  ✓ applied: migrations/20260928_platform_role_grants_platform_writes.sql
+second run: 602:✅ Schema migration complete — safe to roll services.

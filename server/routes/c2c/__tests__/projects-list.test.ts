@@ -48,7 +48,7 @@ describe('GET /api/c2c/projects', () => {
     expect(sql).toContain('progress_percent');
     // Paged: org, then the default page size + 1 (the extra row is how hasMore
     // is decided without a second COUNT(*)), then the offset.
-    expect(params).toEqual([7, 51, 0]);
+    expect(params).toEqual([7, 51, 0, false]);
   });
 
   it('clamps ?limit to its maximum and never issues an unbounded read', async () => {
@@ -56,7 +56,7 @@ describe('GET /api/c2c/projects', () => {
     await request(appWith(7)).get('/api/c2c/projects?limit=100000&offset=5');
     const [sql, params] = query.mock.calls[0] as [string, unknown[]];
     expect(sql).toContain('LIMIT $2 OFFSET $3');
-    expect(params).toEqual([7, 201, 5]);
+    expect(params).toEqual([7, 201, 5, false]);
   });
 
   it('reports hasMore and trims the extra probe row off the page', async () => {
@@ -96,7 +96,9 @@ describe('GET /api/c2c/projects/:id', () => {
     for (const bad of ['p.sponsor_name', 'p.lead_indication', 'p.filing_date', 'p.pdufa_date', 'p.completion_percentage']) {
       expect(sql).not.toContain(bad);
     }
-    expect(sql).toContain('progress_percent');
+    // progress_percent is written once as 0 and never updated; the detail
+    // reports the governed readiness instead (projects-readiness.test.ts).
+    expect(sql).not.toContain('progress_percent');
     // WO-9 Click 1: the landing shows sponsor and the agency application number,
     // both read from the database — sponsor from the organisation row, the number
     // from regulatory_programs.application_number (20260907 migration).

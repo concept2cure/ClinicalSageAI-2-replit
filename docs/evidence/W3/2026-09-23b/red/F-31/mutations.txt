@@ -1,0 +1,48 @@
+== mutant: the route without requireAdminRole
+ ✓ finds the routers production mounts under /api/admin 3ms
+ ✓ a request for /api/admin/scim-tenants reaches its own router, whatever the caller's organisation role 1854ms
+ ✓ a request for /api/admin/audit reaches its own router, whatever the caller's organisation role 9ms
+ ✓ a request for /api/admin/scim-ip-allowlist reaches its own router, whatever the caller's organisation role 8ms
+ ✓ a request for /api/admin/master reaches its own router, whatever the caller's organisation role 6ms
+ ✓ a request for /api/admin/business reaches its own router, whatever the caller's organisation role 5ms
+ ✓ a request for /api/admin/access reaches its own router, whatever the caller's organisation role 5ms
+ × the security-health endpoint still refuses a caller who is not an organisation admin 9ms
+   → expected 200 to be 403 // Object.is equality
+ ✓ the security-health endpoint still refuses a request with no session 3ms
+ ✓ the security-health endpoint answers an organisation admin 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)
+== mutant: the route without authMiddleware
+ ✓ finds the routers production mounts under /api/admin 2ms
+ ✓ a request for /api/admin/scim-tenants reaches its own router, whatever the caller's organisation role 1911ms
+ ✓ a request for /api/admin/audit reaches its own router, whatever the caller's organisation role 10ms
+ ✓ a request for /api/admin/scim-ip-allowlist reaches its own router, whatever the caller's organisation role 8ms
+ ✓ a request for /api/admin/master reaches its own router, whatever the caller's organisation role 6ms
+ ✓ a request for /api/admin/business reaches its own router, whatever the caller's organisation role 5ms
+ ✓ a request for /api/admin/access reaches its own router, whatever the caller's organisation role 6ms
+ ✓ the security-health endpoint still refuses a caller who is not an organisation admin 3ms
+ × the security-health endpoint still refuses a request with no session 9ms
+   → expected 403 to be 401 // Object.is equality
+ × the security-health endpoint answers an organisation admin 3ms
+   → {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 8 passed (10)
+== mutant: the gate router-wide again (the defect)
+ ✓ finds the routers production mounts under /api/admin 7ms
+ × a request for /api/admin/scim-tenants reaches its own router, whatever the caller's organisation role 1850ms
+   → a member's request for /api/admin/scim-tenants was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ × a request for /api/admin/audit reaches its own router, whatever the caller's organisation role 4ms
+   → a member's request for /api/admin/audit was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ × a request for /api/admin/scim-ip-allowlist reaches its own router, whatever the caller's organisation role 4ms
+   → a member's request for /api/admin/scim-ip-allowlist was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ × a request for /api/admin/master reaches its own router, whatever the caller's organisation role 3ms
+   → a member's request for /api/admin/master was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ × a request for /api/admin/business reaches its own router, whatever the caller's organisation role 4ms
+   → a member's request for /api/admin/business was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ × a request for /api/admin/access reaches its own router, whatever the caller's organisation role 5ms
+   → a member's request for /api/admin/access was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ ✓ the security-health endpoint still refuses a caller who is not an organisation admin 3ms
+ ✓ the security-health endpoint still refuses a request with no session 3ms
+ ✓ the security-health endpoint answers an organisation admin 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 4 passed (10)

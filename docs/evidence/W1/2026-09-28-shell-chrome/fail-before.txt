@@ -1,0 +1,27 @@
+== shell-chrome — BEFORE (upstream sources):
+ × shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names no category for a surface that belongs to both — the launch core, a device workbench
+ × shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names the one category a surface belongs to, and Admin for an admin surface
+ × shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD")
+ × shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > never names a category the rail does not list the surface under — for every surface
+ × shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws exactly that crumb
+ × shellChromeTruth.test.tsx > header controls (findings 131, 132) > shows the organisation as a label, not as a control that does nothing
+ × shellChromeTruth.test.tsx > header controls (findings 131, 132) > Help goes where the account menu’s "Get help" goes
+ × shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > marks the open surface as the current page, and the chosen category as pressed — not current
+ × shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > draws the current page, and draws a chosen category differently
+ × shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > collapsed, the brand mark keeps the top and the toggle moves to the foot
+ × shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > draws no floating launcher — the header’s Task and Collaborate buttons open it
+ × shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > names the surface, not its URL slug or the payload field
+ × shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > offers each module once, by name, with the server’s value
+ × shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > labels priorities for people, and posts the server’s values
+ × shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > keeps the auto-assign note one sentence beside its icon
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  15 failed | 1 passed (16)
+== shell-chrome — AFTER (fixed sources):
+      Tests  16 passed (16)
+
+== apps44 — BEFORE (upstream sources):
+ × appsCatalogEntitlement.test.tsx > Apps catalog — the five entitlement states are five different cards > in the plan but never provisioned: it opens, like the rail says, and blames nobody
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+== apps44 — AFTER (fixed sources):
+      Tests  9 passed (9)

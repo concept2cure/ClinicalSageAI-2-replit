@@ -17,7 +17,7 @@
 
 import type { Request, Response } from 'express';
 import { pool } from '../../db.js';
-import { getThreadMessages, programIdForThread } from '../../services/chat-thread-helpers.js';
+import { deleteConversation, getThreadMessages, programIdForThread } from '../../services/chat-thread-helpers.js';
 
 /**
  * GET /api/chat/threads
@@ -333,11 +333,22 @@ export async function deleteThread(req: Request, res: Response) {
       });
     }
 
-    const result = await pool.query(
-      'DELETE FROM chat_threads WHERE id = $1 AND organization_id = $2',
-      [threadId, orgId]
-    );
-    const deleted = (result.rowCount || 0) > 0;
+    // The owner's act, audited in the same transaction; the retained turn
+    // records stay (services/chat-thread-helpers.ts deleteConversation).
+    const result = await deleteConversation({
+      threadId,
+      organizationId: Number(orgId),
+      userId: (req as any).userId ?? (req as any).user?.id ?? null,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') ?? undefined,
+    });
+    if (result.status === 'forbidden') {
+      return res.status(403).json({
+        error: 'That conversation belongs to another user.',
+        code: 'THREAD_FORBIDDEN',
+      });
+    }
+    const deleted = result.status === 'deleted';
 
     res.json({
       success: deleted,

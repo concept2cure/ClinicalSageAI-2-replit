@@ -18,6 +18,7 @@
  * - Command center aggregates
  */
 import { Router, Request, Response } from 'express';
+import { resolveActorNames } from '../services/tenant/actor-names';
 import { z } from 'zod';
 import * as fs from 'fs';
 import { loadUnifiedWork } from '../services/unified-work/unified-work-view';
@@ -39,7 +40,6 @@ import {
   concept2cureArtifacts,
   concept2cureReviewTasks,
   concept2cureReviewAssignments,
-  users,
 } from '../../shared/schema';
 import { eq, and, desc, sql, count, inArray, isNull, asc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
@@ -81,6 +81,7 @@ import {
   type SequencePlan,
 } from '../services/ectd/package-sequence-lifecycle';
 import {
+  artifactApproval,
   assessPackageContent,
   fingerprintPackageContent,
   sha256Hex,
@@ -863,15 +864,11 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
           .filter((id: unknown): id is number => typeof id === 'number')
       )
     );
+    // Through actor_name, so a creator who has since left is still named
+    // (tenant/actor-names.ts; D3 2026-09-29).
     const creatorNames = new Map<number, string>();
-    if (creatorIds.length > 0) {
-      const creators = await db
-        .select({ id: users.id, name: users.name })
-        .from(users)
-        .where(inArray(users.id, creatorIds));
-      for (const u of creators) {
-        if (u.name) creatorNames.set(u.id, u.name);
-      }
+    for (const [id, a] of await resolveActorNames(creatorIds)) {
+      if (a.name) creatorNames.set(id, a.name);
     }
 
     // Attach sections for each milestone
@@ -1970,6 +1967,20 @@ const assembleBody = z.object({
    * annual report, and the packager refuses to guess (see planSequence).
    */
   submissionType: z.string().trim().min(1).max(120).optional(),
+  /**
+   * Documents to WITHDRAW from the application in this sequence, each named as
+   * the filed history records it. Withdrawal is EXPLICIT and can only be: a
+   * leaf missing from an assembly is unchanged and still on file, because
+   * inferring withdrawal from absence would delete a dossier at the agency the
+   * first time somebody assembled a two-document amendment.
+   */
+  withdraw: z
+    .array(z.object({
+      ctdSection: z.string().trim().min(1).max(32),
+      fileName: z.string().trim().min(1).max(120),
+    }))
+    .max(500)
+    .optional(),
   // Governed transition: the operator's reason is recorded on the audit row.
   // It used to be optional with a placeholder ('eCTD bundle assembled')
   // written in its place — a fabricated justification on a hash-chained
@@ -2211,11 +2222,38 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
       // describe the pre-drop set, so the descriptor and the transmit gate both
       // described a package the bytes were not.
       modulePath: string;
+      // The DOCUMENT's identity across sequences, independent of its file name.
+      leafKey: string;
       operation?: LeafBytes['operation']; modifiedFile?: string;
     }> = [];
     // Placement findings (unplaced / disagreement), merged into the validation
     // result below so the governed transmit gate sees them.
+    // Withdrawals: backbone-only leaves with no bytes, kept apart from
+    // `ctdLeaves` because everything that set is used for — validation, the
+    // leaf count, the empty-section list — is about files this bundle contains.
+    const withdrawals: LeafBytes[] = [];
     const placementFindings: Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> = [];
+    // ── Only approved documents are filed (2026-09-23, W5/D7, round-2 review) ──
+    // The mapped-artifact read below had no status predicate, publish needs
+    // only 80% readiness, and the governed transmit reads no artifact status,
+    // so a draft artifact rendered into a leaf and reached the agency. The
+    // sequence spine refuses that (`unfinalized`); this one did not. Each
+    // shipping leaf built from an artifact that is not filable is recorded
+    // here by its path, and becomes an error-severity LEAF-UNAPPROVED finding
+    // once the lifecycle has decided which leaves ship, so executeGovernedTransmit
+    // refuses the bundle (BUNDLE_VALIDATION_ERRORS). leaf path → its artifacts.
+    // 2026-09-23 (W5/D7, round-2 skeptic): "filable" is artifactApproval
+    // (package-content-fingerprint.ts) — finalized by the leaf-source
+    // resolver's isFinalizedStatus AND at the version the status route
+    // approved (approvedVersionId) — and, when locked, locked (publishedVersionId)
+    // at that same approved version (round 3: a lock after an unreviewed edit
+    // recorded the edited version and was trusted on its own). Status alone
+    // was trusted before, and an approved artifact edited after approval keeps
+    // status 'approved' (PUT …/artifacts/:id, rollback, the AnA content
+    // writers), so unreviewed content shipped labelled approved. The same
+    // reduction goes into the content fingerprint, so an approval revoked
+    // after assembly reads as BUNDLE_CONTENT_DRIFT at transmit.
+    const unapprovedByLeafPath = new Map<string, Array<{ label: string; problem: string; remedy: string }>>();
     // An artifact ships as ONE leaf. The section map has no uniqueness on
     // (artifact, section), so a duplicate row — or the same artifact mapped
     // into two sections — used to ship a second copy under a suffixed name with
@@ -2245,6 +2283,11 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           // unchanged content produces the same bytes and the sequence lifecycle
           // can see that nothing changed. See services/ectd/leaf-pdf.ts.
           updatedAt: concept2cureArtifacts.updatedAt,
+          // Whether the artifact may be filed at all (LEAF-UNAPPROVED): its
+          // status, and the version that status was granted to (artifactApproval).
+          status: concept2cureArtifacts.status,
+          approvedVersionId: concept2cureArtifacts.approvedVersionId,
+          publishedVersionId: concept2cureArtifacts.publishedVersionId,
         })
         .from(c2cArtifactSectionMap)
         .innerJoin(
@@ -2264,12 +2307,16 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         contentRows.push({
           sectionDbId: section.id, sectionKey: section.sectionKey, sectionLabel: section.sectionLabel,
           sortOrder: Number(section.sortOrder ?? 0),
-          artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null,
+          artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null, filable: null,
         });
       }
+      // One filability judgement per mapped artifact, shared by the finding and
+      // the fingerprint below.
+      const approvalOf = new Map(mapped.map((a) => [a, artifactApproval(a)] as const));
       for (const a of mapped) {
         // Title and version are embedded in the leaf (index.xml title, PDF
-        // heading), so they are part of what the zip was built from.
+        // heading), so they are part of what the zip was built from; whether it
+        // is filable is what the transmit recompute re-judges.
         contentRows.push({
           sectionDbId: section.id,
           sectionKey: section.sectionKey,
@@ -2280,6 +2327,7 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           version: Number(a.version ?? 0),
           ctdSection: a.ctdSection ?? null,
           contentSha256: sha256Hex(a.content ?? ''),
+          filable: approvalOf.get(a)!.filable,
         });
       }
 
@@ -2319,6 +2367,14 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           mediaType: 'application/pdf',
           content: await buildLeafPdf({ title: sectionLabel, markdown, contentModifiedAt: sectionContentAt(mapped) }),
         });
+        // Every artifact merged into this section's leaf is filed with it.
+        const unapproved = mapped.flatMap((a) => {
+          const approval = approvalOf.get(a)!;
+          return approval.filable
+            ? []
+            : [{ label: `${a.title} (${a.artifactId} v${a.version}) in ${sectionLabel}`, problem: approval.problem, remedy: approval.remedy }];
+        });
+        if (unapproved.length > 0) unapprovedByLeafPath.set(leafPath, unapproved);
         continue;
       }
 
@@ -2413,8 +2469,25 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           markdown,
           contentModifiedAt: sectionContentAt(artifact ? [artifact] : []),
         });
-        ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title, modulePath });
+        /* Identity, not presentation. `fileName` is composed from the section
+           key, which PATCH edits in place, so renaming a section changed every
+           file name in it and the next sequence filed the same documents again
+           as `new` — leaving two current copies of each at the agency, with no
+           finding. The artifact's own id does not move; the CTD section is part
+           of the key because one document legitimately files at two sections,
+           and because moving a document to a different section is a withdrawal
+           and a new filing, never a replace across sections. An empty section
+           ships a placeholder that belongs to the SECTION ROW, whose id is
+           stable across renames of its key. */
+        const leafKey = artifact
+          ? `artifact:${artifact.artifactId}@${placement.code}`
+          : `section:${section.id}@${placement.code}`;
+        ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title, modulePath, leafKey });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
+        const approval = artifact ? approvalOf.get(artifact)! : null;
+        if (approval && !approval.filable) {
+          unapprovedByLeafPath.set(modulePath, [{ label: unitLabel, problem: approval.problem, remedy: approval.remedy }]);
+        }
         if (shipKey) shippedArtifacts.set(shipKey, sectionLabel);
       }
     }
@@ -2445,9 +2518,11 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
             ? { terms, accepts: (v: string) => resolveSubmissionTypeCode(v) !== null }
             : null,
           filed: readFiledSequences(existingMetadata),
+          withdraw: parsed.data.withdraw,
           desired: ctdLeaves.map((l) => ({
             ctdSection: l.ctdSection,
             fileName: l.fileName,
+            leafKey: l.leafKey,
             md5: createHash('md5').update(l.bytes).digest('hex'),
             title: l.title,
           })),
@@ -2490,6 +2565,26 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         emptyLeafPaths.push(...keptEmpty);
         emptyLeafCount = keptEmpty.length;
       }
+      // A withdrawal ships no bytes: it is a backbone entry pointing at the
+      // sequence that holds the document. It reaches the packager, and NOTHING
+      // else — not `leafs`, so it is neither validated as a file nor counted as
+      // one, because there is no file.
+      const shippingKeys = new Set(kept.map((l) => `${l.ctdSection}/${l.fileName}`));
+      for (const l of lifecycle.leaves) {
+        if (l.operation !== 'delete') continue;
+        if (shippingKeys.has(`${l.ctdSection}/${l.fileName}`)) continue;
+        withdrawals.push({
+          ctdSection: l.ctdSection,
+          fileName: l.fileName,
+          // The title and checksum the document was FILED under: a withdrawal
+          // ships no bytes, so neither can be recomputed, and the backbone has
+          // to name and check the file in the sequence that holds it.
+          title: l.title ?? l.fileName,
+          operation: 'delete',
+          ...(l.md5 ? { md5: l.md5 } : {}),
+          ...(l.modifiedFile ? { modifiedFile: l.modifiedFile } : {}),
+        });
+      }
       ctdLeaves.length = 0;
       ctdLeaves.push(...kept);
     }
@@ -2498,6 +2593,23 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
     // the descriptor and surfaced to the UI; transmit hard-blocks on errors.
     // This is INTERNAL structural validation only — NOT an agency validator.
     const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths, enforceFileNames: isEctdFormat });
+    // LEAF-UNAPPROVED, over the leaves that SHIP (after the lifecycle drop, like
+    // everything else here) and for every format — an eSTAR goes to FDA too.
+    for (const leaf of leafs) {
+      for (const u of unapprovedByLeafPath.get(leaf.path) ?? []) {
+        validation.findings.push({
+          severity: 'error',
+          ruleId: 'LEAF-UNAPPROVED',
+          // 2026-09-23 (W5/D7, round-2 skeptic, round 3): the remedy was "approve
+          // it (again)", which the status route cannot do — approved → approved is
+          // not a valid transition. artifactApproval now names the transitions
+          // (u.remedy), and a lock counts only when it covers the approved version.
+          message: `${u.label}: ${u.problem}. Only an approved or locked artifact, at the version that was approved (and, when locked, locked), is filed with an agency; ${u.remedy}, or remove it from the package, then assemble again.`,
+          filePath: leaf.path,
+        });
+        validation.errorCount += 1;
+      }
+    }
 
     // Assemble the real zip buffer.
     //
@@ -2584,7 +2696,7 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           productName: pkg.title,
           outputDir: work,
           environment: 'staging',
-          leaves: ctdLeaves,
+          leaves: [...ctdLeaves, ...withdrawals],
         });
         zip = await fs.promises.readFile(canonical.path);
         canonicalLeafManifest = canonical.leafManifest ?? null;

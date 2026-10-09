@@ -2,32 +2,47 @@ import React, { useState, useEffect, useRef } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
+import { AnaActionChips } from '../AnaActionChips';
+import { LiveDriveSwitch } from '../LiveDriveSwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
-import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
+import { useChatUpload, readyAttachmentLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import { SignoffList } from '../SignoffList';
 import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
 import { readShellProject, shellProgramName } from '../shellProject';
-import { AnaWorkPanel } from '../AnaWorkPanel';
+import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { useAgentActivity } from '../useAgentActivity';
-import { AnaActivity, type AnaActivityProps } from '../AnaActivity';
+import { AnaActivity, activityPropsFor, hasReportableWork, type AnaActivityProps } from '../AnaActivity';
+import { CONTINUE_PROMPT, continueTurnIndex } from '../anaWorkModel';
+import { useProgressDock } from '../workDock';
 import { C2CToast, useToast, type FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
+import { AnaMarkdown } from '../AnaMarkdown';
+import { DocumentCanvas } from '../editor/DocumentCanvas';
 import {
-  CT_LINKMAP,
-  CT_LINKIC,
-  CT_ARTIC,
-  CT_STATUS_LABEL,
+  CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
 } from '../fixtures/conversation-thread-data';
 import type { CtTurn, CtArtifact } from '../fixtures/conversation-thread-data';
 
-/* Where the side column's shown/hidden choice is remembered. Same convention
-   as the shell rail's work dock (`WORK_DOCK_KEY` in Shell.tsx): a `c2c-v2-`
-   key holding 'shown' | 'hidden', per browser, never per turn. */
-const SIDE_DOCK_KEY = 'c2c-v2-ct-side-dock';
+
+/* The starters a new conversation opens on. They are the product speaking
+   before the person has said anything, and they are shown to every
+   organisation, so they presuppose nothing about its programs, documents or
+   dossier. They used to be demo copy — "File a 510(k) for our glucose
+   monitoring patch", "Is the section 2.5.4 efficacy claim defensible?", "What
+   blocks the Module 3 freeze?" — read aloud to a new Biotech & Pharma
+   workspace with no projects: a device claimed as "ours", and a 2.5.4 claim
+   and a Module 3 freeze that existed nowhere (2026-09-23, launch row D2).
+   Each of these is answerable from whatever the workspace really holds,
+   including nothing. Pinned by conversationThreadStarters.test.tsx. */
+const STARTER_ASKS = [
+  'What can you help me with in this workspace?',
+  'What does this workspace hold so far?',
+  'How does a regulatory submission come together here?',
+] as const;
 
 /* Adapt one real AnA turn (useAnaChat → /api/ana-ri/stream) into the CtTurn
    shape this surface renders — the model's answer, the record of how she got
@@ -36,26 +51,13 @@ const SIDE_DOCK_KEY = 'c2c-v2-ct-side-dock';
    omitted. */
 function toTurn(m: AnaChatMessage): CtTurn {
   if (m.role === 'user') return { role: 'user', text: m.text };
-  const grounding = (m.groundingSources || []).map(s => ({ src: s, ok: true }));
-  /* Everything the turn reported about how it was answered — the SAME mapping
-     `adaptChatMessage` in V2App.tsx hands the shell rail. It was dropped here:
-     `toTurn` carried `thinking` and discarded the phase, the tools, the rounds,
-     the lens and the draft, so AnA could run several deterministic engines
-     across two rounds and this surface showed three animated dots. The rail
-     was fixed; this surface was not. */
-  const activity: AnaActivityProps = {
-    streaming: m.streaming,
-    phase: m.statusPhase,
-    lens: m.detectedLens,
-    documentType: m.detectedDocumentType,
-    toolCalls: m.toolCalls,
-    thinking: m.thinking,
-    draftTitle: m.generatedDraft?.title,
-    /* The clock — the same two fields the rail's mapping carries, so the
-       phase line here ticks and the collapsed line names the duration. */
-    startedAt: m.sentAt,
-    completedAt: m.completedAt,
-  };
+  const grounding = (m.groundingSources || []).map((s) => ({ src: s, ok: true }));
+  const authoringDoc = authoringDocOf(m);
+  /* Everything the turn reported about how it was answered, through the one
+     mapping every host uses (AnaActivity.activityPropsFor). A second copy of
+     it here once carried `thinking` and dropped the phase, the tools, the
+     rounds, the lens and the draft. */
+  const activity: AnaActivityProps = activityPropsFor(m);
   return {
     role: 'ana',
     answer: m.text || undefined,
@@ -80,40 +82,105 @@ function toTurn(m: AnaChatMessage): CtTurn {
      */
     executedActions: m.executedActions?.length ? m.executedActions : undefined,
     pendingSignoffs: m.pendingSignoffs?.length ? m.pendingSignoffs : undefined,
+    /* The authoring document this turn drafted, when it drafted one — the
+       canvas beneath the turn is rendered from THIS, not from the draft's
+       inline content (docs/design/ANA_DOCUMENT_CANVAS.md). */
+    authoringDoc: authoringDoc ?? undefined,
   };
 }
 
-/** True when the activity record has something real to show for this turn.
- *  The same three-line condition as `hasReportableWork` in V2App.tsx, on the
- *  mapped shape rather than the message. Not imported from there: V2App is the
- *  shell root and this surface is one of its lazy chunks. */
-function hasReportableWork(a: AnaActivityProps): boolean {
-  return Boolean(
-    (a.toolCalls && a.toolCalls.length > 0) ||
-      a.lens ||
-      a.documentType ||
-      a.thinking ||
-      a.draftTitle
-  );
+/**
+ * The authoring document a turn produced, by id, or null.
+ *
+ * The live stream says it directly: `artifact_draft` carries `authoringDocId`
+ * (+ `programId`) when the `draft_authoring_document` tool persisted the
+ * draft, and useAnaChat records both on `generatedDraft`. A rehydrated thread
+ * carries no draft record (loadThread restores messages and the tool trace,
+ * not drafts), so the tool trace is the second place to look: the tool's
+ * result, when the stream kept it, is the JSON the tool returned, and its
+ * `authoringDocId` is the same id. Nothing is parsed out of prose.
+ */
+export function authoringDocOf(
+  m: AnaChatMessage,
+): { docId: string; programId: string | null; title: string | null } | null {
+  const d = m.generatedDraft;
+  if (d?.authoringDocId) {
+    return { docId: d.authoringDocId, programId: d.programId ?? null, title: d.title || null };
+  }
+  return authoringDocFromTrace(m.toolCalls);
+}
+
+function authoringDocFromTrace(
+  calls: AnaChatMessage['toolCalls'],
+): { docId: string; programId: string | null; title: string | null } | null {
+  for (const call of calls ?? []) {
+    if (call.name !== 'draft_authoring_document' || typeof call.result !== 'string') continue;
+    const found = authoringDocFromToolResult(call.result);
+    if (found) return found;
+  }
+  return null;
+}
+
+const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const DOC_ID_RE = new RegExp(`"authoringDocId"\\s*:\\s*"(${UUID})"`, 'i');
+const PROGRAM_ID_RE = new RegExp(`"programId"\\s*:\\s*"(${UUID})"`, 'i');
+const TITLE_RE = /"title"\s*:\s*"((?:[^"\\]|\\.){1,300})"/;
+
+/**
+ * The tool's JSON result, read for its ids. A regex over the two id fields
+ * rather than JSON.parse, because the persisted trace keeps a CAPPED copy of
+ * the result (server/services/ana/tool-trace.ts summarizeToolResult, 180
+ * characters) that is not always whole JSON — and the ids are at its head.
+ * Only a well-formed UUID counts; nothing is read out of prose.
+ */
+export function authoringDocFromToolResult(
+  result: string,
+): { docId: string; programId: string | null; title: string | null } | null {
+  const doc = DOC_ID_RE.exec(result)?.[1];
+  if (!doc) return null;
+  const program = PROGRAM_ID_RE.exec(result)?.[1] ?? null;
+  const rawTitle = TITLE_RE.exec(result)?.[1];
+  let title: string | null = null;
+  if (rawTitle) {
+    try {
+      title = String(JSON.parse(`"${rawTitle}"`)).trim() || null;
+    } catch {
+      title = null;
+    }
+  }
+  return { docId: doc.toLowerCase(), programId: program ? program.toLowerCase() : null, title };
 }
 
 /* ---- AnA turn (activity + answer + grounding) ---- */
 
 interface AnaTurnProps {
   turn: CtTurn;
-  onNav?: (id: string) => void;
+  onRefine: () => void;
+  onNav: (id: string) => void;
+  /** Starts a demonstration from a "Start demonstration" chip — on every turn,
+   *  not only the ones that drafted a document (which is all `canvas` covers). */
+  onStartDemo?: (demoId: string, title: string) => void;
+  /** Continue, offered on the latest settled turn only (anaWorkModel.continueTurnIndex). */
+  onContinue?: () => void;
+  /** The document canvas beneath this turn, when the turn drafted a document. */
+  canvas?: {
+    conversationId: string | null;
+    expanded: boolean;
+    onExpandedChange: (expanded: boolean) => void;
+    onAsk: (text: string) => void;
+    fireToast: FireToast;
+    liveDrive?: OwnedSurfaceViewProps['liveDrive'];
+  };
 }
 
-function AnaTurn({ turn, onNav }: AnaTurnProps) {
+function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
       <div className="ct-ana-av">{'✻'}</div>
       <div className="ct-ana-body">
         {turn.doc && (
-          <div style={{ marginBottom: 6 }}>
-            <DocTypeChip doc={turn.doc} />
-          </div>
+          <div style={{ marginBottom: 6 }}><DocTypeChip doc={turn.doc} /></div>
         )}
         {turn.doc && (turn.doc.confidence || 1) < 0.4 && (
           <DocumentContextCard doc={turn.doc} defaultOpen={false} />
@@ -136,7 +203,7 @@ function AnaTurn({ turn, onNav }: AnaTurnProps) {
             reportable) or together with `streaming: false` — so the state
             "streaming with nothing to show" cannot occur, and a renderer for
             it would be the fifth dead one on this surface. */}
-        {a && <AnaActivity {...a} />}
+        {a && <AnaActivity {...a} onContinue={onContinue} />}
         {/* ── The proposal block was unreachable, and it advertised a
             workflow this surface does not have ───────────────────────────────
             It rendered a diff with Accept / Refine / Discard, and a chip for a
@@ -157,20 +224,36 @@ function AnaTurn({ turn, onNav }: AnaTurnProps) {
             surface is `pendingSignoffs`, rendered by EctdSignoffs below from
             what the server actually sent. If a proposal workflow is built
             later it starts from a server-issued proposal, not from this. */}
-        {turn.answer && <div className="ct-ana-text">{turn.answer}</div>}
+        {/* The answer as prose. This was `<div className="ct-ana-text">{turn.answer}</div>`
+            — plain text, so every heading, emphasis and list the model wrote
+            reached the reader as `##`, `**` and `-`. AnaMarkdown is the ONE
+            markdown renderer (marked → DOMPurify → React elements, no
+            innerHTML); the person's own turn above stays as typed. */}
+        {turn.answer && <AnaMarkdown text={turn.answer} className="ct-ana-text ana-md" />}
+        {/* The document canvas: the authoring document this turn drafted,
+            read from the store and expandable into THE editor in place. */}
+        {turn.authoringDoc && canvas && (
+          <DocumentCanvas
+            docId={turn.authoringDoc.docId}
+            programId={turn.authoringDoc.programId}
+            conversationId={canvas.conversationId}
+            fromThisConversation
+            draftTitle={turn.authoringDoc.title}
+            expanded={canvas.expanded}
+            onExpandedChange={canvas.onExpandedChange}
+            onNav={onNav}
+            onAsk={canvas.onAsk}
+            fireToast={canvas.fireToast}
+            liveDrive={canvas.liveDrive}
+          />
+        )}
         {turn.links && (
           <div className="ct-refs">
             {turn.links.map((l, i) => (
-              <button
-                key={i}
-                className="ct-ref"
-                data-kind={l.kind}
-                onClick={() => onNav && onNav(CT_LINKMAP[l.kind] || 'document-authoring')}
-                title={'Open in ' + (CT_LINKMAP[l.kind] || 'editor')}
-              >
+              <button key={i} className="ct-ref" data-kind={l.kind} onClick={() => onNav && onNav(CT_LINKMAP[l.kind] || 'document-authoring')} title={'Open in ' + (CT_LINKMAP[l.kind] || 'editor')}>
                 <span className="ct-ref-ic">{(I as any)[CT_LINKIC[l.kind]] || I.fileText}</span>
                 <span className="ct-ref-l">{l.label}</span>
-                <span className="ct-ref-go">{I.arrowUpRight || I.externalLink}</span>
+                <span className="ct-ref-go">{I.externalLink}</span>
               </button>
             ))}
           </div>
@@ -178,26 +261,16 @@ function AnaTurn({ turn, onNav }: AnaTurnProps) {
         {turn.grounding && (
           <div className="ct-ground">
             <span className="ct-ground-l">Grounded in</span>
-            {turn.grounding.map((g, i) => (
-              <span key={i} className="ct-ground-chip" data-ok={g.ok}>
-                {g.ok ? I.check : I.alertTriangle} {g.src}
-              </span>
-            ))}
+            {turn.grounding.map((g, i) => (<span key={i} className="ct-ground-chip" data-ok={g.ok}>{g.ok ? I.check : I.alertTriangle} {g.src}</span>))}
           </div>
         )}
         {turn.executedActions && (
           <div className="ana-msg-executed">
-            {turn.executedActions.map((a, i) => (
-              <span
-                key={i}
-                className={`ana-exec-chip${a.executed ? ' is-done' : ''}${
-                  a.error ? ' is-err' : ''
-                }`}
-                title={a.error || a.label}
-              >
-                {a.error ? I.alertTriangle : a.executed ? I.check : I.zap} {a.label}
-              </span>
-            ))}
+            <AnaActionChips
+              actions={turn.executedActions}
+              onNav={onNav}
+              onStartDemo={onStartDemo}
+            />
           </div>
         )}
         {/* The §11.50 prompt. Rendered here for the same reason RbmSurfaces
@@ -277,6 +350,11 @@ export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] 
   for (const m of messages) {
     const d = m.generatedDraft;
     if (!d || !d.title) continue;
+    /* A draft persisted as an AUTHORING DOCUMENT is the document canvas
+       beneath its turn, not a side-panel card — one place per document, and
+       the card's own draft→review transition is for the artifact store this
+       document is not in. The panel keeps the non-document canvases. */
+    if (d.authoringDocId) continue;
     out.push({
       id: d.artifactId || unsavedDraftId(m.id),
       kind: 'document',
@@ -295,10 +373,10 @@ export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] 
       note: d.artifactId
         ? undefined
         : m.streaming
-        ? unstoredDraftReason(false)
-        : unstoredDraftReason(true) +
-          ' AnA files a draft against the open program, and does not re-file one that is ' +
-          'identical to the version already stored.',
+          ? unstoredDraftReason(false)
+          : unstoredDraftReason(true)
+            + ' AnA files a draft against the open program, and does not re-file one that is '
+            + 'identical to the version already stored.',
     });
   }
   return out;
@@ -320,15 +398,7 @@ interface ArtifactCardProps {
   fireToast: FireToast;
 }
 
-function ArtifactCard({
-  art,
-  expanded,
-  onToggle,
-  onNav,
-  projectId,
-  saveSettled,
-  fireToast,
-}: ArtifactCardProps) {
+function ArtifactCard({ art, expanded, onToggle, onNav, projectId, saveSettled, fireToast }: ArtifactCardProps) {
   /* Seeded from the artifact and then owned here, because a successful
      transition is a fact the server confirmed and the message that produced
      the draft will never carry. The card is keyed on the artifact id, so the
@@ -356,11 +426,10 @@ function ArtifactCard({
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         fireToast(
-          'The Word file was not produced — ' +
-            ((body as { error?: { message?: string } } | null)?.error?.message ??
-              `the server refused it (HTTP ${res.status})`) +
-            '.',
-          'error'
+          'The Word file was not produced — '
+            + ((body as { error?: { message?: string } } | null)?.error?.message
+              ?? `the server refused it (HTTP ${res.status})`) + '.',
+          'error',
         );
         return;
       }
@@ -369,12 +438,12 @@ function ArtifactCard({
         ok
           ? 'Downloaded ' + art.title + '.docx.'
           : 'The Word file was produced but the browser refused the download.',
-        ok ? 'ok' : 'error'
+        ok ? 'ok' : 'error',
       );
     } catch (e) {
       fireToast(
         'The Word file was not produced — ' + (e instanceof Error ? e.message : String(e)) + '.',
-        'error'
+        'error',
       );
     } finally {
       setBusy(null);
@@ -390,14 +459,15 @@ function ArtifactCard({
     try {
       const r = await apiCall(
         'PUT',
-        `/api/concept2cure/projects/${encodeURIComponent(String(projectId))}` +
-          `/artifacts/${encodeURIComponent(art.artifactId)}/status`,
-        { status: 'review' }
+        `/api/concept2cure/projects/${encodeURIComponent(String(projectId))}`
+          + `/artifacts/${encodeURIComponent(art.artifactId)}/status`,
+        { status: 'review' },
       );
       if (!r.ok) {
         fireToast(
-          apiErrorText(r, 'The review request was refused.') + ' The status is unchanged.',
-          'error'
+          apiErrorText(r, 'The review request was refused.')
+            + ' The status is unchanged.',
+          'error',
         );
         return;
       }
@@ -423,8 +493,9 @@ function ArtifactCard({
   const routeBlockedBecause = !art.artifactId
     ? unstoredDraftReason(saveSettled)
     : projectId == null
-    ? 'Open a program first — the review workflow is scoped to one.'
-    : null;
+      ? 'Open a program first — the review workflow is scoped to one.'
+      : null;
+
   return (
     <div className="ct-art" data-status={status} data-open={expanded || undefined}>
       <button className="ct-art-head" onClick={onToggle}>
@@ -444,11 +515,7 @@ function ArtifactCard({
                 <div key={i} className="ct-art-row">
                   <span className="ct-art-row-k">{r.k}</span>
                   <span className="ct-art-row-v">{r.v}</span>
-                  {typeof r.conf === 'number' && (
-                    <span className="ct-art-conf" title="Confidence">
-                      {Math.round(r.conf * 100)}%
-                    </span>
-                  )}
+                  {typeof r.conf === 'number' && <span className="ct-art-conf" title="Confidence">{Math.round(r.conf * 100)}%</span>}
                 </div>
               ))}
             </div>
@@ -458,15 +525,8 @@ function ArtifactCard({
               {art.preds.map((p, i) => (
                 <div key={i} className="ct-art-pred">
                   <span className="ct-art-pred-k">{p.k}</span>
-                  <span className="ct-art-pred-n">
-                    {p.name}
-                    {p.role && <span className={`ct-pred-role ${p.role}`}>{p.role}</span>}
-                  </span>
-                  {p.safety !== 'clean' && (
-                    <span className="ct-pred-flag">
-                      {I.alertTriangle} {p.safety}
-                    </span>
-                  )}
+                  <span className="ct-art-pred-n">{p.name}{p.role && <span className={`ct-pred-role ${p.role}`}>{p.role}</span>}</span>
+                  {p.safety !== 'clean' && <span className="ct-pred-flag">{I.alertTriangle} {p.safety}</span>}
                   <span className="ct-art-pred-m">{p.match}%</span>
                 </div>
               ))}
@@ -475,26 +535,11 @@ function ArtifactCard({
           {art.outline && (
             <div className="ct-outline">
               {art.outline.map((s, i) => (
-                <div
-                  key={i}
-                  className={'ct-outline-row' + (s.required ? '' : ' optional')}
-                  data-st={s.st}
-                >
+                <div key={i} className={'ct-outline-row' + (s.required ? '' : ' optional')} data-st={s.st}>
                   <span className="ct-outline-dot" />
                   {s.code && <span className="ct-outline-code">{s.code}</span>}
-                  <span className="ct-outline-h">
-                    {s.code
-                      ? s.heading.replace(
-                          new RegExp('^' + s.code.replace(/[.]/g, '\\.') + '\\s*'),
-                          ''
-                        )
-                      : s.heading}
-                  </span>
-                  {s.targetWords && (
-                    <span className="ct-outline-w">
-                      ~{s.targetWords[0]}-{s.targetWords[1]}w
-                    </span>
-                  )}
+                  <span className="ct-outline-h">{s.code ? s.heading.replace(new RegExp('^' + s.code.replace(/[.]/g, '\\.') + '\\s*'), '') : s.heading}</span>
+                  {s.targetWords && <span className="ct-outline-w">~{s.targetWords[0]}-{s.targetWords[1]}w</span>}
                   {!s.required && <span className="ct-outline-opt">optional</span>}
                   <span className="ct-outline-st">{s.st}</span>
                 </div>
@@ -521,26 +566,17 @@ function ArtifactCard({
                   no recorded model read "Generated by AnA / undefined" and one
                   with no evidence read "Evidence:" followed by nothing — a
                   provenance block that states less than it appears to. */}
-              <span>
-                Generated by <b>{art.prov.by}</b>
-                {art.prov.model ? ' / ' + art.prov.model : ''}
-              </span>
+              <span>Generated by <b>{art.prov.by}</b>{art.prov.model ? ' / ' + art.prov.model : ''}</span>
               {art.prov.inputs && <span>From: {art.prov.inputs}</span>}
-              {art.prov.evidence.length > 0 && (
-                <span>Evidence: {art.prov.evidence.join(' / ')}</span>
-              )}
+              {art.prov.evidence.length > 0 && <span>Evidence: {art.prov.evidence.join(' / ')}</span>}
               {art.version != null && <span>Version {art.version}</span>}
               {/* Rendered only when a real, server-issued audit id exists. It
                   used to render unconditionally against a client-fabricated
                   string, putting a padlock next to an identifier that traced to
                   nothing. */}
-              {art.prov.audit ? (
-                <span className="ct-art-audit">
-                  {I.lock} Audit {art.prov.audit}
-                </span>
-              ) : (
-                <span className="ct-art-audit">Not yet written to the governed record</span>
-              )}
+              {art.prov.audit
+                ? <span className="ct-art-audit">{I.lock} Audit {art.prov.audit}</span>
+                : <span className="ct-art-audit">Not yet written to the governed record</span>}
             </div>
           </div>
           {/* ── The two controls that were wired to `onAdvance` ──────────────
@@ -616,8 +652,6 @@ interface ArtifactPanelProps {
   openId: string | null;
   setOpenId: (id: string | null) => void;
   onNav?: (id: string) => void;
-  /** Hides the whole side column; the thread header is where it comes back. */
-  setCollapsed: (v: boolean) => void;
   projectId: string | number | null;
   /** Card ids whose producing turn has not finished — see {@link unstoredDraftReason}. */
   pendingDraftIds: ReadonlySet<string>;
@@ -628,53 +662,25 @@ interface ArtifactPanelProps {
    a count — is gone. It was the only way back once the column was hidden, so
    hiding the column never gave the conversation the full width, only the
    width minus a stub, and the control that hid it was an unlabelled chevron
-   inside this panel's own header. The thread header now owns show/hide with a
-   labelled toggle; this panel keeps a close button for convenience. */
-function ArtifactPanel({
-  artifacts,
-  openId,
-  setOpenId,
-  onNav,
-  setCollapsed,
-  projectId,
-  pendingDraftIds,
-  fireToast,
-}: ArtifactPanelProps) {
+   inside this panel's own header. The thread header now owns show/hide with
+   the progress chip, and the column's one close control is the progress
+   panel's, at its top — this panel had a second one a few hundred pixels
+   below it, for the same column. */
+function ArtifactPanel({ artifacts, openId, setOpenId, onNav, projectId, pendingDraftIds, fireToast }: ArtifactPanelProps) {
   return (
     <aside className="ct-artifacts">
       <div className="ct-art-panel-h">
-        <span className="ct-art-panel-t">
-          {I.layers} Artifacts <span className="ct-art-panel-n">{artifacts.length}</span>
-        </span>
-        <button
-          type="button"
-          className="ct-art-panel-x"
-          onClick={() => setCollapsed(true)}
-          aria-label="Hide side panel"
-          title="Hide side panel"
-        >
-          {I.chevronRight || I.right}
-        </button>
+        <span className="ct-art-panel-t">{I.layers} Artifacts <span className="ct-art-panel-n">{artifacts.length}</span></span>
       </div>
       {/* Was "AnA builds, you approve and e-sign". Approving and e-signing do
           not happen here — the panel drafts, exports and routes for review, and
           the signature ceremony belongs to the sign-off prompt on the turn. */}
-      <div className="ct-art-panel-sub">
-        Governed outputs — AnA drafts, you export and route for review
-      </div>
+      <div className="ct-art-panel-sub">Governed outputs — AnA drafts, you export and route for review</div>
       <div className="ct-art-list">
-        {/* The honest empty state. It used to promise "classification reports,
-            predicate analyses, eSTAR sections", which named the three fixture
-            builders rather than anything the conversation can produce, and it
-            did not say that the list covers this session only — reloading a
-            thread rehydrates its messages, not the drafts they carried. */}
-        {artifacts.length === 0 && (
-          <div className="ct-art-empty">
-            Documents AnA drafts in this conversation appear here, each one exportable and routable
-            for review. The list covers this session — reopening the thread restores the messages,
-            not the drafts.
-          </div>
-        )}
+        {/* Mounted only with at least one artifact (see the thread's side
+            column), so there is no empty state to word. The list covers this
+            session only: reloading a thread rehydrates its messages, not the
+            drafts they carried. */}
         {artifacts.map(a => (
           <ArtifactCard
             key={a.id}
@@ -694,14 +700,31 @@ function ArtifactPanel({
 
 /* ---- Conversation thread (main export) ---- */
 
-export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) {
+export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurfaceViewProps) {
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
-  // conversation; the default is a fresh conversation.
-  const sel = ((window as any).C2C_CONVO || { id: 'new' }) as {
+  // conversation, and `{ id: 'new', seed }` by whatever asks a question here.
+  // `current` means "the conversation already in progress" — what this screen
+  // shows when the person comes back to it after AnA took them elsewhere
+  // mid-answer, and (with the shell's chat) whenever there is nothing to ask.
+  const asked = ((window as any).C2C_CONVO || { id: 'new' }) as {
     id: string;
     seed?: string | null;
-    attachments?: import('../../components/ana/useAnaChat').MessageAttachment[];
+    /** Files the seeding composer attached, by upload id. */
+    seedFiles?: SentAttachment[];
   };
+  /* With the shell's chat, a "new" that carries nothing to ask is the
+     conversation in progress. It used to be read as "start over": the mount
+     reset the shell's chat, and the shell's chat is the ONE conversation — the
+     rail's, and the one AnA may be driving from. Every way of arriving here
+     with nothing to ask landed on that reset: a first visit (no C2C_CONVO at
+     all), "Open full thread" with an empty box, and AnA's own navigation to
+     this screen, which wiped the very turn that made it. Starting over is a
+     person's decision, taken with the New conversation control below. */
+  const sel =
+    shellChat && asked.id === 'new' && !(typeof asked.seed === 'string' && asked.seed.trim())
+      ? { id: 'current', seed: null, seedFiles: undefined }
+      : asked;
+  const isCurrent = sel.id === 'current';
   const isNew = sel.id === 'new';
 
   // The conversation runs on the REAL streaming assistant (POST /api/ana-ri/stream
@@ -726,61 +749,34 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
     const p = readShellProject();
     return p ? p.id : null;
   })();
-  const moduleContext = {
-    surface: 'conversation-thread',
-    summary: isNew ? 'New AnA conversation' : 'Existing AnA conversation',
-    facts: {
-      projectId: shellProjectId,
-      threadId: isNew ? null : sel.id,
-    },
-    available_actions: ['Ask AnA a question', 'Attach a document'],
-  };
 
-  const anaChat = useAnaChat({
-    initialThreadId: isNew ? null : sel.id,
+  /* The conversation runs on the SHELL's chat when the shell provides it —
+     the one instance that outlives this screen. A private instance here was
+     unmounted by the first navigation AnA made from it, which aborted the
+     turn: the screen moved once and the answer stopped mid-sentence. The
+     private instance remains only for a host that provides no shell chat
+     (tests, an embed), and then it holds no thread of its own. */
+  const ownChat = useAnaChat({
+    initialThreadId: shellChat || isNew || isCurrent ? null : sel.id,
     screenName: 'conversation-thread',
     projectId: shellProjectId,
-    moduleContext,
     liveDrive: liveDrive?.on,
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
+  const anaChat = shellChat ?? ownChat;
   const [toast, fireToast] = useToast();
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
-  /* Whether the side column — AnA's work dock over the governed outputs — is
-     hidden. Read once on mount so the choice survives navigating away and
-     back; see SIDE_DOCK_KEY for the convention. */
-  const [panelCollapsed, setPanelCollapsed] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(SIDE_DOCK_KEY) === 'hidden';
-    } catch {
-      return false;
-    }
-  });
-  /* The column's close button lives INSIDE the column, so hiding it unmounts
-     the control that had focus and the browser drops focus to <body>. When a
-     hide was asked for, focus moves to the header toggle — the control that
-     brings the column back — once the column is gone. Not on mount: a
-     remembered 'hidden' must not steal focus on page load. */
-  const sideToggleRef = useRef<HTMLButtonElement>(null);
-  const refocusToggle = useRef(false);
-  const sideId = React.useId();
-  const setSideDock = (collapsed: boolean) => {
-    setPanelCollapsed(collapsed);
-    if (collapsed) refocusToggle.current = true;
-    try {
-      localStorage.setItem(SIDE_DOCK_KEY, collapsed ? 'hidden' : 'shown');
-    } catch {
-      /* session-only */
-    }
-  };
-  useEffect(() => {
-    if (panelCollapsed && refocusToggle.current) {
-      refocusToggle.current = false;
-      sideToggleRef.current?.focus();
-    }
-  }, [panelCollapsed]);
+  /* The one document canvas expanded into the editor, by document id. One
+     at a time: the expanded canvas takes the conversation's full width. */
+  const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
+  /* The side column — AnA's progress over the governed outputs — is the
+     progress dock on this page: one shared show/hide memory with every other
+     host (workDock.ts), toggled by the chip in the header, closed from inside
+     with focus handed back to the chip. */
+  const dock = useProgressDock();
+  const panelCollapsed = !dock.open;
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   /* The background queue the work dock shows — read only while the side
@@ -801,22 +797,28 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
   /* `@app` in the thread composer — the same hook the rail uses (appMentions.tsx). */
   const draftRef = useRef<HTMLTextAreaElement>(null);
   const mentions = useAppMentions(draft, setDraft, draftRef);
+  /* An ask from inside a document canvas lands HERE — in this composer, with
+     focus — so the person keeps talking to AnA about the document she is
+     looking at. Not auto-sent: it is her message to send. */
+  const prefillComposer = (text: string) => {
+    setDraft(text);
+    draftRef.current?.focus();
+  };
   /* Scoped to the open project so extracted text lands in THAT project's
      memory, exactly as the shell composer and ProjectHome do. Null when no
      project is open, which the hook accepts — the file is still read, it just
      is not filed against a programme. */
-  const {
-    attachments,
-    addFiles,
-    removeAttachment,
-    clear: clearAttachments,
-    statusMessage,
-  } = useChatUpload({ projectId: shellProjectId });
-  const readyAttachments = attachments.filter(a => a.status === 'ready');
-  const uploadingAttachments = attachments.filter(a => a.status === 'uploading');
+  const { attachments, addFiles, removeAttachment, clear: clearAttachments, statusMessage } =
+    useChatUpload({ projectId: shellProjectId });
+  const readyAttachments = attachments.filter((a) => a.status === 'ready');
+  const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
 
   const turns: CtTurn[] = anaChat.messages.map(toTurn);
   const busy = anaChat.isStreaming;
+  /* The one turn Continue may be offered on: the latest, settled, with nothing
+     in flight. It sends a new turn on this conversation; the stopped run is
+     over, so there is nothing to resume. */
+  const continueAt = continueTurnIndex(anaChat.messages, busy);
   /* This was `const artifacts: CtArtifact[] = []` — a literal, so the panel
      below it, the whole `ArtifactCard` component and every control on it were
      unreachable code that nonetheless looked finished. The drafts were already
@@ -830,24 +832,75 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
      gated on. */
   const pendingDraftIds = new Set(
     anaChat.messages
-      .filter(m => m.streaming && m.generatedDraft?.title)
-      .map(m => unsavedDraftId(m.id))
+      .filter((m) => m.streaming && m.generatedDraft?.title)
+      .map((m) => unsavedDraftId(m.id)),
   );
 
-  const firstUser = turns.find(t => t.role === 'user');
+  const firstUser = turns.find((t) => t.role === 'user');
   const title = isNew
     ? 'New conversation'
     : firstUser?.text
-    ? firstUser.text.slice(0, 60)
-    : anaChat.isLoadingThread
-    ? 'Loading…'
-    : 'Conversation';
+      ? // The first line: the composer appends "Attached: …" after a blank line.
+        firstUser.text.split('\n')[0].slice(0, 60)
+      : anaChat.isLoadingThread
+        ? 'Loading…'
+        // The conversation in progress, before anyone has said anything in it.
+        : isCurrent
+          ? 'New conversation'
+          : 'Conversation';
 
+  /* The latest shell chat, for the deferred seed below: by the time its
+     timeout fires, the value this mount captured is a render old. */
+  const shellChatRef = useRef(shellChat);
+  shellChatRef.current = shellChat;
+
+  /* The rule every branch below keeps: arriving on this screen never wipes a
+     turn that is still running in the shell's chat. `reset` and `loadThread`
+     both abort the in-flight stream, and the stream may be AnA driving — the
+     move that brought the person here among its steps. The conversation starts
+     over only when that was asked for — a question sent here, or the New
+     conversation control — and never mid-turn. */
   useEffect(() => {
+    const convo = window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } };
+    if (isCurrent) {
+      // The conversation in progress — already in the shell chat. Nothing to
+      // load, nothing to reset. Recorded as such when it was an unseeded
+      // "new" (see `sel`), so every later visit reads the same.
+      if (shellChat) convo.C2C_CONVO = { id: 'current', seed: null };
+      return;
+    }
     if (!isNew) {
+      // Returning to the conversation the shell chat already holds must not
+      // reload it: a reload aborts the turn that may still be running.
+      if (shellChat && shellChat.threadId === sel.id) {
+        convo.C2C_CONVO = { id: 'current', seed: null };
+        return;
+      }
+      // Another conversation, asked for while AnA is still answering in this
+      // one. Loading it would abort her; the person is told instead, and opens
+      // it again once she has finished.
+      if (shellChat?.isStreaming) {
+        convo.C2C_CONVO = { id: 'current', seed: null };
+        fireToast(
+          'AnA is still answering in the current conversation, so it stays open. Open the other conversation again once she has finished.',
+          'error',
+        );
+        return;
+      }
       setLoadErr(false);
-      Promise.resolve(anaChat.loadThread(sel.id)).catch(() => setLoadErr(true));
-    } else if (sel.seed || sel.attachments?.length) {
+      Promise.resolve(anaChat.loadThread(sel.id))
+        .then(() => {
+          // Loaded into the shell's chat, it IS the conversation in progress
+          // now. Left as its id, the next arrival here — AnA's navigation
+          // among them — re-read it, and if the shell's chat had moved on (a
+          // new thread from the rail) loaded it over whatever was running.
+          // Only if nothing has asked for another conversation meanwhile.
+          if (shellChat && convo.C2C_CONVO?.id === sel.id) {
+            convo.C2C_CONVO = { id: 'current', seed: null };
+          }
+        })
+        .catch(() => setLoadErr(true));
+    } else if (sel.seed) {
       // Deferred by one task ON PURPOSE. Sending synchronously here opened a
       // fetch during StrictMode's first mount pass; the cleanup at the top of
       // useAnaChat aborted it, and the second pass was swallowed by the
@@ -856,26 +909,42 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
       // a permanently blank bubble. This is the front door: Home's composer
       // lands here. A timeout lets pass 1's cleanup cancel before any fetch
       // exists, so only pass 2 actually sends.
-      const attachmentLine = sel.attachments?.length
-        ? `Attached: ${sel.attachments.map(a => a.name).join(', ')}`
-        : '';
-      const seed = [sel.seed?.trim(), attachmentLine].filter(Boolean).join('\n\n');
+      const seed = sel.seed;
+      const seedFiles = sel.seedFiles;
       let cancelled = false;
       const t = setTimeout(() => {
-        if (!cancelled && seed) void anaChat.send(seed, sel.attachments);
+        if (cancelled) return;
+        /* A question asked from elsewhere while AnA is still answering here.
+           Starting its new conversation now would abort her — and a send
+           without the reset is refused while she streams, which would drop
+           the question without a word. Neither: the running turn stays, the
+           question waits in the composer, and the person sends it when she
+           has finished (into this conversation, which they can see). */
+        const live = shellChatRef.current;
+        if (live?.isStreaming) {
+          prefillComposer(seed);
+          fireToast(
+            'AnA is still answering, so your question has not been sent. It is in the composer — send it once she has finished.',
+            'error',
+          );
+          return;
+        }
+        // A new conversation starts clean in the shared chat.
+        if (live) live.reset();
+        void anaChat.send(seed, seedFiles);
       }, 0);
-      (window as any).C2C_CONVO = { ...sel, seed: null, attachments: undefined };
+      // From here on this screen shows the conversation in progress.
+      convo.C2C_CONVO = shellChat ? { id: 'current', seed: null } : { ...sel, seed: null };
       return () => {
         cancelled = true;
         clearTimeout(t);
       };
     }
+    // With no shell chat, an unseeded "new" is this screen's own fresh chat:
+    // nothing to load and nothing to clear.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [turns.length, busy]);
+  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [turns.length, busy]);
   /* Follow the work. The effect above fires on turn count and busy only, and
      a run's phase line and tool rows land on the LAST turn — below the fold
      once a few have arrived — so what the activity record makes visible could
@@ -891,9 +960,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
   };
   const inflight = anaChat.messages[anaChat.messages.length - 1];
   const inflightKey = inflight?.streaming
-    ? `${inflight.toolCalls?.length ?? 0}:${inflight.text.length}:${inflight.statusPhase ?? ''}:${
-        inflight.thinking?.length ?? 0
-      }`
+    ? `${inflight.toolCalls?.length ?? 0}:${inflight.text.length}:${inflight.statusPhase ?? ''}:${inflight.thinking?.length ?? 0}`
     : '';
   useEffect(() => {
     if (!inflightKey) return;
@@ -911,54 +978,81 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
     // Only files the server CONFIRMED it read are named. A failed upload must
     // never be described as attached — its chip stays visible with the error
     // and the message says nothing about it.
-    const names = readyAttachments.map(a => a.name);
-    const line = names.length ? `Attached: ${names.join(', ')}` : '';
-    const body = t && line ? `${t}\n\n${line}` : t || line;
-    const sentAttachments = readyAttachments.map(
-      ({ id, name, fileId, extractionMethod, extractionWords }) => ({
-        id,
-        name,
-        fileId,
-        extractionMethod,
-        extractionWords,
-      })
-    );
+    const { body, files } = composeTurn(t, readyAttachments);
 
     setDraft('');
     clearAttachments();
-    void anaChat.send(body, sentAttachments);
+    void anaChat.send(body, files);
+  };
+
+  /* The person asking to start over — the one path on this screen that clears
+     the conversation (the rail's "New thread" is the same `reset`, on screens
+     that draw the rail). Nothing is deleted: every turn of the previous
+     conversation is already in the governed conversation store.
+
+     Not while a conversation is loading either. A reset does not stop a load
+     in flight: the load resolves afterwards and puts that conversation back,
+     thread id and all, and the next question went into it under a "New
+     conversation" heading. */
+  const cannotStartOver = busy || anaChat.isLoadingThread;
+  const startNewConversation = () => {
+    if (cannotStartOver) return;
+    anaChat.reset();
+    setLoadErr(false);
+    setOpenId(null);
+    setExpandedDocId(null);
+    (window as any).C2C_CONVO = shellChat ? { id: 'current', seed: null } : { id: 'new', seed: null };
+    draftRef.current?.focus();
   };
 
   const loadingHistory = !isNew && anaChat.isLoadingThread && turns.length === 0;
 
   return (
-    <div className="ct-wrap">
-      <div className="ct-head">
-        <button className="ct-back" onClick={() => onNav && onNav('project-home')}>
-          {I.left} Project
-        </button>
+    <div className="ct-wrap" data-canvas-expanded={expandedDocId ? 'true' : undefined}>
+      {/* `ct-thread-head`, not `ct-head`: that name is the grid header row of
+          every `.ct-table` (surfaces-v2.css), and this header's flex rule for
+          it, loaded later, collapsed the audit trail's and six other tables'
+          column headers into the first 270px (launch sweep finding 47). */}
+      <div className="ct-thread-head">
+        <button className="ct-back" onClick={() => onNav && onNav('project-home')}>{I.left} Project</button>
         <div className="ct-head-mid">
           <div className="ct-head-t">{title}</div>
           <div className="ct-head-m">{I.messageSquare} Conversation</div>
         </div>
         <div className="ct-head-r">
           <span className="ct-head-model">{I.zap} AnA</span>
+          {/* Starting over is asked for, never inferred from how the person
+              arrived (see `sel`). Unavailable while AnA is answering: a reset
+              aborts her mid-turn, and when she is driving, mid-move. */}
+          <button
+            type="button"
+            className="ct-head-open"
+            onClick={startNewConversation}
+            disabled={cannotStartOver}
+            title={
+              busy
+                ? 'AnA is still answering. A new conversation can start once she has finished.'
+                : anaChat.isLoadingThread
+                  ? 'A conversation is loading. A new one can start once it has loaded.'
+                  : undefined
+            }
+          >
+            {I.plus} New conversation
+          </button>
           {/* The one place the side column is shown and hidden from. It used
               to be a chevron in the artifact panel's own header, with a 48px
               stub left behind when collapsed — a control that had to be hunted
               for, and a collapse that never gave the conversation the full
               width. `.ct-head-open` is this header's existing button style,
               which had no remaining user. */}
-          <button
-            ref={sideToggleRef}
-            type="button"
-            className="ct-head-open"
-            aria-expanded={!panelCollapsed}
-            aria-controls={panelCollapsed ? undefined : sideId}
-            onClick={() => setSideDock(!panelCollapsed)}
-          >
-            {I.panelRight} {panelCollapsed ? 'Show side panel' : 'Hide side panel'}
-          </button>
+          <AnaProgressChip
+            ref={dock.chipRef}
+            messages={anaChat.messages}
+            streaming={anaChat.isStreaming}
+            open={dock.open}
+            onToggle={dock.toggle}
+            controls={dock.panelId}
+          />
         </div>
       </div>
 
@@ -967,9 +1061,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
           <div className="ct-scroll" ref={scrollRef} onScroll={onScroll}>
             <div className="ct-col">
               {loadingHistory && (
-                <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
-                  Loading conversation…
-                </div>
+                <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading conversation…</div>
               )}
               {loadErr && turns.length === 0 && (
                 <EmptyState
@@ -983,37 +1075,33 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                 <div className="ct-empty">
                   <div className="ct-empty-mk">{'✻'}</div>
                   <h2>Talk to AnA</h2>
-                  <p>
-                    Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence,
-                    and streams a grounded answer — every turn is saved to your governed
-                    conversation store.
-                  </p>
+                  <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.</p>
                   <div className="ct-empty-chips">
-                    {[
-                      'File a 510(k) for our glucose monitoring patch',
-                      'Is the section 2.5.4 efficacy claim defensible?',
-                      'What blocks the Module 3 freeze?',
-                    ].map((q, i) => (
-                      <button
-                        key={i}
-                        className="ct-empty-chip"
-                        onClick={() => {
-                          void anaChat.send(q);
-                        }}
-                      >
-                        {q}
-                      </button>
+                    {STARTER_ASKS.map((q, i) => (
+                      <button key={i} className="ct-empty-chip" onClick={() => { void anaChat.send(q); }}>{q}</button>
                     ))}
                   </div>
                 </div>
               )}
-              {turns.map((t, i) =>
-                t.role === 'user' ? (
-                  <div key={i} className="ct-turn ct-user">
-                    <div className="ct-user-b">{t.text}</div>
-                  </div>
-                ) : (
-                  <AnaTurn key={i} turn={t} onNav={onNav} />
+              {turns.map((t, i) => t.role === 'user'
+                ? (<div key={i} className="ct-turn ct-user"><div className="ct-user-b">{t.text}</div></div>)
+                : (
+                  <AnaTurn
+                    key={i}
+                    turn={t}
+                    onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }}
+                    onNav={onNav}
+                    onStartDemo={liveDrive?.onStartDemo}
+                    onContinue={i === continueAt ? () => { void anaChat.send(CONTINUE_PROMPT); } : undefined}
+                    canvas={t.authoringDoc ? {
+                      conversationId: anaChat.threadId ?? (isNew || isCurrent ? null : sel.id),
+                      expanded: expandedDocId === t.authoringDoc.docId,
+                      onExpandedChange: (open) => setExpandedDocId(open ? t.authoringDoc!.docId : null),
+                      onAsk: prefillComposer,
+                      fireToast,
+                      liveDrive,
+                    } : undefined}
+                  />
                 )
               )}
               {/* No trailing "typing" turn. The in-flight message is already
@@ -1033,10 +1121,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                 multiple
                 className="ana-hidden-input"
                 aria-label="Attach a document for AnA to read"
-                onChange={e => {
-                  addFiles(e.target.files);
-                  if (fileRef.current) fileRef.current.value = '';
-                }}
+                onChange={(e) => { addFiles(e.target.files); if (fileRef.current) fileRef.current.value = ''; }}
                 data-testid="ct-attach-input"
               />
               <button
@@ -1049,29 +1134,12 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
               >
                 {I.paperclip}
               </button>
-              <textarea
-                ref={draftRef}
-                rows={1}
-                aria-label="Reply to AnA"
-                placeholder="Reply to AnA — ask, request a draft, or type @ to name an app..."
-                value={draft}
-                aria-autocomplete="list"
-                aria-controls={mentions.open ? 'ct-mentions' : undefined}
-                aria-expanded={mentions.open}
-                onChange={e => {
-                  setDraft(e.target.value);
-                  mentions.sync(e.currentTarget);
-                }}
+              <textarea ref={draftRef} rows={1} aria-label="Reply to AnA" placeholder="Reply to AnA — ask, request a draft, or type @ to name an app..." value={draft}
+                aria-autocomplete="list" aria-controls={mentions.open ? 'ct-mentions' : undefined} aria-expanded={mentions.open}
+                onChange={e => { setDraft(e.target.value); mentions.sync(e.currentTarget); }}
                 onSelect={e => mentions.sync(e.currentTarget)}
                 onBlur={() => mentions.close()}
-                onKeyDown={e => {
-                  if (mentions.onKeyDown(e)) return;
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    send();
-                  }
-                }}
-              />
+                onKeyDown={e => { if (mentions.onKeyDown(e)) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
               <AppMentionMenu api={mentions} id="ct-mentions" />
               <button
                 className="ct-comp-send"
@@ -1080,11 +1148,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                    upload blocks send — the old condition looked only at the
                    textarea, which is why attaching could never have worked
                    even if the paperclip had opened a picker. */
-                disabled={
-                  busy ||
-                  uploadingAttachments.length > 0 ||
-                  (!draft.trim() && readyAttachments.length === 0)
-                }
+                disabled={busy || uploadingAttachments.length > 0 || (!draft.trim() && readyAttachments.length === 0)}
                 onClick={send}
               >
                 {I.arrowUp}
@@ -1096,16 +1160,11 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                 and leaving the user to assume it worked. */}
             {attachments.length > 0 && (
               <div className="ct-comp-atts">
-                {attachments.map(a => (
+                {attachments.map((a) => (
                   <span key={a.id} className="ct-att-chip" data-status={a.status}>
                     {I.paperclip} {a.name}
                     {a.status === 'uploading' && <em> · reading…</em>}
-                    {a.status === 'ready' && (
-                      <em>
-                        {' '}
-                        · {attachmentReadLabel(a.extractionMethod, a.extractionWords) ?? 'read'}
-                      </em>
-                    )}
+                    {a.status === 'ready' && <em> · {readyAttachmentLabel(a.extractionMethod, a.extractionWords)}</em>}
                     {a.status === 'error' && <em> · {a.error ?? 'failed'}</em>}
                     <button
                       type="button"
@@ -1119,13 +1178,9 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                 ))}
               </div>
             )}
-            <span className="sr-only" aria-live="polite">
-              {statusMessage}
-            </span>
-            <div className="ct-comp-foot">
-              {I.lock} Governed — AnA proposes; you accept. Accepted changes are captured as
-              immutable, 21 CFR Part 11-audited versions when persisted.
-            </div>
+            <span className="sr-only" aria-live="polite">{statusMessage}</span>
+            <div className="ct-comp-foot"><LiveDriveSwitch /></div>
+            <div className="ct-comp-foot">{I.lock} Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>
         </div>
 
@@ -1135,12 +1190,10 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
             so the conversation takes the full width rather than the width
             minus a stub. `data-artifacts` lets the stylesheet cap the dock's
             height only when there is something below it to make room for. */}
-        {!panelCollapsed && (
-          <div
-            className="ct-side"
-            id={sideId}
-            data-artifacts={artifacts.length > 0 ? 'true' : 'false'}
-          >
+        {/* Not drawn while a document canvas is expanded: the editor takes
+            the conversation's full width, and its own rails are on screen. */}
+        {!panelCollapsed && !expandedDocId && (
+          <div className="ct-side" id={dock.panelId} data-artifacts={artifacts.length > 0 ? 'true' : 'false'}>
             <div className="ct-side-work">
               <AnaWorkPanel
                 messages={anaChat.messages}
@@ -1148,8 +1201,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                 runStatus={anaChat.runStatus}
                 pendingSteers={anaChat.pendingSteers}
                 queue={agentActivity}
-                /* Drafts are the artifact cards directly beneath; not twice. */
-                omitDrafts
+                onClose={dock.close}
                 /* Not `announce`. This surface passed it because it mounted no
                    other announcer; every AnA turn above now carries its own
                    <AnaActivity />, whose polite region speaks the phase, so a
@@ -1162,16 +1214,14 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                 }}
               />
             </div>
-            <ArtifactPanel
-              artifacts={artifacts}
-              openId={openId}
-              setOpenId={setOpenId}
-              onNav={onNav}
-              setCollapsed={setSideDock}
-              projectId={shellProjectId}
-              pendingDraftIds={pendingDraftIds}
-              fireToast={fireToast}
-            />
+            {/* Only when there is an artifact to list. Empty, it was a count of
+                zero and a paragraph promising "documents AnA drafts appear
+                here" — beside a drafted document, which is the canvas under
+                its turn and never listed here (conversationArtifacts). */}
+            {artifacts.length > 0 && (
+              <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
+                projectId={shellProjectId} pendingDraftIds={pendingDraftIds} fireToast={fireToast} />
+            )}
           </div>
         )}
       </div>

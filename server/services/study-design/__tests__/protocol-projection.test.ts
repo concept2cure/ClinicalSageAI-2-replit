@@ -91,6 +91,29 @@ describe('projectProtocol', () => {
     expect(doc.completeness.percent).toBeGreaterThanOrEqual(85);
   });
 
+  /*
+   * `completeness.percent` counts only the sections this projection ATTEMPTS.
+   * A design that fills all eight reads ~100% while the document carries no
+   * protocol summary, oversight, risk-management, appendix or reference
+   * section. That number has been read as ICH M11 conformance elsewhere in the
+   * codebase, so the projection now states what it does and does not claim,
+   * and this test holds it to that statement.
+   */
+  it('does not present a high completeness score as ICH M11 conformance', () => {
+    const doc = projectProtocol(completeDesign());
+
+    expect(doc.conformance.claim).toBe('partial');
+    expect(doc.conformance.sectionsRendered).toEqual(['2', '3', '4', '5', '6', '7', '8', '9']);
+    expect(doc.conformance.note).toMatch(/rather than a conformant M11 protocol/);
+  });
+
+  it('records that its section outline has never been reconciled with the published template', () => {
+    // The outline was written from working knowledge. Until someone checks it
+    // against the ICH/EMA document, these numbers are internal ordering and
+    // must not be cited as M11 section references.
+    expect(projectProtocol(completeDesign()).conformance.outlineVerified).toBe(false);
+  });
+
   it('flags a missing safety section rather than inventing one', () => {
     const d = completeDesign();
     delete d.safety;

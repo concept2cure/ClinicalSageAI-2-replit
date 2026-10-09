@@ -1,0 +1,66 @@
+### npm run -s check:security-patterns
+check-security-patterns: 0 violations across 2856 file(s).
+exit=0
+### npm run -s ci:tenant-isolation:no-regression
+[ci:tenant-isolation] WARN — 9 candidate violation(s) (32 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit):
+
+  server/routes/module-access-requests.ts  (1)
+    L290  tables=[]
+      `${SELECT_REQUEST}
+
+  server/services/advancedRAGPipeline.ts  (1)
+    L856  tables=[rag_chunks,rag_documents]
+      `SELECT rc.content FROM rag_chunks rc
+
+  server/services/deep-research-orchestrator.ts  (1)
+    L419  tables=[deep_research_jobs]
+      `SELECT id, uuid, organization_id, project_id, user_id, status, query, progress,
+
+  server/services/kernel-adaptive-policy.ts  (1)
+    L85  tables=[]
+      `SELECT strategy, AVG(quality_score)::float AS avg_quality, COUNT(*)::int AS samples
+
+  server/services/kernel-observability.ts  (4)
+    L53  tables=[]
+      `SELECT
+    L63  tables=[]
+      `SELECT
+    L72  tables=[]
+      `SELECT
+    … 1 more
+
+  server/services/submission-service/submission-service.ts  (1)
+    L1845  tables=[documents]
+      ref.documentUuid ? sql`SELECT program_id::text AS program_id FROM vault.documents WHERE id = ${ref.documentUuid}::uuid` : null,
+
+Total: 9 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] 1 previously-flagged finding(s) resolved — consider re-running with --write-baseline to ratchet down.
+[ci:tenant-isolation] FAIL — 1 NEW finding(s) above baseline of 9:
+  server/services/submission-service/submission-service.ts#59f216b0a04a:documents
+exit=1
+### npm run -s ci:server-error-leaks
+[ci:server-error-leaks] OK — 145 baselined site(s) across 89 file(s); no file gained one.
+exit=0
+### npm run -s ci:regulated-delete-audit
+[regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).
+exit=0
+### node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression
+[ci:requestdb-coverage] RLS request-scoped DB adoption
+  route files touching the DB : 265
+  using requestDb(req)        : 32
+  still on the shared pool    : 232 (migration backlog)
+    JWT boundary auto-scoped  : 230
+    explicit pre-tenant scope : 2
+    unclassified              : 0
+[ci:requestdb-coverage] 1 route(s) migrated off the shared pool — re-run with --write-baseline to ratchet the backlog down.
+[ci:requestdb-coverage] FAIL — 4 NEW route(s) on the shared pool above baseline of 229. New tenant-facing routes must use requestDb(req):
+  server/routes/admin/master-enterprise-requests.ts
+  server/routes/ai-placement-policy.ts
+  server/routes/ana-intelligence.ts
+  server/routes/ana-ri/turn-records.ts
+exit=1
+### npm run -s ci:unreferenced-modules
+Unreferenced modules: 87 (baseline 87)
+
+OK: no new unreachable modules.
+exit=0

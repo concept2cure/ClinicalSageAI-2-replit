@@ -14,6 +14,7 @@
 
 import { createScopedLogger } from '../../utils/logger.js';
 import { isSafePublicUrl } from '../../utils/ssrfGuard.js';
+import { safeFetch } from '../../utils/safeFetch.js';
 
 const log = createScopedLogger('webhook-notifications');
 
@@ -61,12 +62,20 @@ export interface WebhookDelivery {
 /**
  * Allow webhook delivery only to public https endpoints.
  *
- * SECURITY: the delivery path does `fetch(channel.url)`. Without this guard an
- * operator — or any future API that lets a tenant register a channel — could
- * point a webhook at an internal service or the cloud metadata endpoint
- * (169.254.169.254) and turn outbound delivery into SSRF (credential theft,
- * internal port scanning). Private, loopback, link-local and unique-local
- * destinations are rejected by hostname inspection; non-https is rejected.
+ * SECURITY: without this guard an operator — or any future API that lets a
+ * tenant register a channel — could point a webhook at an internal service or
+ * the cloud metadata endpoint (169.254.169.254) and turn outbound delivery into
+ * SSRF (credential theft, internal port scanning). Private, loopback,
+ * link-local and unique-local destinations are rejected by hostname inspection;
+ * non-https is rejected.
+ *
+ * This literal check is the first line only. The delivery itself goes through
+ * {@link safeFetch}, which resolves the hostname, refuses any private or
+ * metadata address it resolves to, pins the socket to the resolved address and
+ * refuses redirects outright — until 2026-09-25 delivery was a bare `fetch`
+ * after this check, so a public hostname that answered 302 to
+ * http://169.254.169.254/… was followed (security audit 2026-09-24, IAM-13;
+ * plan P1-6).
  *
  * Delegates to the shared {@link isSafePublicUrl} guard so the allow/deny logic
  * lives in one audited place (also used by tenant connector URLs). Re-exported
@@ -240,15 +249,31 @@ async function deliverToChannel(channel: WebhookChannel, event: WebhookEvent): P
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DELIVERY_TIMEOUT_MS);
 
-    const response = await fetch(channel.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
+    // DNS-pinned, private-range-refusing, and `redirect: 'error'`: a webhook
+    // destination is a fixed endpoint the operator configured, so a redirect
+    // is refused rather than followed (IAM-13 / P1-6).
+    let response: Response;
+    try {
+      response = await safeFetch(
+        channel.url,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+          redirect: 'error',
+        },
+        `webhook delivery to ${channel.name}`,
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
     const durationMs = Date.now() - start;
+
+    // The destination's response body is never read into the record or the
+    // log: it is a third party's text (an error page, an internal hostname, a
+    // token echo) and the delivery outcome is the status code.
+    await response.body?.cancel().catch(() => undefined);
 
     if (response.ok) {
       log.info(`Delivered to ${channel.name} (${channel.platform}) in ${durationMs}ms`);
@@ -262,14 +287,13 @@ async function deliverToChannel(channel: WebhookChannel, event: WebhookEvent): P
       };
     }
 
-    const errorBody = await response.text().catch(() => '');
-    log.warn(`Webhook delivery failed to ${channel.name}: ${response.status} ${errorBody}`);
+    log.warn(`Webhook delivery failed to ${channel.name}: HTTP ${response.status}`);
     return {
       channelId: channel.id,
       event,
       status: 'failed',
       statusCode: response.status,
-      error: `HTTP ${response.status}: ${errorBody.slice(0, 200)}`,
+      error: `HTTP ${response.status}`,
       deliveredAt: new Date().toISOString(),
       durationMs,
     };

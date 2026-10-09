@@ -1,0 +1,6 @@
+ × server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every registered tool has a class 8ms
+ × server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every entry names a registered tool 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: registered tools with no entry in tool-authorization.register.json — classify each (read, self, confirm, refuse, or conditional with a rule in tool-authorization.ts): expected [ 'raise_monitoring_signal' ] to deeply equal []
+AssertionError: register entries for tools that no longer exist: expected [ 'a_retired_tool' ] to deeply equal []
+      Tests  2 failed | 48 passed (50)

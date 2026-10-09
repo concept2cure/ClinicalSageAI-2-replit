@@ -59,6 +59,31 @@ export const irbSubmissions = pgTable(
     /** Single IRB of record for a multi-site study (revised Common Rule sIRB mandate). */
     isSingleIrb: boolean('is_single_irb').notNull().default(false),
     consentWaiverRequested: boolean('consent_waiver_requested').notNull().default(false),
+    /*
+     * ── The four package-manifest facts. NULLABLE, NO DEFAULT. ──────────────
+     *
+     * `server/services/irb/package-manifest.ts` gates five artifact slots on
+     * these. Three states must survive to the manifest: true (the requirement
+     * applies), false (a RECORDED statement, so the requirement is
+     * not_required), and NULL (NOT RECORDED, so the requirement stays
+     * `undetermined` and names the field that would settle it).
+     *
+     * Do NOT add `.notNull().default(false)` to any of the four, however much
+     * the sibling columns directly above invite it. Those siblings drive no
+     * not_required branch; these do. A default here turns "nobody answered"
+     * into "the sponsor said no" and drops Form FDA 1572 out of a board's
+     * package on a claim nobody made. Pinned by
+     * `server/services/irb/__tests__/submission-context-columns.pglite.integration.test.ts`
+     * and by `migrations/20260922d_irb_submission_context.sql`.
+     */
+    /** Subpart D (45 CFR 46.408). NULL means not recorded, NOT "no children". */
+    involvesChildren: boolean('involves_children'),
+    /** 21 CFR 312. Gates both Form FDA 1572 and the financial disclosure. NULL means not recorded. */
+    isIndStudy: boolean('is_ind_study'),
+    /** 45 CFR 164.508. NULL means not recorded, NOT "no PHI". */
+    usesPhi: boolean('uses_phi'),
+    /** 21 CFR 56.111(a)(3). NULL means not recorded. */
+    usesRecruitmentMaterial: boolean('uses_recruitment_material'),
     status: text('status').$type<IrbSubmissionStatus>().notNull().default('draft'),
     approvalDate: date('approval_date'),
     expirationDate: date('expiration_date'),

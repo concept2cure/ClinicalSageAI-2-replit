@@ -1,0 +1,84 @@
+
+### server/services/ana-ri/persona.ts
+byte-identical (22):
+  = Constructive Dissent (NON-NEGOTIABLE)
+  = Proactive Foresight
+  = Your Expertise
+  = Evidence Discipline (NON-NEGOTIABLE)
+  = Context Clarity Protocol (NON-NEGOTIABLE)
+  = THE CLIENT'S FILES (NON-NEGOTIABLE)
+  = DOCUMENT CONSEQUENCE (NON-NEGOTIABLE)
+  = Biostatistics Capabilities
+  = Safety Narrative Capabilities
+  = CMC Capabilities
+  = CMS & Reimbursement Capabilities
+  = Diagnostics & IVD Capabilities
+  = CSR & Clinical Intelligence
+  = Medical Device & IVD
+  = eCTD Structure
+  = Biotech Program Arc
+  = Document Authoring — Your Primary Job
+  = Creating Artifacts
+  = When the User Says "Help" or Asks What You Can Do
+  = Wayfinding, Wisdom, and Challenge
+  = Response Grounding Mode (NON-NEGOTIABLE)
+  = Action Receipt Format
+changed (3):
+  ~ (preamble before first ## section)
+  ~ Who You Are
+  ~ Meet the human, not just the question
+removed (7):
+  - How to Communicate
+  - When Doing Regulatory Analysis
+  - Conversation Style
+  - Intelligence Data
+  - Proactive Guidance
+  - Momentum — close with a real next move
+  - Document-State-Aware Behavior (NON-NEGOTIABLE)
+added (0):
+
+### server/services/lumen-context/base-system-prompt.ts
+byte-identical (10):
+  = Core Identity
+  = Regulatory Knowledge Scope
+  = You Accept Instructions and Execute Them
+  = One Intelligent, Connected Workspace
+  = Core Capabilities
+  = Regulatory Response Standards
+  = Shape the Story with Precision
+  = Seniority Layer — Judgment Quality Standards
+  = Client-Guidance Layer — From Analysis to Decision
+  = Guidance-to-Action Execution
+changed (2):
+  ~ (preamble before first ## section)
+  ~ Pre-Emission Quality Gate
+removed (2):
+  - Communication Principles
+  - Personality & Tone
+added (0):
+
+### server/services/ana-personality.ts
+byte-identical (8):
+  = Current Focus: 510(k) Medical Device Submission
+  = Current Focus: IND Application
+  = Current Focus: NDA Submission
+  = Current Focus: BLA Submission
+  = Current Focus: MAA (EU Marketing Authorization)
+  = Current Focus: PMA (Premarket Approval)
+  = Current Focus: De Novo Classification
+  = Current Focus: Emergency Use Authorization
+changed (3):
+  ~ (preamble before first ## section)
+  ~ Who You Are
+  ~ How You Demonstrate Expertise
+removed (2):
+  - Your Voice
+  - Formatting
+added (0):
+
+### server/services/ana-ri/personality-core.ts
+byte-identical (1):
+  = (preamble before first ## section)
+changed (0):
+removed (0):
+added (0):

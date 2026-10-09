@@ -22,20 +22,43 @@
  *   - It is NOT the Business Center gate. That one is deliberately narrower
  *     (financials); this one is deliberately about commercial packaging.
  *
- * WHO QUALIFIES. Three independent signals. The first two match the pattern
- * already used by `requireBusinessAdmin`:
+ * WHO QUALIFIES. Only somebody `requirePlatformAdmin` already admits — the
+ * owner grant is a subset of platform administration, never beside it — and
+ * who, in addition, carries one of three signals:
  *
  *   1. the `super_admin` role — the platform-owner role. `platform_admin` and
  *      `support` are NOT included: they are staff roles for monitoring and
  *      assistance, and handing them a blanket commercial unlock would make the
  *      entitlement layer report something untrue about the tenant they are
  *      looking at.
- *   2. an email on the MASTER_ADMIN_EMAILS allowlist. The built-in default is
- *      the platform owner's own address, so a fresh deployment works without
- *      configuration; setting the env var REPLACES that default outright (it
- *      does not append), so an operator can move or remove the grant.
+ *   2. an email on the MASTER_ADMIN_EMAILS allowlist, on the holder's own
+ *      (password) sign-in. There is no built-in address: unset, the allowlist
+ *      is empty. A federated (SAML) session's e-mail is whatever the tenant's
+ *      identity provider asserted, so it gets nothing from this list — the
+ *      same rule `requirePlatformAdmin` applies to PLATFORM_ADMIN_EMAILS
+ *      (audit IAM-03).
  *   3. an active `platform_role_grants` row for a master-admin role — the
  *      designation the owner makes from inside the app.
+ *
+ * ── Why the grant sits inside platform administration (finding 43) ─────────
+ *
+ * Until 2026-09-28 the two were decided side by side, and a source file named
+ * the owner: `DEFAULT_MASTER_ADMIN_EMAILS` held one personal address and
+ * applied whenever MASTER_ADMIN_EMAILS was unset — which is every deployment
+ * Terraform provisions (security audit 2026-09-24, INF-27). The launch sweep
+ * then saw one account answered two ways in one session: the nav resolver said
+ * `masterAdmin: true` and unlocked every module, and the licensing console it
+ * belongs to refused the same person with 403.
+ *
+ * The disagreement was the lesser problem. This grant is not only a nav-rail
+ * unlock: `access-requests.ts` exempts a master admin from the tenant
+ * boundary, so it answers module access requests for EVERY organization. Keyed
+ * on a bare e-mail, with no provider check, it went to whichever account held
+ * that address — including a federated session whose tenant IdP asserted it.
+ * A cross-tenant power belongs to somebody the platform guard admits, so it is
+ * now decided behind that guard ({@link resolveAdminStanding}), and the owner
+ * is named by configuration or by an audited in-app designation, never by the
+ * source code.
  *
  * ── Why (3) had to be added ─────────────────────────────────────────────────
  *
@@ -75,6 +98,7 @@
 
 import type { Request } from 'express';
 import { query } from '../../db';
+import { resolvePlatformAdmin, tokenProvider } from '../../middleware/requirePlatformAdmin.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
 const logger = createScopedLogger('master-admin');
@@ -86,30 +110,17 @@ const logger = createScopedLogger('master-admin');
 export const MASTER_ADMIN_ROLES: ReadonlySet<string> = new Set(['super_admin']);
 
 /**
- * The platform owner's address, used when MASTER_ADMIN_EMAILS is unset.
+ * Emails holding the owner grant, lower-cased. Unset or blank is an empty list:
+ * no address is the owner by default.
  *
- * This is the same identity `server/db/bootstrap/seed-default-org.ts` seeds as
- * the platform's admin account, kept as a constant here rather than read from
- * DEMO_USER_EMAIL: that variable exists to point the *demo seed* somewhere
- * else, and reusing it would silently move the owner's licence grant with it.
- */
-export const DEFAULT_MASTER_ADMIN_EMAILS: readonly string[] = ['jonmichaelpsmith@gmail.com'];
-
-/**
- * Emails holding the owner grant, lower-cased.
- *
- * MASTER_ADMIN_EMAILS is a comma-separated REPLACEMENT for the default, not an
- * addition to it — an operator who sets it to a single address has moved the
- * grant, and one who sets it to a value with no usable entries has removed it.
- * A blank/whitespace-only value is treated as unset (the default applies), so a
- * variable that exists but was never filled in cannot silently leave the
- * platform with no owner.
+ * MASTER_ADMIN_EMAILS is comma-separated. It never admits anyone on its own —
+ * {@link resolveAdminStanding} consults it only for somebody the platform
+ * guard already admits (PLATFORM_ADMIN_EMAILS, a platform role, or an Access
+ * Management designation).
  */
 export function masterAdminEmails(): Set<string> {
-  const raw = process.env.MASTER_ADMIN_EMAILS;
-  if (raw == null || raw.trim() === '') return new Set(DEFAULT_MASTER_ADMIN_EMAILS);
   return new Set(
-    raw
+    (process.env.MASTER_ADMIN_EMAILS ?? '')
       .split(',')
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean),
@@ -122,14 +133,16 @@ export interface MasterAdminIdentity {
   email?: string | null;
   role?: string | null;
   roles?: ReadonlyArray<string | null | undefined> | null;
+  /** The authentication surface that issued the session ('local-jwt', 'saml', …). */
+  provider?: string | null;
 }
 
 /**
- * PURE: does this identity hold the owner grant?
+ * PURE: does this identity carry an owner signal (role or allowlisted e-mail)?
  *
- * Exported separately from {@link isMasterAdmin} so the rule can be tested
- * directly, and so non-HTTP callers (jobs, tools) can ask the same question
- * without fabricating a request object.
+ * A signal, not the verdict: the verdict also requires platform
+ * administration, which this cannot see ({@link resolveAdminStanding}).
+ * Exported so the rule can be tested directly.
  */
 export function isMasterAdminIdentity(identity: MasterAdminIdentity): boolean {
   const primaryRole = (identity.role ?? '').toString().trim().toLowerCase();
@@ -138,46 +151,48 @@ export function isMasterAdminIdentity(identity: MasterAdminIdentity): boolean {
   const roles = (identity.roles ?? []).map((r) => String(r ?? '').trim().toLowerCase());
   if (roles.some((r) => r && MASTER_ADMIN_ROLES.has(r))) return true;
 
+  // Not for a federated session: its e-mail is the identity provider's word.
+  const provider = (identity.provider ?? '').toString().trim().toLowerCase();
   const email = (identity.email ?? '').toString().trim().toLowerCase();
-  if (email && masterAdminEmails().has(email)) return true;
+  if (email && provider !== 'saml' && masterAdminEmails().has(email)) return true;
 
   return false;
 }
 
 /**
- * Does the authenticated request hold the owner grant, by the SYNCHRONOUS
- * signals alone?
+ * Does the authenticated request carry an owner signal, by the SYNCHRONOUS
+ * fields alone?
  *
  * Reads only fields an authentication middleware has already resolved — it
  * never parses a token, never touches the database, and an unauthenticated
- * request is never the owner.
- *
- * Prefer {@link resolveMasterAdmin} anywhere the answer decides what a person
- * sees: this one cannot see an in-app designation, so it answers "no" for
- * somebody the owner has designated through the console. It stays exported and
- * unchanged for callers that must not await, and for the pure-rule tests.
+ * request carries no signal. It is NOT the verdict: it cannot see platform
+ * administration or an in-app designation. Decide with
+ * {@link resolveMasterAdmin} / {@link resolveAdminStanding}.
  */
 export function isMasterAdmin(req: Request): boolean {
   return isMasterAdminIdentity({
     email: req.userEmail ?? req.user?.email ?? null,
     role: req.userRole ?? req.user?.role ?? null,
     roles: req.user?.roles ?? null,
+    provider: tokenProvider(req),
   });
 }
 
 /**
  * How long a designation lookup is reused, in milliseconds.
  *
- * The sync signals short-circuit before any of this, so the query only runs for
- * identities that are NOT already the owner by role or email — which is nearly
- * every request. Without a cache that would put a query on a nav-rail load for
- * every ordinary user of the platform, to answer "no" every time.
+ * The query runs only for somebody platform administration already admits and
+ * who carries no synchronous owner signal — staff, not customers — so the cache
+ * saves little now; it stays because it bounds that lookup per person.
  *
  * The cost is a bounded staleness window on BOTH directions: for up to this
  * long, a fresh designation is not yet honoured and a revoked one still is.
- * That is an entitlement widening, not route access — `requirePlatformAdmin`
- * has no cache, so a revoked person is out of the console immediately and only
- * their nav rail lags. Stated rather than hidden.
+ * Platform administration itself is not cached (`requirePlatformAdmin`), so a
+ * person whose last platform standing is revoked loses the owner grant at once;
+ * one who keeps a `support` or `platform_admin` standing keeps the owner grant
+ * — including cross-organization access-request decisions — for up to this
+ * window after the `super_admin` designation is revoked. Stated rather than
+ * hidden.
  */
 export const MASTER_ADMIN_GRANT_TTL_MS = 30_000;
 
@@ -224,16 +239,34 @@ async function hasMasterAdminGrant(userId: number, now: number): Promise<boolean
   return holds;
 }
 
+/** Who a request is, to the platform: staff admitted to Master Administration,
+ *  and — inside that — the owner holding the commercial unlock. */
+export interface AdminStanding {
+  /** {@link resolvePlatformAdmin}: would the Master Administration guard admit it? */
+  platformAdmin: boolean;
+  /** The owner grant. Never true where `platformAdmin` is false. */
+  masterAdmin: boolean;
+}
+
 /**
- * THE canonical answer: does this request hold the owner grant?
+ * THE canonical answer to both questions, in one pass.
  *
- * Sync signals first, so the common owner path costs no query and every other
- * path costs at most one per {@link MASTER_ADMIN_GRANT_TTL_MS}. Use this
- * wherever the answer decides what somebody sees.
+ * Platform administration is decided first, by the guard's own function; a
+ * request it refuses is never the owner and costs no designation lookup. Only
+ * inside it are the owner signals read — sync first, then the designation.
+ * Callers that need both (the nav rail) ask this once rather than resolving
+ * platform administration twice.
  */
-export async function resolveMasterAdmin(req: Request): Promise<boolean> {
-  if (isMasterAdmin(req)) return true;
+export async function resolveAdminStanding(req: Request): Promise<AdminStanding> {
+  const platformAdmin = await resolvePlatformAdmin(req);
+  if (!platformAdmin) return { platformAdmin, masterAdmin: false };
+  if (isMasterAdmin(req)) return { platformAdmin, masterAdmin: true };
   const userId = Number(req.userId ?? req.user?.id ?? NaN);
-  if (!Number.isFinite(userId)) return false;
-  return hasMasterAdminGrant(userId, Date.now());
+  if (!Number.isFinite(userId)) return { platformAdmin, masterAdmin: false };
+  return { platformAdmin, masterAdmin: await hasMasterAdminGrant(userId, Date.now()) };
+}
+
+/** Does this request hold the owner grant? {@link resolveAdminStanding}'s `masterAdmin`. */
+export async function resolveMasterAdmin(req: Request): Promise<boolean> {
+  return (await resolveAdminStanding(req)).masterAdmin;
 }

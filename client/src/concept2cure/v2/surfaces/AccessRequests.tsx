@@ -12,8 +12,16 @@
  * the platform owner's cross-workspace view, rendered inside the licensing
  * console by ./licensing/AccessRequestsPanel. They are the same queue with the
  * same governed answer, so they are the same component; the scope changes the
- * read, one column, and nothing else. Two copies would be two places for the
- * approval flow to drift apart.
+ * endpoint, one column, and nothing else. Two copies would be two places for
+ * the approval flow to drift apart.
+ *
+ * The scope picks the ENDPOINT, not a query parameter (2026-09-22). The
+ * workspace endpoint runs under the caller's own workspace, where the database
+ * shows nothing else — asked for every workspace it answered with one, and this
+ * screen rendered that as "no requests waiting" for all the others. The
+ * owner's view is read from, and answered through, the platform console's
+ * endpoint, which the server serves with cross-workspace reach. Both endpoints
+ * run the same server handlers.
  *
  * ── EVERY ANSWER IS GOVERNED ─────────────────────────────────────────────────
  * Approve and decline both go through `<GovernedConfirmDialog minReason={3}>` —
@@ -77,7 +85,12 @@ interface QueuePayload {
   truncated: boolean;
 }
 
-const QUEUE_PATH = '/api/module-access-requests';
+/** Where each scope's queue is read and answered. Chosen by scope, never by a
+ *  parameter the workspace endpoint would have to honour. */
+const QUEUE_PATHS = {
+  organization: '/api/module-access-requests',
+  all: '/api/admin/master/access-requests',
+} as const;
 
 /** Absolute, never relative. "3 days ago" is a claim about a clock the reader
  *  cannot see, and it becomes wrong on a page left open. */
@@ -112,6 +125,62 @@ type Pending = {
   label: string;
 };
 
+/* ── Whether anybody has ever asked ────────────────────────────────────────── */
+
+/** What a read of EVERY request found, for a Waiting view that came back empty.
+ *  `unknown` covers a failed read and "not asked" alike: it claims no history. */
+type PastAsks = 'answered' | 'never-asked' | 'unknown';
+
+/**
+ * What the empty Waiting view may say, and tell AnA, per outcome. One table so
+ * the screen and the summary AnA reads cannot say different things.
+ */
+const WAITING_EMPTY: Record<PastAsks, { hint: string; summary: string; actions?: string[] }> = {
+  answered: {
+    hint: 'Everything asked for so far has been answered.',
+    summary: 'No requests waiting; everything asked for so far has been answered.',
+    actions: ['Switch the filter between Waiting and Everything (view state only)'],
+  },
+  'never-asked': {
+    hint: 'Nobody has asked for an app yet. When somebody asks for one they cannot open, the request appears here.',
+    summary: 'No access requests exist for this workspace at all — nobody has asked for an app yet.',
+  },
+  unknown: {
+    hint: 'Nobody is waiting for an answer. Whether earlier requests exist could not be checked.',
+    summary:
+      'No requests waiting. Whether earlier requests exist could not be checked — do not report that everything was answered, or that nobody has asked.',
+    actions: ['Retry the access-request read'],
+  },
+};
+
+/**
+ * The Waiting read answers "is anybody waiting" and nothing more: an empty
+ * answer is the same for a workspace whose every request was answered and for
+ * one where nobody has ever asked. This screen used to say "Everything asked
+ * for so far has been answered" on a brand-new workspace, because it never
+ * looked (2026-09-23, launch row D2). So a real zero on the Waiting read is
+ * followed by a read of every request, and the copy says only what that read
+ * found. Nothing is read while somebody is waiting.
+ */
+function usePastAsks(queuePath: string, waitingEmpty: boolean, reload: number) {
+  const historyPath = waitingEmpty ? `${queuePath}?status=all` : null;
+  const history = useLiveData<QueuePayload>(
+    historyPath,
+    [historyPath, reload],
+    hasKeys<QueuePayload>('requests', 'scope'),
+  );
+  // `status` is undefined until this path's read has returned — including the
+  // one render after the path appears and before the hook's effect runs.
+  const pending = waitingEmpty && (history.loading || history.status === undefined);
+  const found =
+    waitingEmpty && !pending && !history.error && Array.isArray(history.data?.requests)
+      ? history.data!.requests
+      : null;
+  const pastAsks: PastAsks =
+    found === null ? 'unknown' : found.length > 0 ? 'answered' : 'never-asked';
+  return { pending, pastAsks, error: waitingEmpty ? (history.error ?? null) : null };
+}
+
 /* ── The queue ─────────────────────────────────────────────────────────────── */
 
 export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' }) {
@@ -121,7 +190,8 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
   const [busyId, setBusyId] = React.useState<number | null>(null);
   const [toast, fireToast] = useToast();
 
-  const path = `${QUEUE_PATH}?scope=${scope}&status=${showAnswered ? 'all' : 'open'}`;
+  const queuePath = QUEUE_PATHS[scope];
+  const path = `${queuePath}?status=${showAnswered ? 'all' : 'open'}`;
   const live = useLiveData<QueuePayload>(
     path,
     [path, reload],
@@ -131,6 +201,9 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
   const rows = Array.isArray(live.data?.requests) ? live.data!.requests : [];
   const openCount = rows.filter((r) => r.status === 'open').length;
 
+  const waitingEmpty = !showAnswered && !live.loading && !live.error && rows.length === 0;
+  const past = usePastAsks(queuePath, waitingEmpty, reload);
+
   /* WHAT ANA SEES HERE. Published only for the organization scope — the 'all'
      scope of this same component is mounted INSIDE master-licensing, and a
      publish from there would stamp that surface with this id. Never the
@@ -139,7 +212,7 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
      prose. */
   const truncated = live.data?.truncated === true;
   const anaContext = React.useMemo(() => {
-    if (live.loading) {
+    if (live.loading || past.pending) {
       return { summary: 'The access-request queue is still loading; nothing on screen is final yet.' };
     }
     if (live.error) {
@@ -151,16 +224,19 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
       };
     }
     if (rows.length === 0) {
-      return showAnswered
-        ? {
-            summary: 'No access requests exist for this workspace at all — nobody has asked for an app yet.',
-            facts: { openCount: 0, shownCount: 0, showAnswered, truncated },
-          }
-        : {
-            summary: 'No requests waiting; everything asked for so far has been answered.',
-            facts: { openCount: 0, shownCount: 0, showAnswered, truncated },
-            availableActions: ['Switch the filter between Waiting and Everything (view state only)'],
-          };
+      // Everything, read and empty, is itself the proof that nobody has asked.
+      const said = WAITING_EMPTY[showAnswered ? 'never-asked' : past.pastAsks];
+      return {
+        summary: said.summary,
+        facts: {
+          openCount: 0,
+          shownCount: 0,
+          showAnswered,
+          truncated,
+          ...(past.error ? { historyReadFailure: past.error } : {}),
+        },
+        ...(said.actions ? { availableActions: said.actions } : {}),
+      };
     }
     return {
       summary:
@@ -182,7 +258,7 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
         'Approving or declining a waiting request is a governed decision the administrator makes under a recorded reason — the outcome of an approval is a grant.',
       ],
     };
-  }, [live.loading, live.error, rows, openCount, showAnswered, truncated]);
+  }, [live.loading, live.error, rows, openCount, showAnswered, truncated, past.pending, past.pastAsks, past.error]);
   /* Registered only for the administrator's own queue. The identical
      component also renders as a master-licensing tab (scope="all"), and the
      bus is a single slot — claiming it there would answer for a screen the
@@ -241,7 +317,7 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
     if (!action) return;
     setPending(null);
     setBusyId(action.id);
-    const res = await apiCall('POST', `${QUEUE_PATH}/${action.id}/decision`, {
+    const res = await apiCall('POST', `${queuePath}/${action.id}/decision`, {
       decision: action.decision,
       reason,
     });
@@ -264,19 +340,20 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
   const cols =
     scope === 'all' ? 'ml-table ml-table-requests-all' : 'ml-table ml-table-requests';
 
-  return (
+  const queue = (
     <div className="mar-surface">
       <section className="ml-sec">
-        <div className="ml-banner">
-          <span className="ml-banner-ic" aria-hidden="true">
-            {I.info}
-          </span>
-          <p>
-            {scope === 'all'
-              ? 'Requests from every workspace. Approving turns the app on for that workspace and records who approved it and why. Declining records the reason and changes nothing.'
-              : 'People in your workspace who asked for an app they cannot open. Approving turns the app on for the whole workspace and records who approved it and why. Declining records the reason and changes nothing.'}
-          </p>
-        </div>
+        {scope === 'all' && (
+          <div className="ml-banner">
+            <span className="ml-banner-ic" aria-hidden="true">
+              {I.info}
+            </span>
+            <p>
+              Requests from every workspace. Approving turns the app on for that workspace and
+              records who approved it and why. Declining records the reason and changes nothing.
+            </p>
+          </div>
+        )}
 
         <div className="ml-toolbar">
           <div className="ml-field">
@@ -321,7 +398,9 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
           )}
         </div>
 
-        {live.loading && <div role="status" className="ml-loading">Loading requests…</div>}
+        {(live.loading || past.pending) && (
+          <div role="status" className="ml-loading">Loading requests…</div>
+        )}
 
         {/* A failed read shows no table. "Could not load" and "nobody is
             waiting" are opposite facts and this screen never conflates them. */}
@@ -333,19 +412,24 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
           />
         )}
 
-        {!live.loading && !live.error && rows.length === 0 && (
+        {!live.loading && !live.error && !past.pending && rows.length === 0 && (
           <EmptyState
             title={showAnswered ? 'No requests yet' : 'No requests waiting'}
             hint={
               showAnswered
                 ? 'When somebody asks for an app they cannot open, the request appears here.'
-                : 'Everything asked for so far has been answered.'
+                : WAITING_EMPTY[past.pastAsks].hint
             }
             icon={I.clipboardList}
             regulation="Serves the 21 CFR Part 11 record of who was granted an app, by whom, and why."
-            {...(showAnswered
-              ? {}
-              : { action: { label: 'Show answered requests', onAct: () => setShowAnswered(true) } })}
+            {...(/* Offered only over answered requests that exist: on a
+                    workspace where nobody has asked it opened another empty list. */
+                 !showAnswered && past.pastAsks === 'answered'
+              ? { action: { label: 'Show answered requests', onAct: () => setShowAnswered(true) } }
+              : {})}
+            {...(!showAnswered && past.pastAsks === 'unknown'
+              ? { retry: () => setReload((n) => n + 1), retryLabel: 'Check again' }
+              : {})}
           />
         )}
 
@@ -443,6 +527,33 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
         />
       )}
       <C2CToast msg={toast} />
+    </div>
+  );
+
+  /* The 'all' scope is a tab body: Master Licensing already draws the page and
+     its header, so a second frame there would nest one page inside another. */
+  if (scope === 'all') return queue;
+
+  /* The organization scope IS a page — registered as the `access-requests`
+     surface and reached from the account menu. `.page` supplies no padding of
+     its own (app-v2.css), so without this frame the queue ran edge to edge
+     with no title, unlike every sibling admin surface. Same `page-inner` +
+     `ph` header they use; the explanation that sat in a banner is the header's
+     sub-line, so it is said once. */
+  return (
+    <div className="page-inner">
+      <div className="ph">
+        <div>
+          <div className="ph-eyebrow">Admin — organization</div>
+          <h1 className="ph-title">Access requests</h1>
+          <div className="ph-sub">
+            People in your workspace who asked for an app they cannot open. Approving turns the app
+            on for the whole workspace and records who approved it and why. Declining records the
+            reason and changes nothing.
+          </div>
+        </div>
+      </div>
+      {queue}
     </div>
   );
 }

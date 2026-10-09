@@ -1,0 +1,7 @@
+ × server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts > ectd-sequence signature binding > changes when a vault leaf is re-pointed at a different document 13ms
+ × server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts > ectd-sequence signature binding > changes when the content pin changes 4ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts > ectd-sequence signature binding > does not change for workflow columns the signature must survive 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '7b6267a2758f4dd283a31ef06d164e5af800d…' not to be '7b6267a2758f4dd283a31ef06d164e5af800d…' // Object.is equality
+AssertionError: expected '7b6267a2758f4dd283a31ef06d164e5af800d…' not to be '7b6267a2758f4dd283a31ef06d164e5af800d…' // Object.is equality
+      Tests  2 failed | 1 passed (3)

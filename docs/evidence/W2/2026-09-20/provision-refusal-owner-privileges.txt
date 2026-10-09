@@ -1,0 +1,20 @@
+# 2026-09-20T23:59:12Z — DATABASE_OWNER_URL unset; DATABASE_URL=c2c (non-superuser, no CREATEROLE) on the still-empty clinicalsage_novector
+▶ 0/4 Connections
+  owner: c2c@127.0.0.1:5432/clinicalsage_novector   (DATABASE_URL fallback)
+  app:   c2c@127.0.0.1:5432/clinicalsage_novector
+  ⚠ DATABASE_OWNER_URL is not set — using DATABASE_URL as the owner connection.
+    This is the single-role posture: migrations and the request-serving pool share
+    one role, RLS is inert on it if it owns the tables, and production refuses to
+    boot on it under RLS_ENFORCE=on. Fine for a laptop; not for staging or production.
+  runtime role: not minted (APP_SERVICE_DB_PASSWORD unset) — the app connects as the owner
+
+▶ 1/4 Preflight (owner connection, nothing written except CREATE EXTENSION vector)
+  server PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1), database clinicalsage_novector, connected as c2c
+  ✓ pgvector available (package 0.6.0, not yet installed in this database)
+
+✗ The owner connection cannot provision this database — refusing before the first write.
+  • role c2c has neither SUPERUSER nor CREATEROLE. db/migrations/005_gcc_database_roles.sql, 017_gcc_shadow_agent_rbac.sql and 080_gcc_21cfr_part11_compliance.sql each CREATE ROLE. Run as a role with CREATEROLE (the RDS master user has it; locally: ALTER ROLE … CREATEROLE).
+  • role c2c cannot CREATE EXTENSION vector: permission denied to create extension "vector". vector is not a trusted extension, so a superuser (or the provider's admin role) must create it — either run this script as that role, or pre-create it: psql -U postgres -d clinicalsage_novector -c 'CREATE EXTENSION vector'.
+
+  Nothing else was written to the database.
+exit=5

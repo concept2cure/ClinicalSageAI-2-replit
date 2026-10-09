@@ -1,0 +1,93 @@
+Each guard below was removed or reverted in the code, the named test was run
+and seen RED, and the code was restored (hash-checked where noted). A test
+that has only ever been seen to pass has not been tested.
+
+── The record of a comment (authoring-record-comments.pglite.test.ts) ─────────
+1. POST /sections/:id/comment: the parent-on-this-section check disabled
+   (`if (false && parent_comment_id)`)
+   RED: (4) a reply whose parent is on another section -> expected 201 to be 400;
+        (7) every row reads intact -> 7 events, expected 6.
+2. The comment's trail row written on the pool instead of the transaction client
+   RED: (1) chained actor_id null, expected 3; (2) the chained write failing
+        left the comment (201, expected >= 500); (4) actor_id null vs 8.
+3. authoring-evidence.ts: metadataSha256 removed from the chain details
+   RED: (1) details.metadataSha256 undefined; all three (7) cases (every row
+        intact:false).
+   Router and evidence file restored; sha256 matched the pre-break snapshot.
+
+── Decisions on tracked changes (authoring-record-decisions.pglite.test.ts) ──
+4. describeTrackedChange: `c.text` -> `c.text.slice(0, 500)`
+   RED: 1 — a 1,200-character insertion lands in the metadata in full.
+5. The section-in-document check made to pass everything
+   RED: 4 — a section of ANOTHER document -> 400 (got 200).
+6. COMMIT moved before the trail write (the old commit-then-audit order)
+   RED: 5 — audit_logs refusing the chained row -> 500 and nothing survives
+        ("a decision committed without its record"); 1 — chain_seq NULL.
+7. statedReason's `: null` -> `: 'Reviewer decision'`
+   RED: 6 — no reason, or only whitespace -> null in trail and audit_logs.
+8. resolveTurnRecordSource: `organization_id = $1` -> `(organization_id = $1 OR true)`
+   RED: 3 — another organization's turn record -> unverified (single and bulk).
+
+── The export and the AI draft accept (authoring-record-export / -draft-accept-record) ──
+9.  AI draft accept: trail row on the pool instead of the client
+    RED: written on the transaction's client; trail INSERT failing -> 500
+         (got 200: content landed with no record).
+10. generated_draft always recorded / never recorded
+    RED: both unedited-draft cases / the edited-draft case.
+11. audited-export.ts: the export row made best-effort (.catch)
+    RED: (iii) expected 503, got 200 — the package left unrecorded.
+    (Re-run 2026-09-29 after the file split: still RED.)
+12. metadataSha256 with JSON.stringify instead of stableStringify
+    RED: (ii) the offline verifier reports ['metadata'] on every event.
+13. walkTenantChain's catch: ok:null -> ok:true
+    RED: (v).
+14. Package sent first, export row written after
+    RED: (i) on the ordering itself (response at trace index 3, before the
+         COMMIT at 10); (iii) returned 200.
+15. The malformed-id guard removed from GET /docs/:id/audit and /audit/export
+    RED: (iv) an id that is not a document id -> 404 (got 500).
+
+── Attribution (authoring-record-attribution.pglite.test.ts) ──────────────────
+16. Decision routes back to refusing only DOCUMENT_FROZEN
+    RED: 1 — an unknown id, and another tenant's document -> 404 (both).
+17. Standalone index row back to userId: ctx.actorEmail
+    RED: 2 — review with a reason; approval with none (chained actor_id null).
+18. Review comments not passed as the reason
+    RED: 2 — a review stating why.
+19. Reorder recorded with a rebuilt request (what the legacy wrapper did)
+    RED: 2 — a section reorder (no actor on the chained row).
+
+── The editor (suggestionSourceRecord / documentWorkbenchDecisionPayload / auditRailIntegrity) ──
+20. continuesRange's sourceRecord clause removed
+    RED: 4 tests in suggestionSourceRecord, 2 in documentWorkbenchDecisionPayload.
+21. parseHTML for data-source-record returns null
+    RED: 9 + 3 tests (the single accept POSTed sourceRecord: undefined).
+22. insertSuggestedContent sets sourceRecord: null
+    RED: 4 tests.
+23. InsertionMark back to `excludes: 'deletion'`
+    RED: a human typing at the end of a pending AnA draft is their own change.
+24. changeIdOf without the turn record
+    RED: identical drafts from two turns in one minute are two changes.
+25. auditIntegrityNote speaking for any non-intact row
+    RED: 2 (a chained:false/intact:null row showed a note).
+26. The export fetched with a raw fetch and no bearer token
+    RED: 'GETs the export with the bearer token'; ci:unauthenticated-fetch RED.
+27. The export refusal swallowed
+    RED: 'shows the server's refusal on the rail (503)'.
+
+── AnA never records a reason nobody gave (governed-reason-not-invented.test.ts) ──
+28. One handler back to a stock reason
+    ('Investigator registered via AnA' when none is sent)
+    RED: 6 (refusals, and the syntax-tree scan: the reason is not a variable).
+29. create_clinical_investigator dropped from REASON_REQUIRED_TOOLS
+    RED: 2 (the completeness scan; the ask-before-confirm case).
+30. The ask-before-confirmation check removed from preHandlerRefusal
+    RED: 1.
+31. The wrapper's ReasonNotStatedError catch removed
+    RED: 20 (the refusal became a thrown error).
+    The completeness scan also found a real gap when first run:
+    revise_qms_document recorded a governed action and was not in the set.
+
+── The trigger registry (audit-immutability-triggers.pglite.test.ts) ─────────
+32. 20260817_doc_revisions_immutable_ledger.sql removed from the literal list
+    RED: the literal-list check, and the ALTER-closure contract.

@@ -48,6 +48,7 @@ import {
   reapOrphanedRuns,
   stopRunInternally,
   _resetLocalRunsForTest,
+  MAX_SCREEN_REPORT_CHARS,
 } from '../run-control.js';
 import { MAX_INTERJECTION_CHARS } from '../run-status.js';
 
@@ -242,7 +243,7 @@ describe('control', () => {
     const { runId } = await newRun();
     await control(runId, 'interject', { message: 'x'.repeat(MAX_INTERJECTION_CHARS + 500) });
     const [drained] = await consumeInterjections(pool(), runId);
-    expect(drained.length).toBe(MAX_INTERJECTION_CHARS);
+    expect(drained.text.length).toBe(MAX_INTERJECTION_CHARS);
   });
 
   it('loses a guarded race rather than applying twice', async () => {
@@ -312,8 +313,8 @@ describe('the steer drain', () => {
     await control(runId, 'interject', { message: 'narrow to Class III' });
     await control(runId, 'interject', { message: 'skip the EU section' });
     expect(await consumeInterjections(pool(), runId)).toEqual([
-      'narrow to Class III',
-      'skip the EU section',
+      { kind: 'steer', text: 'narrow to Class III' },
+      { kind: 'steer', text: 'skip the EU section' },
     ]);
   });
 
@@ -331,7 +332,7 @@ describe('the steer drain', () => {
       consumeInterjections(pool(), runId),
       consumeInterjections(pool(), runId),
     ]);
-    expect([...a, ...b]).toEqual(['narrow to Class III']);
+    expect([...a, ...b]).toEqual([{ kind: 'steer', text: 'narrow to Class III' }]);
   });
 
   it('is empty for a run with nothing queued', async () => {
@@ -353,6 +354,209 @@ describe('the steer drain', () => {
       [runId],
     );
     expect(naive.rows[0].drained).toEqual([]);
+  });
+});
+
+/**
+ * What the app saw on the person's screen — a move AnA made that did not land —
+ * told to her mid-turn.
+ *
+ * It used to ride `interject`, and so became three false things at once: a
+ * control event in the decision lineage saying the PERSON typed it, a resume of
+ * a run they had deliberately paused, and (in the stream) an announcement the
+ * client renders as "You steered AnA:". Each case below holds one of those
+ * apart, plus the ownership rules a report shares with every control.
+ */
+describe('screen reports', () => {
+  const SAID = 'Opening the Vault screen did not happen: no program is open.';
+  const report = (runId: string, message = SAID, over: Record<string, unknown> = {}) =>
+    control(runId, 'screen_report', { message, ...over });
+
+  it('is drained with its kind, in arrival order with the steers around it', async () => {
+    const { runId } = await newRun();
+    await control(runId, 'interject', { message: 'narrow to Class III' });
+    await report(runId);
+    expect(await consumeInterjections(pool(), runId)).toEqual([
+      { kind: 'steer', text: 'narrow to Class III' },
+      { kind: 'screen_report', text: SAID },
+    ]);
+  });
+
+  it('is NOT written to the control lineage — the person did not type it', async () => {
+    const { runId } = await newRun();
+    const r = await report(runId);
+    expect(r.ok).toBe(true);
+    const row = await readRun(pool(), runId, ORG);
+    expect(row?.controlEvents, 'an app observation recorded as a human decision').toEqual([]);
+    // Queued all the same, so the empty lineage above is not an empty write.
+    expect(row?.pendingInterjections).toHaveLength(1);
+  });
+
+  it('leaves a paused run paused, and waits in the queue for the resume', async () => {
+    const { runId } = await newRun();
+    await control(runId, 'pause');
+    const r = await report(runId);
+    expect(r.ok).toBe(true);
+    expect(r.status).toBe('paused');
+    const row = await readRun(pool(), runId, ORG);
+    expect(row?.status, 'a report resumed a run the person had paused').toBe('paused');
+    expect(row?.controlEvents.map(e => e.action)).toEqual(['pause']);
+    expect(await consumeInterjections(pool(), runId)).toEqual([{ kind: 'screen_report', text: SAID }]);
+  });
+
+  it('still wakes a held checkpoint — which re-reads paused and keeps waiting', async () => {
+    // The wake is how anything queued reaches the owning instance. With the
+    // status unchanged it moves nothing, which is the point.
+    const { runId, handle } = await newRun();
+    await control(runId, 'pause');
+    const woke = handle.wake(5_000).then(() => 'woke' as const);
+    await report(runId);
+    const slept = new Promise<'slept'>(resolve => setTimeout(() => resolve('slept'), 1_000));
+    expect(await Promise.race([woke, slept])).toBe('woke');
+    expect((await readRun(pool(), runId, ORG))?.status).toBe('paused');
+  });
+
+  it("is refused on a colleague's run — a report must come from the run's own user", async () => {
+    const { runId } = await newRun({ userId: OTHER_USER });
+    expect((await report(runId)).code).toBe('NOT_YOURS');
+    expect(await consumeInterjections(pool(), runId)).toEqual([]);
+  });
+
+  it("is NOT FOUND on another organization's run", async () => {
+    const { runId } = await newRun({ organizationId: OTHER_ORG, userId: null });
+    expect((await report(runId)).code).toBe('NOT_FOUND');
+  });
+
+  it('is refused on a settled run, and nothing is queued for a round that will never come', async () => {
+    const { runId } = await newRun();
+    await control(runId, 'cancel');
+    const r = await report(runId);
+    expect(r.ok).toBe(false);
+    expect(r.code).toBe('TERMINAL');
+    expect(await consumeInterjections(pool(), runId)).toEqual([]);
+  });
+
+  /**
+   * A pool on which `action` is accepted — a real control, committed — after
+   * the report has read the row and before it writes: the window two requests
+   * landing together actually open.
+   */
+  const racedBy = (runId: string, action: 'pause' | 'cancel') => {
+    const inner = pool();
+    let raced = false;
+    return {
+      ...inner,
+      query: async (text: string, params?: unknown[]) => {
+        if (!raced && text.includes('SET pending_interjections = pending_interjections ||')) {
+          raced = true;
+          expect((await control(runId, action)).ok).toBe(true);
+        }
+        return inner.query(text, params);
+      },
+    };
+  };
+
+  it('is not lost to a Pause pressed between its read and its write', async () => {
+    // A report changes no status, so the status it read is no precondition of
+    // it. Guarded on that exact status, a Pause landing in the window made the
+    // report lose a race it was never in: refused as TERMINAL on a run that
+    // was live, and AnA, once resumed, never told that her move had failed.
+    const { runId } = await newRun();
+    const r = await applyControl({
+      pool: racedBy(runId, 'pause'),
+      runId,
+      organizationId: ORG,
+      userId: USER,
+      action: 'screen_report',
+      message: SAID,
+    });
+    expect(r, 'a live run refused the report as settled').toMatchObject({ ok: true, status: 'paused' });
+    const row = await readRun(pool(), runId, ORG);
+    expect(row?.status).toBe('paused');
+    expect(row?.controlEvents.map(e => e.action)).toEqual(['pause']);
+    expect(await consumeInterjections(pool(), runId)).toEqual([{ kind: 'screen_report', text: SAID }]);
+  });
+
+  it('is still refused by a Stop that lands between its read and its write', async () => {
+    const { runId } = await newRun();
+    const r = await applyControl({
+      pool: racedBy(runId, 'cancel'),
+      runId,
+      organizationId: ORG,
+      userId: USER,
+      action: 'screen_report',
+      message: SAID,
+    });
+    expect(r).toMatchObject({ ok: false, code: 'TERMINAL', status: 'cancelled' });
+    expect(await consumeInterjections(pool(), runId)).toEqual([]);
+  });
+
+  it('refuses an empty report', async () => {
+    const { runId } = await newRun();
+    const r = await report(runId, '   ');
+    expect(r.ok).toBe(false);
+    expect(r.code).toBe('INVALID');
+  });
+
+  it('caps a report — one sentence about a move, not a document', async () => {
+    const { runId } = await newRun();
+    await report(runId, 'x'.repeat(MAX_SCREEN_REPORT_CHARS + 500));
+    const [drained] = await consumeInterjections(pool(), runId);
+    expect(drained).toMatchObject({ kind: 'screen_report' });
+    expect(drained.text.length).toBe(MAX_SCREEN_REPORT_CHARS);
+  });
+
+  it('reads an entry queued with no kind as a steer — rows queued before reports existed', async () => {
+    const { runId } = await newRun();
+    await db.query(`UPDATE ana_runs SET pending_interjections = $2::jsonb WHERE id = $1`, [
+      runId,
+      JSON.stringify([{ text: 'skip the EU section', at: '2026-09-01T00:00:00.000Z', byUserId: USER }]),
+    ]);
+    expect(await consumeInterjections(pool(), runId)).toEqual([
+      { kind: 'steer', text: 'skip the EU section' },
+    ]);
+  });
+});
+
+describe('move landings', () => {
+  // The screen settles each move AnA made; the stream holds her next round
+  // until it has. A landing is the app's confirmation, not anyone's decision.
+  it('queues a landing with its move, drained with nothing for the model to read', async () => {
+    const { runId } = await newRun();
+    const r = await control(runId, 'move_landed', { moveId: 'toolu_nav_1' });
+    expect(r.ok).toBe(true);
+    await control(runId, 'screen_report', { message: 'Opening the Vault screen did not happen.', moveId: 'toolu_act_2' });
+    expect(await consumeInterjections(pool(), runId)).toEqual([
+      { kind: 'move_landed', text: '', moveId: 'toolu_nav_1' },
+      { kind: 'screen_report', text: 'Opening the Vault screen did not happen.', moveId: 'toolu_act_2' },
+    ]);
+  });
+
+  it('is not written to the control lineage, and leaves a paused run paused', async () => {
+    const { runId } = await newRun();
+    await control(runId, 'pause');
+    const r = await control(runId, 'move_landed', { moveId: 'toolu_nav_1' });
+    expect(r.ok).toBe(true);
+    const row = await readRun(pool(), runId, ORG);
+    expect(row?.status).toBe('paused');
+    expect(row?.controlEvents.map(e => e.action)).toEqual(['pause']);
+  });
+
+  it('needs a move id that is one, and is held to the same ownership as a report', async () => {
+    const { runId } = await newRun();
+    expect((await control(runId, 'move_landed')).code).toBe('INVALID');
+    expect((await control(runId, 'move_landed', { moveId: 'not a move id' })).code).toBe('INVALID');
+    expect(await consumeInterjections(pool(), runId)).toEqual([]);
+    const theirs = await newRun({ userId: OTHER_USER });
+    expect((await control(theirs.runId, 'move_landed', { moveId: 'toolu_1' })).code).toBe('NOT_YOURS');
+  });
+
+  it('a malformed move id on a report is dropped, and the report kept', async () => {
+    const { runId } = await newRun();
+    await control(runId, 'screen_report', { message: 'Opening the Vault screen did not happen.', moveId: '../../x' });
+    expect(await consumeInterjections(pool(), runId)).toEqual([
+      { kind: 'screen_report', text: 'Opening the Vault screen did not happen.' },
+    ]);
   });
 });
 
@@ -450,10 +654,36 @@ describe('holding a run at a governed action', () => {
  * reader chasing the e-signature rules should not have to read the gate's own.
  */
 describe('deciding a held run', () => {
+  it('refuses a decision from another tenant, and leaves the run held', async () => {
+    // The route that serves this looks the run up org-scoped first and 404s, so
+    // this was never reachable through the API — but the write itself carried no
+    // tenant predicate, and /api/ana-ri is mounted without requireTenantContext
+    // so it runs on the SHARED pool. With RLS_ENFORCE off, which is today, the
+    // statement was the only thing that could enforce the boundary and it did
+    // not. A decision recorded against another tenant's run is an e-signature
+    // attached to an action its signer never saw.
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending());
+
+    const ok = await recordApprovalDecision(pool(), runId, OTHER_ORG, {
+      toolUseId: 'tu_1',
+      decided: 'approved',
+      decidedAt: '2026-09-19T00:01:00.000Z',
+      byUserId: USER,
+      reasonForChange: 'Should not be able to decide this',
+      result: { success: true },
+    });
+
+    expect(ok, 'another tenant must not be able to decide this run').toBe(false);
+    const row = await readRun(pool(), runId, ORG);
+    expect(row?.status, 'the run stays held').toBe('awaiting_approval');
+    expect(await readApprovalDecision(pool(), runId, 'tu_1')).toBeNull();
+  });
+
   it('releases the run when the person decides, and keeps what they decided', async () => {
     const { runId } = await newRun();
     await requestApproval(pool(), runId, pending());
-    const ok = await recordApprovalDecision(pool(), runId, {
+    const ok = await recordApprovalDecision(pool(), runId, ORG, {
       toolUseId: 'tu_1',
       decided: 'approved',
       decidedAt: '2026-09-19T00:01:00.000Z',
@@ -474,7 +704,7 @@ describe('deciding a held run', () => {
     // signature collected for one action authorises another.
     const { runId } = await newRun();
     await requestApproval(pool(), runId, pending('tu_1'));
-    const ok = await recordApprovalDecision(pool(), runId, {
+    const ok = await recordApprovalDecision(pool(), runId, ORG, {
       toolUseId: 'tu_2',
       decided: 'approved',
       decidedAt: '2026-09-19T00:01:00.000Z',
@@ -487,7 +717,7 @@ describe('deciding a held run', () => {
 
   it('a decision cannot be recorded against a run that is not waiting', async () => {
     const { runId } = await newRun();
-    const ok = await recordApprovalDecision(pool(), runId, {
+    const ok = await recordApprovalDecision(pool(), runId, ORG, {
       toolUseId: 'tu_1',
       decided: 'approved',
       decidedAt: '2026-09-19T00:01:00.000Z',
@@ -502,7 +732,7 @@ describe('deciding a held run', () => {
     // refused step.
     const { runId } = await newRun();
     await requestApproval(pool(), runId, pending());
-    await recordApprovalDecision(pool(), runId, {
+    await recordApprovalDecision(pool(), runId, ORG, {
       toolUseId: 'tu_1',
       decided: 'denied',
       decidedAt: '2026-09-19T00:01:00.000Z',
@@ -526,7 +756,7 @@ describe('deciding a held run', () => {
     // the last answer as this one.
     const { runId } = await newRun();
     await requestApproval(pool(), runId, pending('tu_1'));
-    await recordApprovalDecision(pool(), runId, {
+    await recordApprovalDecision(pool(), runId, ORG, {
       toolUseId: 'tu_1', decided: 'approved', decidedAt: 'x', byUserId: USER,
     });
     await requestApproval(pool(), runId, pending('tu_2'));

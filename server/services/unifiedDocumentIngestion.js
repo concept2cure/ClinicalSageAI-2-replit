@@ -23,7 +23,6 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import { TextProcessor } from '../utils/textProcessing.js';
-import { pool as dbPool } from '../utils/database.js';
 import { db } from '../db.ts';
 import { ModuleIntegrationService } from './ModuleIntegrationService.ts';
 // import PDFParser from 'pdf-parse';
@@ -358,7 +357,6 @@ Object.values(STORAGE_PATHS).forEach(dir => {
  */
 export class UnifiedDocumentIngestion {
   constructor() {
-    this.processingQueue = new Map();
     this.knowledgeBase = new Map();
     this.moduleIntegration = new ModuleIntegrationService(db);
   }
@@ -1195,7 +1193,6 @@ export class UnifiedDocumentIngestion {
         });
       }
 
-      const versionId = registered.version?.id;
       const documentRecord = {
         ...registered,
         processing_id: data.processingId,
@@ -1210,128 +1207,10 @@ export class UnifiedDocumentIngestion {
         structure: data.structure,
       };
 
-      // Store document chunks if available
-      if (versionId && data.processedText.chunks && data.processedText.chunks.length > 0) {
-        await this.storeDocumentChunks(versionId, data.processedText.chunks, tenantId);
-      }
-
-      // Store extracted tables if available
-      if (versionId && data.extractedContent.tables && data.extractedContent.tables.length > 0) {
-        await this.storeDocumentTables(versionId, data.extractedContent.tables, tenantId);
-      }
-
       return documentRecord;
     } catch (error) {
       console.error('Database storage failed:', error);
       throw error;
-    }
-  }
-
-  /**
-   * Store document chunks for vector search
-   */
-  async storeDocumentChunks(documentVersionId, chunks, tenantId) {
-    try {
-      // Note: document_chunks.id is auto-incremented integer, not UUID
-      // Using existing columns: doc_id, content, embedding (requires vector generation)
-      const chunkInsertQuery = `
-        INSERT INTO document_chunks (
-          doc_id,
-          doc_title,
-          chunk_index,
-          content,
-          chunk_text,
-          embedding,
-          document_version_id,
-          created_at,
-          tenant_id
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      `;
-
-      // Generate placeholder embedding vector (1536 dimensions) - should be replaced with actual embeddings
-      const placeholderEmbedding = Array(1536).fill(0.0);
-
-      for (let i = 0; i < chunks.length; i++) {
-        await dbPool.query(chunkInsertQuery, [
-          documentVersionId, // Using document_version_id as doc_id
-          'Document', // Placeholder title - should be extracted from document metadata
-          i,
-          chunks[i], // content column
-          chunks[i], // chunk_text column (duplicate for compatibility)
-          placeholderEmbedding,
-          documentVersionId,
-          new Date(),
-          tenantId,
-        ]);
-      }
-
-      console.log(
-        `[UNIFIED INGESTION] Stored ${chunks.length} document chunks with tenant isolation`
-      );
-    } catch (error) {
-      console.error('Failed to store document chunks:', error);
-      // Non-critical error, continue processing
-    }
-  }
-
-  /**
-   * Store extracted tables from documents
-   */
-  async storeDocumentTables(documentVersionId, tables, tenantId) {
-    try {
-      const tableInsertQuery = `
-        INSERT INTO document_tables (table_id, document_version_id, table_index, table_data, headers, created_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-      `;
-
-      for (let i = 0; i < tables.length; i++) {
-        const tableId = uuidv4();
-        await dbPool.query(tableInsertQuery, [
-          tableId,
-          documentVersionId,
-          i,
-          JSON.stringify(tables[i].data),
-          JSON.stringify(tables[i].headers || []),
-          new Date(),
-          tenantId,
-        ]);
-      }
-
-      console.log(
-        `[UNIFIED INGESTION] Stored ${tables.length} document tables with tenant isolation`
-      );
-    } catch (error) {
-      console.error('Failed to store document tables:', error);
-      // Non-critical error, continue processing
-    }
-  }
-
-  /**
-   * Create audit trail entry
-   */
-  async createAuditEntry(documentVersionId, action, userId, details, tenantId) {
-    try {
-      const auditQuery = `
-        INSERT INTO document_audit_trail (audit_id, document_version_id, action, performed_by, performed_at, details, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-      `;
-
-      const auditId = uuidv4();
-      await dbPool.query(auditQuery, [
-        auditId,
-        documentVersionId,
-        action,
-        userId,
-        new Date(),
-        JSON.stringify(details),
-        tenantId,
-      ]);
-
-      console.log(`[UNIFIED INGESTION] Created audit trail entry with tenant isolation: ${action}`);
-    } catch (error) {
-      console.error('Failed to create audit entry:', error);
-      // Non-critical error, continue processing
     }
   }
 
@@ -1535,50 +1414,6 @@ export class UnifiedDocumentIngestion {
     if (lowerText.includes('report')) return 'Clinical Report';
     if (lowerText.includes('submission')) return 'Regulatory Submission';
     return 'General Document';
-  }
-
-  /**
-   * Search across all ingested documents
-   */
-  async searchDocuments(query, filters = {}) {
-    try {
-      let searchQuery = `
-        SELECT * FROM unified_documents
-        WHERE text_content ILIKE $1
-      `;
-
-      const queryParams = [`%${query}%`];
-
-      if (filters.module) {
-        searchQuery += ` AND module = $${queryParams.length + 1}`;
-        queryParams.push(filters.module);
-      }
-
-      if (filters.documentType) {
-        searchQuery += ` AND ai_analysis::text ILIKE $${queryParams.length + 1}`;
-        queryParams.push(`%${filters.documentType}%`);
-      }
-
-      searchQuery += ` ORDER BY created_at DESC LIMIT 50`;
-
-      const result = await dbPool.query(searchQuery, queryParams);
-      return result.rows;
-    } catch (error) {
-      console.error('Document search failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get processing statistics
-   */
-  getProcessingStats() {
-    return {
-      totalDocuments: this.knowledgeBase.size,
-      processingQueue: this.processingQueue.size,
-      lastProcessed: new Date(),
-      supportedFormats: ['PDF', 'DOCX', 'Excel', 'PowerPoint', 'TXT', 'CSV', 'XML', 'JSON'],
-    };
   }
 }
 

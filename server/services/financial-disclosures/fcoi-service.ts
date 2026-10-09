@@ -20,6 +20,7 @@ import { pool } from '../../db';
 import { linkProvenanceTx } from '../provenance/provenance-service';
 import { deriveFormType, computeDisclosureContentHash, type DisclosureSnapshot } from './fcoi-logic';
 import type { FcoiInterestType, InvestigatorRole } from '../../../shared/schema/financial-disclosures';
+import type { GovernedSignMeaning } from '../part11/signature-meanings';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -235,7 +236,9 @@ export async function certifyDisclosureTx(
   orgId: number,
   userId: number,
   id: number,
-  meaning = 'Certified',
+  // The signer's own meaning, already checked against the closed vocabulary by
+  // the route; there is no default, because a meaning nobody gave is not one.
+  meaning: GovernedSignMeaning,
 ): Promise<{ contentHash: string; provenanceLinkId: number | null }> {
   const snap = await loadDisclosureSnapshot(client, orgId, id);
   if (snap.row.status === 'signed') throw new FcoiError('INVALID_STATE', 'Disclosure is already signed.');

@@ -116,14 +116,68 @@ describe('packageLeafBytes — lifecycle operations after sequence 0000', () => 
         sponsorId: 'SPON-1', sponsorName: 'Acme Bio', productName: 'Compound X', environment: 'staging', outputDir,
         leaves: [{
           ctdSection: '3.2.S.1', fileName: 'drug-substance.pdf', bytes: pdf('DS v3'), title: 'Drug Substance General',
-          operation: 'replace', modifiedFile: '../0001/m3/32-body-data/32s-drug-sub/drug-substance.pdf',
+          operation: 'replace', modifiedFile: '../0001/index.xml#leaf-3-2-S-1-drug-substance',
         }],
       });
       const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
       const indexXml = await zip.file('index.xml')!.async('string');
       expect(indexXml).toMatch(/operation="replace"/);
-      expect(indexXml).toContain('../0001/m3/32-body-data/32s-drug-sub/drug-substance.pdf');
-      expect(indexXml).not.toMatch(/operation="new"/);
+      expect(indexXml).toContain('modified-file="../0001/index.xml#leaf-3-2-S-1-drug-substance"');
+      // Every sequence carries its own regional backbone, so index.xml's
+      // pointer to it is always "new"; no CONTENT leaf may be.
+      const m1 = /<m1-administrative-information-and-prescribing-information>[\s\S]*?<\/m1-administrative-information-and-prescribing-information>/;
+      expect(indexXml.match(m1)?.[0]).toMatch(/operation="new"[^>]*xlink:href="m1\/us\/us-regional\.xml"/);
+      expect(indexXml.replace(m1, '')).not.toMatch(/operation="new"/);
+    } finally {
+      await fs.rm(outputDir, { recursive: true, force: true });
+    }
+  });
+
+  it('files a WITHDRAWAL with no bytes: a backbone delete, no file in the zip, no line in the md5 manifest', async () => {
+    // A withdrawal names a document that lives in a PRIOR sequence, so it ships
+    // nothing of its own. This adapter wrote every leaf's bytes to disk
+    // unconditionally, so a bytes-less delete could not reach the packager at
+    // all — and `delete` was unreachable from the package path.
+    const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), 'plb-out5-'));
+    try {
+      const bundle = await packageLeafBytes({
+        region: 'fda', applicationId: 'IND123456', sequence: '0002', submissionType: 'Efficacy Supplement',
+        fda: { applicationType: 'ind', submissionType: 'Efficacy Supplement' },
+        sponsorId: 'SPON-1', sponsorName: 'Acme Bio', productName: 'Compound X', environment: 'staging', outputDir,
+        leaves: [
+          { ctdSection: '3.2.S.1', fileName: 'drug-substance.pdf', bytes: pdf('DS v3'), title: 'Drug Substance', operation: 'replace', modifiedFile: '../0001/index.xml#leaf-3-2-S-1-drug-substance' },
+          { ctdSection: '3.2.P.1', fileName: 'withdrawn.pdf', title: 'Withdrawn In Error', operation: 'delete', md5: 'a'.repeat(32), modifiedFile: '../0001/index.xml#leaf-3-2-P-1-withdrawn' },
+        ],
+      });
+      const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
+      const indexXml = await zip.file('index.xml')!.async('string');
+      expect(indexXml).toMatch(/operation="delete"/);
+      expect(indexXml).toContain('modified-file="../0001/index.xml#leaf-3-2-P-1-withdrawn"');
+      // No bytes shipped for it, and nothing claiming its integrity.
+      expect(Object.keys(zip.files).some((n) => n.includes('withdrawn.pdf'))).toBe(false);
+      expect(await zip.file('util/index-md5.txt')!.async('string')).not.toContain('withdrawn.pdf');
+      // It names the document it withdraws, and carries no checksum: it ships
+      // no file (2026-09-29, W5/D7 — it carried the withdrawn file's checksum).
+      expect(indexXml).toContain('Withdrawn In Error');
+      expect(indexXml).not.toContain(`checksum="${'a'.repeat(32)}"`);
+      expect(indexXml.match(/<leaf[^>]*operation="delete"[^>]*>/)?.[0]).not.toMatch(/checksum=|xlink:href=/);
+      // In the manifest, because that entry is what removes the document from
+      // the NEXT sequence's fold of what is on file.
+      expect(bundle.leafManifest?.some((m) => m.fileName === 'withdrawn.pdf' && m.operation === 'delete')).toBe(true);
+    } finally {
+      await fs.rm(outputDir, { recursive: true, force: true });
+    }
+  });
+
+  it('REFUSES a leaf that carries no bytes and is not a withdrawal', async () => {
+    const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), 'plb-out6-'));
+    try {
+      await expect(packageLeafBytes({
+        region: 'fda', applicationId: 'IND123456', sequence: '0000', submissionType: 'original',
+        fda: { applicationType: 'ind', submissionType: 'original' },
+        sponsorId: 'S', sponsorName: 'A', productName: 'X', environment: 'staging', outputDir,
+        leaves: [{ ctdSection: '3.2.S.1', fileName: 'empty.pdf', title: 'No bytes' } as any],
+      })).rejects.toThrow(/must carry it/);
     } finally {
       await fs.rm(outputDir, { recursive: true, force: true });
     }

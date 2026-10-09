@@ -1,0 +1,8 @@
+$ npx tsc -p <scoped tsconfig: the three changed files + the repo's ambient *.d.ts> --noEmit   (the full-tree check is not run on this host)
+HEAD=872c8648 (working tree: P0-2d guard applied, uncommitted)
+(no diagnostics in server/mcp/index.ts, server/mcp/config.ts or the new test file)
+other diagnostics, all in transitively imported modules that this scoped include does not fully type (pre-existing, untouched): 7
+      4 server/services/concept2cure/governedDocumentContractService.ts
+      2 server/services/authoring/authoring-permissions.ts
+      1 server/middleware/orgMembership.ts
+tsc exit=2

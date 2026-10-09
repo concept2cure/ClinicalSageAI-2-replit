@@ -1,0 +1,21 @@
+ × tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way 74ms
+   → a failed purge must destroy nothing: expected +0 to be 1 // Object.is equality
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails 64ms
+ × tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have 25ms
+   → expected 1 to be +0 // Object.is equality
+ × tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing 21ms
+   → promise resolved "{ organizationId: 90601, …(8) }" instead of rejecting
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason 13ms
+ × tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing 11ms
+   → an incomplete return must not become purge evidence: expected true to be false // Object.is equality
+ × tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read 10ms
+   → expected true to be false // Object.is equality
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export 8ms
+ × tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits 29ms
+   → expected undefined to deeply equal { objects: 1, deleted: 1, …(1) }
+ × tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way 76ms
+   → expected +0 to be 1 // Object.is equality
+ × tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove 17ms
+   → Cannot read properties of undefined (reading 'objects')
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed | 3 passed (11)

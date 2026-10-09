@@ -2,7 +2,7 @@
  * The compute sandbox must not be able to read the server's secrets.
  *
  * ── The threat this is about ──────────────────────────────────────────────────
- * `workers/artifact-compute/python-script-runtime.py` calls `exec()` on
+ * `workers/artifact-compute/python-script-runtime.py` called `exec()` on
  * AnA-authored Python. That is the feature: it is a scripting sandbox, and the
  * runtime documents it plainly. The problem was never the `exec` — it was that
  * both spawn sites passed `{ ...process.env }`, so the script's environment
@@ -23,19 +23,17 @@
  * cannot find it. That is the property; everything else is a detail of how it is
  * achieved.
  *
- * ── What this does NOT claim ──────────────────────────────────────────────────
- * The script can still execute arbitrary code, spawn processes and touch the
- * filesystem, because that is what the runtime is for. Containment of THAT is
- * the container's job — which `runner.ts` describes as something the process
- * "should" run inside, with no code in this repository making it so. Removing
- * the credentials shrinks the blast radius; it does not close the boundary, and
- * this file should not be read as saying it does.
+ * ── Closed since (INJ-PATH-002) ───────────────────────────────────────────────
+ * This file used to say, rightly, that removing the credentials shrank the blast
+ * radius but did not close the boundary: the script could still execute any
+ * code and touch the filesystem, and the container `runner.ts` described was one
+ * no code in this repository created. The exec runtime has since been removed
+ * and run_python_script runs in the hardened container instead; the last block
+ * below pins that no host-side runtime executes code it was handed.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 import { sandboxEnv, SANDBOX_PASSTHROUGH } from '../sandboxEnv';
@@ -132,69 +130,27 @@ describe('the spawn sites use it', () => {
 });
 
 /*
- * The end-to-end case. Skipped rather than failed where python3 is absent —
- * a missing interpreter is a fact about the machine, not about the product, and
- * failing on it would train people to ignore this file.
+ * The end-to-end case used to run python-script-runtime.py — the runtime that
+ * exec()'d AnA's Python — with a planted secret, and check the script could not
+ * print it. That runtime is gone (INJ-PATH-002): scrubbing the environment never
+ * closed the boundary, because the script still ran on the application host with
+ * the whole filesystem, including every tenant's uploads and /proc. Model-written
+ * code now runs only in the hardened container (services/compute/containerExec).
+ *
+ * So the property this file can now pin is stronger and structural: no runtime
+ * the host spawns compiles or executes code it was handed.
  */
-const python3 = spawnSync('python3', ['--version'], { encoding: 'utf8' });
-const havePython = python3.status === 0;
+describe('no host-side compute runtime executes supplied code', () => {
+  const dir = path.resolve(process.cwd(), 'workers/artifact-compute');
+  const runtimes = fs.readdirSync(dir).filter(f => f.endsWith('.py'));
 
-describe.skipIf(!havePython)('the real runtime cannot read the secrets', () => {
-  let workdir: string;
-
-  beforeEach(() => {
-    for (const [k, v] of Object.entries(PLANTED)) process.env[k] = v;
-    workdir = fs.mkdtempSync(path.join(os.tmpdir(), 'sandbox-env-test-'));
-  });
-  afterEach(() => {
-    for (const k of Object.keys(PLANTED)) delete process.env[k];
-    fs.rmSync(workdir, { recursive: true, force: true });
+  it('has runtimes to check', () => {
+    expect(runtimes.length).toBeGreaterThan(0);
   });
 
-  it('a script that dumps os.environ finds no secret', () => {
-    const runtime = path.resolve(
-      process.cwd(),
-      'workers/artifact-compute/python-script-runtime.py',
-    );
-    expect(fs.existsSync(runtime), 'the runtime under test is missing').toBe(true);
-
-    const outputPath = path.join(workdir, 'output.json');
-    const inputPath = path.join(workdir, 'input.json');
-    // Exactly what a prompt-injected script would do first.
-    fs.writeFileSync(
-      inputPath,
-      JSON.stringify({
-        code: 'import os, json\nprint(json.dumps(dict(os.environ)))\n',
-        output_path: outputPath,
-        cpu_seconds: 10,
-      }),
-    );
-
-    const res = spawnSync('python3', [runtime, inputPath], {
-      cwd: workdir,
-      env: sandboxEnv({ ARTIFACT_COMPUTE_NO_NETWORK: '1', ARTIFACT_COMPUTE_WORKDIR: workdir }),
-      encoding: 'utf8',
-      timeout: 30_000,
-    });
-    expect(res.error, `python3 failed to run: ${res.error?.message}`).toBeUndefined();
-
-    const out = JSON.parse(fs.readFileSync(outputPath, 'utf8'));
-    expect(out.ok, `the runtime errored: ${out.error}`).toBe(true);
-
-    const seen = JSON.parse(out.stdout.trim()) as Record<string, string>;
-    for (const [key, value] of Object.entries(PLANTED)) {
-      expect(seen[key], `${key} was visible to the sandboxed script`).toBeUndefined();
-      expect(
-        JSON.stringify(seen),
-        `the VALUE of ${key} appeared in the sandbox environment under another name`,
-      ).not.toContain(value);
-    }
-
-    // And the control: the sandbox got the environment it legitimately needs,
-    // so this test cannot pass merely because the script saw nothing at all.
-    expect(seen.ARTIFACT_COMPUTE_NO_NETWORK, 'the runtime contract did not reach the script').toBe(
-      '1',
-    );
-    expect(seen.PATH, 'PATH was not passed; python3 would not have started').toBeTruthy();
+  it.each(runtimes)('%s neither exec()s, eval()s nor compile()s', rel => {
+    const src = fs.readFileSync(path.join(dir, rel), 'utf8');
+    expect(src).not.toMatch(/\b(exec|eval|compile)\s*\(/);
+    expect(src).not.toMatch(/\b__import__\s*\(/);
   });
 });

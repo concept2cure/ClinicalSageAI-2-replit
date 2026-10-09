@@ -1,0 +1,194 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/projects?limit=50",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 19,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": "1f58125d-0bfe-4fa1-989b-a6832cdab394",
+          "title": "OQ-001 IND program 20260922223507",
+          "ws": "Biotech",
+          "code": "OIP2-5JD4",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "c8f562ad-cefa-4187-818b-01962a3ea495",
+          "title": "OQ-002 Vault program 20260922223348",
+          "ws": "Biotech",
+          "code": "OVP2-3O7H",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "a5cd9d3f-d1d4-4d5e-95d4-5e1fa8823842",
+          "title": "OQ-002 Vault program 20260922222653",
+          "ws": "Biotech",
+          "code": "OVP2-USI4",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "379a6e8b-3910-4b2e-a979-4d2c8a710624",
+          "title": "OQ-002 Vault program 20260922222444",
+          "ws": "Biotech",
+          "code": "OVP2-S0PD",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "49383ff6-a9e7-4b82-a011-febbd03697df",
+          "title": "OQ-002 Vault program 20260922222359",
+          "ws": "Biotech",
+          "code": "OVP2-R2CV",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "07234c75-1170-43d0-b8cc-be2adf82384b",
+          "title": "OQ-002 Vault program 20260922222002",
+          "ws": "Biotech",
+          "code": "OVP2-LZKM",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "6730f645-3a2d-4c2b-af3b-3b7222dbec54",
+          "title": "OQ-002 Vault program 20260922221807",
+          "ws": "Biotech",
+          "code": "OVP2-JIJV",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "9f5d26b1-3d3c-4475-901c-8e629d3ce746",
+          "title": "OQ-002 Vault program 20260922221548",
+          "ws": "Biotech",
+          "code": "OVP2-GIVR",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "036ebd57-11e8-45d0-9a5d-be4c1770dccd",
+          "title": "OQ-002 Vault program 20260922221516",
+          "ws": "Biotech",
+          "code": "OVP2-FUGU",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "9f872da6-924e-4a96-a10a-6a5a2657f2da",
+          "title": "OQ-001 IND program 20260922221437",
+          "ws": "Biotech",
+          "code": "OIP2-F3VA",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "0eff869a-cf19-4cad-ada5-0bef745978df",
+          "title": "OQ-002 Vault program 20260922221431",
+          "ws": "Biotech",
+          "code": "OVP2",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "461ba654-0964-479f-9741-525fe39a40ad",
+          "title": "OQ-001 IND program 20260922221348",
+          "ws": "Biotech",
+          "code": "OIP2",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        },
+        {
+          "id": "53691100-8887-4f3c-98f5-a95c03a10ca1",
+          "title": "OQ-003 Authoring program 20260922220523",
+          "ws": "Biotech",
+          "code": "OAP2",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 22"
+        }
+      ],
+      "meta": {
+        "count": 13,
+        "limit": 50,
+        "offset": 0,
+        "hasMore": false
+      }
+    }
+  }
+}

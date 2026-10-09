@@ -1,0 +1,11 @@
+$ assessRlsCatalogPosture(pool)   # server/db/rlsEnforcement.ts
+
+role                 : c2c
+role is superuser    : false
+role has BYPASSRLS   : false
+public tenant tables : 768 inspected
+owner-exempt tables  : 117
+failures             : 1
+  - runtime role c2c OWNS 117 RLS-enabled table(s) that are not FORCE ROW LEVEL SECURITY (cortex.active_learning_queue, cortex.calibration_log, cortex.causal_discovery_runs, cortex.causal_effects, cortex.causal_graphs, +112 more). Postgres exempts a table's owner from its own policies unless FORCE is set, so every policy on those tables is inert on this connection and they are readable across tenants. Remedy: connect as the non-owner runtime role (set APP_SERVICE_DB_PASSWORD when provisioning and APP_DATABASE_URL for the runtime), or apply FORCE ROW LEVEL SECURITY to the tables listed.
+
+VERDICT: GATE FAILS CLOSED — production boot refuses.

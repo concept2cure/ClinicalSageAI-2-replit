@@ -606,21 +606,27 @@ const enhancedMockContent: Record<string, Record<string, (ctx: any) => string>> 
         `Effect of the technological differences between the subject and predicate devices on safety and effectiveness: [DIFFERENCES ASSESSMENT]. Substantial equivalence of ${ctx.deviceName || '[DEVICE NAME]'} to ${ctx.predicateDevice || '[PREDICATE]'}${ctx.predicateK ? ` (${ctx.predicateK})` : ''} is determined by FDA upon review of this comparison: [SUBSTANTIAL EQUIVALENCE DETERMINATION].`,
       ].join('\n'),
 
+    /* Every result below is a placeholder the sponsor fills. This block used
+       to state four results as fact — biocompatibility "passed … at an ISO
+       17025 accredited laboratory", IEC 60601-1 "meets all applicable
+       requirements", IEC 62304 "comply", and "meets or exceeds all design
+       input specifications" — and was returned whenever the AI gateway
+       produced nothing. A test result nobody ran, in a 510(k) section. */
     testing: ctx =>
       [
         `## Performance Testing Summary`,
         ``,
         `### Biocompatibility (ISO 10993 series)`,
-        `All patient-contacting materials passed cytotoxicity (ISO 10993-5), sensitization (ISO 10993-10), and irritation testing at an ISO 17025 accredited laboratory.`,
+        `Cytotoxicity (ISO 10993-5), sensitization (ISO 10993-10) and irritation results for all patient-contacting materials: [BIOCOMPATIBILITY RESULTS]. Test laboratory and accreditation: [TEST LABORATORY].`,
         ``,
         `### Electrical Safety (IEC 60601-1)`,
-        `The device meets all applicable requirements of IEC 60601-1:2005+A1:2012 and IEC 60601-1-2:2014 (EMC). Leakage currents and dielectric strength are within specified limits.`,
+        `Results against IEC 60601-1:2005+A1:2012 and IEC 60601-1-2:2014 (EMC), including leakage current and dielectric strength: [ELECTRICAL SAFETY RESULTS].`,
         ``,
         `### Software Verification & Validation (IEC 62304)`,
-        `Software lifecycle processes comply with IEC 62304:2006+A1:2015. Unit, integration, and system testing achieved [CODE COVERAGE]% code coverage with [DEFECT COUNT] critical defects noted.`,
+        `Software lifecycle conformance to IEC 62304:2006+A1:2015: [IEC 62304 CONFORMANCE]. Unit, integration, and system testing achieved [CODE COVERAGE]% code coverage with [DEFECT COUNT] critical defects noted.`,
         ``,
         `### Performance Specifications`,
-        `Quantitative performance testing confirms ${ctx.deviceName || 'the device'} meets or exceeds all design input specifications under normal and fault conditions.`,
+        `Quantitative performance testing of ${ctx.deviceName || 'the device'} against its design input specifications, under normal and fault conditions: [PERFORMANCE TEST RESULTS].`,
       ].join('\n'),
 
     concl: ctx =>

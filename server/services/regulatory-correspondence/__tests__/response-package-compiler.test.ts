@@ -53,7 +53,14 @@ describe('response package compiler', () => {
   it('builds governed assembly with evidence and gaps', () => {
     const assembly = compileGovernedResponseAssembly({
       correspondenceId: 'corr-123',
-      issues: [makeIssue({ id: 'issue-1', correspondenceId: 'corr-123' })],
+      /* `humanReviewStatus` is spelled out because the fixture defaults to
+         'pending', and since 2026-09-20 an extraction no person has confirmed
+         is a `draft` — the thing missing there is the confirmation, not the
+         evidence. This case is about the evidence, so the confirmation is
+         given. */
+      issues: [
+        makeIssue({ id: 'issue-1', correspondenceId: 'corr-123', humanReviewStatus: 'confirmed' }),
+      ],
     });
 
     expect(assembly.issueMatrix.length).toBe(1);
@@ -64,17 +71,35 @@ describe('response package compiler', () => {
   });
 
   it('returns review_ready when no evidence gaps exist', () => {
-    const issue = makeIssue({
-      structuredExtraction: undefined,
+    /*
+     * REWRITTEN 2026-09-20. This test was named for `review_ready` and asserted
+     * `evidence_gap`, and its own comment said why: "falls back to ['Issue
+     * evidence attachment'] which is ALWAYS marked 'missing'". It was a test
+     * written around a constant — `status: 'missing' as const` — which made
+     * `review_ready` unreachable, so the name and the assertion could not both
+     * be satisfied.
+     *
+     * The checklist now follows the human decision on each issue, so the test
+     * asserts what its name always claimed.
+     */
+    const assembly = compileGovernedResponseAssembly({
+      correspondenceId: 'corr-no-gaps',
+      issues: [makeIssue({ humanReviewStatus: 'confirmed', resolutionStatus: 'resolved' })],
+      revisedArtifactIds: ['44'],
     });
 
+    expect(assembly.unresolvedGaps).toEqual([]);
+    expect(assembly.readinessState).toBe('review_ready');
+  });
+
+  it('a missing structuredExtraction still yields a checklist item, and no invented ask', () => {
+    /* The half of the old test that WAS about the fallback. */
     const assembly = compileGovernedResponseAssembly({
       correspondenceId: 'corr-no-extraction',
-      issues: [issue],
+      issues: [makeIssue({ structuredExtraction: undefined, humanReviewStatus: 'confirmed' })],
     });
-
-    // Without structuredExtraction, evidenceNeeds falls back to ['Issue evidence attachment']
-    // which is always marked 'missing', so readinessState should be 'evidence_gap'
+    expect(assembly.evidenceChecklist).toHaveLength(1);
+    expect(assembly.evidenceChecklist[0].item).toContain('Issue evidence attachment');
     expect(assembly.readinessState).toBe('evidence_gap');
   });
 
@@ -87,7 +112,12 @@ describe('response package compiler', () => {
     expect(assembly.issueMatrix.length).toBe(0);
     expect(assembly.evidenceChecklist.length).toBe(0);
     expect(assembly.unresolvedGaps.length).toBe(0);
-    expect(assembly.readinessState).toBe('review_ready');
+    /* CHANGED 2026-09-20, and this assertion WAS the defect: with no issues
+       there are no gaps, and the old rule read `gaps > 0 ? evidence_gap :
+       review_ready`, so a package in which nothing had been assessed reported
+       itself ready for review — in the one field a reviewer uses to decide
+       whether to look at it. Nothing assessed is a draft. */
+    expect(assembly.readinessState).toBe('draft');
     expect(assembly.impactedSections.length).toBe(0);
     expect(assembly.coverLetterDraft).toContain('0 issue(s)');
   });

@@ -187,3 +187,77 @@ describe('folderLabel', () => {
     expect(folderLabel('device', null)).toBe('');
   });
 });
+
+/* VR-04 (row D4): beside 'Confirm filing', a proposal is either right or
+   honestly 'needs review'. The CTD patterns were unanchored substrings, a
+   generic safety pattern ran before the ISS one, and a module fallback emitted
+   a non-section 'N.0'. */
+describe('CTD proposals you can trust (VR-04)', () => {
+  const pharma = (fileName: string) => classifyForFiling({ fileName, view: 'pharma' });
+
+  it('a word inside another word is not a section: "Permission" is not ISS, "Otherwise" is not ISE', () => {
+    for (const f of ['Permission to cross-reference.pdf', 'Otherwise unrelated memo.docx']) {
+      const c = pharma(f);
+      expect(`${c.ctdSection}/${c.confidence}`, f).not.toBe('5.3.5.3/high');
+    }
+  });
+
+  it('an Integrated Summary of Safety is proposed at 5.3.5.3, not the generic 5.3.5', () => {
+    expect(pharma('Integrated Summary of Safety.pdf').ctdSection).toBe('5.3.5.3');
+    expect(pharma('Integrated Summary of Efficacy.pdf').ctdSection).toBe('5.3.5.3');
+  });
+
+  it('a safety data sheet is not a clinical safety study', () => {
+    expect(pharma('Safety Data Sheet - ethanol.pdf').ctdSection).toBeNull();
+  });
+
+  it('"Item2" is not Module 2, and a bare module is never proposed as a section', () => {
+    expect(pharma('Item2 notes.pdf').ctdSection).toBeNull();
+    for (const f of ['Module 3 quality notes.pdf', 'M4 summary.pdf']) {
+      const c = pharma(f);
+      expect(c.ctdSection, f).toBeNull();
+      expect(c.confidence, f).not.toBe('high');
+    }
+    expect(pharma('Module 3 quality notes.pdf').folderId).toBe('module-3');
+  });
+
+  it('clinical pharmacology is Module 5, not the nonclinical pharmacology of Module 4', () => {
+    expect(pharma('Clinical Pharmacology report.pdf').ctdSection).toBe('5.3.3');
+  });
+
+  it('positive controls stay put', () => {
+    expect(pharma('Clinical Overview.pdf').ctdSection).toBe('2.5');
+    expect(pharma('ISS tables.pdf').ctdSection).toBe('5.3.5.3');
+    expect(pharma('stability-protocol.pdf').ctdSection).toBe('3.2.P.8');
+    expect(pharma('cover letter.pdf').ctdSection).toBe('1.1');
+    expect(pharma('Nonclinical Overview.pdf').ctdSection).toBe('2.4');
+  });
+});
+
+describe("the uploader's declared type informs the proposal (VR-04)", () => {
+  it('a declared PROTOCOL on a neutral filename is a protocol', () => {
+    const c = classifyForFiling({ fileName: 'scan-0042.pdf', view: 'pharma', documentType: 'PROTOCOL' });
+    expect(c.evidenceKind).toBe('protocol');
+    expect(c.rationale).toMatch(/Protocol/);
+  });
+
+  it('a declared type that contradicts the filename is flagged for review naming both, not overridden', () => {
+    const c = classifyForFiling({ fileName: 'stability-summary-24m.pdf', view: 'pharma', documentType: 'CSR' });
+    expect(c.needsReview).toBe(true);
+    expect(c.folderId).toBeNull();
+    expect(c.rationale).toMatch(/Clinical study report/);
+    expect(c.rationale).toMatch(/Module 3/);
+  });
+
+  it('a declared type that agrees with the filename keeps the placement and the more specific kind', () => {
+    const c = classifyForFiling({ fileName: 'CSR-BX204-301-efficacy.pdf', view: 'pharma', documentType: 'CSR' });
+    expect(c.needsReview).toBe(false);
+    expect(c.folderId).toBe('module-5');
+    expect(c.evidenceKind).toBe('csr');
+  });
+
+  it('OTHER, or no declared type, changes nothing', () => {
+    const plain = classifyForFiling({ fileName: 'stability-summary-24m.pdf', view: 'pharma' });
+    expect(classifyForFiling({ fileName: 'stability-summary-24m.pdf', view: 'pharma', documentType: 'OTHER' })).toEqual(plain);
+  });
+});

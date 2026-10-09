@@ -1,0 +1,8 @@
+# Red first: the pushed baseline (HEAD) against the tree with fetch_and_import.js, csr-extractor-service.ts and searchDocuments deleted.
+# The guard must name exactly the entries those deletions resolve, and fail.
+[ci:column-reachability] ❌ baselined column(s) no longer found — remove them to ratchet down: csr_details.age_range, csr_details.gender_distribution, csr_details.processed, csr_details.processing_status, csr_details.safety, csr_details.study_description, csr_details.study_duration, csr_details.treatment_arms, csr_reports.date, csr_reports.drug_name, csr_reports.file_name, csr_reports.file_path, csr_reports.file_size, csr_reports.nctrial_id, unified_documents.text_content
+exit=1
+
+# Then with those entries removed:
+[ci:column-reachability] OK — 2136 column add(s) on no applier, 1 queried by the server (all baselined with reasons).
+exit=0

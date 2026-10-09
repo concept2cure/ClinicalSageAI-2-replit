@@ -1,0 +1,13 @@
+# Red, first run: the five malformed bodies before the guard (npx vitest run protocolDevSurfaceWrites -t HS-C-1)
+ × client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an empty object reads as a failed load 5042ms
+   → Unable to find an element with the text: Couldn't load the protocol. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an envelope around an object reads as a failed load 5008ms
+   → Unable to find an element with the text: Couldn't load the protocol. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an error carried on a 200 reads as a failed load 5007ms
+   → Unable to find an element with the text: Couldn't load the protocol. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > rows with no fields reads as a failed load 5009ms
+   → Unable to find an element with the text: Couldn't load the protocol. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row with an id and nothing else reads as a failed load 5008ms
+   → Unable to find an element with the text: Couldn't load the protocol. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  5 failed | 20 skipped (25)

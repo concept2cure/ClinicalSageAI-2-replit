@@ -17,13 +17,14 @@ describe('dossierStore live-data integrity', () => {
     expect(DossierStore.readSectionBody('k510', 1, 'Medical Device User Fee Cover Sheet')).toContain('BX-204');
   });
 
-  it('excludes the synthesized audit seed from section activity outside sample mode', () => {
-    /* Even with sample fixtures installed in the store, the drawer's Activity
-       feed merges the kit's synthesized hash-chain events only when sample
-       mode itself is on — otherwise only real in-store edits appear. */
-    DossierStore.enableSampleFixtures();
-    const activity = DossierStore.activityForSection('k510', 11);
-    expect(activity.every((e) => e.live === true)).toBe(true);
+  it('exposes no audit feed of its own — a section\'s history is the server\'s', () => {
+    /* This asserted that the Activity feed held only "real in-store edits".
+       Those were not real either: events this browser wrote about itself. The
+       feed now reads c2c_document_section_versions (useSectionVersions), and
+       the store has no event API left to render from. */
+    const store = DossierStore as unknown as Record<string, unknown>;
+    expect(store.activityForSection).toBeUndefined();
+    expect(store.liveEventsForPathway).toBeUndefined();
   });
 
   it('empty backend hydration removes prior sample evidence', () => {
@@ -79,12 +80,18 @@ describe('live audit events attribute only what the client can actually observe'
      Falsified by re-adding the literal to attachFile and re-running: two of the
      three assertions below go red. */
 
-  it('records a section edit with no invented source address', () => {
+  /* 'records a section edit with no invented source address' checked that the
+     store's client-authored edit event carried no `ip` — the right fix for the
+     narrower defect, which left the wider one standing: the event itself was
+     fabricated (actor "You", role "Reg Lead", Math.random id, pushed before and
+     regardless of the governed PATCH). The attach case below reached the same
+     conclusion first. Edits now write content only. */
+  it('records NO audit event for a section edit — the server owns that entry', () => {
+    const store = DossierStore as unknown as Record<string, unknown>;
     DossierStore.writeSectionBody('k510', 11, 'Performance testing', 'first');
     DossierStore.writeSectionBody('k510', 11, 'Performance testing', 'second');
-    const events = DossierStore.activityForSection('k510', 11);
-    expect(events.length).toBeGreaterThan(0);
-    for (const e of events) expect(e.ip, 'a source address was invented').toBeUndefined();
+    expect(DossierStore.readSectionBody('k510', 11, 'Performance testing')).toBe('second');
+    expect(store.activityForSection).toBeUndefined();
   });
 
   it('records NO audit event for a file attach — the server owns that entry', () => {
@@ -108,8 +115,7 @@ describe('live audit events attribute only what the client can actually observe'
       { name: 'mard-by-age-band.pdf', size: 1_400_000, kind: 'pdf' },
       { who: 'You', role: 'Reg Lead' },
     );
-    const events = DossierStore.activityForSection('k510', 11);
-    expect(events.some((e) => e.kind === 'attach')).toBe(false);
+    expect((DossierStore as unknown as Record<string, unknown>).activityForSection).toBeUndefined();
     /* The attachment is still listed — the tab updates without a round trip.
        This read used to be `listDir('k510', 11, 'Performance testing')`, which
        was wrong twice over: `listDir` takes ONE argument, a path prefix, so
@@ -122,12 +128,5 @@ describe('live audit events attribute only what the client can actually observe'
     ).toContain('mard-by-age-band.pdf');
   });
 
-  it('holds for every live event the store can emit, not only the two probed above', () => {
-    DossierStore.writeSectionBody('k510', 7, 'Indications', 'a');
-    DossierStore.writeSectionBody('k510', 7, 'Indications', 'b');
-    DossierStore.attachFile('k510', 7, 'Indications', { name: 'x.pdf', size: 10, kind: 'pdf' });
-    const live = DossierStore.liveEventsForPathway('k510');
-    expect(live.length).toBeGreaterThan(0);
-    expect(live.filter((e) => e.ip !== undefined)).toEqual([]);
-  });
+
 });

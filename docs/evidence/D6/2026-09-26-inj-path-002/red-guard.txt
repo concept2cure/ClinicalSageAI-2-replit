@@ -1,0 +1,45 @@
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > is the caller's own uploads and scratch areas, and nothing else 18ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts a builder output path 2ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts an eCTD packager path 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts an upload of its own 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts an absolute path that genuinely lives in its workspace 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an absolute path to a secrets file 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an absolute system path 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a traversal out of the workspace 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a bare traversal segment 2ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a windows-style traversal 1ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an absolute sibling directory sharing the root prefix 4ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an embedded NUL truncation trick 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an empty string 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a non-string 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects null 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects undefined 1ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > throws a correctable, non-echoing error 6ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > returns the RESOLVED absolute path, not the caller's string 1ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses another tenant's upload 3ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses another tenant's builder output 2ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses another tenant's eCTD package 2ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses a tenant whose id merely starts with ours 2ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses a scratch file that belongs to nobody (the old layout) 2ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses the whole uploads tree 3ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses a tmp area AnA does not write to 3ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with no organization 2ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with organization 0 2ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with a non-numeric organization 1ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with a negative organization 3ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > names every scratch directory inside the tenant's own area 1ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > a symlink cannot carry a checked path out > to another tenant's files, or to the host 1ms
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > builds file names that cannot leave a directory 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects the production server bundle reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects the package manifest reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects a secrets file reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects application source reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects a nested source path reached by a plain relative path 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > still accepts the paths the document tools actually produce 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > the guard and the consumer now agree on which file is meant 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > 'query_rim_patterns_by_domain' declares no orgId parameter 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > 'summarize_rim_intelligence' declares no orgId parameter 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > does not invite the model to name an organization 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > still asks for the domain filter, which is genuinely the model's to choose 0ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  17 failed | 26 passed (43)

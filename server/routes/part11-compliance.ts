@@ -838,18 +838,25 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
       params
     );
 
+    /* No rows means nothing was re-computed, so there is no verdict to give.
+       This used to answer `integrityValid: true` — a pass over zero entries —
+       and Part11Console printed it as "Integrity valid" on a fresh org whose
+       audit_logs chain (sign-ins, governed actions) this query never reads.
+       `null` is the route's own "not verified" state (see the unhashed branch
+       below); `empty` says why. 2026-09-23, launch sweep finding 111. */
     if (rows.length === 0) {
       return res.json({
         success: true,
         data: {
           chainStatus: 'empty',
           totalEntries: 0,
-          integrityValid: true,
+          verifiedEntries: 0,
+          integrityValid: null,
           hashAlgorithm: 'SHA-256',
           chainType: 'linear-hash-chain',
           compliance: {
             '§11.10(e)': 'Audit trail preserves complete change history with computer-generated timestamps',
-            tamperEvident: 'Each entry is cryptographically linked to its predecessor via SHA-256 hash chain',
+            tamperEvident: 'No audit events are recorded for this organisation, so there is no chain to verify.',
           },
         },
       });

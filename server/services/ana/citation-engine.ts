@@ -115,6 +115,8 @@ export interface CitationRunResult {
   metadata: {
     strategy: string;
     chunksRetrievedTotal: number;
+    /** Sentences whose evidence retrieval failed, so were not checked. */
+    retrievalFailures?: number;
     latencyMs: number;
     timedOut?: boolean;
   };
@@ -299,16 +301,25 @@ async function lookupAtomMetadata(
   if (atomIds.length === 0) return result;
   try {
     const { rows } = await getPool().query(
-      `SELECT id, source_type, source_id, metadata
+      /* `metadata` does not exist on lumen_data_atoms — the column is
+         `structured_data` — and `id` is INTEGER, so the uuid[] cast could not
+         have matched either. Both failed together, the catch below returned an
+         empty Map, and `atom` was ALWAYS undefined: every citation this engine
+         has ever written carries sectionCode null and pageRef null, and the
+         artifactId degrades to the raw vault chunk id — the "opaque chunk ids"
+         the comment further down says this code exists to prevent. Those nulls
+         freeze into the immutable ana_artifact_citation_runs row and export as
+         primarySourceSection / primarySourcePageRef. */
+      `SELECT id, source_type, source_id, structured_data
          FROM lumen_data_atoms
-        WHERE id = ANY($1::uuid[])`,
+        WHERE id = ANY($1::int[])`,
       [atomIds]
     );
     for (const r of rows) {
       result.set(r.id, {
         sourceType: r.source_type,
         sourceId: r.source_id,
-        metadata: r.metadata,
+        metadata: r.structured_data,
       });
     }
   } catch (err: any) {
@@ -388,6 +399,7 @@ export async function runCitationEngine(
 
   const citations: SentenceCitation[] = [];
   let chunksRetrievedTotal = 0;
+  let retrievalFailures = 0;
   let timedOut = false;
 
   for (const s of sentences) {
@@ -417,6 +429,10 @@ export async function runCitationEngine(
           limit: RETRIEVAL_TOP_K,
           threshold: RETRIEVAL_THRESHOLD,
           useReranking: true,
+          // The rerank score decides supported vs gap, so it is a governed
+          // figure: only an approved model produces it, and a failed rerank
+          // fails the sentence rather than scoring it on embeddings alone.
+          governedVerdict: true,
           useMmr: false,
           organizationUuid: validOrgUuid,
           artifactScope,
@@ -490,6 +506,14 @@ export async function runCitationEngine(
           '[citation-engine] retrieval failed for sentence:',
           err?.message || err
         );
+        // Still recorded as a gap (a failure must not read as supported), but
+        // flagged, so it is not taken for a finding about the content.
+        retrievalFailures += 1;
+        flags.push({
+          rule: 'RETRIEVAL_FAILED',
+          severity: 'downgrade',
+          message: 'Evidence retrieval failed for this sentence, so it was not checked. This is not a finding about its content.',
+        });
       }
     }
 
@@ -537,6 +561,7 @@ export async function runCitationEngine(
     metadata: {
       strategy: ragPipeline ? 'basic+rerank (project-scoped)' : 'no-rag (no orgUuid)',
       chunksRetrievedTotal,
+      retrievalFailures: retrievalFailures || undefined,
       latencyMs: Date.now() - startedAt,
       timedOut: timedOut || undefined,
     },

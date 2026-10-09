@@ -1,0 +1,2 @@
+[ci:tenant-blind-models] 225 table(s) carry a tenant column; 700 model(s) scanned; 4 blind (baseline 4).
+[ci:tenant-blind-models] OK — no unjustified tenant-blind models.

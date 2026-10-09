@@ -1,0 +1,9 @@
+  ✓ flags a launch screen calling a prefix only an out-of-scope surface claims
+  ✓ names the surface and the file
+  ✓ does not flag the launch prefix, or a never-gated shell call
+  ✓ passes once the launch surface declares the prefix it calls
+  ✓ flags a launch call no surface claims (unmapped)
+  ✓ resolves every registration it was given
+  ✗ flags a launch screen that computes the /api namespace
+
+selftest FAILED (1)

@@ -12,6 +12,16 @@
  * for the section header) — a separate spine from the eCTD core, because eSTAR
  * is not eCTD and a device filing is never forced into ectd_sequences.
  *
+ * The PLANNER reads the live region profile (GET /api/region-profiles/:region)
+ * — agency, pathways, the Module 1 sections required for THIS application type,
+ * agency forms, region-specific requirements, and the codified gateway rules the
+ * package will later be validated against. It had named those contents in prose
+ * over a screen that never read them. Profiles exist for five of the twelve
+ * regions the selector offers, so the 404 is a first-class state: "no profile is
+ * registered" is rendered distinctly from a failed read AND from an empty
+ * requirement set, because on a submission screen an empty required-section list
+ * is a statement that nothing is required.
+ *
  * Per-sequence workspaces (SubmissionSeqWorkspaces.tsx) are REAL: a sequence
  * selector feeds Builder (GET/PUT leaves), Validation (dispatch-readiness
  * findings + AI explain), Shadow Review (runs + persisted findings),
@@ -34,7 +44,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
 import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
@@ -84,10 +94,81 @@ interface SubRow {
   primaryRegion: string; // fda|eu|jp (SC_REGIONS)
   status: string; // planning|active|submitted|archived
   lifecycleStage: string; // planning|original|amendment|response|variation|annual|withdrawal
+  /** The project this submission belongs to (regulatory_programs.id); null for
+   *  one created before submissions recorded it (LX-22). */
+  programId?: string | null;
 }
 
 // (SeqRow — the `ectd_sequences` display row — now lives in
 // SubmissionSeqWorkspaces.tsx, shared with the per-sequence workspaces.)
+
+/* The region profile GET /api/region-profiles/:region returns. Mirrors
+   SubmissionRegionProfile (server/services/region-profiles/region-profile-service.ts);
+   declared structurally rather than imported because that module is server-side
+   (it reaches into the rule packs), and the client only reads this shape. */
+interface RegionProfileSection {
+  number: string;
+  title: string;
+  titleLocal?: string;
+  required: boolean;
+  /** Application types the `required` flag applies to. Absent = all of them. */
+  requiredFor?: string[];
+  description: string;
+  childSections?: RegionProfileSection[];
+}
+interface RegionProfileForm {
+  name: string;
+  formId?: string;
+  required: boolean;
+  description: string;
+  url?: string;
+}
+interface RegionProfileRule {
+  id: string;
+  severity: string;
+  citation: string;
+  description: string;
+}
+interface RegionProfile {
+  region: string;
+  agency: string;
+  language: string;
+  currency: string;
+  pathways: string[];
+  module1Sections: RegionProfileSection[];
+  forms: RegionProfileForm[];
+  specificRequirements: string[];
+  validationRules: RegionProfileRule[];
+  validationRuleCount: number;
+}
+
+/**
+ * Flatten the Module 1 tree to the sections REQUIRED for this application type.
+ *
+ * `requiredFor` is load-bearing and application-specific: a debarment
+ * certification is required for a marketing application and not for an IND;
+ * the general investigational plan is the reverse. Listing every `required`
+ * section regardless would tell an IND filer they owe paperwork they do not,
+ * which is the same class of false statement as listing none at all.
+ * An ABSENT `requiredFor` means "every application type", per the server's own
+ * contract — so it is kept, not dropped.
+ */
+function requiredModule1For(
+  sections: RegionProfileSection[],
+  applicationType: string | null | undefined,
+): RegionProfileSection[] {
+  const app = applicationType ? String(applicationType).toLowerCase() : null;
+  const out: RegionProfileSection[] = [];
+  const walk = (list: RegionProfileSection[]): void => {
+    for (const s of list) {
+      const appliesHere = !s.requiredFor || !app || s.requiredFor.includes(app);
+      if (s.required && appliesHere) out.push(s);
+      if (s.childSections?.length) walk(s.childSections);
+    }
+  };
+  walk(sections ?? []);
+  return out;
+}
 
 // Deterministic display tone for the submission status enum (not sample data).
 const SUB_STATUS_TONE: Record<string, string> = {
@@ -142,6 +223,9 @@ const ESTAR_FILING_STATUS: Record<string, ToneMap> = {
 interface AssemblyVerdictPayload {
   artifactKind: string; // official-estar | content-package-draft | none
   blockers?: string[];
+  /** The section readiness the blockers were written from
+   *  (assemble-device-submission.ts: `estar.summary`). */
+  estar?: { summary?: { missingRequired?: unknown; undetermined?: unknown } };
 }
 
 // Honest labels for the assembly verdict's artifactKind enum.
@@ -154,7 +238,33 @@ const ARTIFACT_KIND_LABEL: Record<string, string> = {
 type AssemblyVerdictState =
   | { state: 'loading' }
   | { state: 'error' }
-  | { state: 'ready'; artifactKind: string; blockerCount: number };
+  | { state: 'ready'; artifactKind: string; missingRequired: number; undetermined: number; otherBlockers: number };
+
+/* ── What the blocker list counts ───────────────────────────────────────────
+   `blockers` is a list of SENTENCES, not of blockers: the engine writes every
+   missing required eSTAR section into ONE sentence ("11 required eSTAR
+   section(s) missing: …") and every section of undetermined applicability into
+   another. The caption printed `blockers.length`, so an org with 11 required
+   sections missing and 7 undetermined read "· 2 blockers". The section counts
+   are read from the summary those sentences are written from; each remaining
+   entry (a template or market blocker) is one blocker. */
+function readAssemblyVerdict(p: AssemblyVerdictPayload): AssemblyVerdictState {
+  const blockers = Array.isArray(p.blockers) ? p.blockers : [];
+  const missingList = p.estar?.summary?.missingRequired;
+  const undeterminedList = p.estar?.summary?.undetermined;
+  const missingRequired = Array.isArray(missingList) ? missingList.length : 0;
+  const undetermined = Array.isArray(undeterminedList) ? undeterminedList.length : 0;
+  const sectionSentences = (missingRequired > 0 ? 1 : 0) + (undetermined > 0 ? 1 : 0);
+  return {
+    state: 'ready',
+    artifactKind: p.artifactKind,
+    missingRequired,
+    undetermined,
+    otherBlockers: Math.max(0, blockers.length - sectionSentences),
+  };
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** The device-section header line: the org-wide assembly verdict (one call). */
 function assemblyReadinessLine(v: AssemblyVerdictState): string {
@@ -165,7 +275,15 @@ function assemblyReadinessLine(v: AssemblyVerdictState): string {
   if (v.state === 'loading') return 'Checking 510(k) device assembly readiness…';
   if (v.state === 'error') return '510(k) device assembly readiness unavailable right now';
   const kind = ARTIFACT_KIND_LABEL[v.artifactKind] ?? v.artifactKind;
-  return `510(k) device assembly readiness: ${kind} · ${v.blockerCount} blocker${v.blockerCount === 1 ? '' : 's'} (other pathways not assessed here)`;
+  const parts: string[] = [];
+  if (v.missingRequired > 0) parts.push(`${plural(v.missingRequired, 'required section', 'required sections')} missing`);
+  if (v.undetermined > 0) parts.push(`applicability of ${plural(v.undetermined, 'section', 'sections')} not established`);
+  if (v.otherBlockers > 0 || parts.length === 0) {
+    parts.push(parts.length === 0
+      ? plural(v.otherBlockers, 'blocker', 'blockers')
+      : plural(v.otherBlockers, 'other blocker', 'other blockers'));
+  }
+  return `510(k) device assembly readiness: ${kind} · ${parts.join(' · ')} (other pathways not assessed here)`;
 }
 
 /** Review-clock cell: only states the tracker actually knows. */
@@ -178,6 +296,41 @@ function reviewClock(f: DeviceFilingRow): string {
 }
 
 // (Chip is imported from SubmissionSeqWorkspaces — one implementation.)
+
+/** Follow-up sequence types: the server's createSequence enum, less 'original' (that is 0000). */
+const FOLLOW_UP_SEQ_TYPES = ['amendment', 'response', 'annual', 'variation', 'withdrawal'] as const;
+
+/** The next sequence number in the submission's own region — numbering restarts per region. */
+function nextSequenceNumber(sub: SubRow, rows: SeqRow[]): string {
+  const taken = rows
+    .filter((r) => r.region === sub.primaryRegion)
+    .map((r) => Number.parseInt(r.sequenceNumber, 10))
+    .filter((n) => Number.isFinite(n));
+  return String((taken.length ? Math.max(...taken) : -1) + 1).padStart(4, '0');
+}
+
+/** Start a follow-up sequence: its number is derived, its type is the author's to state. */
+function NextSequenceControl({ sub, rows, type, onType, busy, onStart }: {
+  sub: SubRow;
+  rows: SeqRow[];
+  type: string;
+  onType: (t: string) => void;
+  busy: boolean;
+  onStart: (sequenceNumber: string) => void;
+}) {
+  const next = nextSequenceNumber(sub, rows);
+  return (
+    <div className="cm-pushbar sc-mt">
+      <select className="sc-subpick" aria-label={`Type of sequence ${next}`} value={type} disabled={busy}
+        onChange={(e) => onType(e.target.value)}>
+        {FOLLOW_UP_SEQ_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+      </select>
+      <button type="button" className="sp-primary sc-btn" disabled={busy} onClick={() => onStart(next)}>
+        {I.sparkles} {busy ? 'Creating…' : `Start sequence ${next}`}
+      </button>
+    </div>
+  );
+}
 
 /** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
 const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'cross-region', 'dispatch']);
@@ -202,9 +355,9 @@ export function SubmissionCenter({
   // GET /api/submissions — real DB rows, honest empty, honest error (no fixture).
   const [subsBump, setSubsBump] = React.useState(0);
   const subs = useLiveRows<SubRow>('/api/submissions', ['/api/submissions', subsBump]);
-  /* The org's programmes, so the required projectId is PICKED rather than typed
-     as a uuid — createSubmissionSchema takes a uuid and a customer does not
-     have one to hand. */
+  /* The org's programmes, so the required programId is PICKED rather than
+     typed as a uuid — createSubmissionSchema requires one (the submission's
+     project) and a customer does not have one to hand. */
   const programmes = useLiveRows<{ id: string; title: string; code: string }>('/api/c2c/projects');
   const list = subs.rows;
   const sub = list.find((s) => s.id === selSub) ?? list[0];
@@ -252,8 +405,7 @@ export function SubmissionCenter({
     }).then((r) => {
       if (cancelled) return;
       if (r.data && typeof r.data.artifactKind === 'string') {
-        const blockers = Array.isArray(r.data.blockers) ? r.data.blockers : [];
-        setAssembly({ state: 'ready', artifactKind: r.data.artifactKind, blockerCount: blockers.length });
+        setAssembly(readAssemblyVerdict(r.data));
       } else {
         // Failed or misshapen — say it is unavailable, never fabricate a verdict.
         setAssembly({ state: 'error' });
@@ -272,6 +424,27 @@ export function SubmissionCenter({
   const [seqBump, setSeqBump] = React.useState(0);
   const seqPath = sub ? `/api/submissions/${sub.id}/sequences` : null;
   const seqs = useLiveRows<SeqRow>(seqPath, [seqPath, seqBump]);
+
+  /* ── The Planner's region profile ────────────────────────────────────────
+     The Planner named this profile's contents in prose — "required modules,
+     granularity, regional Module 1, and the validation profile" — over a
+     screen that never read it. /api/region-profiles is live and auth-gated,
+     and its own header says it serves "the submission UI"; it simply had no
+     caller. This is that caller.
+
+     COVERAGE IS PARTIAL AND THAT IS THE POINT. The region selector offers
+     twelve regions; profiles exist for five (fda, eu, jp, cn, kr), so seven —
+     Health Canada, MHRA, Swissmedic, TGA, ANVISA, CDSCO, HSA — resolve to a
+     404. That 404 must never render as "no requirements": on a submission
+     screen, an empty required-section list is a statement that nothing is
+     required, and for those seven nobody has codified what is. The same
+     fail-visible rule the dispatch assessor already applies to an unregistered
+     region ("the absence of MISSING_REQUIRED_SECTION findings does NOT mean
+     the required sections are present"). */
+  const profilePath = sub?.primaryRegion
+    ? `/api/region-profiles/${encodeURIComponent(String(sub.primaryRegion).toLowerCase())}`
+    : null;
+  const profile = useLiveData<RegionProfile>(profilePath, [profilePath]);
 
   /* The same discriminator for THIS submission's sequences, for the same reason:
      `seqs.rows.length === 0` is true in flight, on failure, and on a genuine
@@ -319,12 +492,12 @@ export function SubmissionCenter({
    * what it said.
    *
    * The route and its schema existed the whole time — the MOUNTED router's
-   * createSubmissionSchema (routes/submissions.ts) takes { title,
+   * createSubmissionSchema (routes/submissions.ts) takes { programId, title,
    * productName?, applicationType, clientType, primaryRegion } — so this is a
    * form over what the server actually requires, with the programme picked
-   * from the org's own list to supply the product identity the compile spine
-   * links on. (An earlier body targeted a different, unmounted router's
-   * schema; every submit answered 400 VALIDATION.)
+   * from the org's own list: the submission is anchored to it. (An earlier
+   * body targeted a different, unmounted router's schema; every submit
+   * answered 400 VALIDATION.)
    */
   const [newOpen, setNewOpen] = React.useState(false);
   const [creating, setCreating] = React.useState(false);
@@ -338,16 +511,19 @@ export function SubmissionCenter({
     setCreating(true);
     setNotice(null);
     /* The LIVE schema of POST /api/submissions (routes/submissions.ts):
-       { title, productName?, applicationType, clientType, primaryRegion }.
-       The previous body ({ type, projectId, targetAgency, targetDate })
-       belonged to a router that is NOT mounted at this path — every submit
-       was a 400 VALIDATION, so this form had never created anything.
-       productName carries the programme's identity on purpose: the eCTD
-       compile spine links program ↔ submission by matching application type
-       plus product/title, so this field is what makes the new submission
-       compilable from the programme's Module 3. */
+       { programId, title, productName?, applicationType, clientType,
+       primaryRegion }. The previous body ({ type, projectId, targetAgency,
+       targetDate }) belonged to a router that is NOT mounted at this path —
+       every submit was a 400 VALIDATION, so this form had never created
+       anything.
+       programId is the programme the user picked: the submission belongs to
+       it (submissions.program_id, LX-22). The form used to make the user pick
+       one and then drop the id, so a submission created here had no project
+       and reached one only by a product-name match. The server refuses a
+       programme of another organization (404). */
     const r = await mutateVerbatim<SubRow>('POST', '/api/submissions', {
       title: (v.title ?? '').trim(),
+      programId: programme.id,
       productName: programme.title || programme.code || undefined,
       applicationType: v.applicationType,
       clientType: v.clientType,
@@ -381,23 +557,28 @@ export function SubmissionCenter({
    * ask the user for. The verdict is the server's, verbatim.
    */
   const [creatingSeq, setCreatingSeq] = React.useState(false);
-  const startFirstSequence = async (target: SubRow) => {
+  const startSequence = async (target: SubRow, sequenceNumber: string, type: string) => {
     if (creatingSeq) return;
     setCreatingSeq(true);
     setNotice(null);
     const r = await mutateVerbatim<SeqRow>('POST', `/api/submissions/${target.id}/sequences`, {
       region: target.primaryRegion,
-      sequenceNumber: '0000',
-      type: 'original',
+      sequenceNumber,
+      type,
     });
     setCreatingSeq(false);
     if (r.data && (r.data as { id?: unknown }).id != null) {
       setSeqBump((b) => b + 1);
-      setNotice({ tone: 'ok', text: `Sequence 0000 created for ${target.title} — server-confirmed.` });
+      setNotice({ tone: 'ok', text: `Sequence ${sequenceNumber} created for ${target.title} — server-confirmed.` });
     } else {
-      setNotice({ tone: 'err', text: `Sequence 0000 not created — ${r.error ?? 'the request failed'}.` });
+      setNotice({ tone: 'err', text: `Sequence ${sequenceNumber} not created — ${r.error ?? 'the request failed'}.` });
     }
   };
+
+  /* A follow-up sequence (WO-9 Click 6). Its number follows the highest in the
+     submission's own region — numbering restarts per region — and its type is
+     the author's to state; the server's enum, less 'original', which is 0000. */
+  const [nextSeqType, setNextSeqType] = React.useState<string>('amendment');
 
   /** Non-governed lifecycle transition — the REAL endpoint, verdict verbatim.
    *  The server refuses frozen/dispatched here (GOVERNED_REQUIRED); those two
@@ -515,10 +696,11 @@ export function SubmissionCenter({
       const guarded = busyGuard();
       if (guarded) return guarded;
       const wanted = (params.submission ?? '').trim().toLowerCase();
-      if (!wanted) return { ok: false, reason: 'No submission named.' };
       if (subs.loading)
         return { ok: false, reason: 'The submission portfolio is still loading.', retry: true };
       if (subs.error) return { ok: false, reason: 'The submission portfolio could not be read.' };
+      const listed = () => listedChoices(list.map((s) => s.title), 'Submissions listed');
+      if (!wanted) return { ok: false, reason: `No submission named.${listed()}` };
       // Resolved over the same `list` the portfolio picker renders: exact
       // title/product match first (case-insensitive), then unique containment.
       const exact = list.find(
@@ -537,8 +719,11 @@ export function SubmissionCenter({
           ok: false,
           reason:
             contains.length > 1
-              ? `"${params.submission}" matches ${contains.length} submissions — name one exactly.`
-              : `No submission named "${params.submission}" in this portfolio.`,
+              ? `"${params.submission}" matches ${contains.length} submissions — name one exactly.${listedChoices(
+                  contains.map((s) => s.title),
+                  'Matches',
+                )}`
+              : `No submission named "${params.submission}" in this portfolio.${listed()}`,
         };
       }
       const already = match.id === sub?.id;
@@ -656,24 +841,56 @@ export function SubmissionCenter({
         deviceFilingsUnavailable: deviceRes.error ? 'the eSTAR tracker read failed' : null,
         deviceAssemblyVerdict:
           assembly.state === 'ready'
-            ? { artifactKind: assembly.artifactKind, blockerCount: assembly.blockerCount }
+            ? { artifactKind: assembly.artifactKind, missingRequiredSections: assembly.missingRequired,
+                undeterminedSections: assembly.undetermined, otherBlockers: assembly.otherBlockers }
             : assembly.state === 'error'
               ? 'unavailable'
               : 'loading',
         lastServerNotice: notice ? { tone: notice.tone, text: notice.text } : null,
+        /* The Planner's region profile. The three outcomes are kept apart here
+           for the same reason they are on screen: an assistant told only
+           "requiredModule1: []" will report that nothing is required, which is
+           true for none of the three cases below. */
+        regionProfile: profile.loading
+          ? 'loading'
+          : profile.status === 404
+            ? {
+                state: 'not-codified',
+                region: sub?.primaryRegion ?? null,
+                detail:
+                  'No region profile is registered for this region. Required Module 1 sections, forms and gateway rules have NOT been codified — this is a rule-pack gap, never a statement that nothing is required.',
+              }
+            : profile.error || !profile.data
+              ? { state: 'unreadable', detail: 'the region-profile read failed; requirements are unknown, not absent' }
+              : {
+                  state: 'codified',
+                  agency: profile.data.agency,
+                  pathways: profile.data.pathways ?? [],
+                  /* Scoped to this application type — see requiredModule1For. */
+                  requiredModule1ForThisApplicationType: requiredModule1For(
+                    profile.data.module1Sections,
+                    sub?.applicationType,
+                  ).map((s) => ({ number: s.number, title: s.title })),
+                  requiredForms: (profile.data.forms ?? [])
+                    .filter((f) => f.required)
+                    .map((f) => ({ formId: f.formId ?? null, name: f.name })),
+                  specificRequirements: profile.data.specificRequirements ?? [],
+                  gatewayRuleCount: profile.data.validationRuleCount ?? 0,
+                },
       },
       availableActions: [
         'Switch workspace — planner, sequences, builder, validation, shadow review, cross-region, dispatch',
         'Select a different submission from the portfolio picker',
         'Select the working sequence the build and validation workspaces act on',
         'Move a sequence through its non-governed lifecycle transitions',
-        'Freeze or dispatch a sequence (each requires a Part 11 e-signature and passes the dispatch gate)',
+        'Freeze or dispatch a sequence (each requires a Part 11 e-signature and a clear gate; a missing release signature never blocks a freeze)',
         'Open a tracked eSTAR device filing in the 510(k) surface',
       ],
     };
   }, [
     subs.loading, subs.error, list, sub, ws, seqs.loading, seqs.error, seqs.rows, seq,
     deviceRes.loading, deviceRes.error, deviceFilings.length, assembly, notice,
+    profile.loading, profile.error, profile.data,
   ]);
   usePublishSurfaceContext('submission-center', anaContext);
 
@@ -886,7 +1103,14 @@ export function SubmissionCenter({
                       }}
                     >
                       <td>
-                        <b>{s.title}</b>
+                        {/* The row opens on click. A <tr> cannot take focus without
+                            losing its table semantics, so the title is the keyboard
+                            affordance: a real button styled as the text it wraps.
+                            Its click (mouse or Enter/Space) bubbles to the row's
+                            handler, so there is one open path, not two (SC 2.1.1). */}
+                        <button type="button" className="sc-subrow-open" aria-label={`Open ${s.title}`}>
+                          <b>{s.title}</b>
+                        </button>
                         {s.productName ? <span className="sp-row-s"> · {s.productName}</span> : null}
                       </td>
                       <td>{regL(s.primaryRegion)}</td>
@@ -1009,6 +1233,137 @@ export function SubmissionCenter({
                 <span className="tl-spec-v sc-cap">{sub.lifecycleStage}</span>
               </div>
             </div>
+            {/* ── The region profile itself ────────────────────────────────
+                The prose above used to NAME this profile's contents over a
+                screen that never read them. It is read now, with the 404 for
+                an unprofiled region kept distinct from an empty one. */}
+            <div className="sc-mt">
+              {profile.loading ? (
+                <EmptyState icon={I.globe} title="Loading the region profile…" busy />
+              ) : profile.status === 404 ? (
+                /* THE 404, TESTED BEFORE THE GENERIC ERROR. Seven of the twelve
+                   regions the selector offers have no codified profile, and the
+                   route answers 404 for each. That is a different fact from a
+                   failed read — nobody has codified this region, so there is
+                   nothing to retry — and it must not be reported as either a
+                   transient failure or an empty requirement set. Ordering
+                   matters: useLiveData sets `error` for every non-OK status, so
+                   a 404 checked after `error` is unreachable. */
+                <EmptyState
+                  icon={I.globe}
+                  title={`No region profile is registered for ${regL(sub.primaryRegion)}`}
+                  hint="Required Module 1 sections, agency forms and gateway validation rules have not been codified for this region. Their absence here is a gap in the rule pack, not a statement that nothing is required — plan this filing against the agency’s own guidance."
+                />
+              ) : profile.error || !profile.data ? (
+                <EmptyState
+                  tone="error"
+                  icon={I.alertTriangle}
+                  title={`Couldn’t load the ${regL(sub.primaryRegion)} region profile`}
+                  hint="The profile read did not complete, so the required Module 1 sections and validation rules below are unknown — this is a failed read, not an empty requirement set."
+                />
+              ) : (
+                <>
+                  <div className="tl-spec-grid sc-spec">
+                    <div className="tl-spec-row">
+                      <span className="tl-spec-k">Agency</span>
+                      <span className="tl-spec-v">{profile.data.agency}</span>
+                    </div>
+                    <div className="tl-spec-row">
+                      <span className="tl-spec-k">Pathways</span>
+                      <span className="tl-spec-v">
+                        {profile.data.pathways?.length ? profile.data.pathways.join(' · ') : '—'}
+                      </span>
+                    </div>
+                    <div className="tl-spec-row">
+                      <span className="tl-spec-k">Codified gateway rules</span>
+                      <span className="tl-spec-v">{profile.data.validationRuleCount ?? 0}</span>
+                    </div>
+                  </div>
+
+                  {/* Required Module 1, scoped to THIS application type. */}
+                  {(() => {
+                    const req = requiredModule1For(profile.data.module1Sections, sub.applicationType);
+                    return (
+                      <div className="sc-mt">
+                        <div className="tl-spec-k sc-mb">
+                          Required Module 1 for {appL(sub.applicationType)} · {req.length}
+                        </div>
+                        {req.length === 0 ? (
+                          <div className="scaf-note">
+                            The profile codifies no Module 1 section as required for{' '}
+                            {appL(sub.applicationType)} specifically. Sections required for other
+                            application types are not listed here.
+                          </div>
+                        ) : (
+                          <div className="sc-chiprow">
+                            {req.map((s) => (
+                              <span key={s.number} className="rd-chip tone-idle" title={s.description}>
+                                {s.number} {s.title}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Agency forms. */}
+                  {profile.data.forms?.length > 0 && (
+                    <div className="sc-mt">
+                      <div className="tl-spec-k sc-mb">Agency forms</div>
+                      <div className="sc-chiprow">
+                        {profile.data.forms.map((f) => (
+                          <span
+                            key={f.formId ?? f.name}
+                            className={`rd-chip tone-${f.required ? 'warn' : 'idle'}`}
+                            title={f.description}
+                          >
+                            {f.formId ? `${f.formId} · ` : ''}
+                            {f.name}
+                            {f.required ? ' (required)' : ''}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Region-specific requirements, verbatim from the profile. */}
+                  {profile.data.specificRequirements?.length > 0 && (
+                    <div className="sc-mt">
+                      <div className="tl-spec-k sc-mb">Region-specific requirements</div>
+                      <ul className="sc-blockers">
+                        {profile.data.specificRequirements.map((r, i) => (
+                          <li key={i}>{r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* The gateway rules this filing will be validated against —
+                      the same codified set the hardened validator enforces at
+                      package time, shown here BEFORE the package is built. */}
+                  {profile.data.validationRules?.length > 0 && (
+                    <div className="sc-mt">
+                      <div className="tl-spec-k sc-mb">
+                        Gateway validation rules · {profile.data.validationRules.length}
+                      </div>
+                      <div className="sc-chiprow">
+                        {profile.data.validationRules.map((r) => (
+                          <span
+                            key={r.id}
+                            className={`rd-chip tone-${r.severity === 'error' ? 'err' : r.severity === 'warning' ? 'warn' : 'idle'}`}
+                            title={`${r.description} — ${r.citation}`}
+                          >
+                            {r.id}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
             <div className="scaf-note sc-mt">
               {/* Read "AnA builds the sequence plan…" above a button that only
                   opened the chat rail: a capability stated in the present
@@ -1122,7 +1477,7 @@ export function SubmissionCenter({
                   <button
                     type="button"
                     className="sp-primary sc-btn"
-                    onClick={() => void startFirstSequence(sub)}
+                    onClick={() => void startSequence(sub, '0000', 'original')}
                     disabled={creatingSeq}
                   >
                     {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
@@ -1171,7 +1526,9 @@ export function SubmissionCenter({
                               disabled={acting != null}
                               title={
                                 governed
-                                  ? 'Governed — Part 11 e-signature and a clear dispatch gate required'
+                                  ? to === 'frozen'
+                                    ? 'Governed — Part 11 e-signature and a clear freeze gate required. A missing release signature does not block a freeze.'
+                                    : 'Governed — Part 11 e-signature and a clear dispatch gate required'
                                   : 'Lifecycle transition — the server enforces which transitions are legal'
                               }
                               onClick={(e) => {
@@ -1200,6 +1557,14 @@ export function SubmissionCenter({
                     </div>
                   ))}
                 </div>
+                <NextSequenceControl
+                  sub={sub}
+                  rows={seqs.rows}
+                  type={nextSeqType}
+                  onType={setNextSeqType}
+                  busy={creatingSeq}
+                  onStart={(n) => void startSequence(sub, n, nextSeqType)}
+                />
               </>
             )}
           </div>
@@ -1223,6 +1588,10 @@ export function SubmissionCenter({
           }`}
           defaultMeaning={flow.kind === 'freeze' ? 'approval' : 'release'}
           signer={authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined}
+          // The server's re-authentication demands the authenticator code
+          // whenever the signer has one enrolled; without this the modal never
+          // asked for it and an enrolled signer could not freeze or dispatch.
+          requireMfa={authUser?.mfaEnabled === true}
           onClose={() => setFlow(null)}
           onSign={(input) => runGoverned(flow, input)}
         />

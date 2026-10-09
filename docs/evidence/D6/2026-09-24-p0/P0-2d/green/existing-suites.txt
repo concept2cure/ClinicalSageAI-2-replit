@@ -1,0 +1,30 @@
+$ NODE_OPTIONS='--max-old-space-size=4096' npx vitest run --config vitest.config.ts server/mcp/__tests__/mcp-auth-contract.test.ts --reporter=verbose
+HEAD=9dba7621 (working tree: P0-2d guard applied, uncommitted). server/mcp/__tests__/* is the D8 lane's; run, not edited. mcp-connector.dbtest.ts needs PostgreSQL (vitest.db.config.ts) and is not runnable on this host.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "message": "[database] RLS enforcement mode resolved",
+    "mode": "on"
+  }
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+  }
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 9728 protected-resource metadata for /mcp 20ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 8414 authorization-server metadata with PKCE S256 and dynamic registration 3ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp without a token with 401 and a resource_metadata challenge 15ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp with a forged token with 401 (same verifier as the API: HS256 + rotation) 4ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > rejects a refresh-class token on the MCP path (token-class allow-list) 6ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > curated tool catalog > has 19 uniquely named tools, each with all four annotation hints, a scope and exactly one governed write 5ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > returns the gateway’s own refusal verbatim when no provider key is configured 398ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > maps an AnA handler error to a verbatim refusal, never an empty success 1ms
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  01:53:24
+   Duration  2.91s (transform 1.34s, setup 93ms, import 148ms, tests 2.37s, environment 0ms)
+exit=0

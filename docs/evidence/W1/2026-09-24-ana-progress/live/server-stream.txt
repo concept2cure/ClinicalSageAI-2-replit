@@ -1,0 +1,50 @@
+# Real server, fake model: the SSE the stream route emitted
+
+Server: npx tsx server/index.ts on a freshly provisioned Postgres 16 + pgvector (install-fresh + deploy-migrate).
+Model: harness/fake-anthropic.mjs on 127.0.0.1 (ANTHROPIC_BASE_URL), playing plan -> search -> plan -> draft -> plan -> plan -> answer.
+Every other part — auth, upload, file resolution, tool execution, authoring store, events — is the real code.
+
+## BEFORE the refusal fix: the same refused draft, reported as a success
+
+    tool_result draft_authoring_document status=success result={"error":"draft_authoring_document needs an open project — every authoring document is filed under one. Open or select a project, then ask a
+
+## A draft with no open project: the handler refuses, and the step is now reported as failed
+
+    context_used {"uploads": [{"fileId": "file_1790276373525_3csxu3", "fileName": "Protocol-ONC-221-v3.2.txt", "mimeType": "text/plain", "read": "name_only"}], "unresolvedUploads": 0, "memoryStatus": "unavailable"}
+    orchestration suggestedActions=["rewritten_section", "revised_artifact", "risk_memo", "strategy_note"]
+    tool_result update_plan status=success
+    plan round 1: Read the protocol [in_progress], Draft the endpoint summary [pending], Check the estimand [pending]
+    tool_result project_knowledge_search status=success
+    tool_result update_plan status=success
+    plan round 3: Read the protocol [completed], Draft the endpoint summary [in_progress], Check the estimand [pending]
+    tool_result draft_authoring_document status=error message='AnA couldn\'t finish drafting "Primary endpoint summary — ONC-221". She\'ll continue with what she has.' result={"error":"draft_authoring_document needs an open project — every authoring document is filed under one. Open or select a project, then ask a
+    tool_result update_plan status=success
+    plan round 5: Read the protocol [completed], Draft the endpoint summary [completed], Check the estimand [in_progress]
+    tool_result update_plan status=success
+    plan round 6: Read the protocol [completed], Draft the endpoint summary [completed], Check the estimand [completed]
+    done
+
+## The same turn with the project named: real authoring document saved
+
+    context_used {"uploads": [{"fileId": "file_1790276373525_3csxu3", "fileName": "Protocol-ONC-221-v3.2.txt", "mimeType": "text/plain", "read": "name_only"}], "unresolvedUploads": 0, "memoryStatus": "unavailable"}
+    orchestration suggestedActions=["rewritten_section", "revised_artifact", "risk_memo", "strategy_note"]
+    tool_result update_plan status=success
+    plan round 1: Read the protocol [in_progress], Draft the endpoint summary [pending], Check the estimand [pending]
+    tool_result project_knowledge_search status=success
+    tool_result update_plan status=success
+    plan round 3: Read the protocol [completed], Draft the endpoint summary [in_progress], Check the estimand [pending]
+    tool_result draft_authoring_document status=success result={"status":"generated","authoringDocId":"3166b733-4bf2-4deb-adc1-ce5e29e33fa9","programId":"37d12a4b-5b89-4454-8694-c3e5de21f62a","title":"Pr
+    artifact_draft title='Primary endpoint summary — ONC-221' authoringDocId=3166b733-4bf2-4deb-adc1-ce5e29e33fa9
+    tool_result update_plan status=success
+    plan round 5: Read the protocol [completed], Draft the endpoint summary [completed], Check the estimand [in_progress]
+    tool_result update_plan status=success
+    plan round 6: Read the protocol [completed], Draft the endpoint summary [completed], Check the estimand [completed]
+    done
+
+## Next actions BEFORE the label fix
+
+    orchestration suggestedActions=["rewritten_section", "revised_artifact", "risk_memo", "deficiency_preemption_memo", "strategy_note"]
+
+## Next actions AFTER the label fix
+
+    orchestration suggestedActions=["Rewrite Section", "Revise Document", "Create Risk Memo", "Create Deficiency Preemption Memo", "Create Strategy Note"]

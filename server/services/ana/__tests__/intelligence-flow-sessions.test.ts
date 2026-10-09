@@ -17,7 +17,8 @@
  *     marks the session committed; a refused entry stops the commit, leaves
  *     the session 'complete', and dry_run shows the plan without writing.
  */
-import { describe, it, expect, beforeEach, type Mock } from 'vitest';
+import { runWithTenantScope } from '../../../db/tenantStore';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 
 import { mockPool } from '../../../../tests/setup';
 
@@ -40,6 +41,15 @@ const registerCreates = {
 };
 vi.mock('../../cmc/register-writes', () => registerCreates);
 
+/* 2026-09-28: commit_intelligence_flow is confirm-class, so it now passes the
+   registry's editor-role gate (writeRoleRefusal) first; CTX models the confirmed
+   member who ran the interview, so the principal's role is an editor one. */
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 
 /* The runtime instruments the pool on import (server/db/poolInstrumentation
    wraps `pool.query`, keeping a bound reference to the original vi.fn). The
@@ -47,12 +57,15 @@ vi.mock('../../cmc/register-writes', () => registerCreates);
    BEFORE the executor loads — the wrapper delegates to it, so scripting the
    original drives every query the handlers issue. */
 const rawQuery = mockPool.query as unknown as Mock;
+/* Same for connect: instrumentation replaces pool.connect, and the scoped path
+   runs every query through the ORIGINAL one captured here. */
+const rawConnect = mockPool.connect as unknown as Mock;
 const { getToolHandler } = await import('../AnaToolExecutor');
 const { startFlow } = await import('../intelligence-questions/engine.js');
 
 const ORG = 42;
 const SESSION_ID = '5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e';
-const CTX = { organizationId: ORG, userId: 7, projectId: 91, projectType: 'pharma' as const };
+const CTX = { organizationId: ORG, userId: 7, projectId: 91, projectType: 'pharma' as const, humanConfirmed: true };
 
 type Statement = { text: string; params: unknown[] };
 
@@ -73,26 +86,62 @@ function sessionRow(state: unknown, overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Script the shared pool: record statements, answer by SQL shape. */
-function scriptPool(answer: (text: string, params: unknown[]) => unknown[] | null) {
+/** Script the shared pool: record statements, answer by SQL shape.
+ *  The tenant check on the session's project (PF-15) admits CTX's project
+ *  unless a case says the tenant does not hold it. */
+function scriptPool(answer: (text: string, params: unknown[]) => unknown[] | null, opts: { projectInTenant?: boolean } = {}) {
   const statements: Statement[] = [];
   rawQuery.mockImplementation(async (text: string, params: unknown[] = []) => {
     statements.push({ text, params });
+    if (/SELECT 1 AS present/.test(text)) {
+      const rows = opts.projectInTenant === false ? [] : [{ present: 1 }];
+      return { rows, rowCount: rows.length };
+    }
     const rows = answer(text, params) ?? [];
     return { rows, rowCount: rows.length };
   });
   return statements;
 }
 
+/**
+ * Run a tool the way production does: inside the caller's tenant scope.
+ *
+ * The request middleware (establishRequestTenantScope) and AnA run-control both
+ * wrap tool execution in runWithTenantScope for the caller's organisation, and
+ * with RLS_ENFORCE=on — the test default since tests/setup.db.ts, and the
+ * production requirement — a bare pool.query outside a scope fails closed. These
+ * tests called the handler directly, so every tool that persists anything
+ * failed with "[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant
+ * scope" before reaching the behaviour under test. A context with no
+ * organisation runs unscoped, which is what the refusal cases assert against.
+ */
 const call = async (name: string, input: Record<string, unknown>, ctx?: Record<string, unknown>) => {
   const handler = getToolHandler(name);
   expect(handler, `${name} registered`).toBeTypeOf('function');
-  return JSON.parse(await handler!(input, ctx as never));
+  const org = ctx?.organizationId;
+  const run = () => handler!(input, ctx as never);
+  const raw = org == null
+    ? await run()
+    : await runWithTenantScope({ tenantId: String(org), source: 'test', caller: `tool:${name}` }, run);
+  return JSON.parse(raw);
 };
 
+/* Under a tenant scope the instrumented pool runs each query on a connection
+   (pool.connect → set_config → the statement), and the shared mock's client
+   answers undefined. Route that client to the same scripted query, minus the
+   scope's own session-variable setup, so `statements` still holds only the
+   tool's SQL. */
+const SCOPE_SETUP = /^\s*(SELECT set_config\(|BEGIN\b|COMMIT\b|ROLLBACK\b|RESET\b)/i;
 beforeEach(() => {
   rawQuery.mockReset();
   rawQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+  rawConnect.mockResolvedValue({
+    query: (text: unknown, params?: unknown[]) =>
+      SCOPE_SETUP.test(String((text as { text?: string })?.text ?? text))
+        ? Promise.resolve({ rows: [], rowCount: 0 })
+        : rawQuery(text, params),
+    release: () => undefined,
+  });
 });
 
 describe('start_intelligence_flow', () => {
@@ -113,6 +162,18 @@ describe('start_intelligence_flow', () => {
     expect(insert.params[2]).toBe(7);
     expect(insert.params[4]).toBe('cmc_specification');
     expect(JSON.parse(String(insert.params[5])).currentNodeId).toBe('substance_identification');
+  });
+
+  it('refuses a project the organization does not hold — the interview is not started and nothing is written (PF-15)', async () => {
+    const statements = scriptPool(
+      (text, params) => (/INSERT INTO cmc_interview_sessions/.test(text) ? [sessionRow(JSON.parse(String(params[5])))] : null),
+      { projectInTenant: false },
+    );
+    const out = await call('start_intelligence_flow', { document_type: 'cmc' }, CTX);
+    expect(out.error).toMatch(/not a program or project of this organization/);
+    expect(out.session_id).toBeUndefined();
+    expect(statements.find(s => /SELECT 1 AS present/.test(s.text))?.params).toEqual(['91', ORG]);
+    expect(statements.filter(s => /INSERT INTO cmc_interview_sessions/.test(s.text))).toEqual([]);
   });
 
   it('without an organization it runs stateless, persists nothing, and says so', async () => {
@@ -396,7 +457,7 @@ describe('commit_intelligence_flow', () => {
         ? [sessionRow(completeState, { status: 'complete', project_id: null })]
         : null,
     );
-    const out = await call('commit_intelligence_flow', { session_id: SESSION_ID }, { organizationId: ORG, userId: 7 });
+    const out = await call('commit_intelligence_flow', { session_id: SESSION_ID }, { organizationId: ORG, userId: 7, humanConfirmed: true });
     expect(out.code).toBe('PROJECT_REQUIRED');
   });
 });

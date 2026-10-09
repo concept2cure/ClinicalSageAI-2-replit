@@ -82,11 +82,13 @@ describe('SubmissionCenter — create posts the live schema', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create submission/ }));
 
     await waitFor(() => expect(posts).toHaveLength(1));
-    // The EXACT keys the mounted router's createSubmissionSchema requires —
-    // and productName is the programme's identity, which is what the eCTD
-    // compile spine links program ↔ submission on.
+    // The EXACT keys the mounted router's createSubmissionSchema requires,
+    // including the project the user picked: the submission is anchored to it
+    // (submissions.program_id, LX-22). The form used to make the user pick a
+    // programme and then drop the id.
     expect(posts[0].body).toEqual({
       title: 'BX-701 — EU MAA (Centralised)',
+      programId: 'prog-uuid-1',
       productName: 'BX-701',
       applicationType: 'maa',
       clientType: 'biotech',
@@ -108,5 +110,61 @@ describe('SubmissionCenter — create posts the live schema', () => {
     const typeSel = screen.getByLabelText(/Application type/);
     const types = Array.from(typeSel.querySelectorAll('option')).map((o) => o.textContent);
     expect(types).toEqual(expect.arrayContaining(['MAA', 'CTA', 'IND', 'NDA', 'BLA']));
+  });
+});
+
+/**
+ * WO-9 Click 6: a follow-up sequence is started from the product, through the
+ * same POST /api/submissions/:id/sequences that starts 0000. Only 0000 could be
+ * started here, so a lifecycle sequence (0001) had no path in the UI.
+ */
+describe('SubmissionCenter — the next sequence', () => {
+  const SUB = {
+    id: 55, title: 'BX-512 IND', productName: 'BX-512', applicationType: 'ind', clientType: 'biotech',
+    primaryRegion: 'fda', status: 'active', lifecycleStage: 'original',
+  };
+  const seq = (id: number, sequenceNumber: string, region = 'fda', type = 'original') =>
+    ({ id, submissionId: 55, sequenceNumber, region, type, status: 'dispatched' });
+
+  function serve(initial: unknown[]) {
+    const seqPosts: unknown[] = [];
+    let rowsNow = initial;
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
+      if (method === 'GET' && url === '/api/submissions') return res({ data: [SUB] });
+      if (method === 'GET' && url === '/api/submissions/55/sequences') return res({ data: rowsNow });
+      if (method === 'POST' && url === '/api/submissions/55/sequences') {
+        seqPosts.push(body);
+        const created = { id: 99, submissionId: 55, sequenceNumber: body.sequenceNumber, region: body.region, type: body.type, status: 'draft' };
+        rowsNow = [...rowsNow, created];
+        return res(created, 201);
+      }
+      return res({ data: [] });
+    });
+    return seqPosts;
+  }
+
+  it('starts the next sequence in the submission\'s region, numbered after the last, of the type chosen', async () => {
+    const seqPosts = serve([seq(9, '0000')]);
+    render(<SubmissionCenter {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Open the sequences' }));
+
+    const start = await screen.findByRole('button', { name: 'Start sequence 0001' });
+    fireEvent.change(screen.getByLabelText('Type of sequence 0001'), { target: { value: 'response' } });
+    fireEvent.click(start);
+
+    await waitFor(() => expect(seqPosts).toEqual([{ region: 'fda', sequenceNumber: '0001', type: 'response' }]));
+    expect(await screen.findByText(/Sequence 0001 created for BX-512 IND — server-confirmed/)).toBeTruthy();
+  });
+
+  it('numbers after the highest sequence in the submission\'s own region — numbering restarts per region', async () => {
+    serve([seq(9, '0000'), seq(10, '0001'), seq(11, '0004', 'ema')]);
+    render(<SubmissionCenter {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Open the sequences' }));
+    expect(await screen.findByRole('button', { name: 'Start sequence 0002' })).toBeTruthy();
+    // An original is sequence 0000; a follow-up is never offered as one.
+    const types = Array.from((screen.getByLabelText('Type of sequence 0002') as HTMLSelectElement).options).map((o) => o.value);
+    expect(types).not.toContain('original');
+    expect(types).toContain('amendment');
   });
 });

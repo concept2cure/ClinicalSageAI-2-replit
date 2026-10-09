@@ -1,0 +1,139 @@
+# red (second way): the save_document_to_vault entry removed from PROPOSE_ONLY_TOOLS; the completeness assertion must name it
+# command: NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/services/ana/__tests__/propose-only-tools.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the scan still sees the surface > finds the whole registered surface across the executor and every RegisterFn module 2ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the scan still sees the surface > flags the tools the finding was found through 1ms
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every handler with a write marker is classified — a new writer cannot ship unclassified 7ms
+   → expected [ 'save_document_to_vault' ] to deeply equal []
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > no name is in two maps 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every classified name is a registered tool — no stale entries 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every entry says why, in a sentence 7ms
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > the two gates compose: every governed content write is a proposal or a refusal 1ms
+   → expected [ 'save_document_to_vault' ] to deeply equal []
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every handler that already refuses inline is registered as a refusal — the registry is the single source 6ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > the command bridge is in no map — the command partition governs it 1ms
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > save_document_to_vault is a proposal 1ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > update_vault_document is a proposal 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > draft_authoring_document is a proposal 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > create_qms_document is a proposal 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > retire_qms_document is refused in chat 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > approve_import is refused in chat 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > ack_training is refused in chat 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > approve_qms_document is refused in chat 0ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > qms_change_transition is refused for the approve, reject and close targets and proposed for the rest 2ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > an unreadable transition target is refused, not proposed 0ms
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > the tools that already demand a reason-for-change of their own are at the reason tier, so the reason is the person’s 1ms
+   → save_document_to_vault: expected null to be 'reason' // Object.is equality
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > a read is neither 0ms
+ × server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a proposal mirrors buildHumanConfirmationRequiredResult with a {tool, input} retry 2ms
+   → save_document_to_vault is not a propose-only tool
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a confirm-tier proposal asks for no reason and carries an object input even when the call had none 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > refuses to build a proposal for a tool that is not one — no silent confirm tier for an unknown name 1ms
+ ✓ server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a refusal keeps refuseSignatureInChat’s keys and adds an error code every door reads as a refusal 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > every handler with a write marker is classified — a new writer cannot ship unclassified
+AssertionError: expected [ 'save_document_to_vault' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "save_document_to_vault",
++ ]
+
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:127:26
+    125|   it('every handler with a write marker is classified — a new writer c…
+    126|     const unclassified = flagged.filter((n) => !classified.has(n));
+    127|     expect(unclassified).toEqual([]);
+       |                          ^
+    128|   });
+    129|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the classification cannot go stale > the two gates compose: every governed content write is a proposal or a refusal
+AssertionError: expected [ 'save_document_to_vault' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "save_document_to_vault",
++ ]
+
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:161:21
+    159|   it('the two gates compose: every governed content write is a proposa…
+    160|     const unaided = Object.keys(GOVERNED_CONTENT_WRITE_TOOLS).filter((…
+    161|     expect(unaided).toEqual([]);
+       |                     ^
+    162|   });
+    163|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > save_document_to_vault is a proposal
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:181:36
+    179|     '%s is a proposal',
+    180|     (n) => {
+    181|       expect(isProposeOnlyTool(n)).toBe(true);
+       |                                    ^
+    182|       expect(refusedInChatTool(n, { title: 'x' })).toBeNull();
+    183|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the finding's exemplars are classified as stated (DP-36) > the tools that already demand a reason-for-change of their own are at the reason tier, so the reason is the person’s
+AssertionError: save_document_to_vault: expected null to be 'reason' // Object.is equality
+
+- Expected:
+"reason"
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:215:32
+    213|   it('the tools that already demand a reason-for-change of their own a…
+    214|     for (const n of ['save_document_to_vault', 'update_vault_document'…
+    215|       expect(toolTierOf(n), n).toBe('reason');
+       |                                ^
+    216|     }
+    217|     for (const n of ['create_qms_document', 'draft_authoring_document'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/ana/__tests__/propose-only-tools.test.ts > the envelopes > a proposal mirrors buildHumanConfirmationRequiredResult with a {tool, input} retry
+TypeError: save_document_to_vault is not a propose-only tool
+ ❯ buildToolProposalResult server/services/ana/propose-only-tools.ts:563:28
+    561| } {
+    562|   const tier = toolTierOf(tool);
+    563|   if (tier === null) throw new TypeError(`${tool} is not a propose-onl…
+       |                            ^
+    564|   const message =
+    565|     tier === 'confirm'
+ ❯ server/services/ana/__tests__/propose-only-tools.test.ts:233:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 20 passed (25)
+   Start at  13:19:33
+   Duration  825ms (transform 230ms, setup 146ms, import 167ms, tests 44ms, environment 0ms)
+
+exit=1

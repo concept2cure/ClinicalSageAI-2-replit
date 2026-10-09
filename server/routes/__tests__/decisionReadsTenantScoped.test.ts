@@ -24,6 +24,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { store } = vi.hoisted(() => ({ store: { decisions: [] as any[] } }));
 
+/* The service now REFUSES to report a governed decision it could not record
+   durably, so these read tests need a persistence layer that succeeds. Mocking
+   it keeps the subject what it was — the in-memory tenant filtering on the real
+   recording path — rather than turning this into a persistence test. */
+vi.mock('../../services/decision-record-service.js', () => ({
+  decisionRecordService: { create: vi.fn().mockResolvedValue({ id: 'row_1' }) },
+}));
+
 vi.mock('../../services/decision-lifecycle-service.js', async (importOriginal) => {
   /* The REAL service, driven through its real recording path, so the filtering
      under test is the shipped implementation rather than a stand-in. */
@@ -47,7 +55,7 @@ function makeApp(tenantId: number | null) {
 }
 
 /** Record one decision directly through the service, under a given org. */
-function record(organizationId: number | undefined, projectId: string) {
+async function record(organizationId: number | undefined, projectId: string) {
   return decisionLifecycleService.recordGovernedActionDecision({
     projectId,
     organizationId,
@@ -66,8 +74,8 @@ beforeEach(() => {
 
 describe('decision reads are tenant-scoped', () => {
   it('does not return another organization’s project decisions', async () => {
-    const mine = record(7, 'P-SHARED');
-    const theirs = record(9, 'P-SHARED');
+    const mine = await record(7, 'P-SHARED');
+    const theirs = await record(9, 'P-SHARED');
     expect(mine?.id).toBeTruthy();
     expect(theirs?.id).toBeTruthy();
 
@@ -80,7 +88,7 @@ describe('decision reads are tenant-scoped', () => {
   });
 
   it('reports another organization’s decision as not found, not forbidden', async () => {
-    const theirs = record(9, 'P-OTHER');
+    const theirs = await record(9, 'P-OTHER');
 
     const res = await request(makeApp(7)).get(
       `/api/authoring-actions/decision/${theirs.id}`,
@@ -92,8 +100,8 @@ describe('decision reads are tenant-scoped', () => {
   });
 
   it('scopes decision-context, which returns receipts as well', async () => {
-    const mine = record(7, 'P-CTX');
-    const theirs = record(9, 'P-CTX');
+    const mine = await record(7, 'P-CTX');
+    const theirs = await record(9, 'P-CTX');
 
     const res = await request(makeApp(7)).get(
       '/api/authoring-actions/decision-context/P-CTX',
@@ -105,17 +113,21 @@ describe('decision reads are tenant-scoped', () => {
     expect(ids).not.toContain(theirs.id);
   });
 
-  it('excludes records stored without any tenant context', async () => {
-    // Fail closed: an unattributed record belongs to no organization, so it is
-    // not served to one.
-    const unattributed = record(undefined, 'P-UNATTRIBUTED');
+  it('refuses to record a decision with no tenant context at all', async () => {
+    /* This used to assert that an unattributed record was merely EXCLUDED from
+       a tenant's reads. It cannot be created any more: persistDecision refuses
+       a decision with no organizationId rather than fabricating attribution,
+       and the service no longer reports a decision it could not record. Not
+       being able to make one is the stronger property, so it is the one
+       asserted. */
+    await expect(record(undefined, 'P-UNATTRIBUTED')).rejects.toThrow(
+      /could not be recorded durably/,
+    );
 
     const res = await request(makeApp(7)).get(
       '/api/authoring-actions/decisions/P-UNATTRIBUTED',
     );
-
-    const ids = (res.body.decisions ?? []).map((d: any) => d.id);
-    expect(ids).not.toContain(unattributed.id);
+    expect(res.body.decisions ?? []).toEqual([]);
   });
 
   it('refuses all three reads when no tenant context is present', async () => {

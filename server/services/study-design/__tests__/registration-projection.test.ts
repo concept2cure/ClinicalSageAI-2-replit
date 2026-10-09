@@ -2,8 +2,17 @@
  * Tests for the registration projection (module spec §8). A registry record is a projection
  * of the design object: the scientific content is mapped deterministically (phase, masking,
  * allocation, intervention model, arm type, outcome measures), and a field the object does not
- * carry (sponsor, sex/age, dates, recruitment status, EU member states) is reported as a gap,
- * never invented. The same design feeds both ClinicalTrials.gov and EU CTIS, so they agree.
+ * carry (sponsor, dates, recruitment status, EU member states) is reported as a gap, never
+ * invented. The same design feeds both ClinicalTrials.gov and EU CTIS, so they agree.
+ *
+ * Eligibility comes from `eligibility-model.ts`: age limits are rendered when — and only when —
+ * an inclusion age criterion states them, while sex and healthy-volunteer eligibility stay gaps
+ * because nothing on `StudyDesign.population` can record either. The gap text for those three
+ * used to be a flat "not part of the design object"; it now carries the engine's own reason and
+ * names the field that would settle it, and the assertions below were updated to match. The
+ * fixture's criteria state no age, so all three are still gaps here — the CHANGE is in what the
+ * gap says, not in whether it is one. `registration-eligibility-wiring.test.ts` covers the
+ * criteria that do parse.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -12,6 +21,7 @@ import {
   projectAllRegistrations,
   type RegistrationRecord,
   type RegistrationField,
+  CTGOV_TITLE_LIMITS,
 } from '../registration-projection';
 import { type StudyDesign } from '../study-design-types';
 
@@ -53,6 +63,33 @@ function clone(d: StudyDesign): StudyDesign {
 function fieldOf(rec: RegistrationRecord, name: string): RegistrationField | undefined {
   return rec.modules.flatMap(m => m.fields).find(f => f.name === name);
 }
+
+describe('projectRegistration — titles', () => {
+  it('never shows the official title as the lay brief title; renders a recorded public title and acronym', () => {
+    const bare = projectRegistration(regDesign(), 'ctgov');
+    expect(fieldOf(bare, 'Brief title')).toMatchObject({ status: 'missing', value: null, required: true });
+    expect(fieldOf(bare, 'Brief title')!.gap).toMatch(/official title is not reused/);
+    expect(fieldOf(bare, 'Official title')).toMatchObject({ status: 'rendered', value: 'A phase 3 study of Drug X in type 2 diabetes' });
+    expect(fieldOf(bare, 'Acronym')).toMatchObject({ status: 'missing', required: false });
+
+    const d = { ...regDesign(), publicTitle: 'A study of Drug X for adults with type 2 diabetes', acronym: 'DX-T2D' };
+    const rec = projectRegistration(d, 'ctgov');
+    expect(fieldOf(rec, 'Brief title')).toMatchObject({ status: 'rendered', value: d.publicTitle });
+    expect(fieldOf(rec, 'Acronym')).toMatchObject({ status: 'rendered', value: 'DX-T2D' });
+    expect(fieldOf(projectRegistration(d, 'ctis'), 'Public title')).toMatchObject({ status: 'rendered', value: d.publicTitle, required: false });
+    expect(fieldOf(projectRegistration(regDesign(), 'ctis'), 'Public title')).toMatchObject({ status: 'missing', required: false });
+  });
+
+  it('a title longer than ClinicalTrials.gov accepts is partial with its length, never truncated', () => {
+    const long = 'x'.repeat(CTGOV_TITLE_LIMITS.brief + 1);
+    const rec = projectRegistration({ ...regDesign(), publicTitle: long, acronym: 'A-VERY-LONG-ACRONYM' }, 'ctgov');
+    expect(fieldOf(rec, 'Brief title')).toMatchObject({ status: 'partial', value: long });
+    expect(fieldOf(rec, 'Brief title')!.gap).toMatch(/301 characters; ClinicalTrials\.gov accepts at most 300/);
+    expect(fieldOf(rec, 'Acronym')!.status).toBe('partial');
+    const exact = projectRegistration({ ...regDesign(), publicTitle: 'y'.repeat(CTGOV_TITLE_LIMITS.brief) }, 'ctgov');
+    expect(fieldOf(exact, 'Brief title')!.status).toBe('rendered');
+  });
+});
 
 describe('projectRegistration — ClinicalTrials.gov', () => {
   it('is deterministic', () => {
@@ -101,6 +138,30 @@ describe('projectRegistration — ClinicalTrials.gov', () => {
     expect(rec.registrable).toBe(false);
     expect(rec.gaps.length).toBeGreaterThan(0);
     expect(rec.completeness.requiredRendered).toBeLessThan(rec.completeness.requiredTotal);
+  });
+
+  it('says what would settle each eligibility gap, rather than only that it is absent', () => {
+    const rec = projectRegistration(regDesign(), 'ctgov');
+    // The fixture's criteria state no age, so the engine reports both bounds absent and why.
+    expect(fieldOf(rec, 'Age limits')!.gap).toMatch(/lower age bound in a written time unit/i);
+    // Sex and healthy volunteers name the field that would close them. These two replace the
+    // old flat text "… is not part of the design object."
+    expect(fieldOf(rec, 'Sex / gender')!.gap).toMatch(/EligibilityRecordedFacts\.sex/);
+    expect(fieldOf(rec, 'Accepts healthy volunteers')!.gap).toMatch(/EligibilityRecordedFacts\.healthyVolunteers/);
+    for (const name of ['Sex / gender', 'Accepts healthy volunteers']) {
+      expect(fieldOf(rec, name)!.gap).not.toMatch(/is not part of the design object\.$/);
+    }
+  });
+
+  it('renders the eligibility criteria and carries the same set as data', () => {
+    const rec = projectRegistration(regDesign(), 'ctgov');
+    const criteria = fieldOf(rec, 'Eligibility criteria')!;
+    expect(criteria.status).toBe('rendered');
+    expect(criteria.value).toMatch(/Inclusion: HbA1c 7\.0–10\.0%/);
+    expect(criteria.value).toMatch(/Exclusion: eGFR below 30/);
+    // Every criterion is present as data too, including the one the grammar refuses.
+    expect(criteria.eligibility?.criteria.map(c => c.text)).toEqual(['HbA1c 7.0–10.0%', 'eGFR below 30']);
+    expect(criteria.eligibility?.unstructured).toBe(1); // "eGFR below 30" has no symbolic comparator
   });
 
   it('marks a primary outcome with no time frame as partial', () => {

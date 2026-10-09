@@ -1,0 +1,8 @@
+# MUTANT B: one byte appended to the vendored bundle
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > sets NODE_EXTRA_CA_CERTS in the production stage, after assets are copied in 2ms
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > names a committed file that .dockerignore does not drop 2ms
+ × tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > matches the SHA-256 recorded in checksums.txt 8ms
+   → expected '53af412739e58556da2f3d6343d6f4d735308…' to be 'e5bb2084ccf45087bda1c9bffdea0eb15ee67…' // Object.is equality
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > is loaded by Node as extra CAs, and supplies roots Node does not already have 85ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)

@@ -1,0 +1,15 @@
+{
+ "before": {
+  "projects": 200,
+  "session": true
+ },
+ "logout": {
+  "status": 200,
+  "message": "Logged out successfully. Tokens invalidated."
+ },
+ "after": {
+  "projects": 401,
+  "session": false,
+  "ledger": 401
+ }
+}

@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 typecheck:fast
+> NODE_OPTIONS="--max-old-space-size=24576" tsc --noEmit -p tsconfig.check.json
+
+exit=0

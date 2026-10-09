@@ -1,0 +1,4 @@
+plain s: rendered selection line 1070 chars; fences 2
+lone surrogates: rendered selection line 6065 chars; fences 2
+quotes: rendered selection line 2069 chars; fences 2
+backslashes: rendered selection line 2069 chars; fences 2

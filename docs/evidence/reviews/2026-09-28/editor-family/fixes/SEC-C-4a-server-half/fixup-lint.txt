@@ -1,0 +1,16 @@
+=== server/services/ana-ri/surface-context-block.ts: working tree
+
+server/services/ana-ri/surface-context-block.ts
+  141:8  warning  Function 'buildSurfaceContextBlock' has a complexity of 20. Maximum allowed is 15  complexity
+
+✖ 1 problem (0 errors, 1 warning)
+
+=== server/services/ana-ri/surface-context-block.ts: HEAD
+
+server/services/ana-ri/surface-context-block.ts
+  102:8  warning  Function 'buildSurfaceContextBlock' has a complexity of 18. Maximum allowed is 15  complexity
+
+✖ 1 problem (0 errors, 1 warning)
+
+=== server/services/ana-ri/__tests__/surface-context-block.test.ts: working tree
+=== server/services/ana-ri/__tests__/surface-context-block.test.ts: HEAD

@@ -32,17 +32,20 @@ vi.mock('../../../db', () => {
     };
     return p;
   };
-  return {
-    db: {
-      select: () => chain(),
-      insert: () => chain(),
-      update: () => {
-        updateCalls.count += 1;
-        return chain();
-      },
-      execute: () => Promise.resolve({ rows: [] }),
+  const db: any = {
+    select: () => chain(),
+    insert: () => chain(),
+    update: () => {
+      updateCalls.count += 1;
+      return chain();
     },
+    execute: () => Promise.resolve({ rows: [] }),
   };
+  // 2026-09-23 (W5/D7, round-2 skeptic): the soft delete now runs inside a
+  // transaction holding the sequence row lock; the stub's lock read reports an
+  // unlocked sequence, and the write goes through the same chain as before.
+  db.transaction = async (fn: (tx: any) => unknown) => fn({ ...db, execute: async () => ({ rows: [{ status: 'draft' }] }) });
+  return { db };
 });
 
 const logAction = vi.hoisted(() => vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }));

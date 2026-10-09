@@ -1,0 +1,13 @@
+=== With 'transmissionId: unlinked ? wire.mdnId : undefined,' REMOVED from fda-esg.ts recordMdnRefusal ===
+=== (a) round-2 assertions (no transmission_id pin): test (3) ===
+ ✓ server/services/submission-gateways/__tests__/zz-tmp-round2-test3.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN that names no message stays inside the duplicate-send lock with its transmission id, and throws 10ms
+      Tests  1 passed | 23 skipped (24)
+
+=== (b) round-3 assertions (transmission_id pinned): test (3) ===
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN that names no message stays inside the duplicate-send lock with its transmission id, and throws 15ms
+   → expected 'UPDATE submission_transmittals SET st…' to match /transmission_id\s*=/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'UPDATE submission_transmittals SET st…' to match /transmission_id\s*=/
+/transmission_id\s*=/
+    465|     expect(last.sql).toMatch(/transmission_id\s*=/);
+      Tests  1 failed | 23 skipped (24)
