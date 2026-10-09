@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-09T00:37:31.873Z",
+  "generatedAt": "2026-10-09T02:33:37.666Z",
   "git": {
-    "sha": "c245df58f25fc2208bfe1b3634bf2d54c75c383c",
+    "sha": "1473342ab8371155fddc479590ba5de51846bc40",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2088,7 +2088,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 189008
+        "bytes": 189160
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2196,7 +2196,7 @@
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
-        "bytes": 116012
+        "bytes": 116282
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2326,7 +2326,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3715
+        "lines": 3717
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2553,12 +2553,12 @@
         "lines": 1989
       },
       {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 1973
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1976
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1971
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 1973
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
