@@ -53,6 +53,9 @@ function buildSealInput(
           artifactVerified: body.verification.artifactVerified,
           sourceVerified: body.verification.sourceVerified,
           sourceDiffPerformed: body.verification.sourceDiffPerformed,
+          // Preserve explicit qualification limits; never launder them into ok-only sealing.
+          sourceQualification: body.verification.sourceQualification,
+          sealEligible: body.verification.sealEligible,
           receipt: body.verification.receipt,
         }
       : { ok: false };

@@ -89,6 +89,9 @@ export interface SealVerifiedVersionInput {
     artifactVerified?: unknown;
     sourceVerified?: unknown;
     sourceDiffPerformed?: unknown;
+    /** Caller declarations are not authenticated scientific review and cannot authorize a seal. */
+    sourceQualification?: unknown;
+    sealEligible?: unknown;
     /** Optional historical full tool-result reference. Fidelity never qualifies a source. */
     receipt?: unknown;
   };
@@ -252,6 +255,18 @@ export async function sealVerifiedVersion(
     throw new SealBlockedError(
       'Plan-text, required-string-only, and unsupported verification scopes cannot qualify a verified seal.',
       'VERIFICATION_SCOPE_INSUFFICIENT',
+    );
+  }
+
+  // There is no supported caller-declared scientific qualification contract.
+  // Reject negative, malformed AND positive claims rather than dropping them
+  // into legacy ok-only sealing. Omitted fields retain the existing legacy
+  // behavior, which remains an open qualification defect, not an approval path.
+  if (verification.sourceQualification !== undefined || verification.sealEligible !== undefined) {
+    throw new SealBlockedError(
+      'Caller-supplied source qualification or seal eligibility cannot authorize sealing. A version-bound scientific review is required.',
+      'SOURCE_QUALIFICATION_UNSUPPORTED',
+      422,
     );
   }
 

@@ -114,12 +114,12 @@ async function seed(status: 'review' | 'approved') {
   await run(
     `INSERT INTO concept2cure_artifacts
        (artifact_id, organization_id, project_id, type, category, title, content, content_hash, version, status, approved_version_id)
-     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', 'sha-v2', 2, $4, $5)`,
+     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', 2, $4, $5)`,
     [ARTIFACT, ORG, PROJECT, status, status === 'approved' ? 2 : null],
   );
   await run(
     `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash)
-     SELECT id, organization_id, 2, 'body', 'sha-v2' FROM concept2cure_artifacts WHERE artifact_id = $1`,
+     SELECT id, organization_id, 2, 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5' FROM concept2cure_artifacts WHERE artifact_id = $1`,
     [ARTIFACT],
   );
 }
