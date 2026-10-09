@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-09T03:48:26.263Z",
+  "generatedAt": "2026-10-09T04:12:00.670Z",
   "git": {
-    "sha": "512369c95a4a89a32e20bc2cb32601521a2a2df4",
+    "sha": "dc1927938a13c46153a3a2132f958dbada138435",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2191,12 +2191,12 @@
         "bytes": 118342
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "bytes": 116834
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "bytes": 117247
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "bytes": 116288
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "bytes": 116834
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2549,12 +2549,12 @@
         "lines": 2002
       },
       {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 1989
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 2001
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1980
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 1989
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
