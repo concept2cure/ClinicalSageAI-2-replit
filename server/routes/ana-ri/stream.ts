@@ -993,25 +993,6 @@ export function mountStreamRoute(router: Router): void {
       // before the disconnect listeners existed. Settle that missed close
       // after opening the recorder so its cause is retained too.
       if (res.destroyed || req.aborted) disconnectRun();
-      /* The tenant's permitted tool surface, resolved in parallel with context
-         assembly. Composed by governedToolsetFor so this path and
-         POST /api/chat/send-message cannot drift on whether the deny-list is
-         applied — which they had. */
-      const toolPolicyPromise = governedToolsetFor(getPool(), orgId == null ? null : Number(orgId));
-
-      // ── Live Drive (opt-in screen driving) ─────────────────────────────
-      // The client sends `live_drive: true` only while the person has the
-      // toggle on, plus `drive_mode: 'demo'` for an explicitly started
-      // demonstration (bigger budgets, demo prompt block — same entitlement).
-      // Entitlement (`ana_live_drive`, ENTITLEMENTS_ENFORCE modes) is resolved
-      // in parallel with context assembly; a deny is an honest `drive_state`
-      // event, never a dead turn. No request → zero queries.
-      const driveStatePromise = resolveDriveState(
-        live_drive === true,
-        orgId != null ? Number(orgId) : null,
-        { driveMode: drive_mode },
-      );
-
       // ── Intelligence answer fast-path ──────────────────────────────────
       // When the client submits a structured intelligence flow answer, skip
       // the full AI pipeline and call the tool handler directly.
@@ -1104,6 +1085,27 @@ export function mountStreamRoute(router: Router): void {
         await closeFastPath(fastOutcome);
         return;
       }
+
+      // Only model turns use these reads. Direct interview answers above
+      // retain their registered handler gates without admitting unused work.
+      /* The tenant's permitted tool surface, resolved in parallel with context
+         assembly. Composed by governedToolsetFor so this path and
+         POST /api/chat/send-message cannot drift on whether the deny-list is
+         applied — which they had. */
+      const toolPolicyPromise = governedToolsetFor(getPool(), orgId == null ? null : Number(orgId));
+
+      // ── Live Drive (opt-in screen driving) ─────────────────────────────
+      // The client sends `live_drive: true` only while the person has the
+      // toggle on, plus `drive_mode: 'demo'` for an explicitly started
+      // demonstration (bigger budgets, demo prompt block — same entitlement).
+      // Entitlement (`ana_live_drive`, ENTITLEMENTS_ENFORCE modes) is resolved
+      // in parallel with context assembly; a deny is an honest `drive_state`
+      // event, never a dead turn. No request → zero queries.
+      const driveStatePromise = resolveDriveState(
+        live_drive === true,
+        orgId != null ? Number(orgId) : null,
+        { driveMode: drive_mode },
+      );
 
       const validatedLens: IntentLens | undefined =
         intent_lens && VALID_LENSES.has(intent_lens as IntentLens)

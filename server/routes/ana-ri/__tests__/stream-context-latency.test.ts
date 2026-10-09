@@ -4,6 +4,11 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 const io = vi.hoisted(() => ({
   prefetch: vi.fn(),
   memory: vi.fn(),
+  toolPolicy: vi.fn(),
+  drive: vi.fn(),
+  answer: vi.fn(),
+  release: vi.fn(),
+  outcomes: [] as string[],
   operations: [] as string[],
   failAt: '' as string,
 }));
@@ -13,11 +18,26 @@ vi.mock('../shared.js', async importOriginal =>
   (await harnessModule()).mocks.shared(await importOriginal<Record<string, unknown>>()),
 );
 vi.mock('../post-processing.js', async () => (await harnessModule()).mocks.postProcessing());
-vi.mock('../../../services/ana/AnaToolExecutor.js', async () => (await harnessModule()).mocks.toolExecutor());
-vi.mock('../../../services/ana/governed-toolset.js', async () => (await harnessModule()).mocks.governedToolset());
-vi.mock('../../../services/ana/run-control.js', async importOriginal =>
-  (await harnessModule()).mocks.runControl(await importOriginal<typeof import('../../../services/ana/run-control.js')>()),
-);
+vi.mock('../../../services/ana/AnaToolExecutor.js', async () => {
+  const real = (await harnessModule()).mocks.toolExecutor();
+  return { ...real, getToolHandler: (name: string) => name === 'answer_intelligence_question' ? io.answer : real.getToolHandler(name) };
+});
+vi.mock('../../../services/ana/governed-toolset.js', () => ({ governedToolsetFor: io.toolPolicy }));
+vi.mock('../../../services/ana-ri/live-drive.js', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../../services/ana-ri/live-drive.js')>()),
+  resolveDriveState: io.drive,
+}));
+vi.mock('../../../services/ana/run-control.js', async importOriginal => ({
+  ...(await harnessModule()).mocks.runControl(await importOriginal<typeof import('../../../services/ana/run-control.js')>()),
+  releaseLocalRun: io.release,
+}));
+vi.mock('../../../services/ana/turn-record.js', async importOriginal => {
+  const real = await importOriginal<typeof import('../../../services/ana/turn-record.js')>();
+  return { ...real, writeTurnRecordSafely: (...args: Parameters<typeof real.writeTurnRecordSafely>) => {
+    io.outcomes.push(args[2]);
+    return real.writeTurnRecordSafely(...args);
+  } };
+});
 vi.mock('../../../services/ana-ri/orchestrator.js', async () => (await harnessModule()).mocks.orchestrator());
 vi.mock('../../../services/ana-ri/chat-context-builder.js', async importOriginal => ({
   ...(await harnessModule()).mocks.chatContextBuilder(await importOriginal<Record<string, unknown>>()),
@@ -77,6 +97,13 @@ beforeEach(() => {
   resetHarness();
   io.operations.length = 0;
   io.failAt = '';
+  io.outcomes.length = 0;
+  io.toolPolicy.mockReset().mockImplementation(() => Object.keys(h.handlers).map(name => ({
+    name, description: name, input_schema: { type: 'object', properties: {} },
+  })));
+  io.drive.mockReset().mockResolvedValue({ requested: false, enabled: false, mode: 'assist' });
+  io.answer.mockReset();
+  io.release.mockReset();
   io.prefetch.mockReset().mockResolvedValue({ contextAvailabilityBlock: 'Scoped context retained.' });
   io.memory.mockReset().mockImplementation(async () => {
     io.operations.push('memory');
@@ -84,6 +111,98 @@ beforeEach(() => {
   });
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+describe('direct intelligence answers avoid unused model-turn reads', () => {
+  const prefix = '[INTELLIGENCE_ANSWER]';
+  const payload = { session_id: 'interview-1', answer: 'Recorded evidence.' };
+  const direct = (message = prefix + JSON.stringify(payload)) => turn(app, {
+    message, project_id: 'program-uuid', live_drive: true, drive_mode: 'demo',
+  });
+
+  function expectDirectCleanup(outcome: string) {
+    expect(io.toolPolicy).not.toHaveBeenCalled();
+    expect(io.drive).not.toHaveBeenCalled();
+    expect(io.prefetch).not.toHaveBeenCalled();
+    expect(io.memory).not.toHaveBeenCalled();
+    expect(h.state.gatewayCalls).toBe(0);
+    expect(io.outcomes).toEqual([outcome]);
+    expect(io.release).toHaveBeenCalledExactlyOnceWith('run_test');
+    expect(h.state.endRuns).toEqual([{
+      status: outcome === 'failed' ? 'failed' : 'finished',
+      stoppedReason: outcome === 'failed' ? 'error' : 'no_more_tools',
+    }]);
+  }
+
+  it('keeps the next question, session, direct handler scope and turn record', async () => {
+    io.answer.mockResolvedValue(JSON.stringify({
+      status: 'intelligence_question', session_id: 'interview-1', flowState: { node: 2 },
+      question: { node: { question: 'Which evidence?', guidance: 'Use the recorded source.' } },
+    }));
+    const events = await direct();
+    expect(io.answer).toHaveBeenCalledExactlyOnceWith(payload, {
+      organizationId: 7, userId: 3, projectId: null, projectRef: 'program-uuid',
+    });
+    expect(events.find(e => e.type === 'intelligence_question')).toMatchObject({ sessionId: 'interview-1', flowState: { node: 2 } });
+    expect(events.find(e => e.type === 'text')?.content).toBe('**Which evidence?**\n\nUse the recorded source.');
+    expect(events.filter(e => e.type === 'done')).toHaveLength(1);
+    expect(events.filter(e => e.type === 'post_done')).toHaveLength(1);
+    expectDirectCleanup('answered');
+  });
+
+  it('keeps interview completion and its summary', async () => {
+    io.answer.mockResolvedValue(JSON.stringify({
+      status: 'intelligence_flow_complete', session_id: 'interview-1',
+      completion: { summary: 'Interview complete.' }, flowState: { complete: true },
+    }));
+    const events = await direct();
+    expect(events.find(e => e.type === 'intelligence_flow_complete')).toMatchObject({ sessionId: 'interview-1', completion: { summary: 'Interview complete.' } });
+    expect(events.find(e => e.type === 'text')?.content).toBe('Interview complete.');
+    expectDirectCleanup('answered');
+  });
+
+  it.each(['refused', 'throws', 'non-json'])('keeps %s handler failure honest without unused reads', async failure => {
+    if (failure === 'throws') io.answer.mockRejectedValue(new Error('Interview unavailable.'));
+    else io.answer.mockResolvedValue(failure === 'refused' ? JSON.stringify({ error: 'LAUNCH_SCOPE' }) : 'not-json');
+    const events = await direct();
+    expect(events.some(e => e.type === 'text' && String(e.content).startsWith('Error'))).toBe(true);
+    expect(io.answer).toHaveBeenCalledTimes(1);
+    expect(events.filter(e => e.type === 'post_done')).toHaveLength(1);
+    expectDirectCleanup('failed');
+  });
+
+  it('handles malformed input without calling a handler or admitting unused reads', async () => {
+    const events = await direct(prefix + '{');
+    expect(events.some(e => e.type === 'text' && String(e.content).startsWith('Error processing intelligence answer:'))).toBe(true);
+    expect(io.answer).not.toHaveBeenCalled();
+    expectDirectCleanup('failed');
+  });
+
+  it('still starts both model-turn reads while optional route prefetch is pending', async () => {
+    const started = deferred<void>();
+    const prefetch = deferred<Record<string, unknown>>();
+    const tools = Object.keys(h.handlers).map(name => ({ name, description: name, input_schema: { type: 'object', properties: {} } }));
+    const policy = deferred<typeof tools>();
+    const drive = deferred<{ requested: boolean; enabled: boolean; mode: string }>();
+    io.toolPolicy.mockReturnValue(policy.promise);
+    io.drive.mockReturnValue(drive.promise);
+    io.prefetch.mockImplementation(() => { started.resolve(); return prefetch.promise; });
+    const pending = ask();
+    try {
+      await started.promise;
+      expect(io.toolPolicy).toHaveBeenCalledTimes(1);
+      expect(io.toolPolicy.mock.calls[0]?.[1]).toBe(7);
+      expect(io.drive).toHaveBeenCalledExactlyOnceWith(false, 7, { driveMode: undefined });
+      expect(h.state.gatewayCalls).toBe(0);
+    } finally {
+      policy.resolve(tools);
+      drive.resolve({ requested: false, enabled: false, mode: 'assist' });
+      prefetch.resolve({});
+      await pending;
+    }
+    expect(h.state.gatewayCalls).toBe(1);
+    expect(io.answer).not.toHaveBeenCalled();
+  });
 });
 afterEach(() => { vi.restoreAllMocks(); });
 

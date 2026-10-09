@@ -1,0 +1,9 @@
+{
+  "exit": 1,
+  "passed": 7,
+  "failed": 6,
+  "elapsed_seconds": 7.386,
+  "candidate_restored": true,
+  "unchanged_source_blob": "e5b8a87a8a3d6635b192e2e67858b119a924d9cb",
+  "final_test_blob": "d933c7af8a38c0fe9e10517cc2387361d308c9bc"
+}

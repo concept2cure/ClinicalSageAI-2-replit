@@ -1,0 +1,12 @@
+{
+  "publication_base": "c55fa8d4bca3491c2d821ae84a55a1320ee2e745",
+  "qualified_checkpoint": "5fe086cd43b13eaacf61c387a0209f109efa15be",
+  "base_client_hash": "f4a50c306387585250e354c68e08a099362e3823",
+  "qualified_client_hash": "f4a50c306387585250e354c68e08a099362e3823",
+  "client_directory_unchanged": true,
+  "out_of_scope_paths": [],
+  "allowed_source_paths": [
+    "server/routes/ana-ri/stream.ts",
+    "server/routes/ana-ri/__tests__/stream-context-latency.test.ts"
+  ]
+}
