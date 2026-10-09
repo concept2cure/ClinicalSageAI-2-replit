@@ -76,6 +76,15 @@ jobs:
           done
           echo "::error::npm ci failed after 3 attempts"; exit 1
 
+      - name: Check AnA fresh-install migration ordering
+        # Execute the real parent/child migrations in PGlite before the full
+        # PostgreSQL install. A failed regression remains a failed job.
+        shell: bash
+        run: |
+          mkdir -p test-results
+          set -o pipefail
+          npx vitest run --config vitest.config.ts tests/schema-contracts/install-fresh-ana-runs.pglite.test.ts 2>&1 | tee test-results/ana-bootstrap.log
+
       - name: Install Playwright test runner + Chromium
         # @playwright/test is intentionally kept out of package.json (see
         # PROOF_HIERARCHY.md / run-e2e-smoke.mjs). Install it for this job only,
@@ -85,6 +94,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Provision the application schema from scratch
+        id: provision
         # The same from-scratch installer ci.yml's blank-db-provisioning job runs.
         run: node scripts/db/install-fresh.mjs
 
@@ -101,7 +111,8 @@ jobs:
         # governed evidence draft → citation gate → denied pre-review export →
         # reviewer assignment → approval under separation of duties →
         # persistence, in a real browser against the same fresh database.
-        if: '!cancelled()'
+        # Still runs if only the first browser spec fails, never over an incomplete install.
+        if: "!cancelled() && steps.provision.outcome == 'success'"
         run: npm run test:e2e:smoke -- tests/e2e/golden-customer-journey.e2e.ts
 
       - name: Upload smoke artifacts (traces, screenshots, results)
@@ -112,4 +123,5 @@ jobs:
           path: |
             test-results/e2e/**
             test-results/e2e-results.json
+            test-results/ana-bootstrap.log
           retention-days: 14
