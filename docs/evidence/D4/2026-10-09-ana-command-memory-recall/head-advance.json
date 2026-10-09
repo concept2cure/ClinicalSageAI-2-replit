@@ -1,0 +1,10 @@
+{
+  "original_base": "dc1927938a13c46153a3a2132f958dbada138435",
+  "release_base": "bf80e2fa922a0261edadf403da732983cc55c9b7",
+  "release_base_tree": "e7db019cfccdf40e239529c9e49ebbcb0016f6b3",
+  "changed_paths": [
+    "docs/reports/repo-health-scan-latest.json",
+    "docs/reports/repo-health-scan-latest.md"
+  ],
+  "source_unchanged": true
+}

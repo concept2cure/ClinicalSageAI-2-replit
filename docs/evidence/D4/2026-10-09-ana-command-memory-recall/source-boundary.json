@@ -1,0 +1,8 @@
+{
+  "base": "dc1927938a13c46153a3a2132f958dbada138435",
+  "production_blob": "76aa5d5822d97837587f8d0321cf738f1d9a7c60",
+  "changed_sql_literals": 1,
+  "private_type_change": "unused importance?: number \u2192 string | null",
+  "all_other_source_bytes_identical": true,
+  "masked_source_sha256": "b87f3b5818a2077c27416cb7cabb10a2960a2d80f24200f5c0e6528e94c6a0d5"
+}

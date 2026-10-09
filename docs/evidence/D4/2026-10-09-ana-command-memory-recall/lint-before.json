@@ -1,0 +1,275 @@
+{
+  "base": "dc1927938a13c46153a3a2132f958dbada138435",
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--stdin",
+    "--stdin-filename",
+    "server/services/ana-ri/command-executor.ts",
+    "--no-ignore",
+    "--format",
+    "json"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 1.281,
+  "results": [
+    {
+      "filePath": "/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana-ri/command-executor.ts",
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'updateProject' has a complexity of 17. Maximum allowed is 15.",
+          "line": 380,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 380,
+          "endColumn": 36
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'createArtifact' has too many lines (132). Maximum allowed is 100.",
+          "line": 473,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 473,
+          "endColumn": 37
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'createArtifact' has a complexity of 22. Maximum allowed is 15.",
+          "line": 473,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 473,
+          "endColumn": 37
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (4593). Maximum allowed is 500.",
+          "line": 653,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 5613,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'updateTask' has too many lines (165). Maximum allowed is 100.",
+          "line": 1192,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1192,
+          "endColumn": 33
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'updateTask' has a complexity of 29. Maximum allowed is 15.",
+          "line": 1192,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1192,
+          "endColumn": 33
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'err' is defined but never used.",
+          "line": 1578,
+          "column": 12,
+          "messageId": "unusedVar",
+          "endLine": 1578,
+          "endColumn": 15
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'err' is defined but never used.",
+          "line": 2200,
+          "column": 12,
+          "messageId": "unusedVar",
+          "endLine": 2200,
+          "endColumn": 15
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'runComplianceScan' has too many lines (127). Maximum allowed is 100.",
+          "line": 2303,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 2303,
+          "endColumn": 40
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'runComplianceScan' has a complexity of 22. Maximum allowed is 15.",
+          "line": 2303,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 2303,
+          "endColumn": 40
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'reviewVersionImpact' has too many lines (210). Maximum allowed is 100.",
+          "line": 2640,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 2640,
+          "endColumn": 42
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'reviewVersionImpact' has a complexity of 22. Maximum allowed is 15.",
+          "line": 2640,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 2640,
+          "endColumn": 42
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'generateSAP' has a complexity of 23. Maximum allowed is 15.",
+          "line": 3251,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 3251,
+          "endColumn": 34
+        },
+        {
+          "ruleId": "no-unreachable",
+          "severity": 1,
+          "message": "Unreachable code.",
+          "line": 3570,
+          "column": 5,
+          "messageId": "unreachableCode",
+          "endLine": 3575,
+          "endColumn": 7
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'executeCommands' has a complexity of 23. Maximum allowed is 15.",
+          "line": 5430,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 5430,
+          "endColumn": 38
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+          "line": 5506,
+          "column": 11,
+          "messageId": "limited",
+          "endLine": 5506,
+          "endColumn": 22,
+          "suggestions": [
+            {
+              "fix": {
+                "range": [
+                  207701,
+                  207792
+                ],
+                "text": ""
+              },
+              "messageId": "removeConsole",
+              "data": {
+                "propertyName": "log"
+              },
+              "desc": "Remove the console.log()."
+            }
+          ]
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+          "line": 5553,
+          "column": 9,
+          "messageId": "limited",
+          "endLine": 5553,
+          "endColumn": 20,
+          "suggestions": [
+            {
+              "fix": {
+                "range": [
+                  210171,
+                  210325
+                ],
+                "text": ""
+              },
+              "messageId": "removeConsole",
+              "data": {
+                "propertyName": "log"
+              },
+              "desc": "Remove the console.log()."
+            }
+          ]
+        },
+        {
+          "ruleId": "no-console",
+          "severity": 1,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info.",
+          "line": 5592,
+          "column": 3,
+          "messageId": "limited",
+          "endLine": 5592,
+          "endColumn": 14,
+          "suggestions": [
+            {
+              "fix": {
+                "range": [
+                  211766,
+                  211844
+                ],
+                "text": ""
+              },
+              "messageId": "removeConsole",
+              "data": {
+                "propertyName": "log"
+              },
+              "desc": "Remove the console.log()."
+            }
+          ]
+        }
+      ],
+      "suppressedMessages": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'_sections' is assigned a value but never used.",
+          "line": 2333,
+          "column": 11,
+          "messageId": "unusedVar",
+          "endLine": 2333,
+          "endColumn": 20,
+          "suppressions": [
+            {
+              "kind": "directive",
+              "justification": ""
+            }
+          ]
+        }
+      ],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 18,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": [],
+      "omittedSourceSha256": "5c5df291e6ef497c404683b1b5f956a9d790f09d3860df3c620cf902a0ed4fc0"
+    }
+  ]
+}

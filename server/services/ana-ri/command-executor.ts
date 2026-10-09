@@ -4414,7 +4414,7 @@ interface MemoryEntryRow {
   content?: string;
   category?: string;
   confidence?: number;
-  importance?: number;
+  importance?: string | null;
 }
 
 async function loadProjectMemoryEntries(
@@ -4426,10 +4426,17 @@ async function loadProjectMemoryEntries(
   if (categories.length === 0) return [];
   const placeholders = categories.map((_, i) => `$${i + 3}`).join(', ');
   const result = await pool.query(
-    `SELECT title, content, category, confidence, importance
+    `SELECT title, content, category, confidence_score AS confidence, importance_level AS importance
      FROM project_memory_entries
-     WHERE project_id = $1 AND organization_id = $2 AND category IN (${placeholders})
-     ORDER BY importance DESC, created_at DESC
+     WHERE project_id = $1 AND organization_id = $2 AND status = 'active' AND category IN (${placeholders})
+     ORDER BY CASE lower(coalesce(importance_level, ''))
+                  WHEN 'critical' THEN 4
+                  WHEN 'high'     THEN 3
+                  WHEN 'medium'   THEN 2
+                  WHEN 'low'      THEN 1
+                  ELSE 0
+                END DESC,
+                created_at DESC
      LIMIT $${categories.length + 3}`,
     [projectId, organizationId, ...categories, limit]
   );

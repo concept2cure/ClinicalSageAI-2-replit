@@ -1,0 +1,192 @@
+(node:7) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:7) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts
+{
+  "timestamp": "2026-10-09T04:16:58.186Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T04:16:58.187Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts
+{
+  "timestamp": "2026-10-09T04:16:58.187Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts
+{
+  "timestamp": "2026-10-09T04:16:58.480Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts
+Loaded 0 academic documents
+
+ × server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > public commands recall canonical columns without changing decision math > preserves the exact CMS coverage, keyword risks, and recommendation result 17ms
+   → expected { success: false, …(3) } to deeply equal { success: true, …(3) }
+ × server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > public commands recall canonical columns without changing decision math > preserves the existing diagnostics keyword coverage score and component result 7ms
+   → expected { success: false, …(3) } to deeply equal { success: true, …(3) }
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > the shared reader preserves severity, category sets, and command limits > 'cms' orders severity case-insensitively, then newest first, and ranks null/unknown last
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > the shared reader preserves severity, category sets, and command limits > 'diagnostics' orders severity case-insensitively, then newest first, and ranks null/unknown last
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > the shared reader preserves severity, category sets, and command limits > 'cms' keeps its category array, bound arguments, and 18-row limit
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > the shared reader preserves severity, category sets, and command limits > 'diagnostics' keeps its category array, bound arguments, and 20-row limit
+ × server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > active-only command recall excludes quarantined and retired records > 'cms' ignores inactive/null/unknown status rows in coverage and risk calculations 6ms
+   → expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > active-only command recall excludes quarantined and retired records > 'diagnostics' ignores inactive/null/unknown status rows in coverage and risk calculations 5ms
+   → expected false to be true // Object.is equality
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > active-only command recall excludes quarantined and retired records > 'cms' retains its healthy empty result for an inactive-only project
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > active-only command recall excludes quarantined and retired records > 'diagnostics' retains its healthy empty result for an inactive-only project
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > scope and project selection remain bound to the public command input > 'cms' excludes other tenants/projects and honors an explicit project override
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > scope and project selection remain bound to the public command input > 'diagnostics' excludes other tenants/projects and honors an explicit project override
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > scope and project selection remain bound to the public command input > 'cms' preserves the missing-project guard without querying
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > scope and project selection remain bound to the public command input > 'diagnostics' preserves the missing-project guard without querying
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > scope and project selection remain bound to the public command input > 'cms' preserves the nonnumeric-project guard without querying
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > scope and project selection remain bound to the public command input > 'diagnostics' preserves the nonnumeric-project guard without querying
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > real database failures remain command failures, never successful empty reports > 'cms' reports a real missing-table error through its existing catch
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > real database failures remain command failures, never successful empty reports > 'diagnostics' reports a real missing-table error through its existing catch
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > real database failures remain command failures, never successful empty reports > 'cms' reports a real column error through its existing catch
+ ↓ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > real database failures remain command failures, never successful empty reports > 'diagnostics' reports a real column error through its existing catch
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > public commands recall canonical columns without changing decision math > preserves the exact CMS coverage, keyword risks, and recommendation result
+AssertionError: expected { success: false, …(3) } to deeply equal { success: true, …(3) }
+
+- Expected
++ Received
+
+  {
+    "action": "analyze_cms_strategy",
+-   "data": {
+-     "categoryCoverage": [
+-       {
+-         "category": "cms_strategy",
+-         "count": 1,
+-       },
+-       {
+-         "category": "reimbursement_strategy",
+-         "count": 1,
+-       },
+-       {
+-         "category": "coding_coverage",
+-         "count": 1,
+-       },
+-       {
+-         "category": "payer_evidence",
+-         "count": 1,
+-       },
+-       {
+-         "category": "health_economics",
+-         "count": 1,
+-       },
+-     ],
+-     "memoryEntryCount": 5,
+-     "projectId": 42,
+-     "recommendations": undefined,
+-     "riskSignals": [
+-       {
+-         "category": "cms_strategy",
+-         "snippet": "Gap remains in payer narrative.",
+-         "title": "CMS overview",
+-       },
+-       {
+-         "category": "reimbursement_strategy",
+-         "snippet": "Payment assumptions unclear.",
+-         "title": "Payment route",
+-       },
+-     ],
+-   },
+-   "message": "CMS strategy analyzed using 5 project intelligence entries. 2 reimbursement risk signal(s) flagged.",
+-   "success": true,
++   "error": "column \"confidence\" does not exist",
++   "message": "CMS strategy analysis failed.",
++   "success": false,
+  }
+
+ ❯ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts:78:47
+     76|     ];
+     77|     for (const row of rows) await seed(row);
+     78|     expect(await analyzeCMSStrategy(CTX, {})).toEqual({
+       |                                               ^
+     79|       success: true, action: 'analyze_cms_strategy',
+     80|       data: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > public commands recall canonical columns without changing decision math > preserves the existing diagnostics keyword coverage score and component result
+AssertionError: expected { success: false, …(3) } to deeply equal { success: true, …(3) }
+
+- Expected
++ Received
+
+  {
+    "action": "assess_diagnostic_validation",
+-   "data": {
+-     "memoryEntryCount": 5,
+-     "missingComponents": [],
+-     "presentComponents": [
+-       "Analytical validation",
+-       "Clinical performance",
+-       "Cutoff / decision threshold",
+-       "Companion diagnostic alignment",
+-     ],
+-     "projectId": 42,
+-     "readinessScore": 100,
+-   },
+-   "message": "Diagnostics/IVD validation readiness assessed at 100%. 0 component(s) need strengthening.",
+-   "success": true,
++   "error": "column \"confidence\" does not exist",
++   "message": "Diagnostics validation assessment failed.",
++   "success": false,
+  }
+
+ ❯ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts:99:56
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > active-only command recall excludes quarantined and retired records > 'cms' ignores inactive/null/unknown status rows in coverage and risk calculations
+ FAIL  server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts > active-only command recall excludes quarantined and retired records > 'diagnostics' ignores inactive/null/unknown status rows in coverage and risk calculations
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts:146:28
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 16 skipped (20)
+   Start at  00:16:56
+   Duration  7.62s (transform 3.35s, setup 63ms, import 5.65s, tests 1.66s, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-command-memory-recall/focused-red.json

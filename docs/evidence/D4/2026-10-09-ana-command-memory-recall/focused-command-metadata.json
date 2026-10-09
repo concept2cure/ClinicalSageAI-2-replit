@@ -1,0 +1,141 @@
+{
+  "current_head_before": "bf80e2fa922a0261edadf403da732983cc55c9b7",
+  "original_source_matches_current_head": true,
+  "original_source": {
+    "git_blob": "0cb11c5e1cb6ab6a55ff58540f120219c25b69a4",
+    "sha256": "5c5df291e6ef497c404683b1b5f956a9d790f09d3860df3c620cf902a0ed4fc0",
+    "bytes": 223786
+  },
+  "candidate_source": {
+    "git_blob": "76aa5d5822d97837587f8d0321cf738f1d9a7c60",
+    "sha256": "4e3eeec8705d4cba263b023c0584172b2a0c7b97f45556c6520d064c834d3652",
+    "bytes": 224112
+  },
+  "test": {
+    "git_blob": "ca042146891e99bdf58bd83a52e014d5ac344491",
+    "sha256": "da311ccac8dc248156ea323e4f5f748f64837de38e8dcbbf3b9227fcad25b02d",
+    "bytes": 13780
+  },
+  "canonical_schema": {
+    "git_blob": "ac0895f080039b9ee5724a95b6b5defbe153616a",
+    "sha256": "f4de0a6872d01edec764a6f75bf61f16306aa8d9e122ea507136d87e41f7c2b9",
+    "bytes": 862248
+  },
+  "source_restored_in_finally": true,
+  "commands": [
+    {
+      "name": "focused-red",
+      "cwd": "/workspace/scratch/bd36ee581acd/concept2cure",
+      "command_argv": [
+        "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-command-memory-recall/focused-red.json",
+        "-t",
+        "(preserves the exact CMS|preserves the existing diagnostics|ignores inactive/null/unknown)"
+      ],
+      "environment": {
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "started_at_utc": "2026-10-09T04:16:56.110502+00:00",
+      "elapsed_seconds": 8.039,
+      "exit_code": 1,
+      "source_pin": {
+        "git_blob": "0cb11c5e1cb6ab6a55ff58540f120219c25b69a4",
+        "sha256": "5c5df291e6ef497c404683b1b5f956a9d790f09d3860df3c620cf902a0ed4fc0",
+        "bytes": 223786
+      },
+      "test_pin": {
+        "git_blob": "ca042146891e99bdf58bd83a52e014d5ac344491",
+        "sha256": "da311ccac8dc248156ea323e4f5f748f64837de38e8dcbbf3b9227fcad25b02d",
+        "bytes": 13780
+      },
+      "summary": {
+        "success": false,
+        "numTotalTests": 20,
+        "numPassedTests": 0,
+        "numFailedTests": 4,
+        "numPendingTests": 16
+      }
+    },
+    {
+      "name": "focused-green",
+      "cwd": "/workspace/scratch/bd36ee581acd/concept2cure",
+      "command_argv": [
+        "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-command-memory-recall/focused-green.json"
+      ],
+      "environment": {
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
+      "started_at_utc": "2026-10-09T04:17:04.163498+00:00",
+      "elapsed_seconds": 7.765,
+      "exit_code": 0,
+      "source_pin": {
+        "git_blob": "76aa5d5822d97837587f8d0321cf738f1d9a7c60",
+        "sha256": "4e3eeec8705d4cba263b023c0584172b2a0c7b97f45556c6520d064c834d3652",
+        "bytes": 224112
+      },
+      "test_pin": {
+        "git_blob": "ca042146891e99bdf58bd83a52e014d5ac344491",
+        "sha256": "da311ccac8dc248156ea323e4f5f748f64837de38e8dcbbf3b9227fcad25b02d",
+        "bytes": 13780
+      },
+      "summary": {
+        "success": true,
+        "numTotalTests": 20,
+        "numPassedTests": 20,
+        "numFailedTests": 0,
+        "numPendingTests": 0
+      }
+    },
+    {
+      "name": "focused-diff-check",
+      "command_argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "/workspace/scratch/bd36ee581acd/concept2cure",
+      "exit_code": 0,
+      "elapsed_seconds": 0.015
+    }
+  ],
+  "forced_lint": {
+    "command_argv": [
+      "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+      "node_modules/eslint/bin/eslint.js",
+      "--no-ignore",
+      "server/services/ana-ri/command-executor.ts",
+      "server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts",
+      "--format",
+      "json"
+    ],
+    "exit_code": 0,
+    "raw_result": "focused-lint.json",
+    "summary": [
+      {
+        "file": "server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "file": "server/services/ana-ri/command-executor.ts",
+        "errors": 0,
+        "warnings": 18
+      }
+    ]
+  }
+}
