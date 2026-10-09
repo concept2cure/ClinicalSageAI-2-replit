@@ -1,0 +1,160 @@
+(node:44) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:44) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'precedent' returns its primary heading and confidence from canonical columns 14ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'claims' returns its primary heading and confidence from canonical columns 6ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'knowledge' returns its primary heading and confidence from canonical columns 4ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'safety' returns its primary heading and confidence from canonical columns 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'precedent' preserves the existing zero-confidence handling 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'claims' preserves the existing zero-confidence handling 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'knowledge' preserves the existing zero-confidence handling 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'safety' preserves the existing zero-confidence handling 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'precedent' ranks severity case-insensitively, then newest first, with null/unknown last 6ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'claims' ranks severity case-insensitively, then newest first, with null/unknown last 5ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'knowledge' ranks severity case-insensitively, then newest first, with null/unknown last 6ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'safety' ranks severity case-insensitively, then newest first, with null/unknown last 5ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'precedent' applies its SQL limit and the existing per-category rendering cap 11ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'claims' applies its SQL limit and the existing per-category rendering cap 6ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'knowledge' applies its SQL limit and the existing per-category rendering cap 7ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'safety' applies its SQL limit and the existing per-category rendering cap 6ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'precedent' retains its existing category set 5ms
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > keeps active-only claims fallback with its original five-row limit when the primary read fails
+{
+  "timestamp": "2026-10-09T03:53:51.569Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "forced claims primary failure"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'precedent' retains the legitimately missing-table empty behavior
+{
+  "timestamp": "2026-10-09T03:53:51.587Z",
+  "level": "warn",
+  "message": "[enrichment] Precedent query failed",
+  "context": {
+    "error": "relation \"project_memory_entries\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'claims' retains the legitimately missing-table empty behavior
+{
+  "timestamp": "2026-10-09T03:53:51.590Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "relation \"project_memory_entries\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'knowledge' retains the legitimately missing-table empty behavior
+{
+  "timestamp": "2026-10-09T03:53:51.594Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "relation \"project_memory_entries\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'precedent' keeps existing failure reporting on a real non-missing-table SQL error
+{
+  "timestamp": "2026-10-09T03:53:51.601Z",
+  "level": "warn",
+  "message": "[enrichment] Precedent query failed",
+  "context": {
+    "error": "column \"content\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'claims' keeps existing failure reporting on a real non-missing-table SQL error
+{
+  "timestamp": "2026-10-09T03:53:51.605Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "column \"content\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'claims' keeps existing failure reporting on a real non-missing-table SQL error
+{
+  "timestamp": "2026-10-09T03:53:51.605Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "column \"content\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'knowledge' keeps existing failure reporting on a real non-missing-table SQL error
+{
+  "timestamp": "2026-10-09T03:53:51.608Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "column \"content\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'safety' keeps existing failure reporting on a real non-missing-table SQL error
+{
+  "timestamp": "2026-10-09T03:53:51.611Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "column \"content\" does not exist"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'claims' retains its existing category set 4ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'safety' retains its existing category set 5ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'precedent' exposes only active rows despite higher-severity inactive rows 5ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'claims' exposes only active rows despite higher-severity inactive rows 8ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'knowledge' exposes only active rows despite higher-severity inactive rows 6ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'safety' exposes only active rows despite higher-severity inactive rows 5ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'precedent' treats an inactive-only result as its original healthy empty 6ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'claims' treats an inactive-only result as its original healthy empty 6ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'knowledge' treats an inactive-only result as its original healthy empty 5ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'safety' treats an inactive-only result as its original healthy empty 5ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > keeps active-only claims fallback with its original five-row limit when the primary read fails 10ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'precedent' keeps healthy empty results distinct from failed reads 2ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'claims' keeps healthy empty results distinct from failed reads 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'knowledge' keeps healthy empty results distinct from failed reads 4ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'safety' keeps healthy empty results distinct from failed reads 2ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'precedent' retains the legitimately missing-table empty behavior 4ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'claims' retains the legitimately missing-table empty behavior 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'knowledge' retains the legitimately missing-table empty behavior 4ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'safety' retains the legitimately missing-table empty behavior 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'precedent' keeps existing failure reporting on a real non-missing-table SQL error 4ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'claims' keeps existing failure reporting on a real non-missing-table SQL error 4ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'knowledge' keeps existing failure reporting on a real non-missing-table SQL error 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'safety' keeps existing failure reporting on a real non-missing-table SQL error 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'precedent' excludes another tenant and another project 4ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'claims' excludes another tenant and another project 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'knowledge' excludes another tenant and another project 6ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'safety' excludes another tenant and another project 4ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'precedent' reads no project memory without an organization or project 2ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'claims' reads no project memory without an organization or project 1ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'knowledge' reads no project memory without an organization or project 2ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'safety' reads no project memory without an organization or project 1ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'precedent' uses the linked integer project for a caller-resolved program UUID 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'claims' uses the linked integer project for a caller-resolved program UUID 2ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'knowledge' uses the linked integer project for a caller-resolved program UUID 3ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'safety' uses the linked integer project for a caller-resolved program UUID 4ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > reads no memory for a none project resolution 2ms
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > reads no memory for a unresolved project resolution 2ms
+
+ Test Files  1 passed (1)
+      Tests  54 passed (54)
+   Start at  23:53:44
+   Duration  6.91s (transform 3.52s, setup 65ms, import 4.73s, tests 1.84s, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-memory-recall-schema/focused-green.json

@@ -1,0 +1,56 @@
+{
+  "base": "512369c95a4a89a32e20bc2cb32601521a2a2df4",
+  "basis": "Canonical provisioned table shape and existing top-level lifecycle policy; deployed remote database not queried.",
+  "files": [
+    {
+      "path": "shared/schema.ts",
+      "git_blob_sha1": "ac0895f080039b9ee5724a95b6b5defbe153616a",
+      "sha256": "f4de0a6872d01edec764a6f75bf61f16306aa8d9e122ea507136d87e41f7c2b9"
+    },
+    {
+      "path": "drizzle.config.ts",
+      "git_blob_sha1": "8a295b1608fc130a45022ee456e12956611a7a67",
+      "sha256": "acb2a5bc0a9a227e55a556365a38132a6f21d4a2aea90cc376b1c1b59cf8f9a4"
+    },
+    {
+      "path": "scripts/db/install-fresh.mjs",
+      "git_blob_sha1": "e273d0081d8008a5461f96c200aa861de898a927",
+      "sha256": "ed89794686efff71b7060f652755dc063d81d4f56dc89faaa5a5743ed944f784"
+    },
+    {
+      "path": "server/services/memory-consolidation-job.ts",
+      "git_blob_sha1": "ba2066b07c50971831596276baf7aa0f6bdb774b",
+      "sha256": "5260947e09965fd6399ded12bf14a835b3a7dd53bb9b62ab1c5e21193b8a9e53"
+    },
+    {
+      "path": "server/services/client-intelligence-memory.ts",
+      "git_blob_sha1": "480f81c0a0f13f8525d39d607ea26a3b76f0e04b",
+      "sha256": "586ec6850fef5e15a3c5d569b78673d2e6363cc1d0a751661abf47a2e9180916"
+    },
+    {
+      "path": "server/services/intelligence/project-intelligence-service.ts",
+      "git_blob_sha1": "dce6a25803de9e410a822eb211ebae655e46d551",
+      "sha256": "5cc7fd10d0caf41e6e11e1761ffb489ad1d83fad5d0e42b1ddb5a05e624951b0"
+    }
+  ],
+  "schema_columns": [
+    "confidence_score",
+    "importance_level",
+    "status"
+  ],
+  "recall_status": "active",
+  "excluded_status_examples": [
+    "pending_review",
+    "superseded",
+    "archived",
+    "rejected",
+    null,
+    "unknown"
+  ],
+  "limits": {
+    "precedent": 12,
+    "claims": 8,
+    "knowledge": 10
+  },
+  "precedent_per_category_output_cap": 4
+}

@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-memory-recall-schema/focused-green.json"
+  ],
+  "exitCode": 0,
+  "productionSha256": "b68596282503281f4f37aee9be0a48c97c68f19eaeb7abb3e33b0bc0a006fa83",
+  "testSha256": "8476b3e1c83dc7f1305d6ef4817699cbb62f8fae1d7a90cc540c817b273bef57"
+}

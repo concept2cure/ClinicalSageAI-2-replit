@@ -1,0 +1,46 @@
+{
+  "scope": "Four context-enrichment project-memory SELECTs only",
+  "baseCommit": "512369c95",
+  "productionPath": "server/services/ana-ri/context-enrichment.ts",
+  "productionSha256": "b68596282503281f4f37aee9be0a48c97c68f19eaeb7abb3e33b0bc0a006fa83",
+  "productionBlob": "8899226b64533be55a1636c184e997a2bb318aa7",
+  "testPath": "server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts",
+  "testSha256": "8476b3e1c83dc7f1305d6ef4817699cbb62f8fae1d7a90cc540c817b273bef57",
+  "testBlob": "47c9affa0283ff18edc738eaf71a13279752c0e0",
+  "canonicalSchemaPath": "shared/schema.ts",
+  "canonicalSchemaSha256": "f4de0a6872d01edec764a6f75bf61f16306aa8d9e122ea507136d87e41f7c2b9",
+  "canonicalSchemaBlob": "ac0895f080039b9ee5724a95b6b5defbe153616a",
+  "red": {
+    "failed": 8,
+    "passed": 1,
+    "pending": 45
+  },
+  "green": {
+    "failed": 0,
+    "passed": 54,
+    "pending": 0
+  },
+  "forcedLint": {
+    "errors": 0,
+    "warnings": 6,
+    "newTestWarnings": 0,
+    "productionExistingWarningCount": 6
+  },
+  "diffCheckExitCode": 0,
+  "healthyFormatterPins": 4,
+  "coveredContracts": [
+    "Canonical-only real SQL succeeds for all three structured readers and common memory",
+    "Semantic severity, case handling, null/unknown ranks, newest tie ordering",
+    "Limits 12/8/10/5, original category sets, four-per-category precedent rendering cap",
+    "Active-only excludes pending_review/superseded/archived/rejected/null/unknown status in all four selectors",
+    "Forced claims fallback preserves five-row limit and excludes inactive rows",
+    "Tenant/project scope, caller-resolved program UUID, absent/unresolved project guards",
+    "Healthy empty, inactive-only empty, real missing-table errors and real column errors preserve existing handling",
+    "Existing zero-confidence formatting and structured inference defaults remain unchanged"
+  ],
+  "caveats": [
+    "The fix intentionally restores structured results where published SQL failed; whole-result equality with the broken SQL is not claimed.",
+    "Active filtering applies to the four context-enrichment selectors, not every memory recall path in the platform.",
+    "Existing catch/fallback/error-reporting contracts are unchanged."
+  ]
+}

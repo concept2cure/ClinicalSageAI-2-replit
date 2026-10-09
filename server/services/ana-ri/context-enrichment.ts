@@ -258,7 +258,7 @@ async function readProjectMemory(
     const result = await pool.query(
       `SELECT content, title, confidence_score, importance_level, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
          AND category IN (${catPlaceholders})
        ORDER BY CASE lower(coalesce(importance_level, ''))
                   WHEN 'critical' THEN 4
@@ -363,11 +363,18 @@ async function enrichWithPrecedents(projectId: ProjectRowId, orgId?: number): Pr
   try {
     const catPlaceholders = categories.map((_, i) => `$${i + 3}`).join(', ');
     const result = await pool.query(
-      `SELECT content, title, confidence, importance, category
+      `SELECT content, title, confidence_score AS confidence, importance_level AS importance, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
          AND category IN (${catPlaceholders})
-       ORDER BY importance DESC, created_at DESC
+       ORDER BY CASE lower(coalesce(importance_level, ''))
+                  WHEN 'critical' THEN 4
+                  WHEN 'high'     THEN 3
+                  WHEN 'medium'   THEN 2
+                  WHEN 'low'      THEN 1
+                  ELSE 0
+                END DESC,
+                created_at DESC
        LIMIT $${categories.length + 3}`,
       [projectId, orgId, ...categories, 12]
     );
@@ -581,11 +588,18 @@ async function enrichWithClaims(projectId: ProjectRowId, orgId?: number): Promis
   // Try to build evidence chains from stored memory
   try {
     const result = await pool.query(
-      `SELECT content, title, confidence, category
+      `SELECT content, title, confidence_score AS confidence, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
          AND category IN ('evidence_assessment', 'claim_evidence_map', 'evidence_gap')
-       ORDER BY importance DESC, created_at DESC
+       ORDER BY CASE lower(coalesce(importance_level, ''))
+                  WHEN 'critical' THEN 4
+                  WHEN 'high'     THEN 3
+                  WHEN 'medium'   THEN 2
+                  WHEN 'low'      THEN 1
+                  ELSE 0
+                END DESC,
+                created_at DESC
        LIMIT $3`,
       [projectId, orgId, 8]
     );
@@ -707,10 +721,17 @@ async function enrichWithKnowledgeSearch(query: string, projectId: ProjectRowId,
   try {
     // Search project memory entries semantically
     const result = await pool.query(
-      `SELECT title, content, category, confidence, importance
+      `SELECT title, content, category, confidence_score AS confidence, importance_level AS importance
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
-       ORDER BY importance DESC, created_at DESC
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
+       ORDER BY CASE lower(coalesce(importance_level, ''))
+                  WHEN 'critical' THEN 4
+                  WHEN 'high'     THEN 3
+                  WHEN 'medium'   THEN 2
+                  WHEN 'low'      THEN 1
+                  ELSE 0
+                END DESC,
+                created_at DESC
        LIMIT $3`,
       [projectId, orgId, 10]
     );

@@ -1,0 +1,4 @@
+Merge made by the 'ort' strategy.
+ docs/reports/repo-health-scan-latest.json | 8 ++++----
+ docs/reports/repo-health-scan-latest.md   | 4 ++--
+ 2 files changed, 6 insertions(+), 6 deletions(-)

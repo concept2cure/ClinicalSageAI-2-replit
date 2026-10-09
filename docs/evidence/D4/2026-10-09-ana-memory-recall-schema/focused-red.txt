@@ -1,0 +1,330 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'precedent' returns its primary heading and confidence from canonical columns
+{
+  "timestamp": "2026-10-09T03:53:44.228Z",
+  "level": "warn",
+  "message": "[enrichment] Precedent query failed",
+  "context": {
+    "error": "column \"confidence\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'claims' returns its primary heading and confidence from canonical columns
+{
+  "timestamp": "2026-10-09T03:53:44.239Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "column \"confidence\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'knowledge' returns its primary heading and confidence from canonical columns
+{
+  "timestamp": "2026-10-09T03:53:44.252Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "column \"confidence\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'precedent' exposes only active rows despite higher-severity inactive rows
+{
+  "timestamp": "2026-10-09T03:53:44.264Z",
+  "level": "warn",
+  "message": "[enrichment] Precedent query failed",
+  "context": {
+    "error": "column \"confidence\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'claims' exposes only active rows despite higher-severity inactive rows
+{
+  "timestamp": "2026-10-09T03:53:44.270Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "column \"confidence\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'knowledge' exposes only active rows despite higher-severity inactive rows
+{
+  "timestamp": "2026-10-09T03:53:44.278Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "column \"confidence\" does not exist"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > keeps active-only claims fallback with its original five-row limit when the primary read fails
+{
+  "timestamp": "2026-10-09T03:53:44.292Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "forced claims primary failure"
+  }
+}
+
+ × server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'precedent' returns its primary heading and confidence from canonical columns 17ms
+   → expected '' to be '\n\n## PROJECT PRECEDENT INTELLIGENCE…' // Object.is equality
+ × server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'claims' returns its primary heading and confidence from canonical columns 13ms
+   → expected '\n\n## Claims & Evidence Intelligence…' to be '\n\n## Evidence & Claims Analysis\n**…' // Object.is equality
+ × server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'knowledge' returns its primary heading and confidence from canonical columns 5ms
+   → expected '' to be '\n\n## Knowledge Base Search Results\…' // Object.is equality
+ ✓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'safety' returns its primary heading and confidence from canonical columns 5ms
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'precedent' preserves the existing zero-confidence handling
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'claims' preserves the existing zero-confidence handling
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'knowledge' preserves the existing zero-confidence handling
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'safety' preserves the existing zero-confidence handling
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'precedent' ranks severity case-insensitively, then newest first, with null/unknown last
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'claims' ranks severity case-insensitively, then newest first, with null/unknown last
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'knowledge' ranks severity case-insensitively, then newest first, with null/unknown last
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'safety' ranks severity case-insensitively, then newest first, with null/unknown last
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'precedent' applies its SQL limit and the existing per-category rendering cap
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'claims' applies its SQL limit and the existing per-category rendering cap
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'knowledge' applies its SQL limit and the existing per-category rendering cap
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'safety' applies its SQL limit and the existing per-category rendering cap
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'precedent' retains its existing category set
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'claims' retains its existing category set
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > all four selectors order severity and preserve existing limits > /'safety' retains its existing category set
+ × server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'precedent' exposes only active rows despite higher-severity inactive rows 6ms
+   → expected '' to contain 'Active record'
+ × server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'claims' exposes only active rows despite higher-severity inactive rows 8ms
+   → expected '\n\n## Claims & Evidence Intelligence…' to contain 'Active record'
+ × server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'knowledge' exposes only active rows despite higher-severity inactive rows 6ms
+   → expected '' to contain 'Active record'
+ × server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'safety' exposes only active rows despite higher-severity inactive rows 6ms
+   → expected '\n\n## Safety Intelligence\nProject-s…' to contain 'Active record'
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'precedent' treats an inactive-only result as its original healthy empty
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'claims' treats an inactive-only result as its original healthy empty
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'knowledge' treats an inactive-only result as its original healthy empty
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'safety' treats an inactive-only result as its original healthy empty
+ × server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > keeps active-only claims fallback with its original five-row limit when the primary read fails 9ms
+   → expected '\n\n## Claims & Evidence Intelligence…' not to contain 'Fallback inactive'
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'precedent' keeps healthy empty results distinct from failed reads
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'claims' keeps healthy empty results distinct from failed reads
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'knowledge' keeps healthy empty results distinct from failed reads
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'safety' keeps healthy empty results distinct from failed reads
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'precedent' retains the legitimately missing-table empty behavior
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'claims' retains the legitimately missing-table empty behavior
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'knowledge' retains the legitimately missing-table empty behavior
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'safety' retains the legitimately missing-table empty behavior
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'precedent' keeps existing failure reporting on a real non-missing-table SQL error
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'claims' keeps existing failure reporting on a real non-missing-table SQL error
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'knowledge' keeps existing failure reporting on a real non-missing-table SQL error
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > empty, missing-table, and real SQL errors preserve their original contracts > /'safety' keeps existing failure reporting on a real non-missing-table SQL error
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'precedent' excludes another tenant and another project
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'claims' excludes another tenant and another project
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'knowledge' excludes another tenant and another project
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'safety' excludes another tenant and another project
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'precedent' reads no project memory without an organization or project
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'claims' reads no project memory without an organization or project
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'knowledge' reads no project memory without an organization or project
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'safety' reads no project memory without an organization or project
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'precedent' uses the linked integer project for a caller-resolved program UUID
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'claims' uses the linked integer project for a caller-resolved program UUID
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'knowledge' uses the linked integer project for a caller-resolved program UUID
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > /'safety' uses the linked integer project for a caller-resolved program UUID
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > reads no memory for a none project resolution
+ ↓ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > recall retains tenant, project, and public-entry guards > reads no memory for a unresolved project resolution
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'precedent' returns its primary heading and confidence from canonical columns
+AssertionError: expected '' to be '\n\n## PROJECT PRECEDENT INTELLIGENCE…' // Object.is equality
+
+- Expected
++ Received
+
+-
+-
+- ## PROJECT PRECEDENT INTELLIGENCE
+- Identified precedents and comparators. Reference these for similar products/devices.
+-
+- ### Regulatory Precedent Analysis
+- - **Active record** [90% confidence]: Active record body
+
+ ❯ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts:93:26
+     91|     await seed({ title: 'Active record', category: route.category });
+     92|     const result = await recall(route.command);
+     93|     expect(result.block).toBe(exactHealthyBlocks[route.command]);
+       |                          ^
+     94|     expect(result.sources).toEqual([route.command]);
+     95|     expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'claims' returns its primary heading and confidence from canonical columns
+AssertionError: expected '\n\n## Claims & Evidence Intelligence…' to be '\n\n## Evidence & Claims Analysis\n**…' // Object.is equality
+
+- Expected
++ Received
+
+
+
+- ## Evidence & Claims Analysis
+- **Evidence Chain Strength:** moderate | **Confidence:** 66/100
+- **Factors:** evidenceCount: 1, averageRelevance: 0.9, hasRegulatoryReference: false, hasUserVerification: false, recency: recent
+-
+- **Evidence Entries:**
+- - **Active record** [90%]: Active record body
+-
+- Analyze the strength of evidence chains. Flag any claims with weak or missing evidence support.
++ ## Claims & Evidence Intelligence
++ Evidence chain data and claim-to-evidence mapping. Flag any unsupported claims.
++ - **Active record** [90% confidence]: Active record body
+
+ ❯ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts:93:26
+     91|     await seed({ title: 'Active record', category: route.category });
+     92|     const result = await recall(route.command);
+     93|     expect(result.block).toBe(exactHealthyBlocks[route.command]);
+       |                          ^
+     94|     expect(result.sources).toEqual([route.command]);
+     95|     expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > structured readers execute canonical columns and retain their healthy format > /'knowledge' returns its primary heading and confidence from canonical columns
+AssertionError: expected '' to be '\n\n## Knowledge Base Search Results\…' // Object.is equality
+
+- Expected
++ Received
+
+-
+-
+- ## Knowledge Base Search Results
+- **1 entries** found in project knowledge.
+-
+- - **Active record** [strategy] (90%): Active record body
+-
+- Reference these knowledge atoms when answering. Cite the category and confidence level.
+
+ ❯ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts:93:26
+     91|     await seed({ title: 'Active record', category: route.category });
+     92|     const result = await recall(route.command);
+     93|     expect(result.block).toBe(exactHealthyBlocks[route.command]);
+       |                          ^
+     94|     expect(result.sources).toEqual([route.command]);
+     95|     expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'precedent' exposes only active rows despite higher-severity inactive rows
+ FAIL  server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'knowledge' exposes only active rows despite higher-severity inactive rows
+AssertionError: expected '' to contain 'Active record'
+
+- Expected
++ Received
+
+- Active record
+
+ ❯ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts:167:26
+    165|     for (const status of INACTIVE) await seed({ title: `Inactive ${Str…
+    166|     const result = await recall(route.command);
+    167|     expect(result.block).toContain('Active record');
+       |                          ^
+    168|     expect(titles(h.results[0].rows)).toEqual(['Active record']);
+    169|     for (const status of INACTIVE) expect(result.block).not.toContain(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'claims' exposes only active rows despite higher-severity inactive rows
+AssertionError: expected '\n\n## Claims & Evidence Intelligence…' to contain 'Active record'
+
+- Expected
++ Received
+
+- Active record
++
++
++ ## Claims & Evidence Intelligence
++ Evidence chain data and claim-to-evidence mapping. Flag any unsupported claims.
++ - **Inactive archived** [90% confidence]: Inactive archived body
++ - **Inactive pending_review** [90% confidence]: Inactive pending_review body
++ - **Inactive superseded** [90% confidence]: Inactive superseded body
++ - **Inactive unknown-status** [90% confidence]: Inactive unknown-status body
++ - **Inactive rejected** [90% confidence]: Inactive rejected body
+
+ ❯ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts:167:26
+    165|     for (const status of INACTIVE) await seed({ title: `Inactive ${Str…
+    166|     const result = await recall(route.command);
+    167|     expect(result.block).toContain('Active record');
+       |                          ^
+    168|     expect(titles(h.results[0].rows)).toEqual(['Active record']);
+    169|     for (const status of INACTIVE) expect(result.block).not.toContain(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > /'safety' exposes only active rows despite higher-severity inactive rows
+AssertionError: expected '\n\n## Safety Intelligence\nProject-s…' to contain 'Active record'
+
+- Expected
++ Received
+
+- Active record
++
++
++ ## Safety Intelligence
++ Project-specific safety data. Reference directly in your response.
++ - **Inactive archived** [90% confidence]: Inactive archived body
++ - **Inactive pending_review** [90% confidence]: Inactive pending_review body
++ - **Inactive superseded** [90% confidence]: Inactive superseded body
++ - **Inactive unknown-status** [90% confidence]: Inactive unknown-status body
++ - **Inactive rejected** [90% confidence]: Inactive rejected body
+
+ ❯ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts:167:26
+    165|     for (const status of INACTIVE) await seed({ title: `Inactive ${Str…
+    166|     const result = await recall(route.command);
+    167|     expect(result.block).toContain('Active record');
+       |                          ^
+    168|     expect(titles(h.results[0].rows)).toEqual(['Active record']);
+    169|     for (const status of INACTIVE) expect(result.block).not.toContain(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts > active-only recall excludes quarantined and retired records > keeps active-only claims fallback with its original five-row limit when the primary read fails
+AssertionError: expected '\n\n## Claims & Evidence Intelligence…' not to contain 'Fallback inactive'
+
+- Expected
++ Received
+
+- Fallback inactive
++
++
++ ## Claims & Evidence Intelligence
++ Evidence chain data and claim-to-evidence mapping. Flag any unsupported claims.
++ - **Fallback inactive archived** [90% confidence]: Fallback inactive archived body
++ - **Fallback inactive rejected** [90% confidence]: Fallback inactive rejected body
++ - **Fallback inactive pending_review** [90% confidence]: Fallback inactive pending_review body
++ - **Fallback inactive superseded** [90% confidence]: Fallback inactive superseded body
++ - **Fallback inactive null** [90% confidence]: Fallback inactive null body
+
+ ❯ server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts:190:30
+    188|     expect(result.block).toContain('## Claims & Evidence Intelligence'…
+    189|     expect(result.block).not.toContain('## Evidence & Claims Analysis'…
+    190|     expect(result.block).not.toContain('Fallback inactive');
+       |                              ^
+    191|     expect(h.errors.map(error => error.code)).toEqual(['57P01']);
+    192|     expect(h.query).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed | 45 skipped (54)
+   Start at  23:53:37
+   Duration  6.34s (transform 3.18s, setup 77ms, import 4.28s, tests 1.68s, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-memory-recall-schema/focused-red.json

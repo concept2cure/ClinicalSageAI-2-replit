@@ -1,0 +1,37 @@
+{
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "--expose-gc",
+    "--max-old-space-size=6656",
+    "docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/c2c-ts-prewarm.cjs",
+    "batch",
+    "3000",
+    "6200"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 55.06,
+  "result": {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7095,
+    "sourceCount": 12154,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 2,
+    "pendingAfter": 0,
+    "checkedCount": 2,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 5843,
+    "heapMb": 5567,
+    "gcEvents": [],
+    "checked": [
+      {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/services/ana-ri/__tests__/structured-memory-recall.pglite.test.ts",
+        "diagnosticCodes": []
+      }
+    ]
+  }
+}
