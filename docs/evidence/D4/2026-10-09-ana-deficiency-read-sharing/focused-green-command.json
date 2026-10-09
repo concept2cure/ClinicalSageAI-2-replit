@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-deficiency-read-sharing/focused-green.json"
+  ],
+  "source_blobs": {
+    "server/services/ana-ri/context-enrichment.ts": "44f9e4bdd9707ca6811a6a42dce90c74d8d8f47f",
+    "server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts": "b44b80cce4b75b093bdb89070b3265de57328493"
+  }
+}

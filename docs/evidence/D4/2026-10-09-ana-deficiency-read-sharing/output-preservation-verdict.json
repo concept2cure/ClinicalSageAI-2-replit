@@ -1,0 +1,96 @@
+{
+  "cases": [
+    {
+      "case": "Review the deficiency letter and reviewer question",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 3,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "Anticipate the question",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 1,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "/risk",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 1,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "/preflight",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 1,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "/simulate",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 1,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "/twin",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 1,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "/review",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 1,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "/brief",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 1,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "/scan",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 1,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "/haq",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 1,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "empty",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 3,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "memory-throw",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 3,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "memory-reject",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 3,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "live-throw",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 3,
+      "afterDeficiencyReads": 1
+    },
+    {
+      "case": "timeout",
+      "fullEnrichmentResultPreserved": true,
+      "beforeDeficiencyReads": 3,
+      "afterDeficiencyReads": 1
+    }
+  ],
+  "fullEnrichmentResultEquality": true,
+  "orderingScope": "Exact ordering is preserved for these fixed seams; production composition still uses completion order."
+}

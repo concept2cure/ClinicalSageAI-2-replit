@@ -1,0 +1,79 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > shares one deficiency read across three natural triggers and preserves repeated prompt contributions 36ms
+   → expected [ [ …(2) ], [ …(2) ], [ …(2) ] ] to have a length of 1 but got 3
+ × server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > starts one shared raw read while all three consumers remain pending 13ms
+   → expected [ [ …(2) ], [ …(2) ], [ …(2) ] ] to have a length of 1 but got 3
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > keeps the /simulate path and its existing source label
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > keeps the /review path and its existing source label
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > keeps the /haq path and its existing source label
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > keeps the /preflight path and its existing source label
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > keeps simulation-only enrichment under its own source label
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > does not eagerly read deficiency context for an unrelated turn
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > shared deficiency work retains each consumer deadline > reports original per-source timeouts, preserves precedent, and ignores late completion
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > keeps healthy empty results separate from unavailable context
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > preserves the existing memory-error omission when the query throw
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > preserves the existing memory-error omission when the query reject
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > retains memory fallback when live patterns throw
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > retains unknown recurring-pattern IDs and occurrence counts
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing stays fresh and tenant/project scoped > separates concurrent invocations and reads the same scope again on a later turn
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing preserves existing organization/project guards > starts no deficiency reads without organization undefined
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing preserves existing organization/project guards > starts no deficiency reads without organization 0
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing preserves existing organization/project guards > starts no scoped reads on a projectless turn
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing preserves existing organization/project guards > starts no deficiency read for a none project resolution
+ ↓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing preserves existing organization/project guards > starts no deficiency read for a unresolved project resolution
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > shares one deficiency read across three natural triggers and preserves repeated prompt contributions
+AssertionError: expected [ [ …(2) ], [ …(2) ], [ …(2) ] ] to have a length of 1 but got 3
+
+- Expected
++ Received
+
+- 1
++ 3
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts:66:31
+     64|   it('shares one deficiency read across three natural triggers and pre…
+     65|     const result = await enrichContextForChat(INPUT);
+     66|     expect(deficiencyReads()).toHaveLength(1);
+       |                               ^
+     67|     expect(h.recurring.mock.calls).toEqual([[7, 42]]);
+     68|     expect(h.patterns).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > starts one shared raw read while all three consumers remain pending
+AssertionError: expected [ [ …(2) ], [ …(2) ], [ …(2) ] ] to have a length of 1 but got 3
+
+- Expected
++ Received
+
+- 1
++ 3
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts:92:33
+     90|     try {
+     91|       await vi.advanceTimersByTimeAsync(0);
+     92|       expect(deficiencyReads()).toHaveLength(1);
+       |                                 ^
+     93|       expect(h.recurring).toHaveBeenCalledTimes(1);
+     94|       expect(settled).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 skipped (20)
+   Start at  23:28:02
+   Duration  4.51s (transform 3.08s, setup 67ms, import 4.14s, tests 51ms, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-deficiency-read-sharing/focused-red.json

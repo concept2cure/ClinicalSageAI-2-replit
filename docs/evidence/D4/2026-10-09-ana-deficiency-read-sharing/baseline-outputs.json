@@ -1,0 +1,287 @@
+{
+  "source": "2f5c512",
+  "outputs": [
+    {
+      "message": "Review the deficiency letter and reviewer question",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.\n\n## PROJECT PRECEDENT INTELLIGENCE\nIdentified precedents and comparators. Reference these for similar products/devices.\n\n### Regulatory Precedent Analysis\n- **Precedent comparator** [75% confidence]: Agency requested longer stability follow-up.\n\n\n## Agency-interaction tactics\nThe user is preparing for or responding to a regulator. Apply the tactics below to their specifics — the move, why it works, and the failure mode it avoids. Be concrete and practical; this is execution help, not theory.\n\n### Answer the question the reviewer asked, in their words, before adding context. Lead each response with the direct answer, then the supporting evidence.\n_Response strategy · all segments_\n- **When:** Responding to a health-authority question or deficiency.\n- **Why it works:** Reviewers grade responsiveness. Burying the answer under preamble reads as evasion and invites a follow-up question and another cycle.\n- **Watch out for:** Reframing the question to the one you wish they had asked is the fastest way to a second round.\n- **Basis:** Recurring HAQ / deficiency review pattern across FDA and EMA.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "deficiency",
+          "simulation",
+          "haq",
+          "agency-tactics"
+        ],
+        "enrichmentMeta": {
+          "sourcesAttempted": 4,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "deficiency",
+            "simulation",
+            "haq",
+            "agency-tactics"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "natural_language",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 3,
+      "recurringReadCount": 3
+    },
+    {
+      "message": "Anticipate the question",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "simulation"
+        ],
+        "enrichmentMeta": {
+          "sourcesAttempted": 1,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "simulation"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "natural_language",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "message": "/risk",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "risk"
+        ],
+        "rewrittenMessage": "Analyze the risk profile and submission risk for this project.",
+        "enrichmentMeta": {
+          "sourcesAttempted": 1,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "risk"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "slash_command",
+          "detectedCommand": "risk",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "message": "/preflight",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## Live Readiness Assessment\n**Overall Score: 50/100** | Trend: unknown\n\n**No readiness assessment is on record for this program.** Do not state an approval probability, a review-time estimate or a deficiency count — none has been computed.\n\n| Dimension | Score |\n|---|---|\n\n\n**Top Gaps (0 total):**\n- None identified\n\nPresent the scores above directly, and only those. Be specific about gaps and remediation steps.Workflow context\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "preflight"
+        ],
+        "rewrittenMessage": "Run a preflight check on the current section/module.",
+        "enrichmentMeta": {
+          "sourcesAttempted": 1,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "preflight"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "slash_command",
+          "detectedCommand": "preflight",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "message": "/simulate",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "simulate"
+        ],
+        "rewrittenMessage": "Simulate likely reviewer challenges and questions.",
+        "enrichmentMeta": {
+          "sourcesAttempted": 1,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "simulate"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "slash_command",
+          "detectedCommand": "simulate",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "message": "/twin",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.\n\n## Live Readiness Assessment\n**Overall Score: 50/100** | Trend: unknown\n\n**No readiness assessment is on record for this program.** Do not state an approval probability, a review-time estimate or a deficiency count — none has been computed.\n\n| Dimension | Score |\n|---|---|\n\n\n**Top Gaps (0 total):**\n- None identified\n\nPresent the scores above directly, and only those. Be specific about gaps and remediation steps.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "twin"
+        ],
+        "rewrittenMessage": "Run a submission twin analysis: evaluate claims vs evidence integrity, identify unsupported claims, simulate reviewer challenges, and assess submission fragility.",
+        "enrichmentMeta": {
+          "sourcesAttempted": 1,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "twin"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "slash_command",
+          "detectedCommand": "twin",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "message": "/review",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "review"
+        ],
+        "rewrittenMessage": "Conduct a regulatory review of the current section. Think like an FDA/EMA reviewer. Flag weaknesses, unsupported claims, and likely deficiency triggers.",
+        "enrichmentMeta": {
+          "sourcesAttempted": 1,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "review"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "slash_command",
+          "detectedCommand": "review",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "message": "/brief",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "brief"
+        ],
+        "rewrittenMessage": "Generate a Reviewer Question Anticipation Brief with prepared answers for likely reviewer questions.",
+        "enrichmentMeta": {
+          "sourcesAttempted": 1,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "brief"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "slash_command",
+          "detectedCommand": "brief",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "message": "/scan",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "scan"
+        ],
+        "rewrittenMessage": "Scan the current section/document for regulatory deficiencies. Check completeness, missing keywords, placeholder text, and compliance gaps.",
+        "enrichmentMeta": {
+          "sourcesAttempted": 1,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "scan"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "slash_command",
+          "detectedCommand": "scan",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    },
+    {
+      "message": "/haq",
+      "result": {
+        "block": "\n\n## Project Intelligence Profile\n**Strategy:** Reconcile source evidence\n\n**Documents:** 2 ingested | 3 memory atoms\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.\nWorkflow context\n\n\n## ACTIVE REGULATORY PATTERNS\n- **[HIGH]** Stability evidence gap (FDA) — 3 hits | Fix: Reconcile shelf-life evidence.\n\n## HISTORICAL DEFICIENCY PATTERNS\nPersisted deficiency and rejection patterns for trend context.\n- **Stability response history** [91% confidence]: Earlier reviewer request remains open.\n\n## PROJECT PRECEDENT INTELLIGENCE\nIdentified precedents and comparators. Reference these for similar products/devices.\n\n### Regulatory Precedent Analysis\n- **Precedent comparator** [75% confidence]: Agency requested longer stability follow-up.",
+        "sources": [
+          "project-profile",
+          "workflow",
+          "haq"
+        ],
+        "rewrittenMessage": "Draft a health authority question response. Ask for agency, exact question text, impacted section, and supporting evidence, then provide a defensible response structure.",
+        "enrichmentMeta": {
+          "sourcesAttempted": 1,
+          "sourcesSucceeded": [
+            "project-profile",
+            "workflow",
+            "haq"
+          ],
+          "sourcesFailed": [],
+          "unavailableSources": [],
+          "unavailableReasons": {},
+          "triggerType": "slash_command",
+          "detectedCommand": "haq",
+          "hasProjectContext": true
+        }
+      },
+      "deficiencyReadCount": 1,
+      "recurringReadCount": 1
+    }
+  ]
+}

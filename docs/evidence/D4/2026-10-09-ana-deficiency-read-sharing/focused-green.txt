@@ -1,0 +1,66 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > preserves the existing memory-error omission when the query throw
+{
+  "timestamp": "2026-10-09T03:37:10.058Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "memory failed synchronously"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > preserves the existing memory-error omission when the query reject
+{
+  "timestamp": "2026-10-09T03:37:10.060Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "memory failed asynchronously"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > retains memory fallback when live patterns throw
+{
+  "timestamp": "2026-10-09T03:37:10.061Z",
+  "level": "warn",
+  "message": "[enrichment] Live CRLRTF patterns failed",
+  "context": {
+    "error": "live pattern registry unavailable"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > shares one deficiency read across three natural triggers and preserves repeated prompt contributions 33ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > starts one shared raw read while all three consumers remain pending 13ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > keeps the /simulate path and its existing source label 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > keeps the /review path and its existing source label 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > keeps the /haq path and its existing source label 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > keeps the /preflight path and its existing source label 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > keeps simulation-only enrichment under its own source label 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > one lazy deficiency snapshot preserves its existing consumers > does not eagerly read deficiency context for an unrelated turn 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > shared deficiency work retains each consumer deadline > reports original per-source timeouts, preserves precedent, and ignores late completion 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > keeps healthy empty results separate from unavailable context 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > preserves the existing memory-error omission when the query throw 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > preserves the existing memory-error omission when the query reject 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > retains memory fallback when live patterns throw 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > sharing preserves empty and swallowed-error contracts > retains unknown recurring-pattern IDs and occurrence counts 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing stays fresh and tenant/project scoped > separates concurrent invocations and reads the same scope again on a later turn 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing preserves existing organization/project guards > starts no deficiency reads without organization undefined 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing preserves existing organization/project guards > starts no deficiency reads without organization 0 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing preserves existing organization/project guards > starts no scoped reads on a projectless turn 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing preserves existing organization/project guards > starts no deficiency read for a none project resolution 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > deficiency sharing preserves existing organization/project guards > starts no deficiency read for a unresolved project resolution 0ms
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  23:37:04
+   Duration  5.14s (transform 3.61s, setup 114ms, import 4.70s, tests 68ms, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-deficiency-read-sharing/focused-green.json

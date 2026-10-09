@@ -1,0 +1,41 @@
+{
+  "productionPath": "server/services/ana-ri/context-enrichment.ts",
+  "productionSha256": "0c047c1bfcf80c1165befd660d919b0ee99a423b5870ce8f87e783b380290563",
+  "productionBlob": "44f9e4bdd9707ca6811a6a42dce90c74d8d8f47f",
+  "testPath": "server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts",
+  "testSha256": "772aa1dae0613d3fa6eea6fac35119a5668f45c3cf5baf11b7b176a9b38e5942",
+  "testBlob": "b44b80cce4b75b093bdb89070b3265de57328493",
+  "helperUnchanged": true,
+  "budgetUnchanged": true,
+  "red": {
+    "failed": 2,
+    "passed": 0,
+    "pending": 18
+  },
+  "green": {
+    "failed": 0,
+    "passed": 20,
+    "pending": 0
+  },
+  "forcedLint": {
+    "errors": 0,
+    "warnings": 6,
+    "newTestWarnings": 0,
+    "productionExistingWarningCount": 6
+  },
+  "fullEnrichmentResultsPreserved": 15,
+  "naturalTriggerDeficiencyReads": {
+    "before": 3,
+    "after": 1
+  },
+  "scope": [
+    "W3",
+    "D4"
+  ],
+  "caveats": [
+    "Existing swallowed live-pattern and memory query errors retain their fallback/omission contract; no new error reporting is introduced.",
+    "Exact result ordering is qualified for fixed seams; the existing production completion-order composition algorithm is unchanged."
+  ],
+  "formattingCorrection": "formatting-correction.json",
+  "greenElapsedSeconds": 5.548
+}

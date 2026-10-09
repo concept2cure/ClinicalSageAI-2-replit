@@ -1361,6 +1361,10 @@ export async function enrichContextForChat(params: {
     workflowPromise ??= submissionType && pid !== null
       ? Promise.resolve().then(() => buildWorkflowContext(pid, submissionType, organizationId))
       : Promise.resolve('');
+  // Share one raw deficiency snapshot only within this turn; consumers keep their budgets.
+  let deficiencyPromise: Promise<string> | undefined;
+  const deficiencyContext = (): Promise<string> =>
+    deficiencyPromise ??= Promise.resolve().then(() => enrichWithCRLRTF(pid, organizationId));
   /* A request that reads several sources reads, and reports, each one under its
      own name. They were joined with Promise.all inside one read, so one failed
      read (a domain memory read now throws) discarded what the others found,
@@ -1393,7 +1397,7 @@ export async function enrichContextForChat(params: {
   const slash = detectSlashCommand(message);
   if (slash) {
     const enrichMap: Record<string, () => Promise<string>> = {
-      risk: parts(['foresight', () => enrichWithForesight(pid, organizationId)], ['deficiency', () => enrichWithCRLRTF(pid, organizationId)]),
+      risk: parts(['foresight', () => enrichWithForesight(pid, organizationId)], ['deficiency', deficiencyContext]),
       readiness: () => enrichWithReadiness(pid, organizationId),
       precedent: () => enrichWithPrecedents(pid, organizationId),
       draft: () =>
@@ -1403,7 +1407,7 @@ export async function enrichContextForChat(params: {
         ['readiness', () => enrichWithReadiness(pid, organizationId)],
         ['workflow', workflowContext],
         ['claims', () => enrichWithClaims(pid, organizationId)],
-        ['deficiency', () => enrichWithCRLRTF(pid, organizationId)],
+        ['deficiency', deficiencyContext],
       ),
       claims: () => enrichWithClaims(pid, organizationId),
       recommend: () => enrichWithRecommendations(pid, organizationId),
@@ -1413,7 +1417,7 @@ export async function enrichContextForChat(params: {
         Promise.resolve(
           '\n\n## Conversation Export Intent\nUser requested conversation export. Provide a concise markdown-ready output and include any critical action receipts from this turn.'
         ),
-      simulate: () => enrichWithCRLRTF(pid, organizationId),
+      simulate: deficiencyContext,
       assess: parts(
         ['readiness', () => enrichWithReadiness(pid, organizationId)],
         ['recommendations', () => enrichWithRecommendations(pid, organizationId)],
@@ -1422,7 +1426,7 @@ export async function enrichContextForChat(params: {
       ),
       twin: parts(
         ['claims', () => enrichWithClaims(pid, organizationId)],
-        ['deficiency', () => enrichWithCRLRTF(pid, organizationId)],
+        ['deficiency', deficiencyContext],
         ['readiness', () => enrichWithReadiness(pid, organizationId)],
       ),
       consistency: () => enrichWithCrossModule(pid, organizationId),
@@ -1443,13 +1447,13 @@ export async function enrichContextForChat(params: {
       ectd: () => enrichWithECTD(pid, organizationId),
       audit: parts(['readiness', () => enrichWithReadiness(pid, organizationId)], ['claims', () => enrichWithClaims(pid, organizationId)]),
       amend: () => enrichWithProjectMemory(pid, ['document_version', 'change_impact', 'amendment_tracking'], 'Amendment Context', 'Relevant version history and change impact data.', 5, organizationId),
-      review: parts(['claims', () => enrichWithClaims(pid, organizationId)], ['deficiency', () => enrichWithCRLRTF(pid, organizationId)]),
+      review: parts(['claims', () => enrichWithClaims(pid, organizationId)], ['deficiency', deficiencyContext]),
       memo: () => enrichWithForesight(pid, organizationId),
-      brief: () => enrichWithCRLRTF(pid, organizationId),
+      brief: deficiencyContext,
       strategy: parts(['precedent', () => enrichWithPrecedents(pid, organizationId)], ['foresight', () => enrichWithForesight(pid, organizationId)]),
       freeze: () => enrichWithECTD(pid, organizationId),
       sign: () => enrichWithECTD(pid, organizationId),
-      scan: parts(['claims', () => enrichWithClaims(pid, organizationId)], ['deficiency', () => enrichWithCRLRTF(pid, organizationId)]),
+      scan: parts(['claims', () => enrichWithClaims(pid, organizationId)], ['deficiency', deficiencyContext]),
       checklist: () => enrichWithReadiness(pid, organizationId),
       submit: parts(['readiness', () => enrichWithReadiness(pid, organizationId)], ['ectd', () => enrichWithECTD(pid, organizationId)]),
       narrative: () => enrichWithSafety(pid, organizationId),
@@ -1461,7 +1465,7 @@ export async function enrichContextForChat(params: {
       rmp: () => enrichWithSafety(pid, organizationId),
       uspi: () => enrichWithSafety(pid, organizationId),
       haq: parts(
-        ['deficiency', () => enrichWithCRLRTF(pid, organizationId)],
+        ['deficiency', deficiencyContext],
         ['precedent', () => enrichWithPrecedents(pid, organizationId)],
         ['claims', () => enrichWithClaims(pid, organizationId)],
       ),
@@ -1701,11 +1705,11 @@ export async function enrichContextForChat(params: {
     const triggers: Array<{ test: RegExp[]; fn: () => Promise<string>; name: string }> = [
       { test: FORESIGHT_TRIGGERS, fn: () => enrichWithForesight(pid, organizationId), name: 'foresight' },
       { test: PRECEDENT_TRIGGERS, fn: () => enrichWithPrecedents(pid, organizationId), name: 'precedent' },
-      { test: CRL_RTF_TRIGGERS, fn: () => enrichWithCRLRTF(pid, organizationId), name: 'deficiency' },
+      { test: CRL_RTF_TRIGGERS, fn: deficiencyContext, name: 'deficiency' },
       { test: READINESS_TRIGGERS, fn: () => enrichWithReadiness(pid, organizationId), name: 'readiness' },
       { test: RECOMMENDATION_TRIGGERS, fn: () => enrichWithRecommendations(pid, organizationId), name: 'recommendations' },
       { test: CLAIMS_TRIGGERS, fn: () => enrichWithClaims(pid, organizationId), name: 'claims' },
-      { test: SIMULATION_TRIGGERS, fn: () => enrichWithCRLRTF(pid, organizationId), name: 'simulation' },
+      { test: SIMULATION_TRIGGERS, fn: deficiencyContext, name: 'simulation' },
       { test: BIOSTAT_TRIGGERS, fn: () => enrichWithBiostatContext(pid, submissionType, organizationId), name: 'biostatistics' },
       { test: SAFETY_TRIGGERS, fn: () => enrichWithSafety(pid, organizationId), name: 'safety' },
       { test: CMC_TRIGGERS, fn: cmcParts(), name: 'cmc' },
@@ -1714,7 +1718,7 @@ export async function enrichContextForChat(params: {
       { test: DIAGNOSTICS_TRIGGERS, fn: () => enrichWithDiagnostics(pid, organizationId), name: 'diagnostics' },
       { test: CMS_TRIGGERS, fn: () => enrichWithCMS(pid, organizationId), name: 'cms' },
       { test: ECTD_TRIGGERS, fn: () => enrichWithECTD(pid, organizationId), name: 'ectd' },
-      { test: HAQ_TRIGGERS, fn: parts(['deficiency', () => enrichWithCRLRTF(pid, organizationId)], ['precedent', () => enrichWithPrecedents(pid, organizationId)]), name: 'haq' },
+      { test: HAQ_TRIGGERS, fn: parts(['deficiency', deficiencyContext], ['precedent', () => enrichWithPrecedents(pid, organizationId)]), name: 'haq' },
       { test: WISDOM_TRIGGERS, fn: () => Promise.resolve(buildIndustryWisdomBlock({ submissionType, message })), name: 'industry-wisdom' },
       { test: WAYFINDING_TRIGGERS, fn: () => Promise.resolve(buildTourGuideBlock({ submissionType, message })), name: 'tour-guide' },
     ];
