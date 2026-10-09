@@ -1,0 +1,18 @@
+{
+  "source_checkpoint": "e86ed87bc19490a5f1fe8885f4e1b560e8672da6",
+  "source_blobs_verified": true,
+  "selected_tests": 959,
+  "selected_files": 43,
+  "tests_failed": 0,
+  "tests_skipped": 0,
+  "production_build_passed": true,
+  "no_lint_warning_growth": true,
+  "full_prepush_passed": true,
+  "typescript_errors": 0,
+  "typescript_exit": 0,
+  "no_ui_changes": true,
+  "client_tree": "f4a50c306387585250e354c68e08a099362e3823",
+  "authenticated_source_verification": "open",
+  "full_ind_qualification": "open",
+  "remote_ci": "separate pending publication inspection"
+}

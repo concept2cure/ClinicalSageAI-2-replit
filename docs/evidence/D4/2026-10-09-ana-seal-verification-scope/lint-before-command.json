@@ -1,0 +1,27 @@
+{
+  "command": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "server/routes/ana-ri/seal-verified.ts",
+    "server/services/ana/verifiedSealService.ts",
+    "--format",
+    "json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.981,
+  "errors": 0,
+  "warnings": 4,
+  "files": [
+    {
+      "path": "server/routes/ana-ri/seal-verified.ts",
+      "errors": 0,
+      "warnings": 2
+    },
+    {
+      "path": "server/services/ana/verifiedSealService.ts",
+      "errors": 0,
+      "warnings": 2
+    }
+  ]
+}

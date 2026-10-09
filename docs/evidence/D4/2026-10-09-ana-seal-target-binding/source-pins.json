@@ -1,0 +1,13 @@
+{
+  "time_utc": "2026-10-09T06:54:28.911562+00:00",
+  "source_blobs": {
+    "server/services/ana/verifiedSealService.ts": "9ef2771151c287449df208ff91f9da745de6220f",
+    "server/routes/ana-ri/seal-verified.ts": "8b72c03a8843a730e2307f3f93688542dd63cf36",
+    "server/services/ana/__tests__/verified-seal-service.test.ts": "8f179e86a167171ebcdf1e941a1587ebba28a5bc",
+    "server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts": "c4353d21cff894480085725a9bf03279116bb05b",
+    "server/routes/ana-ri/__tests__/seal-verified-scope.test.ts": "0058f7657b241278e2522b53a726e12e151f49f0"
+  },
+  "client_tree": "f4a50c306387585250e354c68e08a099362e3823",
+  "no_client_diff": true,
+  "source_checkpoint": "e86ed87bc19490a5f1fe8885f4e1b560e8672da6"
+}

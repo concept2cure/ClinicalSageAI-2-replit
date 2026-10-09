@@ -1,0 +1,21 @@
+{
+  "prior_commit": "4eda1a3dddbd5b14d360fa4ae939426187b666cb",
+  "browser_smoke": {
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37887095726",
+    "failed_step": "Provision the application schema from scratch",
+    "finding": "Installer left 20261008f_ana_run_events.sql unapplied because relation ana_runs did not exist. Later golden-journey seed also reported absent auth_users."
+  },
+  "semgrep": {
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37887095721",
+    "baseline": "661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19",
+    "blocking_findings": 5,
+    "paths": [
+      "docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs",
+      "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+      "server/services/clinical-regulatory-evidence/dataset-profile.ts",
+      "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+      "server/services/tasking/__tests__/task-project.pglite.test.ts"
+    ]
+  },
+  "scope": "These files, provisioning scripts and workflows are unchanged by the present seal-scope batch; failures remain unresolved separate release blockers. Do not report remote CI as green."
+}

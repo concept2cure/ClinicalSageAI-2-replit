@@ -60,7 +60,9 @@ necessity flag, not an applicability decision. Optional is not inapplicable.
 | 1 — delivered in 008223d | batch_draft_sections → canonical drafting requirements: infer omitted filing type from the tenant-owned open program | Actual registered handler and real drafting resolver; US IND deep-section guidance reaches gateway, explicit choice preserved, foreign/unknown context unassessed, DB outage refused, scope and source controls preserved |
 | 1b — delivered; see 2026-10-09-ana-ind-plan-honesty | Backend plan_ind_module_authoring claim | All planning output explicitly non-sealable; verification limited to its constructed plan text; caller-declared live provenance is not independent source qualification; existing payload retained |
 | 1c — delivered; see 2026-10-09-ana-section-capture-scope | Existing draft_section metadata preparation | Tenant-bound row lookup against the deployed standalone table; invalid tenant refused before DB; foreign/missing indistinguishable; preparation versus generation reported honestly; no invented project qualification |
-| 1d — immediate follow-up | Independent seal-route enforcement | A plan-text check cannot authorize sealing an authored artifact; actual artifact/source binding and real fail-first cases before any acceptance claim |
+| 1d — bounded guard delivered; see 2026-10-09-ana-seal-verification-scope | Seal-route scope/negative-evidence preservation | Planning-only, explicitly incomplete and malformed verification metadata reaches the real service and is refused before pool/transaction; preserve legacy behavior without claiming authoritative qualification |
+| 1e — bounded target binding delivered; see 2026-10-09-ana-seal-target-binding | Persisted seal-target binding | Every supplied artifact/version selector resolves in the tenant-owned project; explicit misses cannot create substitute rows; stored version text/hash and current artifact text must match the submitted bytes, preserving current source attribution; malformed and unanchored selectors refused; selected rows locked during sealing. This binds the target, not an authenticated source verdict |
+| 1f — immediate follow-up | Authenticated artifact/source verification | Legacy caller ok cannot establish source qualification; the owned artifact/version/content and qualified source versions must be bound to a server-authenticated verdict; omitted, forged, stale or wrong-target proof refused. Current target/scope guards remain insufficient |
 | 2 | Canonical CTD hierarchy/content alignment | Every audited leaf classified exact-content, inherited-content, structure-only or unindexed; controlled mapping of regional M1; numbered table coverage and repeatable study/product instances; unknown codes refused without invented requirements |
 | 3 | Product-specific applicability in the existing requirements resolver | Phase/modality/population facts select required/conditional/not-applicable/undetermined with a basis and reason; unknown facts remain gaps; early-phase IND is not forced into a complete marketing dossier |
 | 4 | Therapeutic and modality overlays in the existing drafting path | Section-scoped verified references, indication and product constraints reach nested drafting; risk/endpoint instructions fit the actual product; no contradictions between an oncology profile and a CGT modality |
@@ -97,3 +99,9 @@ new gate failing on the defect it is meant to catch.
 Report progress using the relevant denominator and observed test class. Preserve
 partial and unassessed states. Never describe all therapeutic areas, all IND
 subsections or submission readiness as complete based on counts or prose length.
+
+Remote release qualification remains separate from local checks. The prior
+4eda1a3d delivery has unresolved browser-schema provisioning and five Semgrep
+findings, recorded in 2026-10-09-ana-seal-verification-scope/PRIOR_REMOTE_CI.json.
+Local test/build/pre-push success must not be reported as remote CI success or
+commercial deployment while those release blockers remain open.

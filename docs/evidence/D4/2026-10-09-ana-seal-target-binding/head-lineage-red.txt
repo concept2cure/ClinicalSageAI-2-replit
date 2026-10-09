@@ -1,0 +1,140 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-09T06:50:55.316Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion attributes the text it seals > records author lineage for the sealed content, in the seal transaction
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion attributes the text it seals > KEEPS existing source spans — sealing must not flatten citations into an author claim
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion attributes the text it seals > FAILS CLOSED — a broken lineage write rolls the seal back, signature included
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > seals the same owned artifact through pk selectors without duplicating it
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > seals the same owned artifact through external selectors without duplicating it
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > seals the same owned artifact through both selectors without duplicating it
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > seals an exact persisted version selected by id without appending a version
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > seals an exact persisted version selected by number without appending a version
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > seals an exact persisted version selected by both without appending a version
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses an explicit foreign artifact named by pk instead of creating a fallback
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses an explicit foreign artifact named by external instead of creating a fallback
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses an explicit foreign artifact named by both instead of creating a fallback
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses missing explicit artifact selectors {"artifactPk":999999} without a fallback
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses missing explicit artifact selectors {"artifactExternalId":"artifact_missing"} without a fallback
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses missing explicit artifact selectors {"artifactPk":999999,"artifactExternalId":"artifact_missing"} without a fallback
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses two supplied artifact identifiers that resolve different owned rows
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses an owned artifact from another project through pk selectors
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses an owned artifact from another project through external selectors
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses an owned artifact from another project through both selectors
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses fallback creation for foreign or missing project 8
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the signature to the selected persisted target > refuses fallback creation for foreign or missing project 999999
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses unresolved explicit version selectors {"existingVersionId":999999} without appending
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses unresolved explicit version selectors {"existingVersionNumber":99} without appending
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses unresolved explicit version selectors {"existingVersionId":999999,"existingVersionNumber":99} without appending
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses a version id belonging to another artifact in the same organization
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses a version id belonging to a foreign artifact and organization
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses a foreign organization version selected by id even when its artifact id matches
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses a foreign organization version selected by number even when its artifact id matches
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses a foreign organization version selected by both even when its artifact id matches
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses a supplied version id and number that point to different rows
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses changed submitted content for a persisted version selected by id
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses changed submitted content for a persisted version selected by number
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses changed submitted content for a persisted version selected by both
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > compares persisted text exactly, including trailing whitespace
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses persisted version hash null despite matching stored content
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses persisted version hash malformed-hash despite matching stored content
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses persisted version hash 0000000000000000000000000000000000000000000000000000000000000000 despite matching stored content
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion binds the selected stored version and content > refuses changed stored text even when the persisted hash claims to match submitted content
+ × server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion preserves the current artifact source lineage > refuses different head bytes on the stored-version path without retiring current sources 47ms
+   → expected undefined to be an instance of SealBlockedError
+ × server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion preserves the current artifact source lineage > refuses different head bytes on the new-version path without retiring current sources 27ms
+   → expected undefined to be an instance of SealBlockedError
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed organizationId = 0 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed organizationId = -1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed organizationId = 1.5 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed organizationId = 2147483648 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed organizationId = 9007199254740992 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed organizationId = NaN before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed organizationId = 1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed organizationId = null before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed projectId = 0 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed projectId = -1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed projectId = 1.5 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed projectId = 2147483648 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed projectId = 9007199254740992 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed projectId = NaN before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed projectId = 1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed projectId = null before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed userId = 0 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed userId = -1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed userId = 1.5 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed userId = 2147483648 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed userId = 9007199254740992 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed userId = NaN before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed userId = 1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed userId = null before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactPk = 0 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactPk = -1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactPk = 1.5 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactPk = 2147483648 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactPk = 9007199254740992 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactPk = NaN before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactPk = 1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactPk = null before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionId = 0 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionId = -1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionId = 1.5 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionId = 2147483648 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionId = 9007199254740992 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionId = NaN before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionId = 1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionId = null before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionNumber = 0 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionNumber = -1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionNumber = 1.5 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionNumber = 2147483648 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionNumber = 9007199254740992 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionNumber = NaN before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionNumber = 1 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed existingVersionNumber = null before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactExternalId =  before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactExternalId =     before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactExternalId = null before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses malformed artifactExternalId = 123 before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses version selectors {"existingVersionId":1} without an artifact selector before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses version selectors {"existingVersionNumber":1} without an artifact selector before pool access
+ ↓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion rejects malformed selectors before acquiring a connection > refuses version selectors {"existingVersionId":1,"existingVersionNumber":1} without an artifact selector before pool access
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion preserves the current artifact source lineage > refuses different head bytes on the stored-version path without retiring current sources
+ FAIL  server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion preserves the current artifact source lineage > refuses different head bytes on the new-version path without retiring current sources
+AssertionError: expected undefined to be an instance of SealBlockedError
+ ❯ expectSealRefused server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts:293:17
+    291|   }
+    292|   const after = await sealState();
+    293|   expect(error).toBeInstanceOf(SealBlockedError);
+       |                 ^
+    294|   expect(error).toMatchObject({ code, status });
+    295|   // No fallback artifacts/versions, signature, provenance, audit or a…
+ ❯ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts:538:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 93 skipped (95)
+   Start at  02:50:53
+   Duration  4.12s (transform 1.07s, setup 72ms, import 1.72s, tests 1.96s, environment 0ms)
+

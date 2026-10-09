@@ -1,0 +1,97 @@
+{
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "--expose-gc",
+    "--max-old-space-size=6656",
+    "docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/c2c-ts-prewarm.cjs",
+    "batch",
+    "3000",
+    "6200"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 38.739,
+  "result": {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7101,
+    "sourceCount": 12160,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 17,
+    "pendingAfter": 0,
+    "checkedCount": 17,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 5462,
+    "heapMb": 5205,
+    "gcEvents": [],
+    "checked": [
+      {
+        "file": "server/services/ana/verifiedSealService.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/routes/ana-ri/seal-verified.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/routes/ana-ri/utility.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/routes/ana-ri.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/bootstrap/register-ai-routes.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/startup/routes.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/index.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/routes/ana-ri/__tests__/governedActionRunOwner.test.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/routes/ana-ri/__tests__/seal-verified-scope.test.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/services/ana/__tests__/verified-seal-scope.test.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/services/ana/__tests__/verified-seal-service.test.ts",
+        "diagnosticCodes": []
+      },
+      {
+        "file": "server/services/ana-ri/__tests__/proposal-provenance.test.ts",
+        "diagnosticCodes": []
+      }
+    ]
+  }
+}

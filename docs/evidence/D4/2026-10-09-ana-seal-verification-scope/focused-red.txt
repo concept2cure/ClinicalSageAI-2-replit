@@ -1,0 +1,2 @@
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-seal-verification-scope/focused-red-report.json
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

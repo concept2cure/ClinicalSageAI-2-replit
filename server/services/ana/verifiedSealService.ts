@@ -26,9 +26,12 @@
  *     the persisted version by NUMBER (not row PK). When the number is supplied we
  *     resolve the `concept2cure_artifact_versions` row PK (org-scoped) and seal it
  *     in place — no second version row.
- *   • The fallback artifact/version insert below only runs when NO persisted row
- *     can be resolved (e.g. an in-session draft that never reached Build 1), so the
- *     seal always has a durable target. The common path is now the persisted row.
+ *   • A supplied artifact/version selector must resolve in the tenant-owned
+ *     project. A miss refuses rather than creating a substitute target. Only
+ *     omitted selectors admit the existing in-session fallback inserts.
+ *   • A selected stored version is locked and its content and SHA-256 must
+ *     match the submitted bytes. This binds the target, not the authenticity
+ *     of the legacy caller-supplied source-verification verdict.
  *
  * The pool is injected so the transaction is unit-testable without a live DB.
  */
@@ -36,6 +39,7 @@
 import crypto from 'node:crypto';
 import { resolveSignerIdentity } from '../part11/resolve-signer-identity.js';
 import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate.js';
+import { projectBelongsToTenant } from '../cmc/project-membership.js';
 
 import { getPool } from '../../db';
 import {
@@ -74,10 +78,18 @@ export interface SealVerifiedVersionInput {
   manifestation: SealManifestationInput;
 
   /**
-   * The `verify_docx_against_source` verdict for THIS content. Sealing is
-   * refused unless `ok === true`: you may only seal a clean verification.
+   * Legacy caller-supplied verdict. Explicit limits and malformed qualifiers
+   * refuse sealing; absent qualifiers retain the existing unbound ok-only path.
+   * Positive flags are not authenticated artifact or source qualification.
    */
-  verification: { ok: boolean; message?: string };
+  verification: {
+    ok: boolean;
+    message?: string;
+    scope?: unknown;
+    artifactVerified?: unknown;
+    sourceVerified?: unknown;
+    sourceDiffPerformed?: unknown;
+  };
 
   /** Caller-asserted sample/draft signals (block sealing). */
   isSample?: boolean;
@@ -125,6 +137,73 @@ export class SealBlockedError extends Error {
   }
 }
 
+/** Explicit malformed selectors must never turn into the new-document fallback. */
+function validateSealTargetInput(input: SealVerifiedVersionInput): void {
+  // These selectors address PostgreSQL integer columns, including version.
+  const positiveInteger = (value: unknown) =>
+    typeof value === 'number' && Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
+  const artifactSelected = input.artifactPk !== undefined || input.artifactExternalId !== undefined;
+  const versionSelected = input.existingVersionId !== undefined || input.existingVersionNumber !== undefined;
+  if (
+    ![input.organizationId, input.projectId, input.userId].every(positiveInteger) ||
+    [input.artifactPk, input.existingVersionId, input.existingVersionNumber]
+      .some(value => value !== undefined && !positiveInteger(value)) ||
+    (input.artifactExternalId !== undefined &&
+      (typeof input.artifactExternalId !== 'string' || !input.artifactExternalId.trim())) ||
+    (versionSelected && !artifactSelected)
+  ) {
+    throw new SealBlockedError('A valid project and consistent artifact/version selectors are required.', 'INVALID_SEAL_TARGET');
+  }
+}
+
+/** Resolve every supplied artifact selector together, including PK + external id. */
+async function resolveSealArtifact(client: SealPoolClient, input: SealVerifiedVersionInput) {
+  if (input.artifactPk === undefined && input.artifactExternalId === undefined) return undefined;
+  const { rows } = await client.query(
+    `SELECT id, artifact_id, content FROM concept2cure_artifacts
+      WHERE organization_id = $1 AND project_id = $2
+        AND ($3::integer IS NULL OR id = $3)
+        AND ($4::text IS NULL OR artifact_id = $4)
+      LIMIT 1 FOR UPDATE`,
+    [input.organizationId, input.projectId, input.artifactPk ?? null, input.artifactExternalId ?? null],
+  );
+  if (rows.length !== 1) {
+    throw new SealBlockedError('The selected artifact is unavailable in this project.', 'SEAL_TARGET_NOT_FOUND', 404);
+  }
+  // Lineage is keyed to the artifact head, not an immutable version. Sealing
+  // different bytes would retire valid head sources and rewrite attribution.
+  if (rows[0].content !== input.content) {
+    throw new SealBlockedError('The supplied content does not match the current artifact text.', 'SEAL_CONTENT_MISMATCH', 409);
+  }
+  return { id: Number(rows[0].id), externalId: rows[0].artifact_id as string };
+}
+
+/** Bind the seal to the actual stored version and its bytes, rather than a caller's ID. */
+async function resolveSealVersion(
+  client: SealPoolClient,
+  input: SealVerifiedVersionInput,
+  artifactPk: number,
+  contentHash: string,
+) {
+  if (input.existingVersionId === undefined && input.existingVersionNumber === undefined) return undefined;
+  const { rows } = await client.query(
+    `SELECT id, version, content, content_hash FROM concept2cure_artifact_versions
+      WHERE artifact_id = $1 AND organization_id = $2
+        AND ($3::integer IS NULL OR id = $3)
+        AND ($4::integer IS NULL OR version = $4)
+      LIMIT 1 FOR SHARE`,
+    [artifactPk, input.organizationId, input.existingVersionId ?? null, input.existingVersionNumber ?? null],
+  );
+  if (rows.length !== 1) {
+    throw new SealBlockedError('The selected version is unavailable for this artifact.', 'SEAL_VERSION_NOT_FOUND', 404);
+  }
+  const row = rows[0];
+  if (row.content !== input.content || row.content_hash !== contentHash) {
+    throw new SealBlockedError('The supplied content does not match the persisted version and its hash.', 'SEAL_CONTENT_MISMATCH', 409);
+  }
+  return { id: Number(row.id), version: Number(row.version) };
+}
+
 /**
  * Seal a verified version under a Part 11 §11.50 manifestation. Validates and
  * guards BEFORE opening a transaction, then persists version (if needed) +
@@ -132,7 +211,7 @@ export class SealBlockedError extends Error {
  */
 export async function sealVerifiedVersion(
   input: SealVerifiedVersionInput,
-  pool: SealPool = getPool() as unknown as SealPool,
+  pool?: SealPool,
 ): Promise<SealVerifiedVersionResult> {
   // ── Fail-closed gates (no DB work until these pass) ──
   if (!input.verification || input.verification.ok !== true) {
@@ -141,6 +220,22 @@ export async function sealVerifiedVersion(
       'NOT_VERIFIED',
     );
   }
+
+  // No authoritative scoped receipt is supported here. Preserve declared
+  // limitations without treating caller-supplied positive flags as proof.
+  const verification = input.verification;
+  if (
+    verification.scope !== undefined ||
+    [verification.artifactVerified, verification.sourceVerified, verification.sourceDiffPerformed]
+      .some(value => value !== undefined && value !== true)
+  ) {
+    throw new SealBlockedError(
+      'Plan-text, required-string-only, and unsupported verification scopes cannot qualify a verified seal.',
+      'VERIFICATION_SCOPE_INSUFFICIENT',
+    );
+  }
+
+  validateSealTargetInput(input);
 
   const guard = guardSampleContent({
     title: input.title,
@@ -167,54 +262,21 @@ export async function sealVerifiedVersion(
     sealedAt,
   });
 
-  const client = await pool.connect();
+  const sealPool = pool ?? (getPool() as unknown as SealPool);
+  const client = await sealPool.connect();
   try {
     await client.query('BEGIN');
 
+    if (!await projectBelongsToTenant({ organizationId: input.organizationId, projectId: String(input.projectId) }, client)) {
+      throw new SealBlockedError('The selected project is unavailable.', 'SEAL_TARGET_NOT_FOUND', 404);
+    }
+
     // ── Resolve / create the artifact (Build-1 integration point) ──
-    let artifactPk = input.artifactPk;
-    let artifactExternalId = input.artifactExternalId;
+    const selectedArtifact = await resolveSealArtifact(client, input);
+    let artifactPk = selectedArtifact?.id;
+    let artifactExternalId = selectedArtifact?.externalId;
 
-    // Build 1 (E11): the client knows the persisted artifact only by its
-    // external id (`artifact_xxx`), not its PK. When the external id is supplied
-    // (and the PK is not), resolve the PK org-scoped so we seal the EXISTING
-    // persisted artifact row — never a fallback. Tenant isolation: the lookup is
-    // bound to organizationId, so a foreign external id resolves to nothing and
-    // falls through to the guarded fallback insert below.
-    if (!artifactPk && artifactExternalId) {
-      const found = await client.query(
-        `SELECT id FROM concept2cure_artifacts
-          WHERE artifact_id = $1 AND organization_id = $2
-          LIMIT 1`,
-        [artifactExternalId, input.organizationId],
-      );
-      if (found.rows.length > 0) {
-        artifactPk = found.rows[0].id as number;
-      }
-    }
-
-    // PR #973 port: seal-verified.ts admits `artifactPk` WITHOUT an external
-    // id. That used to fall through to the fallback INSERT below — sealing a
-    // DUPLICATE artifact rather than the one the caller named. Resolve the PK
-    // to its external id, org-scoped. A PK that does not resolve in THIS org is
-    // dropped (never sealed against: that would bind a signature to another
-    // tenant's row) and the guarded fallback below runs, exactly as an
-    // unresolved external id does above.
-    if (artifactPk && !artifactExternalId) {
-      const foundByPk = await client.query(
-        `SELECT artifact_id FROM concept2cure_artifacts
-          WHERE id = $1 AND organization_id = $2
-          LIMIT 1`,
-        [artifactPk, input.organizationId],
-      );
-      if (foundByPk.rows.length > 0) {
-        artifactExternalId = foundByPk.rows[0].artifact_id as string;
-      } else {
-        artifactPk = undefined;
-      }
-    }
-
-    if (!artifactPk || !artifactExternalId) {
+    if (!selectedArtifact) {
       // TODO(build-1): When Build 1 persists the artifact, this fallback insert
       // is removed and `artifactPk`/`artifactExternalId` are required inputs.
       artifactExternalId = `artifact_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
@@ -241,27 +303,9 @@ export async function sealVerifiedVersion(
     }
 
     // ── Resolve / create the version (Build-1 integration point) ──
-    let versionId = input.existingVersionId;
-    let versionNumber = input.existingVersionNumber ?? 1;
-
-    // Build 1 (E11): the client knows the persisted version by its number, not
-    // its row PK. When we have a resolved artifact PK and a version number (but
-    // no version-row PK), bind to the EXISTING `concept2cure_artifact_versions`
-    // row so the seal points at the persisted version — not a fresh insert.
-    // Org-scoped for tenant isolation; a miss falls through to the guarded
-    // fallback insert below.
-    if (!versionId && artifactPk && input.existingVersionNumber != null) {
-      const foundVersion = await client.query(
-        `SELECT id, version FROM concept2cure_artifact_versions
-          WHERE artifact_id = $1 AND organization_id = $2 AND version = $3
-          LIMIT 1`,
-        [artifactPk, input.organizationId, input.existingVersionNumber],
-      );
-      if (foundVersion.rows.length > 0) {
-        versionId = foundVersion.rows[0].id as number;
-        versionNumber = Number(foundVersion.rows[0].version);
-      }
-    }
+    const selectedVersion = await resolveSealVersion(client, input, artifactPk!, sealedRecord.contentHash);
+    let versionId = selectedVersion?.id;
+    let versionNumber = selectedVersion?.version ?? 1;
 
     if (!versionId) {
       // TODO(build-1): When Build 1 persists the version, pass `existingVersionId`

@@ -1,0 +1,11 @@
+# Independent implementation review — W3 / D4
+
+Reviewed by the separate seal_review session against the current production patch and PGlite tests. No blocking defect found. Exact production/test bytes are recorded in source-pins.json and qualified before publication.
+
+All supplied artifact selectors are AND-bound to organization and project under FOR UPDATE. All supplied version selectors are AND-bound to the resolved artifact and organization under FOR SHARE. Stored version text must equal submitted text exactly, and its stored SHA-256 must equal the newly computed submitted-content hash. Returned version identifiers are derived from the persisted row. A subsequent review found that artifact-level source lineage would be overwritten when sealing different historical bytes. The final guard also requires submitted text to match the locked current artifact content, on both existing-version and omitted-version paths; a real source-span regression reproduced the corruption before repair and checks full state preservation afterward. Explicit missing or mismatched selectors refuse instead of creating substitutes.
+
+The HTTP handler forwards explicit malformed selector values to the central validator, which refuses before acquiring the sealing pool. A canonical project membership check precedes artifact lookup or creation on the same transaction. Invalid project ownership is not replaced with a fallback artifact.
+
+Tests cover separate/combined selectors, wrong tenant/project/document/version, conflicts between selector pairs, exact text mismatch, corrupt or missing hashes and preservation of all six governed tables on refusal. PostgreSQL integer overflow was also reproduced and bounded before pool access. Original source attribution, signer, feature, verification scope and transactional persistence gates are retained.
+
+Limits: the legacy caller-supplied verification verdict is not authenticated source qualification. The omitted-version insertion path retains existing version-1 behavior and can fail on a pre-existing version 1; it is not a new version allocation mechanism. PGlite tests do not prove concurrent PostgreSQL locking, live authentication, deployed RLS or scientific correctness. Full IND qualification remains open.

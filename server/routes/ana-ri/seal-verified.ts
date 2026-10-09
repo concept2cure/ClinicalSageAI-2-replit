@@ -49,6 +49,10 @@ function buildSealInput(
       ? {
           ok: body.verification.ok === true,
           message: typeof body.verification.message === 'string' ? body.verification.message : undefined,
+          scope: body.verification.scope,
+          artifactVerified: body.verification.artifactVerified,
+          sourceVerified: body.verification.sourceVerified,
+          sourceDiffPerformed: body.verification.sourceDiffPerformed,
         }
       : { ok: false };
   const ipAddress = clientIpOf(req) ?? undefined;
@@ -73,11 +77,12 @@ function buildSealInput(
     isSample: body.isSample === true,
     isDraft: body.isDraft === true,
     atoms: Array.isArray(body.atoms) ? body.atoms : undefined,
-    // Build-1 integration points — consumed when present.
-    artifactPk: typeof body.artifactPk === 'number' ? body.artifactPk : undefined,
-    artifactExternalId: typeof body.artifactExternalId === 'string' ? body.artifactExternalId : undefined,
-    existingVersionId: typeof body.existingVersionId === 'number' ? body.existingVersionId : undefined,
-    existingVersionNumber: typeof body.existingVersionNumber === 'number' ? body.existingVersionNumber : undefined,
+    // Keep explicit malformed selectors: the central gate must refuse them,
+    // rather than interpreting a dropped selector as a new-document request.
+    artifactPk: body.artifactPk,
+    artifactExternalId: body.artifactExternalId,
+    existingVersionId: body.existingVersionId,
+    existingVersionNumber: body.existingVersionNumber,
     ipAddress,
     signatureVerified: true,
     secondFactorVerified,
