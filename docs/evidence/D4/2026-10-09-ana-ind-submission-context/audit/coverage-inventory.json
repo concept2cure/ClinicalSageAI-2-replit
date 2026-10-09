@@ -1,0 +1,245 @@
+{
+  "audited_at_utc": "2026-10-09T04:31:30.256Z",
+  "head": "6071cce1821115faff223dd84fa7ceacf7d01656",
+  "branch": "concept2cure-v2",
+  "runtime": "v22.23.3",
+  "reproduction": "node --import tsx docs/evidence/D4/2026-10-09-ana-ind-submission-context/audit/count-ind-coverage.mjs",
+  "coverage_classes": {
+    "deep_node": "Any node in the existing IND project bootstrap tree, including containers.",
+    "terminal_node": "A code with no modeled descendants in its own catalogue; not automatically a submission document or a regulatory requirement.",
+    "counted_package_section": "The builder counts terminal nodes plus nonterminal nodes with positive estimatedHours.",
+    "detailed_guidance": "An exact CTD_AUTHORING_GUIDANCE record with authoring prose and content elements; not proof of current regulatory correctness or successful model execution.",
+    "structure_only": "A heading in ICH_M4_HEADINGS without an exact detailed guidance record.",
+    "proven_execution": "No live/model execution was performed in this inventory. Existing prompt and batch tests are separately cited in the audit conclusions."
+  },
+  "deep_ind": {
+    "nodes": 107,
+    "terminal_nodes": 87,
+    "counted_package_sections": 96,
+    "meaningful_nonterminal_nodes": 9,
+    "required_nodes": 48,
+    "required_terminal_nodes": 29,
+    "counted_required_package_sections": 37,
+    "ai_draftable_terminal_nodes": 37
+  },
+  "ctd_authoring_overlay": {
+    "entries": 115,
+    "ind_necessity_tagged": 87
+  },
+  "ich_structure_only": {
+    "entries": 120
+  },
+  "overlay_plus_ich_headings": {
+    "entries": 235,
+    "duplicate_codes": [],
+    "terminal_nodes": 193,
+    "terminal_with_exact_guidance": 93,
+    "terminal_structure_only": 100
+  },
+  "by_module": {
+    "1": {
+      "deep_nodes": 21,
+      "deep_terminal_nodes": 15,
+      "deep_ai_draftable_terminal_nodes": 5,
+      "legacy_registry_sections": 5,
+      "detailed_guidance_entries": 15,
+      "guidance_ind_necessity_tagged": 7,
+      "structure_only_entries": 0,
+      "record_terminal_nodes": 15,
+      "record_terminal_with_exact_guidance": 15,
+      "record_terminal_structure_only": 0
+    },
+    "2": {
+      "deep_nodes": 32,
+      "deep_terminal_nodes": 27,
+      "deep_ai_draftable_terminal_nodes": 18,
+      "legacy_registry_sections": 6,
+      "detailed_guidance_entries": 27,
+      "guidance_ind_necessity_tagged": 21,
+      "structure_only_entries": 75,
+      "record_terminal_nodes": 85,
+      "record_terminal_with_exact_guidance": 18,
+      "record_terminal_structure_only": 67
+    },
+    "3": {
+      "deep_nodes": 20,
+      "deep_terminal_nodes": 17,
+      "deep_ai_draftable_terminal_nodes": 10,
+      "legacy_registry_sections": 3,
+      "detailed_guidance_entries": 41,
+      "guidance_ind_necessity_tagged": 41,
+      "structure_only_entries": 6,
+      "record_terminal_nodes": 38,
+      "record_terminal_with_exact_guidance": 36,
+      "record_terminal_structure_only": 2
+    },
+    "4": {
+      "deep_nodes": 21,
+      "deep_terminal_nodes": 17,
+      "deep_ai_draftable_terminal_nodes": 0,
+      "legacy_registry_sections": 3,
+      "detailed_guidance_entries": 19,
+      "guidance_ind_necessity_tagged": 17,
+      "structure_only_entries": 22,
+      "record_terminal_nodes": 32,
+      "record_terminal_with_exact_guidance": 15,
+      "record_terminal_structure_only": 17
+    },
+    "5": {
+      "deep_nodes": 13,
+      "deep_terminal_nodes": 11,
+      "deep_ai_draftable_terminal_nodes": 4,
+      "legacy_registry_sections": 2,
+      "detailed_guidance_entries": 13,
+      "guidance_ind_necessity_tagged": 1,
+      "structure_only_entries": 17,
+      "record_terminal_nodes": 23,
+      "record_terminal_with_exact_guidance": 9,
+      "record_terminal_structure_only": 14
+    }
+  },
+  "us_ind_regional_module1": {
+    "nodes": 25,
+    "terminal_nodes": 20,
+    "exact_overlay_guidance_matches": 6,
+    "standing_without_client_facts": {
+      "required": [
+        "1.1",
+        "1.2",
+        "1.3",
+        "1.12.14",
+        "1.14",
+        "1.14.4",
+        "1.14.4.1",
+        "1.14.4.2",
+        "1.20"
+      ],
+      "undetermined": [
+        {
+          "code": "1.4.1",
+          "condition": "referenced_master_file"
+        },
+        {
+          "code": "1.9",
+          "condition": "paediatric_obligation"
+        }
+      ],
+      "notApplicable": [
+        "1.3.3",
+        "1.3.4",
+        "1.14.1",
+        "1.14.1.1",
+        "1.14.1.2",
+        "1.14.1.3",
+        "1.14.3",
+        "1.16"
+      ]
+    }
+  },
+  "therapeutic_profiles": {
+    "canonical_areas": 25,
+    "distinct_profiles": 25,
+    "accepted_slugs": 78,
+    "unresolved_canonical_areas": [],
+    "context_rule_entries": 238,
+    "guidance_reference_entries": 304,
+    "profile_ids": [
+      "allergy",
+      "cardiology",
+      "dental",
+      "dermatology",
+      "endocrinology",
+      "gastroenterology",
+      "gene-cell-therapy",
+      "other",
+      "hematology",
+      "immunology",
+      "infectious-disease",
+      "metabolic",
+      "musculoskeletal",
+      "nephrology",
+      "neurology",
+      "obstetrics-gynecology",
+      "oncology",
+      "ophthalmology",
+      "pain",
+      "psychiatry",
+      "rare-disease",
+      "respiratory",
+      "transplant",
+      "urology",
+      "vaccines"
+    ]
+  },
+  "modalities": {
+    "count": 11,
+    "values": [
+      "small_molecule",
+      "peptide",
+      "protein",
+      "mab",
+      "adc",
+      "oligonucleotide",
+      "vaccine",
+      "cell_therapy",
+      "gene_therapy",
+      "biosimilar",
+      "combination"
+    ]
+  },
+  "legacy_generate_section": {
+    "accepted_legacy_sections": 19,
+    "exact_overlay_matches": 11,
+    "exact_overlay_rejected_by_legacy_lookup": 104,
+    "limitation": "This route remains mounted, but the ind_generate_section and ind_get_status AnA tools are retired. Canonical AnA drafting uses batch_draft_sections and draft_authoring_document."
+  },
+  "limitations": [
+    "The overlay-plus-headings counts cover the FDA IND/NDA/BLA lifecycle record, not an approved IND-specific required-leaf manifest.",
+    "The regional Module 1 catalogue is separate from the ICH Modules 2–5 structural record; its rows include multi-document placement headings such as Forms.",
+    "requiredFor is a necessity flag, not conditional applicability. Optional IND content can lack an IND tag.",
+    "No disease-by-modality-by-section execution matrix, live model generation, scientific qualification, or regulator completeness assessment was run.",
+    "The M3 heading record intentionally lacks deeper CMC subdivisions, and nonclinical table numbers are not modeled."
+  ],
+  "source_pins": [
+    {
+      "path": "services/regulatory/ind-ectd-sections.ts",
+      "bytes": 77095,
+      "sha256": "0a117b2f5df77aabc624f6de52cf956377f9085a308ae2a6db3554af31f9d7ac"
+    },
+    {
+      "path": "server/services/ind/ctd/authoring-guidance.ts",
+      "bytes": 478271,
+      "sha256": "07d3a80243f7a95525270ddea3d1438c0ebcbd245960a86b559660b7afc6a643"
+    },
+    {
+      "path": "server/services/ind/ctd/ich-m4-headings.ts",
+      "bytes": 14334,
+      "sha256": "f8d233ee9f9aeacf6587990b08b815c8baa03cdec6436fb6f84a0a8d136e5c03"
+    },
+    {
+      "path": "server/services/ind/ind-section-registry.ts",
+      "bytes": 18551,
+      "sha256": "13efbb997937daf089146b300996dd257ea39fcf95106c07602e482aca848c1e"
+    },
+    {
+      "path": "shared/regulatory/regional-module1.ts",
+      "bytes": 39114,
+      "sha256": "8c2539d2f0d03ebc3462733089684e79902691a19ad331c94465e6d3ec0de613"
+    },
+    {
+      "path": "server/services/ana/therapeutic-area-profiles/index.ts",
+      "bytes": 12405,
+      "sha256": "30f4c3af6427903412032aca3769d52ab804433d5ee804199d6cb2d718ca5238"
+    },
+    {
+      "path": "shared/constants/domain/therapeutic-areas.ts",
+      "bytes": 6504,
+      "sha256": "097fa10c9576b01a4905da785ab4d49652a430b49a60e3bbb2f2e258ec83e9f5"
+    },
+    {
+      "path": "shared/regulatory/modality.ts",
+      "bytes": 14114,
+      "sha256": "bfba4e34e1e72af3a49481bb8880040ebad882069e578e23e478068c8298de46"
+    }
+  ]
+}

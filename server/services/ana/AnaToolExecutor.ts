@@ -15670,6 +15670,8 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
   }
 
   try {
+    const { applyRecordedDraftSubmissionContext } = await import('./draft-submission-context.js');
+    await applyRecordedDraftSubmissionContext(requests, submissionType, ctx);
     const { getAnaDraftingService } = await import('./AnaDocumentDraftingService.js');
     const { loadDraftProjectSources } = await import('./draft-project-sources.js');
     const sourceFailures = new Map<number, import('./batch-draft-result.js').BatchDraftFailure>();
