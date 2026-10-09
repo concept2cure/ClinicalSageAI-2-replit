@@ -1,0 +1,43 @@
+Repository: concept2cure/ClinicalSageAI-2-replit
+Commit SHA: b4badf56fbe9038490bae860dc41f812bd966c27
+Run: 37996641066
+Job: 114044298539
+Completed step API receipt observed: 2026-10-09T22:21:53.108Z
+[
+  {
+    "name": "Run TypeScript check (no regression vs baseline)",
+    "status": "completed",
+    "conclusion": "success",
+    "number": 127
+  },
+  {
+    "name": "Run beta-slice TypeScript check",
+    "status": "completed",
+    "conclusion": "success",
+    "number": 128
+  }
+]
+
+COMPLETE STOCK TYPECHECK AND BETA STEP LOG EXCERPTS
+2026-10-09T22:18:19.6976184Z ##[group]Run npm run ci:typecheck:no-regression
+2026-10-09T22:18:19.6976547Z [36;1mnpm run ci:typecheck:no-regression[0m
+2026-10-09T22:18:19.7039196Z shell: /usr/bin/bash -e {0}
+2026-10-09T22:18:19.7039465Z ##[endgroup]
+2026-10-09T22:18:19.8073390Z 
+2026-10-09T22:18:19.8074196Z > concept2cure-riai@1.0.0 ci:typecheck:no-regression
+2026-10-09T22:18:19.8074909Z > node scripts/ci/typecheck-no-regression.mjs
+2026-10-09T22:18:19.8075230Z 
+2026-10-09T22:18:19.8440358Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-09T22:21:34.7901041Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-09T22:21:34.7902350Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.
+2026-10-09T22:21:34.8033393Z ##[group]Run npm run beta:typecheck
+2026-10-09T22:21:34.8033821Z [36;1mnpm run beta:typecheck[0m
+2026-10-09T22:21:34.8147184Z shell: /usr/bin/bash -e {0}
+2026-10-09T22:21:34.8147463Z ##[endgroup]
+2026-10-09T22:21:34.9201315Z 
+2026-10-09T22:21:34.9202049Z > concept2cure-riai@1.0.0 beta:typecheck
+2026-10-09T22:21:34.9202845Z > NODE_OPTIONS="--max-old-space-size=4096" tsc --noEmit -p tsconfig.beta-slice.json
+2026-10-09T22:21:34.9203279Z 
+
+Next job boundary:
+2026-10-09T22:21:36.5595488Z Post job cleanup.

@@ -132,3 +132,14 @@ structure-only/unindexed section coverage; product/phase applicability;
 owned-program product-context projection; authoritative regulatory currency;
 and representative model/human/end-to-end IND qualification. This batch does
 not establish complete IND coverage or overall release clearance.
+
+## Published implementation and completed remote checks
+
+The pre-publication state above is retained as observed history. Implementation
+`b4badf56fbe9038490bae860dc41f812bd966c27` was subsequently pushed directly to
+`concept2cure-v2` with the exact checked tree. Its Security Scan, ordinary full
+TypeScript, named AnA readiness suite and all four Tier 5 checks completed
+success. A test-only scanner follow-up passed 314 tests and a second complete
+canonical pre-push hook. The permanent
+[POST_PUSH_VERIFICATION.md](./POST_PUSH_VERIFICATION.md) binds every result to
+the actual checked SHA and records remaining failed release gates and IND needs.

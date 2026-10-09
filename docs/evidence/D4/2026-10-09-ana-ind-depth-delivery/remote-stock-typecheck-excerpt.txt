@@ -1,0 +1,16 @@
+Excerpt from completed Audit job 114044298127, run 37996640994, implementation b4badf56fbe9038490bae860dc41f812bd966c27.
+Only the complete TypeScript step follows; subsequent non-enforcing lint is excluded.
+
+2026-10-09T22:00:07.5106346Z ##[group]Run npm run ci:typecheck:no-regression
+2026-10-09T22:00:07.5106975Z [36;1mnpm run ci:typecheck:no-regression[0m
+2026-10-09T22:00:07.5175212Z shell: /usr/bin/bash -e {0}
+2026-10-09T22:00:07.5175477Z env:
+2026-10-09T22:00:07.5175670Z   NODE_VERSION: 22
+2026-10-09T22:00:07.5175886Z ##[endgroup]
+2026-10-09T22:00:07.6234907Z 
+2026-10-09T22:00:07.6235674Z > concept2cure-riai@1.0.0 ci:typecheck:no-regression
+2026-10-09T22:00:07.6236281Z > node scripts/ci/typecheck-no-regression.mjs
+2026-10-09T22:00:07.6236553Z 
+2026-10-09T22:00:07.6582016Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-09T22:03:10.0454496Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-09T22:03:10.0455471Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.

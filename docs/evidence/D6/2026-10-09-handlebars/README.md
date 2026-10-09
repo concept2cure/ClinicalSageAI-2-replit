@@ -72,3 +72,15 @@ The live scan still reports 76 vulnerability wrappers: 2 Low, 43 Moderate,
 evidence, owners and expirations are unchanged. This repair does not claim a
 zero-vulnerability platform or clear the overall release. The old CI run
 remains failed; a fresh run must verify the pushed implementation.
+
+## Fresh post-push verification
+
+The fresh Security Scan job 114044298588 in CI run 37996641066 completed success
+against implementation `b4badf56fbe9038490bae860dc41f812bd966c27`. The actual
+dependency gate accepted only the unchanged three reviewed High occurrences;
+no Handlebars Critical/High occurrence was listed. All 36 dependency/security
+tests passed. This closes the identified dependency blocker without a waiver.
+Full logs, artifact identity and broader failed gates are recorded in
+[POST_PUSH_VERIFICATION.md](../../D4/2026-10-09-ana-ind-depth-delivery/POST_PUSH_VERIFICATION.md).
+The preceding fresh-run requirement is the retained pre-publication history;
+the overall release remains blocked by separate CI failures.

@@ -1,0 +1,38 @@
+{
+  "implementationSHA": "b4badf56fbe9038490bae860dc41f812bd966c27",
+  "recordedAtUTC": "2026-10-09T22:31:34.185260+00:00",
+  "logs": [
+    {
+      "jobId": 114044298588,
+      "runId": 37996641066,
+      "fullRetrievedLogBytes": 103388,
+      "fullRetrievedLogSHA256": "fc48565588933a94f8ac01404dd0161d73892ac391ad896250a7b5260f3b7714",
+      "committedEvidence": "remote-security-scan.txt",
+      "committedCoverage": "complete job log"
+    },
+    {
+      "jobId": 114044298127,
+      "runId": 37996640994,
+      "fullRetrievedLogBytes": 1327275,
+      "fullRetrievedLogSHA256": "20dfa6d40809d2b18a2ad4b3640e02606a7c126f38182ec5ca88660dacd9d5fc",
+      "committedEvidence": "remote-stock-typecheck-excerpt.txt",
+      "committedCoverage": "complete compiler step excerpt"
+    },
+    {
+      "jobId": 114044300653,
+      "runId": 37996641125,
+      "fullRetrievedLogBytes": 104525,
+      "fullRetrievedLogSHA256": "b891958fa047d474f259a23c37bca8b48ddbe891da03bbed5a096a84e7db7fcb",
+      "committedEvidence": "remote-semgrep.txt",
+      "committedCoverage": "complete job log"
+    },
+    {
+      "jobId": 114044298539,
+      "runId": 37996641066,
+      "fullRetrievedLogBytes": 2578433,
+      "fullRetrievedLogSHA256": "fcc0d8b6d4a10d68974c5da7ea716ec98a8f401379ab3ba5697034db2e416955",
+      "committedEvidence": "remote-main-typecheck-excerpt.txt",
+      "committedCoverage": "complete compiler step excerpt"
+    }
+  ]
+}

@@ -1,0 +1,1135 @@
+﻿2026-10-09T21:59:00.1710957Z Current runner version: '2.337.0'
+2026-10-09T21:59:00.1745131Z ##[group]Runner Image Provisioner
+2026-10-09T21:59:00.1746456Z Hosted Compute Agent
+2026-10-09T21:59:00.1747467Z Version: 20261002.596
+2026-10-09T21:59:00.1748671Z Commit: c3d12f3313a95f25162a1503be624f3b0617f8c0
+2026-10-09T21:59:00.1750219Z Build Date: 2026-10-02T22:28:27Z
+2026-10-09T21:59:00.1751351Z Worker ID: {55ce06b7-6861-48bc-9a6a-2f92b602c6c4}
+2026-10-09T21:59:00.1752627Z Region: eastus
+2026-10-09T21:59:00.1753488Z Cloud: Azure
+2026-10-09T21:59:00.1754349Z ##[endgroup]
+2026-10-09T21:59:00.1756690Z ##[group]Operating System
+2026-10-09T21:59:00.1757743Z Ubuntu
+2026-10-09T21:59:00.1758798Z 24.04.5
+2026-10-09T21:59:00.1759896Z LTS
+2026-10-09T21:59:00.1760815Z ##[endgroup]
+2026-10-09T21:59:00.1761832Z ##[group]Runner Image
+2026-10-09T21:59:00.1762805Z Image: ubuntu-24.04
+2026-10-09T21:59:00.1763798Z Version: 20261004.327.1
+2026-10-09T21:59:00.1765886Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261004.327/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-09T21:59:00.1768850Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261004.327
+2026-10-09T21:59:00.1770754Z ##[endgroup]
+2026-10-09T21:59:00.1772708Z ##[group]GITHUB_TOKEN Permissions
+2026-10-09T21:59:00.1775342Z Contents: read
+2026-10-09T21:59:00.1776385Z Metadata: read
+2026-10-09T21:59:00.1777250Z ##[endgroup]
+2026-10-09T21:59:00.1780633Z Secret source: Actions
+2026-10-09T21:59:00.1782182Z Cache mode: write
+2026-10-09T21:59:00.1783439Z Prepare workflow directory
+2026-10-09T21:59:00.2256723Z Prepare all required actions
+2026-10-09T21:59:00.2328072Z Getting action download info
+2026-10-09T21:59:00.4524038Z Download action repository 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-09T21:59:00.5514261Z Download action repository 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-09T21:59:00.6365800Z Download action repository 'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-09T21:59:00.7574016Z Download action repository 'aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25' (SHA:ed142fd0673e97e23eac54620cfb913e5ce36c25)
+2026-10-09T21:59:00.9828294Z Getting action download info
+2026-10-09T21:59:01.0697927Z Download action repository 'aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514' (SHA:3fb12ec12f41e471780db15c232d5dd185dcb514)
+2026-10-09T21:59:01.1473282Z Download action repository 'actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae' (SHA:27d5ce7f107fe9357f9df03efb73ab90386fccae)
+2026-10-09T21:59:01.3206724Z Getting action download info
+2026-10-09T21:59:01.4167400Z Download action repository 'actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb' (SHA:9255dc7a253b0ccc959486e2bca901246202afeb)
+2026-10-09T21:59:01.5746619Z Download action repository 'actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8' (SHA:8e8c483db84b4bee98b60c0593521ed34d9990e8)
+2026-10-09T21:59:01.7587948Z Getting action download info
+2026-10-09T21:59:01.8640330Z Getting action download info
+2026-10-09T21:59:02.0542461Z Complete job name: Security Scan
+2026-10-09T21:59:02.1492428Z ##[group]Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+2026-10-09T21:59:02.1494076Z with:
+2026-10-09T21:59:02.1494974Z   repository: concept2cure/ClinicalSageAI-2-replit
+2026-10-09T21:59:02.1504293Z   token: ***
+2026-10-09T21:59:02.1532583Z   ssh-strict: true
+2026-10-09T21:59:02.1533430Z   ssh-user: git
+2026-10-09T21:59:02.1534260Z   persist-credentials: true
+2026-10-09T21:59:02.1535156Z   clean: true
+2026-10-09T21:59:02.1536971Z   sparse-checkout-cone-mode: true
+2026-10-09T21:59:02.1538116Z   fetch-depth: 1
+2026-10-09T21:59:02.1539208Z   fetch-tags: false
+2026-10-09T21:59:02.1540099Z   show-progress: true
+2026-10-09T21:59:02.1541056Z   lfs: false
+2026-10-09T21:59:02.1541848Z   submodules: false
+2026-10-09T21:59:02.1542665Z   set-safe-directory: true
+2026-10-09T21:59:02.1543893Z   allow-unsafe-pr-checkout: false
+2026-10-09T21:59:02.1545292Z ##[endgroup]
+2026-10-09T21:59:02.2682806Z Syncing repository: concept2cure/ClinicalSageAI-2-replit
+2026-10-09T21:59:02.2685626Z ##[group]Getting Git version info
+2026-10-09T21:59:02.2687235Z Working directory is '/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit'
+2026-10-09T21:59:02.2689636Z [command]/usr/bin/git version
+2026-10-09T21:59:02.2760717Z git version 2.55.0
+2026-10-09T21:59:02.2781791Z ##[endgroup]
+2026-10-09T21:59:02.2795709Z Temporarily overriding HOME='/home/runner/work/_temp/7fb8761e-ac21-4f8f-b702-79a6ba17378c' before making global git config changes
+2026-10-09T21:59:02.2798498Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-09T21:59:02.2802707Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit
+2026-10-09T21:59:02.2852183Z Deleting the contents of '/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit'
+2026-10-09T21:59:02.2856083Z ##[group]Initializing the repository
+2026-10-09T21:59:02.2860614Z [command]/usr/bin/git init /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit
+2026-10-09T21:59:02.2982722Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-09T21:59:02.2987092Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-09T21:59:02.2991276Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-09T21:59:02.2994275Z hint: call:
+2026-10-09T21:59:02.2996166Z hint:
+2026-10-09T21:59:02.2998247Z hint: 	git config --global init.defaultBranch <name>
+2026-10-09T21:59:02.3001014Z hint:
+2026-10-09T21:59:02.3003070Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-09T21:59:02.3006687Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-09T21:59:02.3008120Z hint:
+2026-10-09T21:59:02.3009244Z hint: 	git branch -m <name>
+2026-10-09T21:59:02.3010416Z hint:
+2026-10-09T21:59:02.3012557Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-09T21:59:02.3015432Z Initialized empty Git repository in /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.git/
+2026-10-09T21:59:02.3019335Z [command]/usr/bin/git remote add origin https://github.com/concept2cure/ClinicalSageAI-2-replit
+2026-10-09T21:59:02.3047785Z ##[endgroup]
+2026-10-09T21:59:02.3050624Z ##[group]Disabling automatic garbage collection
+2026-10-09T21:59:02.3052364Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-09T21:59:02.3085834Z ##[endgroup]
+2026-10-09T21:59:02.3088192Z ##[group]Setting up auth
+2026-10-09T21:59:02.3093273Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-09T21:59:02.3124680Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-09T21:59:02.3500154Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-09T21:59:02.3534728Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-09T21:59:02.3758137Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-09T21:59:02.3791823Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-09T21:59:02.4018107Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-09T21:59:02.4055088Z ##[endgroup]
+2026-10-09T21:59:02.4056460Z ##[group]Fetching the repository
+2026-10-09T21:59:02.4066382Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +b4badf56fbe9038490bae860dc41f812bd966c27:refs/remotes/origin/concept2cure-v2
+2026-10-09T21:59:14.1707749Z From https://github.com/concept2cure/ClinicalSageAI-2-replit
+2026-10-09T21:59:14.1709899Z  * [new ref]           b4badf56fbe9038490bae860dc41f812bd966c27 -> origin/concept2cure-v2
+2026-10-09T21:59:14.1713662Z ##[endgroup]
+2026-10-09T21:59:14.1714659Z ##[group]Determining the checkout info
+2026-10-09T21:59:14.1715655Z ##[endgroup]
+2026-10-09T21:59:14.1721026Z [command]/usr/bin/git sparse-checkout disable
+2026-10-09T21:59:14.1770521Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-09T21:59:14.1798602Z ##[group]Checking out the ref
+2026-10-09T21:59:14.1802968Z [command]/usr/bin/git checkout --progress --force -B concept2cure-v2 refs/remotes/origin/concept2cure-v2
+2026-10-09T21:59:15.2367384Z Updating files:  43% (9939/23098)
+2026-10-09T21:59:15.2906574Z Updating files:  44% (10164/23098)
+2026-10-09T21:59:15.3336291Z Updating files:  45% (10395/23098)
+2026-10-09T21:59:15.3735758Z Updating files:  46% (10626/23098)
+2026-10-09T21:59:15.3921690Z Updating files:  47% (10857/23098)
+2026-10-09T21:59:15.4153695Z Updating files:  48% (11088/23098)
+2026-10-09T21:59:15.4402965Z Updating files:  49% (11319/23098)
+2026-10-09T21:59:15.4622401Z Updating files:  50% (11549/23098)
+2026-10-09T21:59:15.4862452Z Updating files:  51% (11780/23098)
+2026-10-09T21:59:15.5047566Z Updating files:  52% (12011/23098)
+2026-10-09T21:59:15.5254938Z Updating files:  53% (12242/23098)
+2026-10-09T21:59:15.5450150Z Updating files:  54% (12473/23098)
+2026-10-09T21:59:15.5646449Z Updating files:  55% (12704/23098)
+2026-10-09T21:59:15.5830045Z Updating files:  56% (12935/23098)
+2026-10-09T21:59:15.6069597Z Updating files:  57% (13166/23098)
+2026-10-09T21:59:15.6299548Z Updating files:  58% (13397/23098)
+2026-10-09T21:59:15.6667072Z Updating files:  59% (13628/23098)
+2026-10-09T21:59:15.6944979Z Updating files:  60% (13859/23098)
+2026-10-09T21:59:15.7144478Z Updating files:  61% (14090/23098)
+2026-10-09T21:59:15.7485174Z Updating files:  62% (14321/23098)
+2026-10-09T21:59:15.7924615Z Updating files:  63% (14552/23098)
+2026-10-09T21:59:15.8055927Z Updating files:  64% (14783/23098)
+2026-10-09T21:59:15.8328155Z Updating files:  65% (15014/23098)
+2026-10-09T21:59:15.8523507Z Updating files:  66% (15245/23098)
+2026-10-09T21:59:15.8704355Z Updating files:  67% (15476/23098)
+2026-10-09T21:59:15.8943958Z Updating files:  68% (15707/23098)
+2026-10-09T21:59:15.9115419Z Updating files:  69% (15938/23098)
+2026-10-09T21:59:15.9281237Z Updating files:  70% (16169/23098)
+2026-10-09T21:59:15.9434268Z Updating files:  71% (16400/23098)
+2026-10-09T21:59:15.9618358Z Updating files:  72% (16631/23098)
+2026-10-09T21:59:15.9849349Z Updating files:  73% (16862/23098)
+2026-10-09T21:59:16.0071993Z Updating files:  74% (17093/23098)
+2026-10-09T21:59:16.1212233Z Updating files:  75% (17324/23098)
+2026-10-09T21:59:16.1380549Z Updating files:  76% (17555/23098)
+2026-10-09T21:59:16.1583140Z Updating files:  77% (17786/23098)
+2026-10-09T21:59:16.1773217Z Updating files:  78% (18017/23098)
+2026-10-09T21:59:16.2001170Z Updating files:  79% (18248/23098)
+2026-10-09T21:59:16.2046035Z Updating files:  80% (18479/23098)
+2026-10-09T21:59:16.2230935Z Updating files:  80% (18524/23098)
+2026-10-09T21:59:16.2436853Z Updating files:  81% (18710/23098)
+2026-10-09T21:59:16.2675815Z Updating files:  82% (18941/23098)
+2026-10-09T21:59:16.2863301Z Updating files:  83% (19172/23098)
+2026-10-09T21:59:16.3041437Z Updating files:  84% (19403/23098)
+2026-10-09T21:59:16.3265201Z Updating files:  85% (19634/23098)
+2026-10-09T21:59:16.3481953Z Updating files:  86% (19865/23098)
+2026-10-09T21:59:16.3690043Z Updating files:  87% (20096/23098)
+2026-10-09T21:59:16.3908279Z Updating files:  88% (20327/23098)
+2026-10-09T21:59:16.4097512Z Updating files:  89% (20558/23098)
+2026-10-09T21:59:16.4293797Z Updating files:  90% (20789/23098)
+2026-10-09T21:59:16.4519520Z Updating files:  91% (21020/23098)
+2026-10-09T21:59:16.4722304Z Updating files:  92% (21251/23098)
+2026-10-09T21:59:16.4886593Z Updating files:  93% (21482/23098)
+2026-10-09T21:59:16.5081675Z Updating files:  94% (21713/23098)
+2026-10-09T21:59:16.5499766Z Updating files:  95% (21944/23098)
+2026-10-09T21:59:16.5705798Z Updating files:  96% (22175/23098)
+2026-10-09T21:59:16.5871185Z Updating files:  97% (22406/23098)
+2026-10-09T21:59:16.6044562Z Updating files:  98% (22637/23098)
+2026-10-09T21:59:16.6230526Z Updating files:  99% (22868/23098)
+2026-10-09T21:59:16.6231130Z Updating files: 100% (23098/23098)
+2026-10-09T21:59:16.6231518Z Updating files: 100% (23098/23098), done.
+2026-10-09T21:59:16.6479846Z Switched to a new branch 'concept2cure-v2'
+2026-10-09T21:59:16.6484513Z branch 'concept2cure-v2' set up to track 'origin/concept2cure-v2'.
+2026-10-09T21:59:16.6565431Z ##[endgroup]
+2026-10-09T21:59:16.6606319Z [command]/usr/bin/git log -1 --format=%H
+2026-10-09T21:59:16.6630413Z b4badf56fbe9038490bae860dc41f812bd966c27
+2026-10-09T21:59:16.6906564Z ##[group]Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+2026-10-09T21:59:16.6906994Z with:
+2026-10-09T21:59:16.6907194Z   node-version: 22
+2026-10-09T21:59:16.6907406Z   always-auth: false
+2026-10-09T21:59:16.6907615Z   check-latest: false
+2026-10-09T21:59:16.6910369Z   token: ***
+2026-10-09T21:59:16.6910584Z ##[endgroup]
+2026-10-09T21:59:16.8325513Z Found in cache @ /opt/hostedtoolcache/node/22.23.3/x64
+2026-10-09T21:59:16.8330985Z (node:2342) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-09T21:59:16.8332258Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-09T21:59:16.8334538Z ##[group]Environment details
+2026-10-09T21:59:17.2485538Z node: v22.23.3
+2026-10-09T21:59:17.2485838Z npm: 10.9.9
+2026-10-09T21:59:17.2486058Z yarn: 1.22.22
+2026-10-09T21:59:17.2487482Z ##[endgroup]
+2026-10-09T21:59:17.2620579Z ##[group]Run for attempt in 1 2 3; do
+2026-10-09T21:59:17.2620968Z [36;1mfor attempt in 1 2 3; do[0m
+2026-10-09T21:59:17.2621242Z [36;1m  npm ci && exit 0[0m
+2026-10-09T21:59:17.2621669Z [36;1m  echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"[0m
+2026-10-09T21:59:17.2622101Z [36;1m  sleep $((attempt * 15))[0m
+2026-10-09T21:59:17.2622350Z [36;1mdone[0m
+2026-10-09T21:59:17.2622619Z [36;1mecho "::error::npm ci failed after 3 attempts"; exit 1[0m
+2026-10-09T21:59:17.2914074Z shell: /usr/bin/bash -e {0}
+2026-10-09T21:59:17.2914413Z ##[endgroup]
+2026-10-09T21:59:21.8419186Z npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+2026-10-09T21:59:22.6826330Z npm warn deprecated rimraf@2.7.1: Rimraf versions prior to v4 are no longer supported
+2026-10-09T21:59:23.9466085Z npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+2026-10-09T21:59:24.6134824Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-10-09T21:59:26.3462859Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+2026-10-09T21:59:26.3522884Z npm warn deprecated fstream@1.0.12: This package is no longer supported.
+2026-10-09T21:59:29.9156408Z npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+2026-10-09T21:59:29.9163223Z npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+2026-10-09T21:59:29.9925386Z npm warn deprecated deep-diff@1.0.2: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+2026-10-09T21:59:30.9527880Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-09T21:59:31.0767059Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-09T21:59:31.6363209Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-09T21:59:32.2127051Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-09T21:59:32.6816000Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-09T21:59:33.8868824Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-09T21:59:35.6968403Z npm warn deprecated glob@11.1.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-09T21:59:37.0528765Z npm warn deprecated uuid@8.3.2: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+2026-10-09T21:59:37.1028562Z npm warn deprecated popper.js@1.16.1: You can find the new Popper v2 at @popperjs/core, this package is dedicated to the legacy v1
+2026-10-09T21:59:37.4843469Z npm warn deprecated uuid@8.3.2: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+2026-10-09T21:59:37.5784998Z npm warn deprecated uuid@8.3.2: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+2026-10-09T21:59:38.3292952Z npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-09T21:59:38.4312645Z npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-09T21:59:45.0952398Z npm warn deprecated recharts@2.15.4: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
+2026-10-09T22:00:06.1481375Z 
+2026-10-09T22:00:06.1482012Z > concept2cure-riai@1.0.0 prepare
+2026-10-09T22:00:06.1482486Z > [ -n "$CI" ] || husky || true
+2026-10-09T22:00:06.1482695Z 
+2026-10-09T22:00:06.1842393Z 
+2026-10-09T22:00:06.1843107Z added 2421 packages, and audited 2422 packages in 49s
+2026-10-09T22:00:06.1845800Z 
+2026-10-09T22:00:06.1846194Z 361 packages are looking for funding
+2026-10-09T22:00:06.1846605Z   run `npm fund` for details
+2026-10-09T22:00:06.3397275Z 
+2026-10-09T22:00:06.3398764Z 76 vulnerabilities (2 low, 43 moderate, 31 high)
+2026-10-09T22:00:06.3399890Z 
+2026-10-09T22:00:06.3400202Z To address issues that do not require attention, run:
+2026-10-09T22:00:06.3400730Z   npm audit fix
+2026-10-09T22:00:06.3400902Z 
+2026-10-09T22:00:06.3401198Z To address all issues (including breaking changes), run:
+2026-10-09T22:00:06.3401650Z   npm audit fix --force
+2026-10-09T22:00:06.3401838Z 
+2026-10-09T22:00:06.3402000Z Run `npm audit` for details.
+2026-10-09T22:00:06.4473221Z ##[group]Run npm run sbom > sbom.cyclonedx.json
+2026-10-09T22:00:06.4473623Z [36;1mnpm run sbom > sbom.cyclonedx.json[0m
+2026-10-09T22:00:06.4535453Z shell: /usr/bin/bash -e {0}
+2026-10-09T22:00:06.4535716Z ##[endgroup]
+2026-10-09T22:00:09.0504287Z ##[group]Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+2026-10-09T22:00:09.0504977Z with:
+2026-10-09T22:00:09.0505301Z   name: sbom-cyclonedx
+2026-10-09T22:00:09.0505686Z   path: sbom.cyclonedx.json
+2026-10-09T22:00:09.0506085Z   retention-days: 90
+2026-10-09T22:00:09.0506470Z   if-no-files-found: ignore
+2026-10-09T22:00:09.0506859Z   compression-level: 6
+2026-10-09T22:00:09.0507198Z   overwrite: false
+2026-10-09T22:00:09.0507422Z   include-hidden-files: false
+2026-10-09T22:00:09.0507658Z ##[endgroup]
+2026-10-09T22:00:09.2302570Z (node:2589) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-09T22:00:09.2303463Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-09T22:00:09.2347849Z With the provided path, there will be 1 file uploaded
+2026-10-09T22:00:09.2353409Z Artifact name is valid!
+2026-10-09T22:00:09.2353966Z Root directory input is valid!
+2026-10-09T22:00:09.4484440Z Beginning upload of artifact content to blob storage
+2026-10-09T22:00:09.5007195Z (node:2589) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-09T22:00:09.5325838Z Uploaded bytes 207542
+2026-10-09T22:00:09.5464557Z Finished uploading artifact content to blob storage!
+2026-10-09T22:00:09.5466040Z SHA256 digest of uploaded artifact zip is 61f34f079a8ccd45cfc990bb50470e23180d17c6c299b30e2438799bffd09f27
+2026-10-09T22:00:09.5467393Z Finalizing artifact upload
+2026-10-09T22:00:09.7374126Z Artifact sbom-cyclonedx.zip successfully finalized. Artifact ID 11647197931
+2026-10-09T22:00:09.7375612Z Artifact sbom-cyclonedx has been successfully uploaded! Final size is 207542 bytes. Artifact ID is 11647197931
+2026-10-09T22:00:09.7377325Z Artifact download URL: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37996641066/artifacts/11647197931
+2026-10-09T22:00:09.7537975Z ##[group]Run npm run ci:dependency-risk
+2026-10-09T22:00:09.7538551Z [36;1mnpm run ci:dependency-risk[0m
+2026-10-09T22:00:09.7622753Z shell: /usr/bin/bash -e {0}
+2026-10-09T22:00:09.7623179Z env:
+2026-10-09T22:00:09.7623590Z   NPM_AUDIT_OUTPUT: dependency-audit-results.json
+2026-10-09T22:00:09.7624147Z ##[endgroup]
+2026-10-09T22:00:09.8744435Z 
+2026-10-09T22:00:09.8745385Z > concept2cure-riai@1.0.0 ci:dependency-risk
+2026-10-09T22:00:09.8745886Z > node scripts/ci/check-dependency-risk.mjs
+2026-10-09T22:00:09.8746128Z 
+2026-10-09T22:00:12.3910562Z Dependency risk gate: PASS; 3 Critical/High advisory occurrence(s), all reviewed.
+2026-10-09T22:00:12.3912639Z Scanner: npm audit 10.9.9; Node v22.23.3; lockfile 529a8e5889cf500959484df70c561d27746437aa3a4c7d043cd70a5c551e3961
+2026-10-09T22:00:12.3913909Z   GHSA-VFJ7-8CJW-P6XM braces high: unreachable
+2026-10-09T22:00:12.3914880Z   GHSA-5P2G-FCMC-QVQQ image-size high: unreachable
+2026-10-09T22:00:12.3915922Z   GHSA-W3RX-R6R6-PGPR image-size high: unreachable
+2026-10-09T22:00:12.4074761Z ##[group]Run npm run test:dependency-risk
+2026-10-09T22:00:12.4075129Z [36;1mnpm run test:dependency-risk[0m
+2026-10-09T22:00:12.4136527Z shell: /usr/bin/bash -e {0}
+2026-10-09T22:00:12.4136788Z ##[endgroup]
+2026-10-09T22:00:12.5165625Z 
+2026-10-09T22:00:12.5166593Z > concept2cure-riai@1.0.0 test:dependency-risk
+2026-10-09T22:00:12.5167819Z > node --test scripts/ci/__tests__/dependency-risk-gate.test.mjs tests/security/handlebars-upgrade.test.mjs
+2026-10-09T22:00:12.5168545Z 
+2026-10-09T22:00:12.5660131Z TAP version 13
+2026-10-09T22:00:14.1970137Z # Subtest: passes a reviewed unreachable advisory
+2026-10-09T22:00:14.1981991Z ok 1 - passes a reviewed unreachable advisory
+2026-10-09T22:00:14.1983569Z   ---
+2026-10-09T22:00:14.1983995Z   duration_ms: 40.083533
+2026-10-09T22:00:14.1984435Z   type: 'test'
+2026-10-09T22:00:14.1984911Z   ...
+2026-10-09T22:00:14.1988718Z # Subtest: passes the npm transitive wrapper for a reviewed advisory
+2026-10-09T22:00:14.1991548Z ok 2 - passes the npm transitive wrapper for a reviewed advisory
+2026-10-09T22:00:14.1992208Z   ---
+2026-10-09T22:00:14.1992569Z   duration_ms: 38.474653
+2026-10-09T22:00:14.1993004Z   type: 'test'
+2026-10-09T22:00:14.1993257Z   ...
+2026-10-09T22:00:14.1994791Z # Subtest: passes a diamond: two wrappers sharing one reviewed transitive
+2026-10-09T22:00:14.1997153Z ok 3 - passes a diamond: two wrappers sharing one reviewed transitive
+2026-10-09T22:00:14.1998722Z   ---
+2026-10-09T22:00:14.1999269Z   duration_ms: 35.390736
+2026-10-09T22:00:14.1999685Z   type: 'test'
+2026-10-09T22:00:14.2000018Z   ...
+2026-10-09T22:00:14.2001431Z # Subtest: passes a reviewed high cause alongside a separately reported moderate-only branch
+2026-10-09T22:00:14.2003133Z ok 4 - passes a reviewed high cause alongside a separately reported moderate-only branch
+2026-10-09T22:00:14.2003867Z   ---
+2026-10-09T22:00:14.2004210Z   duration_ms: 35.571183
+2026-10-09T22:00:14.2004605Z   type: 'test'
+2026-10-09T22:00:14.2004945Z   ...
+2026-10-09T22:00:14.2010302Z # Subtest: blocks an uncovered high cause even when its wrapper claims moderate severity
+2026-10-09T22:00:14.2011657Z ok 5 - blocks an uncovered high cause even when its wrapper claims moderate severity
+2026-10-09T22:00:14.2012251Z   ---
+2026-10-09T22:00:14.2012570Z   duration_ms: 36.794734
+2026-10-09T22:00:14.2013051Z   type: 'test'
+2026-10-09T22:00:14.2013419Z   ...
+2026-10-09T22:00:14.2017828Z # Subtest: blocks an uncovered critical advisory even when every wrapper claims moderate severity
+2026-10-09T22:00:14.2019400Z ok 6 - blocks an uncovered critical advisory even when every wrapper claims moderate severity
+2026-10-09T22:00:14.2020195Z   ---
+2026-10-09T22:00:14.2020550Z   duration_ms: 37.660525
+2026-10-09T22:00:14.2020956Z   type: 'test'
+2026-10-09T22:00:14.2021294Z   ...
+2026-10-09T22:00:14.2022071Z # Subtest: passes a well-formed moderate-only scanner graph without a high decision
+2026-10-09T22:00:14.2023248Z ok 7 - passes a well-formed moderate-only scanner graph without a high decision
+2026-10-09T22:00:14.2023939Z   ---
+2026-10-09T22:00:14.2024278Z   duration_ms: 36.712705
+2026-10-09T22:00:14.2024668Z   type: 'test'
+2026-10-09T22:00:14.2024996Z   ...
+2026-10-09T22:00:14.2026305Z # Subtest: blocks a truncated moderate branch beside a reviewed high cause
+2026-10-09T22:00:14.2027813Z ok 8 - blocks a truncated moderate branch beside a reviewed high cause
+2026-10-09T22:00:14.2028454Z   ---
+2026-10-09T22:00:14.2028786Z   duration_ms: 36.018993
+2026-10-09T22:00:14.2029376Z   type: 'test'
+2026-10-09T22:00:14.2029704Z   ...
+2026-10-09T22:00:14.2035496Z # Subtest: blocks a cycle in a moderate branch beside a reviewed high cause
+2026-10-09T22:00:14.2036549Z ok 9 - blocks a cycle in a moderate branch beside a reviewed high cause
+2026-10-09T22:00:14.2037199Z   ---
+2026-10-09T22:00:14.2037426Z   duration_ms: 36.901841
+2026-10-09T22:00:14.2037661Z   type: 'test'
+2026-10-09T22:00:14.2037855Z   ...
+2026-10-09T22:00:14.2039361Z # Subtest: blocks malformed advisory metadata in a moderate branch
+2026-10-09T22:00:14.2041239Z ok 10 - blocks malformed advisory metadata in a moderate branch
+2026-10-09T22:00:14.2042003Z   ---
+2026-10-09T22:00:14.2042477Z   duration_ms: 34.795537
+2026-10-09T22:00:14.2042976Z   type: 'test'
+2026-10-09T22:00:14.2043419Z   ...
+2026-10-09T22:00:14.2044108Z # Subtest: blocks a high wrapper with no reported high or critical cause
+2026-10-09T22:00:14.2045419Z ok 11 - blocks a high wrapper with no reported high or critical cause
+2026-10-09T22:00:14.2045957Z   ---
+2026-10-09T22:00:14.2046410Z   duration_ms: 35.580751
+2026-10-09T22:00:14.2046907Z   type: 'test'
+2026-10-09T22:00:14.2047484Z   ...
+2026-10-09T22:00:14.2050335Z # Subtest: fails closed on a true via cycle
+2026-10-09T22:00:14.2051625Z ok 12 - fails closed on a true via cycle
+2026-10-09T22:00:14.2052342Z   ---
+2026-10-09T22:00:14.2052563Z   duration_ms: 35.617394
+2026-10-09T22:00:14.2052797Z   type: 'test'
+2026-10-09T22:00:14.2052996Z   ...
+2026-10-09T22:00:14.2054367Z # Subtest: fails closed on a via-string naming a package absent from the report
+2026-10-09T22:00:14.2057815Z ok 13 - fails closed on a via-string naming a package absent from the report
+2026-10-09T22:00:14.2058245Z   ---
+2026-10-09T22:00:14.2058544Z   duration_ms: 33.174436
+2026-10-09T22:00:14.2059251Z   type: 'test'
+2026-10-09T22:00:14.2059612Z   ...
+2026-10-09T22:00:14.2066050Z # Subtest: fails closed on a new high advisory
+2026-10-09T22:00:14.2066652Z ok 14 - fails closed on a new high advisory
+2026-10-09T22:00:14.2067307Z   ---
+2026-10-09T22:00:14.2067526Z   duration_ms: 35.738702
+2026-10-09T22:00:14.2067767Z   type: 'test'
+2026-10-09T22:00:14.2067965Z   ...
+2026-10-09T22:00:14.2069410Z # Subtest: fails closed when the scanner is unavailable
+2026-10-09T22:00:14.2076092Z ok 15 - fails closed when the scanner is unavailable
+2026-10-09T22:00:14.2076701Z   ---
+2026-10-09T22:00:14.2077161Z   duration_ms: 32.826379
+2026-10-09T22:00:14.2077658Z   type: 'test'
+2026-10-09T22:00:14.2078118Z   ...
+2026-10-09T22:00:14.2080514Z # Subtest: fails closed on an expired exception
+2026-10-09T22:00:14.2082517Z ok 16 - fails closed on an expired exception
+2026-10-09T22:00:14.2083234Z   ---
+2026-10-09T22:00:14.2083515Z   duration_ms: 35.074556
+2026-10-09T22:00:14.2083754Z   type: 'test'
+2026-10-09T22:00:14.2084146Z   ...
+2026-10-09T22:00:14.2086518Z # Subtest: fails closed on a malformed validation clock instead of bypassing expiration
+2026-10-09T22:00:14.2089216Z ok 17 - fails closed on a malformed validation clock instead of bypassing expiration
+2026-10-09T22:00:14.2089968Z   ---
+2026-10-09T22:00:14.2090181Z   duration_ms: 34.831383
+2026-10-09T22:00:14.2090417Z   type: 'test'
+2026-10-09T22:00:14.2090618Z   ...
+2026-10-09T22:00:14.2093341Z # Subtest: fails closed on an invalid decision expiry instead of accepting NaN
+2026-10-09T22:00:14.2094650Z ok 18 - fails closed on an invalid decision expiry instead of accepting NaN
+2026-10-09T22:00:14.2095283Z   ---
+2026-10-09T22:00:14.2095568Z   duration_ms: 35.143956
+2026-10-09T22:00:14.2095804Z   type: 'test'
+2026-10-09T22:00:14.2096194Z   ...
+2026-10-09T22:00:14.2099313Z # Subtest: fails closed on an impossible calendar date in a decision expiry
+2026-10-09T22:00:14.2100798Z ok 19 - fails closed on an impossible calendar date in a decision expiry
+2026-10-09T22:00:14.2101452Z   ---
+2026-10-09T22:00:14.2101898Z   duration_ms: 34.806497
+2026-10-09T22:00:14.2102311Z   type: 'test'
+2026-10-09T22:00:14.2102645Z   ...
+2026-10-09T22:00:14.2104112Z # Subtest: fails closed on a malformed decision review date
+2026-10-09T22:00:14.2109316Z ok 20 - fails closed on a malformed decision review date
+2026-10-09T22:00:14.2110201Z   ---
+2026-10-09T22:00:14.2110571Z   duration_ms: 34.17541
+2026-10-09T22:00:14.2110954Z   type: 'test'
+2026-10-09T22:00:14.2111281Z   ...
+2026-10-09T22:00:14.2114112Z # Subtest: fails closed on a malformed exception approval timestamp
+2026-10-09T22:00:14.2115449Z ok 21 - fails closed on a malformed exception approval timestamp
+2026-10-09T22:00:14.2115979Z   ---
+2026-10-09T22:00:14.2116191Z   duration_ms: 32.498628
+2026-10-09T22:00:14.2116426Z   type: 'test'
+2026-10-09T22:00:14.2116901Z   ...
+2026-10-09T22:00:14.2119703Z # Subtest: fails closed when the ledger seal does not match the lockfile
+2026-10-09T22:00:14.2126543Z ok 22 - fails closed when the ledger seal does not match the lockfile
+2026-10-09T22:00:14.2127201Z   ---
+2026-10-09T22:00:14.2127789Z   duration_ms: 32.748862
+2026-10-09T22:00:14.2128184Z   type: 'test'
+2026-10-09T22:00:14.2128453Z   ...
+2026-10-09T22:00:14.2131141Z # Subtest: reseal refuses a new advisory and writes nothing
+2026-10-09T22:00:14.2133241Z ok 23 - reseal refuses a new advisory and writes nothing
+2026-10-09T22:00:14.2133832Z   ---
+2026-10-09T22:00:14.2134187Z   duration_ms: 116.439197
+2026-10-09T22:00:14.2134601Z   type: 'test'
+2026-10-09T22:00:14.2134934Z   ...
+2026-10-09T22:00:14.2137098Z # Subtest: reseal refuses when a covered finding vanishes from the audit
+2026-10-09T22:00:14.2142511Z ok 24 - reseal refuses when a covered finding vanishes from the audit
+2026-10-09T22:00:14.2143460Z   ---
+2026-10-09T22:00:14.2144005Z   duration_ms: 114.786867
+2026-10-09T22:00:14.2144620Z   type: 'test'
+2026-10-09T22:00:14.2145178Z   ...
+2026-10-09T22:00:14.2162328Z # Subtest: reseal refuses when a covered finding's installed version changed
+2026-10-09T22:00:14.2189996Z ok 25 - reseal refuses when a covered finding's installed version changed
+2026-10-09T22:00:14.2195911Z   ---
+2026-10-09T22:00:14.2196495Z   duration_ms: 114.374954
+2026-10-09T22:00:14.2197071Z   type: 'test'
+2026-10-09T22:00:14.2197541Z   ...
+2026-10-09T22:00:14.2198266Z # Subtest: reseal refuses when the scanner is unavailable
+2026-10-09T22:00:14.2199509Z ok 26 - reseal refuses when the scanner is unavailable
+2026-10-09T22:00:14.2200236Z   ---
+2026-10-09T22:00:14.2200732Z   duration_ms: 112.276633
+2026-10-09T22:00:14.2201281Z   type: 'test'
+2026-10-09T22:00:14.2201766Z   ...
+2026-10-09T22:00:14.2202637Z # Subtest: reseal rebinds an unchanged finding set and the gate passes again
+2026-10-09T22:00:14.2203854Z ok 27 - reseal rebinds an unchanged finding set and the gate passes again
+2026-10-09T22:00:14.2204707Z   ---
+2026-10-09T22:00:14.2205067Z   duration_ms: 191.807228
+2026-10-09T22:00:14.2205466Z   type: 'test'
+2026-10-09T22:00:14.2205763Z   ...
+2026-10-09T22:00:14.2206214Z # Subtest: security patch: a mapped IPv6 subnet cannot trust every IPv4 client
+2026-10-09T22:00:14.2206840Z ok 28 - security patch: a mapped IPv6 subnet cannot trust every IPv4 client
+2026-10-09T22:00:14.2207222Z   ---
+2026-10-09T22:00:14.2207426Z   duration_ms: 4.821823
+2026-10-09T22:00:14.2207661Z   type: 'test'
+2026-10-09T22:00:14.2207857Z   ...
+2026-10-09T22:00:14.2208271Z # Subtest: security patch: shell quoting rejects line terminators after a comment
+2026-10-09T22:00:14.2209246Z ok 29 - security patch: shell quoting rejects line terminators after a comment
+2026-10-09T22:00:14.2210022Z   ---
+2026-10-09T22:00:14.2210416Z   duration_ms: 2.597183
+2026-10-09T22:00:14.2210864Z   type: 'test'
+2026-10-09T22:00:14.2211248Z   ...
+2026-10-09T22:00:14.2212192Z # Subtest: security patch: an extreme indexed source-map offset is rejected in a bounded child
+2026-10-09T22:00:14.2213658Z ok 30 - security patch: an extreme indexed source-map offset is rejected in a bounded child
+2026-10-09T22:00:14.2214541Z   ---
+2026-10-09T22:00:14.2214983Z   duration_ms: 33.872035
+2026-10-09T22:00:14.2215401Z   type: 'test'
+2026-10-09T22:00:14.2215633Z   ...
+2026-10-09T22:00:14.2216462Z # Subtest: security patch: an aborted compressed response destroys its zlib stream
+2026-10-09T22:00:14.2217123Z ok 31 - security patch: an aborted compressed response destroys its zlib stream
+2026-10-09T22:00:14.2217515Z   ---
+2026-10-09T22:00:14.2217732Z   duration_ms: 61.095797
+2026-10-09T22:00:14.2217968Z   type: 'test'
+2026-10-09T22:00:14.2218165Z   ...
+2026-10-09T22:00:14.2218600Z # Subtest: integration: committed ledger seals the committed package-lock.json
+2026-10-09T22:00:14.2219611Z ok 32 - integration: committed ledger seals the committed package-lock.json
+2026-10-09T22:00:14.2220015Z   ---
+2026-10-09T22:00:14.2220224Z   duration_ms: 53.93222
+2026-10-09T22:00:14.2220676Z   type: 'test'
+2026-10-09T22:00:14.2220889Z   ...
+2026-10-09T22:00:14.2292554Z # Subtest: Handlebars rejects the blockParams AST injection bypass (GHSA-8r5x-fm3f-whwj)
+2026-10-09T22:00:14.2293916Z ok 33 - Handlebars rejects the blockParams AST injection bypass (GHSA-8r5x-fm3f-whwj)
+2026-10-09T22:00:14.2294988Z   ---
+2026-10-09T22:00:14.2295330Z   duration_ms: 4.497618
+2026-10-09T22:00:14.2295705Z   type: 'test'
+2026-10-09T22:00:14.2296037Z   ...
+2026-10-09T22:00:14.2296950Z # Subtest: Handlebars blocks Function constructor lookup through own properties (GHSA-p8wg-vrv2-v86f)
+2026-10-09T22:00:14.2298364Z ok 34 - Handlebars blocks Function constructor lookup through own properties (GHSA-p8wg-vrv2-v86f)
+2026-10-09T22:00:14.2300303Z   ---
+2026-10-09T22:00:14.2300637Z   duration_ms: 3.616505
+2026-10-09T22:00:14.2301012Z   type: 'test'
+2026-10-09T22:00:14.2301341Z   ...
+2026-10-09T22:00:14.2302222Z # Subtest: Handlebars precompiled templates cannot terminate an inline script (GHSA-xw65-4hp5-5hc7)
+2026-10-09T22:00:14.2303571Z ok 35 - Handlebars precompiled templates cannot terminate an inline script (GHSA-xw65-4hp5-5hc7)
+2026-10-09T22:00:14.2304346Z   ---
+2026-10-09T22:00:14.2304665Z   duration_ms: 0.374358
+2026-10-09T22:00:14.2305033Z   type: 'test'
+2026-10-09T22:00:14.2305353Z   ...
+2026-10-09T22:00:14.2305763Z # Subtest: Handlebars retains ordinary string rendering and HTML escaping
+2026-10-09T22:00:14.2306320Z ok 36 - Handlebars retains ordinary string rendering and HTML escaping
+2026-10-09T22:00:14.2306674Z   ---
+2026-10-09T22:00:14.2306874Z   duration_ms: 2.145061
+2026-10-09T22:00:14.2307093Z   type: 'test'
+2026-10-09T22:00:14.2307283Z   ...
+2026-10-09T22:00:14.2307466Z 1..36
+2026-10-09T22:00:14.2307651Z # tests 36
+2026-10-09T22:00:14.2307837Z # suites 0
+2026-10-09T22:00:14.2308021Z # pass 36
+2026-10-09T22:00:14.2308210Z # fail 0
+2026-10-09T22:00:14.2308393Z # cancelled 0
+2026-10-09T22:00:14.2308586Z # skipped 0
+2026-10-09T22:00:14.2308773Z # todo 0
+2026-10-09T22:00:14.2309262Z # duration_ms 1680.007047
+2026-10-09T22:00:14.2440983Z ##[group]Run npm run ci:pptx-image-reachability
+2026-10-09T22:00:14.2441427Z [36;1mnpm run ci:pptx-image-reachability[0m
+2026-10-09T22:00:14.2503981Z shell: /usr/bin/bash -e {0}
+2026-10-09T22:00:14.2504260Z ##[endgroup]
+2026-10-09T22:00:14.3546992Z 
+2026-10-09T22:00:14.3547897Z > concept2cure-riai@1.0.0 ci:pptx-image-reachability
+2026-10-09T22:00:14.3548567Z > node scripts/ci/check-pptx-image-reachability.mjs
+2026-10-09T22:00:14.3549072Z 
+2026-10-09T22:00:14.4019714Z PPTX image reachability: PASS
+2026-10-09T22:00:14.4022267Z   resolved entry: /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/pptxgenjs/dist/pptxgen.cjs.js
+2026-10-09T22:00:14.4023721Z   shipped pptxgenjs Node bundle does not import image-size
+2026-10-09T22:00:14.4024515Z   production generator uses no pptxgenjs image-capable API
+2026-10-09T22:00:14.4213495Z ##[group]Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+2026-10-09T22:00:14.4213923Z with:
+2026-10-09T22:00:14.4214142Z   name: npm-audit-lockfile-evidence
+2026-10-09T22:00:14.4214437Z   path: dependency-audit-results.json
+2026-10-09T22:00:14.4214716Z   if-no-files-found: warn
+2026-10-09T22:00:14.4214952Z   compression-level: 6
+2026-10-09T22:00:14.4215174Z   overwrite: false
+2026-10-09T22:00:14.4215423Z   include-hidden-files: false
+2026-10-09T22:00:14.4215665Z ##[endgroup]
+2026-10-09T22:00:14.5843070Z (node:2985) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-09T22:00:14.5844619Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-09T22:00:14.5890985Z With the provided path, there will be 1 file uploaded
+2026-10-09T22:00:14.5895837Z Artifact name is valid!
+2026-10-09T22:00:14.5896904Z Root directory input is valid!
+2026-10-09T22:00:14.7888104Z Beginning upload of artifact content to blob storage
+2026-10-09T22:00:14.8088803Z (node:2985) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-09T22:00:14.8337127Z Uploaded bytes 6448
+2026-10-09T22:00:14.8517620Z Finished uploading artifact content to blob storage!
+2026-10-09T22:00:14.8520436Z SHA256 digest of uploaded artifact zip is 16ceede57cd3209b59c8140caa343659146b9a04109fafd88ba330880a06b584
+2026-10-09T22:00:14.8521499Z Finalizing artifact upload
+2026-10-09T22:00:15.0406514Z Artifact npm-audit-lockfile-evidence.zip successfully finalized. Artifact ID 11647187813
+2026-10-09T22:00:15.0407658Z Artifact npm-audit-lockfile-evidence has been successfully uploaded! Final size is 6448 bytes. Artifact ID is 11647187813
+2026-10-09T22:00:15.0414113Z Artifact download URL: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37996641066/artifacts/11647187813
+2026-10-09T22:00:15.0538175Z ##[group]Run node scripts/ci/check-trivy-inline-ignores.mjs --selftest
+2026-10-09T22:00:15.0538745Z [36;1mnode scripts/ci/check-trivy-inline-ignores.mjs --selftest[0m
+2026-10-09T22:00:15.0539513Z [36;1mnode scripts/ci/check-trivy-inline-ignores.mjs[0m
+2026-10-09T22:00:15.0539949Z [36;1mnode scripts/ci/check-trivyignore-hygiene.mjs --selftest[0m
+2026-10-09T22:00:15.0540369Z [36;1mnode scripts/ci/check-trivyignore-hygiene.mjs[0m
+2026-10-09T22:00:15.0601407Z shell: /usr/bin/bash -e {0}
+2026-10-09T22:00:15.0601674Z ##[endgroup]
+2026-10-09T22:00:15.0968623Z   ✓ directly above the resource: attached
+2026-10-09T22:00:15.0973176Z   ✓ the abc1c99a5 shape: another resource and its comments put between the ignore and its block
+2026-10-09T22:00:15.0974282Z   ✓ a blank line between the ignore and its block
+2026-10-09T22:00:15.0975029Z   ✓ chained ignores reach the first code line
+2026-10-09T22:00:15.0975791Z   ✓ an indented nested block (the ECS egress rule)
+2026-10-09T22:00:15.0976631Z   ✓ a trailing ignore on a code line is always attached
+2026-10-09T22:00:15.0977375Z   ✓ an ignore at the end of the file
+2026-10-09T22:00:15.0978029Z   ✓ the // comment form and tfsec prefix are read the same way
+2026-10-09T22:00:15.0986743Z [ci:trivy-inline-ignores] FAIL — 1 inline Trivy exception(s) attached to nothing:
+2026-10-09T22:00:15.0989345Z   - modules/main.tf:2 #trivy:ignore:AWS-0011 — line 3 below it is a comment ("# Security headers for the SPA (P0-15).")
+2026-10-09T22:00:15.0990227Z 
+2026-10-09T22:00:15.0990679Z   Trivy applies an ignore comment to the line directly below it (or, chained, to the first
+2026-10-09T22:00:15.0991826Z   code line after a run of ignore lines). Move it so it sits on the resource or attribute it
+2026-10-09T22:00:15.0993066Z   excepts, with any explanation ABOVE it, not between it and the block.
+2026-10-09T22:00:15.0994052Z   ✓ the tree check exits 1 on a detached ignore
+2026-10-09T22:00:15.0994871Z [ci:trivy-inline-ignores:selftest] OK — 9 case(s) caught.
+2026-10-09T22:00:15.1563061Z [ci:trivy-inline-ignores] OK — 5 inline exception(s), each on the block it names:
+2026-10-09T22:00:15.1565478Z   AWS-0053 → resource "aws_lb" "this"  (terraform/modules/alb/main.tf:23)
+2026-10-09T22:00:15.1567055Z   AWS-0132 → resource "aws_s3_bucket_server_side_encryption_configuration" "frontend"  (terraform/modules/cloudfront/main.tf:43)
+2026-10-09T22:00:15.1568117Z   AWS-0011 → resource "aws_cloudfront_distribution" "this"  (terraform/modules/cloudfront/main.tf:157)
+2026-10-09T22:00:15.1568794Z   AWS-0104 → egress  (terraform/modules/ecs-fargate/main.tf:120)
+2026-10-09T22:00:15.1569645Z   AWS-0104 → egress  (terraform/modules/embedding-service/main.tf:73)
+2026-10-09T22:00:15.1903749Z   ✓ clean entry passes
+2026-10-09T22:00:15.1906865Z   ✓ missing exp
+2026-10-09T22:00:15.1907769Z   ✓ expired
+2026-10-09T22:00:15.1908787Z   ✓ too far out
+2026-10-09T22:00:15.1909935Z   ✓ no owner, no reason (blank line breaks the block)
+2026-10-09T22:00:15.1911116Z   ✓ tree-wide S3 public access block ignore
+2026-10-09T22:00:15.1913934Z   ✓ the audited file shape (no exp, no owner, S3 set) fails on every rule
+2026-10-09T22:00:15.1915108Z   ✓ one block covers two consecutive entries
+2026-10-09T22:00:15.1920438Z [ci:trivyignore-hygiene] FAIL — 4 violation(s) in /tmp/trivyignore-selftest-asE53H/.trivyignore (1 entries):
+2026-10-09T22:00:15.1923384Z   - line 1: AVD-AWS-0093 (S3: restrict public buckets) is a per-resource property and may not be suppressed for the whole tree; fix the resource or except it inline with #trivy:ignore and a reason
+2026-10-09T22:00:15.1925656Z   - line 1: AVD-AWS-0093 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+2026-10-09T22:00:15.1926347Z   - line 1: AVD-AWS-0093 has no "# owner:" in the comment block above it
+2026-10-09T22:00:15.1926870Z   - line 1: AVD-AWS-0093 has no "# reason:" in the comment block above it
+2026-10-09T22:00:15.1927167Z 
+2026-10-09T22:00:15.1928136Z   Every entry: "<ID> exp:YYYY-MM-DD" (future, <= 180 days), preceded by "# owner:" and "# reason:" lines. Per-resource checks are never suppressed tree-wide: fix the resource or except it inline.
+2026-10-09T22:00:15.1929511Z   ✓ runFile exits 1 on a failing file
+2026-10-09T22:00:15.1930460Z [ci:trivyignore-hygiene:selftest] OK — 9 case(s) caught.
+2026-10-09T22:00:15.2252799Z [ci:trivyignore-hygiene] OK — 3 suppression(s) in /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+2026-10-09T22:00:15.2495765Z ##[group]Run aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+2026-10-09T22:00:15.2496221Z with:
+2026-10-09T22:00:15.2496425Z   scan-type: fs
+2026-10-09T22:00:15.2496648Z   scan-ref: .
+2026-10-09T22:00:15.2496856Z   severity: CRITICAL,HIGH
+2026-10-09T22:00:15.2497087Z   exit-code: 1
+2026-10-09T22:00:15.2497288Z   format: table
+2026-10-09T22:00:15.2497500Z   ignore-unfixed: false
+2026-10-09T22:00:15.2497734Z   vuln-type: os,library
+2026-10-09T22:00:15.2498164Z   cache-dir: /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.cache/trivy
+2026-10-09T22:00:15.2498633Z   list-all-pkgs: false
+2026-10-09T22:00:15.2499143Z   version: v0.70.0
+2026-10-09T22:00:15.2499365Z   cache: true
+2026-10-09T22:00:15.2499579Z   skip-setup-trivy: false
+2026-10-09T22:00:15.2502230Z   token-setup-trivy: ***
+2026-10-09T22:00:15.2502493Z ##[endgroup]
+2026-10-09T22:00:15.2563618Z ##[start-action display=Install Trivy;id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy]
+2026-10-09T22:00:15.2658445Z ##[group]Run aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514
+2026-10-09T22:00:15.2659053Z with:
+2026-10-09T22:00:15.2659257Z   version: v0.70.0
+2026-10-09T22:00:15.2659468Z   cache: true
+2026-10-09T22:00:15.2662025Z   token: ***
+2026-10-09T22:00:15.2662254Z   path: $HOME/.local/bin
+2026-10-09T22:00:15.2662524Z   github-server-url: https://github.com
+2026-10-09T22:00:15.2662819Z ##[endgroup]
+2026-10-09T22:00:15.2669456Z ##[start-action display=Binary dir;id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.binary-dir]
+2026-10-09T22:00:15.2686707Z ##[group]Run echo "dir=$HOME/.local/bin/trivy-bin" >> $GITHUB_OUTPUT
+2026-10-09T22:00:15.2687189Z [36;1mecho "dir=$HOME/.local/bin/trivy-bin" >> $GITHUB_OUTPUT[0m
+2026-10-09T22:00:15.2749523Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:15.2749892Z ##[endgroup]
+2026-10-09T22:00:15.2864599Z ##[end-action id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.binary-dir;outcome=success;conclusion=success;duration_ms=19]
+2026-10-09T22:00:15.2887784Z ##[start-action display=Check the version for caching;id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.__run]
+2026-10-09T22:00:15.2894591Z ##[end-action id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.__run;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-09T22:00:15.2896899Z ##[start-action display=Restore Trivy binary from cache;id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.cache]
+2026-10-09T22:00:15.2937492Z ##[group]Run actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb
+2026-10-09T22:00:15.2937897Z with:
+2026-10-09T22:00:15.2938123Z   path: /home/runner/.local/bin/trivy-bin
+2026-10-09T22:00:15.2938436Z   key: trivy-binary-v0.70.0-Linux-X64
+2026-10-09T22:00:15.2938725Z   enableCrossOsArchive: false
+2026-10-09T22:00:15.2939311Z   fail-on-cache-miss: false
+2026-10-09T22:00:15.2939564Z   lookup-only: false
+2026-10-09T22:00:15.2939783Z ##[endgroup]
+2026-10-09T22:00:15.4690708Z Cache hit for: trivy-binary-v0.70.0-Linux-X64
+2026-10-09T22:00:15.8001657Z Received 43751279 of 43751279 (100.0%), 148.5 MBs/sec
+2026-10-09T22:00:15.8002462Z Cache Size: ~42 MB (43751279 B)
+2026-10-09T22:00:15.8037943Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d788c6d2-5cd8-4b0f-9ae7-5b21100c37db/cache.tzst -P -C /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit --use-compress-program unzstd
+2026-10-09T22:00:16.0379333Z Cache restored successfully
+2026-10-09T22:00:16.0476424Z Cache restored from key: trivy-binary-v0.70.0-Linux-X64
+2026-10-09T22:00:16.0613756Z ##[end-action id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.cache;outcome=success;conclusion=success;duration_ms=771]
+2026-10-09T22:00:16.0617035Z ##[start-action display=Checkout install script;id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.__actions_checkout]
+2026-10-09T22:00:16.0623382Z ##[end-action id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.__actions_checkout;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-09T22:00:16.0625593Z ##[start-action display=Install Trivy;id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.__run_2]
+2026-10-09T22:00:16.0631387Z ##[end-action id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.__run_2;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-09T22:00:16.0633554Z ##[start-action display=Add Trivy binary to $GITHUB_PATH;id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.__run_3]
+2026-10-09T22:00:16.0652725Z ##[group]Run echo /home/runner/.local/bin/trivy-bin >> $GITHUB_PATH
+2026-10-09T22:00:16.0653201Z [36;1mecho /home/runner/.local/bin/trivy-bin >> $GITHUB_PATH[0m
+2026-10-09T22:00:16.0715219Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:16.0715580Z ##[endgroup]
+2026-10-09T22:00:16.0811186Z ##[end-action id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.__run_3;outcome=success;conclusion=success;duration_ms=17]
+2026-10-09T22:00:16.0815003Z ##[start-action display=Save Trivy binary to cache;id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.__actions_cache]
+2026-10-09T22:00:16.0824078Z ##[end-action id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy.__actions_cache;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-09T22:00:16.0835784Z ##[end-action id=__aquasecurity_trivy-action.__aquasecurity_setup-trivy;outcome=success;conclusion=success;duration_ms=827]
+2026-10-09T22:00:16.0837792Z ##[start-action display=Get current date;id=__aquasecurity_trivy-action.date]
+2026-10-09T22:00:16.0854461Z ##[group]Run echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+2026-10-09T22:00:16.0854875Z [36;1mecho "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT[0m
+2026-10-09T22:00:16.0912294Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:16.0912654Z ##[endgroup]
+2026-10-09T22:00:16.1008292Z ##[end-action id=__aquasecurity_trivy-action.date;outcome=success;conclusion=success;duration_ms=16]
+2026-10-09T22:00:16.1010618Z ##[start-action display=Restore DB from cache;id=__aquasecurity_trivy-action.__actions_cache]
+2026-10-09T22:00:16.1047156Z ##[group]Run actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+2026-10-09T22:00:16.1047523Z with:
+2026-10-09T22:00:16.1047903Z   path: /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.cache/trivy
+2026-10-09T22:00:16.1048391Z   key: cache-trivy-2026-10-09
+2026-10-09T22:00:16.1048664Z   restore-keys: cache-trivy-
+2026-10-09T22:00:16.1049219Z   enableCrossOsArchive: false
+2026-10-09T22:00:16.1049528Z   fail-on-cache-miss: false
+2026-10-09T22:00:16.1049782Z   lookup-only: false
+2026-10-09T22:00:16.1050007Z   save-always: false
+2026-10-09T22:00:16.1050229Z ##[endgroup]
+2026-10-09T22:00:16.3120454Z Cache hit for restore-key: cache-trivy-2026-10-08
+2026-10-09T22:00:16.9619241Z Received 84821943 of 84821943 (100.0%), 137.6 MBs/sec
+2026-10-09T22:00:16.9620200Z Cache Size: ~81 MB (84821943 B)
+2026-10-09T22:00:16.9652642Z [command]/usr/bin/tar -xf /home/runner/work/_temp/ae40c78f-effc-4e0e-a282-bffd47412822/cache.tzst -P -C /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit --use-compress-program unzstd
+2026-10-09T22:00:18.6677761Z Cache restored successfully
+2026-10-09T22:00:18.7960212Z Cache restored from key: cache-trivy-2026-10-08
+2026-10-09T22:00:18.8074463Z ##[end-action id=__aquasecurity_trivy-action.__actions_cache;outcome=success;conclusion=success;duration_ms=2706]
+2026-10-09T22:00:18.8078029Z ##[start-action display=Set GitHub Path;id=__aquasecurity_trivy-action.__run]
+2026-10-09T22:00:18.8095570Z ##[group]Run echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+2026-10-09T22:00:18.8095972Z [36;1mecho "$GITHUB_ACTION_PATH" >> $GITHUB_PATH[0m
+2026-10-09T22:00:18.8159550Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:18.8159929Z env:
+2026-10-09T22:00:18.8160428Z   GITHUB_ACTION_PATH: /home/runner/work/_actions/aquasecurity/trivy-action/ed142fd0673e97e23eac54620cfb913e5ce36c25
+2026-10-09T22:00:18.8160992Z ##[endgroup]
+2026-10-09T22:00:18.8245587Z ##[end-action id=__aquasecurity_trivy-action.__run;outcome=success;conclusion=success;duration_ms=16]
+2026-10-09T22:00:18.8248425Z ##[start-action display=Clear Trivy Envs file;id=__aquasecurity_trivy-action.__run_2]
+2026-10-09T22:00:18.8281206Z ##[group]Run rm -f trivy_envs.txt
+2026-10-09T22:00:18.8281507Z [36;1mrm -f trivy_envs.txt[0m
+2026-10-09T22:00:18.8281774Z [36;1mtouch trivy_envs.txt[0m
+2026-10-09T22:00:18.8335810Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:18.8336175Z ##[endgroup]
+2026-10-09T22:00:18.8439423Z ##[end-action id=__aquasecurity_trivy-action.__run_2;outcome=success;conclusion=success;duration_ms=18]
+2026-10-09T22:00:18.8444044Z ##[start-action display=Set Trivy environment variables;id=__aquasecurity_trivy-action.__run_3]
+2026-10-09T22:00:18.8461314Z ##[group]Run # Note: There is currently no way to distinguish between undefined variables and empty strings in GitHub Actions.
+2026-10-09T22:00:18.8462244Z [36;1m# Note: There is currently no way to distinguish between undefined variables and empty strings in GitHub Actions.[0m
+2026-10-09T22:00:18.8462955Z [36;1m# This limitation affects how we handle default values and empty inputs.[0m
+2026-10-09T22:00:18.8463545Z [36;1m# For more information, see: https://github.com/actions/runner/issues/924[0m
+2026-10-09T22:00:18.8463976Z [36;1m[0m
+2026-10-09T22:00:18.8464374Z [36;1m# The following logic implements the configuration priority described in the README:[0m
+2026-10-09T22:00:18.8464837Z [36;1m#[0m
+2026-10-09T22:00:18.8465048Z [36;1m# Inputs[0m
+2026-10-09T22:00:18.8465285Z [36;1m# Environment Variables[0m
+2026-10-09T22:00:18.8465561Z [36;1m# Config File[0m
+2026-10-09T22:00:18.8465802Z [36;1m# Defaults[0m
+2026-10-09T22:00:18.8466022Z [36;1m#[0m
+2026-10-09T22:00:18.8466459Z [36;1m# As noted above defaults are awkward to handle as GitHub Actions will inject those values as the input[0m
+2026-10-09T22:00:18.8467165Z [36;1m# if the caller doesn't provide them, thus if the input matches the default we don't set it as we[0m
+2026-10-09T22:00:18.8467892Z [36;1m# can't tell the difference.  Plus if we did set it when it was the default value then it could potentially[0m
+2026-10-09T22:00:18.8468667Z [36;1m# override an external environment variable, or something in the callers configuration file, which then wouldn't[0m
+2026-10-09T22:00:18.8469558Z [36;1m# match the configuration priority that is documented.[0m
+2026-10-09T22:00:18.8469938Z [36;1mset_env_var_if_provided() {[0m
+2026-10-09T22:00:18.8470239Z [36;1m  local var_name="$1"[0m
+2026-10-09T22:00:18.8470509Z [36;1m  local input_value="$2"[0m
+2026-10-09T22:00:18.8470798Z [36;1m  local default_value="$3"[0m
+2026-10-09T22:00:18.8471072Z [36;1m[0m
+2026-10-09T22:00:18.8471391Z [36;1m  if [ -n "$input_value" ] && [ "$input_value" != "$default_value" ]; then[0m
+2026-10-09T22:00:18.8471907Z [36;1m    # If action was provided with explicit input by the caller set that[0m
+2026-10-09T22:00:18.8472475Z [36;1m    # Use printf %q to safely escape special characters and prevent command injection[0m
+2026-10-09T22:00:18.8473189Z [36;1m    printf 'export %s=%q\n' "$var_name" "$input_value" >> trivy_envs.txt[0m
+2026-10-09T22:00:18.8473577Z [36;1m  fi[0m
+2026-10-09T22:00:18.8473789Z [36;1m}[0m
+2026-10-09T22:00:18.8473994Z [36;1m[0m
+2026-10-09T22:00:18.8474306Z [36;1m# Set environment variables, handling those with default values[0m
+2026-10-09T22:00:18.8474924Z [36;1m# cf. https://aquasecurity.github.io/trivy/latest/docs/configuration/#environment-variables[0m
+2026-10-09T22:00:18.8475508Z [36;1mset_env_var_if_provided "TRIVY_INPUT" "$INPUT_INPUT" ""[0m
+2026-10-09T22:00:18.8475963Z [36;1mset_env_var_if_provided "TRIVY_EXIT_CODE" "$INPUT_EXIT_CODE" ""[0m
+2026-10-09T22:00:18.8476496Z [36;1mset_env_var_if_provided "TRIVY_IGNORE_UNFIXED" "$INPUT_IGNORE_UNFIXED" "false"[0m
+2026-10-09T22:00:18.8477062Z [36;1mset_env_var_if_provided "TRIVY_PKG_TYPES" "$INPUT_VULN_TYPE" "os,library"[0m
+2026-10-09T22:00:18.8477805Z [36;1mset_env_var_if_provided "TRIVY_SEVERITY" "$INPUT_SEVERITY" "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"[0m
+2026-10-09T22:00:18.8478396Z [36;1mset_env_var_if_provided "TRIVY_FORMAT" "$INPUT_FORMAT" "table"[0m
+2026-10-09T22:00:18.8479134Z [36;1mset_env_var_if_provided "TRIVY_TEMPLATE" "$INPUT_TEMPLATE" ""[0m
+2026-10-09T22:00:18.8479613Z [36;1mset_env_var_if_provided "TRIVY_OUTPUT" "$INPUT_OUTPUT" ""[0m
+2026-10-09T22:00:18.8480071Z [36;1mset_env_var_if_provided "TRIVY_SKIP_DIRS" "$INPUT_SKIP_DIRS" ""[0m
+2026-10-09T22:00:18.8480580Z [36;1mset_env_var_if_provided "TRIVY_SKIP_FILES" "$INPUT_SKIP_FILES" ""[0m
+2026-10-09T22:00:18.8481069Z [36;1mset_env_var_if_provided "TRIVY_TIMEOUT" "$INPUT_TIMEOUT" ""[0m
+2026-10-09T22:00:18.8481555Z [36;1mset_env_var_if_provided "TRIVY_IGNORE_POLICY" "$INPUT_IGNORE_POLICY" ""[0m
+2026-10-09T22:00:18.8482056Z [36;1mset_env_var_if_provided "TRIVY_QUIET" "$INPUT_HIDE_PROGRESS" ""[0m
+2026-10-09T22:00:18.8482572Z [36;1mset_env_var_if_provided "TRIVY_LIST_ALL_PKGS" "$INPUT_LIST_ALL_PKGS" "false"[0m
+2026-10-09T22:00:18.8483105Z [36;1mset_env_var_if_provided "TRIVY_SCANNERS" "$INPUT_SCANNERS" ""[0m
+2026-10-09T22:00:18.8483569Z [36;1mset_env_var_if_provided "TRIVY_CONFIG" "$INPUT_TRIVY_CONFIG" ""[0m
+2026-10-09T22:00:18.8484032Z [36;1mset_env_var_if_provided "TRIVY_TF_VARS" "$INPUT_TF_VARS" ""[0m
+2026-10-09T22:00:18.8484523Z [36;1mset_env_var_if_provided "TRIVY_DOCKER_HOST" "$INPUT_DOCKER_HOST" ""[0m
+2026-10-09T22:00:18.8538718Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:18.8539388Z env:
+2026-10-09T22:00:18.8539597Z   INPUT_INPUT: 
+2026-10-09T22:00:18.8539831Z   INPUT_EXIT_CODE: 1
+2026-10-09T22:00:18.8540085Z   INPUT_IGNORE_UNFIXED: false
+2026-10-09T22:00:18.8540347Z   INPUT_VULN_TYPE: os,library
+2026-10-09T22:00:18.8540625Z   INPUT_SEVERITY: CRITICAL,HIGH
+2026-10-09T22:00:18.8540895Z   INPUT_FORMAT: table
+2026-10-09T22:00:18.8541125Z   INPUT_TEMPLATE: 
+2026-10-09T22:00:18.8541348Z   INPUT_OUTPUT: 
+2026-10-09T22:00:18.8541569Z   INPUT_SKIP_DIRS: 
+2026-10-09T22:00:18.8541794Z   INPUT_SKIP_FILES: 
+2026-10-09T22:00:18.8542023Z   INPUT_TIMEOUT: 
+2026-10-09T22:00:18.8542244Z   INPUT_IGNORE_POLICY: 
+2026-10-09T22:00:18.8542476Z   INPUT_HIDE_PROGRESS: 
+2026-10-09T22:00:18.8542711Z   INPUT_LIST_ALL_PKGS: false
+2026-10-09T22:00:18.8542965Z   INPUT_SCANNERS: 
+2026-10-09T22:00:18.8543179Z   INPUT_TRIVY_CONFIG: 
+2026-10-09T22:00:18.8543404Z   INPUT_TF_VARS: 
+2026-10-09T22:00:18.8543619Z   INPUT_DOCKER_HOST: 
+2026-10-09T22:00:18.8543839Z ##[endgroup]
+2026-10-09T22:00:18.8630542Z ##[end-action id=__aquasecurity_trivy-action.__run_3;outcome=success;conclusion=success;duration_ms=18]
+2026-10-09T22:00:18.8633668Z ##[start-action display=Run Trivy;id=__aquasecurity_trivy-action.__run_4]
+2026-10-09T22:00:18.8649816Z ##[group]Run entrypoint.sh
+2026-10-09T22:00:18.8650093Z [36;1mentrypoint.sh[0m
+2026-10-09T22:00:18.8704103Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:18.8704470Z env:
+2026-10-09T22:00:18.8704685Z   INPUT_SCAN_TYPE: fs
+2026-10-09T22:00:18.8705092Z   INPUT_IMAGE_REF: 
+2026-10-09T22:00:18.8705328Z   INPUT_SCAN_REF: .
+2026-10-09T22:00:18.8705562Z   INPUT_TRIVYIGNORES: 
+2026-10-09T22:00:18.8705811Z   INPUT_GITHUB_PAT: 
+2026-10-09T22:00:18.8706055Z   INPUT_LIMIT_SEVERITIES_FOR_SARIF: 
+2026-10-09T22:00:18.8706570Z   TRIVY_CACHE_DIR: /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.cache/trivy
+2026-10-09T22:00:18.8707067Z ##[endgroup]
+2026-10-09T22:00:18.8804438Z Running Trivy with options: trivy fs .
+2026-10-09T22:00:18.9314174Z 2026-10-09T22:00:18Z	INFO	[vulndb] Need to update DB
+2026-10-09T22:00:18.9314796Z 2026-10-09T22:00:18Z	INFO	[vulndb] Downloading vulnerability DB...
+2026-10-09T22:00:18.9315513Z 2026-10-09T22:00:18Z	INFO	[vulndb] Downloading artifact...	repo="mirror.gcr.io/aquasec/trivy-db:2"
+2026-10-09T22:00:24.4371681Z 5.01 MiB / 120.52 MiB [-->___________________________________________________________] 4.16% ? p/s ?38.98 MiB / 120.52 MiB [------------------->________________________________________] 32.34% ? p/s ?75.30 MiB / 120.52 MiB [------------------------------------->______________________] 62.47% ? p/s ?110.95 MiB / 120.52 MiB [----------------------------------------->___] 92.05% 176.53 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 176.53 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 176.53 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 166.17 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 166.17 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 166.17 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 155.45 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 155.45 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 155.45 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 145.42 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 145.42 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 145.42 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 136.04 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 136.04 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 136.04 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 127.26 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 127.26 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [------------------------------------------->] 100.00% 127.26 MiB p/s ETA 0s120.52 MiB / 120.52 MiB [-----------------------------------------------] 100.00% 29.07 MiB p/s 4.3s2026-10-09T22:00:24Z	INFO	[vulndb] Artifact successfully downloaded	repo="mirror.gcr.io/aquasec/trivy-db:2"
+2026-10-09T22:00:24.4377791Z 2026-10-09T22:00:24Z	INFO	[vuln] Vulnerability scanning is enabled
+2026-10-09T22:00:24.4378320Z 2026-10-09T22:00:24Z	INFO	[secret] Secret scanning is enabled
+2026-10-09T22:00:24.4379314Z 2026-10-09T22:00:24Z	INFO	[secret] If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2026-10-09T22:00:24.4380338Z 2026-10-09T22:00:24Z	INFO	[secret] Please see https://trivy.dev/docs/v0.70/guide/scanner/secret#recommendation for faster secret detection
+2026-10-09T22:00:45.8241732Z 2026-10-09T22:00:45Z	WARN	[secret] The size of the scanned file is too large. It is recommended to use `--skip-files` for this file to avoid high memory consumption.	file_path="server/scripts/data/clinical_trials_cancer_20250409_214935.json" size (MB)=14
+2026-10-09T22:00:52.9134662Z 2026-10-09T22:00:52Z	WARN	[pip] Unable to find python `site-packages` directory. License detection is skipped.	err="site-packages directory not found"
+2026-10-09T22:00:53.1432196Z 2026-10-09T22:00:53Z	INFO	[npm] To collect the license information of packages, "npm install" needs to be performed beforehand	dir="tests/validation/node_modules"
+2026-10-09T22:00:53.1712668Z 2026-10-09T22:00:53Z	INFO	Suppressing dependencies for development and testing. To display them, try the '--include-dev-deps' flag.
+2026-10-09T22:00:53.1714029Z 2026-10-09T22:00:53Z	INFO	Number of language-specific files	num=4
+2026-10-09T22:00:53.1716617Z 2026-10-09T22:00:53Z	INFO	[npm] Detecting vulnerabilities...
+2026-10-09T22:00:53.1945669Z 2026-10-09T22:00:53Z	INFO	[pip] Detecting vulnerabilities...
+2026-10-09T22:00:53.2063441Z 2026-10-09T22:00:53Z	INFO	Some vulnerabilities have been ignored/suppressed. Use the "--show-suppressed" flag to display them.
+2026-10-09T22:00:53.2064355Z 
+2026-10-09T22:00:53.2064404Z 
+2026-10-09T22:00:53.2064880Z 📣 [34mNotices:[0m
+2026-10-09T22:00:53.2065593Z   - Version 0.75.0 of Trivy is now available, current version is 0.70.0
+2026-10-09T22:00:53.2066119Z 
+2026-10-09T22:00:53.2066987Z To suppress version checks, run Trivy scans with the --skip-version-check flag
+2026-10-09T22:00:53.2067593Z 
+2026-10-09T22:00:53.2067763Z Report Summary
+2026-10-09T22:00:53.2067904Z 
+2026-10-09T22:00:53.2068406Z ┌────────────────────────────────────────────────────────────┬──────┬─────────────────┬─────────┐
+2026-10-09T22:00:53.2069543Z │                           Target                           │ Type │ Vulnerabilities │ Secrets │
+2026-10-09T22:00:53.2070760Z ├────────────────────────────────────────────────────────────┼──────┼─────────────────┼─────────┤
+2026-10-09T22:00:53.2072131Z │ package-lock.json                                          │ npm  │        0        │    -    │
+2026-10-09T22:00:53.2073347Z ├────────────────────────────────────────────────────────────┼──────┼─────────────────┼─────────┤
+2026-10-09T22:00:53.2074445Z │ requirements.txt                                           │ pip  │        0        │    -    │
+2026-10-09T22:00:53.2075654Z ├────────────────────────────────────────────────────────────┼──────┼─────────────────┼─────────┤
+2026-10-09T22:00:53.2076900Z │ server/services/python/requirements.txt                    │ pip  │        0        │    -    │
+2026-10-09T22:00:53.2078176Z ├────────────────────────────────────────────────────────────┼──────┼─────────────────┼─────────┤
+2026-10-09T22:00:53.2079561Z │ tests/validation/package-lock.json                         │ npm  │        0        │    -    │
+2026-10-09T22:00:53.2080859Z ├────────────────────────────────────────────────────────────┼──────┼─────────────────┼─────────┤
+2026-10-09T22:00:53.2082138Z │ docs/evidence/D6/2026-09-25-p1/IAM-18-6/red/before-fix.txt │ text │        -        │    0    │
+2026-10-09T22:00:53.2083497Z └────────────────────────────────────────────────────────────┴──────┴─────────────────┴─────────┘
+2026-10-09T22:00:53.2084168Z Legend:
+2026-10-09T22:00:53.2084538Z - '-': Not scanned
+2026-10-09T22:00:53.2085071Z - '0': Clean (no security findings detected)
+2026-10-09T22:00:53.2085443Z 
+2026-10-09T22:00:53.2146706Z ##[end-action id=__aquasecurity_trivy-action.__run_4;outcome=success;conclusion=success;duration_ms=34351]
+2026-10-09T22:00:53.2149495Z ##[start-action display=Remove Trivy Envs file;id=__aquasecurity_trivy-action.__run_5]
+2026-10-09T22:00:53.2167715Z ##[group]Run rm -f trivy_envs.txt
+2026-10-09T22:00:53.2168023Z [36;1mrm -f trivy_envs.txt[0m
+2026-10-09T22:00:53.2229582Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:53.2229951Z ##[endgroup]
+2026-10-09T22:00:53.2330962Z ##[end-action id=__aquasecurity_trivy-action.__run_5;outcome=success;conclusion=success;duration_ms=18]
+2026-10-09T22:00:53.2505850Z ##[group]Run aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+2026-10-09T22:00:53.2506299Z with:
+2026-10-09T22:00:53.2506515Z   scan-type: config
+2026-10-09T22:00:53.2506740Z   scan-ref: .
+2026-10-09T22:00:53.2506955Z   severity: CRITICAL,HIGH
+2026-10-09T22:00:53.2507201Z   exit-code: 1
+2026-10-09T22:00:53.2507408Z   format: table
+2026-10-09T22:00:53.2507636Z   skip-dirs: node_modules
+2026-10-09T22:00:53.2508250Z   skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci,docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green
+2026-10-09T22:00:53.2509159Z   ignore-unfixed: false
+2026-10-09T22:00:53.2509424Z   vuln-type: os,library
+2026-10-09T22:00:53.2509861Z   cache-dir: /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.cache/trivy
+2026-10-09T22:00:53.2510347Z   list-all-pkgs: false
+2026-10-09T22:00:53.2510590Z   version: v0.70.0
+2026-10-09T22:00:53.2510809Z   cache: true
+2026-10-09T22:00:53.2511065Z   skip-setup-trivy: false
+2026-10-09T22:00:53.2513702Z   token-setup-trivy: ***
+2026-10-09T22:00:53.2513956Z ##[endgroup]
+2026-10-09T22:00:53.2538684Z ##[start-action display=Install Trivy;id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy]
+2026-10-09T22:00:53.2621264Z ##[group]Run aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514
+2026-10-09T22:00:53.2621690Z with:
+2026-10-09T22:00:53.2621902Z   version: v0.70.0
+2026-10-09T22:00:53.2622119Z   cache: true
+2026-10-09T22:00:53.2624663Z   token: ***
+2026-10-09T22:00:53.2624897Z   path: $HOME/.local/bin
+2026-10-09T22:00:53.2625175Z   github-server-url: https://github.com
+2026-10-09T22:00:53.2625475Z ##[endgroup]
+2026-10-09T22:00:53.2631570Z ##[start-action display=Binary dir;id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.binary-dir]
+2026-10-09T22:00:53.2647370Z ##[group]Run echo "dir=$HOME/.local/bin/trivy-bin" >> $GITHUB_OUTPUT
+2026-10-09T22:00:53.2647840Z [36;1mecho "dir=$HOME/.local/bin/trivy-bin" >> $GITHUB_OUTPUT[0m
+2026-10-09T22:00:53.2706880Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:53.2707262Z ##[endgroup]
+2026-10-09T22:00:53.2794655Z ##[end-action id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.binary-dir;outcome=success;conclusion=success;duration_ms=16]
+2026-10-09T22:00:53.2796955Z ##[start-action display=Check the version for caching;id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.__run]
+2026-10-09T22:00:53.2801942Z ##[end-action id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.__run;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-09T22:00:53.2804024Z ##[start-action display=Restore Trivy binary from cache;id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.cache]
+2026-10-09T22:00:53.2837168Z ##[group]Run actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb
+2026-10-09T22:00:53.2837569Z with:
+2026-10-09T22:00:53.2837793Z   path: /home/runner/.local/bin/trivy-bin
+2026-10-09T22:00:53.2838109Z   key: trivy-binary-v0.70.0-Linux-X64
+2026-10-09T22:00:53.2838421Z   enableCrossOsArchive: false
+2026-10-09T22:00:53.2838689Z   fail-on-cache-miss: false
+2026-10-09T22:00:53.2839255Z   lookup-only: false
+2026-10-09T22:00:53.2839496Z ##[endgroup]
+2026-10-09T22:00:53.4660066Z Cache hit for: trivy-binary-v0.70.0-Linux-X64
+2026-10-09T22:00:53.7709288Z Received 43751279 of 43751279 (100.0%), 165.6 MBs/sec
+2026-10-09T22:00:53.7709924Z Cache Size: ~42 MB (43751279 B)
+2026-10-09T22:00:53.7740975Z [command]/usr/bin/tar -xf /home/runner/work/_temp/c1de0315-89e2-48a5-ba5e-602002d7afa3/cache.tzst -P -C /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit --use-compress-program unzstd
+2026-10-09T22:00:54.0555062Z Cache restored successfully
+2026-10-09T22:00:54.0698300Z Cache restored from key: trivy-binary-v0.70.0-Linux-X64
+2026-10-09T22:00:54.0815348Z ##[end-action id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.cache;outcome=success;conclusion=success;duration_ms=800]
+2026-10-09T22:00:54.0820886Z ##[start-action display=Checkout install script;id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.__actions_checkout]
+2026-10-09T22:00:54.0827791Z ##[end-action id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.__actions_checkout;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-09T22:00:54.0832154Z ##[start-action display=Install Trivy;id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.__run_2]
+2026-10-09T22:00:54.0840155Z ##[end-action id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.__run_2;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-09T22:00:54.0843366Z ##[start-action display=Add Trivy binary to $GITHUB_PATH;id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.__run_3]
+2026-10-09T22:00:54.0862955Z ##[group]Run echo /home/runner/.local/bin/trivy-bin >> $GITHUB_PATH
+2026-10-09T22:00:54.0863441Z [36;1mecho /home/runner/.local/bin/trivy-bin >> $GITHUB_PATH[0m
+2026-10-09T22:00:54.0924679Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:54.0925058Z ##[endgroup]
+2026-10-09T22:00:54.1018697Z ##[end-action id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.__run_3;outcome=success;conclusion=success;duration_ms=17]
+2026-10-09T22:00:54.1021349Z ##[start-action display=Save Trivy binary to cache;id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.__actions_cache]
+2026-10-09T22:00:54.1028093Z ##[end-action id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy.__actions_cache;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-09T22:00:54.1033578Z ##[end-action id=__aquasecurity_trivy-action_2.__aquasecurity_setup-trivy;outcome=success;conclusion=success;duration_ms=849]
+2026-10-09T22:00:54.1035624Z ##[start-action display=Get current date;id=__aquasecurity_trivy-action_2.date]
+2026-10-09T22:00:54.1051913Z ##[group]Run echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+2026-10-09T22:00:54.1052347Z [36;1mecho "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT[0m
+2026-10-09T22:00:54.1106890Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:54.1107284Z ##[endgroup]
+2026-10-09T22:00:54.1203653Z ##[end-action id=__aquasecurity_trivy-action_2.date;outcome=success;conclusion=success;duration_ms=16]
+2026-10-09T22:00:54.1207171Z ##[start-action display=Restore DB from cache;id=__aquasecurity_trivy-action_2.__actions_cache]
+2026-10-09T22:00:54.1276612Z ##[group]Run actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+2026-10-09T22:00:54.1277009Z with:
+2026-10-09T22:00:54.1277396Z   path: /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.cache/trivy
+2026-10-09T22:00:54.1277874Z   key: cache-trivy-2026-10-09
+2026-10-09T22:00:54.1278154Z   restore-keys: cache-trivy-
+2026-10-09T22:00:54.1278429Z   enableCrossOsArchive: false
+2026-10-09T22:00:54.1278700Z   fail-on-cache-miss: false
+2026-10-09T22:00:54.1279262Z   lookup-only: false
+2026-10-09T22:00:54.1279522Z   save-always: false
+2026-10-09T22:00:54.1279754Z ##[endgroup]
+2026-10-09T22:00:54.3161461Z Cache hit for restore-key: cache-trivy-2026-10-08
+2026-10-09T22:00:54.8542906Z Received 84821943 of 84821943 (100.0%), 169.2 MBs/sec
+2026-10-09T22:00:54.8543842Z Cache Size: ~81 MB (84821943 B)
+2026-10-09T22:00:54.8577838Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d762ce5c-e4d6-4053-90fb-2a15d2cb6f6e/cache.tzst -P -C /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit --use-compress-program unzstd
+2026-10-09T22:00:57.0683045Z Cache restored successfully
+2026-10-09T22:00:57.1022009Z Cache restored from key: cache-trivy-2026-10-08
+2026-10-09T22:00:57.1162472Z ##[end-action id=__aquasecurity_trivy-action_2.__actions_cache;outcome=success;conclusion=success;duration_ms=2995]
+2026-10-09T22:00:57.1165830Z ##[start-action display=Set GitHub Path;id=__aquasecurity_trivy-action_2.__run]
+2026-10-09T22:00:57.1184237Z ##[group]Run echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+2026-10-09T22:00:57.1184652Z [36;1mecho "$GITHUB_ACTION_PATH" >> $GITHUB_PATH[0m
+2026-10-09T22:00:57.1246911Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:57.1247476Z env:
+2026-10-09T22:00:57.1247989Z   GITHUB_ACTION_PATH: /home/runner/work/_actions/aquasecurity/trivy-action/ed142fd0673e97e23eac54620cfb913e5ce36c25
+2026-10-09T22:00:57.1248556Z ##[endgroup]
+2026-10-09T22:00:57.1343991Z ##[end-action id=__aquasecurity_trivy-action_2.__run;outcome=success;conclusion=success;duration_ms=17]
+2026-10-09T22:00:57.1346055Z ##[start-action display=Clear Trivy Envs file;id=__aquasecurity_trivy-action_2.__run_2]
+2026-10-09T22:00:57.1363215Z ##[group]Run rm -f trivy_envs.txt
+2026-10-09T22:00:57.1363537Z [36;1mrm -f trivy_envs.txt[0m
+2026-10-09T22:00:57.1363818Z [36;1mtouch trivy_envs.txt[0m
+2026-10-09T22:00:57.1423508Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:57.1423901Z ##[endgroup]
+2026-10-09T22:00:57.1534996Z ##[end-action id=__aquasecurity_trivy-action_2.__run_2;outcome=success;conclusion=success;duration_ms=18]
+2026-10-09T22:00:57.1541432Z ##[start-action display=Set Trivy environment variables;id=__aquasecurity_trivy-action_2.__run_3]
+2026-10-09T22:00:57.1569837Z ##[group]Run # Note: There is currently no way to distinguish between undefined variables and empty strings in GitHub Actions.
+2026-10-09T22:00:57.1571529Z [36;1m# Note: There is currently no way to distinguish between undefined variables and empty strings in GitHub Actions.[0m
+2026-10-09T22:00:57.1572842Z [36;1m# This limitation affects how we handle default values and empty inputs.[0m
+2026-10-09T22:00:57.1573939Z [36;1m# For more information, see: https://github.com/actions/runner/issues/924[0m
+2026-10-09T22:00:57.1574741Z [36;1m[0m
+2026-10-09T22:00:57.1575481Z [36;1m# The following logic implements the configuration priority described in the README:[0m
+2026-10-09T22:00:57.1576360Z [36;1m#[0m
+2026-10-09T22:00:57.1576766Z [36;1m# Inputs[0m
+2026-10-09T22:00:57.1577224Z [36;1m# Environment Variables[0m
+2026-10-09T22:00:57.1577749Z [36;1m# Config File[0m
+2026-10-09T22:00:57.1578206Z [36;1m# Defaults[0m
+2026-10-09T22:00:57.1578631Z [36;1m#[0m
+2026-10-09T22:00:57.1579800Z [36;1m# As noted above defaults are awkward to handle as GitHub Actions will inject those values as the input[0m
+2026-10-09T22:00:57.1581152Z [36;1m# if the caller doesn't provide them, thus if the input matches the default we don't set it as we[0m
+2026-10-09T22:00:57.1582566Z [36;1m# can't tell the difference.  Plus if we did set it when it was the default value then it could potentially[0m
+2026-10-09T22:00:57.1584031Z [36;1m# override an external environment variable, or something in the callers configuration file, which then wouldn't[0m
+2026-10-09T22:00:57.1585229Z [36;1m# match the configuration priority that is documented.[0m
+2026-10-09T22:00:57.1585936Z [36;1mset_env_var_if_provided() {[0m
+2026-10-09T22:00:57.1586481Z [36;1m  local var_name="$1"[0m
+2026-10-09T22:00:57.1586983Z [36;1m  local input_value="$2"[0m
+2026-10-09T22:00:57.1587518Z [36;1m  local default_value="$3"[0m
+2026-10-09T22:00:57.1588016Z [36;1m[0m
+2026-10-09T22:00:57.1588602Z [36;1m  if [ -n "$input_value" ] && [ "$input_value" != "$default_value" ]; then[0m
+2026-10-09T22:00:57.1589809Z [36;1m    # If action was provided with explicit input by the caller set that[0m
+2026-10-09T22:00:57.1590864Z [36;1m    # Use printf %q to safely escape special characters and prevent command injection[0m
+2026-10-09T22:00:57.1591913Z [36;1m    printf 'export %s=%q\n' "$var_name" "$input_value" >> trivy_envs.txt[0m
+2026-10-09T22:00:57.1592970Z [36;1m  fi[0m
+2026-10-09T22:00:57.1593382Z [36;1m}[0m
+2026-10-09T22:00:57.1593779Z [36;1m[0m
+2026-10-09T22:00:57.1594388Z [36;1m# Set environment variables, handling those with default values[0m
+2026-10-09T22:00:57.1595539Z [36;1m# cf. https://aquasecurity.github.io/trivy/latest/docs/configuration/#environment-variables[0m
+2026-10-09T22:00:57.1596655Z [36;1mset_env_var_if_provided "TRIVY_INPUT" "$INPUT_INPUT" ""[0m
+2026-10-09T22:00:57.1597522Z [36;1mset_env_var_if_provided "TRIVY_EXIT_CODE" "$INPUT_EXIT_CODE" ""[0m
+2026-10-09T22:00:57.1598751Z [36;1mset_env_var_if_provided "TRIVY_IGNORE_UNFIXED" "$INPUT_IGNORE_UNFIXED" "false"[0m
+2026-10-09T22:00:57.1600117Z [36;1mset_env_var_if_provided "TRIVY_PKG_TYPES" "$INPUT_VULN_TYPE" "os,library"[0m
+2026-10-09T22:00:57.1601285Z [36;1mset_env_var_if_provided "TRIVY_SEVERITY" "$INPUT_SEVERITY" "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"[0m
+2026-10-09T22:00:57.1602405Z [36;1mset_env_var_if_provided "TRIVY_FORMAT" "$INPUT_FORMAT" "table"[0m
+2026-10-09T22:00:57.1603322Z [36;1mset_env_var_if_provided "TRIVY_TEMPLATE" "$INPUT_TEMPLATE" ""[0m
+2026-10-09T22:00:57.1604208Z [36;1mset_env_var_if_provided "TRIVY_OUTPUT" "$INPUT_OUTPUT" ""[0m
+2026-10-09T22:00:57.1605132Z [36;1mset_env_var_if_provided "TRIVY_SKIP_DIRS" "$INPUT_SKIP_DIRS" ""[0m
+2026-10-09T22:00:57.1606072Z [36;1mset_env_var_if_provided "TRIVY_SKIP_FILES" "$INPUT_SKIP_FILES" ""[0m
+2026-10-09T22:00:57.1606987Z [36;1mset_env_var_if_provided "TRIVY_TIMEOUT" "$INPUT_TIMEOUT" ""[0m
+2026-10-09T22:00:57.1607935Z [36;1mset_env_var_if_provided "TRIVY_IGNORE_POLICY" "$INPUT_IGNORE_POLICY" ""[0m
+2026-10-09T22:00:57.1609155Z [36;1mset_env_var_if_provided "TRIVY_QUIET" "$INPUT_HIDE_PROGRESS" ""[0m
+2026-10-09T22:00:57.1610188Z [36;1mset_env_var_if_provided "TRIVY_LIST_ALL_PKGS" "$INPUT_LIST_ALL_PKGS" "false"[0m
+2026-10-09T22:00:57.1611192Z [36;1mset_env_var_if_provided "TRIVY_SCANNERS" "$INPUT_SCANNERS" ""[0m
+2026-10-09T22:00:57.1612072Z [36;1mset_env_var_if_provided "TRIVY_CONFIG" "$INPUT_TRIVY_CONFIG" ""[0m
+2026-10-09T22:00:57.1612974Z [36;1mset_env_var_if_provided "TRIVY_TF_VARS" "$INPUT_TF_VARS" ""[0m
+2026-10-09T22:00:57.1613889Z [36;1mset_env_var_if_provided "TRIVY_DOCKER_HOST" "$INPUT_DOCKER_HOST" ""[0m
+2026-10-09T22:00:57.1697235Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:57.1697916Z env:
+2026-10-09T22:00:57.1698299Z   INPUT_INPUT: 
+2026-10-09T22:00:57.1698722Z   INPUT_EXIT_CODE: 1
+2026-10-09T22:00:57.1699525Z   INPUT_IGNORE_UNFIXED: false
+2026-10-09T22:00:57.1700031Z   INPUT_VULN_TYPE: os,library
+2026-10-09T22:00:57.1700562Z   INPUT_SEVERITY: CRITICAL,HIGH
+2026-10-09T22:00:57.1701065Z   INPUT_FORMAT: table
+2026-10-09T22:00:57.1701507Z   INPUT_TEMPLATE: 
+2026-10-09T22:00:57.1701926Z   INPUT_OUTPUT: 
+2026-10-09T22:00:57.1702358Z   INPUT_SKIP_DIRS: node_modules
+2026-10-09T22:00:57.1703542Z   INPUT_SKIP_FILES: .claude/skills/gstack/.github/docker/Dockerfile.ci,docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green
+2026-10-09T22:00:57.1704802Z   INPUT_TIMEOUT: 
+2026-10-09T22:00:57.1705231Z   INPUT_IGNORE_POLICY: 
+2026-10-09T22:00:57.1705697Z   INPUT_HIDE_PROGRESS: 
+2026-10-09T22:00:57.1706167Z   INPUT_LIST_ALL_PKGS: false
+2026-10-09T22:00:57.1706642Z   INPUT_SCANNERS: 
+2026-10-09T22:00:57.1707059Z   INPUT_TRIVY_CONFIG: 
+2026-10-09T22:00:57.1707494Z   INPUT_TF_VARS: 
+2026-10-09T22:00:57.1707909Z   INPUT_DOCKER_HOST: 
+2026-10-09T22:00:57.1708337Z ##[endgroup]
+2026-10-09T22:00:57.1845927Z ##[end-action id=__aquasecurity_trivy-action_2.__run_3;outcome=success;conclusion=success;duration_ms=30]
+2026-10-09T22:00:57.1850465Z ##[start-action display=Run Trivy;id=__aquasecurity_trivy-action_2.__run_4]
+2026-10-09T22:00:57.1873438Z ##[group]Run entrypoint.sh
+2026-10-09T22:00:57.1873899Z [36;1mentrypoint.sh[0m
+2026-10-09T22:00:57.1948543Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:00:57.1949387Z env:
+2026-10-09T22:00:57.1949751Z   INPUT_SCAN_TYPE: config
+2026-10-09T22:00:57.1950191Z   INPUT_IMAGE_REF: 
+2026-10-09T22:00:57.1950783Z   INPUT_SCAN_REF: .
+2026-10-09T22:00:57.1951176Z   INPUT_TRIVYIGNORES: 
+2026-10-09T22:00:57.1951588Z   INPUT_GITHUB_PAT: 
+2026-10-09T22:00:57.1952016Z   INPUT_LIMIT_SEVERITIES_FOR_SARIF: 
+2026-10-09T22:00:57.1952887Z   TRIVY_CACHE_DIR: /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.cache/trivy
+2026-10-09T22:00:57.1953753Z ##[endgroup]
+2026-10-09T22:00:57.2086480Z Running Trivy with options: trivy config .
+2026-10-09T22:00:57.2787824Z 2026-10-09T22:00:57Z	INFO	[misconfig] Misconfiguration scanning is enabled
+2026-10-09T22:00:57.8464601Z 2026-10-09T22:00:57Z	INFO	[checks-client] Using existing checks from cache	path="/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.cache/trivy/policy/content"
+2026-10-09T22:01:12.6580156Z 2026-10-09T22:01:12Z	ERROR	[helm scanner] Failed to render Chart files	file_path="charts/concept2cure-app" err="found in Chart.yaml, but missing in charts/ directory: postgresql, redis"
+2026-10-09T22:01:12.6590899Z 2026-10-09T22:01:12Z	ERROR	[helm scanner] Failed to render Chart files	file_path="charts/trialsage-cer" err="found in Chart.yaml, but missing in charts/ directory: postgresql, redis"
+2026-10-09T22:01:13.6484939Z 2026-10-09T22:01:13Z	INFO	[terraform scanner] Scanning root module	file_path="terraform/bootstrap"
+2026-10-09T22:01:13.6720549Z 2026-10-09T22:01:13Z	INFO	[terraform scanner] Scanning root module	file_path="terraform/environments/production"
+2026-10-09T22:01:13.6749116Z 2026-10-09T22:01:13Z	WARN	[terraform parser] Variable values were not found in the environment or variable files. Evaluating may not work correctly.	module="root" variables="acm_certificate_arn, ai_provider_placement_approvals, anthropic_api_key, audit_attestation_key, audit_export_signing_key, audit_hmac_key, audit_hmac_secret, cloudfront_certificate_arn, cloudfront_origin_secret, connector_encryption_key, domain_aliases, image_tag, jwt_secret, mfa_encryption_key, platform_owner_emails, refresh_token_secret, smtp_from, smtp_host, smtp_pass, smtp_user"
+2026-10-09T22:01:15.4779341Z 2026-10-09T22:01:15Z	INFO	[terraform scanner] Scanning root module	file_path="terraform/environments/staging"
+2026-10-09T22:01:15.4801863Z 2026-10-09T22:01:15Z	WARN	[terraform parser] Variable values were not found in the environment or variable files. Evaluating may not work correctly.	module="root" variables="acm_certificate_arn, ai_provider_placement_approvals, anthropic_api_key, audit_attestation_key, audit_export_signing_key, audit_hmac_key, audit_hmac_secret, cloudfront_certificate_arn, cloudfront_origin_secret, connector_encryption_key, domain_aliases, image_tag, jwt_secret, mfa_encryption_key, platform_owner_emails, refresh_token_secret, smtp_from, smtp_host, smtp_pass, smtp_user"
+2026-10-09T22:01:17.3837695Z 2026-10-09T22:01:17Z	INFO	[terraform executor] Ignore finding	rule="aws-ec2-no-public-egress-sgr" range="terraform/modules/embedding-service/main.tf:78"
+2026-10-09T22:01:17.3839575Z 2026-10-09T22:01:17Z	INFO	[terraform executor] Ignore finding	rule="aws-ec2-no-public-egress-sgr" range="terraform/modules/ecs-fargate/main.tf:124"
+2026-10-09T22:01:17.3841113Z 2026-10-09T22:01:17Z	INFO	[terraform executor] Ignore finding	rule="aws-cloudfront-enable-waf" range="terraform/modules/cloudfront/main.tf:157-281"
+2026-10-09T22:01:17.3842613Z 2026-10-09T22:01:17Z	INFO	[terraform executor] Ignore finding	rule="aws-s3-encryption-customer-key" range="terraform/modules/cloudfront/main.tf:43-50"
+2026-10-09T22:01:17.3843916Z 2026-10-09T22:01:17Z	INFO	[terraform executor] Ignore finding	rule="aws-elb-alb-not-public" range="terraform/modules/alb/main.tf:25"
+2026-10-09T22:01:17.4818098Z 2026-10-09T22:01:17Z	INFO	[terraform executor] Ignore finding	rule="aws-elb-alb-not-public" range="terraform/modules/alb/main.tf:25"
+2026-10-09T22:01:17.4820708Z 2026-10-09T22:01:17Z	INFO	[terraform executor] Ignore finding	rule="aws-ec2-no-public-egress-sgr" range="terraform/modules/embedding-service/main.tf:78"
+2026-10-09T22:01:17.4822238Z 2026-10-09T22:01:17Z	INFO	[terraform executor] Ignore finding	rule="aws-ec2-no-public-egress-sgr" range="terraform/modules/ecs-fargate/main.tf:124"
+2026-10-09T22:01:17.4824103Z 2026-10-09T22:01:17Z	INFO	[terraform executor] Ignore finding	rule="aws-cloudfront-enable-waf" range="terraform/modules/cloudfront/main.tf:157-281"
+2026-10-09T22:01:17.4825598Z 2026-10-09T22:01:17Z	INFO	[terraform executor] Ignore finding	rule="aws-s3-encryption-customer-key" range="terraform/modules/cloudfront/main.tf:43-50"
+2026-10-09T22:01:17.5273272Z 2026-10-09T22:01:17Z	INFO	Detected config files	num=14
+2026-10-09T22:01:17.5291352Z 
+2026-10-09T22:01:17.5291898Z 📣 [34mNotices:[0m
+2026-10-09T22:01:17.5292965Z   - Version 0.75.0 of Trivy is now available, current version is 0.70.0
+2026-10-09T22:01:17.5293557Z 
+2026-10-09T22:01:17.5294201Z To suppress version checks, run Trivy scans with the --skip-version-check flag
+2026-10-09T22:01:17.5294857Z 
+2026-10-09T22:01:17.5294922Z 
+2026-10-09T22:01:17.5295120Z Report Summary
+2026-10-09T22:01:17.5295373Z 
+2026-10-09T22:01:17.5295921Z ┌───────────────────────────────────────────────┬────────────┬───────────────────┐
+2026-10-09T22:01:17.5296684Z │                    Target                     │    Type    │ Misconfigurations │
+2026-10-09T22:01:17.5297446Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5298196Z │ Dockerfile.optimized                          │ dockerfile │         0         │
+2026-10-09T22:01:17.5299271Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5300108Z │ infra/k8s/bff-with-predicate-shadow.yaml      │ kubernetes │         0         │
+2026-10-09T22:01:17.5300992Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5301731Z │ terraform/bootstrap                           │ terraform  │         0         │
+2026-10-09T22:01:17.5302515Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5303266Z │ terraform/bootstrap/main.tf                   │ terraform  │         0         │
+2026-10-09T22:01:17.5304085Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5304891Z │ terraform/environments/production             │ terraform  │         0         │
+2026-10-09T22:01:17.5305571Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5306200Z │ terraform/environments/staging                │ terraform  │         0         │
+2026-10-09T22:01:17.5306863Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5307504Z │ terraform/modules/alb/main.tf                 │ terraform  │         0         │
+2026-10-09T22:01:17.5308171Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5308804Z │ terraform/modules/cloudfront/main.tf          │ terraform  │         0         │
+2026-10-09T22:01:17.5309852Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5310739Z │ terraform/modules/compliance-evidence/main.tf │ terraform  │         0         │
+2026-10-09T22:01:17.5311425Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5312034Z │ terraform/modules/ecr/main.tf                 │ terraform  │         0         │
+2026-10-09T22:01:17.5312685Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5313310Z │ terraform/modules/ecs-fargate/main.tf         │ terraform  │         0         │
+2026-10-09T22:01:17.5314107Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5314753Z │ terraform/modules/embedding-service/main.tf   │ terraform  │         0         │
+2026-10-09T22:01:17.5315428Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5316033Z │ terraform/modules/rds/main.tf                 │ terraform  │         0         │
+2026-10-09T22:01:17.5316703Z ├───────────────────────────────────────────────┼────────────┼───────────────────┤
+2026-10-09T22:01:17.5317314Z │ terraform/stack/vault_storage.tf              │ terraform  │         0         │
+2026-10-09T22:01:17.5317967Z └───────────────────────────────────────────────┴────────────┴───────────────────┘
+2026-10-09T22:01:17.5318321Z Legend:
+2026-10-09T22:01:17.5318555Z - '-': Not scanned
+2026-10-09T22:01:17.5319397Z - '0': Clean (no security findings detected)
+2026-10-09T22:01:17.5319833Z 
+2026-10-09T22:01:17.5456845Z ##[end-action id=__aquasecurity_trivy-action_2.__run_4;outcome=success;conclusion=success;duration_ms=20360]
+2026-10-09T22:01:17.5459707Z ##[start-action display=Remove Trivy Envs file;id=__aquasecurity_trivy-action_2.__run_5]
+2026-10-09T22:01:17.5477601Z ##[group]Run rm -f trivy_envs.txt
+2026-10-09T22:01:17.5477920Z [36;1mrm -f trivy_envs.txt[0m
+2026-10-09T22:01:17.5540209Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-09T22:01:17.5540771Z ##[endgroup]
+2026-10-09T22:01:17.5638611Z ##[end-action id=__aquasecurity_trivy-action_2.__run_5;outcome=success;conclusion=success;duration_ms=17]
+2026-10-09T22:01:17.5830504Z Post job cleanup.
+2026-10-09T22:01:17.5834358Z ##[start-action display=Restore DB from cache;id=__7b1f096a-4835-4b17-8475-ec8dbe2895ec.__actions_cache]
+2026-10-09T22:01:17.5869337Z Post job cleanup.
+2026-10-09T22:01:17.7352095Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit --files-from manifest.txt --use-compress-program zstdmt
+2026-10-09T22:01:20.5176823Z Sent 84821824 of 84821824 (100.0%), 80.9 MBs/sec
+2026-10-09T22:01:20.9220353Z Cache saved with key: cache-trivy-2026-10-09
+2026-10-09T22:01:20.9284214Z ##[end-action id=__7b1f096a-4835-4b17-8475-ec8dbe2895ec.__actions_cache;outcome=success;conclusion=success;duration_ms=3344]
+2026-10-09T22:01:20.9287878Z ##[start-action display=Install Trivy;id=__7b1f096a-4835-4b17-8475-ec8dbe2895ec.__aquasecurity_setup-trivy]
+2026-10-09T22:01:20.9390987Z Post job cleanup.
+2026-10-09T22:01:20.9395888Z ##[end-action id=__7b1f096a-4835-4b17-8475-ec8dbe2895ec.__aquasecurity_setup-trivy;outcome=success;conclusion=success;duration_ms=10]
+2026-10-09T22:01:20.9610764Z Post job cleanup.
+2026-10-09T22:01:20.9614634Z ##[start-action display=Restore DB from cache;id=__029f4700-e8cc-4a53-a779-c0da45028406.__actions_cache]
+2026-10-09T22:01:20.9649746Z Post job cleanup.
+2026-10-09T22:01:21.1118749Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit --files-from manifest.txt --use-compress-program zstdmt
+2026-10-09T22:01:22.8815742Z Failed to save: Unable to reserve cache with key cache-trivy-2026-10-09, another job may be creating this cache.
+2026-10-09T22:01:22.8958440Z ##[end-action id=__029f4700-e8cc-4a53-a779-c0da45028406.__actions_cache;outcome=success;conclusion=success;duration_ms=1934]
+2026-10-09T22:01:22.8962646Z ##[start-action display=Install Trivy;id=__029f4700-e8cc-4a53-a779-c0da45028406.__aquasecurity_setup-trivy]
+2026-10-09T22:01:22.9054686Z Post job cleanup.
+2026-10-09T22:01:22.9060454Z ##[end-action id=__029f4700-e8cc-4a53-a779-c0da45028406.__aquasecurity_setup-trivy;outcome=success;conclusion=success;duration_ms=9]
+2026-10-09T22:01:22.9119740Z Post job cleanup.
+2026-10-09T22:01:23.0362827Z (node:3197) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-09T22:01:23.0363958Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-09T22:01:23.0536234Z Post job cleanup.
+2026-10-09T22:01:23.1402591Z [command]/usr/bin/git version
+2026-10-09T22:01:23.1439105Z git version 2.55.0
+2026-10-09T22:01:23.1475752Z Temporarily overriding HOME='/home/runner/work/_temp/994b15dd-e444-4a24-b991-dccc013de8f1' before making global git config changes
+2026-10-09T22:01:23.1476894Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-09T22:01:23.1482682Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit
+2026-10-09T22:01:23.1519704Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-09T22:01:23.1553086Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-09T22:01:23.1805536Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-09T22:01:23.1828790Z http.https://github.com/.extraheader
+2026-10-09T22:01:23.1840639Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-09T22:01:23.1873183Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-09T22:01:23.2114174Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-09T22:01:23.2144851Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-09T22:01:23.2513871Z Cleaning up orphan processes
+2026-10-09T22:01:23.2836621Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020, actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

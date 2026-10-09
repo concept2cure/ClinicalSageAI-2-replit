@@ -1,0 +1,6 @@
+{
+  "testedLocalCommit": "6dc5a3122aa6101eb1767d291b0408e229c6feea",
+  "scope": "Exact git ls-tree -r -z entries excluding paths under docs/; NUL delimiters retained",
+  "trackedEntries": 10845,
+  "sha256": "605da526976d9df095317781d5825abbb77e01f21e1107fceed9c04df5c89606"
+}

@@ -68,7 +68,9 @@ describe('IND CMC exact leaf guidance through existing AnA drafting', () => {
     expect(user).toContain('Do not fabricate');
     expect(user).toContain('unresolved');
     expect(user).not.toContain('M4Q(R2)');
-    expect(sent.metadata.requirementsSource).toMatch(new RegExp(`record:ctd-section:${code.replaceAll('.', '\\.')}:exact$`));
+    const requirementsSource = sent.metadata.requirementsSource as string;
+    expect(requirementsSource).toBeTypeOf('string');
+    expect(requirementsSource.endsWith(`record:ctd-section:${code}:exact`)).toBe(true);
     expect(sent.organizationId).toBe(41);
     expect(sent.projectId).toBe(93);
     expect(result.content).toBe('gateway wiring sentinel');

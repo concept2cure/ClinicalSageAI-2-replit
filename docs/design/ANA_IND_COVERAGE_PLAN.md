@@ -136,8 +136,12 @@ Remote release qualification remains separate from local checks. The prior
 a17157f3 and verified by successful Tier 5 run 37983068322; b879e9a9 records the
 completed verification at
 `docs/evidence/D1/2026-10-09-fresh-ana-runs/POST_PUSH_VERIFICATION.md`.
-The Handlebars dependency blocker is repaired locally in this follow-up and
-still requires fresh remote verification. Other governance, database and
-Semgrep failures observed in broader CI remain separate release blockers.
+The Handlebars dependency blocker is repaired and freshly verified by the
+successful Security Scan job 114044298588 in CI run 37996641066 on implementation
+`b4badf56`. Ordinary full-project TypeScript, all four Tier 5 checks and the
+named AnA readiness suite also passed on that SHA. The permanent receipt is
+[`POST_PUSH_VERIFICATION.md`](../evidence/D4/2026-10-09-ana-ind-depth-delivery/POST_PUSH_VERIFICATION.md).
+Completed proof/guard, tenant-purge and Semgrep failures remain separate
+release blockers; pending wider test results are not passing evidence.
 Local test/build/pre-push success must not be reported as remote CI success or
 commercial deployment while those release blockers remain open.

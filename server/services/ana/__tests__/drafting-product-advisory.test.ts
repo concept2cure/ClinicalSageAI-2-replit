@@ -1,10 +1,11 @@
 /** Nested IND drafts must retain declared context without claiming evidence qualification. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => ({ route: vi.fn() }));
-vi.mock('../../ai-gateway/gateway', async importOriginal => ({
-  ...await importOriginal<typeof import('../../ai-gateway/gateway')>(),
-  getGateway: () => ({ route: h.route }),
-}));
+type GatewayModule = typeof import('../../ai-gateway/gateway');
+vi.mock('../../ai-gateway/gateway', async importOriginal => {
+  const actual = await importOriginal<GatewayModule>();
+  return { ...actual, getGateway: () => ({ route: h.route }) };
+});
 import { AnaDocumentDraftingService, type DocumentDraftRequest } from '../AnaDocumentDraftingService';
 import { getToolHandler } from '../AnaToolExecutor';
 import { BATCH_DRAFT_SECTIONS } from '../legacy-import-tool-defs';
