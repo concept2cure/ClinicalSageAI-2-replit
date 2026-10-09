@@ -99,7 +99,7 @@ export function normalizeModality(value: string | null | undefined): Modality | 
   if ((MODALITIES as readonly string[]).includes(v)) return v as Modality;
   const underscored = v.replace(/[ -]/g, '_');
   if ((MODALITIES as readonly string[]).includes(underscored)) return underscored as Modality;
-  return MODALITY_ALIASES[v] ?? null;
+  return Object.hasOwn(MODALITY_ALIASES, v) ? MODALITY_ALIASES[v] : null;
 }
 
 export type ReviewCenter = 'CDER' | 'CBER';

@@ -1,0 +1,412 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/324dc668b968/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted 38ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CTD code from the section brief, naming the entry and how it matched 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CSR alias from the ICH E3 outline, with the basis the outline carries 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a lifecycle document type by id, case-insensitively 0ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > says what it does not index, and never answers from another entry 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > is the only dispatch: the tool delegates and keeps no copy of the rule 2ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > imports the brief renderers and is imported by none of them 0ms
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | tests/regulatory/ctd-registry-consistency.test.ts
+{
+  "timestamp": "2026-10-09T20:11:50.916Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T20:11:50.917Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/ctd-registry-consistency.test.ts
+{
+  "timestamp": "2026-10-09T20:11:50.917Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/ctd-registry-consistency.test.ts
+[database] Database connection successful
+
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > an entry with no code (undefined) is skipped, whatever its title says 2ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > an entry with no code (null) is skipped, whatever its title says 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > an entry with no code ("") is skipped, whatever its title says 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > an entry with no code ("   ") is skipped, whatever its title says 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node naming several Module 1 documents may sit at the heading that holds them all 1ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > …but a node naming one document still files at that document’s heading, not at a parent 1ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node AT 1.3.2 must carry the meaning FDA fixes for it (Patent information is caught) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node AT 1.3.5 must carry the meaning FDA fixes for it (Field copy certification is caught) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > a node AT 1.12.14 must carry the meaning FDA fixes for it (Pediatric study plan is caught) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the shared Module 1 contract — amendments > the identity rules accept what those headings hold, and say nothing about a title-less code 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 4.3.1 is not a heading of the record 1ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > m4.3.1 is not a heading of the record 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.8 is not a heading of the record 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 5.3.8 is not a heading of the record 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.3 "Summary of Clinical Safety" contradicts the record (efficacy/safety) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.3 "Summary of Clinical Pharmacodynamics" contradicts the record (the old orchestrator line) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.4 "Summary of Clinical Efficacy" contradicts the record (efficacy/safety) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7.5 "Summary of Clinical Safety" contradicts the record (literature references, not a summary) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.6.2 "Pharmacokinetics Written Summary" contradicts the record (pharmacology/pharmacokinetics) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.6.6 "Pharmacology Written Summary" contradicts the record (toxicology/pharmacology) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.6.3 "Pharmacology Written Summary" contradicts the record (written/tabulated) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.5 "Clinical Summary" contradicts the record (overview/summary) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 2.7 "Clinical Overview" contradicts the record (summary/overview) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > 3.2.S "Drug Product" contradicts the record (substance/product) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > m3.2.P "Drug Substance" contradicts the record (product/substance) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > extra words are not contradictions, and neither is naming both members of a pair 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > Module 1, code-less and non-code entries are not its business 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the Module 2–5 contract — a real heading, and a title that does not contradict it > Module 3 depth the record does not yet model is reported unchecked — neither passed nor failed 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > every heading of both halves is a heading, checked, and agrees with itself 1ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.5 with "overview" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.7 with "summary" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.7.3 with "efficacy" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.7.4 with "safety" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.7.5 with "literature" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.6.2 with "pharmacology written" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.6.3 with "pharmacology tabulated" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.6.4 with "pharmacokinetics written" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 2.6.6 with "toxicology written" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 3.2.S with "substance" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > the record titles 3.2.P with "product" 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the record checks against itself > every contradicting term is a word some record title carries 1ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > IND section registry (AnA plans, coverage, chat) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > deep IND eCTD map (project bootstrap, readiness, checklist) 1ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > AnA document templates (injected when a message names a document) 1ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > AnA submission workflows (IND / NDA / BLA) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > required-artifact matrix (US IND / NDA / BLA bootstrap) 0ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the check is live — a wrong 2.7.3 is caught wherever 2.7.3 is named > retitling the record’s 2.7.3 "Summary of Clinical Safety" fails every registry that names 2.7.3 1ms
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts > the check is live — a wrong 2.7.3 is caught wherever 2.7.3 is named > a copy that retitles 2.7.3 "Summary of Clinical Safety" fails against the real record 1ms
+(node:46) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts
+{
+  "timestamp": "2026-10-09T20:11:54.477Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T20:11:54.478Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts
+{
+  "timestamp": "2026-10-09T20:11:54.478Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.S.1.1 as its own recorded section, rather than a broad ancestor 6ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.S.1.2 as its own recorded section, rather than a broad ancestor 3ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.S.1.3 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.1.1 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.1.2 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.2.1 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.2.2 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.2.3 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.3 as its own recorded section, rather than a broad ancestor 1ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.4 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.5 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > resolves 3.2.P.2.6 as its own recorded section, rather than a broad ancestor 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.S.1.1 guidance and missing-evidence limits to the real drafting gateway 14ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.S.1.2 guidance and missing-evidence limits to the real drafting gateway 1ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.S.1.3 guidance and missing-evidence limits to the real drafting gateway 1ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.1.1 guidance and missing-evidence limits to the real drafting gateway 1ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.1.2 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.2.1 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.2.2 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.2.3 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.3 guidance and missing-evidence limits to the real drafting gateway 1ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.4 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.5 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > passes exact 3.2.P.2.6 guidance and missing-evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > keeps missing phase/modality and sponsor data unresolved in every new leaf prompt 1ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > retains an explicit refusal to invent wholly unindexed section guidance 0ms
+ ✓ server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts > IND CMC exact leaf guidance through existing AnA drafting > labels unsupported deeper numbering as inherited guidance, never exact coverage 0ms
+(node:55) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-09T20:11:56.557Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T20:11:56.558Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-09T20:11:56.558Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 4ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 2ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > delivers processed project source records to the gateway with explicit evidence limits 8ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 0ms
+(node:63) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-09T20:11:57.774Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T20:11:57.775Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-09T20:11:57.776Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Database connection successful
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-09T20:11:58.179Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+Loaded 0 academic documents
+
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.3 is Summary of Clinical Efficacy 2ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.4 is Summary of Clinical Safety 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.5 is Literature References 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.2 is Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.12.14 is Environmental Assessment 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.14 is labeling, not the environmental assessment 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a sub-section is briefed as its nearest registered section, and says so 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a parent is briefed by the sections it contains, not as its first child 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a code nothing registers gets no line rather than a guessed one 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > agrees with the canonical overlay on every registered code 3ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.1 carries Form FDA 1571 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.2 carries Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.3.3 carries Debarment Certification 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.14.4.1 carries Investigator's Brochure 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.2 carries Tabular Listing 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.3.5.1 holds the reports of controlled clinical studies, not a protocol playbook 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > opens with the canonical code and title for every registered code 4ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > keeps the module playbooks the overlay does not model 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical efficacy" → 2.7.3 3ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "draft section 2.7.3" → 2.7.3 2ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical safety" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4 summary of clinical safety" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every template with a CTD Module 2–5 primary code is named for that heading 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every coded 2.5.x / 2.7.x sub-heading carries its ICH M4E title 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 does not claim to be the ISE 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.4 does not claim to be the ISS 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 states FDA’s own description of the summary 0ms
+(node:79) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-09T20:12:02.612Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T20:12:02.613Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-09T20:12:02.613Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_DSUR is a harmonised document, not a filing to ICH 2ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_SAP is a harmonised document, not a filing to ICH 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_PROTOCOL is a harmonised document, not a filing to ICH 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ISO_CIP preserves its own global reference body 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > IEC_62304 preserves its own global reference body 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > QMS_MDSAP preserves its own global reference body 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous CTA needs jurisdiction before drafting to a trial route 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous  cta  needs jurisdiction before drafting to a trial route 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > exact regional trial identity still delivers the applicable context 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > DSUR section drafting uses the corrected E2F record through section 20 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > EU_CTA drafts from its exact scoped outline 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA drafts from its exact scoped outline 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA_A drafts from its exact scoped outline 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > JP_CTN drafts from its exact scoped outline 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > US_IND_AMENDMENT drafts from its exact scoped outline 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_NONCLIN_SUMMARY drafts from its exact scoped outline 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA rejects marketing CTD guidance outside its selected scope 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA_A rejects marketing CTD guidance outside its selected scope 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_NONCLIN_SUMMARY rejects marketing CTD guidance outside its selected scope 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CTIS groups and conditional attachments are not described as CTD modules or optional waivers 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current M11 protocol requirements are consumed by section drafting > a parent objective section briefs its current child headings from the canonical outline 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current M11 protocol requirements are consumed by section drafting > an applicable assessment carries scope limits without implying universal assessment requirements 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current M11 protocol requirements are consumed by section drafting > an unmodelled protocol heading 8.7.1 is explicit and never replaced by another document framework 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current M11 protocol requirements are consumed by section drafting > an unmodelled protocol heading 15 is explicit and never replaced by another document framework 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current M11 protocol requirements are consumed by section drafting > an unmodelled protocol heading 3.2.S is explicit and never replaced by another document framework 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current US IND safety reporting remains subtype and route scoped > section drafting includes the canonical current route limits before any form or placement assumptions 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current US IND safety reporting remains subtype and route scoped > lifecycle timing distinguishes determination-based 15-day reporting, receipt-based 7-day reporting and prompt follow-up 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current US IND safety reporting remains subtype and route scoped > the bounded canonical lifecycle brief keeps current route and timing and an unknown section stays unindexed 0ms
+(node:87) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > registers guidance for every core CTD leaf section 2ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > every guidance entry is industry-grade (real prose + concrete content elements) 2ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > drug-substance and drug-product sections require CMC across IND/NDA/BLA 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — marketing blueprint is deep > an NDA blueprint exposes drug-substance and clinical leaves as first-class sections 6ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > covers the full IND->NDA/BLA lifecycle spine 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > every document type carries real components and regulatory basis 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > the NDA document type resolves deep CTD sections from the shared overlay 2ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > links document types to the canonical taxonomy so the catalog can reach deep guidance 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > meeting packages are flagged and the ISS/ISE integrated summaries exist 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — prompt generation > drafts a deep leaf code against its real guidance 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — prompt generation > every registered guidance code has a non-empty title and module 1-5 4ms
+(node:95) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.3 / 2.7.4 prompts agree with their own guidance: the ISE / ISS are filed in 5.3.5.3 > 2.7.3 drafting prompt does not say the section houses the integrated summary 2ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.3 / 2.7.4 prompts agree with their own guidance: the ISE / ISS are filed in 5.3.5.3 > 2.7.4 drafting prompt does not say the section houses the integrated summary 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.4 references where death / SAE narratives are; it does not send them to 2.7.6 > no field ties narratives to 2.7.6 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.4 references where death / SAE narratives are; it does not send them to 2.7.6 > names 2.7.4.2.2 and the study reports as the narratives’ home 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > states that synopses are not repeated in Module 2 in eCTD and are hyperlinked 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > keeps the EU nuance: copies are also accepted 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > no longer routes SAE/death narratives through 2.7.6 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > every sentence that says PREA does not apply to orphan indications also states the exception 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > names the 505B(k)(2) molecular-target exception, and the drafting prompt carries it 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > requiredFor stays NDA/BLA: an iPSP is not owed by every IND 1ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > no field places the IB at 1.4.1; 1.4.1 appears only named as the letter of authorization 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > cites E6(R3) Appendix A, and "Section 7" only as the E6(R2) location 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > reference safety information carries the frequency and nature of expected serious adverse reactions 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > the drafting prompt drafts the IB at 1.14.4.1, not a 1.4.1 reference stub 0ms
+(node:103) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused > 4.3.1 is not an ICH heading (M4S 4.3 Literature References has no subdivisions; single-dose toxicity is 4.2.3.1) 2ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused > m4.3.1 is not an ICH heading (the m-prefixed spelling of the same invented heading) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused > 4.2.4 is not an ICH heading (M4S 4.2 has 4.2.1–4.2.3 only) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused > 2.8 is not an ICH heading (Module 2 ends at 2.7) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused > 5.3.8 is not an ICH heading (M4E 5.3 ends at 5.3.7) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused > 5.5 is not an ICH heading (Module 5 ends at 5.4) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused > 6 is not an ICH heading (there is no Module 6) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused > 1.2 is not an ICH heading (Module 1 is regional, not an ICH M4 heading) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused >  is not an ICH heading (empty) 1ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused > Single dose toxicity is not an ICH heading (not code-shaped) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 4.2.3.1 is an ICH heading (guidance record) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > m4.2.3.1 is an ICH heading (guidance record, m-prefixed) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 4.3 is an ICH heading (guidance record) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 2.7.3 is an ICH heading (guidance record) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 3.2.s.1 is an ICH heading (guidance record, lower-case Module 3 part) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 2 is an ICH heading (structural: Module 2) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 2.1 is an ICH heading (structural: CTD table of contents) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 2.6 is an ICH heading (structural: nonclinical written and tabulated summaries) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 2.7 is an ICH heading (structural: clinical summary) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 2.5.7 is an ICH heading (structural: M4E 2.5.7 Literature References) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 2.7.4.2.1.1 is an ICH heading (structural: M4E common adverse events) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 4.1 is an ICH heading (structural: Module 4 table of contents) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 4.2.1 is an ICH heading (structural: pharmacology) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 4.2.3 is an ICH heading (structural: toxicology) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 4.2.3.5.4 is an ICH heading (structural: juvenile animal studies) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 5.3.1.1 is an ICH heading (structural: BA study reports) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 5.3.5 is an ICH heading (structural: reports of efficacy and safety studies) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > 3.2.P is an ICH heading (structural: Module 3 skeleton) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > ichHeadingTitle reads whichever half holds the code, and null for a non-heading 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > ICH_M4_HEADINGS — one record with the guidance, never a copy of it > is disjoint from the CTD_AUTHORING_GUIDANCE keys 1ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > ICH_M4_HEADINGS — one record with the guidance, never a copy of it > holds no duplicate code 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > ICH_M4_HEADINGS — one record with the guidance, never a copy of it > every code is canonical, in Modules 2–5, and in CTD order 4ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > ICH_M4_HEADINGS — one record with the guidance, never a copy of it > every row names its parent, and the parent is itself a heading 5ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > ICH_M4_HEADINGS — one record with the guidance, never a copy of it > every M2–M5 guidance code hangs under a heading (the tree is closed) 0ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > ICH_M4_HEADINGS — one record with the guidance, never a copy of it > every basis is well formed 2ms
+ ✓ tests/regulatory/ich-m4-headings.test.ts > ICH_M4_HEADINGS — one record with the guidance, never a copy of it > Module 3 holds the backbone skeleton and parents of the exact pharmaceutical-development leaves 0ms
+(node:111) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_nda_meeting MTG-EFF 1ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_nda_meeting MTG-SAFETY 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_bla_meeting MTG-EFF 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_bla_meeting MTG-SAFETY 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.1 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.2 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.3 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.4 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > names every heading in the content elements and the generation prompt 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > ties the headings to FDA's Benefit-Risk Framework and fits the brief's caps 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > warns against product data in the Therapeutic Context 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > reaches the section brief with every heading, including from a child code 1ms
+
+ Test Files  10 passed (10)
+      Tests  230 passed (230)
+   Start at  16:11:48
+   Duration  15.41s (transform 7.06s, setup 169ms, import 13.64s, tests 223ms, environment 1ms)
+

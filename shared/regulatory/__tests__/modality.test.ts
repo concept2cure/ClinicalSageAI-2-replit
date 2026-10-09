@@ -43,6 +43,9 @@ describe('registry shape', () => {
 });
 
 describe('normalizeModality — variants land, classes do not', () => {
+  it.each(['__proto__', 'constructor', 'toString', 'valueOf', 'hasOwnProperty'])('refuses inherited object name %s as a modality', label => {
+    expect(normalizeModality(label)).toBeNull();
+  });
   it('accepts canonical members, spacing and case variants', () => {
     expect(normalizeModality('small_molecule')).toBe('small_molecule');
     expect(normalizeModality('Small Molecule')).toBe('small_molecule');

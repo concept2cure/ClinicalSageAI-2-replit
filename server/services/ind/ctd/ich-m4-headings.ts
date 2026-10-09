@@ -20,9 +20,9 @@
  * Scope.
  *   - Module 1 is regional and is not an ICH M4 heading; `isIchHeading` is
  *     false for every 1.x code.
- *   - Module 3: this file holds only the skeleton the eCTD backbone names
- *     (3, 3.1, 3.2, 3.2.S, 3.2.P, 3.3). Module 3 content and its deeper headings
- *     (3.2.S.1.1…, 3.2.P.2.x…, 3.2.A.1–3, 2.3.S.x…) belong to the CMC lane, which
+ *   - Module 3: this file holds the eCTD backbone skeleton and two structural
+ *     pharmaceutical-development parents (3.2.P.2.1 and 3.2.P.2.2). Module 3
+ *     content and its deeper headings (3.2.A.1–3, 2.3.S.x…) belong to the CMC lane, which
  *     appends them here through the same `IchM4Heading` type. There is never a
  *     second Module 3 tree. Append-only shared file (ANA_REGULATORY_RECORD.md R0).
  *   - The tabulated nonclinical summaries (2.6.3, 2.6.5, 2.6.7) are numbered in
@@ -77,7 +77,7 @@ const M4S = (section: string): RegulatoryBasis => ({
 const M4E = (section: string): RegulatoryBasis => recall(`ICH M4E(R2) ${section}`);
 const M4Q = (section: string): RegulatoryBasis => ({
   ...recall(`ICH M4Q(R1) ${section}`),
-  note: 'Module 3 skeleton only; Module 3 content is the CMC lane',
+  note: 'Module 3 structure only; detailed Module 3 content is in the canonical authoring overlay',
 });
 
 type Row = readonly [code: string, title: string, basis: RegulatoryBasis];
@@ -166,6 +166,9 @@ const ROWS: readonly Row[] = [
   ['3.2', 'Body of Data', M4_ORG()],
   ['3.2.S', 'Drug Substance', M4Q('3.2.S')],
   ['3.2.P', 'Drug Product', M4Q('3.2.P')],
+  // Parents of the exact P.2 leaves added 2026-10-09; content remains in the overlay.
+  ['3.2.P.2.1', 'Components of the Drug Product', M4Q('3.2.P.2.1')],
+  ['3.2.P.2.2', 'Drug Product', M4Q('3.2.P.2.2')],
   ['3.3', 'Literature References', M4_ORG()],
 
   // ── Module 4 ────────────────────────────────────────────────────────────────

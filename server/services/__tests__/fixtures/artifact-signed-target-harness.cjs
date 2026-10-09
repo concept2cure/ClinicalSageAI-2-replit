@@ -18,8 +18,9 @@ function load(tree,file,doubles){
  const src=fs.readFileSync(path.join(tree,file),'utf8');
  const compiled=ts.transpileModule(src,{reportDiagnostics:true,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,esModuleInterop:true}});
  assert.equal(compiled.diagnostics.length,0,'syntactic diagnostics');
- const exp={};vm.runInThisContext(`(function(require,module,exports){${compiled.outputText}\n})`,{filename:file})
- (n=>{if(Object.hasOwn(doubles,n))return doubles[n];if(n==='crypto')return crypto;throw new Error('Unexpected import: '+n);},{exports:exp},exp);
+ const exp={};
+ const execute=vm.runInThisContext(`(function(require,module,exports){${compiled.outputText}\n})`,{filename:file});
+ execute(n=>{if(Object.hasOwn(doubles,n))return doubles[n];if(n==='crypto')return crypto;throw new Error('Unexpected import: '+n);},{exports:exp},exp);
  return exp;
 }
 const columns={

@@ -50,6 +50,8 @@ import { renderOutlineBrief } from '../ind/ctd/section-brief.js';
 import { ICH_M11_PROTOCOL_LIMITATIONS } from '../../../shared/regulatory/protocol-m11.js';
 import { getLifecycleDocumentTypeForRegistry } from '../ind/ctd/index.js';
 import { IND_SAFETY_REPORT_ROUTE_LIMITS, IND_SAFETY_REPORT_TIMING } from '../ind/ctd/lifecycle-document-types.js';
+import { getProfile, renderProfileForPrompt } from './therapeutic-area-profiles/index.js';
+import { normalizeModality, MODALITY_FRAME, MODALITY_LABEL } from '../../../shared/regulatory/modality.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory System Prompts (cached for cost efficiency)
@@ -651,6 +653,9 @@ export interface DocumentDraftRequest {
     indication?: string;
     predicateDevice?: string;
     classification?: string;
+    /** Caller-declared context, not independently qualified project evidence. */
+    therapeuticArea?: string;
+    modality?: string;
   };
   /** Enable extended thinking for complex analysis */
   enableThinking?: boolean;
@@ -702,6 +707,41 @@ export interface DocumentDraftResponse {
    * not-confirmed.
    */
   truncated: boolean;
+}
+
+function modalityDraftAdvisory(modality: ReturnType<typeof normalizeModality>, section: string | null) {
+  if (!modality) return ['PRODUCT MODALITY: UNASSESSED. No unambiguous modality was supplied; do not sharpen a broad biologic label.'];
+  const blocks = [`PRODUCT MODALITY (declared): ${MODALITY_LABEL[modality]}.`];
+  if (section?.startsWith('3.')) {
+    blocks.push(`Existing modality CMC reference set (advisory, currency unverified): ${MODALITY_FRAME[modality].cmcCore.join('; ')}.`);
+    blocks.push('Assess each reference against the actual product and development phase. Missing characterization, validation or comparability results remain evidence gaps, never invented results.');
+  }
+  return blocks;
+}
+
+/** Carry declared product context into the nested draft; do not promote it to evidence. */
+function draftProductAdvisory(
+  context: DocumentDraftRequest['projectContext'], sectionType: string, requirementsSource: string,
+) {
+  const profile = getProfile(typeof context?.therapeuticArea === 'string' ? context.therapeuticArea : null);
+  const modality = normalizeModality(typeof context?.modality === 'string' ? context.modality : null);
+  const audit = { productContextSource: 'caller-declared-unverified', therapeuticProfile: profile?.id ?? null, productModality: modality };
+  if (!context || (context.therapeuticArea === undefined && context.modality === undefined)) {
+    return { prompt: '', audit: { ...audit, productContextSource: 'unassessed' } };
+  }
+  const section = leadingSectionCode(sectionType)?.code ??
+    /^record:ctd-section:([^:]+):/.exec(requirementsSource)?.[1] ?? null;
+  const blocks = [
+    'PRODUCT CONTEXT STATUS: CALLER-DECLARED, UNVERIFIED ADVISORY.',
+    'These labels select existing advisory context; they are not server-loaded project facts or scientific source qualification. ' +
+      'Use the selected section requirements and supplied evidence first. Confirm phase, disease stage, population and product details; ' +
+      'do not infer modality from therapeutic area, or an approved pathway from a profile. Static reference titles do not establish current guidance status or effective dates.',
+  ];
+  blocks.push(profile
+    ? renderProfileForPrompt(profile, { activeCtdSection: section, onlyApplicableRules: true, maxBulletsPerSection: 4 })
+    : 'THERAPEUTIC AREA: UNASSESSED. No recognized area label was supplied; do not substitute another profile.');
+  blocks.push(...modalityDraftAdvisory(modality, section));
+  return { prompt: `${blocks.join('\n')}\n\n`, audit };
 }
 
 export interface VisionAnalysisRequest {
@@ -778,6 +818,8 @@ export class AnaDocumentDraftingService {
     // regulatory structure rather than the model re-deriving it.
     const { requirements, requirementsSource } = resolveDraftingRequirements(req.submissionType, req.sectionType);
     if (requirements) userPrompt += `${requirements}\n\n`;
+    const productAdvisory = draftProductAdvisory(req.projectContext, req.sectionType, requirementsSource);
+    userPrompt += productAdvisory.prompt;
 
     userPrompt += `INSTRUCTIONS:\n${req.instructions}`;
 
@@ -808,6 +850,7 @@ export class AnaDocumentDraftingService {
         submissionType: req.submissionType,
         sectionType: req.sectionType,
         requirementsSource,
+        ...productAdvisory.audit,
         ...draftSourceAudit(req.sourceContext),
       },
     };

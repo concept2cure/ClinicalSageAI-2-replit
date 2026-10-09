@@ -71,6 +71,35 @@ necessity flag, not an applicability decision. Optional is not inapplicable.
 | 5 | Regulatory currency and evidence time | Scope-matched dated citations; draft/final distinction; publication versus effective dates; supersession and verification age; reproducible historical as-of answers; stale/unverified references visibly unresolved |
 | 6 | End-to-end IND qualification through existing authoring/review/export | Representative cross-dimension scenarios with section-specific scoring, source receipts, faithful tables/numbers, missing/conflicting data, source updates and sequence lifecycle; qualified model and human regulatory review before acceptance claims |
 
+### Bounded progress, 2026-10-09: CMC depth and nested product context
+
+The coordinated follow-up adds 12 exact CMC content records (three substance
+identity leaves and nine pharmaceutical-development leaves) and two structural
+parents through the existing canonical record. The recorded inventory is now
+127 content records and 122 structural records, with 203 terminal nodes: 103
+exact-content and 100 structure-only. The denominator changes as former parents
+gain leaves; these are encoded lifecycle counts, not a complete initial-IND
+census or a qualification percentage. Phase/product uncertainty and early-IND
+evidence limits are preserved. FDA's draft M4Q(R2) numbering is not substituted
+for the reviewed final structure. Evidence:
+`docs/evidence/D4/2026-10-09-ana-ind-cmc-leaf-guidance/`.
+
+Nested drafting now accepts independent caller-declared therapeutic-area and
+modality labels through the existing batch tool, with structurally scoped rules
+and common gaps from the existing registries. Unknown/ambiguous labels remain
+unassessed; the prompt and gateway metadata explicitly distinguish declared
+advisory context from server-loaded or qualified evidence. Wiring tests traverse
+25 profiles and 11 modalities (275 inputs), not scientific qualification of all
+combinations. Automatic owned-program context projection, scientific review,
+applicability and currency remain open. Evidence:
+`docs/evidence/D4/2026-10-09-ana-ind-product-context/`.
+
+`docs/design/ANA_IND_REQUIREMENTS_BACKLOG.md` now enumerates all 100 recorded
+structure-only terminal sections, their nearest exact-guidance ancestors and
+bounded follow-up scopes. Its reproducible audit preserves unresolved initial
+IND applicability and the canonical source hashes. It also identifies shared
+qualification needs; inherited guidance is not counted as exact leaf content.
+
 The existing curated currency registry is useful but not comprehensive. Its FDA
 guidance ingestion service explicitly reports no connected guidance index. A
 live authoritative update feed, if needed, requires its own evaluated bounded
@@ -103,7 +132,12 @@ partial and unassessed states. Never describe all therapeutic areas, all IND
 subsections or submission readiness as complete based on counts or prose length.
 
 Remote release qualification remains separate from local checks. The prior
-4eda1a3d delivery has unresolved browser-schema provisioning and five Semgrep
-findings, recorded in 2026-10-09-ana-seal-verification-scope/PRIOR_REMOTE_CI.json.
+4eda1a3d browser-schema provisioning blocker was subsequently repaired in
+a17157f3 and verified by successful Tier 5 run 37983068322; b879e9a9 records the
+completed verification at
+`docs/evidence/D1/2026-10-09-fresh-ana-runs/POST_PUSH_VERIFICATION.md`.
+The Handlebars dependency blocker is repaired locally in this follow-up and
+still requires fresh remote verification. Other governance, database and
+Semgrep failures observed in broader CI remain separate release blockers.
 Local test/build/pre-push success must not be reported as remote CI success or
 commercial deployment while those release blockers remain open.

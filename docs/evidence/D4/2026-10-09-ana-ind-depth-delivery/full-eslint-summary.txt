@@ -1,0 +1,5 @@
+Command: npm run lint
+Exit status: 0
+✖ 6242 problems (0 errors, 6242 warnings)
+  0 errors and 45 warnings potentially fixable with the `--fix` option.
+

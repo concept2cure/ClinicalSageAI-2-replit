@@ -711,13 +711,15 @@ export const BATCH_DRAFT_SECTIONS: AnaTool = {
       submission_type: { type: 'string', description: 'Canonical filing type (e.g. "US_IND", "510k", "IVDR-TF") — unlocks framework-grade authoring for all filing types. Shared across the batch.' },
       project_context: {
         type: 'object',
-        description: 'Shared project context applied to every section (device/product name, indication, etc.).',
+        description: 'Shared caller-declared context applied to every section. Labels select advisory context; they do not establish verified project facts, guidance currency or source qualification.',
         properties: {
           deviceName: { type: 'string' },
           deviceType: { type: 'string' },
           indication: { type: 'string' },
           predicateDevice: { type: 'string' },
           classification: { type: 'string' },
+          therapeuticArea: { type: 'string', description: 'Explicit therapeutic-area label from the client or recorded context. Do not infer a disease area from a modality.' },
+          modality: { type: 'string', description: 'Explicit product modality (e.g. small_molecule, mab, gene_therapy, cell_therapy). Broad biologic/mRNA labels remain unresolved; do not infer modality from therapeutic area.' },
         },
       },
     },

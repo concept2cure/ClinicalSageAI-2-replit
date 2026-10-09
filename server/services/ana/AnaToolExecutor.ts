@@ -15554,7 +15554,7 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
   const projectContext = (input.project_context && typeof input.project_context === 'object'
     ? (input.project_context as Record<string, unknown>)
     : undefined) as
-    | { deviceName?: string; deviceType?: string; indication?: string; predicateDevice?: string; classification?: string }
+    | { deviceName?: string; deviceType?: string; indication?: string; predicateDevice?: string; classification?: string; therapeuticArea?: string; modality?: string }
     | undefined;
 
   const { batchDraftReceipt, batchSectionRecord } = await import('./batch-draft-result.js');

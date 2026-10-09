@@ -15,6 +15,9 @@
 import type { CtdSection } from './types.js';
 
 export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
+  // Exact identity and pharmaceutical-development leaves, source review 2026-10-09.
+  // P.2 leaf flags do not force a complete marketing dossier into an initial IND;
+  // applicability remains phase/product-dependent, not waived by a false flag.
   "1.1.1": {
     "code": "1.1.1",
     "title": "Form FDA 1571 — Investigational New Drug Application",
@@ -2103,6 +2106,308 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "3.2.S.1"
     ]
   },
+  "3.2.P.2.1.1": {
+    "code": "3.2.P.2.1.1",
+    "title": "Drug Substance",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.P.2.1",
+    "required": false,
+    "requiredFor": [
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.P.2.1.1; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain which documented substance properties affect the proposed formulation and its performance. Evaluate the supplied substance-excipient compatibility evidence and, for more than one active substance, relevant interactions between them. Tie each observation to the actual substance form, formulation and study conditions. This is a formulation-development assessment, not a second identity dossier; link to S.1 and P.1. Missing studies cannot establish compatibility or justify the absence of a risk.",
+    "keyContentElements": [
+      "Relevant substance properties linked to the proposed product performance",
+      "Substance-excipient compatibility evidence for the actual formulation",
+      "Interactions among multiple active substances where applicable",
+      "Material, formulation, report version and conditions behind each assessment"
+    ],
+    "expectedData": [
+      "Compatibility assessment table identifying tested combinations and unresolved combinations"
+    ],
+    "commonPitfalls": [
+      "Concluding compatibility from studies of a different substance form or formulation",
+      "Duplicating substance identity while omitting formulation-relevant properties"
+    ],
+    "generationPrompt": "Draft CTD 3.2.P.2.1.1 (Drug Substance) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain which documented substance properties affect the proposed formulation and its performance. Evaluate the supplied substance-excipient compatibility evidence and, for more than one active substance, relevant interactions between them. Tie each observation to the actual substance form, formulation and study conditions. This is a formulation-development assessment, not a second identity dossier; link to S.1 and P.1. Missing studies cannot establish compatibility or justify the absence of a risk.",
+    "dependencies": [
+      "3.2.S.1",
+      "3.2.P.1"
+    ]
+  },
+  "3.2.P.2.1.2": {
+    "code": "3.2.P.2.1.2",
+    "title": "Excipients",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.P.2.1",
+    "required": false,
+    "requiredFor": [
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.P.2.1.2; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain each excipient choice and function using the actual composition record. Relate the documented amount or concentration and material characteristics to the proposed product performance. Distinguish a supplied rationale from one still requiring sponsor assessment, and identify relevant novel-excipient or route-specific questions without inventing safety findings. Reconcile the formulation with P.1 and direct excipient control information to P.4.",
+    "keyContentElements": [
+      "Each excipient, its function and source-supported selection rationale",
+      "Documented amount or concentration reconciled with the composition record",
+      "Relevant excipient characteristics and evidence affecting product performance",
+      "Unresolved material, route or novel-excipient questions with supporting source pointers"
+    ],
+    "expectedData": [
+      "Excipient-function table linked to the composition and supporting development records"
+    ],
+    "commonPitfalls": [
+      "Inferring excipient safety or suitability from its name alone",
+      "Using concentrations from an obsolete formulation"
+    ],
+    "generationPrompt": "Draft CTD 3.2.P.2.1.2 (Excipients) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain each excipient choice and function using the actual composition record. Relate the documented amount or concentration and material characteristics to the proposed product performance. Distinguish a supplied rationale from one still requiring sponsor assessment, and identify relevant novel-excipient or route-specific questions without inventing safety findings. Reconcile the formulation with P.1 and direct excipient control information to P.4.",
+    "dependencies": [
+      "3.2.P.1",
+      "3.2.P.4"
+    ]
+  },
+  "3.2.P.2.2.1": {
+    "code": "3.2.P.2.2.1",
+    "title": "Formulation Development",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.P.2.2",
+    "required": false,
+    "requiredFor": [
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.P.2.2.1; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain the supplied formulation history in relation to the intended route and use. Identify which version supports each nonclinical or clinical batch and what differs from the proposed formulation in P.1. Discuss comparative in vitro or in vivo results only when supplied and relevant, retaining their scope and limitations. For an initial IND, do not describe an unselected commercial formulation as final or treat a planned bridging study as a completed demonstration.",
+    "keyContentElements": [
+      "Source-supported formulation development history and intended route/use",
+      "Versioned comparison of tested and proposed formulations",
+      "Supplied comparative evidence and its relevance to the formulation changes",
+      "Unresolved differences and planned work kept distinct from completed evidence"
+    ],
+    "expectedData": [
+      "Formulation/batch history table with version and study links",
+      "Supplied comparison results with methods and limitations where applicable"
+    ],
+    "commonPitfalls": [
+      "Claiming formulation equivalence without the relevant comparison evidence",
+      "Conflating the clinical formulation with an unselected commercial formulation"
+    ],
+    "generationPrompt": "Draft CTD 3.2.P.2.2.1 (Formulation Development) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain the supplied formulation history in relation to the intended route and use. Identify which version supports each nonclinical or clinical batch and what differs from the proposed formulation in P.1. Discuss comparative in vitro or in vivo results only when supplied and relevant, retaining their scope and limitations. For an initial IND, do not describe an unselected commercial formulation as final or treat a planned bridging study as a completed demonstration.",
+    "dependencies": [
+      "3.2.P.1",
+      "3.2.P.5.4"
+    ]
+  },
+  "3.2.P.2.2.2": {
+    "code": "3.2.P.2.2.2",
+    "title": "Overages",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.P.2.2",
+    "required": false,
+    "requiredFor": [
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.P.2.2.2; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Determine from the sponsor composition and batch records whether any formulation overage is used. If present, record its material, source-supported amount, purpose and justification, and reconcile it with P.1 and the batch formula in P.3.2. Keep processing losses, excess fill and an active-ingredient overage distinct where the records distinguish them. State that no overage is used only when the supplied record establishes that fact; silence is unresolved.",
+    "keyContentElements": [
+      "Evidence-backed determination of whether an overage is used",
+      "Identity, amount and purpose of each documented overage",
+      "Sponsor justification and supporting data without invented percentages",
+      "Reconciliation with composition and batch-formula versions"
+    ],
+    "expectedData": [
+      "Overage reconciliation table, or a source-supported statement that none is used"
+    ],
+    "commonPitfalls": [
+      "Treating an absent overage record as confirmation that none is used",
+      "Inventing an overage percentage to compensate for unsupported stability or process losses"
+    ],
+    "generationPrompt": "Draft CTD 3.2.P.2.2.2 (Overages) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Determine from the sponsor composition and batch records whether any formulation overage is used. If present, record its material, source-supported amount, purpose and justification, and reconcile it with P.1 and the batch formula in P.3.2. Keep processing losses, excess fill and an active-ingredient overage distinct where the records distinguish them. State that no overage is used only when the supplied record establishes that fact; silence is unresolved.",
+    "dependencies": [
+      "3.2.P.1",
+      "3.2.P.3.2"
+    ]
+  },
+  "3.2.P.2.2.3": {
+    "code": "3.2.P.2.2.3",
+    "title": "Physicochemical and Biological Properties",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.P.2.2",
+    "required": false,
+    "requiredFor": [
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.P.2.2.3; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Identify the documented product properties relevant to performance for the actual dosage form and route. Keep product-level evidence separate from drug-substance properties. Discuss measured physical, chemical, activity or potency attributes only as supported by the supplied reports, retaining formulation, batch, methods, units and conditions. Do not infer preserved potency, reconstitution performance or acceptable aggregation from a generic modality label.",
+    "keyContentElements": [
+      "Product properties linked to dosage form, route and performance",
+      "Available measured physical, chemical and biological attributes as relevant",
+      "Formulation/batch identity, method, units and conditions for supplied results",
+      "Gaps and cross-references to product control and stability evidence"
+    ],
+    "expectedData": [
+      "Product-performance property table linked to reports and formulation versions"
+    ],
+    "commonPitfalls": [
+      "Using substance-level measurements as demonstrated product performance",
+      "Claiming activity or potency without a suitable supplied measurement"
+    ],
+    "generationPrompt": "Draft CTD 3.2.P.2.2.3 (Physicochemical and Biological Properties) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Identify the documented product properties relevant to performance for the actual dosage form and route. Keep product-level evidence separate from drug-substance properties. Discuss measured physical, chemical, activity or potency attributes only as supported by the supplied reports, retaining formulation, batch, methods, units and conditions. Do not infer preserved potency, reconstitution performance or acceptable aggregation from a generic modality label.",
+    "dependencies": [
+      "3.2.P.1",
+      "3.2.P.5",
+      "3.2.P.8"
+    ]
+  },
+  "3.2.P.2.3": {
+    "code": "3.2.P.2.3",
+    "title": "Manufacturing Process Development",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.P.2",
+    "required": false,
+    "requiredFor": [
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.P.2.3; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain the supplied process selection and development history, linking it to the current process in P.3.3. Identify documented critical aspects and meaningful differences among processes used for the relevant clinical batches. Discuss sterilization selection when relevant to the dosage form, supported by the actual process records. Do not describe exploratory changes as validated or manufacture a comparability conclusion; keep proposed work and unresolved performance effects explicit.",
+    "keyContentElements": [
+      "Source-supported process selection and development rationale",
+      "Documented critical aspects and their relationship to product performance",
+      "Versioned comparison of relevant clinical-batch and proposed processes",
+      "Applicable sterilization rationale and unresolved change assessments"
+    ],
+    "expectedData": [
+      "Process-change/batch map with supporting development evidence"
+    ],
+    "commonPitfalls": [
+      "Claiming validation or comparability from a narrative development history",
+      "Ignoring a process change affecting the product used in clinical studies"
+    ],
+    "generationPrompt": "Draft CTD 3.2.P.2.3 (Manufacturing Process Development) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain the supplied process selection and development history, linking it to the current process in P.3.3. Identify documented critical aspects and meaningful differences among processes used for the relevant clinical batches. Discuss sterilization selection when relevant to the dosage form, supported by the actual process records. Do not describe exploratory changes as validated or manufacture a comparability conclusion; keep proposed work and unresolved performance effects explicit.",
+    "dependencies": [
+      "3.2.P.3.3",
+      "3.2.P.3.5",
+      "3.2.P.5.4"
+    ]
+  },
+  "3.2.P.2.4": {
+    "code": "3.2.P.2.4",
+    "title": "Container Closure System",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.P.2",
+    "required": false,
+    "requiredFor": [
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.P.2.4; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Assess the selected container closure in relation to the documented storage, transport and use of the product, referring to the description in P.7. Discuss relevant protection, material compatibility, safety and delivery performance only within the supplied evidence. Retain tested materials, formulation, contact conditions and source version. A packaging description alone does not establish suitability, freedom from leachables, or performance through an unsupported shelf life.",
+    "keyContentElements": [
+      "Selected packaging configuration linked to the P.7 description",
+      "Evidence for relevant protection during the proposed storage, transport and use",
+      "Material compatibility and safety evidence with conditions and scope",
+      "Relevant delivery performance and unresolved suitability questions"
+    ],
+    "expectedData": [
+      "Packaging suitability/evidence map identifying tested materials and contact conditions"
+    ],
+    "commonPitfalls": [
+      "Declaring packaging safe or suitable from its specification alone",
+      "Extending a study conclusion to untested materials or storage/use conditions"
+    ],
+    "generationPrompt": "Draft CTD 3.2.P.2.4 (Container Closure System) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Assess the selected container closure in relation to the documented storage, transport and use of the product, referring to the description in P.7. Discuss relevant protection, material compatibility, safety and delivery performance only within the supplied evidence. Retain tested materials, formulation, contact conditions and source version. A packaging description alone does not establish suitability, freedom from leachables, or performance through an unsupported shelf life.",
+    "dependencies": [
+      "3.2.P.7",
+      "3.2.P.8"
+    ]
+  },
+  "3.2.P.2.5": {
+    "code": "3.2.P.2.5",
+    "title": "Microbiological Attributes",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.P.2",
+    "required": false,
+    "requiredFor": [
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.P.2.5; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Establish from the supplied product record whether the dosage form is sterile or nonsterile and whether a preservative system is used. Explain the documented microbial-control approach for that context; discuss preservative evidence or sterile-container integrity only when relevant and supported. A reason for omitting a test needs an actual sponsor assessment. Missing sterility, preservative or integrity evidence remains a gap, never an inferred acceptable result.",
+    "keyContentElements": [
+      "Source-supported sterile/nonsterile status and preservative-system status",
+      "Applicable microbial-control rationale and supporting records",
+      "Relevant preservative or sterile-container integrity evidence where available",
+      "Sponsor basis for any omitted testing, with unresolved evidence retained"
+    ],
+    "expectedData": [
+      "Microbial-control evidence map keyed to formulation and container configuration"
+    ],
+    "commonPitfalls": [
+      "Treating an unknown sterile/nonsterile status as not applicable",
+      "Inventing preservative effectiveness or container integrity from intended design"
+    ],
+    "generationPrompt": "Draft CTD 3.2.P.2.5 (Microbiological Attributes) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Establish from the supplied product record whether the dosage form is sterile or nonsterile and whether a preservative system is used. Explain the documented microbial-control approach for that context; discuss preservative evidence or sterile-container integrity only when relevant and supported. A reason for omitting a test needs an actual sponsor assessment. Missing sterility, preservative or integrity evidence remains a gap, never an inferred acceptable result.",
+    "dependencies": [
+      "3.2.P.1",
+      "3.2.P.5.1",
+      "3.2.P.7"
+    ]
+  },
+  "3.2.P.2.6": {
+    "code": "3.2.P.2.6",
+    "title": "Compatibility",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.P.2",
+    "required": false,
+    "requiredFor": [
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.P.2.6; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Determine from the intended-use record whether reconstitution, dilution or an administration device is involved. Discuss the supplied compatibility evidence for those actual combinations, preserving diluent, concentration, container/device, contact time and conditions. Keep observed outcomes and supported limits separate from plans or assumptions, and reconcile the proposed use instructions with the study scope. Never invent an in-use hold time or assert compatibility for an untested configuration.",
+    "keyContentElements": [
+      "Source-supported intended reconstitution, dilution or device-use configurations",
+      "Available compatibility results for the actual product and tested configuration",
+      "Test conditions, concentrations, contact times and observed limitations",
+      "Reconciliation with proposed use instructions and unresolved combinations"
+    ],
+    "expectedData": [
+      "Compatibility matrix by diluent/device/configuration and supporting report"
+    ],
+    "commonPitfalls": [
+      "Extrapolating compatibility to an untested diluent or administration device",
+      "Inventing a permitted in-use hold time or concentration"
+    ],
+    "generationPrompt": "Draft CTD 3.2.P.2.6 (Compatibility) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Determine from the intended-use record whether reconstitution, dilution or an administration device is involved. Discuss the supplied compatibility evidence for those actual combinations, preserving diluent, concentration, container/device, contact time and conditions. Keep observed outcomes and supported limits separate from plans or assumptions, and reconcile the proposed use instructions with the study scope. Never invent an in-use hold time or assert compatibility for an untested configuration.",
+    "dependencies": [
+      "3.2.P.1",
+      "3.2.P.8",
+      "1.14.4.2"
+    ]
+  },
   "3.2.P.3": {
     "code": "3.2.P.3",
     "title": "Manufacture",
@@ -3044,6 +3349,109 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
     "dependencies": [
       "3.2.S.3.1",
       "3.2.S.4.1"
+    ]
+  },
+  "3.2.S.1.1": {
+    "code": "3.2.S.1.1",
+    "title": "Nomenclature",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.S.1",
+    "required": true,
+    "requiredFor": [
+      "IND",
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.S.1.1; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Reconcile the actual drug substance identity across sponsor-controlled records. Record established and provisional names separately, including the sponsor code and available registry identifiers. Distinguish the active moiety from the supplied salt, hydrate or other form, and identify each substance separately for a multi-substance product. An unavailable INN, USAN or CAS number is a gap, never a guessed identifier.",
+    "keyContentElements": [
+      "Established/provisional substance names and sponsor or laboratory code",
+      "Available compendial, chemical and nonproprietary names with their status",
+      "Supplied substance form and available registry identifier, traced to the source",
+      "Reconciliation of identity with characterization and specification records"
+    ],
+    "expectedData": [
+      "Source-bound identity reconciliation table, including unavailable identifiers"
+    ],
+    "commonPitfalls": [
+      "Guessing a registry identifier or presenting a proposed name as established",
+      "Confusing the active moiety with the supplied substance form"
+    ],
+    "generationPrompt": "Draft CTD 3.2.S.1.1 (Nomenclature) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Reconcile the actual drug substance identity across sponsor-controlled records. Record established and provisional names separately, including the sponsor code and available registry identifiers. Distinguish the active moiety from the supplied salt, hydrate or other form, and identify each substance separately for a multi-substance product. An unavailable INN, USAN or CAS number is a gap, never a guessed identifier.",
+    "dependencies": [
+      "3.2.S.3.1",
+      "3.2.S.4.1"
+    ]
+  },
+  "3.2.S.1.2": {
+    "code": "3.2.S.1.2",
+    "title": "Structure",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.S.1",
+    "required": true,
+    "requiredFor": [
+      "IND",
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.S.1.2; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Describe the structure represented in the supplied characterization record. For a chemical substance, retain the documented stereochemistry, formula and relative molecular mass for the actual form. For a biological substance, use the appropriate supplied sequence or structural schematic and identified modifications. Do not calculate a mass from a guessed formula or transfer a chemical template to a cell or gene therapy without a product-specific basis. Refer supporting analytical evidence to S.3.1.",
+    "keyContentElements": [
+      "Source-supported chemical structure and stereochemistry where applicable",
+      "Documented molecular formula, relative molecular mass and substance form",
+      "Appropriate biological sequence, schematic and known modifications where applicable",
+      "Pointer to the characterization record supporting the described identity"
+    ],
+    "expectedData": [
+      "Sponsor-provided structure or sequence schematic with a source version",
+      "Identity table retaining source values, units and substance form"
+    ],
+    "commonPitfalls": [
+      "Substituting an assumed sequence, modification or molecular mass",
+      "Describing a structure inconsistent with the tested substance form"
+    ],
+    "generationPrompt": "Draft CTD 3.2.S.1.2 (Structure) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Describe the structure represented in the supplied characterization record. For a chemical substance, retain the documented stereochemistry, formula and relative molecular mass for the actual form. For a biological substance, use the appropriate supplied sequence or structural schematic and identified modifications. Do not calculate a mass from a guessed formula or transfer a chemical template to a cell or gene therapy without a product-specific basis. Refer supporting analytical evidence to S.3.1.",
+    "dependencies": [
+      "3.2.S.1.1",
+      "3.2.S.3.1"
+    ]
+  },
+  "3.2.S.1.3": {
+    "code": "3.2.S.1.3",
+    "title": "General Properties",
+    "module": 3,
+    "moduleName": "Quality (CMC)",
+    "parentCode": "3.2.S.1",
+    "required": true,
+    "requiredFor": [
+      "IND",
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.S.1.3; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+    "authoringGuidance": "Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. List the relevant properties supported by the substance record, retaining the measurement conditions, method, units and material identity. Discuss biological activity for a biological substance when the evidence supports it. Separate measured values from qualitative observations and planned characterization; avoid imposing a small-molecule property checklist on other modalities. Cross-reference detailed characterization and control methods instead of inventing numerical property values.",
+    "keyContentElements": [
+      "Available physicochemical properties relevant to this substance",
+      "Source-supported biological activity and its measurement basis where applicable",
+      "Measurement conditions, units, method and material identity for reported properties",
+      "Uncharacterized properties and their effect on the proposed investigation"
+    ],
+    "expectedData": [
+      "Property table linked to supporting reports and measurement conditions"
+    ],
+    "commonPitfalls": [
+      "Reporting a property without its units or test conditions",
+      "Treating absent characterization as proof the property is irrelevant"
+    ],
+    "generationPrompt": "Draft CTD 3.2.S.1.3 (General Properties) for {{PRODUCT_NAME}}, sponsored by {{SPONSOR}}, for {{INDICATION}} at {{PHASE}}. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. List the relevant properties supported by the substance record, retaining the measurement conditions, method, units and material identity. Discuss biological activity for a biological substance when the evidence supports it. Separate measured values from qualitative observations and planned characterization; avoid imposing a small-molecule property checklist on other modalities. Cross-reference detailed characterization and control methods instead of inventing numerical property values.",
+    "dependencies": [
+      "3.2.S.3.1",
+      "3.2.S.4.2"
     ]
   },
   "3.2.S.2": {

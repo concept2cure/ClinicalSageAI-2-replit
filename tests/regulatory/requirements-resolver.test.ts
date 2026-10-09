@@ -173,6 +173,8 @@ describe('resolveRequirements — the one dispatch', () => {
 
 // Recorded from documentSectionRequirements at a425d1de, before the extraction.
 // Fingerprint, then the input as JSON; three to a line.
+// 2026-10-09: 12 exact CMC leaves and two structural parents intentionally expand
+// the enumerated inputs; affected ancestor listings change, unrelated hashes stay pinned.
 const PINNED_TABLE = `
 b40bf211f7e54507 {"document":"1"}  cd2025612b986822 {"document":"1.1"}  4a2ae5b79a8739e0 {"document":"1.1.1"}
 8fec1080817ffabb {"document":"1.1.2"}  2cc355087e894708 {"document":"1.1.3"}  62dc7cedc05894e2 {"document":"1.1.4"}
@@ -191,15 +193,15 @@ fb039127fb58a342 {"document":"2.5.5"}  528d68a49f43a829 {"document":"2.5.6"}  6e
 a908663e04b07a7c {"document":"2.6.4"}  cc88e6265a133793 {"document":"2.6.5"}  46d8063bca81aa4a {"document":"2.6.6"}
 b3fcf7aecff12593 {"document":"2.6.7"}  bfae4c818f791136 {"document":"2.7"}  554f75ea14dcb4de {"document":"2.7.1"}
 bf55b7118d2203ea {"document":"2.7.2"}  b87f32b2e555bc51 {"document":"2.7.3"}  adcd03fd610bbf7e {"document":"2.7.4"}
-90c5a251ec745be5 {"document":"2.7.5"}  78059bec4e347313 {"document":"2.7.6"}  2db1d7043ad87387 {"document":"3"}
-e667893bc1efb633 {"document":"3.2"}  4d6a51fe57bf11be {"document":"3.2.A"}  8c00475a017a2828 {"document":"3.2.P"}
+90c5a251ec745be5 {"document":"2.7.5"}  78059bec4e347313 {"document":"2.7.6"}  d968e0dfd69c0025 {"document":"3"}
+5508a54c3241ad28 {"document":"3.2"}  4d6a51fe57bf11be {"document":"3.2.A"}  768bb186a39e709a {"document":"3.2.P"}
 f10ddeeede2cd042 {"document":"3.2.P.1"}  768df392ed92a438 {"document":"3.2.P.2"}  3a326fd360644751 {"document":"3.2.P.3"}
 0a04b396534bb259 {"document":"3.2.P.3.1"}  4d89c000ce9d6c2f {"document":"3.2.P.3.2"}  080b889d14c1e649 {"document":"3.2.P.3.3"}
 f448598ea431c0c9 {"document":"3.2.P.3.4"}  f909e46d17bff646 {"document":"3.2.P.3.5"}  a19ce6bd2fdc64d3 {"document":"3.2.P.4"}
 247b72352962aec8 {"document":"3.2.P.5"}  3dca6adb8409e2c2 {"document":"3.2.P.5.1"}  802e9ad08a57473d {"document":"3.2.P.5.2"}
 15dc73730bee21f4 {"document":"3.2.P.5.3"}  435e068edd83ecfd {"document":"3.2.P.5.4"}  acabe2b2db8af499 {"document":"3.2.P.5.5"}
 0fff94e22c6fa526 {"document":"3.2.P.5.6"}  6b460d092a932cf0 {"document":"3.2.P.6"}  b74727ab54a52621 {"document":"3.2.P.7"}
-81f6d8f436835c88 {"document":"3.2.P.8"}  8a1f5e4fe6b882d9 {"document":"3.2.R"}  1be2a6b75051f4e9 {"document":"3.2.S"}
+81f6d8f436835c88 {"document":"3.2.P.8"}  8a1f5e4fe6b882d9 {"document":"3.2.R"}  d3fe6824d42d2397 {"document":"3.2.S"}
 7913e3a9792e5c7e {"document":"3.2.S.1"}  9983a5c764c7c3ea {"document":"3.2.S.2"}  42afa7e5d87865d0 {"document":"3.2.S.2.1"}
 1ec0368e3d7a8e92 {"document":"3.2.S.2.2"}  7034242f517014f4 {"document":"3.2.S.2.3"}  d5ba0fa7638b857e {"document":"3.2.S.2.4"}
 75464beb57ea3781 {"document":"3.2.S.2.5"}  c5d5d7c40c7a4cef {"document":"3.2.S.2.6"}  cf84a4d3d8ba075e {"document":"3.2.S.3"}
@@ -237,15 +239,15 @@ fb039127fb58a342 {"document":"m2.5.5"}  528d68a49f43a829 {"document":"m2.5.6"}  
 a908663e04b07a7c {"document":"m2.6.4"}  cc88e6265a133793 {"document":"m2.6.5"}  46d8063bca81aa4a {"document":"m2.6.6"}
 b3fcf7aecff12593 {"document":"m2.6.7"}  bfae4c818f791136 {"document":"m2.7"}  554f75ea14dcb4de {"document":"m2.7.1"}
 bf55b7118d2203ea {"document":"m2.7.2"}  b87f32b2e555bc51 {"document":"m2.7.3"}  adcd03fd610bbf7e {"document":"m2.7.4"}
-90c5a251ec745be5 {"document":"m2.7.5"}  78059bec4e347313 {"document":"m2.7.6"}  2db1d7043ad87387 {"document":"m3"}
-e667893bc1efb633 {"document":"m3.2"}  4d6a51fe57bf11be {"document":"m3.2.A"}  8c00475a017a2828 {"document":"m3.2.P"}
+90c5a251ec745be5 {"document":"m2.7.5"}  78059bec4e347313 {"document":"m2.7.6"}  d968e0dfd69c0025 {"document":"m3"}
+5508a54c3241ad28 {"document":"m3.2"}  4d6a51fe57bf11be {"document":"m3.2.A"}  768bb186a39e709a {"document":"m3.2.P"}
 f10ddeeede2cd042 {"document":"m3.2.P.1"}  768df392ed92a438 {"document":"m3.2.P.2"}  3a326fd360644751 {"document":"m3.2.P.3"}
 0a04b396534bb259 {"document":"m3.2.P.3.1"}  4d89c000ce9d6c2f {"document":"m3.2.P.3.2"}  080b889d14c1e649 {"document":"m3.2.P.3.3"}
 f448598ea431c0c9 {"document":"m3.2.P.3.4"}  f909e46d17bff646 {"document":"m3.2.P.3.5"}  a19ce6bd2fdc64d3 {"document":"m3.2.P.4"}
 247b72352962aec8 {"document":"m3.2.P.5"}  3dca6adb8409e2c2 {"document":"m3.2.P.5.1"}  802e9ad08a57473d {"document":"m3.2.P.5.2"}
 15dc73730bee21f4 {"document":"m3.2.P.5.3"}  435e068edd83ecfd {"document":"m3.2.P.5.4"}  acabe2b2db8af499 {"document":"m3.2.P.5.5"}
 0fff94e22c6fa526 {"document":"m3.2.P.5.6"}  6b460d092a932cf0 {"document":"m3.2.P.6"}  b74727ab54a52621 {"document":"m3.2.P.7"}
-81f6d8f436835c88 {"document":"m3.2.P.8"}  8a1f5e4fe6b882d9 {"document":"m3.2.R"}  1be2a6b75051f4e9 {"document":"m3.2.S"}
+81f6d8f436835c88 {"document":"m3.2.P.8"}  8a1f5e4fe6b882d9 {"document":"m3.2.R"}  d3fe6824d42d2397 {"document":"m3.2.S"}
 7913e3a9792e5c7e {"document":"m3.2.S.1"}  9983a5c764c7c3ea {"document":"m3.2.S.2"}  42afa7e5d87865d0 {"document":"m3.2.S.2.1"}
 1ec0368e3d7a8e92 {"document":"m3.2.S.2.2"}  7034242f517014f4 {"document":"m3.2.S.2.3"}  d5ba0fa7638b857e {"document":"m3.2.S.2.4"}
 75464beb57ea3781 {"document":"m3.2.S.2.5"}  c5d5d7c40c7a4cef {"document":"m3.2.S.2.6"}  cf84a4d3d8ba075e {"document":"m3.2.S.3"}
@@ -381,6 +383,20 @@ f3cfbb2e7d6599e0 {"document":"smpc"}  dac1f91b5987f30e {"document":"II.6.1"}  6a
 697a765bb33b507b {"document":"Totally Fabricated Section 99"}  c63ab4b951507fa4 {"document":"clinical-study-report"}  1e72548c25606fe8 {"document":"ich-e3"}
 b36291f307ffae23 {"document":"m9"}  176c058cf3810b76 {"document":"csr","section":""}  b87f32b2e555bc51 {"document":"2.7.3","section":"12.2"}
 887533ba3fdd848b {"document":""}  887533ba3fdd848b {"document":42}  887533ba3fdd848b {}
+409d9f3b219d98f0 {"document":"3.2.P.2.1"}  88db3f53d2014d67 {"document":"3.2.P.2.1.1"}  84ddf9feb7b828cc {"document":"3.2.P.2.1.2"}
+94941c1bdab579a2 {"document":"3.2.P.2.2"}  0e77ca0987080d71 {"document":"3.2.P.2.2.1"}  849f182e1f51224d {"document":"3.2.P.2.2.2"}
+1a07a3be6eb7ed2d {"document":"3.2.P.2.2.3"}  d405bd7e4e2158a9 {"document":"3.2.P.2.3"}  360072e2350fdcab {"document":"3.2.P.2.4"}
+c25b2f87a8dc20df {"document":"3.2.P.2.5"}  21f14641359025cf {"document":"3.2.P.2.6"}  a6d79fed505eb217 {"document":"3.2.S.1.1"}
+938c08fe7cfdabb3 {"document":"3.2.S.1.2"}  60b8a40682ea2b29 {"document":"3.2.S.1.3"}  409d9f3b219d98f0 {"document":"m3.2.P.2.1"}
+88db3f53d2014d67 {"document":"m3.2.P.2.1.1"}  84ddf9feb7b828cc {"document":"m3.2.P.2.1.2"}  94941c1bdab579a2 {"document":"m3.2.P.2.2"}
+0e77ca0987080d71 {"document":"m3.2.P.2.2.1"}  849f182e1f51224d {"document":"m3.2.P.2.2.2"}  1a07a3be6eb7ed2d {"document":"m3.2.P.2.2.3"}
+d405bd7e4e2158a9 {"document":"m3.2.P.2.3"}  360072e2350fdcab {"document":"m3.2.P.2.4"}  c25b2f87a8dc20df {"document":"m3.2.P.2.5"}
+21f14641359025cf {"document":"m3.2.P.2.6"}  a6d79fed505eb217 {"document":"m3.2.S.1.1"}  938c08fe7cfdabb3 {"document":"m3.2.S.1.2"}
+60b8a40682ea2b29 {"document":"m3.2.S.1.3"}  e3dd9918f659ed80 {"document":"3.2.P.2.1.99"}  480d6f5aed9184bf {"document":"3.2.P.2.1.1.99"}
+eebf037b55223ee9 {"document":"3.2.P.2.1.2.99"}  001310d4d19b1212 {"document":"3.2.P.2.2.99"}  ade719ae70a9b6d4 {"document":"3.2.P.2.2.1.99"}
+c826abdfc4ea65fd {"document":"3.2.P.2.2.2.99"}  b6dc1d0560a80f2f {"document":"3.2.P.2.2.3.99"}  bca5e25b9f1882f4 {"document":"3.2.P.2.3.99"}
+e1d20ceac78d2ad4 {"document":"3.2.P.2.4.99"}  0025305eb13f2a4b {"document":"3.2.P.2.5.99"}  c4ef802111b77bed {"document":"3.2.P.2.6.99"}
+0f2b05c0528442e5 {"document":"3.2.S.1.1.99"}  387f3662b3a39c31 {"document":"3.2.S.1.2.99"}  cb2b762715eb6313 {"document":"3.2.S.1.3.99"}
 `;
 
 const PINNED: Record<string, string> = Object.fromEntries(

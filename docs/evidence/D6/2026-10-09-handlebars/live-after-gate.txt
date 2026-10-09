@@ -1,0 +1,14 @@
+(node:9) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:dependency-risk
+> node scripts/ci/check-dependency-risk.mjs
+
+(node:22) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Dependency risk gate: PASS; 3 Critical/High advisory occurrence(s), all reviewed.
+Scanner: npm audit 11.9.0; Node v22.23.3; lockfile 529a8e5889cf500959484df70c561d27746437aa3a4c7d043cd70a5c551e3961
+  GHSA-VFJ7-8CJW-P6XM braces high: unreachable
+  GHSA-5P2G-FCMC-QVQQ image-size high: unreachable
+  GHSA-W3RX-R6R6-PGPR image-size high: unreachable

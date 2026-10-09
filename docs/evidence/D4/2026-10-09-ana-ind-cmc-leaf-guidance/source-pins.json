@@ -1,0 +1,32 @@
+[
+  {
+    "path": "server/services/ind/ctd/authoring-guidance.ts",
+    "sha256": "87875a27d80db335e166b9e055d0bf1699d7344e9019e0f05c36f42697fc0d26",
+    "bytes": 515739
+  },
+  {
+    "path": "server/services/ind/ctd/ich-m4-headings.ts",
+    "sha256": "c063ac55b664fb33a1dc20ba05fb3633cda8796f1eba214c45a7369dd2de6e2b",
+    "bytes": 14577
+  },
+  {
+    "path": "server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts",
+    "sha256": "02272be30798eb2b75c3fce84ff2d7eb09dafbc21b0a56152864a6eb8fc0022b",
+    "bytes": 5437
+  },
+  {
+    "path": "tests/regulatory/ich-m4-headings.test.ts",
+    "sha256": "c2fe28fa0cfa683cb5d86000828b42a32ec820194b02939ad75fd42f1fbdf24a",
+    "bytes": 6061
+  },
+  {
+    "path": "tests/regulatory/requirements-resolver.test.ts",
+    "sha256": "9a45c6481042b5416040710d3acce86d719ba7f05b7beda9dcbac39ccd533855",
+    "bytes": 37762
+  },
+  {
+    "path": "tests/regulatory/ctd-registry-consistency.test.ts",
+    "sha256": "f8e0c6f8f9de10edb5ad57ddb7900be2c40271c9907f89e240f2af55f301dee8",
+    "bytes": 14322
+  }
+]

@@ -1,0 +1,22 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] FAIL — tsc did not complete.
+  exit status : 137
+  heap cap    : 24576 MB (override with TYPECHECK_HEAP_MB)
+  The error count below is NOT trustworthy — the compiler died before finishing.
+  Last 40 lines of output:
+    (node:13) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+    (Use `node --trace-warnings ...` to show where the warning was created)
+    npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+    Killed
+    
+
+  If this host cannot supply the heap, the gate has NOT run — do not
+  report the diff as typechecked. Options, in order of soundness:
+    1. Run it on a host with the memory, or in CI.
+    2. Raise/lower the cap: TYPECHECK_HEAP_MB=<mb> npm run ci:typecheck:no-regression
+    3. Scoped, NOT equivalent: npx tsc --noEmit --skipLibCheck <changed files>
+       — catches within-file errors only; blind to callers. A narrow
+       tsconfig include is not a substitute either: it double-loads the
+       global .d.ts augmentations and invents errors in untouched files.

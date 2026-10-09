@@ -216,8 +216,8 @@ describe('the Module 2–5 contract — a real heading, and a title that does no
   });
 
   it('Module 3 depth the record does not yet model is reported unchecked — neither passed nor failed', () => {
-    // ich-m4-headings.ts holds the Module 3 skeleton only; 2.3.S.x and
-    // 3.2.S.x.y belong to the CMC lane, which appends them to the same record.
+    // The 2026-10-09 identity leaves now model S.1.1 in the same record;
+    // QOS subdivisions and the A.1 appendix remain unmodeled here.
     const result = checkM2to5([
       { code: '2.3.S.1', title: 'General Information' },
       { code: '3.2.S.1.1', title: 'Nomenclature' },
@@ -225,7 +225,7 @@ describe('the Module 2–5 contract — a real heading, and a title that does no
       { code: '3.2.S.4.1', title: 'Specification' },
     ]);
     expect(result.violations).toEqual([]);
-    expect(result.unchecked.map((n) => n.code)).toEqual(['2.3.S.1', '3.2.S.1.1', '3.2.A.1']);
+    expect(result.unchecked.map((n) => n.code)).toEqual(['2.3.S.1', '3.2.A.1']);
   });
 });
 
