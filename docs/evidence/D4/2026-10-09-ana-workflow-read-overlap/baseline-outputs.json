@@ -1,0 +1,2120 @@
+{
+  "source": "21ed751",
+  "fixtureRows": [
+    {
+      "rows": [
+        {
+          "type": "strategy_note"
+        },
+        {
+          "type": "form_1571"
+        },
+        {
+          "type": "sap"
+        }
+      ]
+    },
+    {
+      "rows": [
+        {
+          "ctd_section": "1.6.1"
+        },
+        {
+          "ctd_section": "4.2"
+        },
+        {
+          "ctd_section": null
+        },
+        {
+          "ctd_section": ""
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "fixture": "empty",
+      "type": "ind",
+      "status": {
+        "type": "ind",
+        "name": "Investigational New Drug Application",
+        "totalSteps": 21,
+        "trackedSteps": 20,
+        "untrackedSteps": 1,
+        "completedSteps": 0,
+        "currentPhase": "Pre-IND Preparation",
+        "nextStep": {
+          "id": "ind-1",
+          "phase": "pre-ind",
+          "title": "Define regulatory strategy",
+          "description": "Determine IND type, clinical phase, indication, and target population",
+          "requiredArtifacts": [
+            "strategy_note"
+          ],
+          "commands": [
+            "/strategy"
+          ],
+          "roles": [
+            "ra_lead",
+            "ceo"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "Define regulatory strategy",
+          "Pre-IND meeting request",
+          "Nonclinical data package",
+          "Form FDA 1571",
+          "Cover letter"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "Pre-IND Preparation",
+            "steps": [
+              {
+                "id": "ind-1",
+                "title": "Define regulatory strategy",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-2",
+                "title": "Pre-IND meeting request",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-3",
+                "title": "Nonclinical data package",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 1 — Administrative",
+            "steps": [
+              {
+                "id": "ind-4",
+                "title": "Form FDA 1571",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-21",
+                "title": "Cover letter",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-5",
+                "title": "Form 1572 (Investigators)",
+                "complete": false,
+                "critical": false
+              },
+              {
+                "id": "ind-6",
+                "title": "Investigator brochure",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 3 — Quality (CMC)",
+            "steps": [
+              {
+                "id": "ind-12",
+                "title": "Drug Substance (3.2.S)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-13",
+                "title": "Drug Product (3.2.P)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 5 — Clinical",
+            "steps": [
+              {
+                "id": "ind-14",
+                "title": "Clinical protocol",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-15",
+                "title": "Statistical Analysis Plan",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 2 — CTD Summaries",
+            "steps": [
+              {
+                "id": "ind-7",
+                "title": "Quality Overall Summary (2.3)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-10",
+                "title": "Nonclinical Written Summaries (2.6)",
+                "complete": false,
+                "critical": false
+              },
+              {
+                "id": "ind-8",
+                "title": "Nonclinical Overview (2.4)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-11",
+                "title": "Clinical Summary (2.7)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-9",
+                "title": "Clinical Overview (2.5)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Pre-Submission Review",
+            "steps": [
+              {
+                "id": "ind-16",
+                "title": "Full dossier preflight",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-17",
+                "title": "Risk assessment",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-18",
+                "title": "Reviewer question prep",
+                "complete": false,
+                "critical": false
+              },
+              {
+                "id": "ind-19",
+                "title": "Freeze and sign",
+                "complete": null,
+                "critical": true
+              },
+              {
+                "id": "ind-20",
+                "title": "Submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: Investigational New Drug Application\n**Progress:** 0/20 tracked steps (0%); 1 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** Pre-IND Preparation\n\n**Next Step:** Define regulatory strategy\n> Determine IND type, clinical phase, indication, and target population\nSuggested commands: /strategy\nResponsible: ra_lead, ceo\n\n**Critical Blockers (5):**\n- Define regulatory strategy\n- Pre-IND meeting request\n- Nonclinical data package\n- Form FDA 1571\n- Cover letter\n\n**Phases:**\n- Pre-IND Preparation: 0/3 tracked\n- Module 1 — Administrative: 0/4 tracked\n- Module 3 — Quality (CMC): 0/2 tracked\n- Module 5 — Clinical: 0/2 tracked\n- Module 2 — CTD Summaries: 0/5 tracked\n- Pre-Submission Review: 0/4 tracked · 1 not tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "6ebfee87edb931e9eb783572f7d6b6cf34e1b10f2f44acc5147960467289e4ae",
+      "promptSha256": "962255cb17ca4f3f8dc83881b4530fc94144eee1926ec3e681af1978856450e4"
+    },
+    {
+      "fixture": "empty",
+      "type": "510k",
+      "status": {
+        "type": "510k",
+        "name": "510(k) Premarket Notification",
+        "totalSteps": 11,
+        "trackedSteps": 11,
+        "untrackedSteps": 0,
+        "completedSteps": 0,
+        "currentPhase": "Predicate & Strategy",
+        "nextStep": {
+          "id": "510k-1",
+          "phase": "strategy",
+          "title": "Predicate device search",
+          "description": "Identify 1-3 predicate devices with product codes",
+          "requiredArtifacts": [
+            "predicate_analysis"
+          ],
+          "commands": [
+            "/precedent",
+            "/device"
+          ],
+          "roles": [
+            "ra_lead"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "Predicate device search",
+          "Substantial equivalence argument",
+          "Device description",
+          "SE comparison",
+          "Performance data"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "Predicate & Strategy",
+            "steps": [
+              {
+                "id": "510k-1",
+                "title": "Predicate device search",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-2",
+                "title": "Substantial equivalence argument",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "510(k) Sections",
+            "steps": [
+              {
+                "id": "510k-3",
+                "title": "Device description",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-4",
+                "title": "SE comparison",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-5",
+                "title": "Performance data",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-6",
+                "title": "Biocompatibility",
+                "complete": false,
+                "critical": false
+              },
+              {
+                "id": "510k-7",
+                "title": "Labeling",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-8",
+                "title": "Software documentation",
+                "complete": false,
+                "critical": false
+              }
+            ]
+          },
+          {
+            "name": "Review & Submit",
+            "steps": [
+              {
+                "id": "510k-9",
+                "title": "Full submission preflight",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-10",
+                "title": "Risk assessment & deficiency prep",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-11",
+                "title": "Submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: 510(k) Premarket Notification\n**Progress:** 0/11 tracked steps (0%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** Predicate & Strategy\n\n**Next Step:** Predicate device search\n> Identify 1-3 predicate devices with product codes\nSuggested commands: /precedent, /device\nResponsible: ra_lead\n\n**Critical Blockers (5):**\n- Predicate device search\n- Substantial equivalence argument\n- Device description\n- SE comparison\n- Performance data\n\n**Phases:**\n- Predicate & Strategy: 0/2 tracked\n- 510(k) Sections: 0/6 tracked\n- Review & Submit: 0/3 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "38dfdd31358a9d062179e62abd906e6650edd0fe924fb4aa3dde2c5f57f45876",
+      "promptSha256": "5d9a8225ed3348430aa4049c3c7d14fd4a3c36178590a4004269fbb2eeb83697"
+    },
+    {
+      "fixture": "empty",
+      "type": "nda",
+      "status": {
+        "type": "nda",
+        "name": "New Drug Application",
+        "totalSteps": 17,
+        "trackedSteps": 17,
+        "untrackedSteps": 0,
+        "completedSteps": 0,
+        "currentPhase": "Pre-NDA Planning",
+        "nextStep": {
+          "id": "nda-1",
+          "phase": "planning",
+          "title": "Pre-NDA meeting request",
+          "description": "Type B meeting with FDA to align on NDA content and format",
+          "requiredArtifacts": [
+            "meeting_request"
+          ],
+          "commands": [
+            "/strategy"
+          ],
+          "roles": [
+            "ra_lead",
+            "ceo"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "Pre-NDA meeting request",
+          "NDA submission plan",
+          "Drug Substance (3.2.S)",
+          "Drug Product (3.2.P)",
+          "Pivotal CSR(s)"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "Pre-NDA Planning",
+            "steps": [
+              {
+                "id": "nda-1",
+                "title": "Pre-NDA meeting request",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-2",
+                "title": "NDA submission plan",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 3 — Quality",
+            "steps": [
+              {
+                "id": "nda-8",
+                "title": "Drug Substance (3.2.S)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-9",
+                "title": "Drug Product (3.2.P)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 5 — Clinical Studies",
+            "steps": [
+              {
+                "id": "nda-10",
+                "title": "Pivotal CSR(s)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-11",
+                "title": "Integrated Summary of Safety (ISS)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-12",
+                "title": "Integrated Summary of Efficacy (ISE)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 2 — CTD Summaries",
+            "steps": [
+              {
+                "id": "nda-3",
+                "title": "Quality Overall Summary (2.3)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-6",
+                "title": "Nonclinical Summaries (2.6)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-4",
+                "title": "Nonclinical Overview (2.4)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-7",
+                "title": "Clinical Summary (2.7)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-5",
+                "title": "Clinical Overview (2.5)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Labeling & Advisory Committee",
+            "steps": [
+              {
+                "id": "nda-13",
+                "title": "USPI draft",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-14",
+                "title": "AdCom preparation",
+                "complete": false,
+                "critical": false
+              }
+            ]
+          },
+          {
+            "name": "Pre-Submission & Filing",
+            "steps": [
+              {
+                "id": "nda-15",
+                "title": "Full dossier preflight",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-16",
+                "title": "RTF risk assessment",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-17",
+                "title": "Freeze, sign, submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: New Drug Application\n**Progress:** 0/17 tracked steps (0%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** Pre-NDA Planning\n\n**Next Step:** Pre-NDA meeting request\n> Type B meeting with FDA to align on NDA content and format\nSuggested commands: /strategy\nResponsible: ra_lead, ceo\n\n**Critical Blockers (5):**\n- Pre-NDA meeting request\n- NDA submission plan\n- Drug Substance (3.2.S)\n- Drug Product (3.2.P)\n- Pivotal CSR(s)\n\n**Phases:**\n- Pre-NDA Planning: 0/2 tracked\n- Module 3 — Quality: 0/2 tracked\n- Module 5 — Clinical Studies: 0/3 tracked\n- Module 2 — CTD Summaries: 0/5 tracked\n- Labeling & Advisory Committee: 0/2 tracked\n- Pre-Submission & Filing: 0/3 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "8dbd2b81bac12423b5f8356da9449c1a9a8cbe67bad83a1391e0efc035d89279",
+      "promptSha256": "38464b217b8e38463805de29e9bc969832d7529b519e44c781b21d6c453671d3"
+    },
+    {
+      "fixture": "empty",
+      "type": "bla",
+      "status": {
+        "type": "bla",
+        "name": "Biologics License Application",
+        "totalSteps": 8,
+        "trackedSteps": 8,
+        "untrackedSteps": 0,
+        "completedSteps": 0,
+        "currentPhase": "BLA Strategy",
+        "nextStep": {
+          "id": "bla-1",
+          "phase": "strategy",
+          "title": "BLA submission strategy",
+          "description": "Biologics-specific pathway, biosimilar vs novel, accelerated pathways",
+          "requiredArtifacts": [
+            "strategy_note"
+          ],
+          "commands": [
+            "/strategy"
+          ],
+          "roles": [
+            "ra_lead",
+            "ceo"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "BLA submission strategy",
+          "Drug Substance (3.2.S) — Biologics",
+          "Drug Product (3.2.P)",
+          "Pivotal CSRs",
+          "Quality Overall Summary (2.3)"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "BLA Strategy",
+            "steps": [
+              {
+                "id": "bla-1",
+                "title": "BLA submission strategy",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 3 — Quality (Biologics)",
+            "steps": [
+              {
+                "id": "bla-5",
+                "title": "Drug Substance (3.2.S) — Biologics",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "bla-6",
+                "title": "Drug Product (3.2.P)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 5 — Clinical Studies",
+            "steps": [
+              {
+                "id": "bla-7",
+                "title": "Pivotal CSRs",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 2 — CTD Summaries",
+            "steps": [
+              {
+                "id": "bla-2",
+                "title": "Quality Overall Summary (2.3)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "bla-4",
+                "title": "Clinical Summary (2.7)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "bla-3",
+                "title": "Clinical Overview (2.5)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Filing",
+            "steps": [
+              {
+                "id": "bla-8",
+                "title": "Full preflight + submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: Biologics License Application\n**Progress:** 0/8 tracked steps (0%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** BLA Strategy\n\n**Next Step:** BLA submission strategy\n> Biologics-specific pathway, biosimilar vs novel, accelerated pathways\nSuggested commands: /strategy\nResponsible: ra_lead, ceo\n\n**Critical Blockers (5):**\n- BLA submission strategy\n- Drug Substance (3.2.S) — Biologics\n- Drug Product (3.2.P)\n- Pivotal CSRs\n- Quality Overall Summary (2.3)\n\n**Phases:**\n- BLA Strategy: 0/1 tracked\n- Module 3 — Quality (Biologics): 0/2 tracked\n- Module 5 — Clinical Studies: 0/1 tracked\n- Module 2 — CTD Summaries: 0/3 tracked\n- Filing: 0/1 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "fe413295ca39a8c8749a8a9d0826d90dde960fb9aaaf31efc4f0e18c584ce4d8",
+      "promptSha256": "de24a5076b7cfb106e077a073aabb97b1e0dbbb9b45ad2bccc456e1c8b42ee35"
+    },
+    {
+      "fixture": "empty",
+      "type": "maa",
+      "status": {
+        "type": "maa",
+        "name": "Marketing Authorisation Application",
+        "totalSteps": 9,
+        "trackedSteps": 9,
+        "untrackedSteps": 0,
+        "completedSteps": 0,
+        "currentPhase": "Pre-Submission (EMA)",
+        "nextStep": {
+          "id": "maa-1",
+          "phase": "pre-sub",
+          "title": "Regulatory strategy (EU)",
+          "description": "Centralised vs decentralised, PRIME eligibility, rapporteur preferences",
+          "requiredArtifacts": [
+            "strategy_note"
+          ],
+          "commands": [
+            "/strategy"
+          ],
+          "roles": [
+            "ra_lead"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "Regulatory strategy (EU)",
+          "Application form",
+          "SmPC draft",
+          "Package Leaflet",
+          "Risk Management Plan"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "Pre-Submission (EMA)",
+            "steps": [
+              {
+                "id": "maa-1",
+                "title": "Regulatory strategy (EU)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "maa-2",
+                "title": "Scientific advice request",
+                "complete": false,
+                "critical": false
+              }
+            ]
+          },
+          {
+            "name": "Module 1 — EU Administrative",
+            "steps": [
+              {
+                "id": "maa-3",
+                "title": "Application form",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "maa-4",
+                "title": "SmPC draft",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "maa-5",
+                "title": "Package Leaflet",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "maa-6",
+                "title": "Risk Management Plan",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Modules 2-5 (Same as IND/NDA)",
+            "steps": [
+              {
+                "id": "maa-7",
+                "title": "CTD Modules 2-5",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Filing",
+            "steps": [
+              {
+                "id": "maa-8",
+                "title": "Full MAA preflight",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "maa-9",
+                "title": "Submit MAA",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: Marketing Authorisation Application\n**Progress:** 0/9 tracked steps (0%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** Pre-Submission (EMA)\n\n**Next Step:** Regulatory strategy (EU)\n> Centralised vs decentralised, PRIME eligibility, rapporteur preferences\nSuggested commands: /strategy\nResponsible: ra_lead\n\n**Critical Blockers (5):**\n- Regulatory strategy (EU)\n- Application form\n- SmPC draft\n- Package Leaflet\n- Risk Management Plan\n\n**Phases:**\n- Pre-Submission (EMA): 0/2 tracked\n- Module 1 — EU Administrative: 0/4 tracked\n- Modules 2-5 (Same as IND/NDA): 0/1 tracked\n- Filing: 0/2 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "36a21ef48bf4387c0c21f7e96e30481e16b495146e1a6618bc16db6a581309b6",
+      "promptSha256": "b0bdfcb641b3eae685c933f7778be4742189dda0eb21c307e2df6e121bfdb367"
+    },
+    {
+      "fixture": "empty",
+      "type": "pma",
+      "status": {
+        "type": "pma",
+        "name": "Premarket Approval",
+        "totalSteps": 8,
+        "trackedSteps": 8,
+        "untrackedSteps": 0,
+        "completedSteps": 0,
+        "currentPhase": "PMA Strategy",
+        "nextStep": {
+          "id": "pma-1",
+          "phase": "strategy",
+          "title": "PMA strategy & classification",
+          "description": "Confirm Class III, identify clinical data needs, modular PMA option",
+          "requiredArtifacts": [
+            "strategy_note"
+          ],
+          "commands": [
+            "/strategy",
+            "/device"
+          ],
+          "roles": [
+            "ra_lead"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "PMA strategy & classification",
+          "Pre-submission meeting",
+          "Device description & IFU",
+          "Clinical study data",
+          "Manufacturing (QSR)"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "PMA Strategy",
+            "steps": [
+              {
+                "id": "pma-1",
+                "title": "PMA strategy & classification",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "pma-2",
+                "title": "Pre-submission meeting",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "PMA Content",
+            "steps": [
+              {
+                "id": "pma-3",
+                "title": "Device description & IFU",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "pma-4",
+                "title": "Clinical study data",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "pma-5",
+                "title": "Manufacturing (QSR)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "pma-6",
+                "title": "Nonclinical testing",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Review & Submit",
+            "steps": [
+              {
+                "id": "pma-7",
+                "title": "Advisory panel preparation",
+                "complete": false,
+                "critical": false
+              },
+              {
+                "id": "pma-8",
+                "title": "PMA preflight & submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: Premarket Approval\n**Progress:** 0/8 tracked steps (0%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** PMA Strategy\n\n**Next Step:** PMA strategy & classification\n> Confirm Class III, identify clinical data needs, modular PMA option\nSuggested commands: /strategy, /device\nResponsible: ra_lead\n\n**Critical Blockers (5):**\n- PMA strategy & classification\n- Pre-submission meeting\n- Device description & IFU\n- Clinical study data\n- Manufacturing (QSR)\n\n**Phases:**\n- PMA Strategy: 0/2 tracked\n- PMA Content: 0/4 tracked\n- Review & Submit: 0/2 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "dca27fb720b4d901530e8444e8a64f9deb555adaf8adc277fa394226fe6781e0",
+      "promptSha256": "64f942833defd2a7507502397f0e400feb558c1fb050a4988deafacc967c3495"
+    },
+    {
+      "fixture": "empty",
+      "type": "de_novo",
+      "status": {
+        "type": "de_novo",
+        "name": "De Novo Classification Request",
+        "totalSteps": 6,
+        "trackedSteps": 6,
+        "untrackedSteps": 0,
+        "completedSteps": 0,
+        "currentPhase": "De Novo Strategy",
+        "nextStep": {
+          "id": "dn-1",
+          "phase": "strategy",
+          "title": "Classification rationale",
+          "description": "Document why 510(k) is not appropriate — novel device, no predicate",
+          "requiredArtifacts": [
+            "classification_rationale"
+          ],
+          "commands": [
+            "/device",
+            "/strategy",
+            "/precedent"
+          ],
+          "roles": [
+            "ra_lead"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "Classification rationale",
+          "Pre-submission (Q-Sub)",
+          "Risk assessment & special controls",
+          "Device description & testing",
+          "De Novo preflight & submit"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "De Novo Strategy",
+            "steps": [
+              {
+                "id": "dn-1",
+                "title": "Classification rationale",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "dn-2",
+                "title": "Pre-submission (Q-Sub)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "De Novo Content",
+            "steps": [
+              {
+                "id": "dn-3",
+                "title": "Risk assessment & special controls",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "dn-4",
+                "title": "Device description & testing",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "dn-5",
+                "title": "Clinical data (if required)",
+                "complete": false,
+                "critical": false
+              }
+            ]
+          },
+          {
+            "name": "Filing",
+            "steps": [
+              {
+                "id": "dn-6",
+                "title": "De Novo preflight & submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: De Novo Classification Request\n**Progress:** 0/6 tracked steps (0%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** De Novo Strategy\n\n**Next Step:** Classification rationale\n> Document why 510(k) is not appropriate — novel device, no predicate\nSuggested commands: /device, /strategy, /precedent\nResponsible: ra_lead\n\n**Critical Blockers (5):**\n- Classification rationale\n- Pre-submission (Q-Sub)\n- Risk assessment & special controls\n- Device description & testing\n- De Novo preflight & submit\n\n**Phases:**\n- De Novo Strategy: 0/2 tracked\n- De Novo Content: 0/3 tracked\n- Filing: 0/1 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "efdc151c0a143f2d325f3f6f9e0ba20b8b150ac168def3a26979c7a6a6dba3f3",
+      "promptSha256": "938ed37895c245771931bb0f66a6335d98a184bea35882d67374710cf1a2bbb9"
+    },
+    {
+      "fixture": "empty",
+      "type": "cer",
+      "status": {
+        "type": "cer",
+        "name": "Clinical Evaluation Report (EU MDR)",
+        "totalSteps": 7,
+        "trackedSteps": 7,
+        "untrackedSteps": 0,
+        "completedSteps": 0,
+        "currentPhase": "CER Planning",
+        "nextStep": {
+          "id": "cer-1",
+          "phase": "planning",
+          "title": "CER scope & plan",
+          "description": "Define scope, MEDDEV 2.7/1 Rev 4 compliance, equivalence strategy",
+          "requiredArtifacts": [
+            "cer_plan"
+          ],
+          "commands": [
+            "/strategy",
+            "/device"
+          ],
+          "roles": [
+            "ra_lead"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "CER scope & plan",
+          "Literature search protocol",
+          "Literature search & appraisal",
+          "Clinical data analysis",
+          "CER report"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "CER Planning",
+            "steps": [
+              {
+                "id": "cer-1",
+                "title": "CER scope & plan",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "cer-2",
+                "title": "Literature search protocol",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "CER Content",
+            "steps": [
+              {
+                "id": "cer-3",
+                "title": "Literature search & appraisal",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "cer-4",
+                "title": "Clinical data analysis",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "cer-5",
+                "title": "CER report",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "cer-6",
+                "title": "PMCF plan",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Review & Filing",
+            "steps": [
+              {
+                "id": "cer-7",
+                "title": "CER audit & submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: Clinical Evaluation Report (EU MDR)\n**Progress:** 0/7 tracked steps (0%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** CER Planning\n\n**Next Step:** CER scope & plan\n> Define scope, MEDDEV 2.7/1 Rev 4 compliance, equivalence strategy\nSuggested commands: /strategy, /device\nResponsible: ra_lead\n\n**Critical Blockers (5):**\n- CER scope & plan\n- Literature search protocol\n- Literature search & appraisal\n- Clinical data analysis\n- CER report\n\n**Phases:**\n- CER Planning: 0/2 tracked\n- CER Content: 0/4 tracked\n- Review & Filing: 0/1 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "74e7e0f2627aaeb570cc398fcf7d0dc3f2878242489887c50c7153ceff0b85bf",
+      "promptSha256": "753bba426df2b0ad90fa67bf9c8a06e4a5a1956df6c4030df0440485cdfd129c"
+    },
+    {
+      "fixture": "mixed",
+      "type": "ind",
+      "status": {
+        "type": "ind",
+        "name": "Investigational New Drug Application",
+        "totalSteps": 21,
+        "trackedSteps": 20,
+        "untrackedSteps": 1,
+        "completedSteps": 6,
+        "currentPhase": "Module 1 — Administrative",
+        "nextStep": {
+          "id": "ind-21",
+          "phase": "module-1",
+          "title": "Cover letter",
+          "description": "IND cover letter with sponsor info, drug name, phase, protocol list",
+          "ctdSection": "1.2",
+          "requiredArtifacts": [
+            "cover_letter"
+          ],
+          "commands": [
+            "/draft 1.2"
+          ],
+          "roles": [
+            "ra_lead"
+          ],
+          "depends": [
+            "ind-1"
+          ],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "Cover letter",
+          "Investigator brochure",
+          "Drug Substance (3.2.S)",
+          "Drug Product (3.2.P)",
+          "Quality Overall Summary (2.3)"
+        ],
+        "progressPercent": 30,
+        "phases": [
+          {
+            "name": "Pre-IND Preparation",
+            "steps": [
+              {
+                "id": "ind-1",
+                "title": "Define regulatory strategy",
+                "complete": true,
+                "critical": true
+              },
+              {
+                "id": "ind-2",
+                "title": "Pre-IND meeting request",
+                "complete": true,
+                "critical": true
+              },
+              {
+                "id": "ind-3",
+                "title": "Nonclinical data package",
+                "complete": true,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 1 — Administrative",
+            "steps": [
+              {
+                "id": "ind-4",
+                "title": "Form FDA 1571",
+                "complete": true,
+                "critical": true
+              },
+              {
+                "id": "ind-21",
+                "title": "Cover letter",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-5",
+                "title": "Form 1572 (Investigators)",
+                "complete": false,
+                "critical": false
+              },
+              {
+                "id": "ind-6",
+                "title": "Investigator brochure",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 3 — Quality (CMC)",
+            "steps": [
+              {
+                "id": "ind-12",
+                "title": "Drug Substance (3.2.S)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-13",
+                "title": "Drug Product (3.2.P)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 5 — Clinical",
+            "steps": [
+              {
+                "id": "ind-14",
+                "title": "Clinical protocol",
+                "complete": true,
+                "critical": true
+              },
+              {
+                "id": "ind-15",
+                "title": "Statistical Analysis Plan",
+                "complete": true,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 2 — CTD Summaries",
+            "steps": [
+              {
+                "id": "ind-7",
+                "title": "Quality Overall Summary (2.3)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-10",
+                "title": "Nonclinical Written Summaries (2.6)",
+                "complete": false,
+                "critical": false
+              },
+              {
+                "id": "ind-8",
+                "title": "Nonclinical Overview (2.4)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-11",
+                "title": "Clinical Summary (2.7)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-9",
+                "title": "Clinical Overview (2.5)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Pre-Submission Review",
+            "steps": [
+              {
+                "id": "ind-16",
+                "title": "Full dossier preflight",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-17",
+                "title": "Risk assessment",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "ind-18",
+                "title": "Reviewer question prep",
+                "complete": false,
+                "critical": false
+              },
+              {
+                "id": "ind-19",
+                "title": "Freeze and sign",
+                "complete": null,
+                "critical": true
+              },
+              {
+                "id": "ind-20",
+                "title": "Submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: Investigational New Drug Application\n**Progress:** 6/20 tracked steps (30%); 1 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** Module 1 — Administrative\n\n**Next Step:** Cover letter\n> IND cover letter with sponsor info, drug name, phase, protocol list\nSuggested commands: /draft 1.2\nResponsible: ra_lead\n\n**Critical Blockers (5):**\n- Cover letter\n- Investigator brochure\n- Drug Substance (3.2.S)\n- Drug Product (3.2.P)\n- Quality Overall Summary (2.3)\n\n**Phases:**\n- Pre-IND Preparation: 3/3 tracked\n- Module 1 — Administrative: 1/4 tracked\n- Module 3 — Quality (CMC): 0/2 tracked\n- Module 5 — Clinical: 2/2 tracked\n- Module 2 — CTD Summaries: 0/5 tracked\n- Pre-Submission Review: 0/4 tracked · 1 not tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "490ad797e23d2f1b9fba9ed1bc00ff9b0d8cdf1ab1bbb30d70fb2e2259cacb96",
+      "promptSha256": "238c6f752567d03d2d276d6a3046147f4f7bf59aa48839eb7ad4e9ee448b9900"
+    },
+    {
+      "fixture": "mixed",
+      "type": "510k",
+      "status": {
+        "type": "510k",
+        "name": "510(k) Premarket Notification",
+        "totalSteps": 11,
+        "trackedSteps": 11,
+        "untrackedSteps": 0,
+        "completedSteps": 0,
+        "currentPhase": "Predicate & Strategy",
+        "nextStep": {
+          "id": "510k-1",
+          "phase": "strategy",
+          "title": "Predicate device search",
+          "description": "Identify 1-3 predicate devices with product codes",
+          "requiredArtifacts": [
+            "predicate_analysis"
+          ],
+          "commands": [
+            "/precedent",
+            "/device"
+          ],
+          "roles": [
+            "ra_lead"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "Predicate device search",
+          "Substantial equivalence argument",
+          "Device description",
+          "SE comparison",
+          "Performance data"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "Predicate & Strategy",
+            "steps": [
+              {
+                "id": "510k-1",
+                "title": "Predicate device search",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-2",
+                "title": "Substantial equivalence argument",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "510(k) Sections",
+            "steps": [
+              {
+                "id": "510k-3",
+                "title": "Device description",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-4",
+                "title": "SE comparison",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-5",
+                "title": "Performance data",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-6",
+                "title": "Biocompatibility",
+                "complete": false,
+                "critical": false
+              },
+              {
+                "id": "510k-7",
+                "title": "Labeling",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-8",
+                "title": "Software documentation",
+                "complete": false,
+                "critical": false
+              }
+            ]
+          },
+          {
+            "name": "Review & Submit",
+            "steps": [
+              {
+                "id": "510k-9",
+                "title": "Full submission preflight",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-10",
+                "title": "Risk assessment & deficiency prep",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "510k-11",
+                "title": "Submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: 510(k) Premarket Notification\n**Progress:** 0/11 tracked steps (0%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** Predicate & Strategy\n\n**Next Step:** Predicate device search\n> Identify 1-3 predicate devices with product codes\nSuggested commands: /precedent, /device\nResponsible: ra_lead\n\n**Critical Blockers (5):**\n- Predicate device search\n- Substantial equivalence argument\n- Device description\n- SE comparison\n- Performance data\n\n**Phases:**\n- Predicate & Strategy: 0/2 tracked\n- 510(k) Sections: 0/6 tracked\n- Review & Submit: 0/3 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "38dfdd31358a9d062179e62abd906e6650edd0fe924fb4aa3dde2c5f57f45876",
+      "promptSha256": "5d9a8225ed3348430aa4049c3c7d14fd4a3c36178590a4004269fbb2eeb83697"
+    },
+    {
+      "fixture": "mixed",
+      "type": "nda",
+      "status": {
+        "type": "nda",
+        "name": "New Drug Application",
+        "totalSteps": 17,
+        "trackedSteps": 17,
+        "untrackedSteps": 0,
+        "completedSteps": 0,
+        "currentPhase": "Pre-NDA Planning",
+        "nextStep": {
+          "id": "nda-1",
+          "phase": "planning",
+          "title": "Pre-NDA meeting request",
+          "description": "Type B meeting with FDA to align on NDA content and format",
+          "requiredArtifacts": [
+            "meeting_request"
+          ],
+          "commands": [
+            "/strategy"
+          ],
+          "roles": [
+            "ra_lead",
+            "ceo"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "Pre-NDA meeting request",
+          "NDA submission plan",
+          "Drug Substance (3.2.S)",
+          "Drug Product (3.2.P)",
+          "Pivotal CSR(s)"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "Pre-NDA Planning",
+            "steps": [
+              {
+                "id": "nda-1",
+                "title": "Pre-NDA meeting request",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-2",
+                "title": "NDA submission plan",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 3 — Quality",
+            "steps": [
+              {
+                "id": "nda-8",
+                "title": "Drug Substance (3.2.S)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-9",
+                "title": "Drug Product (3.2.P)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 5 — Clinical Studies",
+            "steps": [
+              {
+                "id": "nda-10",
+                "title": "Pivotal CSR(s)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-11",
+                "title": "Integrated Summary of Safety (ISS)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-12",
+                "title": "Integrated Summary of Efficacy (ISE)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 2 — CTD Summaries",
+            "steps": [
+              {
+                "id": "nda-3",
+                "title": "Quality Overall Summary (2.3)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-6",
+                "title": "Nonclinical Summaries (2.6)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-4",
+                "title": "Nonclinical Overview (2.4)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-7",
+                "title": "Clinical Summary (2.7)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-5",
+                "title": "Clinical Overview (2.5)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Labeling & Advisory Committee",
+            "steps": [
+              {
+                "id": "nda-13",
+                "title": "USPI draft",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-14",
+                "title": "AdCom preparation",
+                "complete": false,
+                "critical": false
+              }
+            ]
+          },
+          {
+            "name": "Pre-Submission & Filing",
+            "steps": [
+              {
+                "id": "nda-15",
+                "title": "Full dossier preflight",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-16",
+                "title": "RTF risk assessment",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "nda-17",
+                "title": "Freeze, sign, submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: New Drug Application\n**Progress:** 0/17 tracked steps (0%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** Pre-NDA Planning\n\n**Next Step:** Pre-NDA meeting request\n> Type B meeting with FDA to align on NDA content and format\nSuggested commands: /strategy\nResponsible: ra_lead, ceo\n\n**Critical Blockers (5):**\n- Pre-NDA meeting request\n- NDA submission plan\n- Drug Substance (3.2.S)\n- Drug Product (3.2.P)\n- Pivotal CSR(s)\n\n**Phases:**\n- Pre-NDA Planning: 0/2 tracked\n- Module 3 — Quality: 0/2 tracked\n- Module 5 — Clinical Studies: 0/3 tracked\n- Module 2 — CTD Summaries: 0/5 tracked\n- Labeling & Advisory Committee: 0/2 tracked\n- Pre-Submission & Filing: 0/3 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "8dbd2b81bac12423b5f8356da9449c1a9a8cbe67bad83a1391e0efc035d89279",
+      "promptSha256": "38464b217b8e38463805de29e9bc969832d7529b519e44c781b21d6c453671d3"
+    },
+    {
+      "fixture": "mixed",
+      "type": "bla",
+      "status": {
+        "type": "bla",
+        "name": "Biologics License Application",
+        "totalSteps": 8,
+        "trackedSteps": 8,
+        "untrackedSteps": 0,
+        "completedSteps": 1,
+        "currentPhase": "Module 3 — Quality (Biologics)",
+        "nextStep": {
+          "id": "bla-5",
+          "phase": "module-3",
+          "title": "Drug Substance (3.2.S) — Biologics",
+          "description": "Cell substrate, manufacturing, characterization (ICH Q5 series)",
+          "ctdSection": "3.2.S",
+          "requiredArtifacts": [
+            "drug_substance"
+          ],
+          "commands": [
+            "/draft 3.2.S",
+            "/cmc"
+          ],
+          "roles": [
+            "cmc_lead"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "Drug Substance (3.2.S) — Biologics",
+          "Drug Product (3.2.P)",
+          "Pivotal CSRs",
+          "Quality Overall Summary (2.3)",
+          "Clinical Summary (2.7)"
+        ],
+        "progressPercent": 13,
+        "phases": [
+          {
+            "name": "BLA Strategy",
+            "steps": [
+              {
+                "id": "bla-1",
+                "title": "BLA submission strategy",
+                "complete": true,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 3 — Quality (Biologics)",
+            "steps": [
+              {
+                "id": "bla-5",
+                "title": "Drug Substance (3.2.S) — Biologics",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "bla-6",
+                "title": "Drug Product (3.2.P)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 5 — Clinical Studies",
+            "steps": [
+              {
+                "id": "bla-7",
+                "title": "Pivotal CSRs",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Module 2 — CTD Summaries",
+            "steps": [
+              {
+                "id": "bla-2",
+                "title": "Quality Overall Summary (2.3)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "bla-4",
+                "title": "Clinical Summary (2.7)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "bla-3",
+                "title": "Clinical Overview (2.5)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Filing",
+            "steps": [
+              {
+                "id": "bla-8",
+                "title": "Full preflight + submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: Biologics License Application\n**Progress:** 1/8 tracked steps (13%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** Module 3 — Quality (Biologics)\n\n**Next Step:** Drug Substance (3.2.S) — Biologics\n> Cell substrate, manufacturing, characterization (ICH Q5 series)\nSuggested commands: /draft 3.2.S, /cmc\nResponsible: cmc_lead\n\n**Critical Blockers (5):**\n- Drug Substance (3.2.S) — Biologics\n- Drug Product (3.2.P)\n- Pivotal CSRs\n- Quality Overall Summary (2.3)\n- Clinical Summary (2.7)\n\n**Phases:**\n- BLA Strategy: 1/1 tracked\n- Module 3 — Quality (Biologics): 0/2 tracked\n- Module 5 — Clinical Studies: 0/1 tracked\n- Module 2 — CTD Summaries: 0/3 tracked\n- Filing: 0/1 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "65a2cde526dc922fb9e7b3b24101071d2fc26caad71b399059e19fac74e47c8b",
+      "promptSha256": "86df3df64310ecd4b581ff3e1543acf224086c9503742ca69fb8e676453ae0e2"
+    },
+    {
+      "fixture": "mixed",
+      "type": "maa",
+      "status": {
+        "type": "maa",
+        "name": "Marketing Authorisation Application",
+        "totalSteps": 9,
+        "trackedSteps": 9,
+        "untrackedSteps": 0,
+        "completedSteps": 1,
+        "currentPhase": "Pre-Submission (EMA)",
+        "nextStep": {
+          "id": "maa-2",
+          "phase": "pre-sub",
+          "title": "Scientific advice request",
+          "description": "EMA scientific advice on development plan",
+          "requiredArtifacts": [
+            "scientific_advice"
+          ],
+          "commands": [
+            "/draft"
+          ],
+          "roles": [
+            "ra_lead"
+          ],
+          "depends": [
+            "maa-1"
+          ],
+          "criticalPath": false
+        },
+        "criticalBlockers": [
+          "Application form",
+          "SmPC draft",
+          "Package Leaflet",
+          "Risk Management Plan",
+          "CTD Modules 2-5"
+        ],
+        "progressPercent": 11,
+        "phases": [
+          {
+            "name": "Pre-Submission (EMA)",
+            "steps": [
+              {
+                "id": "maa-1",
+                "title": "Regulatory strategy (EU)",
+                "complete": true,
+                "critical": true
+              },
+              {
+                "id": "maa-2",
+                "title": "Scientific advice request",
+                "complete": false,
+                "critical": false
+              }
+            ]
+          },
+          {
+            "name": "Module 1 — EU Administrative",
+            "steps": [
+              {
+                "id": "maa-3",
+                "title": "Application form",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "maa-4",
+                "title": "SmPC draft",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "maa-5",
+                "title": "Package Leaflet",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "maa-6",
+                "title": "Risk Management Plan",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Modules 2-5 (Same as IND/NDA)",
+            "steps": [
+              {
+                "id": "maa-7",
+                "title": "CTD Modules 2-5",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Filing",
+            "steps": [
+              {
+                "id": "maa-8",
+                "title": "Full MAA preflight",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "maa-9",
+                "title": "Submit MAA",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: Marketing Authorisation Application\n**Progress:** 1/9 tracked steps (11%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** Pre-Submission (EMA)\n\n**Next Step:** Scientific advice request\n> EMA scientific advice on development plan\nSuggested commands: /draft\nResponsible: ra_lead\n\n**Critical Blockers (5):**\n- Application form\n- SmPC draft\n- Package Leaflet\n- Risk Management Plan\n- CTD Modules 2-5\n\n**Phases:**\n- Pre-Submission (EMA): 1/2 tracked\n- Module 1 — EU Administrative: 0/4 tracked\n- Modules 2-5 (Same as IND/NDA): 0/1 tracked\n- Filing: 0/2 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "955c2b308172f7c3fca998da3ad6d9c8d75bd5615715f699034b3770767c1c5e",
+      "promptSha256": "c30f6a54a6340f6c20eb723a81248620d3ffada8a9c370dd4660c173dd11839f"
+    },
+    {
+      "fixture": "mixed",
+      "type": "pma",
+      "status": {
+        "type": "pma",
+        "name": "Premarket Approval",
+        "totalSteps": 8,
+        "trackedSteps": 8,
+        "untrackedSteps": 0,
+        "completedSteps": 1,
+        "currentPhase": "PMA Strategy",
+        "nextStep": {
+          "id": "pma-2",
+          "phase": "strategy",
+          "title": "Pre-submission meeting",
+          "description": "Q-Sub with FDA CDRH to align on clinical requirements",
+          "requiredArtifacts": [
+            "meeting_request"
+          ],
+          "commands": [
+            "/draft"
+          ],
+          "roles": [
+            "ra_lead"
+          ],
+          "depends": [
+            "pma-1"
+          ],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "Pre-submission meeting",
+          "Device description & IFU",
+          "Clinical study data",
+          "Manufacturing (QSR)",
+          "Nonclinical testing"
+        ],
+        "progressPercent": 13,
+        "phases": [
+          {
+            "name": "PMA Strategy",
+            "steps": [
+              {
+                "id": "pma-1",
+                "title": "PMA strategy & classification",
+                "complete": true,
+                "critical": true
+              },
+              {
+                "id": "pma-2",
+                "title": "Pre-submission meeting",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "PMA Content",
+            "steps": [
+              {
+                "id": "pma-3",
+                "title": "Device description & IFU",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "pma-4",
+                "title": "Clinical study data",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "pma-5",
+                "title": "Manufacturing (QSR)",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "pma-6",
+                "title": "Nonclinical testing",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Review & Submit",
+            "steps": [
+              {
+                "id": "pma-7",
+                "title": "Advisory panel preparation",
+                "complete": false,
+                "critical": false
+              },
+              {
+                "id": "pma-8",
+                "title": "PMA preflight & submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: Premarket Approval\n**Progress:** 1/8 tracked steps (13%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** PMA Strategy\n\n**Next Step:** Pre-submission meeting\n> Q-Sub with FDA CDRH to align on clinical requirements\nSuggested commands: /draft\nResponsible: ra_lead\n\n**Critical Blockers (5):**\n- Pre-submission meeting\n- Device description & IFU\n- Clinical study data\n- Manufacturing (QSR)\n- Nonclinical testing\n\n**Phases:**\n- PMA Strategy: 1/2 tracked\n- PMA Content: 0/4 tracked\n- Review & Submit: 0/2 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "515b55080a14e39e063020d6222d75e3e4f38217a45dd58a2d66612ac1051ea0",
+      "promptSha256": "0885d57356818180e761910a96e645c90da0719ded3a8da028c6e7f9d400a672"
+    },
+    {
+      "fixture": "mixed",
+      "type": "de_novo",
+      "status": {
+        "type": "de_novo",
+        "name": "De Novo Classification Request",
+        "totalSteps": 6,
+        "trackedSteps": 6,
+        "untrackedSteps": 0,
+        "completedSteps": 0,
+        "currentPhase": "De Novo Strategy",
+        "nextStep": {
+          "id": "dn-1",
+          "phase": "strategy",
+          "title": "Classification rationale",
+          "description": "Document why 510(k) is not appropriate — novel device, no predicate",
+          "requiredArtifacts": [
+            "classification_rationale"
+          ],
+          "commands": [
+            "/device",
+            "/strategy",
+            "/precedent"
+          ],
+          "roles": [
+            "ra_lead"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "Classification rationale",
+          "Pre-submission (Q-Sub)",
+          "Risk assessment & special controls",
+          "Device description & testing",
+          "De Novo preflight & submit"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "De Novo Strategy",
+            "steps": [
+              {
+                "id": "dn-1",
+                "title": "Classification rationale",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "dn-2",
+                "title": "Pre-submission (Q-Sub)",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "De Novo Content",
+            "steps": [
+              {
+                "id": "dn-3",
+                "title": "Risk assessment & special controls",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "dn-4",
+                "title": "Device description & testing",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "dn-5",
+                "title": "Clinical data (if required)",
+                "complete": false,
+                "critical": false
+              }
+            ]
+          },
+          {
+            "name": "Filing",
+            "steps": [
+              {
+                "id": "dn-6",
+                "title": "De Novo preflight & submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: De Novo Classification Request\n**Progress:** 0/6 tracked steps (0%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** De Novo Strategy\n\n**Next Step:** Classification rationale\n> Document why 510(k) is not appropriate — novel device, no predicate\nSuggested commands: /device, /strategy, /precedent\nResponsible: ra_lead\n\n**Critical Blockers (5):**\n- Classification rationale\n- Pre-submission (Q-Sub)\n- Risk assessment & special controls\n- Device description & testing\n- De Novo preflight & submit\n\n**Phases:**\n- De Novo Strategy: 0/2 tracked\n- De Novo Content: 0/3 tracked\n- Filing: 0/1 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "efdc151c0a143f2d325f3f6f9e0ba20b8b150ac168def3a26979c7a6a6dba3f3",
+      "promptSha256": "938ed37895c245771931bb0f66a6335d98a184bea35882d67374710cf1a2bbb9"
+    },
+    {
+      "fixture": "mixed",
+      "type": "cer",
+      "status": {
+        "type": "cer",
+        "name": "Clinical Evaluation Report (EU MDR)",
+        "totalSteps": 7,
+        "trackedSteps": 7,
+        "untrackedSteps": 0,
+        "completedSteps": 0,
+        "currentPhase": "CER Planning",
+        "nextStep": {
+          "id": "cer-1",
+          "phase": "planning",
+          "title": "CER scope & plan",
+          "description": "Define scope, MEDDEV 2.7/1 Rev 4 compliance, equivalence strategy",
+          "requiredArtifacts": [
+            "cer_plan"
+          ],
+          "commands": [
+            "/strategy",
+            "/device"
+          ],
+          "roles": [
+            "ra_lead"
+          ],
+          "depends": [],
+          "criticalPath": true
+        },
+        "criticalBlockers": [
+          "CER scope & plan",
+          "Literature search protocol",
+          "Literature search & appraisal",
+          "Clinical data analysis",
+          "CER report"
+        ],
+        "progressPercent": 0,
+        "phases": [
+          {
+            "name": "CER Planning",
+            "steps": [
+              {
+                "id": "cer-1",
+                "title": "CER scope & plan",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "cer-2",
+                "title": "Literature search protocol",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "CER Content",
+            "steps": [
+              {
+                "id": "cer-3",
+                "title": "Literature search & appraisal",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "cer-4",
+                "title": "Clinical data analysis",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "cer-5",
+                "title": "CER report",
+                "complete": false,
+                "critical": true
+              },
+              {
+                "id": "cer-6",
+                "title": "PMCF plan",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          },
+          {
+            "name": "Review & Filing",
+            "steps": [
+              {
+                "id": "cer-7",
+                "title": "CER audit & submit",
+                "complete": false,
+                "critical": true
+              }
+            ]
+          }
+        ]
+      },
+      "prompt": "\n\n## Submission Workflow: Clinical Evaluation Report (EU MDR)\n**Progress:** 0/7 tracked steps (0%); 0 step(s) are not tracked and may or may not have happened — ask, do not assume\n**Current Phase:** CER Planning\n\n**Next Step:** CER scope & plan\n> Define scope, MEDDEV 2.7/1 Rev 4 compliance, equivalence strategy\nSuggested commands: /strategy, /device\nResponsible: ra_lead\n\n**Critical Blockers (5):**\n- CER scope & plan\n- Literature search protocol\n- Literature search & appraisal\n- Clinical data analysis\n- CER report\n\n**Phases:**\n- CER Planning: 0/2 tracked\n- CER Content: 0/4 tracked\n- Review & Filing: 0/1 tracked\n\nUse this workflow status to guide the user. Tell them what to do next, which commands to use, and flag blockers. Be directive.",
+      "statusSha256": "74e7e0f2627aaeb570cc398fcf7d0dc3f2878242489887c50c7153ceff0b85bf",
+      "promptSha256": "753bba426df2b0ad90fa67bf9c8a06e4a5a1956df6c4030df0440485cdfd129c"
+    }
+  ]
+}

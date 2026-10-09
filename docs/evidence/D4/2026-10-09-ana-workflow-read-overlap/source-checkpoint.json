@@ -1,0 +1,9 @@
+{
+  "source_checkpoint": "2b4dab596b659adbfd7942262fbdbae148883796",
+  "commit_exit": 0,
+  "elapsed_seconds": 1.663,
+  "source_files": [
+    "server/services/ana-ri/workflow-orchestration.ts",
+    "server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts"
+  ]
+}

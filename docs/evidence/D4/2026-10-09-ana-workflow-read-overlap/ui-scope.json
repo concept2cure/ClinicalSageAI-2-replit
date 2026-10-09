@@ -1,0 +1,9 @@
+{
+  "base": "21ed7516fb312bcb7c7b9a3a4ba1c5ec80609f0f",
+  "client_tree": "f4a50c306387585250e354c68e08a099362e3823",
+  "changed_client_files": [],
+  "source_scope": [
+    "server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts",
+    "server/services/ana-ri/workflow-orchestration.ts"
+  ]
+}

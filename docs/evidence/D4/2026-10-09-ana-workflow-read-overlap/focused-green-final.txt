@@ -1,0 +1,54 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > enrichment reuses the real workflow snapshot > issues the two tenant-scoped workflow SELECTs once for a /workflow turn
+{
+  "timestamp": "2026-10-09T03:03:54.985Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > scopes every artifact read to the caller organization 2ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > issues no artifact read at all without an organization 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > still returns the workflow definition when the org is absent 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > returns null for a submission type with no workflow, scoped or not 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus marks a step complete only on evidence > with no project records, marks no step complete and no step it cannot track as done 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus marks a step complete only on evidence > computes progress over tracked steps only 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > enrichment reuses the real workflow snapshot > issues the two tenant-scoped workflow SELECTs once for a /workflow turn 6ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > enrichment reuses the real workflow snapshot > still issues no workflow artifact SELECT without a tenant 2ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > starts both reads before settlement and preserves 'status' when read +0 finishes first 3ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > starts both reads before settlement and preserves 'status' when read 1 finishes first 7ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > starts both reads before settlement and preserves 'prompt' when read +0 finishes first 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > starts both reads before settlement and preserves 'prompt' when read 1 finishes first 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > finishes after the slowest scripted read (125ms, 750ms) 2ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > finishes after the slowest scripted read (750ms, 125ms) 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve independent failure defaults > retains the surviving evidence when read +0 fails by 'throw' 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve independent failure defaults > retains the surviving evidence when read +0 fails by 'reject' 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve independent failure defaults > retains the surviving evidence when read 1 fails by 'throw' 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve independent failure defaults > retains the surviving evidence when read 1 fails by 'reject' 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve independent failure defaults > retains both original empty defaults when both reads throw 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve independent failure defaults > retains both original empty defaults when both reads reject 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve scope and guards > keeps concurrent tenant/project evidence separate and reads fresh evidence again 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve scope and guards > reads nothing for invalid organization undefined 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve scope and guards > reads nothing for invalid organization 0 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve scope and guards > reads nothing for invalid organization -1 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve scope and guards > reads nothing for invalid organization NaN 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve scope and guards > reads nothing for invalid organization Infinity 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve scope and guards > reads nothing for invalid organization -Infinity 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads preserve scope and guards > reads nothing for an unknown workflow and preserves its empty prompt 0ms
+
+ Test Files  1 passed (1)
+      Tests  28 passed (28)
+   Start at  23:03:49
+   Duration  5.56s (transform 3.84s, setup 75ms, import 5.03s, tests 37ms, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-workflow-read-overlap/focused-green-final.json

@@ -1,0 +1,45 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > scopes every artifact read to the caller organization
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > issues no artifact read at all without an organization
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > still returns the workflow definition when the org is absent
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > returns null for a submission type with no workflow, scoped or not
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus marks a step complete only on evidence > with no project records, marks no step complete and no step it cannot track as done
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus marks a step complete only on evidence > computes progress over tracked steps only
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > enrichment reuses the real workflow snapshot > issues the two tenant-scoped workflow SELECTs once for a /workflow turn
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > enrichment reuses the real workflow snapshot > still issues no workflow artifact SELECT without a tenant
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > starts both reads before settlement and preserves 'status' when read +0 finishes first
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > starts both reads before settlement and preserves 'status' when read 1 finishes first
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > starts both reads before settlement and preserves 'prompt' when read +0 finishes first
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > starts both reads before settlement and preserves 'prompt' when read 1 finishes first
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > finishes after the slowest scripted read (125ms, 750ms)
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > finishes after the slowest scripted read (750ms, 125ms)
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > retains the surviving evidence when read +0 fails by 'throw'
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > retains the surviving evidence when read +0 fails by 'reject'
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > retains the surviving evidence when read 1 fails by 'throw'
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > retains the surviving evidence when read 1 fails by 'reject'
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > retains both original empty defaults when both reads throw
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > retains both original empty defaults when both reads reject
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > keeps concurrent tenant/project evidence separate and reads fresh evidence again
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > reads nothing for invalid organization undefined
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > reads nothing for invalid organization 0
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > reads nothing for invalid organization -1
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > reads nothing for invalid organization NaN
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > reads nothing for invalid organization Infinity
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > reads nothing for invalid organization -Infinity
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > workflow reads overlap while preserving status and prompt meaning > reads nothing for an unknown workflow and preserves its empty prompt
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > verifies all workflow output preservation against sequential baseline 8ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 28 skipped (29)
+   Start at  23:01:11
+   Duration  5.03s (transform 3.53s, setup 67ms, import 4.69s, tests 11ms, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-workflow-read-overlap/output-preservation.json
