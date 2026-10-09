@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts",
+    "server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-08-ana-workflow-read-sharing/red.json"
+  ],
+  "files": [
+    "server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts",
+    "server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts"
+  ],
+  "source_blob": "3db2b65d27a6a8f363c01b820dbe2634711bede6"
+}

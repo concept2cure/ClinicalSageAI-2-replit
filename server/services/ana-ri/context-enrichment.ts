@@ -1354,8 +1354,13 @@ export async function enrichContextForChat(params: {
   })();
   if (project.status === 'unresolved') budget.mark('project-record', project.reason);
   const pid: ProjectRowId = project.status === 'linked' ? project.id : null;
+  // Common context and workflow commands read the same snapshot. Share only
+  // this invocation's raw read; each consumer keeps its own budget/reporting.
+  let workflowPromise: Promise<string> | undefined;
   const workflowContext = (): Promise<string> =>
-    submissionType && pid !== null ? buildWorkflowContext(pid, submissionType, organizationId) : Promise.resolve('');
+    workflowPromise ??= submissionType && pid !== null
+      ? Promise.resolve().then(() => buildWorkflowContext(pid, submissionType, organizationId))
+      : Promise.resolve('');
   /* A request that reads several sources reads, and reports, each one under its
      own name. They were joined with Promise.all inside one read, so one failed
      read (a domain memory read now throws) discarded what the others found,

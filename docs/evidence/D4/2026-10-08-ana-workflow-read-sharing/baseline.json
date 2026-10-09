@@ -1,0 +1,12 @@
+{
+  "base_sha": "bebd4253676f43d1c983ac769c660e0c0aacdd10",
+  "branch": "concept2cure-v2",
+  "client_hash": "f4a50c306387585250e354c68e08a099362e3823",
+  "original_production_blob": "3db2b65d27a6a8f363c01b820dbe2634711bede6",
+  "owned_paths": [
+    "server/services/ana-ri/context-enrichment.ts",
+    "server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts",
+    "server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts"
+  ],
+  "scope": "W3/D4: invocation-local reuse of the raw workflow read; same prompt, per-consumer budget/reporting, org/project guards. No UI, dependency, TTL or cross-turn cache."
+}

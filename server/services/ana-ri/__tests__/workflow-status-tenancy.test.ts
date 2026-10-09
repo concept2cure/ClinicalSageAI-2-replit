@@ -36,6 +36,7 @@ vi.mock('../../../db.js', () => ({
 }));
 
 import { getWorkflowStatus } from '../workflow-orchestration';
+import { enrichContextForChat } from '../context-enrichment';
 
 const artifactReads = () =>
   poolQuery.mock.calls.filter((c: unknown[]) => String(c[0]).includes('concept2cure_artifacts'));
@@ -99,5 +100,29 @@ describe('getWorkflowStatus marks a step complete only on evidence', () => {
     const status = (await getWorkflowStatus(42, 'ind', 7))!;
     expect(status.trackedSteps + status.untrackedSteps).toBe(status.totalSteps);
     expect(status.progressPercent === null || status.progressPercent === 0).toBe(true);
+  });
+});
+
+describe('enrichment reuses the real workflow snapshot', () => {
+  it('issues the two tenant-scoped workflow SELECTs once for a /workflow turn', async () => {
+    const result = await enrichContextForChat({
+      message: '/workflow', projectId: 42, project: { status: 'linked', id: 42 },
+      submissionType: 'ind', organizationId: 7,
+    });
+    const workflowReads = artifactReads().filter(c => /SELECT DISTINCT (type|ctd_section) FROM/.test(String(c[0])));
+    expect(workflowReads).toHaveLength(2);
+    for (const call of workflowReads) {
+      expect(String(call[0])).toContain('organization_id = $2');
+      expect(call[1]).toEqual([42, 7]);
+    }
+    expect(result.block.split('## Submission Workflow:')).toHaveLength(3);
+    expect(result.block).toContain('0/');
+  });
+
+  it('still issues no workflow artifact SELECT without a tenant', async () => {
+    await enrichContextForChat({
+      message: '/workflow', projectId: 42, project: { status: 'linked', id: 42 }, submissionType: 'ind',
+    });
+    expect(artifactReads()).toHaveLength(0);
   });
 });

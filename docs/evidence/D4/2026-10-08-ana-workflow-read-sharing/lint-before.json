@@ -1,0 +1,75 @@
+[
+  {
+    "filePath": "server/services/ana-ri/context-enrichment.ts",
+    "messages": [
+      {
+        "ruleId": "max-params",
+        "severity": 1,
+        "message": "Async function 'readProjectMemory' has too many parameters (6). Maximum allowed is 5.",
+        "line": 219,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 219,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "max-params",
+        "severity": 1,
+        "message": "Async function 'enrichWithProjectMemory' has too many parameters (6). Maximum allowed is 5.",
+        "line": 300,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 300,
+        "endColumn": 39
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (1505). Maximum allowed is 500.",
+        "line": 709,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 1971,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async function 'enrichWithProjectSummary' has a complexity of 24. Maximum allowed is 15.",
+        "line": 1073,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 1073,
+        "endColumn": 40
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async function 'enrichContextForChat' has too many lines (682). Maximum allowed is 100.",
+        "line": 1159,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 1159,
+        "endColumn": 43
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async function 'enrichContextForChat' has a complexity of 186. Maximum allowed is 15.",
+        "line": 1159,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 1159,
+        "endColumn": 43
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 6,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": [],
+    "omittedSourceSha256": "e63eb307aca8c7e6d54057b5d3f1958cb0fcd09d2d7d918df27b7e9e0a3447b0"
+  }
+]
