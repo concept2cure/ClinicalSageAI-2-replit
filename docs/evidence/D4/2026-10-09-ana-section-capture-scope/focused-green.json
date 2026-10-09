@@ -1,0 +1,40 @@
+{
+  "sourceCommit": "dc90f337d44670324923f795c076052b33f1ffde",
+  "command": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana-ri/__tests__/draft-section-capture.pglite.test.ts",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-section-capture-scope/focused-green-report.json"
+  ],
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "exitCode": 0,
+  "elapsedSeconds": 7.959,
+  "sourceFiles": {
+    "server/services/ana-ri/command-executor.ts": {
+      "blob": "54242eab7951afc523d1b14e16a8fce7857d14c0",
+      "sha256": "47355dc1fdd5755bc247fc643c136988fbadcf08ef9f654fc5a46c9bc12f285d",
+      "bytes": 224449
+    },
+    "server/services/ana-ri/__tests__/draft-section-capture.pglite.test.ts": {
+      "blob": "eca9ddb7e7f9b6f738ac204459b0f9f3ee1ce460",
+      "sha256": "9690ee1ba6a79c8a19e0767241555af89f3f1865f73af00b0c8d56037af3699a",
+      "bytes": 8340
+    },
+    "db/migrations/20260801_consolidated_tree_reconciliation.sql": {
+      "blob": "e3eaa0baa16b5780d81f79f1cc577f05c4e95fc1",
+      "sha256": "21db3c60f48b98f56b6646e141856d58daab8d410995aec3c4e3c3dd09f2b57e",
+      "bytes": 12769
+    },
+    "scripts/db/migration-set.mjs": {
+      "blob": "f9b0a52d4d286877c00e3a526758189b7657432b",
+      "sha256": "9670c262617e0cd0522daee9fc3dcc85b379a9a37b556a561f0bd54e18073116",
+      "bytes": 225355
+    }
+  }
+}

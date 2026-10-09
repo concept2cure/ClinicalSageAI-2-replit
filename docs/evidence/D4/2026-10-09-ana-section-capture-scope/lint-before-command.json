@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "server/services/ana-ri/command-executor.ts",
+    "--format",
+    "json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 1.259,
+  "errors": 0,
+  "warnings": 18
+}

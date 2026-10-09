@@ -3466,7 +3466,7 @@ export async function designTrial(
 // 17. DOCUMENT LIFECYCLE COMMANDS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Draft a CTD section using AI */
+/** Prepare tenant-owned section metadata; does not generate or save draft content. */
 export async function draftSection(
   ctx: CommandContext,
   params: Record<string, unknown>
@@ -3475,30 +3475,41 @@ export async function draftSection(
     const sectionId = params.sectionId;
     if (!sectionId)
       return { success: false, action: 'draft_section', message: 'sectionId required.' };
-    const res = await pool.query(`SELECT id, code, title FROM doc_sections WHERE id = $1 LIMIT 1`, [
-      sectionId,
-    ]);
+    if (!Number.isSafeInteger(ctx.organizationId) || ctx.organizationId <= 0)
+      return {
+        success: false,
+        action: 'draft_section',
+        message: 'organizationId must be a positive safe integer.',
+      };
+    const res = await pool.query(
+      `SELECT id, code, title FROM doc_sections WHERE id = $1 AND tenant_id = $2 LIMIT 1`,
+      [sectionId, ctx.organizationId]
+    );
     if (res.rows.length === 0)
       return {
         success: false,
         action: 'draft_section',
         message: `Section ${sectionId} not found.`,
       };
-    // The actual AI drafting is handled by the authoring router endpoint
-    // Here we trigger it via internal call pattern
     return {
       success: true,
       action: 'draft_section',
-      data: { sectionId, code: res.rows[0].code, title: res.rows[0].title },
+      data: {
+        sectionId,
+        code: res.rows[0].code,
+        title: res.rows[0].title,
+        status: 'prepared',
+        draftGenerated: false,
+      },
       message: `Section ${
         res.rows[0].code || sectionId
-      } ready for AI drafting. Use the /draft slash command or ask me to draft it.`,
+      } metadata prepared for drafting. No draft content was generated or saved.`,
     };
   } catch (err: unknown) {
     return {
       success: false,
       action: 'draft_section',
-      message: 'Draft failed.',
+      message: 'Section preparation failed.',
       error: err instanceof Error ? err.message : String(err),
     };
   }
@@ -4922,7 +4933,7 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
   {
     name: 'draft_section',
-    description: 'Draft a CTD section using AI (submission-ready prose)',
+    description: 'Prepare tenant-owned section metadata for drafting; does not generate or save draft content.',
     parameters: 'sectionId',
     example: '"Draft section 2.5 Clinical Overview"',
   },

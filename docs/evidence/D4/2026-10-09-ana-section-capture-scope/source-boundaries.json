@@ -1,0 +1,6 @@
+{
+  "release_base": "dc90f337d44670324923f795c076052b33f1ffde",
+  "source_path": "server/services/ana-ri/command-executor.ts",
+  "outside_draftSection_and_its_registry_description_byte_identical": true,
+  "no_client_shared_migration_changes": true
+}

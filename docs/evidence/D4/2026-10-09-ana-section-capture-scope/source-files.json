@@ -1,0 +1,19 @@
+{
+  "release_base": "f1759e4becfe25be8bf8bdafed01424d7e9fdeb7",
+  "files": [
+    {
+      "path": "server/services/ana-ri/command-executor.ts",
+      "git_blob_sha1": "54242eab7951afc523d1b14e16a8fce7857d14c0",
+      "sha256": "47355dc1fdd5755bc247fc643c136988fbadcf08ef9f654fc5a46c9bc12f285d",
+      "bytes": 224449
+    },
+    {
+      "path": "server/services/ana-ri/__tests__/draft-section-capture.pglite.test.ts",
+      "git_blob_sha1": "eca9ddb7e7f9b6f738ac204459b0f9f3ee1ce460",
+      "sha256": "9690ee1ba6a79c8a19e0767241555af89f3f1865f73af00b0c8d56037af3699a",
+      "bytes": 8340
+    }
+  ],
+  "client_unchanged": true,
+  "shared_builder_unchanged": true
+}
