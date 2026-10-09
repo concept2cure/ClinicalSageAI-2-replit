@@ -68,11 +68,13 @@ describe('verify_docx_against_source — claim scope', () => {
     expect(r.message).not.toMatch(/vs\. source/);
   });
 
-  it('DOES claim source fidelity when a source was actually diffed and matches', async () => {
+  it('reports caller-text fidelity when supplied text matches without qualifying a persisted artifact or source', async () => {
     const r = await run({ input_docx_path: 'tmp/docbuilder/org-7/claims/uspi.docx', expected_text: DOC_TEXT });
     expect(r.sourceDiffPerformed).toBe(true);
     expect(r.ok).toBe(true);
-    expect(r.message).toMatch(/reproduces the source/i);
+    expect(r.message).toMatch(/Text fidelity passed against caller_supplied_text/i);
+    expect(r).toMatchObject({ comparisonBasis: 'caller_supplied_text', artifactVerified: false,
+      sourceVerified: false, sourceQualification: 'unassessed', sealEligible: false });
     expect(r.divergence).toBeTruthy();
     expect(r.divergence.additions).toBe(0);
     expect(r.divergence.deletions).toBe(0);
@@ -85,6 +87,8 @@ describe('verify_docx_against_source — claim scope', () => {
     });
     expect(r.sourceDiffPerformed).toBe(true);
     expect(r.ok).toBe(false);
-    expect(r.message).toMatch(/vs\. source/);
+    expect(r.message).toMatch(/Text fidelity failed against caller_supplied_text/i);
+    expect(r).toMatchObject({ comparisonBasis: 'caller_supplied_text', artifactVerified: false,
+      sourceVerified: false, sourceQualification: 'unassessed', sealEligible: false });
   });
 });

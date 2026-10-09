@@ -472,33 +472,37 @@ export const VALIDATE_DOCX: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Content-fidelity verification — proves a freshly built/edited .docx actually
-// reproduces the supplied source text (and any required caption/boilerplate
-// strings) verbatim, beyond what validate_docx (structural OOXML integrity)
-// checks. Extracts the .docx text via the same extraction path AnA reads
-// uploads with, diffs it against the source, and asserts each required string
-// is present exactly. This is the audited "verify it against your text" step.
-// ─────────────────────────────────────────────────────────────────────────────
-
+// Text fidelity only. A saved target is loaded and rechecked server-side; the
+// tool result does not establish scientific source qualification or permit sealing.
 export const VERIFY_DOCX_AGAINST_SOURCE: AnaTool = {
   name: 'verify_docx_against_source',
   description:
-    "Verify that a built or edited Word (.docx) faithfully reproduces a known source text — the audited \"verify it against your text\" step after rebuilding from a template, applying corrections, or appending paragraphs. Unlike validate_docx (which checks OOXML/ZIP structural integrity only), this extracts the document's text and (1) diffs it against expected_text to surface any content divergence, and (2) confirms each entry in required_strings (e.g. caption block, case/sponsor identifiers, sworn-paragraph or boilerplate anchors) appears verbatim. Returns { ok, missingRequiredStrings, divergenceSummary, additions, deletions } — a pass/fail the user and the Part 11 audit trail can cite. Pair with validate_docx for full (structural + content) verification. Tenant-scoped via ToolContext.",
+    "Compare a tenant-workspace Word (.docx) against a saved current artifact version by supplying artifact_id and version_number together. The server loads the reference text from the owned project, checks exact content hashes and current disposition eligibility, and rechecks the target after extraction. Returns scoped text-fidelity findings with target/version identities and DOCX/text SHA-256 digests. Without saved selectors, expected_text is caller-text fidelity only, and required_strings alone checks substrings only. Source qualification is always unassessed; this result does not authorize sealing or establish regulatory readiness. Pair with validate_docx for separate structural checks.",
   input_schema: {
     type: 'object',
     properties: {
       input_docx_path: {
         type: 'string',
-        description: 'The built/edited .docx to verify, in your organization\'s AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization\'s uploads; other paths are refused (e.g. a docxPath returned by author_docx_native, build_from_template, or surgical_docx_xml_edit).',
+        description: "The built/edited .docx in your organization's AnA workspace, using a path returned by an earlier document tool or an organization upload. Other paths are refused.",
+      },
+      artifact_id: {
+        type: 'string',
+        description: "External artifact ID of the saved current draft in this conversation's project. Requires version_number. Internal numeric IDs are not aliases. Project and tenant come from server context.",
+      },
+      version_number: {
+        type: 'integer',
+        minimum: 1,
+        maximum: 2147483647,
+        description: 'Saved current version number, as returned by the artifact save or get_document_versions. Requires artifact_id; a stale or unavailable version refuses without falling back to caller text.',
       },
       expected_text: {
         type: 'string',
-        description: 'The verbatim source text the document is supposed to contain (e.g. the complete text the user provided). The extracted document text is diffed against this. Optional when only required_strings is supplied.',
+        description: 'Optional caller comparison text. With saved selectors it must exactly equal server-loaded text. Without them it supplies only caller-text fidelity, never persisted-artifact or qualified-source proof.',
       },
       required_strings: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Strings that MUST appear verbatim in the document (e.g. caption strings, case/sponsor numbers, sworn-paragraph anchors). Each is checked for an exact substring match; any missing entry fails verification.',
+        description: 'Strings that must appear verbatim in extracted text. Missing entries fail fidelity. Without a saved target or expected_text, only these exact substrings are checked.',
       },
     },
     required: ['input_docx_path'],

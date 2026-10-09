@@ -8074,105 +8074,11 @@ registerToolHandler('validate_docx', async (input, ctx) => {
   }
 });
 
-// Verify Docx Against Source — content-fidelity check (not just structure).
-// Extracts the built .docx text and (1) diffs it against the supplied source
-// text and (2) asserts each required string appears verbatim. This is the
-// audited "verify it against your text / confirm the base caption strings" step.
+// The existing verifier has one implementation; its complete result is captured
+// by the canonical turn recorder before the model's tool-result budget.
 registerToolHandler('verify_docx_against_source', async (input, ctx) => {
-  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
-  if (!inputDocxPath) {
-    return JSON.stringify({ error: 'verify_docx_against_source requires input_docx_path (string).' });
-  }
-  if (!ctx?.organizationId) {
-    return JSON.stringify({ error: 'verify_docx_against_source requires tenant context (organizationId).' });
-  }
-  // INJ-PATH-002: the path is the model's. Open only the real path of a file
-  // in this tenant's own workspace, never the string it wrote.
-  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
-  if (!docx.ok) return docx.refusal;
-
-  const expectedText = typeof input.expected_text === 'string' ? input.expected_text : '';
-  const requiredStrings = Array.isArray(input.required_strings)
-    ? input.required_strings.filter((s): s is string => typeof s === 'string' && s.length > 0)
-    : [];
-
-  if (!expectedText && requiredStrings.length === 0) {
-    return JSON.stringify({
-      error: 'verify_docx_against_source requires expected_text and/or a non-empty required_strings array.',
-    });
-  }
-
-  try {
-    const { promises: fs } = await import('fs');
-    const path = await import('path');
-    const { extractDocumentText } = await import('../ocr/index.js');
-
-    const buf = await fs.readFile(docx.path);
-    const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    const extracted = await extractDocumentText(buf, DOCX_MIME, path.basename(docx.path));
-    const docText = extracted.text ?? '';
-
-    // (1) Required-string verbatim check (exact substring match).
-    const missingRequiredStrings = requiredStrings.filter((s) => !docText.includes(s));
-
-    // (2) Structural text diff against the supplied source, when provided.
-    let divergenceSummary: { added: number; removed: number; modified: number; unchanged: number } | undefined;
-    let additions = 0;
-    let deletions = 0;
-    if (expectedText) {
-      const { diffDocumentStructure } = await import('../document-analysis');
-      const d = diffDocumentStructure(expectedText, docText);
-      divergenceSummary = d.summary;
-      additions = d.flat.additions;
-      deletions = d.flat.deletions;
-    }
-
-    const ok = missingRequiredStrings.length === 0 && additions === 0 && deletions === 0;
-    /* `expected_text` is optional — the guard above accepts required_strings
-       alone, and that is the DESIGNED path for the labeling / ODD / IND-module
-       planners, whose required_strings are section headers only. When no source
-       is supplied the diff never runs, so `additions`/`deletions` stay at their
-       initialized 0 and `ok` collapses to "no required header is missing". The
-       success message nevertheless asserted BOTH that the document "reproduces
-       the source" AND that there is "no content divergence" — two claims about a
-       comparison that never happened, relayed verbatim by the model as the
-       verdict on a USPI/SmPC .docx. Say only what was actually checked. */
-    const sourceDiffPerformed = Boolean(expectedText);
-
-    return JSON.stringify({
-      ok,
-      docxPath: inputDocxPath,
-      extractionMethod: extracted.method,
-      docCharCount: docText.length,
-      requiredStringsChecked: requiredStrings.length,
-      missingRequiredStrings,
-      // False when no expected_text was supplied: the document was NOT compared
-      // against any source, so `ok` speaks only to the required strings.
-      sourceDiffPerformed,
-      // additions = lines in the document not in the source; deletions = source lines absent from the document.
-      divergence: sourceDiffPerformed ? { summary: divergenceSummary, additions, deletions } : undefined,
-      message: ok
-        ? sourceDiffPerformed
-          ? `Verified — document reproduces the source${
-              requiredStrings.length ? ` and all ${requiredStrings.length} required string(s)` : ''
-            }; no content divergence.`
-          : `Verified — all ${requiredStrings.length} required string(s) are present. No source text was supplied, so the document was NOT compared against a source: this is not a finding of "no content divergence".`
-        : `NOT verified — ${
-            missingRequiredStrings.length ? `${missingRequiredStrings.length} required string(s) missing` : ''
-          }${
-            missingRequiredStrings.length && sourceDiffPerformed ? '; ' : ''
-          }${sourceDiffPerformed ? `${additions} added / ${deletions} dropped line(s) vs. source` : ''}.`,
-      instruction: sourceDiffPerformed
-        ? 'Report the divergence counts as recorded.'
-        : 'Only the required strings were checked. Do NOT state that the document matches or reproduces a source, and do not claim there is no content divergence — no source was diffed.',
-    });
-  } catch (err) {
-    return JSON.stringify({
-      error: `verify_docx_against_source failed: ${
-        err instanceof Error ? err.message : String(err)
-      }. Verify the .docx path exists and is a readable Word document.`,
-    });
-  }
+  const { verifyDocxFidelity } = await import('./docx-fidelity.js');
+  return verifyDocxFidelity(input, ctx);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

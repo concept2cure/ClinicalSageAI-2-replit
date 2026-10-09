@@ -1,0 +1,1073 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts
+{
+  "timestamp": "2026-10-09T07:56:18.851Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > needs no caller text and binds every resolved identity and exact file/text digest 49ms
+   → expected { ok: true, …(8) } to match object { ok: true, …(9) }
+(7 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > accepts identical optional caller text without upgrading source qualification 33ms
+   → expected undefined to be 'persisted_artifact' // Object.is equality
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > rejects forged caller text even when it exactly matches the DOCX extraction 17ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > cannot pass substantive divergence just because headings are present 15ms
+   → expected { ok: true, …(8) } to match object { ok: false, …(2) }
+(7 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > reports a missing required string despite exact persisted text fidelity 12ms
+   → expected { ok: false, …(8) } to match object { ok: false, …(2) }
+(7 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > blank id cannot silently request the legacy caller-text path 14ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > spaces id cannot silently request the legacy caller-text path 12ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > null id cannot silently request the legacy caller-text path 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > number id cannot silently request the legacy caller-text path 12ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > object id cannot silently request the legacy caller-text path 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > missing id cannot silently request the legacy caller-text path 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > missing version cannot silently request the legacy caller-text path 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > null version cannot silently request the legacy caller-text path 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > string version cannot silently request the legacy caller-text path 14ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > zero version cannot silently request the legacy caller-text path 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > negative version cannot silently request the legacy caller-text path 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > fraction version cannot silently request the legacy caller-text path 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > overflow version cannot silently request the legacy caller-text path 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > NaN version cannot silently request the legacy caller-text path 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > infinite version cannot silently request the legacy caller-text path 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses missing project honestly 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses UUID-only project honestly 12ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses string project honestly 12ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses zero project honestly 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses fraction project honestly 9ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses overflow project honestly 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses negative organization honestly 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { Object (error) } to match object { ok: false, …(1) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses fraction organization honestly 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { Object (error) } to match object { ok: false, …(1) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses overflow organization honestly 14ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { Object (error) } to match object { ok: false, …(1) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses string organization honestly 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { Object (error) } to match object { ok: false, …(1) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses another organization artifact 21ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an artifact in another project of the same organization 12ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > ignores input project_id as authority and cannot override the context project 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a project owned by another organization 16ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an unavailable project even if artifact rows still name it 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing external artifact ID 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > does not treat an internal numeric ID string as the selected external ID 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a selected version that exists only under a different artifact 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a selected version belonging to another organization 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing selected version 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an older version even when the old and new text hashes coincide 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses head content different from the selected persisted version 14ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt artifact hashes rather than trusting equal stored digests 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt version hashes rather than trusting equal stored digests 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt both hashes rather than trusting equal stored digests 10ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing artifact hash 13ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing version hash 13ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a rendition excluded by a real remove_data disposition 69ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a rendition excluded by a real supersede disposition 56ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > can compare retained current text after keep_data without claiming scientific verification 50ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the projects read fails 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the concept2cure_artifact_versions read fails 11ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the document_data_dispositions read fails 13ms
+   → a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a head change made during extraction 10ms
+   → expected { ok: true, …(9) } to match object { ok: false, …(2) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a version change made during extraction 9ms
+   → expected { ok: true, …(9) } to match object { ok: false, …(2) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a version_number change made during extraction 8ms
+   → expected { ok: true, …(9) } to match object { ok: false, …(2) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a removed_version change made during extraction 8ms
+   → expected { ok: true, …(9) } to match object { ok: false, …(2) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a removed_project change made during extraction 8ms
+   → expected { ok: true, …(9) } to match object { ok: false, …(2) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a withdrawal change made during extraction 48ms
+   → expected { ok: true, …(9) } to match object { ok: false, …(2) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > reports a failed extractor rather than inventing fidelity 11ms
+   → expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed if the recheck database read fails after successful extraction 9ms
+   → expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > marks caller_text_fidelity explicitly unbound, even with forged positive qualifiers 9ms
+   → expected { ok: true, …(9) } to match object { ok: true, …(3) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > marks required_strings_only explicitly unbound, even with forged positive qualifiers 8ms
+   → expected { ok: true, …(8) } to match object { ok: true, …(3) }
+(8 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > does not let a copied persisted report become seal proof 8ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > does not let a copied caller_text report become seal proof 10ms
+   → expected Error: Seal must not reach transaction to match object { Object (code) }
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > does not let a copied required_strings report become seal proof 10ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > retains workspace isolation even when persisted selectors are valid 18ms
+stdout | server/services/ana/__tests__/verify-docx-against-source.test.ts
+{
+  "timestamp": "2026-10-09T07:56:22.535Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T07:56:22.536Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/verify-docx-against-source.test.ts
+{
+  "timestamp": "2026-10-09T07:56:22.536Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/verify-docx-against-source.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/verify-docx-against-source.test.ts > verify_docx_against_source — registration & schema > registers a handler 1ms
+ × server/services/ana/__tests__/verify-docx-against-source.test.ts > verify_docx_against_source — registration & schema > is exposed to AnA in ALL_ANA_TOOLS with input_docx_path required 6ms
+   → expected undefined to match object { type: 'string' }
+ ✓ server/services/ana/__tests__/verify-docx-against-source.test.ts > verify_docx_against_source — input guards > errors without input_docx_path 1ms
+ ✓ server/services/ana/__tests__/verify-docx-against-source.test.ts > verify_docx_against_source — input guards > errors without tenant context 0ms
+ ✓ server/services/ana/__tests__/verify-docx-against-source.test.ts > verify_docx_against_source — input guards > errors when neither expected_text nor required_strings is supplied 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 66 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-against-source.test.ts > verify_docx_against_source — registration & schema > is exposed to AnA in ALL_ANA_TOOLS with input_docx_path required
+AssertionError: expected undefined to match object { type: 'string' }
+
+- Expected:
+{
+  "type": "string",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/verify-docx-against-source.test.ts:32:31
+     30|     expect(props.expected_text).toBeDefined();
+     31|     expect(props.required_strings).toBeDefined();
+     32|     expect(props.artifact_id).toMatchObject({ type: 'string' });
+       |                               ^
+     33|     expect(props.version_number).toMatchObject({ type: 'integer' });
+     34|     expect(def!.input_schema.required).not.toContain('artifact_id');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > needs no caller text and binds every resolved identity and exact file/text digest
+AssertionError: expected { ok: true, …(8) } to match object { ok: true, …(9) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "artifactVerified": true,
+-   "comparisonBasis": "persisted_artifact",
+-   "comparisonTextSha256": "820b61de599d7813f2674921ca749512d8d19da10246cc08aea1e3e2a9e1636a",
+-   "docxSha256": "5fcccdfc9c050764a67780b842a918ec8623615732a879bbca643159a681d441",
+-   "docxSizeBytes": 8551,
+-   "extractedTextSha256": "820b61de599d7813f2674921ca749512d8d19da10246cc08aea1e3e2a9e1636a",
+    "ok": true,
+-   "scope": "persisted_artifact_fidelity",
+-   "sourceDiffPerformed": true,
+-   "target": {
+-     "artifactId": "32dd259f-71f5-463b-8d1a-acfa8af1e120",
+-     "artifactPk": 1,
+-     "contentSha256": "820b61de599d7813f2674921ca749512d8d19da10246cc08aea1e3e2a9e1636a",
+-     "organizationId": 1001,
+-     "projectId": 1,
+-     "version": 2,
+-     "versionId": 1,
+-   },
++   "sourceDiffPerformed": false,
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:123:20
+    121|     const before = await snapshot();
+    122|     const result = await run({ required_strings: ['3.2.P.8 Stability']…
+    123|     expect(result).toMatchObject({
+       |                    ^
+    124|       ok: true, artifactVerified: true, scope: 'persisted_artifact_fid…
+    125|       sourceDiffPerformed: true, docxSha256: digest(docxBytes), docxSi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > accepts identical optional caller text without upgrading source qualification
+AssertionError: expected undefined to be 'persisted_artifact' // Object.is equality
+
+- Expected:
+"persisted_artifact"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:139:36
+    137|     const result = await run({ expected_text: TEXT });
+    138|     expect(result.ok).toBe(true);
+    139|     expect(result.comparisonBasis).toBe('persisted_artifact');
+       |                                    ^
+    140|     nonsealable(result);
+    141|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > rejects forged caller text even when it exactly matches the DOCX extraction
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TEXT_CONFLICT",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:145:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > cannot pass substantive divergence just because headings are present
+AssertionError: expected { ok: true, …(8) } to match object { ok: false, …(2) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "artifactVerified": false,
+-   "ok": false,
+-   "sourceDiffPerformed": true,
++   "ok": true,
++   "sourceDiffPerformed": false,
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:151:20
+    149|     state.value.text = TEXT.replace('24 months', '36 months');
+    150|     const result = await run({ required_strings: ['3.2.P.8 Stability']…
+    151|     expect(result).toMatchObject({ ok: false, artifactVerified: false,…
+       |                    ^
+    152|     expect(result.divergence.additions + result.divergence.deletions).…
+    153|     expect(result.missingRequiredStrings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > reports a missing required string despite exact persisted text fidelity
+AssertionError: expected { ok: false, …(8) } to match object { ok: false, …(2) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "artifactVerified": false,
+    "missingRequiredStrings": [
+      "Unrecorded batch release date",
+    ],
+    "ok": false,
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:161:20
+    159|   it('reports a missing required string despite exact persisted text f…
+    160|     const result = await run({ required_strings: ['Unrecorded batch re…
+    161|     expect(result).toMatchObject({ ok: false, artifactVerified: false,…
+       |                    ^
+    162|     expect(result.divergence).toMatchObject({ additions: 0, deletions:…
+    163|     nonsealable(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > blank id cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > spaces id cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > null id cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > number id cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > object id cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > missing id cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > missing version cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > null version cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > string version cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > zero version cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > negative version cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > fraction version cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > overflow version cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > NaN version cannot silently request the legacy caller-text path
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > infinite version cannot silently request the legacy caller-text path
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "INVALID_VERIFICATION_TARGET",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:177:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses missing project honestly
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses UUID-only project honestly
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses string project honestly
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses zero project honestly
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses fraction project honestly
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses overflow project honestly
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "INVALID_VERIFICATION_TARGET",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:188:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses negative organization honestly
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses fraction organization honestly
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses overflow organization honestly
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses string organization honestly
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { Object (error) } to match object { ok: false, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "INVALID_VERIFICATION_TARGET",
+-   "ok": false,
++   "error": "input_docx_path must be a path inside your organization's AnA workspace (a path an earlier document tool returned in this conversation, or one of your uploads). Other paths, and any '..' segment, are refused. For an uploaded document, use its file_id with the uploaded-document tools.",
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:188:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses another organization artifact
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:196:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an artifact in another project of the same organization
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:200:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > ignores input project_id as authority and cannot override the context project
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:204:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a project owned by another organization
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:209:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an unavailable project even if artifact rows still name it
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:213:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing external artifact ID
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:216:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > does not treat an internal numeric ID string as the selected external ID
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:219:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a selected version that exists only under a different artifact
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:223:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a selected version belonging to another organization
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:227:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing selected version
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:231:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an older version even when the old and new text hashes coincide
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:236:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses head content different from the selected persisted version
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:240:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt artifact hashes rather than trusting equal stored digests
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt version hashes rather than trusting equal stored digests
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt both hashes rather than trusting equal stored digests
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:245:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing artifact hash
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing version hash
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:250:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a rendition excluded by a real remove_data disposition
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a rendition excluded by a real supersede disposition
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:254:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > can compare retained current text after keep_data without claiming scientific verification
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:259:23
+    257|     await fixture.apply('keep_data');
+    258|     const result = await run();
+    259|     expect(result.ok).toBe(true);
+       |                       ^
+    260|     expect(result.target.contentSha256).toBe(digest(TEXT));
+    261|     nonsealable(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the projects read fails
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the concept2cure_artifact_versions read fails
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the document_data_dispositions read fails
+AssertionError: a successful caller-text diff must not bypass a persisted-target refusal: expected { ok: true, …(9) } to match object { ok: false, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_UNAVAILABLE",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ refuses server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:106:94
+    104|   const before = await snapshot();
+    105|   const result = await run({ expected_text: TEXT, ...input }, ctx);
+    106|   expect(result, 'a successful caller-text diff must not bypass a pers…
+       |                                                                                              ^
+    107|   expect(result.error).toEqual(expect.any(String));
+    108|   expect(result.target).toBeUndefined();
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:271:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a head change made during extraction
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a version change made during extraction
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a version_number change made during extraction
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a removed_version change made during extraction
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a removed_project change made during extraction
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a withdrawal change made during extraction
+AssertionError: expected { ok: true, …(9) } to match object { ok: false, …(2) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_CHANGED",
+-   "ok": false,
+-   "sealEligible": false,
++   "ok": true,
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:285:22
+    283|       };
+    284|       const result = await run({ expected_text: TEXT });
+    285|       expect(result).toMatchObject({ ok: false, code: 'VERIFICATION_TA…
+       |                      ^
+    286|       expect(result.target).toBeUndefined();
+    287|       expect(state.extract).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > reports a failed extractor rather than inventing fidelity
+AssertionError: expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_UNAVAILABLE",
+-   "ok": false,
+-   "sealEligible": false,
++   "error": "verify_docx_against_source requires expected_text and/or a non-empty required_strings array.",
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:293:20
+    291|     state.value.extractionError = new Error('Extractor unavailable');
+    292|     const result = await run();
+    293|     expect(result).toMatchObject({ ok: false, code: 'VERIFICATION_UNAV…
+       |                    ^
+    294|     expect(result.target).toBeUndefined();
+    295|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed if the recheck database read fails after successful extraction
+AssertionError: expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_UNAVAILABLE",
+-   "ok": false,
+-   "sealEligible": false,
++   "error": "verify_docx_against_source requires expected_text and/or a non-empty required_strings array.",
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:299:20
+    297|     state.value.afterExtraction = async () => { state.value.query = as…
+    298|     const result = await run();
+    299|     expect(result).toMatchObject({ ok: false, code: 'VERIFICATION_UNAV…
+       |                    ^
+    300|     expect(result.target).toBeUndefined();
+    301|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > marks caller_text_fidelity explicitly unbound, even with forged positive qualifiers
+AssertionError: expected { ok: true, …(9) } to match object { ok: true, …(3) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "artifactVerified": false,
+-   "comparisonBasis": "caller_supplied_text",
+    "ok": true,
+-   "scope": "caller_text_fidelity",
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:311:20
+    309|     const result = await run({ artifact_id: undefined, version_number:…
+    310|       artifactVerified: true, sourceVerified: true, sealEligible: true…
+    311|     expect(result).toMatchObject({ ok: true, scope, comparisonBasis, a…
+       |                    ^
+    312|     expect(result.target).toBeUndefined();
+    313|     nonsealable(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > marks required_strings_only explicitly unbound, even with forged positive qualifiers
+AssertionError: expected { ok: true, …(8) } to match object { ok: true, …(3) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "artifactVerified": false,
+-   "comparisonBasis": "required_strings",
+    "ok": true,
+-   "scope": "required_strings_only",
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:311:20
+    309|     const result = await run({ artifact_id: undefined, version_number:…
+    310|       artifactVerified: true, sourceVerified: true, sealEligible: true…
+    311|     expect(result).toMatchObject({ ok: true, scope, comparisonBasis, a…
+       |                    ^
+    312|     expect(result.target).toBeUndefined();
+    313|     nonsealable(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > does not let a copied persisted report become seal proof
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:319:23
+    317|     const result = await run(mode === 'persisted' ? {} : { artifact_id…
+    318|       ...(mode === 'caller_text' ? { expected_text: TEXT } : { require…
+    319|     expect(result.ok).toBe(true);
+       |                       ^
+    320|     const connect = vi.fn(async () => { throw new Error('Seal must not…
+    321|     await expect(sealVerifiedVersion({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/66]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > does not let a copied caller_text report become seal proof
+AssertionError: expected Error: Seal must not reach transaction to match object { Object (code) }
+
+- Expected
++ Received
+
+- {
+-   "code": "VERIFICATION_SCOPE_INSUFFICIENT",
++ Error {
++   "message": "Seal must not reach transaction",
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:325:20
+    323|       manifestation: { printedName: 'Jane Roe', meaning: 'APPROVER', r…
+    324|       verification: result,
+    325|     }, { connect })).rejects.toMatchObject({ code: 'VERIFICATION_SCOPE…
+       |                    ^
+    326|     expect(connect).not.toHaveBeenCalled();
+    327|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/66]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  66 failed | 6 passed (72)
+   Start at  03:56:12
+   Duration  11.32s (transform 4.34s, setup 84ms, import 8.05s, tests 2.77s, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-docx-target-fidelity/focused-red.json

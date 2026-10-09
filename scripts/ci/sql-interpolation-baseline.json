@@ -68,6 +68,7 @@
   "server/services/ana/citation-run-pruner.ts": 1,
   "server/services/ana/citation-search.ts": 1,
   "server/services/ana/deep-investigation.ts": 1,
+  "server/services/ana/docx-fidelity.ts": 1,
   "server/services/ana/lineage-dossier.ts": 5,
   "server/services/ana/org-readiness-overview.ts": 1,
   "server/services/ana/run-control.ts": 1,

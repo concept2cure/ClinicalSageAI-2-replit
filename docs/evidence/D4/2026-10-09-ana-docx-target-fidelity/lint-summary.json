@@ -1,0 +1,55 @@
+{
+  "mode": "lint",
+  "command": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "server/services/ana/docx-fidelity.ts",
+    "server/services/ana/AnaToolExecutor.ts",
+    "server/services/ana/legacy-import-tool-defs.ts",
+    "server/services/ana/__tests__/verify-docx-against-source.test.ts",
+    "server/services/ana/__tests__/verify-docx-claim-scope.test.ts",
+    "server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts",
+    "--format",
+    "json",
+    "--output-file",
+    "/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-docx-target-fidelity/lint-results.json"
+  ],
+  "stdin": null,
+  "node_version": "v22.23.3",
+  "exit_code": 0,
+  "elapsed_seconds": 3.394,
+  "completed_at_utc": "2026-10-09T08:03:26.460127+00:00",
+  "lint": [
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "errors": 0,
+      "warnings": 98
+    },
+    {
+      "path": "server/services/ana/__tests__/verify-docx-against-source.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/verify-docx-claim-scope.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/docx-fidelity.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/legacy-import-tool-defs.ts",
+      "errors": 0,
+      "warnings": 1
+    }
+  ]
+}
