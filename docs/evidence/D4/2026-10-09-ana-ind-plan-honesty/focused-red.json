@@ -1,0 +1,40 @@
+{
+  "sourceCommit": "7f3b84ca5e67f1bb920fc662ebf3289578a4ecb6",
+  "command": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana/__tests__/ind-module-tool.test.ts",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-ind-plan-honesty/focused-red-report.json"
+  ],
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "exitCode": 1,
+  "elapsedSeconds": 6.487,
+  "sourceFiles": {
+    "server/services/ana/AnaToolExecutor.ts": {
+      "blob": "5b41513e3f89a265ddbc237fcf30437924efa67e",
+      "sha256": "88282bd6cf6002c17ed6e618b47187809395f5e105d2964409d139ed21a32b7b",
+      "bytes": 1132865
+    },
+    "server/services/ana/evidence-literature-tool-defs.ts": {
+      "blob": "c69d874ce9f487976d7249a7dcb732a86d11b880",
+      "sha256": "ab13436616a8af087c780f415325281e5ab974a66067c5601219db5ca7c0bbcd",
+      "bytes": 98504
+    },
+    "server/services/ana/__tests__/ind-module-tool.test.ts": {
+      "blob": "f5fc975af32a1a02c15e2fcdb46e09ff308c56d9",
+      "sha256": "2e1dba10b97ccb64059128e6c63581ee7212ead4e4d4e354c531adedd041afa4",
+      "bytes": 11147
+    },
+    "shared/ana/ind-module-authoring.ts": {
+      "blob": "0678af7a999079bcd43a026de92f918e4004a346",
+      "sha256": "28f351ed81b401678fdce98be26d86cff15a19093a94bc32e16e7d1419690f87",
+      "bytes": 12779
+    }
+  }
+}

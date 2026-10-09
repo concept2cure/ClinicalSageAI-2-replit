@@ -1,0 +1,25 @@
+{
+  "release_base": "7f3b84ca5e67f1bb920fc662ebf3289578a4ecb6",
+  "files": [
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "git_blob_sha1": "e60ec28d63ac60bc7f7e6dd8beced2d72005a74c",
+      "sha256": "15f5dfe5788ada04979b58bc430f9ab9977a4e2ace5d45876b01af96d08a3527",
+      "bytes": 1133295
+    },
+    {
+      "path": "server/services/ana/evidence-literature-tool-defs.ts",
+      "git_blob_sha1": "f09ba25a88e525de0a337866f2eaf2d56beac1f1",
+      "sha256": "4ce6d0f52accef13018bec48c9fd780d609b942b9b642e2e099f60427f75e2a5",
+      "bytes": 98308
+    },
+    {
+      "path": "server/services/ana/__tests__/ind-module-tool.test.ts",
+      "git_blob_sha1": "f5fc975af32a1a02c15e2fcdb46e09ff308c56d9",
+      "sha256": "2e1dba10b97ccb64059128e6c63581ee7212ead4e4d4e354c531adedd041afa4",
+      "bytes": 11147
+    }
+  ],
+  "client_unchanged": true,
+  "shared_builder_unchanged": true
+}

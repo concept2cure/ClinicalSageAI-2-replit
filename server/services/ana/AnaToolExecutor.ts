@@ -2951,14 +2951,11 @@ registerToolHandler('plan_orphan_drug_designation', async (input) => {
   });
 });
 
-// IND narrative-module authoring (CTD Module 2.5 / 2.7) — E11.
-// Pure orchestration: build the author_docx_native plan (title + content) from a
-// STRUCTURED source, derive required_strings for verify_docx_against_source from
-// the source's key facts/figures (section headers PLUS every figure value), and
-// emit the Part 11 honesty verdict (sample/not_assessed ⇒ non-sealable; a
-// missing/mistyped figure ⇒ verification fails ⇒ non-sealable). The actual
-// author_docx_native / verify_docx_against_source calls are driven by AnA in the
-// agentic loop using the content + required_strings this tool returns.
+// IND narrative-module planning (CTD Module 2.5 / 2.7) — E11.
+// Build a transcription scaffold from caller/model-supplied facts and check its
+// own text for the supported template headers and supplied figure values. This
+// does not author or verify a file, qualify study sources, or verify provenance;
+// the planning receipt is always non-sealable, including when labelled live.
 registerToolHandler('plan_ind_module_authoring', async (input) => {
   const moduleId = typeof input.module === 'string' ? input.module.trim() : '';
   if (!moduleId || !listIndModules().includes(moduleId)) {
@@ -3006,17 +3003,29 @@ registerToolHandler('plan_ind_module_authoring', async (input) => {
       content: plan.content,
       required_strings: plan.requiredStrings,
     },
-    verification,
+    verification: {
+      ...verification,
+      scope: 'plan_text_only',
+      artifactVerified: false,
+      sourceVerified: false,
+    },
     honesty: {
-      sealable: sealability.sealable,
+      sealable: false,
       provenance: plan.provenance,
-      blockers: sealability.blockers,
+      blockers: [
+        'Planning only: no authored file or independently verified project source evidence was checked. ' +
+          'Verify the actual governed artifact and its qualified sources before sealing.',
+        ...sealability.blockers,
+      ],
       sectionsWithoutFacts: plan.sectionsWithoutFacts,
     },
     note:
-      'Drive author_docx_native with author_docx_native.{title,content}, then verify_docx_against_source ' +
-      'with required_strings. required_strings include every source figure, so a missing or mistyped ' +
-      'figure fails verification and the draft is non-sealable. sample/not_assessed sources are never sealable.',
+      'This tool builds a transcription scaffold and checks only its supported template headers and ' +
+      'caller/model-supplied strings. The plan body\'s \'verified against the source\' wording means only ' +
+      'supplied-string self-consistency: no authored file, underlying study, source qualification, or ' +
+      'caller-declared provenance was independently verified. This planning receipt is always non-sealable. ' +
+      'Use author_docx_native with author_docx_native.{title,content}, then verify the actual governed artifact ' +
+      'and its qualified source evidence separately; required_strings alone do not establish source qualification.',
   });
 });
 

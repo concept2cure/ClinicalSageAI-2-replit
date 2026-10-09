@@ -1,0 +1,11 @@
+{
+  "base": "008223dca5b7f52d0b3c461dd2fc2bac083fb14b",
+  "base_tree": "2f53a21594f868461ce62e2475cffccefb68e509",
+  "branch": "concept2cure-v2",
+  "client_tree": "f4a50c306387585250e354c68e08a099362e3823",
+  "workstream": "W3",
+  "row": "D4",
+  "shared_builder_blob": "0678af7a999079bcd43a026de92f918e4004a346",
+  "shared_builder_unchanged": true,
+  "scope": "Backend IND transcription-plan verification/qualification claim only"
+}

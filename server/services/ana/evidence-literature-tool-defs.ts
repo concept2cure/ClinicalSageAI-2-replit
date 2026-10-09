@@ -484,37 +484,33 @@ export const PLAN_ORPHAN_DRUG_DESIGNATION: AnaTool = {
   },
 };
 
-// IND narrative-module authoring (E11). Author a CTD Module 2 clinical summary
-// (2.5 Clinical Overview / 2.7 Clinical Summary) from a STRUCTURED source and
-// derive the required_strings for verify_docx_against_source from the source's
-// key facts/figures — so the verify step proves transcription fidelity (a
-// missing/mistyped figure fails) before the user signs + seals the persisted
-// version. Honesty contract: sample/not_assessed sources are non-sealable.
+// IND narrative-module planning (E11). A supplied-string scaffold with a
+// plan-text self-check, without authored-file or independent source verification.
 export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
   name: 'plan_ind_module_authoring',
   description:
-    'Author a transcription-safe IND narrative module (CTD Module 2.5 Clinical Overview or 2.7 Clinical ' +
-    'Summary) from a STRUCTURED source. Returns the author_docx_native title + markdown content (every ' +
-    'mandatory CTD Module 2 section header) and the required_strings to pass to verify_docx_against_source. ' +
-    'CRITICAL: required_strings include the section headers PLUS every source figure VALUE, so the verify ' +
-    'step proves each figure was transcribed verbatim and CATCHES a missing or mistyped figure before the ' +
-    'draft can be sealed. Honesty contract: a sample/not_assessed source is never sealable, and a draft ' +
-    'whose figures do not verify is non-sealable. Supply the structured source facts/figures in `facts`.',
+    'Plan an IND transcription scaffold (CTD Module 2.5 Clinical Overview or 2.7 Clinical Summary) from ' +
+    'unverified caller/model-supplied structured facts. Returns the author_docx_native title + markdown ' +
+    'content with supported template headers and required_strings for later transcription checks. ' +
+    'The returned verification is plan-text self-consistency only: this tool does not author a file or ' +
+    'independently verify an artifact, underlying study, source qualification, or provenance. The planning ' +
+    'receipt is always non-sealable, even with provenance live and verification.ok true. Verify the actual ' +
+    'governed artifact and its qualified source evidence separately before sealing. Supply facts in `facts`.',
   input_schema: {
     type: 'object',
     properties: {
       module: {
         type: 'string',
         enum: ['2.5', '2.7'],
-        description: 'CTD Module 2 clinical summary to author: 2.5 (Clinical Overview) or 2.7 (Clinical Summary).',
+        description: 'Supported CTD Module 2 template to plan: 2.5 (Clinical Overview) or 2.7 (Clinical Summary).',
       },
       product_name: { type: 'string', description: 'Product / compound name for the title + running header.' },
       indication: { type: 'string', description: 'Proposed indication.' },
       facts: {
         type: 'array',
         description:
-          'Structured source facts/figures to transcribe verbatim. Each value becomes a required_strings entry, ' +
-          'so a mistyped figure fails verification.',
+          'Unverified caller/model-supplied facts/figures to transcribe verbatim. Each value becomes a ' +
+          'required_strings entry for plan-text self-consistency; this does not qualify the underlying source.',
         items: {
           type: 'object',
           properties: {
@@ -525,9 +521,9 @@ export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
             label: { type: 'string', description: 'Human label for the fact (e.g. "Primary endpoint response rate").' },
             value: {
               type: 'string',
-              description: 'The verbatim figure/string to transcribe AND verify (e.g. "42.3%", "200 mg", "24 months").',
+              description: 'The supplied figure/string to transcribe and self-check (e.g. "42.3%", "200 mg", "24 months").',
             },
-            source: { type: 'string', description: 'Optional source pointer (table/dataset id) recorded for provenance.' },
+            source: { type: 'string', description: 'Optional supplied source pointer (table/dataset id), not resolved or verified.' },
           },
           required: ['section_id', 'label', 'value'],
         },
@@ -535,7 +531,7 @@ export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
       provenance: {
         type: 'string',
         enum: ['live', 'sample', 'not_assessed'],
-        description: 'Provenance of the source data. sample/not_assessed sources are non-sealable.',
+        description: 'Caller-declared provenance label; it does not establish source qualification or sealability. All planning receipts are non-sealable.',
       },
     },
     required: ['module', 'product_name', 'indication'],

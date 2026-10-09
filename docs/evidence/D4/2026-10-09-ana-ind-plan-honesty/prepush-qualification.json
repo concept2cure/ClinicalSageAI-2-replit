@@ -1,0 +1,18 @@
+{
+  "command": [
+    "sh",
+    ".husky/pre-push",
+    "origin",
+    "https://github.com/concept2cure/ClinicalSageAI-2-replit"
+  ],
+  "stdin": "refs/heads/concept2cure-v2 2a48c72afccb65d7835565a002c248e579d01846 refs/heads/concept2cure-v2 7f3b84ca5e67f1bb920fc662ebf3289578a4ecb6\n",
+  "exit_code": 0,
+  "elapsed_seconds": 61.874,
+  "node": "v22.23.3",
+  "source_checkpoint": "2a48c72afccb65d7835565a002c248e579d01846",
+  "publication_base": "7f3b84ca5e67f1bb920fc662ebf3289578a4ecb6",
+  "all_gates_passed": true,
+  "typecheck_heap_mb": 6656,
+  "typecheck_errors": 0,
+  "tsc_exit": 0
+}
