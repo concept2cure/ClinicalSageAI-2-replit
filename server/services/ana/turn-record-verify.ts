@@ -141,34 +141,87 @@ export interface StoredTurnRecord {
 
 const iso = (v: unknown): string => (v instanceof Date ? v.toISOString() : String(v));
 
+/** Optional transport budgets for a governed consumer, not a truncated export. */
+export interface TurnRecordReadLimits {
+  maxRecordBytes: number;
+  maxAuditBytes: number;
+  maxTextBytes: number;
+  maxTotalTextBytes: number;
+  maxTextRefs: number;
+}
+export class TurnRecordReadError extends Error {
+  constructor(public code: 'LIMIT_EXCEEDED' | 'INVALID_RECORD') {
+    super(code === 'LIMIT_EXCEEDED' ? 'Turn record exceeds the bounded read limits.' : 'Turn record references are invalid.');
+    this.name = 'TurnRecordReadError';
+  }
+}
+function boundedRefs(body: TurnRecordBody | null, limits: TurnRecordReadLimits): TextRef[] {
+  if (!body) throw new TurnRecordReadError('INVALID_RECORD');
+  let refs: TextRef[];
+  try { refs = textRefsOf(body); } catch { throw new TurnRecordReadError('INVALID_RECORD'); }
+  if (refs.length > limits.maxTextRefs) throw new TurnRecordReadError('LIMIT_EXCEEDED');
+  if (refs.some(r => typeof r.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(r.sha256) ||
+      !Number.isSafeInteger(r.chars) || r.chars < 0)) throw new TurnRecordReadError('INVALID_RECORD');
+  return refs;
+}
+function validReadLimits(limits: TurnRecordReadLimits): boolean {
+  const keys: Array<keyof TurnRecordReadLimits> = ['maxRecordBytes', 'maxAuditBytes', 'maxTextBytes', 'maxTotalTextBytes', 'maxTextRefs'];
+  return keys.every(key => Number.isInteger(limits[key]) && limits[key] > 0 && limits[key] <= 2_147_483_647);
+}
+function refsForRead(body: TurnRecordBody | null, limits?: TurnRecordReadLimits): TextRef[] {
+  if (limits) return boundedRefs(body, limits);
+  return body ? textRefsOf(body) : [];
+}
+function checkReferenceLengths(refs: TextRef[], texts: Map<string, string>, limits?: TurnRecordReadLimits): void {
+  if (limits && refs.some(r => texts.has(r.sha256) && texts.get(r.sha256)!.length !== r.chars)) {
+    throw new TurnRecordReadError('INVALID_RECORD');
+  }
+}
+
 /**
  * Read a record, its chain row and its texts, within one tenant. Null when the
  * tenant has no record with that id. Reads only — the verdict is
  * verifyTurnRecord's, over exactly what this returns.
  */
-export async function loadTurnRecord(q: Queryable, orgId: number, id: string): Promise<StoredTurnRecord | null> {
+export async function loadTurnRecord(
+  q: Queryable, orgId: number, id: string, limits?: TurnRecordReadLimits,
+): Promise<StoredTurnRecord | null> {
+  if (limits !== undefined && (!limits || !validReadLimits(limits))) {
+    throw new TurnRecordReadError('LIMIT_EXCEEDED');
+  }
   const rec = (
     await q.query(
       `SELECT id, organization_id, thread_id, run_id, actor_user_id, outcome, started_at, ended_at,
-              schema_version, record_text, record_sha256, created_at
+              schema_version, record_sha256, created_at, octet_length(record_text) AS record_bytes,
+              CASE WHEN $3::integer IS NULL OR octet_length(record_text) <= $3 THEN record_text END AS record_text
          FROM ana_turn_records
         WHERE organization_id = $1 AND id = $2`,
-      [orgId, id],
+      [orgId, id, limits?.maxRecordBytes ?? null],
     )
   ).rows[0];
   if (!rec) return null;
+  if (limits && Number(rec.record_bytes) > limits.maxRecordBytes) throw new TurnRecordReadError('LIMIT_EXCEEDED');
   const chainRow = (
     await q.query(
-      `SELECT id, chain_seq, sha256_chain, payload_hash, hmac_seal, occurred_at, new_values
+      `SELECT id, chain_seq, sha256_chain, payload_hash, hmac_seal, occurred_at,
+              octet_length(new_values::text) AS audit_bytes,
+              CASE WHEN $4::integer IS NULL OR octet_length(new_values::text) <= $4 THEN new_values END AS new_values
          FROM audit_logs
         WHERE tenant_id = $1 AND action = $2 AND record_id = $3
         ORDER BY occurred_at ASC
         LIMIT 1`,
-      [orgId, TURN_RECORD_AUDIT_ACTION, id],
+      [orgId, TURN_RECORD_AUDIT_ACTION, id, limits?.maxAuditBytes ?? null],
     )
   ).rows[0];
+  if (limits && chainRow && Number(chainRow.audit_bytes) > limits.maxAuditBytes) throw new TurnRecordReadError('LIMIT_EXCEEDED');
   const body = parseBody(rec.record_text);
-  const texts = await loadTexts(q, orgId, body ? [...new Set(textRefsOf(body).map((r) => r.sha256))] : []);
+  const refs = refsForRead(body, limits);
+  const texts = await loadTexts(q, orgId, [...new Set(refs.map(r => r.sha256))], limits);
+  checkReferenceLengths(refs, texts, limits);
+  return storedRecordOf(rec, chainRow, texts);
+}
+
+function storedRecordOf(rec: Record<string, any>, chainRow: Record<string, any> | undefined, texts: Map<string, string>): StoredTurnRecord {
   return {
     id: rec.id,
     organizationId: Number(rec.organization_id),
@@ -188,15 +241,33 @@ export async function loadTurnRecord(q: Queryable, orgId: number, id: string): P
 }
 
 /** The texts a record references, by hash, within one tenant. */
-async function loadTexts(q: Queryable, orgId: number, refs: string[]): Promise<Map<string, string>> {
+async function loadTexts(q: Queryable, orgId: number, refs: string[], limits?: TurnRecordReadLimits): Promise<Map<string, string>> {
   const texts = new Map<string, string>();
   if (refs.length === 0) return texts;
+  if (limits) return loadBoundedTexts(q, orgId, refs, limits);
   const blobs = await q.query(
     `SELECT sha256, text FROM ana_record_blobs WHERE organization_id = $1 AND sha256 = ANY($2::text[])`,
     [orgId, refs],
   );
   for (const b of blobs.rows) texts.set(b.sha256, b.text);
   return texts;
+}
+
+/** Evaluate the entire blob budget in one SQL snapshot, before transporting
+ * text. CASE masks all blob text if any per-blob or aggregate limit fails. */
+async function loadBoundedTexts(q: Queryable, orgId: number, refs: string[], limits: TurnRecordReadLimits): Promise<Map<string, string>> {
+  const { rows } = await q.query(`WITH selected AS MATERIALIZED (
+      SELECT sha256, text, octet_length(text) AS bytes FROM ana_record_blobs
+      WHERE organization_id=$1 AND sha256=ANY($2::text[])
+    ), budget AS (SELECT coalesce(sum(bytes),0) AS total_bytes, coalesce(max(bytes),0) AS largest FROM selected)
+    SELECT s.sha256, s.bytes, b.total_bytes, b.largest,
+      CASE WHEN b.total_bytes <= $3 AND b.largest <= $4 THEN s.text END AS text
+    FROM selected s CROSS JOIN budget b`, [orgId, refs, limits.maxTotalTextBytes, limits.maxTextBytes]);
+  if (rows.some(r => Number(r.total_bytes) > limits.maxTotalTextBytes || Number(r.largest) > limits.maxTextBytes)) {
+    throw new TurnRecordReadError('LIMIT_EXCEEDED');
+  }
+  if (rows.some(r => typeof r.text !== 'string')) throw new TurnRecordReadError('INVALID_RECORD');
+  return new Map(rows.map(r => [r.sha256, r.text]));
 }
 
 function chainOf(row: Record<string, any>): NonNullable<StoredTurnRecord['chain']> {

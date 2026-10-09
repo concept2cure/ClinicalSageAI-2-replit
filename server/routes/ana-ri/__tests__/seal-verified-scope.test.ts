@@ -78,6 +78,17 @@ describe('HTTP target selectors reach the central service validation', () => {
   });
 });
 
+describe('HTTP receipt qualifiers are retained without legacy fallback', () => {
+  it.each([null, 'receipt', {}, { turnRecordId: 'not-a-uuid', stepIndex: 0, resultSha256: 'a'.repeat(64) }])(
+    'rejects malformed receipt %j before acquiring a pool', async receipt => {
+      const res = await post({ ok: true, receipt });
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('INVALID_VERIFICATION_RECEIPT');
+      expect(h.getPool).not.toHaveBeenCalled();
+    },
+  );
+});
+
 describe('feature and signer gates still precede sealing', () => {
   it('retains the disabled feature refusal without checking the signer or DB', async () => {
     vi.stubEnv('ENABLE_ANA_DOCUMENT_STUDIO', 'false');

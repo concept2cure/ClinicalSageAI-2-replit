@@ -53,6 +53,7 @@ function buildSealInput(
           artifactVerified: body.verification.artifactVerified,
           sourceVerified: body.verification.sourceVerified,
           sourceDiffPerformed: body.verification.sourceDiffPerformed,
+          receipt: body.verification.receipt,
         }
       : { ok: false };
   const ipAddress = clientIpOf(req) ?? undefined;

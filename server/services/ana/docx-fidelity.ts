@@ -81,7 +81,7 @@ async function ownedProject(q: MembershipQueryable, ctx: ToolContext, organizati
   return await projectBelongsToTenant({ organizationId, projectId: String(projectId) }, q) ? projectId : null;
 }
 
-async function loadSavedText(
+export async function loadSavedText(
   q: MembershipQueryable, ctx: ToolContext, organizationId: number, selector: Selector,
 ): Promise<SavedText | null> {
   const projectId = await ownedProject(q, ctx, organizationId);

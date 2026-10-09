@@ -1,0 +1,61 @@
+{
+  "mode": "lint",
+  "command": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "server/routes/ana-ri/seal-verified.ts",
+    "server/services/ana/docx-fidelity.ts",
+    "server/services/ana/turn-record-verify.ts",
+    "server/services/ana/verifiedSealService.ts",
+    "server/services/ana/recorded-docx-fidelity.ts",
+    "server/routes/ana-ri/__tests__/seal-verified-scope.test.ts",
+    "server/services/ana/__tests__/recorded-docx-fidelity.pglite.test.ts",
+    "--format",
+    "json",
+    "--output-file",
+    "/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-recorded-fidelity/lint-results.json"
+  ],
+  "stdin": null,
+  "node_version": "v22.23.3",
+  "exit_code": 0,
+  "elapsed_seconds": 1.209,
+  "completed_at_utc": "2026-10-09T11:53:48.583872+00:00",
+  "lint": [
+    {
+      "path": "server/routes/ana-ri/__tests__/seal-verified-scope.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/routes/ana-ri/seal-verified.ts",
+      "errors": 0,
+      "warnings": 2
+    },
+    {
+      "path": "server/services/ana/__tests__/recorded-docx-fidelity.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/docx-fidelity.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/recorded-docx-fidelity.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/turn-record-verify.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/ana/verifiedSealService.ts",
+      "errors": 0,
+      "warnings": 2
+    }
+  ]
+}

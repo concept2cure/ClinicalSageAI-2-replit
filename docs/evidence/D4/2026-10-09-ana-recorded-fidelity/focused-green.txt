@@ -1,0 +1,24 @@
+Focused green verification — recorded DOCX fidelity
+
+Command:
+NODE_OPTIONS=--max-old-space-size=4096 npx vitest run server/services/ana/__tests__/recorded-docx-fidelity.pglite.test.ts server/routes/ana-ri/__tests__/seal-verified-scope.test.ts server/services/ana/__tests__/turn-record.pglite.test.ts server/services/ana/__tests__/verified-seal-scope.test.ts server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts --reporter=json --outputFile=docs/evidence/D4/2026-10-09-ana-recorded-fidelity/focused-green.json
+
+Exit: 0
+Tests: 192 passed, 0 failed; 5 files passed.
+recorded-docx-fidelity.pglite.test.ts: 39 passed
+seal-verified-scope.test.ts: 33 passed
+turn-record.pglite.test.ts: 14 passed
+verified-seal-scope.test.ts: 19 passed
+verify-docx-persisted-target.pglite.test.ts: 87 passed
+
+Raw machine-readable assertion results: focused-green.json.
+This is a result summary, not a verbatim console transcript.
+
+Coverage includes genuine immutable turn writer/chained audit SQL, canonical
+current artifact/disposition eligibility, malformed receipt refusal before
+connection, exact full-result identity despite model budgeting, corrupted/missing
+records/blobs/audit receipts, and UTF-8/aggregate/deduplicated read budgets.
+The receipt fixture is a handler-shaped recorded result, not an OCR-engine
+qualification. Actual DOCX-handler regression tests also passed separately
+within this selection. Authenticated copying fidelity remains non-sealing:
+SOURCE_QUALIFICATION_UNASSESSED. No scientific qualification is asserted.

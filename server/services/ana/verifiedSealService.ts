@@ -89,6 +89,8 @@ export interface SealVerifiedVersionInput {
     artifactVerified?: unknown;
     sourceVerified?: unknown;
     sourceDiffPerformed?: unknown;
+    /** Optional historical full tool-result reference. Fidelity never qualifies a source. */
+    receipt?: unknown;
   };
 
   /** Caller-asserted sample/draft signals (block sealing). */
@@ -135,6 +137,23 @@ export class SealBlockedError extends Error {
     super(message);
     this.name = 'SealBlockedError';
   }
+}
+
+/** An explicit recorded reference cannot be discarded into legacy ok-only sealing. */
+async function blockRecordedFidelitySeal(input: SealVerifiedVersionInput, pool?: SealPool): Promise<void> {
+  if (input.verification.receipt === undefined) return;
+  const { parseVerificationReceipt, consumeRecordedDocxFidelity, RecordedFidelityError } =
+    await import('./recorded-docx-fidelity.js');
+  try {
+    const receipt = parseVerificationReceipt(input.verification.receipt);
+    const client = await (pool ?? (getPool() as unknown as SealPool)).connect();
+    try { await consumeRecordedDocxFidelity(client, input, receipt); } finally { client.release(); }
+  } catch (error) {
+    if (error instanceof RecordedFidelityError) throw new SealBlockedError(error.message, error.code, error.status);
+    throw new SealBlockedError('Recorded fidelity verification could not complete.', 'VERIFICATION_UNAVAILABLE', 503);
+  }
+  throw new SealBlockedError('The authenticated result establishes copying fidelity only. Scientific source qualification remains unassessed.',
+    'SOURCE_QUALIFICATION_UNASSESSED', 422);
 }
 
 /** Explicit malformed selectors must never turn into the new-document fallback. */
@@ -221,8 +240,9 @@ export async function sealVerifiedVersion(
     );
   }
 
-  // No authoritative scoped receipt is supported here. Preserve declared
-  // limitations without treating caller-supplied positive flags as proof.
+  // No source-qualified seal receipt is supported here. A historical fidelity
+  // reference is authenticated separately below and still refused. Preserve
+  // declared limitations without treating caller-positive flags as proof.
   const verification = input.verification;
   if (
     verification.scope !== undefined ||
@@ -251,8 +271,9 @@ export async function sealVerifiedVersion(
   if (!validated.ok || !validated.manifestation) {
     throw new SealBlockedError(validated.error ?? 'Invalid signature manifestation.', validated.code ?? 'INVALID_MANIFESTATION');
   }
-  const manifestation = validated.manifestation;
-  const signaturePurpose = meaningToSignaturePurpose(manifestation.meaning);
+  const manifestation = validated.manifestation, signaturePurpose = meaningToSignaturePurpose(manifestation.meaning);
+
+  await blockRecordedFidelitySeal(input, pool);
 
   const now = new Date();
   const sealedAt = now.toISOString();
