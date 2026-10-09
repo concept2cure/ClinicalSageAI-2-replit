@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-09T04:44:55.312Z",
+  "generatedAt": "2026-10-09T05:04:31.538Z",
   "git": {
-    "sha": "008223dca5b7f52d0b3c461dd2fc2bac083fb14b",
+    "sha": "dc90f337d44670324923f795c076052b33f1ffde",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2052,7 +2052,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1132865
+        "bytes": 1133295
       },
       {
         "file": "shared/schema.ts",
@@ -2282,7 +2282,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21821
+        "lines": 21830
       },
       {
         "file": "shared/schema.ts",
@@ -2562,7 +2562,7 @@
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
-        "lines": 1940
+        "lines": 1936
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
