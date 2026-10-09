@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T21:39:50.630Z",
+  "generatedAt": "2026-10-09T00:37:31.873Z",
   "git": {
-    "sha": "c63cda8b6d992003774245387c55851e55b777c9",
+    "sha": "c245df58f25fc2208bfe1b3634bf2d54c75c383c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 217,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 56,
+    "largeFilesByBytes": 57,
     "largeFilesByLines": 114
   },
   "findings": {
@@ -2179,6 +2179,10 @@
         "bytes": 125383
       },
       {
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "bytes": 124725
+      },
+      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 119982
       },
@@ -2248,11 +2252,15 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 106983
+        "bytes": 107300
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 103227
+        "bytes": 104301
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "bytes": 101535
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
@@ -2265,10 +2273,6 @@
       {
         "file": "server/routes/knowledge-base.ts",
         "bytes": 101005
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 100838
       },
       {
         "file": "server/routes/submissions.ts",
@@ -2405,6 +2409,10 @@
         "lines": 2693
       },
       {
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 2611
+      },
+      {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "lines": 2609
       },
@@ -2462,7 +2470,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2184
+        "lines": 2189
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
@@ -2489,15 +2497,15 @@
         "lines": 2093
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 2089
+      },
+      {
         "file": "server/routes/510k-estar-routes.ts",
         "lines": 2083
       },
       {
         "file": "client/src/concept2cure/v2/editor/suggestions.ts",
-        "lines": 2077
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "lines": 2077
       },
       {
@@ -2509,16 +2517,12 @@
         "lines": 2068
       },
       {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 2060
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2057
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
         "lines": 2050
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2044
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
@@ -2749,16 +2753,16 @@
       "largeByLines": 8
     },
     {
+      "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
+      "duplicateGroups": 56,
+      "largeByBytes": 10,
+      "largeByLines": 17
+    },
+    {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
       "duplicateGroups": 78,
       "largeByBytes": 3,
       "largeByLines": 2
-    },
-    {
-      "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 56,
-      "largeByBytes": 9,
-      "largeByLines": 17
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
