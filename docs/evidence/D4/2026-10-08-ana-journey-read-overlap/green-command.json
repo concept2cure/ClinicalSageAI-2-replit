@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana/__tests__/client-journey.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-08-ana-journey-read-overlap/green.json"
+  ],
+  "files": [
+    "server/services/ana/__tests__/client-journey.test.ts"
+  ],
+  "source_blob": "c4ab5a75ccd4980108907ef1406379d7b469eb7e"
+}

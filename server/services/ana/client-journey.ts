@@ -260,54 +260,66 @@ async function gatherJourneySignals(
     orgAgeDays: null,
   };
 
-  // Projects (the generic project surface; devices also carry regulatory_programs
-  // but a project row is created for both, so this is the cross-segment count).
-  try {
-    const { rows } = await client.query(
-      `SELECT count(*)::int AS c FROM projects
+  // These reads do not depend on one another's results. Pooled
+  // callers can overlap them; keep each source's existing fallback separate.
+  await Promise.all([
+    (async () => {
+      // Projects (the generic project surface; devices also carry regulatory_programs
+      // but a project row is created for both, so this is the cross-segment count).
+      try {
+        const { rows } = await client.query(
+          `SELECT count(*)::int AS c FROM projects
        WHERE organization_id = $1 AND (status IS NULL OR status <> 'archived')`,
-      [organizationId],
-    );
-    out.projectCount = rows[0]?.c ?? 0;
-  } catch { /* fail-soft */ }
+          [organizationId],
+        );
+        out.projectCount = rows[0]?.c ?? 0;
+      } catch { /* fail-soft */ }
+    })(),
 
-  // Governed artifacts — total, and how many have advanced past draft.
-  try {
-    const { rows } = await client.query(
-      `SELECT
+    (async () => {
+      // Governed artifacts — total, and how many have advanced past draft.
+      try {
+        const { rows } = await client.query(
+          `SELECT
          count(*)::int AS total,
          count(*) FILTER (
            WHERE status IN ('review','in_review','approved','locked','frozen','submission_ready','final')
          )::int AS advanced
        FROM concept2cure_artifacts
        WHERE organization_id = $1`,
-      [organizationId],
-    );
-    out.artifactCount = rows[0]?.total ?? 0;
-    out.advancedArtifactCount = rows[0]?.advanced ?? 0;
-  } catch { /* fail-soft */ }
+          [organizationId],
+        );
+        out.artifactCount = rows[0]?.total ?? 0;
+        out.advancedArtifactCount = rows[0]?.advanced ?? 0;
+      } catch { /* fail-soft */ }
+    })(),
 
-  // Submitted/transmitted signal from the central audit trail (segment-agnostic:
-  // matches device eSTAR transmits, ESG submissions, gateway transmittals).
-  try {
-    const { rows } = await client.query(
-      `SELECT count(*)::int AS c FROM audit_logs
+    (async () => {
+      // Submitted/transmitted signal from the central audit trail (segment-agnostic:
+      // matches device eSTAR transmits, ESG submissions, gateway transmittals).
+      try {
+        const { rows } = await client.query(
+          `SELECT count(*)::int AS c FROM audit_logs
        WHERE tenant_id = $1 AND (action ILIKE '%transmit%' OR action ILIKE '%submission%submit%')`,
-      [organizationId],
-    );
-    out.submittedCount = rows[0]?.c ?? 0;
-  } catch { /* fail-soft */ }
+          [organizationId],
+        );
+        out.submittedCount = rows[0]?.c ?? 0;
+      } catch { /* fail-soft */ }
+    })(),
 
-  // Organization age (welcome vs nudge tone at the pre-project stages).
-  try {
-    const { rows } = await client.query(
-      `SELECT EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400.0 AS days
+    (async () => {
+      // Organization age (welcome vs nudge tone at the pre-project stages).
+      try {
+        const { rows } = await client.query(
+          `SELECT EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400.0 AS days
        FROM organizations WHERE id = $1`,
-      [organizationId],
-    );
-    const days = rows[0]?.days;
-    out.orgAgeDays = typeof days === 'number' || typeof days === 'string' ? Math.max(0, Number(days)) : null;
-  } catch { /* fail-soft */ }
+          [organizationId],
+        );
+        const days = rows[0]?.days;
+        out.orgAgeDays = typeof days === 'number' || typeof days === 'string' ? Math.max(0, Number(days)) : null;
+      } catch { /* fail-soft */ }
+    })(),
+  ]);
 
   return out;
 }

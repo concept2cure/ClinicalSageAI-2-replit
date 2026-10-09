@@ -1,0 +1,36 @@
+[
+  {
+    "filePath": "server/services/ana/client-journey.ts",
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'describeClientJourney' has too many lines (111). Maximum allowed is 100.",
+        "line": 114,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 114,
+        "endColumn": 38
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 1,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": [],
+    "omittedSourceSha256": "9c7de79b700182a7c7656495f07eb6c61dea314690f26503722cdae2dd7ed99f"
+  },
+  {
+    "filePath": "server/services/ana/__tests__/client-journey.test.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  }
+]

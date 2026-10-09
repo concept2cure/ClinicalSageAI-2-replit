@@ -1,0 +1,8 @@
+{
+  "qualified_checkpoint": "4d46685d14e20a5443946052b6e9e7e0684222ef",
+  "publication_base": "561a11a7cddfbed16614c448a9b96dc1bb658aba",
+  "git_blob_sha1": {
+    "server/services/ana/client-journey.ts": "c4ab5a75ccd4980108907ef1406379d7b469eb7e",
+    "server/services/ana/__tests__/client-journey.test.ts": "2029187d2bcc1fd4687394336cc2f888c97c43d6"
+  }
+}

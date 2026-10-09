@@ -1,0 +1,46 @@
+[
+  {
+    "filePath": "server/services/ana/client-journey.ts",
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'describeClientJourney' has too many lines (111). Maximum allowed is 100.",
+        "line": 114,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 114,
+        "endColumn": 38
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async function 'gatherJourneySignals' has a complexity of 16. Maximum allowed is 15.",
+        "line": 250,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 250,
+        "endColumn": 36
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 2,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": [],
+    "omittedSourceSha256": "a270d60c1ae39b1acbdd55b8fd6b94d622966b540a39e9e35bf5c3f16c598707"
+  },
+  {
+    "filePath": "server/services/ana/__tests__/client-journey.test.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  }
+]

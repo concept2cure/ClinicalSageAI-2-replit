@@ -1,0 +1,75 @@
+(node:48) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:48) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:69) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/client-journey.test.ts
+{
+  "timestamp": "2026-10-09T02:35:32.669Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T02:35:32.670Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/client-journey.test.ts
+{
+  "timestamp": "2026-10-09T02:35:32.670Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/client-journey.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/client-journey.test.ts > resolveClientJourneyStage — license → submission > a brand-new license with nothing yet lands on just_licensed 1ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > resolveClientJourneyStage — license → submission > an older org that still made no project is nudged into onboarding 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > resolveClientJourneyStage — license → submission > a project with no content is project_started 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > resolveClientJourneyStage — license → submission > draft artifacts mean authoring 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > resolveClientJourneyStage — license → submission > advanced (review/approved) artifacts mean in_review 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > resolveClientJourneyStage — license → submission > high readiness means submission_ready 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > resolveClientJourneyStage — license → submission > a transmitted submission always wins — submitted 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > resolveClientJourneyStage — license → submission > is monotonic along the happy path 1ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > describeClientJourney — guidance tied to real capabilities > welcome stages point at the onboarding questionnaire 1ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > describeClientJourney — guidance tied to real capabilities > authoring offers the drafting council 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > describeClientJourney — guidance tied to real capabilities > submission_ready is about pre-flight + transmittal 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > describeClientJourney — guidance tied to real capabilities > tailors the welcome framing to the segment 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > describeClientJourney — guidance tied to real capabilities > carries the resolved stage + signals for transparency 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > describeClientJourney — guidance tied to real capabilities > honors the tone floor (no exclamation marks, no emoji) 1ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > buildClientJourneyPromptBlock — proactive greeting block > carries the stage, situation, milestone, and the offer, and tells AnA to lead with it 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > buildClientJourneyPromptBlock — proactive greeting block > honors the tone floor (no exclamation marks, no emoji) 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > get_client_journey — tool wiring > is a registered tool that needs no input 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > get_client_journey — tool wiring > has a handler that orients an anonymous (no-org) caller without a DB 1ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > get_client_journey — tool wiring > ignores an invalid segment hint 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > get_client_journey — tool wiring > gets a calm transparency label 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > get_client_journey — tool wiring > classifies as deterministic_query (a reproducible read over live state) 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > live client-journey reads overlap without changing their meaning > admits all four tenant-scoped reads before any settles and accepts out-of-order completion 6ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > live client-journey reads overlap without changing their meaning > finishes four 750ms pooled reads after one wait instead of four 1ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > live client-journey reads preserve signal meaning > preserves segment and precomputed readiness without adding a query 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > live client-journey reads preserve signal meaning > keeps healthy signal values when read 0 rejects 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > live client-journey reads preserve signal meaning > keeps healthy signal values when read 1 rejects 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > live client-journey reads preserve signal meaning > keeps healthy signal values when read 2 rejects 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > live client-journey reads preserve signal meaning > keeps healthy signal values when read 3 rejects 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > live client-journey reads preserve signal meaning > retains defaults and completes every read when all queries throw 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > live client-journey reads preserve signal meaning > retains defaults and completes every read when all queries reject 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > live client-journey reads preserve signal meaning > preserves empty rows and clamps a negative organization age 0ms
+ ✓ server/services/ana/__tests__/client-journey.test.ts > live client-journey reads preserve signal meaning > keeps concurrent tenant calls separate and reads again on later calls 1ms
+
+ Test Files  1 passed (1)
+      Tests  32 passed (32)
+   Start at  22:35:29
+   Duration  6.21s (transform 3.92s, setup 65ms, import 5.90s, tests 22ms, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-08-ana-journey-read-overlap/green.json
