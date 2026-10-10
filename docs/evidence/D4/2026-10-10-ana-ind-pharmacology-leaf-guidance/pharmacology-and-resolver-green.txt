@@ -1,0 +1,72 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:19) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/324dc668b968/concept2cure-v2
+
+(node:19) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:41) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts
+{
+  "timestamp": "2026-10-10T05:24:59.597Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-10T05:24:59.598Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts
+{
+  "timestamp": "2026-10-10T05:24:59.599Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.1 as its own recorded section with the final M4S heading 4ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.2 as its own recorded section with the final M4S heading 1ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.3 as its own recorded section with the final M4S heading 1ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.4 as its own recorded section with the final M4S heading 1ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.5 as its own recorded section with the final M4S heading 0ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.6 as its own recorded section with the final M4S heading 0ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.7 as its own recorded section with the final M4S heading 0ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.1 guidance and evidence limits to the real drafting gateway 11ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.2 guidance and evidence limits to the real drafting gateway 1ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.3 guidance and evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.4 guidance and evidence limits to the real drafting gateway 1ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.5 guidance and evidence limits to the real drafting gateway 1ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.6 guidance and evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.7 guidance and evidence limits to the real drafting gateway 0ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > carries declared gene-therapy context into safety pharmacology without treating it as verified evidence 1ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > preserves the prefix guards when the existing renderer clips the authoring guidance 2ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology canonical record and hierarchy fidelity > preserves every original record and moves exactly seven headings between the canonical halves 10ms
+ ✓ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology canonical record and hierarchy fidelity > keeps unsupported deeper numbering inherited and wholly unindexed codes unresolved 1ms
+(node:53) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted 39ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CTD code from the section brief, naming the entry and how it matched 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CSR alias from the ICH E3 outline, with the basis the outline carries 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a lifecycle document type by id, case-insensitively 0ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > says what it does not index, and never answers from another entry 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > is the only dispatch: the tool delegates and keeps no copy of the rule 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > imports the brief renderers and is imported by none of them 1ms
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  01:24:55
+   Duration  4.84s (transform 3.11s, setup 81ms, import 4.30s, tests 85ms, environment 0ms)
+

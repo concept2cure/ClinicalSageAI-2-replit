@@ -175,6 +175,9 @@ describe('resolveRequirements — the one dispatch', () => {
 // Fingerprint, then the input as JSON; three to a line.
 // 2026-10-09: 12 exact CMC leaves and two structural parents intentionally expand
 // the enumerated inputs; affected ancestor listings change, unrelated hashes stay pinned.
+// 2026-10-10: seven exact pharmacology leaves add 21 variants; only the
+// existing 2.6/m2.6 parent lists change. The other 661 fingerprints are preserved.
+// Delta: docs/evidence/D4/2026-10-10-ana-ind-pharmacology-leaf-guidance/requirements-snapshot-delta.json
 const PINNED_TABLE = `
 b40bf211f7e54507 {"document":"1"}  cd2025612b986822 {"document":"1.1"}  4a2ae5b79a8739e0 {"document":"1.1.1"}
 8fec1080817ffabb {"document":"1.1.2"}  2cc355087e894708 {"document":"1.1.3"}  62dc7cedc05894e2 {"document":"1.1.4"}
@@ -188,7 +191,7 @@ f42168be678a9483 {"document":"1.3.5.1"}  c93bc3959673cc0e {"document":"1.9"}  71
 f1f3c35a4086ba94 {"document":"2.3.P"}  29aa02ba77745811 {"document":"2.3.R"}  b4dc6b0ba6eef8e9 {"document":"2.3.S"}
 f2593dc20c2937c6 {"document":"2.4"}  c5c3d11581e04987 {"document":"2.5"}  74d3056b0e69cad7 {"document":"2.5.1"}
 979219718f04e8ba {"document":"2.5.2"}  a32e09f149e8a0ab {"document":"2.5.3"}  af185da915e6f50b {"document":"2.5.4"}
-fb039127fb58a342 {"document":"2.5.5"}  528d68a49f43a829 {"document":"2.5.6"}  6e19345bf473d778 {"document":"2.6"}
+fb039127fb58a342 {"document":"2.5.5"}  528d68a49f43a829 {"document":"2.5.6"}  dc1fa651cfa9aeb6 {"document":"2.6"}
 641da6b341c5886f {"document":"2.6.1"}  fd62a9de87bb6fed {"document":"2.6.2"}  fbbd0a76969d3459 {"document":"2.6.3"}
 a908663e04b07a7c {"document":"2.6.4"}  cc88e6265a133793 {"document":"2.6.5"}  46d8063bca81aa4a {"document":"2.6.6"}
 b3fcf7aecff12593 {"document":"2.6.7"}  bfae4c818f791136 {"document":"2.7"}  554f75ea14dcb4de {"document":"2.7.1"}
@@ -234,7 +237,7 @@ f42168be678a9483 {"document":"m1.3.5.1"}  c93bc3959673cc0e {"document":"m1.9"}  
 f1f3c35a4086ba94 {"document":"m2.3.P"}  29aa02ba77745811 {"document":"m2.3.R"}  b4dc6b0ba6eef8e9 {"document":"m2.3.S"}
 f2593dc20c2937c6 {"document":"m2.4"}  c5c3d11581e04987 {"document":"m2.5"}  74d3056b0e69cad7 {"document":"m2.5.1"}
 979219718f04e8ba {"document":"m2.5.2"}  a32e09f149e8a0ab {"document":"m2.5.3"}  af185da915e6f50b {"document":"m2.5.4"}
-fb039127fb58a342 {"document":"m2.5.5"}  528d68a49f43a829 {"document":"m2.5.6"}  6e19345bf473d778 {"document":"m2.6"}
+fb039127fb58a342 {"document":"m2.5.5"}  528d68a49f43a829 {"document":"m2.5.6"}  dc1fa651cfa9aeb6 {"document":"m2.6"}
 641da6b341c5886f {"document":"m2.6.1"}  fd62a9de87bb6fed {"document":"m2.6.2"}  fbbd0a76969d3459 {"document":"m2.6.3"}
 a908663e04b07a7c {"document":"m2.6.4"}  cc88e6265a133793 {"document":"m2.6.5"}  46d8063bca81aa4a {"document":"m2.6.6"}
 b3fcf7aecff12593 {"document":"m2.6.7"}  bfae4c818f791136 {"document":"m2.7"}  554f75ea14dcb4de {"document":"m2.7.1"}
@@ -397,6 +400,28 @@ eebf037b55223ee9 {"document":"3.2.P.2.1.2.99"}  001310d4d19b1212 {"document":"3.
 c826abdfc4ea65fd {"document":"3.2.P.2.2.2.99"}  b6dc1d0560a80f2f {"document":"3.2.P.2.2.3.99"}  bca5e25b9f1882f4 {"document":"3.2.P.2.3.99"}
 e1d20ceac78d2ad4 {"document":"3.2.P.2.4.99"}  0025305eb13f2a4b {"document":"3.2.P.2.5.99"}  c4ef802111b77bed {"document":"3.2.P.2.6.99"}
 0f2b05c0528442e5 {"document":"3.2.S.1.1.99"}  387f3662b3a39c31 {"document":"3.2.S.1.2.99"}  cb2b762715eb6313 {"document":"3.2.S.1.3.99"}
+
+338fb72654728cb1 {"document":"2.6.2.1"}
+ee69589c3ac2b062 {"document":"2.6.2.2"}
+c6a8be3cade5ea23 {"document":"2.6.2.3"}
+e7d51105369ddd8b {"document":"2.6.2.4"}
+a4b06c1a219913ef {"document":"2.6.2.5"}
+cc3fffab698d16a5 {"document":"2.6.2.6"}
+f5600f9aea81b9c7 {"document":"2.6.2.7"}
+338fb72654728cb1 {"document":"m2.6.2.1"}
+ee69589c3ac2b062 {"document":"m2.6.2.2"}
+c6a8be3cade5ea23 {"document":"m2.6.2.3"}
+e7d51105369ddd8b {"document":"m2.6.2.4"}
+a4b06c1a219913ef {"document":"m2.6.2.5"}
+cc3fffab698d16a5 {"document":"m2.6.2.6"}
+f5600f9aea81b9c7 {"document":"m2.6.2.7"}
+94c05744c3f29c70 {"document":"2.6.2.1.99"}
+25a71ea4c8463952 {"document":"2.6.2.2.99"}
+508d5c442a66680e {"document":"2.6.2.3.99"}
+0ab2d19842272f17 {"document":"2.6.2.4.99"}
+1ce8834da9bc0958 {"document":"2.6.2.5.99"}
+c3569e0bebd0ad65 {"document":"2.6.2.6.99"}
+3db3c63cca1e373d {"document":"2.6.2.7.99"}
 `;
 
 const PINNED: Record<string, string> = Object.fromEntries(

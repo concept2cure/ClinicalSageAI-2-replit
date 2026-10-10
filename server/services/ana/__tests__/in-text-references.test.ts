@@ -17,6 +17,7 @@ import {
 } from '../in-text-references';
 import { assessGrounding } from '../grounding-core';
 import { critiqueDraft, critiqueDocument, type PrecisionFinding } from '../writing-precision-gate';
+import { listCtdGuidanceCodes } from '../../ind/ctd/index';
 
 const grounding = (findings: PrecisionFinding[]) => findings.filter((f) => f.category === 'grounding');
 
@@ -165,12 +166,32 @@ describe('extractInTextReferences / classifyInTextReferences', () => {
     const status = (text: string) => classifyInTextReferences(text, {}).map((r) => `${r.label}:${r.status}`);
     expect(status('Module 2.7.4')).toEqual(['Module 2.7.4:resolved']);
     expect(status('Module 2.7')).toEqual(['Module 2.7:resolved']); // the parent of 2.7.1–2.7.6
-    expect(status('Module 3.2.P.2.1')).toEqual(['Module 3.2.P.2.1:not-resolvable-from-input']); // below a registry leaf: unchecked
+    expect(status('Module 3.2.P.2.1')).toEqual(['Module 3.2.P.2.1:resolved']); // structural parent of exact child guidance
     expect(status('Module 2.7.9')).toEqual(['Module 2.7.9:unresolved']);
     expect(status('Module 5.3.5.99')).toEqual(['Module 5.3.5.99:unresolved']);
     expect(status('Module 1.14.1.3')).toEqual(['Module 1.14.1.3:not-resolvable-from-input']);
     expect(status('Module 3.3')).toEqual(['Module 3.3:not-resolvable-from-input']); // registry lacks module top headings
     expect(status('Module 6.1')).toEqual(['Module 6.1:unresolved']);
+  });
+
+  it('resolves a CMC structural heading without claiming exact guidance or unchecked descendants', () => {
+    const codes = listCtdGuidanceCodes();
+    expect(codes).not.toContain('3.2.P.2.1');
+    expect(codes).toEqual(expect.arrayContaining(['3.2.P.2.1.1', '3.2.P.2.1.2']));
+
+    const refs = classifyInTextReferences(
+      'Module 3.2.P.2.1; Module 3.2.P.2.1.1; Module 3.2.P.2.1.2; Module 3.2.P.2.1.99; Module 3.2.P.2.1.1.99.',
+      {},
+    );
+    expect(refs.map((r) => `${r.label}:${r.status}`)).toEqual([
+      'Module 3.2.P.2.1:resolved',
+      'Module 3.2.P.2.1.1:resolved',
+      'Module 3.2.P.2.1.2:resolved',
+      'Module 3.2.P.2.1.99:not-resolvable-from-input',
+      'Module 3.2.P.2.1.1.99:not-resolvable-from-input',
+    ]);
+    expect(refs[0].reason).toBe('CTD 3.2.P.2.1 is a CTD heading.');
+    expect(refs[4].reason).toContain('does not subdivide CTD 3.2.P.2.1.1');
   });
 
   it('outside a CSR, a section or E3-looking table is not resolvable from the text alone', () => {
@@ -369,7 +390,7 @@ describe('fix round 2 — a reference into another document is never judged agai
   it('a module code below a registry leaf is not resolvable, never resolved unchecked', () => {
     const status = (text: string) => classifyInTextReferences(text, {}).map((r) => `${r.label}:${r.status}`);
     expect(status('Module 2.7.4.99')).toEqual(['Module 2.7.4.99:not-resolvable-from-input']);
-    expect(status('Module 3.2.P.2.1')).toEqual(['Module 3.2.P.2.1:not-resolvable-from-input']);
+    expect(status('Module 3.2.P.2.1.1.99')).toEqual(['Module 3.2.P.2.1.1.99:not-resolvable-from-input']);
     expect(grounding(critiqueDraft({ text: 'Nausea occurred in 12% of patients (Module 2.7.4.99).' }).findings)).toEqual(
       [],
     );

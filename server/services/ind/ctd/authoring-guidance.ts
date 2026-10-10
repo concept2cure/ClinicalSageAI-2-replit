@@ -1423,6 +1423,253 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "2.4"
     ]
   },
+  // Exact pharmacology leaves; false legacy flags do not waive study/program obligations.
+  "2.6.2.1": {
+    "code": "2.6.2.1",
+    "title": "Brief Summary",
+    "module": 2,
+    "moduleName": "CTD Summaries",
+    "required": false,
+    "requiredFor": [],
+    "contentType": "narrative",
+    "guidance": "ICH M4S: The CTD — Safety, FDA final August 2001, 2.6.2.1, printed page 14; https://www.fda.gov/media/185340/download. These source pointers and drafting cautions are advisory; acquired-data organization does not establish required studies, program applicability or qualified scientific evidence.",
+    "authoringGuidance": "Scope this leaf to the sponsor's development phase, modality, route, population and duration; an initial IND does not imply a full marketing dossier. Do not fabricate results, doses, GLP status, exposure margins, negative findings or a regulatory sufficiency verdict. Keep missing inputs unresolved. Not supplied is an evidence gap, not proof that a study was not performed. Use not performed, planned, deferred or not applicable only with supplied study-status evidence and a rationale. Record data cutoff, report version and source date; verify applicable final guidance and agency advice for this program. Legacy required flags do not waive study or program obligations. Describe the supplied pharmacologic data package and its principal findings concisely, including documented inclusions, exclusions and model limitations. Separate established findings from proposed studies and unavailable evidence. Identify which supplied reports support primary, secondary, safety and interaction topics; note absent animal models only when documented. Reconcile statements with 2.6.2.2–2.6.2.6, 2.6.3 and Module 4. Describe scope rather than declaring the nonclinical program sufficient for clinical entry.",
+    "keyContentElements": [
+      "Scope of the supplied pharmacology package for the proposed clinical use and development phase",
+      "Principal findings linked to actual primary, secondary, safety and interaction study/report identifiers",
+      "Documented inclusions, exclusions, relevant model limitations and evidence not supplied",
+      "Distinct study-status statements with actual sponsor rationale; unresolved gaps remain visible",
+      "Report version, data cutoff, source date and cross-references to detailed leaves, 2.6.3 and Module 4"
+    ],
+    "generationPrompt": "Draft only CTD 2.6.2.1 Brief Summary for {{PRODUCT_NAME}} ({{SPONSOR}}), {{INDICATION}}, {{PHASE}}. Summarize the supplied package scope and actual principal findings with documented inclusions, exclusions and limitations. Keep planned work separate from completed evidence and reconcile with the detailed pharmacology summaries. Do not deliver a program-sufficiency verdict. Use supplied modality, route, population and duration to scope the development phase. Do not fabricate results, doses, GLP status, margins, negative findings or regulatory sufficiency; keep missing inputs unresolved. Distinguish not supplied from not performed, planned, deferred or not applicable using actual sponsor evidence and rationale. Cite study/report identifiers, versions, data cutoff and Module 4 locations. Confirm current final-guidance applicability and actual agency advice; legacy required flags do not waive study or program obligations.",
+    "parentCode": "2.6.2",
+    "expectedData": [
+      "Available report inventory with identifiers, versions, dates, status and Module 4 locations",
+      "Source-supported principal-findings summary and documented package limitations"
+    ],
+    "commonPitfalls": [
+      "Equating a missing report with a study not performed or an absence of adverse findings",
+      "Calling a partial or planned package complete or sufficient for an initial IND",
+      "Omitting conflicting report versions, cutoff differences or documented model limitations"
+    ],
+    "dependencies": [
+      "2.6.2",
+      "2.6.3",
+      "4.2.1"
+    ]
+  },
+  "2.6.2.2": {
+    "code": "2.6.2.2",
+    "title": "Primary Pharmacodynamics",
+    "module": 2,
+    "moduleName": "CTD Summaries",
+    "required": false,
+    "requiredFor": [],
+    "contentType": "narrative",
+    "guidance": "ICH M4S: The CTD — Safety, FDA final August 2001, 2.6.2.2, printed page 14; https://www.fda.gov/media/185340/download. ICH M3(R2), FDA final January 2010, section II, https://www.fda.gov/media/71542/download; applicable biotechnology-derived product context: ICH S6/S6(R1), https://www.fda.gov/regulatory-information/search-fda-guidance-documents/s6r1-preclinical-safety-evaluation-biotechnology-derived-pharmaceuticals. These source pointers and drafting cautions are advisory; acquired-data organization does not establish required studies, program applicability or qualified scientific evidence.",
+    "authoringGuidance": "Scope this leaf to the sponsor's development phase, modality, route, population and duration; an initial IND does not imply a full marketing dossier. Do not fabricate results, doses, GLP status, exposure margins, negative findings or a regulatory sufficiency verdict. Keep missing inputs unresolved. Not supplied is an evidence gap, not proof that a study was not performed. Use not performed, planned, deferred or not applicable only with supplied study-status evidence and a rationale. Record data cutoff, report version and source date; verify applicable final guidance and agency advice for this program. Legacy required flags do not waive study or program obligations. Summarize and evaluate actual primary pharmacodynamic evidence for the intended target, mechanism and therapeutic effects. Explain supplied model/species relevance, methods, controls and limitations before narrating reported potency or response. Compare with related products only when cited evidence permits a relevant comparison. Record the reported GLP/non-GLP status; primary PD is generally exploratory and non-GLP under ICH M3(R2), not automatically GLP or automatically adequate. Biotechnology-derived product study selection and species relevance require applicable ICH S6 context. Do not derive a clinical dose, efficacy claim or exposure margin from an unsupported model.",
+    "keyContentElements": [
+      "Intended target, mechanism and therapeutic effect distinguished from secondary/off-target effects",
+      "Actual in vitro or in vivo study objectives, methods, test systems, controls and model/species relevance",
+      "Reported dose/concentration-response or potency observations with exact units and source locations",
+      "Supplied comparator evidence, assay limitations, uncertainty and reported GLP/non-GLP status",
+      "Traceable Module 4 primary PD reports, report versions and data cutoff; unresolved evidence gaps"
+    ],
+    "generationPrompt": "Draft only CTD 2.6.2.2 Primary Pharmacodynamics for {{PRODUCT_NAME}} ({{SPONSOR}}), {{INDICATION}}, {{PHASE}}. Summarize and evaluate the actual primary PD reports, intended target/MOA, methods, model relevance, results and limitations. Preserve source values and reported GLP status; use evidence-based class comparisons only when supplied. Separate mechanistic support from clinical efficacy and dose claims. Use supplied modality, route, population and duration to scope the development phase. Do not fabricate results, doses, GLP status, margins, negative findings or regulatory sufficiency; keep missing inputs unresolved. Distinguish not supplied from not performed, planned, deferred or not applicable using actual sponsor evidence and rationale. Cite study/report identifiers, versions, data cutoff and Module 4 locations. Confirm current final-guidance applicability and actual agency advice; legacy required flags do not waive study or program obligations.",
+    "parentCode": "2.6.2",
+    "expectedData": [
+      "Supplied primary pharmacodynamic reports and source-supported results with units",
+      "Documented model/species relevance and methods supporting the stated mechanism"
+    ],
+    "commonPitfalls": [
+      "Treating mechanistic activity or an animal-model response as established clinical efficacy",
+      "Inventing potency values, response curves, comparators, clinical doses or species relevance",
+      "Claiming primary PD must always be GLP or inferring GLP status from a report title"
+    ],
+    "dependencies": [
+      "2.6.2",
+      "2.6.3",
+      "4.2.1.1"
+    ]
+  },
+  "2.6.2.3": {
+    "code": "2.6.2.3",
+    "title": "Secondary Pharmacodynamics",
+    "module": 2,
+    "moduleName": "CTD Summaries",
+    "required": false,
+    "requiredFor": [],
+    "contentType": "narrative",
+    "guidance": "ICH M4S: The CTD — Safety, FDA final August 2001, 2.6.2.3, printed page 14; https://www.fda.gov/media/185340/download. These source pointers and drafting cautions are advisory; acquired-data organization does not establish required studies, program applicability or qualified scientific evidence.",
+    "authoringGuidance": "Scope this leaf to the sponsor's development phase, modality, route, population and duration; an initial IND does not imply a full marketing dossier. Do not fabricate results, doses, GLP status, exposure margins, negative findings or a regulatory sufficiency verdict. Keep missing inputs unresolved. Not supplied is an evidence gap, not proof that a study was not performed. Use not performed, planned, deferred or not applicable only with supplied study-status evidence and a rationale. Record data cutoff, report version and source date; verify applicable final guidance and agency advice for this program. Legacy required flags do not waive study or program obligations. Summarize and evaluate supplied secondary pharmacodynamic findings by organ system where useful. Identify tested targets and endpoints, assay sensitivity, observed off-target activity and relevant limitations. Separate an investigated negative result from an untested target, unavailable report or insufficient assay coverage. Relate findings to safety pharmacology or other supplied studies with source-supported context; quote any exposure comparison only from actual evaluated evidence, without inventing a margin. Do not impose a universal screening panel or assume the same panel fits every modality.",
+    "keyContentElements": [
+      "Actual secondary/off-target study objectives, tested targets/endpoints and organ-system organization",
+      "Methods, test systems, assay controls, concentration ranges and stated coverage limitations",
+      "Source-supported positive and investigated negative findings distinguished from untested or unresolved topics",
+      "Reported GLP status and any documented relevance assessment or exposure comparison",
+      "Module 4 secondary PD report identifiers, versions, data cutoff and links to related safety evidence"
+    ],
+    "generationPrompt": "Draft only CTD 2.6.2.3 Secondary Pharmacodynamics for {{PRODUCT_NAME}} ({{SPONSOR}}), {{INDICATION}}, {{PHASE}}. Summarize and evaluate actual secondary PD studies, organizing by organ system where appropriate. Describe tested targets, methods, findings and coverage limitations. Cross-reference actual safety evidence and supplied relevance assessments; distinguish investigated negative results from untested or missing evidence. Use supplied modality, route, population and duration to scope the development phase. Do not fabricate results, doses, GLP status, margins, negative findings or regulatory sufficiency; keep missing inputs unresolved. Distinguish not supplied from not performed, planned, deferred or not applicable using actual sponsor evidence and rationale. Cite study/report identifiers, versions, data cutoff and Module 4 locations. Confirm current final-guidance applicability and actual agency advice; legacy required flags do not waive study or program obligations.",
+    "parentCode": "2.6.2",
+    "expectedData": [
+      "Supplied secondary pharmacodynamic study reports and actual off-target findings",
+      "Documented assay coverage, sensitivity and limitations for the evaluated targets"
+    ],
+    "commonPitfalls": [
+      "Presenting an untested target or missing report as a negative finding",
+      "Mandating a broad screening panel for every modality without program-specific justification",
+      "Dismissing off-target activity using an invented or unevaluated exposure margin"
+    ],
+    "dependencies": [
+      "2.6.2",
+      "2.6.3",
+      "4.2.1.2",
+      "4.2.1.3"
+    ]
+  },
+  "2.6.2.4": {
+    "code": "2.6.2.4",
+    "title": "Safety Pharmacology",
+    "module": 2,
+    "moduleName": "CTD Summaries",
+    "required": false,
+    "requiredFor": [],
+    "contentType": "narrative",
+    "guidance": "ICH M4S: The CTD — Safety, FDA final August 2001, 2.6.2.4, printed page 14; https://www.fda.gov/media/185340/download. ICH S7A, FDA final July 2001, sections 2.9–2.11, https://www.fda.gov/media/72033/download; ICH M3(R2), FDA final January 2010, section II, https://www.fda.gov/media/71542/download; applicable ICH S6/S6(R1), https://www.fda.gov/regulatory-information/search-fda-guidance-documents/s6r1-preclinical-safety-evaluation-biotechnology-derived-pharmaceuticals. These source pointers and drafting cautions are advisory; acquired-data organization does not establish required studies, program applicability or qualified scientific evidence.",
+    "authoringGuidance": "Scope this leaf to the sponsor's development phase, modality, route, population and duration; an initial IND does not imply a full marketing dossier. Do not fabricate results, doses, GLP status, exposure margins, negative findings or a regulatory sufficiency verdict. Keep missing inputs unresolved. Not supplied is an evidence gap, not proof that a study was not performed. Use not performed, planned, deferred or not applicable only with supplied study-status evidence and a rationale. Record data cutoff, report version and source date; verify applicable final guidance and agency advice for this program. Legacy required flags do not waive study or program obligations. Summarize actual safety pharmacology studies and relevant safety endpoints from other supplied reports; separate intended from undesired effects. Explain assessment scope and unresolved gaps for cardiovascular, central nervous and respiratory functions as applicable to this product and clinical use. ICH S7A generally expects the core battery before human exposure and ordinarily under GLP; document actual compliance, justified alternatives and reliable study records rather than assuming these conditions were met. For biotechnology-derived products use applicable ICH S6 context and documented endpoint integration where appropriate. Do not impose hERG testing on all biologics or infer safety from missing data. Record actual follow-up plans and agency advice.",
+    "keyContentElements": [
+      "Product-specific safety pharmacology scope linked to route, population, duration and intended clinical use",
+      "Actual cardiovascular, central nervous, respiratory or other relevant endpoints and study methods",
+      "Source-supported adverse and investigated negative findings, limitations and any documented follow-up",
+      "Reported GLP status, deviations or justified alternatives and evidence supporting data reliability",
+      "Applicable biotechnology-derived product context and documented integration with toxicity or PD studies",
+      "Module 4 safety report identifiers, versions, data cutoff and unresolved evidence gaps"
+    ],
+    "generationPrompt": "Draft only CTD 2.6.2.4 Safety Pharmacology for {{PRODUCT_NAME}} ({{SPONSOR}}), {{INDICATION}}, {{PHASE}}. Summarize and evaluate only actual safety pharmacology evidence and documented integrated endpoints. Address product-specific assessment scope, methods, findings, limitations, actual GLP status and justified alternatives. Apply appropriate S7A and biotechnology-derived product S6 context, without a universal hERG mandate or a clinical-entry safety verdict. Use supplied modality, route, population and duration to scope the development phase. Do not fabricate results, doses, GLP status, margins, negative findings or regulatory sufficiency; keep missing inputs unresolved. Distinguish not supplied from not performed, planned, deferred or not applicable using actual sponsor evidence and rationale. Cite study/report identifiers, versions, data cutoff and Module 4 locations. Confirm current final-guidance applicability and actual agency advice; legacy required flags do not waive study or program obligations.",
+    "parentCode": "2.6.2",
+    "expectedData": [
+      "Supplied safety pharmacology reports or identified safety endpoints within other actual studies",
+      "Documented study compliance statements, limitations and product-specific assessment rationale"
+    ],
+    "commonPitfalls": [
+      "Inferring no safety signal from an unavailable study or unassessed endpoint",
+      "Inventing GLP compliance, no-effect levels, exposure margins or completed follow-up work",
+      "Imposing a universal hERG or standalone core-battery package on every biologic",
+      "Using an unsupported deferral or not-applicable claim to waive a study/program obligation"
+    ],
+    "dependencies": [
+      "2.6.2",
+      "2.6.3",
+      "4.2.1.3"
+    ]
+  },
+  "2.6.2.5": {
+    "code": "2.6.2.5",
+    "title": "Pharmacodynamic Drug Interactions",
+    "module": 2,
+    "moduleName": "CTD Summaries",
+    "required": false,
+    "requiredFor": [],
+    "contentType": "narrative",
+    "guidance": "ICH M4S: The CTD — Safety, FDA final August 2001, 2.6.2.5, printed page 14; https://www.fda.gov/media/185340/download. These source pointers and drafting cautions are advisory; acquired-data organization does not establish required studies, program applicability or qualified scientific evidence.",
+    "authoringGuidance": "Scope this leaf to the sponsor's development phase, modality, route, population and duration; an initial IND does not imply a full marketing dossier. Do not fabricate results, doses, GLP status, exposure margins, negative findings or a regulatory sufficiency verdict. Keep missing inputs unresolved. Not supplied is an evidence gap, not proof that a study was not performed. Use not performed, planned, deferred or not applicable only with supplied study-status evidence and a rationale. Record data cutoff, report version and source date; verify applicable final guidance and agency advice for this program. Legacy required flags do not waive study or program obligations. Briefly summarize actual pharmacodynamic interaction studies if performed. Describe the supplied agents, regimen, model, methods, therapeutic or safety endpoints and observed combined effects with their limitations. Distinguish pharmacodynamic drug interactions, involving combined pharmacologic effects, from pharmacokinetic drug interactions in 2.6.4.7, involving exposure or disposition; cross-reference the relevant PK evidence without substituting it for PD evidence. If no interaction report was supplied, state that evidence gap without claiming no studies were performed or no interactions exist. A sponsor-confirmed not-performed, planned, deferred or not-applicable statement needs its actual rationale.",
+    "keyContentElements": [
+      "Documented study status and rationale for the intended combination or concomitant-use context",
+      "Actual agents, regimen, model, methods and pharmacodynamic endpoints when studied",
+      "Reported combined pharmacologic effects and limitations without unsupported synergy or antagonism claims",
+      "Separation of PD interactions from PK interactions in 2.6.4.7 with appropriate cross-references",
+      "Module 4 interaction report identifiers, versions, data cutoff and unresolved missing evidence"
+    ],
+    "generationPrompt": "Draft only CTD 2.6.2.5 Pharmacodynamic Drug Interactions for {{PRODUCT_NAME}} ({{SPONSOR}}), {{INDICATION}}, {{PHASE}}. Briefly summarize actual PD interaction studies if performed, including agents, regimen, methods, observed effects and limitations. Clearly distinguish PD interaction effects from PK interactions in 2.6.4.7. If evidence was not supplied, say so; use any other study-status claim only with actual sponsor evidence and rationale. Use supplied modality, route, population and duration to scope the development phase. Do not fabricate results, doses, GLP status, margins, negative findings or regulatory sufficiency; keep missing inputs unresolved. Distinguish not supplied from not performed, planned, deferred or not applicable using actual sponsor evidence and rationale. Cite study/report identifiers, versions, data cutoff and Module 4 locations. Confirm current final-guidance applicability and actual agency advice; legacy required flags do not waive study or program obligations.",
+    "parentCode": "2.6.2",
+    "expectedData": [
+      "Supplied pharmacodynamic interaction reports or documented sponsor status/rationale",
+      "Actual combination-study endpoints and source-supported results when available"
+    ],
+    "commonPitfalls": [
+      "Treating PK exposure/disposition findings as proof of a PD interaction assessment",
+      "Inventing additive, synergistic, antagonistic or no-interaction conclusions",
+      "Converting not-supplied evidence into not-performed or not-applicable study status"
+    ],
+    "dependencies": [
+      "2.6.2",
+      "2.6.3",
+      "4.2.1.4",
+      "2.6.4.7"
+    ]
+  },
+  "2.6.2.6": {
+    "code": "2.6.2.6",
+    "title": "Discussion and Conclusions",
+    "module": 2,
+    "moduleName": "CTD Summaries",
+    "required": false,
+    "requiredFor": [],
+    "contentType": "narrative",
+    "guidance": "ICH M4S: The CTD — Safety, FDA final August 2001, 2.6.2.6, printed page 15; https://www.fda.gov/media/185340/download. These source pointers and drafting cautions are advisory; acquired-data organization does not establish required studies, program applicability or qualified scientific evidence.",
+    "authoringGuidance": "Scope this leaf to the sponsor's development phase, modality, route, population and duration; an initial IND does not imply a full marketing dossier. Do not fabricate results, doses, GLP status, exposure margins, negative findings or a regulatory sufficiency verdict. Keep missing inputs unresolved. Not supplied is an evidence gap, not proof that a study was not performed. Use not performed, planned, deferred or not applicable only with supplied study-status evidence and a rationale. Record data cutoff, report version and source date; verify applicable final guidance and agency advice for this program. Legacy required flags do not waive study or program obligations. Provide a bounded discussion of the actual pharmacologic evaluation and the significance of issues arising from supplied evidence. Relate primary, secondary, safety and interaction findings without erasing discordant results or model limitations. State which conclusions the cited pharmacology evidence supports and where uncertainty remains unresolved. This leaf permits discussion and conclusions about pharmacology; it is not a replacement for the broad integrated nonclinical overview in 2.4 covering PK and toxicology as well. Do not turn a limited finding into a claim of clinical efficacy, clinical-entry safety or regulatory sufficiency.",
+    "keyContentElements": [
+      "Pharmacology-specific discussion grounded in the actual primary, secondary, safety and interaction findings",
+      "Significance of documented issues, discordant results and model or assay limitations",
+      "Conclusions supported by identified evidence, separated from assumptions, plans and unresolved uncertainties",
+      "Cross-references to the underlying leaves, 2.6.3 and Module 4 reports with versions and data cutoff",
+      "Boundary between this pharmacology discussion and the integrated nonclinical overview in 2.4"
+    ],
+    "generationPrompt": "Draft only CTD 2.6.2.6 Discussion and Conclusions for {{PRODUCT_NAME}} ({{SPONSOR}}), {{INDICATION}}, {{PHASE}}. Discuss the actual pharmacologic evaluation and the significance of its documented issues. Give only source-supported, bounded pharmacology conclusions and preserve unresolved uncertainty. Cross-reference the evidence and 2.4 without substituting for its integrated PK/toxicology overview or delivering a regulatory-sufficiency verdict. Use supplied modality, route, population and duration to scope the development phase. Do not fabricate results, doses, GLP status, margins, negative findings or regulatory sufficiency; keep missing inputs unresolved. Distinguish not supplied from not performed, planned, deferred or not applicable using actual sponsor evidence and rationale. Cite study/report identifiers, versions, data cutoff and Module 4 locations. Confirm current final-guidance applicability and actual agency advice; legacy required flags do not waive study or program obligations.",
+    "parentCode": "2.6.2",
+    "expectedData": [
+      "Source-linked findings and documented limitations supporting the bounded pharmacologic discussion",
+      "Actual unresolved issues and sponsor-documented follow-up or interpretive rationale"
+    ],
+    "commonPitfalls": [
+      "Deleting all interpretation despite the explicit Discussion and Conclusions heading",
+      "Replacing the integrated 2.4 overview with a pharmacology-only conclusion",
+      "Concealing discordant evidence or declaring regulatory sufficiency from a partial package"
+    ],
+    "dependencies": [
+      "2.6.2",
+      "2.6.2.2",
+      "2.6.2.3",
+      "2.6.2.4",
+      "2.6.2.5",
+      "2.6.3",
+      "2.4"
+    ]
+  },
+  "2.6.2.7": {
+    "code": "2.6.2.7",
+    "title": "Tables and Figures",
+    "module": 2,
+    "moduleName": "CTD Summaries",
+    "required": false,
+    "requiredFor": [],
+    "contentType": "mixed",
+    "guidance": "ICH M4S: The CTD — Safety, FDA final August 2001, 2.6.2.7, printed page 15; https://www.fda.gov/media/185340/download. These source pointers and drafting cautions are advisory; acquired-data organization does not establish required studies, program applicability or qualified scientific evidence.",
+    "authoringGuidance": "Scope this leaf to the sponsor's development phase, modality, route, population and duration; an initial IND does not imply a full marketing dossier. Do not fabricate results, doses, GLP status, exposure margins, negative findings or a regulatory sufficiency verdict. Keep missing inputs unresolved. Not supplied is an evidence gap, not proof that a study was not performed. Use not performed, planned, deferred or not applicable only with supplied study-status evidence and a rationale. Record data cutoff, report version and source date; verify applicable final guidance and agency advice for this program. Legacy required flags do not waive study or program obligations. Organize traceable text tables and figures supporting the pharmacology written summary, either at appropriate points in the narrative or at its end. This leaf concerns narrative displays; it is distinct from the 2.6.3 Pharmacology Tabulated Summary and does not impose mandatory separate 2.6.3 table numbers. Identify every supplied display's report, version, endpoint, units, legends and data cutoff, and reconcile values with the narrative and source reports. With no display data supplied, describe an unpopulated layout and unresolved inputs rather than creating rows, curves, error bars or numerical examples.",
+    "keyContentElements": [
+      "Selection and placement of supplied narrative text tables/figures within or after the written summary",
+      "Display title, legend, endpoints, units and documented methods or limitations",
+      "Source report identifier/location, version and data cutoff for every populated display",
+      "Reconciliation of displayed values with the written summary, 2.6.3 where applicable and Module 4",
+      "Explicit distinction from 2.6.3 tabulated summaries; empty layout when display evidence is not supplied"
+    ],
+    "generationPrompt": "Draft only CTD 2.6.2.7 Tables and Figures for {{PRODUCT_NAME}} ({{SPONSOR}}), {{INDICATION}}, {{PHASE}}. Organize only supplied narrative tables/figures at appropriate text locations or the summary's end, with traceable legends, units and report references. Distinguish these displays from 2.6.3 tabulated summaries. If display data are unavailable, provide an unpopulated layout with unresolved input needs; never invent rows, plotted results or numeric examples. Use supplied modality, route, population and duration to scope the development phase. Do not fabricate results, doses, GLP status, margins, negative findings or regulatory sufficiency; keep missing inputs unresolved. Distinguish not supplied from not performed, planned, deferred or not applicable using actual sponsor evidence and rationale. Cite study/report identifiers, versions, data cutoff and Module 4 locations. Confirm current final-guidance applicability and actual agency advice; legacy required flags do not waive study or program obligations.",
+    "parentCode": "2.6.2",
+    "expectedData": [
+      "Supplied narrative display data and source-linked tables or figures when available",
+      "Unpopulated layout specification and unresolved input list when data were not supplied"
+    ],
+    "commonPitfalls": [
+      "Fabricating display rows, curves, error bars or illustrative results in governed content",
+      "Treating this leaf as a universal mandate for separately numbered 2.6.3 tables",
+      "Using values, units, report versions or cutoffs inconsistent with the cited evidence"
+    ],
+    "dependencies": [
+      "2.6.2",
+      "2.6.3",
+      "4.2.1"
+    ]
+  },
   "2.6.3": {
     "code": "2.6.3",
     "title": "Pharmacology Tabulated Summary",

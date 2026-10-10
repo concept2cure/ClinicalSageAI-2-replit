@@ -1,16 +1,16 @@
 # AnA IND requirements backlog
 
 Owner: W3 authoring / D4 governed workflow. Canonical branch: concept2cure-v2.
-Captured 2026-10-09 UTC. Status: open work, documentation only.
+Captured 2026-10-10 UTC. Status: current open work and bounded advisory-content delivery; no qualification or release clearance.
 
-The existing combined CTD record has **100 structure-only terminal codes**:
-67 in Module 2, 2 in Module 3, 17 in Module 4 and 14 in Module 5. Every code,
+The existing combined CTD record has **93 structure-only terminal codes**:
+60 in Module 2, 2 in Module 3, 17 in Module 4 and 14 in Module 5. Every code,
 heading and nearest exact-guidance ancestor is listed below. The machine-readable
-[audit](../evidence/D4/2026-10-09-ana-ind-cmc-leaf-guidance/structure-only-terminal-backlog.json)
+[audit](../evidence/D4/2026-10-10-ana-ind-pharmacology-leaf-guidance/structure-only-terminal-backlog.json)
 preserves their recorded regulatory bases, source hashes and unresolved initial
 IND applicability.
 
-These are gaps in the encoded IND/NDA/BLA lifecycle catalogue, not 100 mandatory
+These are gaps in the encoded IND/NDA/BLA lifecycle catalogue, not 93 mandatory
 initial IND documents. Every row's initial IND applicability is **undetermined**
 until filing, product, phase, population, available evidence and agency context
 establish it. A heading, an ancestor's necessity tag or an optional flag cannot
@@ -24,14 +24,14 @@ parallel registry, UI, model, scientific qualification or release clearance.
 ## Inventory boundary
 
 The two canonical inputs are `CTD_AUTHORING_GUIDANCE` and `ICH_M4_HEADINGS`.
-Their union currently contains 249 unique codes: 127 exact content records and
-122 structural records. A terminal has no modeled descendant whose code starts
-with that terminal's code plus a dot. There are 203 terminals: 103 exact content
-and the 100 open rows here. Containers are excluded from this terminal backlog.
+Their union currently contains 249 unique codes: 134 exact content records and
+115 structural records. A terminal has no modeled descendant whose code starts
+with that terminal's code plus a dot. There are 203 terminals: 110 exact content
+and the 93 open rows here. Containers are excluded from this terminal backlog.
 
 For each open row, the nearest exact-guidance ancestor is the longest strict
 dot-delimited prefix present in the authoring overlay. The existing pure
-`resolveSectionBriefSource` agrees with this derivation: 96 rows receive an
+`resolveSectionBriefSource` agrees with this derivation: 89 rows receive an
 ancestor brief; 4 have no exact-content ancestor and are currently not indexed
 by that requirements path. None receives exact leaf content. A structural
 heading and its recorded basis remain useful even when the drafting brief is
@@ -53,7 +53,7 @@ source review is recorded in the
 
 ## Shared critical needs
 
-These needs apply to existing exact records as well as the 100 open rows. Adding
+These needs apply to existing exact records as well as the 93 open rows. Adding
 prose alone cannot close them. The plan remains the authority for their scope;
 this table makes the next deliverable and acceptance evidence concrete.
 
@@ -68,21 +68,30 @@ this table makes the next deliverable and acceptance evidence concrete.
 
 ## Proposed bounded content batches
 
-The letters below partition all 100 rows without overlap. They are engineering
+The open letters B–P below partition all 93 rows without overlap. They are engineering
 scopes for review, not study requirements or a commitment to implement every row
 in one batch. Product applicability may defer or exclude a section for a given
 submission without closing its catalogue gap.
 
-The recommended next content batch is **A: the seven pharmacology written-summary
-leaves, 2.6.2.1–2.6.2.7**. They currently inherit one broad 2.6.2 brief. Verify
+Batch **A: the seven pharmacology written-summary leaves, 2.6.2.1–2.6.2.7**,
+is delivered as exact advisory content in the current catalogue. Its bounded
+primary-source review and existing gateway drafting-path wiring are recorded in
+the [pharmacology delivery evidence](../evidence/D4/2026-10-10-ana-ind-pharmacology-leaf-guidance/README.md).
+This closes the exact-content gap for those seven encoded leaves; it does not
+qualify sponsor evidence, generated scientific conclusions, product or phase
+applicability, a model, an initial IND or the overall release. The prior
+[100-row snapshot](../evidence/D4/2026-10-09-ana-ind-cmc-leaf-guidance/structure-only-terminal-backlog.json)
+remains unchanged as historical evidence.
+
+The recommended next content batch is **B: the ten pharmacokinetics written-summary
+leaves, 2.6.4.1–2.6.4.10**. They currently inherit the broad 2.6.4 brief. Verify
 their final primary M4S basis and appropriate product/phase references, then
 demonstrate exact leaf content in the existing resolver and actual nested drafting
-path with missing-study and modality uncertainty preserved. Keep scientific
+path with missing-study, methods and modality uncertainty preserved. Keep scientific
 source qualification work in plan item 1h visible alongside this content work.
 
 | Batch | Current terminal scope | Rows | Content and fidelity work to prove |
 |---|---|---:|---|
-| A | 2.6.2.1–2.6.2.7 | 7 | Separate pharmacology summary, primary/secondary/safety pharmacology, interactions, conclusions and supplied tables; trace statements to available reports without inventing studies. |
 | B | 2.6.4.1–2.6.4.10 | 10 | Separate analytical methods and ADME/interaction summaries, retain species/material/method/units and evidence limits, and reconcile supplied tables to underlying studies. |
 | C | 2.6.6.1–2.6.6.10 | 10 | Separate toxicology summary subjects; retain exposure, route, duration, findings and study status. Make phase/product-dependent study gaps explicit rather than demanding every lifecycle study. |
 | D | 4.2.3.3.1–4.2.3.3.2 | 2 | Distinguish supplied in vitro and in vivo genotoxicity reports, their identity and interpretation limits; preserve absent or pending results. |
@@ -98,7 +107,7 @@ source qualification work in plan item 1h visible alongside this content work.
 | N | 5.3.3.1–5.3.3.5 | 5 | Distinguish healthy-subject, patient, intrinsic/extrinsic-factor and population PK reports; preserve population/dose/model provenance. |
 | O | 5.3.4.1–5.3.4.2 | 2 | Distinguish healthy-subject and patient PD/PK-PD reports; preserve available endpoints and analytical scope. |
 | P | 2.1, 2.5.7, 3.1, 3.3, 4.1 | 5 | Derive contents and reference lists from controlled document/source metadata through existing paths. Missing entries remain gaps; do not invent filenames, literature citations or submission contents. |
-| Total | All listed structure-only terminals | 100 | No batch confers initial IND applicability or filing readiness. |
+| Total | All listed structure-only terminals | 93 | No batch confers initial IND applicability or filing readiness. |
 
 For every content batch, record verified primary sources and dates before making
 regulatory claims; retain phase/product uncertainty, missing/conflicting data and
@@ -115,19 +124,12 @@ applicability**. The ancestor column is a code in the exact authoring overlay;
 `None` means no exact-content ancestor is recorded. Full ancestor titles and
 the original heading basis are retained in the JSON audit.
 
-### Module 2 — Summaries (67 rows)
+### Module 2 — Summaries (60 rows)
 
 | Code | Recorded heading | Nearest exact-guidance ancestor | Batch |
 |---|---|---|---|
 | 2.1 | Common Technical Document Table of Contents (Modules 2–5) | None | P |
 | 2.5.7 | Literature References | 2.5 | P |
-| 2.6.2.1 | Brief Summary | 2.6.2 | A |
-| 2.6.2.2 | Primary Pharmacodynamics | 2.6.2 | A |
-| 2.6.2.3 | Secondary Pharmacodynamics | 2.6.2 | A |
-| 2.6.2.4 | Safety Pharmacology | 2.6.2 | A |
-| 2.6.2.5 | Pharmacodynamic Drug Interactions | 2.6.2 | A |
-| 2.6.2.6 | Discussion and Conclusions | 2.6.2 | A |
-| 2.6.2.7 | Tables and Figures | 2.6.2 | A |
 | 2.6.4.1 | Brief Summary | 2.6.4 | B |
 | 2.6.4.2 | Methods of Analysis | 2.6.4 | B |
 | 2.6.4.3 | Absorption | 2.6.4 | B |
@@ -244,17 +246,20 @@ receipt.
 
 | Canonical input | SHA-256 |
 |---|---|
-| `server/services/ind/ctd/authoring-guidance.ts` | `87875a27d80db335e166b9e055d0bf1699d7344e9019e0f05c36f42697fc0d26` |
-| `server/services/ind/ctd/ich-m4-headings.ts` | `c063ac55b664fb33a1dc20ba05fb3633cda8796f1eba214c45a7369dd2de6e2b` |
+| `server/services/ind/ctd/authoring-guidance.ts` | `a0971eba73e9a1b388d088c02d746b8533df1290a223e6590c1c2b8b0f89542a` |
+| `server/services/ind/ctd/ich-m4-headings.ts` | `179f242eecac9b542258dbe05c946dd45ab17bc6ed54a2009e8b0dbbeee94116` |
 | `server/services/ind/ctd/section-brief.ts` | `ad91f99559c77ed40a972cab1292e3729f07011f8cf13bf8a84e9c2255395082` |
 | `server/services/ind/ctd/regulatory-basis.ts` | `c295e55494948c99384c871ff0201e93ae7642b7a73e735f172cde054506e826` |
 | `shared/regulatory/section-code.ts` | `e4847c9c4258140212be071e0eadac75acd3cd8fe68557c9534225148bbff3ad` |
 
 The mechanically generated rows agree with the existing CMC coverage inventory:
-67/2/17/14 by module, exactly 100 distinct codes, no exact-content entries, no
-nonterminal codes and no additional codes. Ninety-six nearest-ancestor matches
+60/2/17/14 by module, exactly 93 distinct codes, no exact-content entries, no
+nonterminal codes and no additional codes. Eighty-nine nearest-ancestor matches
 and four unavailable briefs were checked through the actual pure resolver.
-The proposed batches sum to 100, and each row belongs to exactly one batch.
+The open proposed batches sum to 93, and each row belongs to exactly one batch.
+All 93 remaining row payloads equal the historical audit after removing only its
+seven A rows; their original heading bases and applicability remain unchanged.
+Those seven former structure-only codes now resolve as exact advisory content.
 No live model, database or governance action was invoked by this audit.
 
 ### Reproduce and verify
@@ -275,11 +280,11 @@ import { ICH_M4_HEADINGS as headings } from './server/services/ind/ctd/ich-m4-he
 import { compareSectionCode } from './shared/regulatory/section-code.ts';
 import { resolveSectionBriefSource } from './server/services/ind/ctd/section-brief.ts';
 const audit = JSON.parse(fs.readFileSync(
-  'docs/evidence/D4/2026-10-09-ana-ind-cmc-leaf-guidance/structure-only-terminal-backlog.json', 'utf8'));
+  'docs/evidence/D4/2026-10-10-ana-ind-pharmacology-leaf-guidance/structure-only-terminal-backlog.json', 'utf8'));
 const codes = [...Object.keys(guidance), ...headings.map(row => row.code)];
 assert.equal(new Set(codes).size, codes.length, 'canonical halves must not overlap');
 const batches = [
-  ['2.6.2.', 'A'], ['2.6.4.', 'B'], ['2.6.6.', 'C'], ['4.2.3.3.', 'D'],
+  ['2.6.4.', 'B'], ['2.6.6.', 'C'], ['4.2.3.3.', 'D'],
   ['4.2.3.5.', 'E'], ['4.2.3.7.', 'F'], ['4.2.3.4.', 'G'], ['2.7.1.', 'H'],
   ['2.7.2.', 'I'], ['2.7.3.', 'J'], ['2.7.4.', 'K'], ['5.3.1.', 'L'],
   ['5.3.2.', 'M'], ['5.3.3.', 'N'], ['5.3.4.', 'O'],
@@ -307,20 +312,30 @@ const rows = headings.filter(row => !codes.some(code => code.startsWith(`${row.c
       proposed_content_batch: batchFor(row.code),
     };
   });
-assert.equal(rows.length, 100);
-assert.equal(new Set(rows.map(row => row.code)).size, 100);
+assert.equal(rows.length, 93);
+assert.equal(new Set(rows.map(row => row.code)).size, 93);
 const byModule = Object.fromEntries([2, 3, 4, 5].map(module =>
   [module, rows.filter(row => row.module === module).length]));
-assert.deepEqual(byModule, { 2: 67, 3: 2, 4: 17, 5: 14 });
+assert.deepEqual(byModule, { 2: 60, 3: 2, 4: 17, 5: 14 });
 const counts = {
   canonical_guidance_entries: Object.keys(guidance).length,
   canonical_structural_entries: headings.length, combined_entries: codes.length,
+  canonical_terminal_entries: codes.filter(code => !codes.some(other => other.startsWith(`${code}.`))).length,
+  exact_guidance_terminals: Object.keys(guidance).filter(code => !codes.some(other => other.startsWith(`${code}.`))).length,
   structure_only_terminals: rows.length, by_module: byModule,
   inherited_exact_ancestor: rows.filter(row => row.nearest_exact_guidance_ancestor).length,
   without_exact_ancestor: rows.filter(row => !row.nearest_exact_guidance_ancestor).length,
   by_proposed_content_batch: Object.fromEntries([...new Set(rows.map(row => row.proposed_content_batch))]
     .sort().map(batch => [batch, rows.filter(row => row.proposed_content_batch === batch).length])),
 };
+assert.deepEqual(
+  [counts.canonical_guidance_entries, counts.canonical_structural_entries, counts.combined_entries,
+   counts.canonical_terminal_entries, counts.exact_guidance_terminals,
+   counts.inherited_exact_ancestor, counts.without_exact_ancestor],
+  [134, 115, 249, 203, 110, 89, 4],
+);
+assert.equal(Object.values(counts.by_proposed_content_batch).reduce((sum, count) => sum + count, 0), 93);
+assert.ok(!Object.hasOwn(counts.by_proposed_content_batch, 'A'));
 const sourcePins = audit.source_pins.map(({ path }) => {
   const bytes = fs.readFileSync(path);
   return { path, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };

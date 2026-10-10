@@ -1,0 +1,50 @@
+{
+  "local_checked_commit": "017d90a5fe09720f30b96380cdfc4423ac97e70c",
+  "remote_baseline": "26b187705e0f6cc38ed4c2ec4ceee8eb149ba596",
+  "full_compiler_input_snapshot": "8e6cbd5d584272383ebdd886526b29b8cbb5b8c6c5b7e6465f5bcd5b5ee5e04c",
+  "non_documentation_files_changed": [
+    {
+      "path": "server/services/ana/__tests__/in-text-references.test.ts",
+      "git_blob_sha": "2a4df2f7c0502b24419588a969960bb903d12f6d",
+      "bytes": 19813,
+      "sha256": "04d32edf76efa42b8de33d5018d5a6cf05e68cf5f932ab5b934fcf11e637ff74"
+    },
+    {
+      "path": "server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts",
+      "git_blob_sha": "8a018963575be6f122341f6423bf89ad058eb341",
+      "bytes": 8424,
+      "sha256": "a6c38c17a68052a60d7cbae62fcdfe82b0b87361e6b5c59629f7deacb99aa14f"
+    },
+    {
+      "path": "server/services/ana/in-text-references.ts",
+      "git_blob_sha": "31b7d62e636922c557c665dd00f827358fdef964",
+      "bytes": 28252,
+      "sha256": "eb7c300aa19c89ec32cde0563b9c78f7fed45d2b035ee0d712fb79101dcf420c"
+    },
+    {
+      "path": "server/services/ind/ctd/authoring-guidance.ts",
+      "git_blob_sha": "a8cfc3fb7cfc9d178e11ece7655f6100024f0165",
+      "bytes": 545421,
+      "sha256": "a0971eba73e9a1b388d088c02d746b8533df1290a223e6590c1c2b8b0f89542a"
+    },
+    {
+      "path": "server/services/ind/ctd/ich-m4-headings.ts",
+      "git_blob_sha": "e36f9248b2372b4b091960f9e1780210542f028a",
+      "bytes": 14173,
+      "sha256": "179f242eecac9b542258dbe05c946dd45ab17bc6ed54a2009e8b0dbbeee94116"
+    },
+    {
+      "path": "tests/regulatory/fixtures/ind-pharmacology/preexisting-records.json",
+      "git_blob_sha": "e88c64c5ab3ca1fca7ccaba5a0b1a19f88e089fb",
+      "bytes": 30223,
+      "sha256": "0c70cdd503f709451b174fa9253c2ebdb24c5955f8a9f5624f0ddc2f53f17867"
+    },
+    {
+      "path": "tests/regulatory/requirements-resolver.test.ts",
+      "git_blob_sha": "a34597dc8e39a13f21a5873fe63ece58d45fe78c",
+      "bytes": 38894,
+      "sha256": "72e9625b89b188b6aa084d7ba9ac8ba315e0e2a9b9b97bc8ea6244eb2b72f862"
+    }
+  ],
+  "non_documentation_changes_after_checked_commit": []
+}
