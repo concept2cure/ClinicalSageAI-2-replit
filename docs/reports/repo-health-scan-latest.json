@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-09T21:59:19.837Z",
+  "generatedAt": "2026-10-10T05:46:02.962Z",
   "git": {
-    "sha": "b4badf56fbe9038490bae860dc41f812bd966c27",
+    "sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2060,7 +2060,7 @@
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "bytes": 515739
+        "bytes": 545421
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2297,11 +2297,11 @@
         "lines": 6920
       },
       {
-        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5954
+        "file": "server/services/ind/ctd/authoring-guidance.ts",
+        "lines": 6201
       },
       {
-        "file": "server/services/ind/ctd/authoring-guidance.ts",
+        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
         "lines": 5954
       },
       {
