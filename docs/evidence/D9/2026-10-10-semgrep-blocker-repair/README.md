@@ -80,3 +80,11 @@ repair. The IND catalogue still has 93 structure-only terminals; scientific
 qualification, applicability decisions, governed approval, and other launch
 rows remain open. A permanent post-push receipt must report fresh observations
 and their exact source commit before this batch is considered verified remotely.
+
+The completed [post-push verification receipt](POST_PUSH_VERIFICATION.md) records
+fresh results on `de61922a`: the whole Semgrep workflow passed with zero blocking
+delta, while 680 full-scan advisory findings and explicit coverage limits remain.
+Tier 5, the dependency-risk gate and ordinary stock TypeScript also passed. Five
+separate main-CI guardrails have fresh failures; the broader release and IND
+qualification remain open. The receipt and pinned remote records preserve those
+distinctions.

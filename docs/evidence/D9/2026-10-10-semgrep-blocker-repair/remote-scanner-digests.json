@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "subject_sha": "de61922a9351080fdcd76a231c5abd8182054831",
+  "run_id": 38031251350,
+  "files": [
+    {
+      "path": "remote-scanner-metadata.json",
+      "bytes": 17937,
+      "sha256": "c94653b33c48f56aae5e4b3b12ea2998762fb8383135742174027b8f2843c38c"
+    },
+    {
+      "path": "remote-scanner-excerpts.txt",
+      "bytes": 12788,
+      "sha256": "9c603716dbd8918b95a61bcc8ecbde7d63215d940f2db6511b223e8cfe129fa5"
+    }
+  ]
+}

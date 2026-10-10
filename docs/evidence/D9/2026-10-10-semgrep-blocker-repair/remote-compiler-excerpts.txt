@@ -1,0 +1,27 @@
+2026-10-10T06:31:49.2175676Z ##[endgroup]
+2026-10-10T06:31:49.2176326Z ##[group]Fetching the repository
+2026-10-10T06:31:49.2183044Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +de61922a9351080fdcd76a231c5abd8182054831:refs/remotes/origin/concept2cure-v2
+2026-10-10T06:32:02.7855920Z From https://github.com/concept2cure/ClinicalSageAI-2-replit
+2026-10-10T06:32:02.7857749Z  * [new ref]           de61922a9351080fdcd76a231c5abd8182054831 -> origin/concept2cure-v2
+2026-10-10T06:32:02.7861045Z ##[endgroup]
+2026-10-10T06:32:02.7862316Z ##[group]Determining the checkout info
+2026-10-10T06:32:02.7863887Z ##[endgroup]
+2026-10-10T06:32:05.0281907Z ##[endgroup]
+2026-10-10T06:32:05.0327606Z [command]/usr/bin/git log -1 --format=%H
+2026-10-10T06:32:05.0351040Z de61922a9351080fdcd76a231c5abd8182054831
+2026-10-10T06:32:05.0582417Z ##[group]Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+2026-10-10T06:32:05.0582732Z with:
+2026-10-10T06:32:05.0582894Z   node-version: 22
+2026-10-10T06:32:44.0639988Z ##[endgroup]
+2026-10-10T06:32:44.1596803Z 
+2026-10-10T06:32:44.1597543Z > concept2cure-riai@1.0.0 ci:typecheck:no-regression
+2026-10-10T06:32:44.1598191Z > node scripts/ci/typecheck-no-regression.mjs
+2026-10-10T06:32:44.1598482Z 
+2026-10-10T06:32:44.1907089Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-10T06:35:39.0270942Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-10T06:35:39.0271707Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.
+2026-10-10T06:35:39.0381464Z ##[group]Run npm run lint || true
+2026-10-10T06:35:39.0381722Z [36;1mnpm run lint || true[0m
+2026-10-10T06:35:39.0454043Z shell: /usr/bin/bash -e {0}
+2026-10-10T06:35:39.0454292Z env:
+2026-10-10T06:35:39.0454460Z   NODE_VERSION: 22

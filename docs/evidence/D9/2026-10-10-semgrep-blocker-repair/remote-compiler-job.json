@@ -1,0 +1,131 @@
+{
+  "observed_at": "2026-10-10T06:38:46.256Z",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "run": {
+    "id": 38031251357,
+    "name": "C2C Agent — Validate & Audit",
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "de61922a9351080fdcd76a231c5abd8182054831",
+    "head_branch": "concept2cure-v2",
+    "event": "push",
+    "run_attempt": 1,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38031251357",
+    "created_at": "2026-10-10T06:31:45Z",
+    "updated_at": "2026-10-10T06:37:36Z"
+  },
+  "job": {
+    "id": 114152480600,
+    "name": "typecheck",
+    "status": "completed",
+    "conclusion": "success",
+    "run_id": 38031251357,
+    "logs_url": null,
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Run npm ci",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "TypeScript type check (baseline-gated)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5
+      },
+      {
+        "name": "ESLint",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11
+      },
+      {
+        "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13
+      }
+    ]
+  },
+  "observations": {
+    "checked_out_sha": "de61922a9351080fdcd76a231c5abd8182054831",
+    "command": "tsc --noEmit",
+    "baseline_error_count": 0,
+    "error_count": 0,
+    "tsc_exit_code": 0,
+    "matches_baseline": true,
+    "worker_based_path": false,
+    "compiler_started_at": "2026-10-10T06:32:44.1907089Z",
+    "compiler_summary_at": "2026-10-10T06:35:39.0270942Z",
+    "following_lint_command": "npm run lint || true",
+    "following_lint_enforced": false
+  },
+  "evidence_file": "remote-compiler-excerpts.txt",
+  "evidence_scope": "Selected original lines in original order; omitted log lines are not claimed to be reproduced.",
+  "full_decoded_log": {
+    "encoding": "UTF-8",
+    "sha256": "5e6abb120e64686335a6ba67ebede82f75a3e195c63e0592bc36822741060cda",
+    "bytes": 1327252,
+    "line_count": 10091
+  },
+  "retained_original_line_numbers": [
+    92,
+    93,
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    158,
+    159,
+    160,
+    161,
+    162,
+    163,
+    243,
+    244,
+    245,
+    246,
+    247,
+    248,
+    249,
+    250,
+    251,
+    252,
+    253,
+    254,
+    255
+  ]
+}

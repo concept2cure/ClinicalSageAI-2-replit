@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-10-10T06:35:58.228Z",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "subject": {
+    "sha": "de61922a9351080fdcd76a231c5abd8182054831",
+    "tree_sha": "ae8a1ae9e50b346021b9979a14f7f0ee948f10cd",
+    "sole_parent_sha": "2c9a4a5fefc639d6d5ccf3dda139f3d64d6b2115"
+  },
+  "run": {
+    "id": 38031251300,
+    "name": "Tier 5 Browser Smoke",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38031251300",
+    "event": "push",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-10T06:31:45Z",
+    "updated_at": "2026-10-10T06:35:03Z"
+  },
+  "job": {
+    "id": 114152480276,
+    "name": "Authenticated app smoke (real browser + DB)",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38031251300/job/114152480276",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Initialize containers",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Setup Node.js",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "Install dependencies",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5
+      },
+      {
+        "name": "Check AnA fresh-install migration ordering",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Install Playwright test runner + Chromium",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7
+      },
+      {
+        "name": "Provision the application schema from scratch",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8
+      },
+      {
+        "name": "Run the authenticated browser smoke",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9
+      },
+      {
+        "name": "Run the WO-06 governed golden journey",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10
+      },
+      {
+        "name": "Upload smoke artifacts (traces, screenshots, results)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11
+      },
+      {
+        "name": "Post Setup Node.js",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 20
+      },
+      {
+        "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 21
+      },
+      {
+        "name": "Stop containers",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 22
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 23
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "Check AnA fresh-install migration ordering",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 6
+    },
+    {
+      "name": "Provision the application schema from scratch",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 8
+    },
+    {
+      "name": "Run the authenticated browser smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 9
+    },
+    {
+      "name": "Run the WO-06 governed golden journey",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 10
+    }
+  ],
+  "counts": {
+    "migration_order_tests": 4,
+    "authenticated_browser_smoke_tests": 2,
+    "governed_golden_journey_tests": 1
+  },
+  "observed_golden_journey": {
+    "export_before_review_http_status": 403,
+    "recorded_review_submit_http_status": 200,
+    "export_after_review_http_status": 200,
+    "recorded_artifact_id": "artifact_1791614093136_177403045f35"
+  },
+  "provisioning": {
+    "database_service_image": "pgvector/pgvector:pg15",
+    "database_name": "c2c_tier5_smoke",
+    "connection_role": "postgres",
+    "public_tables": 808,
+    "rls_policies": 1004,
+    "named_schema_tables_verified": "6/6",
+    "authoring_tables_verified": "19/19",
+    "required_capabilities_verified": "8/8",
+    "pre_overlay_parent": "db/migrations/20260917_ana_runs.sql",
+    "overlay_applied": 312,
+    "overlay_already_present": 2,
+    "governed_content_applied": "42/42",
+    "out_of_band_deploy_migrate_invoked_by_each_browser_command": true
+  },
+  "raw_log_evidence": {
+    "job_id": 114152480276,
+    "github_api": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/jobs/114152480276/logs",
+    "fetch": {
+      "started_at": "2026-10-10T06:35:57.913Z",
+      "completed_at": "2026-10-10T06:35:58.984Z"
+    },
+    "temporary_original_path": "/tmp/c2c-d9-de61922a-tier5-114152480276.log",
+    "full_fetched_text_sha256": "946a95eaf275693f81571374df30a52fda08fc2f87279f0562618104d6777923",
+    "excerpt_file": "remote-tier5-excerpts.txt",
+    "ranges": [
+      {
+        "start": 280,
+        "end": 281,
+        "purpose": "Exact checkout SHA",
+        "excerpt_start_line": 1,
+        "excerpt_end_line": 2,
+        "sha256": "78bf9f431e35501706f00dc90a3df757bbb9089ab7780fe502a2b270db3f5d39"
+      },
+      {
+        "start": 354,
+        "end": 375,
+        "purpose": "Migration order regression with negative controls",
+        "excerpt_start_line": 3,
+        "excerpt_end_line": 24,
+        "sha256": "e537f10f4da91303db0e5febdaa061b2b21ea30cd2b96b43760157f6df3d8ff1"
+      },
+      {
+        "start": 621,
+        "end": 708,
+        "purpose": "Complete fresh PostgreSQL provisioning results and role limits",
+        "excerpt_start_line": 25,
+        "excerpt_end_line": 112,
+        "sha256": "8da8f081ab6e6255389669bb2c56d12b9e0cfe83626efc0c4d42f7366e2a860a"
+      },
+      {
+        "start": 709,
+        "end": 719,
+        "purpose": "Authenticated smoke command includes deploy migration",
+        "excerpt_start_line": 113,
+        "excerpt_end_line": 123,
+        "sha256": "145ddb4c09e4d880613251edd3c527b53bf8d5aa05233e5e367f2af73facf033"
+      },
+      {
+        "start": 6298,
+        "end": 6298,
+        "purpose": "Authenticated protected surfaces test passed",
+        "excerpt_start_line": 124,
+        "excerpt_end_line": 124,
+        "sha256": "8ad40d013902604c916892be39c1f43b40d8379d2c901a964f44a88efd4b8d6f"
+      },
+      {
+        "start": 7344,
+        "end": 7346,
+        "purpose": "Unauthenticated protected-route negative control and two tests passed",
+        "excerpt_start_line": 125,
+        "excerpt_end_line": 127,
+        "sha256": "5923436fa856df4bf633152fcb567d2f22d2ed3986ca0ac8fe06f060c9d90f96"
+      },
+      {
+        "start": 7354,
+        "end": 7363,
+        "purpose": "Governed golden journey command includes deploy migration",
+        "excerpt_start_line": 128,
+        "excerpt_end_line": 137,
+        "sha256": "e4221c5b839bafd84d0999323fb7bfb0b6be3bb5c7c44d2a53418e1508497d3a"
+      },
+      {
+        "start": 12990,
+        "end": 12991,
+        "purpose": "Pre-review export refused with HTTP 403",
+        "excerpt_start_line": 138,
+        "excerpt_end_line": 139,
+        "sha256": "f931cb96532e359cf5cfd35ada6ade974fb4120adfb0e44b055af33d596872a1"
+      },
+      {
+        "start": 15053,
+        "end": 15053,
+        "purpose": "Recorded review submit HTTP 200",
+        "excerpt_start_line": 140,
+        "excerpt_end_line": 140,
+        "sha256": "08077df658f76c4a75ba7b31bd806b8fa03e95a04a8e95c7c527ac86291124ac"
+      },
+      {
+        "start": 17316,
+        "end": 17320,
+        "purpose": "Post-review export HTTP 200 and golden journey passed",
+        "excerpt_start_line": 141,
+        "excerpt_end_line": 145,
+        "sha256": "67f2e36a65b9e85caa7e40a38d2f32b6bab2c1ca12c4c3ea4bf202f17bd19072"
+      }
+    ],
+    "range_convention": "1-based inclusive original decoded raw job-log lines, concatenated in listed order without inserted headings, timestamp changes or ANSI stripping",
+    "full_fetched_bytes": 2096338,
+    "full_fetched_line_count": 26388,
+    "excerpt_sha256": "a7d81afc11b5d6eacb29d2bfebbdb2d0e7c933de9174df0ab7a6eab9f9774e22",
+    "excerpt_bytes": 16309
+  },
+  "artifacts": [
+    {
+      "id": 11661669420,
+      "name": "tier5-browser-smoke-artifacts",
+      "size_in_bytes": 95960,
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11661669420",
+      "archive_download_url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11661669420/zip",
+      "expired": false,
+      "created_at": "2026-10-10T06:34:58Z",
+      "expires_at": "2026-10-24T06:34:57Z",
+      "updated_at": "2026-10-10T06:34:58Z",
+      "digest": "sha256:e9e7f56e11a73b727adf747636395e4cc9c42e530005e1464d2b7a0f66240951",
+      "workflow_run": {
+        "id": 38031251300,
+        "repository_id": 1096040843,
+        "head_repository_id": 1096040843,
+        "head_branch": "concept2cure-v2",
+        "head_sha": "de61922a9351080fdcd76a231c5abd8182054831"
+      },
+      "downloaded_archive_sha256": "e9e7f56e11a73b727adf747636395e4cc9c42e530005e1464d2b7a0f66240951",
+      "downloaded_bytes": 95960,
+      "archive_entries": [
+        {
+          "path": "e2e-results.json",
+          "bytes": 137366,
+          "sha256": "19df6283596c4d1c581bb581c9e2a4a38267fb9d65ed7561ce9ebd07cc1c0028"
+        },
+        {
+          "path": "ana-bootstrap.log",
+          "bytes": 1438,
+          "sha256": "ac5c8d044a386546f941e59c6727321b210b6dd3e5ca8e71189a98658fc20bb9"
+        }
+      ],
+      "e2e_results_scope": "Final golden-customer-journey invocation; the preceding authenticated smoke rewrites the same JSON path and is evidenced by its completed step and original job log.",
+      "e2e_results_stats": {
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "golden_result_status": "passed",
+      "artifact_digest_matched": true
+    }
+  ],
+  "scope_limits": [
+    "These completed results directly test only de61922a9351080fdcd76a231c5abd8182054831.",
+    "Fresh PostgreSQL provisioning and the existing development-auth browser journeys passed; the connection uses the owner/postgres role and does not certify production non-owner RLS boot.",
+    "The recorded review/export behavior does not establish scientific source qualification, reviewer-observed version binding, initial IND applicability, live-model validation or overall release clearance.",
+    "The archived JSON contains only the final golden invocation; both preceding browser smoke tests are independently visible in completed step 9 and its original raw log.",
+    "No live model or local database was invoked in this inspection; no workflow was rerun or suppressed."
+  ],
+  "source_pins": [
+    {
+      "path": ".github/workflows/tier5-browser-smoke.yml",
+      "git_blob_sha": "feadf66a99288923d1a10e693366ba65ce0dc6b7",
+      "sha256": "952d50274e2b7ae9e8575fa5a470befbc9d5c7d15d2ad8a4827040a1ef3dcfd3",
+      "bytes": 5502
+    },
+    {
+      "path": "scripts/db/install-fresh.mjs",
+      "git_blob_sha": "248a0dec82b3bf35b03d4af45c95b50250f7ab3d",
+      "sha256": "23469635136c354930de376a07ab840eb4be7e34952b6c71d4cb94383a46389d",
+      "bytes": 99629
+    },
+    {
+      "path": "scripts/db/deploy-migrate.mjs",
+      "git_blob_sha": "2f46052b542c156f9b99c572285f43e9fb466dac",
+      "sha256": "b2c407a24e6c92d03002bb3d59ed1c189bed02cb2523fc191886c8b7b949ded5",
+      "bytes": 23308
+    },
+    {
+      "path": "scripts/run-e2e-smoke.mjs",
+      "git_blob_sha": "601e14ccd0d9bdedb1dcd3b5391eab0b0414cbcd",
+      "sha256": "736b87e2b4c7eccad2862125228f2f17ada2b748e922439fd9f43375f5285742",
+      "bytes": 6408
+    },
+    {
+      "path": "tests/schema-contracts/install-fresh-ana-runs.pglite.test.ts",
+      "git_blob_sha": "6d0d72f57b3e21b5c206f5f30f230ed0b00549b8",
+      "sha256": "455712570a4177cb3d3ec2057ef53c22d9af375d9e99432331d48c98f0d814ab",
+      "bytes": 6057
+    },
+    {
+      "path": "tests/e2e/authenticated-app-smoke.e2e.spec.ts",
+      "git_blob_sha": "a495df7d2b8a316099daaea64e4852b75722a2d4",
+      "sha256": "7fd7bde4296eb36482d76ab9a7b110d9de6f94a4d3f57ac5595cdf8e7f0e19b0",
+      "bytes": 3987
+    },
+    {
+      "path": "tests/e2e/golden-customer-journey.e2e.ts",
+      "git_blob_sha": "9e78ddecb1c6c75eb331c3c9c410f7e5b5628e87",
+      "sha256": "2b83210e960e812fc67132d43ac88377544e477bcc2828c1b1a778c2b498eed1",
+      "bytes": 12133
+    }
+  ]
+}

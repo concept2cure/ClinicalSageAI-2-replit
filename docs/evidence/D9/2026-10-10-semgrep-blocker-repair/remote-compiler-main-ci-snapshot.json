@@ -1,0 +1,1058 @@
+{
+  "observed_at": "2026-10-10T06:50:23.378Z",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "source_urls": [
+    "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38031251355",
+    "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/runs/38031251355",
+    "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/runs/38031251355/jobs"
+  ],
+  "run": {
+    "id": 38031251355,
+    "name": "CI",
+    "status": "in_progress",
+    "conclusion": null,
+    "head_sha": "de61922a9351080fdcd76a231c5abd8182054831",
+    "head_branch": "concept2cure-v2",
+    "event": "push",
+    "run_attempt": 1,
+    "created_at": "2026-10-10T06:31:45Z",
+    "updated_at": "2026-10-10T06:31:48Z"
+  },
+  "jobs": [
+    {
+      "id": 114152480454,
+      "name": "Security Contract Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 38031251355,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run security contract tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "MCP SDK OAuth credentials stay bound to their issuer",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ]
+    },
+    {
+      "id": 114152480553,
+      "name": "Lint",
+      "status": "in_progress",
+      "conclusion": null,
+      "run_id": 38031251355,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Guardrails — Node 22 runtime contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Guardrails — Node 22 guard rejects simulated drift",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Guardrails — release-evidence manifest gate self-tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Guardrails — eCTD migration headers (reg audit)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Guardrails — ban direct new Pool()",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Guardrails — migration prefix collisions (no regressions)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Guardrails — a new migration is on a DEPLOY path (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Guardrails — RLS allowlist TS↔SQL parity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Guardrails — duplicate CREATE TABLE across BOTH migration lineages",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Guardrails — golden-journey migrations must be on a durable apply path",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Guardrails — server SQL references a table no APPLIER creates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Guardrails — server SQL references a COLUMN no applier creates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Guardrails — server code runs no DDL on the runtime connection",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Guardrails — the security and tenant gates fail on what they exist to catch (selftests)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Guardrails — no jsonb operator on a json column",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Guardrails — server SQL references a table nothing creates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Guardrails — source files nothing can reach",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Guardrails — no live credentials committed to the tree",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Guardrails — the Compose stacks carry the production boot contract",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        },
+        {
+          "name": "Guardrails — requirements.txt pins must install on the declared Python",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24
+        },
+        {
+          "name": "Guardrails — content cannot be saved without its data lineage",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25
+        },
+        {
+          "name": "Guardrails — a store nothing writes may not gain readers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26
+        },
+        {
+          "name": "Guardrails — the document alias map holds no attributes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27
+        },
+        {
+          "name": "Guardrails — every artifact producer emits a provenance event",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28
+        },
+        {
+          "name": "Guardrails — no direct Pool construction in runtime code",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29
+        },
+        {
+          "name": "Guardrails — eCTD stub bundle + generated risk-code types",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30
+        },
+        {
+          "name": "Guardrails — security patterns (tenant / identity / role trust)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31
+        },
+        {
+          "name": "Guardrails — proof surface must not shrink or overclaim",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32
+        },
+        {
+          "name": "Proof tier — schema contracts + golden journeys + export contracts",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 33
+        },
+        {
+          "name": "Guardrails — i18n locale integrity (key/placeholder/markup parity)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 34
+        },
+        {
+          "name": "Guardrails — surfaces are discoverable, or declared not to be",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 35
+        },
+        {
+          "name": "Guardrails — no ungated fixture fallback in client surfaces",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36
+        },
+        {
+          "name": "Guardrails — every routable surface publishes screen state to AnA",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37
+        },
+        {
+          "name": "Guardrails — launch scope is real and fixture-free (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 38
+        },
+        {
+          "name": "Guardrails — no launch screen calls an API production refuses (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 39
+        },
+        {
+          "name": "Guardrails — AnA document canvas path is wired (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 40
+        },
+        {
+          "name": "Guardrails — untracked-imports gate is trustworthy (selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 41
+        },
+        {
+          "name": "Guardrails — only the PQ runner calls evaluateModel (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 42
+        },
+        {
+          "name": "Guardrails — AnA AI dispatch binds its tenant (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 43
+        },
+        {
+          "name": "Guardrails — no new pin to an unapproved model (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 44
+        },
+        {
+          "name": "Guardrails — one source for the client address (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45
+        },
+        {
+          "name": "Guardrails — validation traceability resolves (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 46
+        },
+        {
+          "name": "Compliance claim check",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 47
+        },
+        {
+          "name": "Microcopy tone check",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 48
+        },
+        {
+          "name": "GA completion ledger check",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 49
+        },
+        {
+          "name": "No server error carries the failure text to the client",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 50
+        },
+        {
+          "name": "No hand-rolled error-envelope reads",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 51
+        },
+        {
+          "name": "INSERT columns are declared in the model",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 52
+        },
+        {
+          "name": "No verdict for a check that did not run",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 53
+        },
+        {
+          "name": "A Part 11 audit row written and its outcome discarded",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 54
+        },
+        {
+          "name": "Gates that existed but ran nowhere",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 55
+        },
+        {
+          "name": "Security gates that ran only in the pre-push hook",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 56
+        },
+        {
+          "name": "Guardrails — no API route or table name in user-visible copy",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 57
+        },
+        {
+          "name": "Guardrails — every in-scope AnA tool reads from its register entry (with selftest)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 58
+        },
+        {
+          "name": "Guardrails — no clearance copy chosen by an empty collection",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 59
+        },
+        {
+          "name": "Guardrails — no control promising an action it only asks about",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 60
+        },
+        {
+          "name": "Guardrails — no success message before the response is checked",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 61
+        },
+        {
+          "name": "Guardrails — no invented signer or applicant identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 62
+        },
+        {
+          "name": "Guardrails — one program-ownership check (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 63
+        },
+        {
+          "name": "Guardrails — audit_logs fixtures accept the audit writer's columns",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 64
+        },
+        {
+          "name": "Guardrails — tenant column types (no TEXT-typed tenant cols)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 65
+        },
+        {
+          "name": "Guardrails — org path params are checked against the caller",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 66
+        },
+        {
+          "name": "Guardrails — every biostat form field is one the server reads",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 67
+        },
+        {
+          "name": "Guardrails — no tenant-blind Drizzle models",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 68
+        },
+        {
+          "name": "Guardrails — no per-request table without a tenant key",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 69
+        },
+        {
+          "name": "Guardrails — the unkeyed-table gate can still fail",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 70
+        },
+        {
+          "name": "Guardrails — WCAG AA contrast on design tokens",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 71
+        },
+        {
+          "name": "Guardrails — theme aliases frozen to their light values",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 72
+        },
+        {
+          "name": "Guardrails — the generated text ramp matches the stylesheets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 73
+        },
+        {
+          "name": "Guardrails — tenant-isolation in raw SQL (no regressions)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 74
+        },
+        {
+          "name": "Guardrails — every tenant entry point considers entitlement",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 75
+        },
+        {
+          "name": "Guardrails — request values must not reach a path unconstrained",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 76
+        },
+        {
+          "name": "Guardrails — workflows must not invoke files that do not exist",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 77
+        },
+        {
+          "name": "Guardrails — the frontend deploy uploads every file the app fetches (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 78
+        },
+        {
+          "name": "Guardrails — one native canvas library in the lockfile (with selftest)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 79
+        },
+        {
+          "name": "Guardrails — required workflows keep a per-commit run on the canonical branch",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 80
+        },
+        {
+          "name": "Guardrails — concurrency guard rejects simulated drift",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 81
+        },
+        {
+          "name": "Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 82
+        },
+        {
+          "name": "Guardrails — tenant baseline ↔ justification parity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 83
+        },
+        {
+          "name": "Guardrails — requestDb (RLS) adoption (no regressions)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 84
+        },
+        {
+          "name": "Guardrails — no leaky dev-auth gates in prod paths",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 85
+        },
+        {
+          "name": "Guardrails — password hygiene",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 86
+        },
+        {
+          "name": "Guardrails — SAML SSO fail-closed (no auth bypass)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 87
+        },
+        {
+          "name": "Guardrails — design-system non-negotiables (Lucide-only, no spring)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 88
+        },
+        {
+          "name": "Guardrails — regulated-data delete audit coverage (Part 11)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 89
+        },
+        {
+          "name": "Guardrails — no unreachable catch around an audit write (Part 11)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 90
+        },
+        {
+          "name": "Guardrails — a sign ledger row comes from a signature ceremony (Part 11)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 91
+        },
+        {
+          "name": "Guardrails — only named writers change a recorded Vault version (Part 11)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 92
+        },
+        {
+          "name": "Guardrails — route mount authority audit (no regressions)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 93
+        },
+        {
+          "name": "Guardrails — route ownership matrix artifact (required review evidence)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 94
+        },
+        {
+          "name": "Guardrails — AI gateway bypass (no direct LLM clients)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 95
+        },
+        {
+          "name": "Guardrails — jwt.verify pins algorithms (no alg-confusion)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 96
+        },
+        {
+          "name": "Guardrails — legacy dependency quarantine (supabase-js, aws-sdk v2)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 97
+        },
+        {
+          "name": "Guardrails — no mock data in prod routes (no regressions)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 98
+        },
+        {
+          "name": "Guardrails — js/ts shadow guard (no new same-basename .js/.ts pairs)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 99
+        },
+        {
+          "name": "Guardrails — DOCX runtime canonicality (approved runtimes only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 100
+        },
+        {
+          "name": "Guardrails — PDF runtime canonicality (approved entry points only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 101
+        },
+        {
+          "name": "Guardrails — cross-shell CSS collisions (ratchet, may only shrink)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 102
+        },
+        {
+          "name": "Guardrails — CSS selector shadowing (allowlist, may only shrink)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 103
+        },
+        {
+          "name": "Guardrails — chip tones must have a CSS rule",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 104
+        },
+        {
+          "name": "Guardrails — one toast implementation, and it can say \"failed\"",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 105
+        },
+        {
+          "name": "Guardrails — phantom design tokens (ratchet, may only shrink)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 106
+        },
+        {
+          "name": "Guardrails — client reachability from main.tsx (ratchet, may only shrink)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 107
+        },
+        {
+          "name": "Guardrails — every registered route + blueprint reaches the bundle",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 108
+        },
+        {
+          "name": "Guardrails — no route defined twice under a shared prefix",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 109
+        },
+        {
+          "name": "Guardrails — every rule pack declares what it was built from",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 110
+        },
+        {
+          "name": "Guardrails — every client /api call has a server route",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 111
+        },
+        {
+          "name": "Guardrails — every local import in every test file resolves",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 112
+        },
+        {
+          "name": "Guardrails — orphaned stylesheets (ratchet, may only shrink)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 113
+        },
+        {
+          "name": "Guardrails — every test file is reachable by a runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 114
+        },
+        {
+          "name": "Guardrails — real-database tests never inherit the pg mock",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 115
+        },
+        {
+          "name": "Guardrails — embedding runtime canonicality (corpus policy)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 116
+        },
+        {
+          "name": "Guardrails — editor extension integrity (@tiptap imports declared)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 117
+        },
+        {
+          "name": "Guardrails — Reasoning Tier readiness suite (governed exports + GA evidence)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 118
+        },
+        {
+          "name": "Guardrails — design-token cascade (ADVISORY)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 119
+        },
+        {
+          "name": "Audit — repo health scan (no regressions)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 120
+        },
+        {
+          "name": "Audit — orphaned endpoints (threshold 1184)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 121
+        },
+        {
+          "name": "Upload governance audit artifacts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 122
+        },
+        {
+          "name": "Run ESLint",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 123
+        },
+        {
+          "name": "Render ESLint findings (failure only)",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 124
+        },
+        {
+          "name": "Guardrails — ESLint warning ratchet (may only shrink)",
+          "status": "pending",
+          "conclusion": null,
+          "number": 125
+        },
+        {
+          "name": "Guardrails — CI guard self-tests",
+          "status": "pending",
+          "conclusion": null,
+          "number": 126
+        },
+        {
+          "name": "Run TypeScript check (no regression vs baseline)",
+          "status": "pending",
+          "conclusion": null,
+          "number": 127
+        },
+        {
+          "name": "Run beta-slice TypeScript check",
+          "status": "pending",
+          "conclusion": null,
+          "number": 128
+        },
+        {
+          "name": "Post Setup Node.js",
+          "status": "pending",
+          "conclusion": null,
+          "number": 255
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "pending",
+          "conclusion": null,
+          "number": 256
+        }
+      ]
+    },
+    {
+      "id": 114152480578,
+      "name": "Secret scan (full history)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 38031251355,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Install gitleaks (pinned module version, checksum-verified)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Scan every commit on this branch",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Name the history credentials not yet revoked",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    },
+    {
+      "id": 114152480619,
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 38031251355,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Generate SBOM (CycloneDX)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Upload SBOM artifact",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run lockfile audit and dependency-risk ledger gate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prove dependency-risk gate fail-closed behavior",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Prove PPTX image parser is unreachable",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Upload exact npm audit evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Trivy exceptions are attached, owned and dated (with selftests)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Trivy filesystem scan (deps + secrets)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Trivy config scan (Dockerfile/IaC)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Trivy config scan (Dockerfile/IaC)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        },
+        {
+          "name": "Post Trivy filesystem scan (deps + secrets)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24
+        },
+        {
+          "name": "Post Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27
+        }
+      ]
+    },
+    {
+      "id": 114152481453,
+      "name": "Nightly Governance Strict",
+      "status": "completed",
+      "conclusion": "skipped",
+      "run_id": 38031251355,
+      "logs_url": null,
+      "steps": null
+    }
+  ],
+  "scope": "Fresh current-head snapshot. Running or skipped steps are not passes. Historical 88fa failures are not promoted to this head.",
+  "lint_log_availability": "The full Lint job log was not yet available because the job was still running; fresh failure causes are not asserted from older-head logs."
+}

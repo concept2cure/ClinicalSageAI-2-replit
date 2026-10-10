@@ -1,0 +1,78 @@
+{
+  "capturedAtUTC": "2026-10-10T06:34:22.438101+00:00",
+  "currentImplementation": "de61922a9351080fdcd76a231c5abd8182054831",
+  "priorObservedImplementation": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+  "unchangedSourcePins": [
+    {
+      "path": "client/src/concept2cure/components/ana/anaTurnTimeline.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "2e3a1430cb87e020b94f3864853d3e446f714c65",
+      "sha256": "a00a44aa4f9af4ea57e76f76703ec37626267080e6a324c4da75dcefe361d53a",
+      "bytes": 16124
+    },
+    {
+      "path": "migrations/20261008f_stats_computation_runs.sql",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "9956ed6415e04d05d44b231bd4c1211a3176de72",
+      "sha256": "0972952bdcd46401fdca091ff26be7d8eace3e4bf678600e9531282c4e5827d9",
+      "bytes": 4302
+    },
+    {
+      "path": "scripts/ci/check-step-presentation.selftest.mjs",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "2f4485709628b9de81e8041e9003463a1cd04555",
+      "sha256": "a207cee9243af25241dda1779adacb0042809218e6cd7d8070e6d496c48dd4d0",
+      "bytes": 11142
+    },
+    {
+      "path": "server/routes/ana-ri/runs.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "90998bcf6d5301358f168635e153c1f2fbf02fb5",
+      "sha256": "06e1a90fef69d4f935f3ec2bcdbfd3707cbba98c8b4504fced732b9172134b3f",
+      "bytes": 16408
+    },
+    {
+      "path": "server/routes/submissions.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "122701d8e789c89e82f0b2499d9f88c0e35a3cce",
+      "sha256": "11b493707e10b84ee0f0e81f4d990b4bb97733292332c03a743af89e2d75f1b8",
+      "bytes": 100223
+    },
+    {
+      "path": "server/services/ana/bla-biologics-tool-defs.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "a02a226737d49dbf040c3b2a281fa6cc94c84a2c",
+      "sha256": "338fa098f9438131f700d7b60bbed728b4ca901c9f20efc0597665a072c489b8",
+      "bytes": 50418
+    },
+    {
+      "path": "server/services/ana/tool-authorization.register.json",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "5869c8cb976e65d1dd46b7243dafe7bd4303562a",
+      "sha256": "84fa056a533232dd2906e42600e0ac0cd8622dde6b6dceec5f9eb11cf010560e",
+      "bytes": 177630
+    },
+    {
+      "path": "server/services/tenant/tenant-offboarding.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "5ca4439f56e0d3d7c250da9ef852704e33f8cafb",
+      "sha256": "31bd6eee856e3b07f0442affcd414a04b7bbca4b5ff4e6d617678066d44d6dac",
+      "bytes": 49414
+    },
+    {
+      "path": "server/services/vault/document-chunking-backfill.service.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "485c447c9ae4c1e146f4c5b16d31f329ad7c79bc",
+      "sha256": "58523ff36fc376f5b5d2dec9c517c49684099b47d2122070d7c3f70a705a187d",
+      "bytes": 10686
+    },
+    {
+      "path": "tests/schema-contract/biopharma-programs-router-columns.contract.test.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "944eaea62656aa9c734d2f98c47808b0c7c62d14",
+      "sha256": "16018088f943beb68fe89d7f8ac6e7654c4b4018c47858c67a46365c086fbb93",
+      "bytes": 10852
+    }
+  ],
+  "scope": "All ten sources underlying the recorded prior CI failures are byte-identical in the scanner repair. This establishes no repair of those defects; it is not a substitute for fresh CI results. Fresh job observations remain separately timestamped."
+}

@@ -1,0 +1,129 @@
+2026-10-10T06:31:50.3629355Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +de61922a9351080fdcd76a231c5abd8182054831:refs/remotes/origin/concept2cure-v2
+2026-10-10T06:32:01.4157015Z From https://github.com/concept2cure/ClinicalSageAI-2-replit
+2026-10-10T06:32:01.4157929Z  * [new ref]           de61922a9351080fdcd76a231c5abd8182054831 -> origin/concept2cure-v2
+2026-10-10T06:32:01.4169336Z ##[endgroup]
+2026-10-10T06:32:01.4170410Z ##[group]Determining the checkout info
+2026-10-10T06:32:03.9043342Z branch 'concept2cure-v2' set up to track 'origin/concept2cure-v2'.
+2026-10-10T06:32:03.9127284Z ##[endgroup]
+2026-10-10T06:32:03.9179154Z [command]/usr/bin/git log -1 --format=%H
+2026-10-10T06:32:03.9199991Z de61922a9351080fdcd76a231c5abd8182054831
+2026-10-10T06:32:03.9478954Z ##[group]Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+2026-10-10T06:32:55.7129602Z added 2421 packages, and audited 2422 packages in 51s
+2026-10-10T06:32:55.7130205Z 
+2026-10-10T06:32:55.7133048Z 361 packages are looking for funding
+2026-10-10T06:32:55.7133603Z   run `npm fund` for details
+2026-10-10T06:32:55.8669110Z 
+2026-10-10T06:32:55.8670270Z 76 vulnerabilities (2 low, 43 moderate, 31 high)
+2026-10-10T06:32:55.8670832Z 
+2026-10-10T06:32:55.8671290Z To address issues that do not require attention, run:
+2026-10-10T06:32:55.8672324Z   npm audit fix
+2026-10-10T06:32:59.2661931Z ##[endgroup]
+2026-10-10T06:32:59.3689364Z 
+2026-10-10T06:32:59.3690051Z > concept2cure-riai@1.0.0 ci:dependency-risk
+2026-10-10T06:32:59.3690597Z > node scripts/ci/check-dependency-risk.mjs
+2026-10-10T06:32:59.3690863Z 
+2026-10-10T06:33:02.3705282Z Dependency risk gate: PASS; 3 Critical/High advisory occurrence(s), all reviewed.
+2026-10-10T06:33:02.3708562Z Scanner: npm audit 10.9.9; Node v22.23.3; lockfile 529a8e5889cf500959484df70c561d27746437aa3a4c7d043cd70a5c551e3961
+2026-10-10T06:33:02.3709605Z   GHSA-VFJ7-8CJW-P6XM braces high: unreachable
+2026-10-10T06:33:02.3710430Z   GHSA-5P2G-FCMC-QVQQ image-size high: unreachable
+2026-10-10T06:33:02.3711428Z   GHSA-W3RX-R6R6-PGPR image-size high: unreachable
+2026-10-10T06:33:02.3895750Z ##[group]Run npm run test:dependency-risk
+2026-10-10T06:33:04.2946262Z # Subtest: Handlebars rejects the blockParams AST injection bypass (GHSA-8r5x-fm3f-whwj)
+2026-10-10T06:33:04.2947944Z ok 33 - Handlebars rejects the blockParams AST injection bypass (GHSA-8r5x-fm3f-whwj)
+2026-10-10T06:33:04.2949528Z   ---
+2026-10-10T06:33:04.2949933Z   duration_ms: 5.122771
+2026-10-10T06:33:04.2950362Z   type: 'test'
+2026-10-10T06:33:04.2950744Z   ...
+2026-10-10T06:33:04.2951815Z # Subtest: Handlebars blocks Function constructor lookup through own properties (GHSA-p8wg-vrv2-v86f)
+2026-10-10T06:33:04.2953460Z ok 34 - Handlebars blocks Function constructor lookup through own properties (GHSA-p8wg-vrv2-v86f)
+2026-10-10T06:33:04.2954438Z   ---
+2026-10-10T06:33:04.2954824Z   duration_ms: 3.842281
+2026-10-10T06:33:04.2955264Z   type: 'test'
+2026-10-10T06:33:04.2955703Z   ...
+2026-10-10T06:33:04.2956728Z # Subtest: Handlebars precompiled templates cannot terminate an inline script (GHSA-xw65-4hp5-5hc7)
+2026-10-10T06:33:04.2958552Z ok 35 - Handlebars precompiled templates cannot terminate an inline script (GHSA-xw65-4hp5-5hc7)
+2026-10-10T06:33:04.2959498Z   ---
+2026-10-10T06:33:04.2959876Z   duration_ms: 0.38027
+2026-10-10T06:33:04.2960331Z   type: 'test'
+2026-10-10T06:33:04.2960698Z   ...
+2026-10-10T06:33:04.2961445Z # Subtest: Handlebars retains ordinary string rendering and HTML escaping
+2026-10-10T06:33:04.2962553Z ok 36 - Handlebars retains ordinary string rendering and HTML escaping
+2026-10-10T06:33:04.2963294Z   ---
+2026-10-10T06:33:04.2963661Z   duration_ms: 2.14869
+2026-10-10T06:33:04.2964087Z   type: 'test'
+2026-10-10T06:33:04.2964450Z   ...
+2026-10-10T06:33:04.2964798Z 1..36
+2026-10-10T06:33:04.2965151Z # tests 36
+2026-10-10T06:33:04.2965518Z # suites 0
+2026-10-10T06:33:04.2965879Z # pass 36
+2026-10-10T06:33:04.2966236Z # fail 0
+2026-10-10T06:33:04.2966590Z # cancelled 0
+2026-10-10T06:33:04.2966978Z # skipped 0
+2026-10-10T06:33:04.2967324Z # todo 0
+2026-10-10T06:33:04.2967720Z # duration_ms 1753.550241
+2026-10-10T06:33:04.3112470Z ##[group]Run npm run ci:pptx-image-reachability
+2026-10-10T06:33:04.3112895Z [36;1mnpm run ci:pptx-image-reachability[0m
+2026-10-10T06:33:04.3174015Z shell: /usr/bin/bash -e {0}
+2026-10-10T06:33:04.3174298Z ##[endgroup]
+2026-10-10T06:33:04.4272152Z 
+2026-10-10T06:33:04.4272975Z > concept2cure-riai@1.0.0 ci:pptx-image-reachability
+2026-10-10T06:33:04.4273618Z > node scripts/ci/check-pptx-image-reachability.mjs
+2026-10-10T06:33:04.4273916Z 
+2026-10-10T06:33:04.4758797Z PPTX image reachability: PASS
+2026-10-10T06:33:04.4761473Z   resolved entry: /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/pptxgenjs/dist/pptxgen.cjs.js
+2026-10-10T06:33:04.4762401Z   shipped pptxgenjs Node bundle does not import image-size
+2026-10-10T06:33:04.4762958Z   production generator uses no pptxgenjs image-capable API
+2026-10-10T06:33:04.6714491Z Root directory input is valid!
+2026-10-10T06:33:04.8738839Z Beginning upload of artifact content to blob storage
+2026-10-10T06:33:04.8984080Z (node:2922) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-10T06:33:04.9186124Z Uploaded bytes 6451
+2026-10-10T06:33:04.9325048Z Finished uploading artifact content to blob storage!
+2026-10-10T06:33:04.9326901Z SHA256 digest of uploaded artifact zip is 07eb16c9334280b42e20204329eabfc91df0e8ba514843b947fac776cdec8976
+2026-10-10T06:33:04.9328069Z Finalizing artifact upload
+2026-10-10T06:33:05.1262530Z Artifact npm-audit-lockfile-evidence.zip successfully finalized. Artifact ID 11661994176
+2026-10-10T06:33:05.1264433Z Artifact npm-audit-lockfile-evidence has been successfully uploaded! Final size is 6451 bytes. Artifact ID is 11661994176
+2026-10-10T06:33:05.1271749Z Artifact download URL: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38031251355/artifacts/11661994176
+2026-10-10T06:33:05.1912326Z [ci:trivy-inline-ignores:selftest] OK — 9 case(s) caught.
+2026-10-10T06:33:05.2506047Z [ci:trivy-inline-ignores] OK — 5 inline exception(s), each on the block it names:
+2026-10-10T06:33:05.2507983Z   AWS-0053 → resource "aws_lb" "this"  (terraform/modules/alb/main.tf:23)
+2026-10-10T06:33:05.2509868Z   AWS-0132 → resource "aws_s3_bucket_server_side_encryption_configuration" "frontend"  (terraform/modules/cloudfront/main.tf:43)
+2026-10-10T06:33:05.2511646Z   AWS-0011 → resource "aws_cloudfront_distribution" "this"  (terraform/modules/cloudfront/main.tf:157)
+2026-10-10T06:33:05.2512924Z   AWS-0104 → egress  (terraform/modules/ecs-fargate/main.tf:120)
+2026-10-10T06:33:05.2513811Z   AWS-0104 → egress  (terraform/modules/embedding-service/main.tf:73)
+2026-10-10T06:33:05.2866644Z [ci:trivyignore-hygiene:selftest] OK — 9 case(s) caught.
+2026-10-10T06:33:05.3179256Z [ci:trivyignore-hygiene] OK — 3 suppression(s) in /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+2026-10-10T06:33:09.3590188Z Running Trivy with options: trivy fs .
+2026-10-10T06:33:09.4140541Z 2026-10-10T06:33:09Z	INFO	[vulndb] Need to update DB
+2026-10-10T06:33:09.4141156Z 2026-10-10T06:33:09Z	INFO	[vulndb] Downloading vulnerability DB...
+2026-10-10T06:33:09.4141887Z 2026-10-10T06:33:09Z	INFO	[vulndb] Downloading artifact...	repo="mirror.gcr.io/aquasec/trivy-db:2"
+2026-10-10T06:33:14.5778773Z 12.77 MiB / 120.61 MiB [------>_____________________________________________________] 10.58% ? p/s ?58.66 MiB / 120.61 MiB [----------------------------->______________________________] 48.64% ? p/s ?108.02 MiB / 120.61 MiB [---------------------------------------------------->______] 89.56% ? p/s ?120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 179.52 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 179.52 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 179.52 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 167.93 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 167.93 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 167.93 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 157.10 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 157.10 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 157.10 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 146.96 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 146.96 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 146.96 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 137.48 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 137.48 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 137.48 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 128.61 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [------------------------------------------->] 100.00% 128.61 MiB p/s ETA 0s120.61 MiB / 120.61 MiB [-----------------------------------------------] 100.00% 30.25 MiB p/s 4.2s2026-10-10T06:33:14Z	INFO	[vulndb] Artifact successfully downloaded	repo="mirror.gcr.io/aquasec/trivy-db:2"
+2026-10-10T06:33:14.5790949Z 2026-10-10T06:33:14Z	INFO	[vuln] Vulnerability scanning is enabled
+2026-10-10T06:33:14.5791916Z 2026-10-10T06:33:14Z	INFO	[secret] Secret scanning is enabled
+2026-10-10T06:33:14.5793271Z 2026-10-10T06:33:14Z	INFO	[secret] If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2026-10-10T06:33:14.5795153Z 2026-10-10T06:33:14Z	INFO	[secret] Please see https://trivy.dev/docs/v0.70/guide/scanner/secret#recommendation for faster secret detection
+2026-10-10T06:33:35.5911056Z 2026-10-10T06:33:35Z	WARN	[secret] The size of the scanned file is too large. It is recommended to use `--skip-files` for this file to avoid high memory consumption.	file_path="server/scripts/data/clinical_trials_cancer_20250409_214935.json" size (MB)=14
+2026-10-10T06:33:42.9506561Z 2026-10-10T06:33:42Z	INFO	[npm] To collect the license information of packages, "npm install" needs to be performed beforehand	dir="tests/validation/node_modules"
+2026-10-10T06:33:42.9555423Z 2026-10-10T06:33:42Z	WARN	[pip] Unable to find python `site-packages` directory. License detection is skipped.	err="site-packages directory not found"
+2026-10-10T06:33:43.1337063Z 2026-10-10T06:33:43Z	INFO	Suppressing dependencies for development and testing. To display them, try the '--include-dev-deps' flag.
+2026-10-10T06:33:43.1339512Z 2026-10-10T06:33:43Z	INFO	Number of language-specific files	num=4
+2026-10-10T06:33:43.1340266Z 2026-10-10T06:33:43Z	INFO	[npm] Detecting vulnerabilities...
+2026-10-10T06:33:43.1606696Z 2026-10-10T06:33:43Z	INFO	[pip] Detecting vulnerabilities...
+2026-10-10T06:33:43.1698450Z 2026-10-10T06:33:43Z	INFO	Some vulnerabilities have been ignored/suppressed. Use the "--show-suppressed" flag to display them.
+2026-10-10T06:33:43.1699766Z 
+2026-10-10T06:33:43.1700056Z Report Summary
+2026-10-10T06:33:47.1120212Z Running Trivy with options: trivy config .
+2026-10-10T06:33:47.1685279Z 2026-10-10T06:33:47Z	INFO	[misconfig] Misconfiguration scanning is enabled
+2026-10-10T06:33:47.1696188Z 2026-10-10T06:33:47Z	INFO	[checks-client] Using existing checks from cache	path="/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.cache/trivy/policy/content"
+2026-10-10T06:34:01.0429539Z 2026-10-10T06:34:01Z	INFO	[terraform scanner] Scanning root module	file_path="terraform/bootstrap"
+2026-10-10T06:34:01.0452627Z 2026-10-10T06:34:01Z	INFO	[terraform scanner] Scanning root module	file_path="terraform/environments/production"
+2026-10-10T06:34:01.0480735Z 2026-10-10T06:34:01Z	WARN	[terraform parser] Variable values were not found in the environment or variable files. Evaluating may not work correctly.	module="root" variables="acm_certificate_arn, ai_provider_placement_approvals, anthropic_api_key, audit_attestation_key, audit_export_signing_key, audit_hmac_key, audit_hmac_secret, cloudfront_certificate_arn, cloudfront_origin_secret, connector_encryption_key, domain_aliases, image_tag, jwt_secret, mfa_encryption_key, platform_owner_emails, refresh_token_secret, smtp_from, smtp_host, smtp_pass, smtp_user"
+2026-10-10T06:34:02.8917796Z 2026-10-10T06:34:02Z	INFO	[terraform scanner] Scanning root module	file_path="terraform/environments/staging"
+2026-10-10T06:34:02.8941335Z 2026-10-10T06:34:02Z	WARN	[terraform parser] Variable values were not found in the environment or variable files. Evaluating may not work correctly.	module="root" variables="acm_certificate_arn, ai_provider_placement_approvals, anthropic_api_key, audit_attestation_key, audit_export_signing_key, audit_hmac_key, audit_hmac_secret, cloudfront_certificate_arn, cloudfront_origin_secret, connector_encryption_key, domain_aliases, image_tag, jwt_secret, mfa_encryption_key, platform_owner_emails, refresh_token_secret, smtp_from, smtp_host, smtp_pass, smtp_user"
+2026-10-10T06:34:04.8234361Z 2026-10-10T06:34:04Z	INFO	[terraform executor] Ignore finding	rule="aws-s3-encryption-customer-key" range="terraform/modules/cloudfront/main.tf:43-50"
+2026-10-10T06:34:04.9244199Z 2026-10-10T06:34:04Z	INFO	[terraform executor] Ignore finding	rule="aws-elb-alb-not-public" range="terraform/modules/alb/main.tf:25"
+2026-10-10T06:34:04.9246387Z 2026-10-10T06:34:04Z	INFO	[terraform executor] Ignore finding	rule="aws-cloudfront-enable-waf" range="terraform/modules/cloudfront/main.tf:157-281"
+2026-10-10T06:34:04.9248941Z 2026-10-10T06:34:04Z	INFO	[terraform executor] Ignore finding	rule="aws-ec2-no-public-egress-sgr" range="terraform/modules/embedding-service/main.tf:78"
+2026-10-10T06:34:04.9251121Z 2026-10-10T06:34:04Z	INFO	[terraform executor] Ignore finding	rule="aws-ec2-no-public-egress-sgr" range="terraform/modules/ecs-fargate/main.tf:124"
+2026-10-10T06:34:04.9253260Z 2026-10-10T06:34:04Z	INFO	[terraform executor] Ignore finding	rule="aws-s3-encryption-customer-key" range="terraform/modules/cloudfront/main.tf:43-50"
+2026-10-10T06:34:05.0195133Z 2026-10-10T06:34:05Z	ERROR	[helm scanner] Failed to render Chart files	file_path="charts/concept2cure-app" err="found in Chart.yaml, but missing in charts/ directory: postgresql, redis"
+2026-10-10T06:34:05.0206881Z 2026-10-10T06:34:05Z	ERROR	[helm scanner] Failed to render Chart files	file_path="charts/trialsage-cer" err="found in Chart.yaml, but missing in charts/ directory: postgresql, redis"
